@@ -1,0 +1,991 @@
+###############################################################################
+#
+# Copyright (c) 2022, RTE (http://www.rte-france.com)
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+###############################################################################
+
+###############################################################################
+# Reactive OPF
+# Author :  Jean Maeght 2022 2023
+###############################################################################
+
+
+
+###############################################################################
+# 
+# General overview
+# 
+# Goal of this reactive OPF is to propose values for all voltage and reactive
+# equipment and controllers of the grid:
+# - voltage set point of generating units,
+# - shunts,
+# - transformers ratios,
+# - and maybe others...
+#  
+# In a grid developemnt study, you decide new equipments, new generating units,
+# new substations, new loads, you set values for active and reactive loads,
+# you set values for active power generation and HVDC flows.
+# Then if you wish to do AC powerflow simulations with N-1 analysis, you need
+# all voltage and reactive set points and this reactive OPF is your solution.
+# 
+# Notice that this reactive OPF:
+# - will _not_ decide active power of generating units and HVDC branches,
+# - does _not_ take into account current nor power limits on branches,
+# - does really use upper and lower limits for voltage, so be carefull with them.
+# 
+###############################################################################
+
+
+
+###############################################################################
+# Controls for shunts
+###############################################################################
+#
+# Default behavior is: all shunts are constant, fixed to their value in ampl_network_shunts.txt
+# Set of shunts which can be modified and/or connected is defined in param_shunts.txt
+# Among this variable shunts, if a shunt is not connected (bus==-1) but bus_possible is 
+# well defined, then this shunt may be used by opf
+# *** Format of param_shunt: 4 columns #variant num bus id
+#
+
+
+
+###############################################################################
+# Controls for reactive power of generating units
+###############################################################################
+# Notice that "unit"=="generating unit"=="generator" in this code
+#
+# Default behavior is: all reactive power of units are variable
+# If file param_generators_reactive.txt is non empty, then all unit listed in
+# this file have a constant value for reactive power, equal to unit_Qc.
+# This value unit_Qc is used even if out of bounds Qmin Qmax of this unit
+# If unit_Qc is not consistent (larger than PQmax), then reactive power will be a variable
+# *** Format of param_generators_reactive: 4 columns # variant num bus id
+# (Another way to fix reactive values is also posible: set minimum and 
+# maximum reactive power bounds to equal value)
+#
+
+
+
+###############################################################################
+# Controls for static var compensators
+###############################################################################
+# All SVC which are connected and svc_regul==true are variables
+# No additional parameter file needed
+
+
+
+###############################################################################
+# VSC converter stations
+###############################################################################
+# Active power P is used as a fixed load
+# Voltage and reactve power are variables
+# No additional parameter file needed
+
+
+
+###############################################################################
+# LCC converter stations
+###############################################################################
+# Active power P and reactive power Q are used as a fixed values
+# No additional parameter file needed
+
+
+
+###############################################################################
+# Controls for ratios of transformers
+###############################################################################
+#
+# Default behavior is: no ratio of transformer are variable
+# If file param_transformers.txt is non empty, then all transformers listed in
+# this file have a variable value.
+# *** Format of param_transformers.txt: 5 columns # variant num bus1 bus2 id
+#
+# todo
+# Controle pour les transfos : dire lesquels sont variables
+# Sinon aucun n'est variable
+
+
+# todo
+# Controle pour minimiser la prod ou bien viser un plan de tension cible
+# La cible est la valeur v(pu) dans _buses.
+# Si aucune valeur v(pu) dans _buses (pour aucun bus), on vise le milieu pout tous les bus
+# Controles pour indiquer pour quels postes on vise la cible, sinon on vise pour tous ceux qui ont une cible
+
+
+
+
+###############################################################################
+# Crash indicator
+# If execution of this .run ampl file terminates before writing results,
+# then status CRASH is already written in indicators' file
+###############################################################################
+# Close any files which might have been opened previously
+close;
+printf "final_status CRASH\n" > reactiveopf_results_indic.txt;
+close;
+
+
+
+###############################################################################
+# Start
+###############################################################################
+# Clean parameters, variables, constraints and any former models pre-existing
+reset;
+
+# Print date of start of calculation
+param ctime_start symbolic := ctime();
+printf "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
+printf "*** Start of file reactiveopf.run : %s\n",ctime_start;
+
+# Global status
+# Possible values : CRASH OK NOK UNKNOWN
+param final_status symbolic default "UNKNOWN";
+
+
+
+###############################################################################
+# Linux or windows?
+###############################################################################
+param operatingSystem symbolic default "unknown";
+if length($OS) > 0 then let operatingSystem := "windows";
+if length($SHELL) > 0 then let operatingSystem := "linux";
+
+
+
+###############################################################################
+# Management of optional input files
+###############################################################################
+# AMPL is able to manage empty files; in that case, sets and paramaeters anre well
+# initialized to empty sets or tables; so the minimum we need is empty file.
+# Maybe this is not the best way to manage optional parameter files...
+if operatingSystem == "linux" then {
+  shell "if [ ! -f param_algo.txt ];                then touch param_algo.txt ;fi";
+  shell "if [ ! -f param_shunts.txt ];              then touch param_shunts.txt ;fi";
+  shell "if [ ! -f param_generators_reactive.txt ]; then touch param_generators_reactive.txt ;fi";
+  shell "if [ ! -f param_transformers.txt ];        then touch param_transformers.txt ;fi";
+  shell "chmod a+rX . * 2>/dev/null";
+}
+if operatingSystem == "windows" then {
+  shell "if not exist param_algo.txt                echo #empty > param_algo.txt";
+  shell "if not exist param_shunts.txt              echo #empty > param_shunts.txt";
+  shell "if not exist param_generators_reactive.txt echo #empty > param_generators_reactive.txt";
+  shell "if not exist param_transformers.txt        echo #empty > param_transformers.txt";
+}
+# If operating system is not linux nor windows, then these optional files are 
+# not optional anymore: you need to provide at least empty files
+
+
+
+###############################################################################
+#
+# General options
+#
+###############################################################################
+
+
+
+###############################################################################
+# Controls and associated parameters
+###############################################################################
+
+#
+# Read main algorithm controls in file
+#
+printf "\n*** Reading algorithmic controls and parameters in file\n";
+model;
+set PARAM_ALGO_KEYS;
+param PARAM_ALGO_VALUES{PARAM_ALGO_KEYS} symbolic;
+data;
+param: PARAM_ALGO_KEYS: PARAM_ALGO_VALUES := include param_algo.txt;
+model;
+display PARAM_ALGO_VALUES;
+
+
+# Absolute parameter : base 100MVA.
+# Never change this unless you really know what you do
+param base100MVA := 100;
+
+# Limit for detecting zero value for power
+param Pnull default 0.01; # MW
+if "Pnull" in PARAM_ALGO_KEYS then let Pnull := num(PARAM_ALGO_VALUES["Pnull"]);
+printf "Parameter: threshold to decide wether an active or reactive power value is zero Pnull:=%Q (MW or Mvar or MVA)\n",Pnull;
+check Pnull > 0 and Pnull < 1;
+
+# Parameter for detection of branches with zero impedance
+param Znull default 1e-4;
+if "Znull" in PARAM_ALGO_KEYS then let Znull := num(PARAM_ALGO_VALUES["Znull"]);
+printf "Parameter: threshold to detect zero impedance branch Znull:=%Q pu\n",Znull;
+check Znull > 0 and Znull < 0.1;
+
+# Minimum consistency value for minimum voltage in kV
+# All busses with nominal voltage lower than epsilon_nominal_voltage will be ignored
+# This value has to be >0
+param epsilon_nominal_voltage default 1.0;
+if "epsilon_nominal_voltage" in PARAM_ALGO_KEYS then let epsilon_nominal_voltage := num(PARAM_ALGO_VALUES["epsilon_nominal_voltage"]);
+printf "Parameter: for consistency checks of minimum nominal voltages epsilon_nominal_voltage:= %Q kV\n",epsilon_nominal_voltage; 
+check epsilon_nominal_voltage > 0;
+
+# Minimum consistency value for voltage in PU
+# This value has to be >0 and <1
+param epsilon_min_voltage default 0.5;
+if "epsilon_min_voltage" in PARAM_ALGO_KEYS then let epsilon_min_voltage := num(PARAM_ALGO_VALUES["epsilon_min_voltage"]);
+printf "Parameter: for consistency checks of voltage bounds eps<=Vmin<Vmax<=2-eps, epsilon_min_voltage:= %Q pu\n",epsilon_min_voltage; 
+check epsilon_min_voltage > 0 and epsilon_min_voltage < 1;
+
+# Ignore voltage bounds for buses with nominal voltage lower than this parameter
+# For all busses with nominal voltage lower than ignore_voltage_bounds, voltage bonds will be ignored
+# and replaced by [epsilon_min_voltage ; 2 - epsilon_min_voltage]
+param ignore_voltage_bounds default 0;
+if "ignore_voltage_bounds" in PARAM_ALGO_KEYS then let ignore_voltage_bounds := num(PARAM_ALGO_VALUES["ignore_voltage_bounds"]);
+if ignore_voltage_bounds >= epsilon_nominal_voltage
+then printf "Parameter: for all busses with nominal voltage <= ignore_voltage_bounds=%.1f, voltage bounds are ignored and replaced by [%.3f;%.3f]\n",ignore_voltage_bounds,epsilon_min_voltage,2-epsilon_min_voltage;
+check ignore_voltage_bounds >= 0;
+
+# Consistency maximal value for P and Q
+# Any Pmax Pmin Qmax Qmin of generating unit with abolute value larger than PQmax is discarded
+# Largest nuclear plant in Europe are less than 2000GW. Value 9000 might be a problem for large hydro dams in the world (22GW)
+param PQmax default 9000;
+if "PQmax" in PARAM_ALGO_KEYS then let PQmax := num(PARAM_ALGO_VALUES["PQmax"]);
+printf "Parameter: maximum for generating units' parameters Pmin Pmax Qmin Qmax = %Q MW or Mvar\n",PQmax; 
+
+param defaultPmax default 1000; # MW
+if "defaultPmax" in PARAM_ALGO_KEYS then let defaultPmax := num(PARAM_ALGO_VALUES["defaultPmax"]);
+printf "Parameter: %s = %Q MW\n","defaultPmax",defaultPmax;
+
+param defaultPmin default 0;    # MW
+if "defaultPmin" in PARAM_ALGO_KEYS then let defaultPmin := num(PARAM_ALGO_VALUES["defaultPmin"]);
+printf "Parameter: %s = %Q MW\n","defaultPmin",defaultPmin;
+
+param defaultQmaxPmaxRatio default 0.3; # Mvar/MW
+if "defaultQmaxPmaxRatio" in PARAM_ALGO_KEYS then let defaultQmaxPmaxRatio := num(PARAM_ALGO_VALUES["defaultQmaxPmaxRatio"]);
+printf "Parameter: %s = %Q Mvar/MW\n","defaultQmaxPmaxRatio",defaultQmaxPmaxRatio;
+
+param defaultQmin := -defaultQmaxPmaxRatio * defaultPmax;
+printf "Parameter: %s = %Q Mvar\n","defaultQmin",defaultQmin;
+
+param defaultQmax :=  defaultQmaxPmaxRatio * defaultPmax;
+printf "Parameter: %s = %Q Mvar\n","defaultQmax",defaultQmax;
+
+param minimalQPrange default 1; # MW or Mvar; if domain is smaller, Q or P is fixed
+if "minimalQPrange" in PARAM_ALGO_KEYS then let minimalQPrange := num(PARAM_ALGO_VALUES["minimalQPrange"]);
+printf "Parameter: %s = %Q MW or Mvar\n","minimalQPrange",minimalQPrange;
+
+
+
+
+
+###############################################################################
+# Solver choice and options
+###############################################################################
+option solver knitroampl;
+option dual_initial_guesses 0;
+option presolve 10;
+option show_boundtol 0;
+
+suffix cfeastol IN;
+suffix xfeastol IN;
+
+suffix cscalefactor IN;
+suffix xscalefactor IN;
+suffix objscalefactor IN;
+
+suffix usercomp IN;
+suffix intvarstrategy IN;
+
+suffix knitro_feaserror OUT;
+suffix knitro_opterror OUT;
+suffix knitro_neval OUT;
+suffix knitro_niter OUT;
+
+
+
+###############################################################################
+# Global variables
+###############################################################################
+
+# DCOPF status
+param dcopf_status symbolic default "UNKNOWN";
+
+# Gobal variables for writing and messages
+param fileOut symbolic default "dummy.txt";
+param errorMessage symbolic default "empty error message";
+
+# Messages to be written in final indicator file
+param messageInfo symbolic default "empty information message";
+set messagesInfo default {};
+
+# Number of iterations for AC OPF
+param nb_iter_last  integer default 0;
+param nb_iter_total integer default 0;
+
+# Additional dummy parameters, used for local computation
+# Remenber you cannot declare new variable in loop or "if"
+param temp1;
+param temp2;
+param temp3;
+param tempo;
+param tempstr symbolic default "empty string";
+
+
+
+###############################################################################
+# Inclusions files .mod and .dat
+###############################################################################
+model "reactiveopf.mod";
+data  "reactiveopf.dat";
+
+
+
+###############################################################################
+# This command "check" means that all checks in .mod file are done right now
+###############################################################################
+check;
+
+
+
+###############################################################################
+#
+# Computation of "slack bus" or reference bus
+#
+###############################################################################
+# This is not really a slack bus since this reactive OPF will change values 
+# of generation proportionally, to ensure global balance generation=losses+load
+# So this "slack node" is used only for zero phase constraint
+# This reference bus is also used to choose on which connect component computation si performed
+printf "\nComputation of bus with largest number of branches connected, in order to fix phase to 0 and to choose on which connex component reacive OPF will run\n";
+let temp1 := min(300,max{n in BUS2} substation_Vnomi[1,bus_substation[1,n]]);
+let null_phase_bus := min{n in BUS2} n;
+let tempo := 0;
+for {n in BUS2 : substation_Vnomi[1,bus_substation[1,n]] >= temp1 * 0.9}
+  let tempo := max (tempo, card({(qq,mm,n) in BRANCH2} union {(qq,n,nn) in BRANCH2}));
+for {n in BUS2 : substation_Vnomi[1,bus_substation[1,n]] >= temp1 * 0.9 && card({(qq,mm,n) in BRANCH2} union {(qq,n,nn) in BRANCH2}) == tempo}
+  let null_phase_bus := n;
+if ( tempo > 0 ) then
+  printf "Bus %QkV with most branches: %Q in substation %s/%s with %Q connected branches\n",
+  substation_Vnomi[1,bus_substation[1,null_phase_bus]],
+  null_phase_bus,
+  substation_id[1,bus_substation[1,null_phase_bus]],
+  substation_description[1,bus_substation[1,null_phase_bus]],
+  tempo;
+if ( tempo == 0 ) then
+  printf "Bus with most branches: not found. Take first bus (=%Q) for phase=0 constraint\n",null_phase_bus;
+
+
+
+###############################################################################
+#
+# Connexity checks and computation of connex components
+#
+###############################################################################
+printf "\n*** Connexity computation\n";
+let PROBLEM_CCOMP := {1};
+let PROBLEM_DCOPF := { };
+let PROBLEM_ACOPF := { };
+option presolve 0;
+let tempstr := ctime();
+printf "# CCcomp solve: start (%s)\n\n",tempstr;
+#
+solve cccomputation_objective;
+#
+if solve_result_num > 103 or card({n in BUS2: teta_ccomputation[n].val > 0.01 and teta_ccomputation[n].val < 0.99})>0 
+then {
+  # First return codes of knitro :
+  # See https://www.artelys.com/docs/knitro/3_referenceManual/knitroamplReference.html#return-codes
+  #   0 Locally optimal or satisfactory solution.
+  let errorMessage := "Optimization for connex component computation failed";
+  let final_status := "NOK";
+  include reactiveopfexit.run;
+}
+printf "# CCcomp solve: end   (%s -> %s)\n\n",tempstr,ctime();
+option presolve 10;
+
+#
+# Definition of BUSCC below was the purpose of this optimization
+#
+let BUSCC := {n in BUS2: teta_ccomputation[n].val <= 0.01};
+
+printf "\n*** Connexity computation\n";
+for{n in BUS2 diff BUSCC}
+  printf "Bus %Q in substation %Q (Vnomi=%.2fkV, country=%Q) is out of main AC CC\n",
+    bus_id[1,n], substation_id[1,bus_substation[1,n]],
+    substation_Vnomi[1,bus_substation[1,n]], substation_country[1,bus_substation[1,n]];
+printf "Nb of busses in AC+DC CC: %i\n",card(BUS2); 
+printf "Nb of busses in CC %Q: %i\n",bus_id[1,null_phase_bus],card(BUSCC);
+printf "Nb of busses in other CCs: %Q\n",card(BUS2)-card(BUSCC);
+
+printf "\n";
+
+
+
+###############################################################################
+# A few information
+###############################################################################
+display
+maximal_voltage_upper_bound, minimal_voltage_lower_bound,
+card(SUBSTATIONS),card(BUS),card(BUS2),card(BUSCC),card(BUS2 diff BUSCC),card(BUSVV),card(BUSCC_SLACK),card(BUSCC diff BUSCC_SLACK),
+card(BRANCH),card(BRANCHCC),card(BRANCHZNULL),card(BRANCHCC diff BRANCHZNULL),
+card(UNIT),card(UNITCC),card(UNITON),card(UNITON diff UNIT_FIXQ),card(UNIT_FIXQ),
+card(LOAD),card(LOADCC),
+card(SHUNTCC),card(SHUNT_FIX),card(SHUNT_VAR),
+card(SVC),card(SVCCC),card(SVCON),
+card(VSCCONV),card(VSCCONVON),
+card(LCCCONV),card(LCCCONVON)
+;
+
+# Is the case power globally power balanced? 
+let temp1 := sum{(c,n) in LOADCC} load_PFix[1,c,n];
+let temp2 := sum{(g,n) in UNITON} unit_Pc[1,g,n];
+let temp3 :=  (sum{(vscconv,n) in VSCCONVON} vscconv_P0[1,vscconv,n])+(sum{(l,k) in LCCCONVON} lccconv_P0[1,l,k]);
+let global_initial_losses_ratio := (temp2-temp1-temp3)/(temp1+temp3);
+
+printf "HVDC injections (homogeneous to loads):\n";
+for {(v,n) in VSCCONVON} 
+  printf "VSC converter %Q in %Q: P0=%.1fMW is fixed, Q is variable\n",
+  vscconv_id[1,v,n],substation_id[1,bus_substation[1,n]],vscconv_P0[1,v,n];
+for {(l,n) in LCCCONVON}
+  printf "LCC converter %Q in %Q: P0=%.1fMW is fixed, Q0=%.1fMvar is fixed\n",
+  lccconv_id[1,l,n],substation_id[1,bus_substation[1,n]],lccconv_P0[1,l,n],lccconv_Q0[1,l,n];
+printf "Sum of HVDC conv.  H: %.0f MW\n", temp3;
+printf "Sum of loads       C: %.0f MW\n", temp1;
+printf "Sum of generations P: %.0f MW\n", temp2;
+printf "Balance    (P-C-H)/C: %.2f %%    (global_initial_losses_ratio=%f)\n\n", (temp2-temp1-temp3)/temp1*100,global_initial_losses_ratio;
+
+# Branches with low current limits (but keep in mind they are not used; this is just for information)
+let temp1 := min{(qq,m,n) in BRANCHCC} Fmax[qq,m,n];
+for {(qq,m,n) in BRANCHCC : Fmax[qq,m,n] <= temp1 * 1.5}
+  printf "Branch %Q Fmax=%.2fMW is small ; Vnom1=%ikV Vnom2=%ikV patl1=%iA patl2=%iA (Fmax not used, this is just for information)\n",
+    branch_id[1,qq,m,n],Fmax[qq,m,n],substation_Vnomi[1,bus_substation[1,m]],substation_Vnomi[1,bus_substation[1,n]],branch_patl1[1,qq,m,n],branch_patl1[1,qq,m,n];
+
+# Abnormally low nominal voltages
+for {(t,n) in BUS: substation_Vnomi[1,bus_substation[1,n]] < epsilon_nominal_voltage}
+  printf "Warning: bus %Q in substation %Q has nominal voltage %.2fkV < %QkV -> bus is ignored\n",
+  bus_id[1,n], substation_id[1,bus_substation[1,n]], substation_Vnomi[1,bus_substation[1,n]], epsilon_nominal_voltage;
+
+# Voltage bounds
+let temp1 := min{(t,s) in SUBSTATIONS: substation_Vmin[t,s] > 0} substation_Vmin[t,s];
+for {(t,s) in SUBSTATIONS: substation_Vmin[t,s] > 0 and substation_Vmin[t,s] <= temp1*1.01}
+  printf "Substations %Q with lowest  voltage lower bound Vnom=%ikV Vmin=%.3fpu\n",substation_id[t,s],substation_Vnomi[t,s],substation_Vmin[t,s];
+let temp1 := max{(t,s) in SUBSTATIONS: substation_Vmax[t,s] > 0} substation_Vmax[t,s];
+for {(t,s) in SUBSTATIONS: substation_Vmax[t,s] > 0 and substation_Vmax[t,s] >= temp1*0.99}
+  printf "Substations %Q with highest voltage upper bound Vnom=%ikV Vmax=%.3fpu\n",substation_id[t,s],substation_Vnomi[t,s],substation_Vmax[t,s];
+printf "If voltage lower bounds are missing or too small, they are set to %.3fpu\n",minimal_voltage_lower_bound;
+printf "If voltage upper bounds are missing or too high,  they are set to %.3fpu\n",maximal_voltage_upper_bound;
+let temp1 := card({n in BUSCC: substation_Vnomi[1,bus_substation[1,n]] <= ignore_voltage_bounds});
+if temp1 > 0 then
+printf "Voltage bounds for substations with nominal voltage <= %ikV are set to [%.3fpu;%.3fpu] (%i busses)\n",
+  ignore_voltage_bounds,minimal_voltage_lower_bound,maximal_voltage_upper_bound,temp1;
+printf "Maximal diameter of voltage interval: %.3f\n",max({(t,s) in SUBSTATIONS}(voltage_upper_bound[t,s] - voltage_lower_bound[t,s]));
+printf "Minimal diameter of voltage interval: %.3f\n",min({(t,s) in SUBSTATIONS}(voltage_upper_bound[t,s] - voltage_lower_bound[t,s]));
+
+#
+# Consistency of transformers ratios
+#
+let temp1 := min{(t,r) in REGL} regl_ratio_min[1,r];
+let temp2 := max{(t,r) in REGL} regl_ratio_max[1,r];
+printf "Minimal transformer ratio : %.3f\n",temp1;
+printf "Maximal transformer ratio : %.3f\n",temp2;
+for {(qq,m,n) in BRANCHCC_REGL: (1,qq,m,n) in PARAM_TRANSFORMERS_RATIO_VARIABLE
+  and not regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]] < regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]]}
+{
+  let messageInfo := sprintf (
+    "Transformer %Q %Q(%ikV)->%Q(%ikV) cstratio=%.3f ratio_min=%.3f ratio_max=%.3f should have variable ratio but min and max are equal",
+    branch_id[1,qq,m,n],
+    substation_id[1,bus_substation[1,m]],substation_Vnomi[1,bus_substation[1,m]],
+    substation_id[1,bus_substation[1,n]],substation_Vnomi[1,bus_substation[1,n]],
+    branch_cstratio[1,qq,m,n],
+    regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]],regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]]);
+  printf "%s\n",messageInfo;
+  let messagesInfo := messagesInfo union {messageInfo};  
+}
+for {(qq,m,n) in BRANCHCC_REGL: regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]] <= temp1 * 1.01
+  or regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]] >= temp2 * 0.99 }
+{
+  printf "Transformer %Q ratio_min=%.3f ratio_max=%.3f\n",
+  branch_id[1,qq,m,n],
+  regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]],
+  regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]]
+}
+# Looking for unconsistencies
+let tempo := 0; # If non zero, major inconsistency detected
+for {(qq,m,n) in BRANCHCC_REGL} {
+  let temp1 := regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]];
+  let temp2 := regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]];
+  if voltage_lower_bound[1,bus_substation[1,m]]*temp1*branch_cstratio[1,qq,m,n] > voltage_upper_bound[1,bus_substation[1,n]]
+  then {
+    if substation_Vnomi[1,bus_substation[1,m]] > ignore_voltage_bounds 
+      and substation_Vnomi[1,bus_substation[1,n]] > ignore_voltage_bounds
+      then let tempo := 1;
+    let messageInfo := sprintf (
+    "ERROR INFEASIBLE transformer %Q %Q(%ikV)->%Q(%ikV) cstratio=%.3f ratio_min=%.3f ratio_max=%.3f : Vmin1=%.3f * ratio_min > Vmax2=%.3f",
+    branch_id[1,qq,m,n],
+    substation_id[1,bus_substation[1,m]],substation_Vnomi[1,bus_substation[1,m]],
+    substation_id[1,bus_substation[1,n]],substation_Vnomi[1,bus_substation[1,n]],
+    branch_cstratio[1,qq,m,n],temp1,temp2,
+    voltage_lower_bound[1,bus_substation[1,m]],
+    voltage_upper_bound[1,bus_substation[1,n]]);
+    printf "%s\n",messageInfo;
+    let messagesInfo := messagesInfo union {messageInfo};  
+  }
+  if voltage_upper_bound[1,bus_substation[1,m]]*temp2*branch_cstratio[1,qq,m,n] < voltage_lower_bound[1,bus_substation[1,n]]
+  then {
+    if substation_Vnomi[1,bus_substation[1,m]] > ignore_voltage_bounds 
+      and substation_Vnomi[1,bus_substation[1,n]] > ignore_voltage_bounds
+      then let tempo := 1;
+    let messageInfo := sprintf (
+    "ERROR INFEASIBLE transformer %Q %Q(%ikV)->%Q(%ikV) cstratio=%.3f ratio_min=%.3f ratio_max=%.3f : Vmax1=%.3f * ratio_max < Vmin2=%.3f",
+    branch_id[1,qq,m,n],
+    substation_id[1,bus_substation[1,m]],substation_Vnomi[1,bus_substation[1,m]],
+    substation_id[1,bus_substation[1,n]],substation_Vnomi[1,bus_substation[1,n]],
+    branch_cstratio[1,qq,m,n],temp1,temp2,
+    voltage_upper_bound[1,bus_substation[1,m]],
+    voltage_lower_bound[1,bus_substation[1,n]]);
+    printf "%s\n",messageInfo;
+    let messagesInfo := messagesInfo union {messageInfo};  
+  }  
+}
+# Consistency for transformers with fixed ratio
+for {(qq,m,n) in BRANCHCC_REGL_FIX} {
+  let temp1 := tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]];
+  if voltage_lower_bound[1,bus_substation[1,m]]*temp1*branch_cstratio[1,qq,m,n] > voltage_upper_bound[1,bus_substation[1,n]]
+  then {
+    if substation_Vnomi[1,bus_substation[1,m]] > ignore_voltage_bounds 
+      and substation_Vnomi[1,bus_substation[1,n]] > ignore_voltage_bounds
+      then let tempo := 1;
+    let messageInfo := sprintf (
+    "ERROR INFEASIBLE transformer %Q %Q(%ikV)->%Q(%ikV) cstratio=%.3f fixed_ratio=%.3f : Vmin1=%.3f * ratio > Vmax2=%.3f",
+    branch_id[1,qq,m,n],
+    substation_id[1,bus_substation[1,m]],substation_Vnomi[1,bus_substation[1,m]],
+    substation_id[1,bus_substation[1,n]],substation_Vnomi[1,bus_substation[1,n]],
+    branch_cstratio[1,qq,m,n],temp1,
+    voltage_lower_bound[1,bus_substation[1,m]],
+    voltage_upper_bound[1,bus_substation[1,n]]);
+    printf "%s\n",messageInfo;
+    let messagesInfo := messagesInfo union {messageInfo};  
+  }
+  if voltage_upper_bound[1,bus_substation[1,m]]*temp1*branch_cstratio[1,qq,m,n] < voltage_lower_bound[1,bus_substation[1,n]]
+  then {
+    if substation_Vnomi[1,bus_substation[1,m]] > ignore_voltage_bounds 
+      and substation_Vnomi[1,bus_substation[1,n]] > ignore_voltage_bounds
+      then let tempo := 1;
+    let messageInfo := sprintf (
+    "ERROR INFEASIBLE transformer %Q %Q(%ikV)->%Q(%ikV) cstratio=%.3f fixed_ratio=%.3f : Vmax1=%.3f * ratio < Vmin2=%.3f",
+    branch_id[1,qq,m,n],
+    substation_id[1,bus_substation[1,m]],substation_Vnomi[1,bus_substation[1,m]],
+    substation_id[1,bus_substation[1,n]],substation_Vnomi[1,bus_substation[1,n]],
+    branch_cstratio[1,qq,m,n],temp1,
+    voltage_upper_bound[1,bus_substation[1,m]],
+    voltage_lower_bound[1,bus_substation[1,n]]);
+    printf "%s\n",messageInfo;
+    let messagesInfo := messagesInfo union {messageInfo};  
+  }  
+}
+if tempo > 0.5 then {
+  let errorMessage := "ERROR INFEASIBLE some voltages bounds and not feasible with transformers ratios";
+  let final_status := "NOK";
+  include reactiveopfexit.run;
+}
+
+
+
+###############################################################################
+#
+# Correction of units' P and Q domains
+#
+###############################################################################
+printf "\n";
+param print_units := 0; # 0 or 1 for detailed prints of corrections
+for {(g,n) in UNITON} {
+
+  if abs(unit_Pmax[1,g,n]) >= PQmax then {
+    let corrected_unit_Pmax[g,n] := max(defaultPmax,unit_Pc[1,g,n]);
+    printf "%Q for %Q is %Q -> corrected to %Q\n","unit_Pmax",unit_id[1,g,n],unit_Pmax[1,g,n],corrected_unit_Pmax[g,n];
+  } 
+  else let corrected_unit_Pmax[g,n] := unit_Pmax[1,g,n];
+
+  if abs(unit_Pmin[1,g,n]) >= PQmax then {
+    let corrected_unit_Pmin[g,n] := min(defaultPmin,unit_Pc[1,g,n]);
+    printf "%Q for %Q is %Q -> corrected to %Q\n","unit_Pmin",unit_id[1,g,n],unit_Pmin[1,g,n],corrected_unit_Pmin[g,n];
+  }
+  else let corrected_unit_Pmin[g,n] := unit_Pmin[1,g,n];
+
+  if abs(corrected_unit_Pmax[g,n]-corrected_unit_Pmin[g,n]) <= minimalQPrange then {
+    if abs(unit_Pc[1,g,n]) > 1 then 
+      printf "Unit %Q has Pmin=%.1f and Pmax=%.1f too close -> we set Pmin=Pmax=Pc=%Q\n",
+      unit_id[1,g,n],corrected_unit_Pmin[g,n],corrected_unit_Pmax[g,n],unit_Pc[1,g,n];
+    let corrected_unit_Pmin[g,n] := unit_Pc[1,g,n];
+    let corrected_unit_Pmax[g,n] := unit_Pc[1,g,n];
+  }
+
+  if abs(unit_qp[1,g,n]) >= PQmax then {
+    let corrected_unit_qp[g,n] := -defaultQmaxPmaxRatio * corrected_unit_Pmax[g,n];
+    if print_units then 
+    printf "%Q for %Q is %Q -> corrected to %Q\n","unit_qp",unit_id[1,g,n],unit_qp[1,g,n],corrected_unit_qp[g,n];
+  }
+  else let corrected_unit_qp[g,n] := unit_qp[1,g,n];
+
+  if abs(unit_qP[1,g,n]) >= PQmax then {
+    let corrected_unit_qP[g,n] := -defaultQmaxPmaxRatio * corrected_unit_Pmax[g,n];
+    if print_units then 
+    printf "%Q for %Q is %Q -> corrected to %Q\n","unit_qP",unit_id[1,g,n],unit_qP[1,g,n],corrected_unit_qP[g,n];
+  }
+  else let corrected_unit_qP[g,n] := unit_qP[1,g,n];
+
+  if abs(unit_Qp[1,g,n]) >= PQmax then {
+    let corrected_unit_Qp[g,n] := defaultQmaxPmaxRatio * corrected_unit_Pmax[g,n];
+    if print_units then 
+    printf "%Q for %Q is %Q -> corrected to %Q\n","unit_Qp",unit_id[1,g,n],unit_Qp[1,g,n],corrected_unit_Qp[g,n];
+  }
+  else let corrected_unit_Qp[g,n] := unit_Qp[1,g,n];
+
+  if abs(unit_QP[1,g,n]) >= PQmax then {
+    let corrected_unit_QP[g,n] := defaultQmaxPmaxRatio * corrected_unit_Pmax[g,n];
+    if print_units then 
+    printf "%Q for %Q is %Q -> corrected to %Q\n","unit_QP",unit_id[1,g,n],unit_QP[1,g,n],corrected_unit_QP[g,n];
+  }
+  else let corrected_unit_QP[g,n] := unit_QP[1,g,n];
+  
+  if corrected_unit_qp[g,n] > corrected_unit_Qp[g,n] then {
+    printf "Warning unit %Q : unit_qp > unit_Qp -> we invert them",unit_id[1,g,n];
+    let tempo := corrected_unit_qp[g,n];
+    let corrected_unit_qp[g,n] := corrected_unit_Qp[g,n];
+    let corrected_unit_Qp[g,n] := tempo;
+  }
+
+  if corrected_unit_qP[g,n] > corrected_unit_QP[g,n] then {
+    printf "Warning unit %Q : unit_qP > unit_QP -> we invert them",unit_id[1,g,n];
+    let tempo := corrected_unit_qP[g,n];
+    let corrected_unit_qP[g,n] := corrected_unit_QP[g,n];
+    let corrected_unit_QP[g,n] := tempo;
+  }
+  
+  if    abs(corrected_unit_qP[g,n]-corrected_unit_QP[g,n]) <= minimalQPrange 
+    and abs(corrected_unit_qp[g,n]-corrected_unit_Qp[g,n]) <= minimalQPrange
+    and abs(corrected_unit_QP[g,n]-corrected_unit_qp[g,n]) <= minimalQPrange
+  then {
+    let tempo := 0.25*(corrected_unit_qP[g,n]+corrected_unit_QP[g,n]+corrected_unit_qp[g,n]+corrected_unit_Qp[g,n]);
+    if print_units then 
+      printf "Unit %Q has reactive diagram too small -> we set qp=qP=Qp=QP=%Q (Pc=%Q)\n",
+      unit_id[1,g,n],tempo,unit_Pc[1,g,n];
+    let corrected_unit_qP[g,n] := tempo;
+    let corrected_unit_QP[g,n] := tempo;
+    let corrected_unit_qp[g,n] := tempo;
+    let corrected_unit_Qp[g,n] := tempo;
+  } 
+  
+  let corrected_unit_Qmin[g,n] := min(corrected_unit_qP[g,n],corrected_unit_qp[g,n]);
+  let corrected_unit_Qmax[g,n] := min(corrected_unit_QP[g,n],corrected_unit_Qp[g,n]);
+  
+  if unit_Pc[1,g,n] > corrected_unit_Pmax[g,n] or unit_Pc[1,g,n] < corrected_unit_Pmin[g,n]
+  then printf "Warning unit %Q Pc=%Q not in bounds [ Pmin=%Q ; Pmax=%Q ]\n",
+    unit_id[1,g,n],unit_Pc[1,g,n],corrected_unit_Pmin[g,n],corrected_unit_Pmax[g,n];
+
+  if abs(corrected_unit_Qmin[g,n] - corrected_unit_Qmax[g,n]) >= minimalQPrange
+     and ( corrected_unit_Qmin[g,n] > 0 or corrected_unit_Qmax[g,n] < 0 )
+  then printf "Warning unit %Q: 0 not in bounds [ Qmin=%Q ; Qmax=%Q ]\n",
+    unit_id[1,g,n],corrected_unit_Qmin[g,n],corrected_unit_Qmax[g,n];
+}
+
+printf "\n";
+printf "Raw extremal values: %Q <= %Q <= %Q\n",min({(g,n) in UNITON} unit_Pmin[1,g,n]),"unit_Pmin",max({(g,n) in UNITON} unit_Pmin[1,g,n]);
+printf "Active generation:   %Q <= %Q <= %Q\n",min({(g,n) in UNITON} unit_Pc[1,g,n]),  "unit_Pc",  max({(g,n) in UNITON} unit_Pc[1,g,n]);
+printf "Raw extremal values: %Q <= %Q <= %Q\n",min({(g,n) in UNITON} unit_Pmax[1,g,n]),"unit_Pmax",max({(g,n) in UNITON} unit_Pmax[1,g,n]);
+printf "Raw extremal values: %Q <= %Q <= %Q\n",min({(g,n) in UNITON} unit_qP[1,g,n]),  "unit_qP",  max({(g,n) in UNITON} unit_qP[1,g,n]);
+printf "Raw extremal values: %Q <= %Q <= %Q\n",min({(g,n) in UNITON} unit_qp[1,g,n]),  "unit_qp",  max({(g,n) in UNITON} unit_qp[1,g,n]);
+printf "Raw extremal values: %Q <= %Q <= %Q\n",min({(g,n) in UNITON} unit_QP[1,g,n]),  "unit_QP",  max({(g,n) in UNITON} unit_QP[1,g,n]);
+printf "Raw extremal values: %Q <= %Q <= %Q\n",min({(g,n) in UNITON} unit_Qp[1,g,n]),  "unit_Qp",  max({(g,n) in UNITON} unit_Qp[1,g,n]);
+
+printf "Corrected extremal values: %Q <= %Q <= %Q\n",min({(g,n) in UNITON} corrected_unit_Pmin[g,n]),"corrected_unit_Pmin",max({(g,n) in UNITON} corrected_unit_Pmin[g,n]);
+printf "Corrected extremal values: %Q <= %Q <= %Q\n",min({(g,n) in UNITON} corrected_unit_Pmax[g,n]),"corrected_unit_Pmax",max({(g,n) in UNITON} corrected_unit_Pmax[g,n]);
+printf "Corrected extremal values: %Q <= %Q <= %Q\n",min({(g,n) in UNITON} corrected_unit_qP[g,n]),  "corrected_unit_qP",  max({(g,n) in UNITON} corrected_unit_qP[g,n]);
+printf "Corrected extremal values: %Q <= %Q <= %Q\n",min({(g,n) in UNITON} corrected_unit_qp[g,n]),  "corrected_unit_qp",  max({(g,n) in UNITON} corrected_unit_qp[g,n]);
+printf "Corrected extremal values: %Q <= %Q <= %Q\n",min({(g,n) in UNITON} corrected_unit_QP[g,n]),  "corrected_unit_QP",  max({(g,n) in UNITON} corrected_unit_QP[g,n]);
+printf "Corrected extremal values: %Q <= %Q <= %Q\n",min({(g,n) in UNITON} corrected_unit_Qp[g,n]),  "corrected_unit_Qp",  max({(g,n) in UNITON} corrected_unit_Qp[g,n]);
+
+
+
+###############################################################################
+#
+# Optimisation DC OPF for phase initialization and data consistency check
+#
+###############################################################################
+let PROBLEM_CCOMP := { };
+let PROBLEM_DCOPF := {1};
+let PROBLEM_ACOPF := { };
+
+
+printf "\n######################################################################\n";
+let tempstr := ctime();
+printf "# DCopf solve: start (%s)\n\n",tempstr;
+solve problem_dcopf_objective;
+printf "\n# DCopf solve: end   (%s -> %s)\n",tempstr,ctime();
+printf "######################################################################\n\n";
+
+
+
+###############################################################################
+#
+# DC OPF results analysis
+#
+###############################################################################
+if solve_result_num > 103
+then {
+  # First return codes of knitro :
+  # See https://www.artelys.com/docs/knitro/3_referenceManual/knitroamplReference.html#return-codes
+  #   0 Locally optimal or satisfactory solution.
+  # 100 Current feasible solution estimate cannot be improved. Nearly optimal.
+  # 101 Relative change in feasible solution estimate < xtol.
+  # 102 Current feasible solution estimate cannot be improved.
+  # 103 Relative change in feasible objective < ftol for ftol_iters.
+  # 200 Convergence to an infeasible point. Problem may be locally infeasible.
+  let errorMessage := "DCOPF optimisation failed";
+  let final_status := "NOK";
+  let dcopf_status := "NOK";
+  include reactiveopfexit.run;
+}
+# "else" is useless since there is an "exit" just above
+let dcopf_status := "OK";
+
+if sum{n in BUSCC} (balance_pos[n] + balance_neg[n]) >= Pnull
+then {
+  let errorMessage := "QP problem for Dcopf is not feasible since some slack variables are non zero";
+  display card({n in BUSCC : balance_pos[n] + balance_neg[n] >= Pnull});
+  display sum{n in BUSCC} (balance_pos[n] + balance_neg[n]);
+  
+  for{n in BUSCC: balance_pos[n] + balance_neg[n] >= Pnull}
+    printf "Bus %Q in substation %Q (Vnomi=%.2fkV, country=%Q) slacks %.2f and %.2f MW\n",
+      bus_id[1,n], substation_id[1,bus_substation[1,n]],
+      substation_Vnomi[1,bus_substation[1,n]], substation_country[1,bus_substation[1,n]],
+      balance_pos[n], balance_neg[n];
+
+  let final_status := "NOK";
+  let dcopf_status := "NOK";
+  include reactiveopfexit.run;
+}
+
+# "else" is useless since there is an "exit" just above
+printf "OK all slack variables for DCOPF are null\n";
+let dcopf_status := "OK";
+
+# Print flows on branches with zero impedance
+for{(qq,m,n) in BRANCHZNULL} printf "Flow on zero impedance branch %Q: %.f MW\n",branch_id[1,qq,m,n],activeflow[qq,m,n];
+
+# Print flows on most loaded lines
+let temp1 := max{(qq,m,n) in BRANCHCC}abs(activeflow[qq,m,n]);
+printf "Maximum flow: %.2f MW\n",temp1;
+for {(qq,m,n) in BRANCHCC : abs(activeflow[qq,m,n]) >= temp1*0.99} printf "Maximum flow %.2f MW is on branch %Q\n", activeflow[qq,m,n],branch_id[1,qq,m,n];
+
+# Print generations which are very different from their target value
+let temp2 := max{(g,n) in UNITON} abs(P_dcopf[g,n]-unit_Pc[1,g,n]);
+printf "Maximum deviation between generation and target: %.2f MW\n",temp2;
+if temp2 >= 10 then
+for {(g,n) in UNITON : abs(P_dcopf[g,n]-unit_Pc[1,g,n]) >= temp2*0.99}
+  printf "Generating unit %Q : Pc=%.2fMW P=%.2fMW (Pmin=%.2fMW Pmax=%.2fMW)\n",
+    unit_id[1,g,n],unit_Pc[1,g,n],P_dcopf[g,n],unit_Pmin[1,g,n],unit_Pmax[1,g,n];
+
+# Balance check
+let temp1 := sum{(c,n) in LOADCC} load_PFix[1,c,n];
+let temp2 := sum{(g,n) in UNITON} P_dcopf[g,n];
+let temp3 :=  (sum{(vscconv,n) in VSCCONVON} vscconv_P0[1,vscconv,n])+(sum{(l,k) in LCCCONVON} lccconv_P0[1,l,k]);
+printf "Sum of HVDC conv.  H: %.0f MW\n", temp3;
+printf "Sum of loads       C: %.0f MW\n", temp1;
+printf "Sum of generations P: %.0f MW\n", temp2;
+printf "Balance    (P-C-H)/C: %.2f %%\n\n", (temp2-temp1-temp3)/temp1*100;
+
+# Analysis of phases computed by DC OPF
+let teta_max := max({n in BUSCC} teta_dc[n].val) + 3; # radians
+let teta_min := min({n in BUSCC} teta_dc[n].val) - 3; # radians
+display teta_max,teta_min,max({n in BUSCC} teta_dc[n]),min({n in BUSCC} teta_dc[n]),
+  max({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[n])),min({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[n]));
+
+let temp1 := max({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[n]));
+let temp2 := min({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[n]));
+
+printf"Branches with large Delta Teta:\n";
+for {(qq,m,n) in BRANCHCC: (teta_dc[m]-teta_dc[n])>temp1*0.99 or (teta_dc[m]-teta_dc[n])<temp2*0.99}
+  printf "%Q R=%.4f X=%.4f delta=%.2f teta_m=%.2f teta_n=%.2f F=%.2f\n",
+  branch_id[1,qq,m,n],branch_R[1,qq,m,n],branch_X[1,qq,m,n],teta_dc[m]-teta_dc[n],teta_dc[m],teta_dc[n],
+  activeflow[qq,m,n];
+
+
+
+# Next optimization problems will use other "teta" variables. These ones were only for DCOPF
+fix{n in BUSCC} teta_dc[n];
+
+
+
+###############################################################################
+#
+# Optimisation AC OPF
+#
+###############################################################################
+let PROBLEM_CCOMP := { };
+let PROBLEM_DCOPF := { };
+let PROBLEM_ACOPF := {1};
+
+
+#
+# Initial values
+#
+
+
+# DC values used as initialization for phases
+let {n in BUSCC} teta[n] := teta_dc[n];
+
+# Voltages
+let {n in BUSVV}            V[n] := bus_V0[1,n];
+let {n in BUSCC diff BUSVV} V[n] := voltage_lower_bound[1,bus_substation[1,n]]
+  + 0.8 *(voltage_upper_bound[1,bus_substation[1,n]] - voltage_lower_bound[1,bus_substation[1,n]]);
+
+let {n in BUSCC_SLACK} slack1_balance_Q[n] := 0;
+let {n in BUSCC_SLACK} slack2_balance_Q[n] := 0;
+let {(g,n) in UNITON} P[g,n] := max(P_dcopf[g,n],unit_Pc[1,g,n]);
+let {(g,n) in UNITON} Q[g,n] := 0.5*(corrected_unit_Qmax[g,n] + corrected_unit_Qmin[g,n]);
+let {(shunt,n) in SHUNT_VAR} shunt_var[shunt,n] := min{(1,shunt,k) in SHUNT} shunt_valnom[1,shunt,k];
+let {(svc,n) in SVCON} svc_qvar[svc,n] := 0.1;
+let {(v,n) in VSCCONVON} vscconv_qvar[v,n] := if abs(vscconv_targetQ[1,v,n]) < PQmax then vscconv_targetQ[1,v,n] else 0;
+let {(qq,m,n) in BRANCHCC_REGL_VAR} branch_Ror_var[qq,m,n] := branch_Ror[qq,m,n];
+
+#
+# Solve
+#
+printf "\n######################################################################\n";
+printf "# ACopf solve: start (%s)\n\n",ctime();
+let tempstr := ctime();
+
+option knitro_options "opttol=1 opttolabs=1e-1 feastol=1 feastolabs=1e-3 maxit=500";
+
+solve problem_acopf_objective;
+
+let nb_iter_last := problem_acopf_objective.numiters;
+let nb_iter_total := nb_iter_total + nb_iter_last; 
+
+param solve_result_num_limit := 200;
+
+if solve_result_num > solve_result_num_limit then 
+for {n in BUS2}
+{
+  solve problem_acopf_objective;
+  let nb_iter_last := problem_acopf_objective.numiters;
+  let nb_iter_total := nb_iter_total + nb_iter_last; 
+  if solve_result_num <= solve_result_num_limit then break; 
+}
+
+
+#
+# Analysis of solve_result_num
+#
+
+# <= 103 : feasible
+# 200 convergence to unfeasible
+# > 200 : failure
+#
+param output_results binary default 0;
+if solve_result_num == 200 
+then {
+  let output_results := 0;
+  let messageInfo := "Optimization was ***not*** successfull - Convergence to an infeasible solution";
+  printf "%s\n", messageInfo;
+  let messagesInfo := messagesInfo union {messageInfo};
+  let final_status := "NOK";
+}
+else if solve_result_num > 103
+then {
+  let output_results := 0;
+  let messageInfo := "Optimization was ***not*** successfull - no solution found";
+  printf "%s\n", messageInfo;
+  let messagesInfo := messagesInfo union {messageInfo};
+  let final_status := "NOK";
+}
+else {
+  let output_results := 1;
+  let final_status := "OK";
+}
+
+printf "\n# ACopf solve: end   (%s -> %s)\n",tempstr,ctime();
+printf "######################################################################\n\n";
+
+
+#
+# Displays aftoer solving
+#
+
+display
+  nb_iter_last,nb_iter_total,
+  max({(qq,m,n) in BRANCHCC} branch_R[1,qq,m,n]),max({(qq,m,n) in BRANCHCC} branch_X[1,qq,m,n]),
+  teta_max, max({n in BUSCC} teta[n]), max({n in BUSCC} teta_dc[n]),
+  teta_min, min({n in BUSCC} teta[n]), min({n in BUSCC} teta_dc[n]),
+  max({(qq,m,n) in BRANCHCC} (teta[m]-teta[n])), max({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[n])),
+  min({(qq,m,n) in BRANCHCC} (teta[m]-teta[n])), min({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[n])),
+  min({n in BUSCC}V[n]),max({n in BUSCC}V[n])
+  ;
+
+let temp1 := max({(qq,m,n) in BRANCHCC} (teta[m]-teta[n]));
+let temp2 := min({(qq,m,n) in BRANCHCC} (teta[m]-teta[n]));
+
+for {(qq,m,n) in BRANCHCC: (teta[m]-teta[n])>temp1*0.99 or (teta[m]-teta[n])<temp2*0.99} {
+  printf "%Q R=%.3f X=%.3f delta=%.2f Vm=%.3f %.2f Vn=%.3f %.2f ",
+  branch_id[1,qq,m,n],branch_R[1,qq,m,n],branch_X[1,qq,m,n],teta[m]-teta[n],V[m],teta[m],V[n],teta[n];
+  if m in BUSCC_SLACK then printf "sQm %.2f %.2f ",
+    max(slack1_balance_Q[m]-slack2_balance_Q[m],0),max(slack2_balance_Q[m]-slack1_balance_Q[m],0);
+  if n in BUSCC_SLACK then printf "sQn %.2f %.2f ",
+    max(slack1_balance_Q[n]-slack2_balance_Q[n],0),max(slack2_balance_Q[n]-slack1_balance_Q[n],0);
+  printf "P1=%.1f Q1=%.1f ",base100MVA*V[m]*Red_Tran_Act_Dir[qq,m,n],base100MVA*V[m]*Red_Tran_Rea_Dir[qq,m,n];
+  printf "P2=%.1f Q2=%.1f ",base100MVA*V[m]*Red_Tran_Act_Inv[qq,m,n],base100MVA*V[m]*Red_Tran_Rea_Inv[qq,m,n];
+  printf"\n";
+  }
+
+# Ouput reactive slack values and voltages
+if (sum{n in BUSCC_SLACK} slack1_balance_Q[n])+(sum{n in BUSCC_SLACK} slack2_balance_Q[n]) > Pnull
+then {
+  display
+    sum{n in BUSCC_SLACK} slack1_balance_Q[n],
+    sum{n in BUSCC_SLACK} slack2_balance_Q[n],
+    max{n in BUSCC_SLACK} slack1_balance_Q[n],
+    max{n in BUSCC_SLACK} slack2_balance_Q[n],
+    card({n in BUSCC_SLACK: slack2_balance_Q[n]+slack1_balance_Q[n]>Pnull});
+  if output_results > 0 then
+    for {n in BUSCC_SLACK: slack1_balance_Q[n]+slack2_balance_Q[n] > Pnull}
+      printf "Bus %Q in substation %Q (%ikV) has non zero reactive slacks %.1f %.1f, Vmin=%.2f Vopt=%.2f Vmax=%.2f \n",
+        bus_id[1,n],substation_id[1,bus_substation[1,n]],substation_Vnomi[1,bus_substation[1,n]],
+        slack1_balance_Q[n],slack2_balance_Q[n],
+        voltage_lower_bound[1,bus_substation[1,n]],V[n],voltage_upper_bound[1,bus_substation[1,n]];
+}
+
+# Write voltage information in debug file
+printf "#bus_id;Vnom;V;Vlb;Vub;Vmin_mod;Vmax_mod;Vmin_OK;Vmax_OK;Vmin_ori;Vmax_ori;sQ1;sQ2;\n" > debug_bus.csv;
+for {n in BUSCC} printf "%Q;%i;%.4f;%.4f;%.4f;%.4f;%.4f;%s;%s;%.4f;%.4f;%.2f;%.2f;\n",
+  bus_id[1,n],substation_Vnomi[1,bus_substation[1,n]],
+  V[n],V[n].lb,V[n].ub,
+  voltage_lower_bound[1,bus_substation[1,n]],
+  voltage_upper_bound[1,bus_substation[1,n]],
+  if V[n]<voltage_lower_bound[1,bus_substation[1,n]] then "NOK" else "OK",
+  if V[n]>voltage_upper_bound[1,bus_substation[1,n]] then "NOK" else "OK",
+  substation_Vmin[1,bus_substation[1,n]],substation_Vmax[1,bus_substation[1,n]],
+  if n in BUSCC_SLACK then max(slack1_balance_Q[n]-slack2_balance_Q[n],0) else -1,
+  if n in BUSCC_SLACK then max(slack2_balance_Q[n]-slack1_balance_Q[n],0) else -1
+  > debug_bus.csv;
+  ;
+close debug_bus.csv;
+
+
+
+###############################################################################
+#
+# Writing results and indicators
+#
+###############################################################################
+include reactiveopfoutput.run;
+
+
+
+###############################################################################
+# End of file
+###############################################################################
+printf "\n";
+printf "*** End of file reactiveopf.run : Optimization %ssuccessfull\n",if output_results>0 then "" else "un";
+printf "*** Start of file reactiveopf.run : %Q\n",ctime_start;
+printf "*** End   of file reactiveopf.run : %Q\n",ctime();

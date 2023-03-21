@@ -1,0 +1,35 @@
+###############################################################################
+#
+# Copyright (c) 2022, RTE (http://www.rte-france.com)
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+###############################################################################
+
+###############################################################################
+# Reactive OPF
+# Author :  Jean Maeght 2022 2023
+###############################################################################
+
+# Exit procedure
+
+let fileOut := "reactiveopf_results_indic.txt";
+printf "%s %s\n","final_status", final_status > (fileOut);
+if length(errorMessage) > 0 then {
+  printf "%s %Q\n","errorMessage",errorMessage > (fileOut);
+  printf "%s\n",errorMessage;
+}
+printf "%s %Q\n","ctime_start",ctime_start > (fileOut);
+
+if card(messagesInfo) > 0 then {
+  let temp1:=1;
+  for { message in messagesInfo } {
+    printf "messageInfo%i %Q\n",temp1,message > (fileOut);
+    let temp1:=temp1+1;
+  }
+}
+
+
+printf   "\n*** End of file reactiveopfexit.run : %s\n",ctime();
+exit;
