@@ -6,14 +6,13 @@
  */
 package com.powsybl.openreac;
 
-import com.powsybl.iidm.network.Importers;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.ReactiveInvestmentOutput;
+import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
 
 import java.util.Map;
-import java.util.Properties;
 
 /**
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
@@ -21,7 +20,8 @@ import java.util.Properties;
 public final class OpenReacTest {
 
     public static void main(String[] args) throws Exception {
-        Network network = Importers.importData("XIIDM", "./", "ieee14", new Properties());
+
+        Network network = IeeeCdfNetworkFactory.create14Solved();
         // Setup parameters
         OpenReacParameters parameters = new OpenReacParameters();
 

@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ *
  * OpenReacAmplIOFiles will interface all inputs and outputs needed for OpenReac to the abtracted Ampl Executor.
  * <p>
  * The user of OpenReac should not see this class directly. One should use {@link OpenReacParameters} for inputs
@@ -28,17 +30,17 @@ import java.util.Map;
  */
 public class OpenReacAmplIOFiles implements AmplParameters {
 
-    private final TargetQGenerators fixedReactiveGeneratorInput;
-    private final VariableShuntCompensators variableReactanceShuntsInput;
-    private final VariableTwoWindingsTransformers variableRatioInput;
+    private final TargetQGenerators targetQGenerators;
+    private final VariableShuntCompensators variableShuntCompensators;
+    private final VariableTwoWindingsTransformers variableTwoWindingsTransformers;
     private final AlgorithmInput algorithmParams;
     private final ReactiveInvestmentOutput reactiveInvestmentOutput;
     private final IndicatorOutput indicators;
 
     public OpenReacAmplIOFiles(OpenReacParameters params) {
-        this.fixedReactiveGeneratorInput = new TargetQGenerators(params.getTargetQGenerators());
-        this.variableReactanceShuntsInput = new VariableShuntCompensators(params.getVariableShuntCompensators());
-        this.variableRatioInput = new VariableTwoWindingsTransformers(params.getVariableTwoWindingsTransformers());
+        this.targetQGenerators = new TargetQGenerators(params.getTargetQGenerators());
+        this.variableShuntCompensators = new VariableShuntCompensators(params.getVariableShuntCompensators());
+        this.variableTwoWindingsTransformers = new VariableTwoWindingsTransformers(params.getVariableTwoWindingsTransformers());
         this.algorithmParams = new AlgorithmInput(params.getAlgorithmParams());
         this.reactiveInvestmentOutput = new ReactiveInvestmentOutput();
         this.indicators = new IndicatorOutput();
@@ -54,12 +56,11 @@ public class OpenReacAmplIOFiles implements AmplParameters {
 
     @Override
     public Collection<AmplInputFile> getInputParameters() {
-        return List.of(fixedReactiveGeneratorInput, variableReactanceShuntsInput, variableRatioInput, algorithmParams);
+        return List.of(targetQGenerators, variableShuntCompensators, variableTwoWindingsTransformers, algorithmParams);
     }
 
     @Override
     public Collection<AmplOutputFile> getOutputParameters() {
         return List.of(reactiveInvestmentOutput, indicators);
     }
-
 }

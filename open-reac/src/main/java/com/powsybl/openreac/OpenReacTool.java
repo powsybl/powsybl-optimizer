@@ -37,9 +37,9 @@ public class OpenReacTool implements Tool {
     private static final String CASE_FILE = "case-file";
     private static final String OUTPUT_CASE_FORMAT = "output-case-format";
     private static final String OUTPUT_CASE_FILE = "output-case-file";
-    private static final String SHUNTS_LIST = "tunable-reactance-shunts-list";
-    private static final String GENERATORS_LIST = "fixed-reactance-generators-list";
-    private static final String TRANSFORMER_LIST = "ratio-tunable-transformers-list";
+    private static final String SHUNTS_LIST = "variable-shunts-list";
+    private static final String GENERATORS_LIST = "fixed-generators-list";
+    private static final String TRANSFORMER_LIST = "variable-transformers-list";
     private static final String OPEN_REAC_PARAMS = "open-reac-params";
 
     @Override
