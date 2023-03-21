@@ -8,6 +8,8 @@ package com.powsybl.openreac.parameters.input;
 
 import com.powsybl.commons.config.PlatformConfig;
 import com.powsybl.commons.extensions.AbstractExtendable;
+import com.powsybl.iidm.network.Network;
+import com.powsybl.openreac.parameters.InvalidParametersException;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
@@ -130,5 +132,27 @@ public class OpenReacParameters extends AbstractExtendable<OpenReacParameters> {
 
     public Map<AlgorithmInput.OpenReacAlgoParam, String> getAlgorithmParams() {
         return algoParamsMap;
+    }
+
+    /**
+     * Do some checks on the parameters given, such as provided IDs must correspond to the given network element
+     * @param network Network on which ID are going to be infered
+     * @throws InvalidParametersException
+     */
+    public void checkIntegrity(Network network) throws InvalidParametersException {
+        for(String shuntId : getVariableShuntCompensators()){
+            try{
+                network.getShuntCompensator(shuntId);
+            }catch (Exception e){
+                throw new InvalidParametersException(shuntId + " is not a valid Shunt ID in the network: " + network.getNameOrId());
+            }
+        }
+        for(String genId : getTargetQGenerators()){
+            try{
+                network.getGenerator(genId);
+            }catch (Exception e){
+                throw new InvalidParametersException(genId + " is not a valid generator ID in the network: " + network.getNameOrId());
+            }
+        }
     }
 }

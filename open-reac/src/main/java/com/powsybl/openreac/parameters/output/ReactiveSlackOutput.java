@@ -55,12 +55,11 @@ public class ReactiveSlackOutput implements AmplOutputFile {
     }
 
     @Override
-    public void read(Path path, StringToIntMapper<AmplSubset> amplMapper) throws IOException {
+    public void read(Path path, StringToIntMapper<AmplSubset> amplMapper) {
         List<String> investmentsLines;
         try {
             investmentsLines = Files.readAllLines(path, StandardCharsets.UTF_8);
-        } catch (NoSuchFileException e) {
-            // FIXME reactive slacks file does not exist if there is none.
+        } catch (IOException e) {
             return;
         }
         String headers = investmentsLines.get(0);
