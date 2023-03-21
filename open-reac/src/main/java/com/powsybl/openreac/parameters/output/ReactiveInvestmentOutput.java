@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2023, RTE (http://www.rte-france.com)
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package com.powsybl.openreac.parameters.output;
 
 import com.powsybl.ampl.converter.AmplConstants;
@@ -15,6 +21,9 @@ import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ */
 public class ReactiveInvestmentOutput implements AmplOutputFile {
     // TODO determine sign for self investments
     private static final boolean IS_SELF_POSITIVE = true;

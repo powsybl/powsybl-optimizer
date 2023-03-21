@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2023, RTE (http://www.rte-france.com)
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package com.powsybl.openreac.parameters.input;
 
 import com.powsybl.ampl.converter.AmplConstants;
@@ -11,21 +17,23 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
- * List of shunts that can be modified by OpenReac
+ * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ *
+ * List of transformers which tap position can be modified by OpenReac.
  * timestep num bus id
  */
-public class VariableRatioInput implements AmplInputFile {
+public class VariableTwoWindingsTransformers implements AmplInputFile {
     public static final String PARAM_TRANSFORMER_FILE_NAME = "param_transformers.txt";
 
-    private final List<String> variablesTransformers;
+    private final List<String> transformers;
     private static final String QUOTE = "'";
 
     public String addQuotes(String str) {
         return QUOTE + str + QUOTE;
     }
 
-    public VariableRatioInput(List<String> variablesTransformers) {
-        this.variablesTransformers = variablesTransformers;
+    public VariableTwoWindingsTransformers(List<String> elementIds) {
+        this.transformers = elementIds;
     }
 
     @Override
@@ -37,7 +45,7 @@ public class VariableRatioInput implements AmplInputFile {
     public InputStream getParameterFileAsStream(StringToIntMapper<AmplSubset> stringToIntMapper) {
         StringBuilder dataBuilder = new StringBuilder();
         dataBuilder.append("#NetworkId amplId powsyblId");
-        for (String transformerId : variablesTransformers) {
+        for (String transformerId : transformers) {
             int amplId = stringToIntMapper.getInt(AmplSubset.RATIO_TAP_CHANGER, transformerId);
             String[] tokens = {Integer.toString(AmplConstants.DEFAULT_VARIANT_INDEX), Integer.toString(
                     amplId), addQuotes(transformerId)};

@@ -19,13 +19,14 @@ import java.util.stream.Collectors;
 import static com.powsybl.ampl.converter.AmplConstants.DEFAULT_VARIANT_INDEX;
 
 /**
- * Enumeration to link resources ampl models to java code
+ * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ *
+ * OpenReac: a reactive opf to set target tension of the generators.
+ * Enumeration to link resources ampl models to java code.
  * It allows to get the list of InputStream of the ampl model resources.
  */
 public class OpenReacModel implements AmplModel {
-    /**
-     * a reactive opf to set target tension of the generators
-     */
+
     public static OpenReacModel buildModel() {
         return new OpenReacModel("reactiveopf_results", "openreac",
                 Arrays.asList("reactiveopf.run", "reactiveopfoutput.run", "reactiveopfexit.run"),
@@ -33,6 +34,7 @@ public class OpenReacModel implements AmplModel {
     }
 
     private static final String NETWORK_DATA_PREFIX = "ampl";
+
     /**
      * A list containing the name of the files and their path in the resources
      */

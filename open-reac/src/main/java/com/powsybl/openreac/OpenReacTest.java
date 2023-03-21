@@ -9,15 +9,16 @@ package com.powsybl.openreac;
 import com.powsybl.iidm.network.Importers;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
-import com.powsybl.openreac.parameters.output.OpenReacResults;
+import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.ReactiveInvestmentOutput;
 
 import java.util.Map;
 import java.util.Properties;
 
-public final class Main {
-    private Main() {
-    }
+/**
+ * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ */
+public final class OpenReacTest {
 
     public static void main(String[] args) throws Exception {
         Network network = Importers.importData("XIIDM", "./", "ieee14", new Properties());
@@ -29,19 +30,21 @@ public final class Main {
         //        parameters.addFixedReactanceGenerators("generator_id");
         //        parameters.addVariableReactanceShunts("shunt_id");
 
-        OpenReacResults openReacResults = OpenReacRunner.runOpenReac(network,
+        OpenReacResult openReacResult = OpenReacRunner.run(network,
                 network.getVariantManager().getWorkingVariantId(), parameters);
 
         // Exploiting OpenReac output
-        System.out.println(openReacResults.getStatus());
-        for (ReactiveInvestmentOutput.ReactiveInvestment investment : openReacResults.getReactiveInvestments()) {
+        System.out.println(openReacResult.getStatus());
+        for (ReactiveInvestmentOutput.ReactiveInvestment investment : openReacResult.getReactiveInvestments()) {
             System.out.println(
                     "investment : " + investment.busId + " " + investment.substationId + " " + investment.slack);
         }
-        for (Map.Entry<String, String> entry : openReacResults.getIndicators().entrySet()) {
+        for (Map.Entry<String, String> entry : openReacResult.getIndicators().entrySet()) {
             System.out.println(entry.getKey() + ": " + entry.getValue());
 
         }
     }
 
+    private OpenReacTest() {
+    }
 }

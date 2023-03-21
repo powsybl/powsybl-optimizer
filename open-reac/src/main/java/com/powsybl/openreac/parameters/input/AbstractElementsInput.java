@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2023, RTE (http://www.rte-france.com)
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package com.powsybl.openreac.parameters.input;
 
 import com.powsybl.ampl.converter.AmplConstants;
@@ -11,10 +17,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
- * List of shunts that can be modified by OpenReac
- * timestep num bus id
+ * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
-public abstract class AbstractReactiveElementInput implements AmplInputFile {
+public abstract class AbstractElementsInput implements AmplInputFile {
     private final List<String> elementIds;
     private static final String QUOTE = "'";
 
@@ -22,7 +27,7 @@ public abstract class AbstractReactiveElementInput implements AmplInputFile {
         return QUOTE + str + QUOTE;
     }
 
-    public AbstractReactiveElementInput(List<String> elementIds) {
+    public AbstractElementsInput(List<String> elementIds) {
         this.elementIds = elementIds;
     }
 
@@ -43,5 +48,4 @@ public abstract class AbstractReactiveElementInput implements AmplInputFile {
     }
 
     abstract AmplSubset getElementAmplSubset();
-
 }

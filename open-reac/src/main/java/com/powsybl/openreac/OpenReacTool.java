@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2023, RTE (http://www.rte-france.com)
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package com.powsybl.openreac;
 
 import com.google.auto.service.AutoService;
@@ -23,6 +29,9 @@ import java.util.Properties;
 
 import static com.powsybl.iidm.network.tools.ConversionToolUtils.*;
 
+/**
+ * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ */
 @AutoService(Tool.class)
 public class OpenReacTool implements Tool {
     private static final String CASE_FILE = "case-file";
@@ -132,11 +141,11 @@ public class OpenReacTool implements Tool {
         OpenReacParameters openReacParameters = new OpenReacParameters();
         String inputFileListSeparator = ";";
         String[] shuntsList = inputParams.getProperty(SHUNTS_LIST, "").split(inputFileListSeparator);
-        openReacParameters.addVariableReactanceShunts(shuntsList);
+        openReacParameters.addVariableShuntCompensators(shuntsList);
         String[] generatorsList = inputParams.getProperty(SHUNTS_LIST, "").split(inputFileListSeparator);
-        openReacParameters.addFixedReactanceGenerators(generatorsList);
+        openReacParameters.addTargetQGenerators(generatorsList);
         String[] transformerList = inputParams.getProperty(SHUNTS_LIST, "").split(inputFileListSeparator);
-        openReacParameters.addVariableTransformator(transformerList);
+        openReacParameters.addVariableTwoWindingsTransformers(transformerList);
 
         for (String key : inputParams.stringPropertyNames()) {
             if (!key.equals(SHUNTS_LIST) && !key.equals(GENERATORS_LIST) && !key.equals(TRANSFORMER_LIST)) {
@@ -160,7 +169,7 @@ public class OpenReacTool implements Tool {
     private static void itoolsOpenReac(ToolRunningContext context, Network network,
                                        OpenReacParameters openReacParameters) {
         context.getOutputStream().println("Running OpenReac on the network...");
-        OpenReacRunner.runOpenReac(network, network.getVariantManager().getWorkingVariantId(), openReacParameters);
+        OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), openReacParameters);
         context.getOutputStream().println("OpenReac optimisation done.");
     }
 

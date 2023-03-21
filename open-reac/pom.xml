@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
     Copyright (c) 2023, RTE (http://www.rte-france.com)
-    This Source Code Form is subject to
-the terms of the Mozilla Public
-    License, v. 2.0. If a copy of the MPL was not distributed with
-this
+    This Source Code Form is subject to the terms of the Mozilla Public
+    License, v. 2.0. If a copy of the MPL was not distributed with this
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -20,7 +18,7 @@ this
 
     <packaging>jar</packaging>
     <artifactId>powsybl-open-reac</artifactId>
-    <name>AMPL reactive optimal powerflow to initialize target voltage</name>
+    <name>OpenReac</name>
 
     <build>
         <plugins>
@@ -41,12 +39,12 @@ this
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-ampl-converter</artifactId>
-            <version>5.2.0-SNAPSHOT</version>
+            <version>5.2.0-RC1</version>
         </dependency>
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-ampl-executor</artifactId>
-            <version>5.2.0-SNAPSHOT</version>
+            <version>5.2.0-RC1</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -56,22 +54,22 @@ this
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-iidm-extensions</artifactId>
-            <version>5.2.0-SNAPSHOT</version>
+            <version>5.2.0-RC1</version>
         </dependency>
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-iidm-xml-converter</artifactId>
-            <version>5.2.0-SNAPSHOT</version>
+            <version>5.2.0-RC1</version>
         </dependency>
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-iidm-impl</artifactId>
-            <version>5.2.0-SNAPSHOT</version>
+            <version>5.2.0-RC1</version>
         </dependency>
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-config-classic</artifactId>
-            <version>5.2.0-SNAPSHOT</version>
+            <version>5.2.0-RC1</version>
         </dependency>
         <!-- Itools dependencies -->
         <dependency>
@@ -81,7 +79,7 @@ this
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-tools</artifactId>
-            <version>5.2.0-SNAPSHOT</version>
+            <version>5.2.0-RC1</version>
         </dependency>
     </dependencies>
 </project>
