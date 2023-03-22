@@ -6,7 +6,6 @@
  */
 package com.powsybl.openreac.parameters.input;
 
-import com.powsybl.ampl.converter.AmplConstants;
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.commons.util.StringToIntMapper;
@@ -21,11 +20,7 @@ import java.util.List;
  */
 public abstract class AbstractElementsInput implements AmplInputFile {
     private final List<String> elementIds;
-    private static final String QUOTE = "'";
 
-    public String addQuotes(String str) {
-        return QUOTE + str + QUOTE;
-    }
 
     public AbstractElementsInput(List<String> elementIds) {
         this.elementIds = elementIds;
@@ -37,7 +32,7 @@ public abstract class AbstractElementsInput implements AmplInputFile {
         dataBuilder.append("#amplId powsyblId\n");
         for (String elementID : elementIds) {
             int amplId = stringToIntMapper.getInt(getElementAmplSubset(), elementID);
-            String[] tokens = {Integer.toString(amplId), addQuotes(elementID)};
+            String[] tokens = {Integer.toString(amplId), AmplWriterUtils.addQuotes(elementID)};
             dataBuilder.append(String.join(" ", tokens));
             dataBuilder.append("\n");
         }
