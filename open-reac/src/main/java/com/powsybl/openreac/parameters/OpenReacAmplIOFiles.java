@@ -62,8 +62,8 @@ public class OpenReacAmplIOFiles implements AmplParameters {
 
     @Override
     public Collection<AmplInputFile> getInputParameters() {
-        return List.of(targetQGenerators, variableShuntCompensators, variableTwoWindingsTransformers, algorithmParams
-            ,voltageLimitsOverride);
+        return List.of(targetQGenerators, variableShuntCompensators, variableTwoWindingsTransformers,
+                algorithmParams, voltageLimitsOverride);
     }
 
     @Override
@@ -76,6 +76,6 @@ public class OpenReacAmplIOFiles implements AmplParameters {
      * @return <code>true</code> if ALL ouput file parsing didn't throw any IOExceptions
      */
     public boolean checkErrors() {
-        return reactiveInvestmentOutput.isErrorState() || indicators.isErrorState();
+        return reactiveSlackOutput.isErrorState() || indicators.isErrorState();
     }
 }
