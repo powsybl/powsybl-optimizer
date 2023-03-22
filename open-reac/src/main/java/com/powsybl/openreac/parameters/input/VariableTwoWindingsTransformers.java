@@ -46,7 +46,7 @@ public class VariableTwoWindingsTransformers implements AmplInputFile {
         StringBuilder dataBuilder = new StringBuilder();
         dataBuilder.append("#NetworkId amplId powsyblId");
         for (String transformerId : transformers) {
-            int amplId = stringToIntMapper.getInt(AmplSubset.RATIO_TAP_CHANGER, transformerId);
+            int amplId = stringToIntMapper.getInt(AmplSubset.BRANCH, transformerId);
             String[] tokens = {Integer.toString(AmplConstants.DEFAULT_VARIANT_INDEX), Integer.toString(
                     amplId), addQuotes(transformerId)};
             dataBuilder.append(String.join(" ", tokens));
