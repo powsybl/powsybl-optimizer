@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# Copyright (c) 2022, RTE (http://www.rte-france.com)
+# Copyright (c) 2022 2023, RTE (http://www.rte-france.com)
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -14,7 +14,10 @@
 
 # Exit procedure
 
+# Indicatros file
 let fileOut := "reactiveopf_results_indic.txt";
+
+# Final status and error message
 printf "%s %s\n","final_status", final_status > (fileOut);
 if length(errorMessage) > 0 then {
   printf "%s %Q\n","errorMessage",errorMessage > (fileOut);
@@ -22,6 +25,7 @@ if length(errorMessage) > 0 then {
 }
 printf "%s %Q\n","ctime_start",ctime_start > (fileOut);
 
+# Other messages
 if card(messagesInfo) > 0 then {
   let temp1:=1;
   for { message in messagesInfo } {
@@ -30,6 +34,36 @@ if card(messagesInfo) > 0 then {
   }
 }
 
+# Other indicators
+printf "\n" > (fileOut);
+printf "%s %s\n","dcopf_status",dcopf_status > (fileOut);
+printf "%s %s\n","operatingSystem",operatingSystem > (fileOut);
+if length($OS) > 0 then {
+  printf "%s %Q\n","OS",$OS > (fileOut); # Windows
+  printf "%s %Q\n","COMPUTERNAME",$COMPUTERNAME > (fileOut);
+}
+if length($SHELL) > 0 then {
+  printf "%s %Q\n","SHELL",$SHELL > (fileOut); # Linux
+  printf "%s %Q\n","HOSTNAME",$HOSTNAME > (fileOut);
+}
+printf "%s %Q\n","directory",_cd > (fileOut);
+
+# Algorithmic parameters
+printf "\n" > (fileOut);
+printf "%s %f\n","Pnull",Pnull > (fileOut);
+printf "%s %f\n","Znull",Znull > (fileOut);
+printf "%s %f\n","epsilon_nominal_voltage",epsilon_nominal_voltage > (fileOut);
+printf "%s %f\n","epsilon_min_voltage",epsilon_min_voltage > (fileOut);
+printf "%s %f\n","ignore_voltage_bounds",ignore_voltage_bounds > (fileOut);
+printf "%s %f\n","PQmax",PQmax > (fileOut);
+printf "%s %f\n","defaultPmax",defaultPmax > (fileOut);
+printf "%s %f\n","defaultPmin",defaultPmin > (fileOut);
+printf "%s %f\n","defaultQmaxPmaxRatio",defaultQmaxPmaxRatio > (fileOut);
+printf "%s %f\n","defaultQmin",defaultQmin > (fileOut);
+printf "%s %f\n","defaultQmax",defaultQmax > (fileOut);
+printf "%s %f\n","minimalQPrange",minimalQPrange > (fileOut);
+
+close (fileOut);
 
 printf   "\n*** End of file reactiveopfexit.run : %s\n",ctime();
 exit;

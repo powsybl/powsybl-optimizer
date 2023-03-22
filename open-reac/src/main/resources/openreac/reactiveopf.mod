@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# Copyright (c) 2022, RTE (http://www.rte-france.com)
+# Copyright (c) 2022 2023, RTE (http://www.rte-france.com)
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -9,7 +9,7 @@
 
 ###############################################################################
 # Reactive OPF
-# Author :  Jean Maeght 2022 2023
+# Author:  Jean Maeght 2022 2023
 ###############################################################################
 
 
@@ -34,7 +34,6 @@ param substation_country     {SUBSTATIONS} symbolic;
 param substation_id          {SUBSTATIONS} symbolic;
 param substation_description {SUBSTATIONS} symbolic;
 
-# Consistency checks
 
 # Check only time stamp 1 is in files
 set TIME := setof{(t,s) in SUBSTATIONS}t;
@@ -45,12 +44,13 @@ check card({(t,s) in SUBSTATIONS: substation_Vnomi[t,s] >= epsilon_nominal_volta
 # Voltage bounds
 check{(t,s) in SUBSTATIONS: substation_Vmin[t,s] >= epsilon_min_voltage and substation_Vmax[t,s] >= epsilon_min_voltage}:
   substation_Vmin[t,s] < substation_Vmax[t,s];
-# Parameter below will be used to force voltage to be in interval [epsilon;2-epsilon]. Typical value is 0.5 although academics would use 0.9 or 0.95
+# Parameter below will be used to force voltage to be in interval [epsilon;2-epsilon].
+# Typical value is 0.5 although academics would use 0.9 or 0.95
 check epsilon_min_voltage > 0 and epsilon_min_voltage < 1;
 # Bounds below will be used for substations without bounds or with bad bounds (eg 0.01pu or 20pu are bad values)
 param minimal_voltage_lower_bound := 
   if card({(t,s) in SUBSTATIONS: substation_Vmin[t,s] > 0}) > 0
-  then max(  epsilon_min_voltage,min{(t,s) in SUBSTATIONS: substation_Vmin[t,s] > 0} substation_Vmin[t,s])
+  then max(epsilon_min_voltage,min{(t,s) in SUBSTATIONS: substation_Vmin[t,s] > 0} substation_Vmin[t,s])
   else epsilon_min_voltage;
 param maximal_voltage_upper_bound := 
   if card({(t,s) in SUBSTATIONS: substation_Vmin[t,s] > 0}) > 0
@@ -59,15 +59,42 @@ param maximal_voltage_upper_bound :=
 check minimal_voltage_lower_bound > 0;
 check maximal_voltage_upper_bound > minimal_voltage_lower_bound;
 
+
+
+###############################################################################
+# Overrides for voltage bounds of substations
+###############################################################################
+#ampl_network_substations_override.txt
+set BOUND_OVERRIDES dimen 1 default {};
+param substation_new_Vmin    {BOUND_OVERRIDES};
+param substation_new_Vmax    {BOUND_OVERRIDES};
+param substation_new_checkId {BOUND_OVERRIDES} symbolic;
+
+# Consistency checks
+check {(t,s) in SUBSTATIONS: s in BOUND_OVERRIDES}: substation_id[t,s] == substation_new_checkId[s];
+check {(t,s) in SUBSTATIONS: s in BOUND_OVERRIDES}: substation_new_Vmin[s] > 0;
+check {(t,s) in SUBSTATIONS: s in BOUND_OVERRIDES}: substation_new_Vmax[s] > 0;
+check {(t,s) in SUBSTATIONS: s in BOUND_OVERRIDES}: substation_new_Vmin[s] < substation_new_Vmax[s];
+
+
+
+###############################################################################
 # Voltage bounds that will really been used
-# Negative value for substation_Vmin or substation_Vmac means that the value is undefined
+###############################################################################
+# Negative value for substation_Vmin or substation_Vmax means that the value is undefined
 # In that case, minimal_voltage_lower_bound or maximal_voltage_upper_bound is used instead
+
 param voltage_lower_bound{(t,s) in SUBSTATIONS} := 
-  max(minimal_voltage_lower_bound,substation_Vmin[t,s]);
+  max( minimal_voltage_lower_bound,
+       if s in BOUND_OVERRIDES then substation_new_Vmin[s] else substation_Vmin[t,s]
+      );
+
 param voltage_upper_bound{(t,s) in SUBSTATIONS} :=
+  if s in BOUND_OVERRIDES then substation_new_Vmax[s] else
   if substation_Vmax[t,s] <= voltage_lower_bound[t,s]
   then maximal_voltage_upper_bound
   else min(maximal_voltage_upper_bound,substation_Vmax[t,s]);
+
 check {(t,s) in SUBSTATIONS}: voltage_lower_bound[t,s] < voltage_upper_bound[t,s];
 
 
@@ -467,9 +494,9 @@ check {(t,h) in HVDC}: hvdc_targetP[t,h] <= hvdc_Pmax[t,h];
 # param_shunts.txt
 # All shunts are considered fixed to their value in ampl_network_shunts.txt (set and parameters based on SHUNT above)
 # Only shunts listed here will be changed by this reactive opf
-set PARAM_SHUNT  dimen 3 default {}; # [variant, shunt, bus]
+set PARAM_SHUNT  dimen 1 default {};
 param param_shunt_id{PARAM_SHUNT} symbolic;
-check {(t,s,n) in PARAM_SHUNT inter SHUNT}: shunt_id[t,s,n] == param_shunt_id[t,s,n];
+check {(t,s,n) in SHUNT: n in PARAM_SHUNT}: shunt_id[t,s,n] == param_shunt_id[s];
 
 
 
@@ -479,10 +506,10 @@ check {(t,s,n) in PARAM_SHUNT inter SHUNT}: shunt_id[t,s,n] == param_shunt_id[t,
 # param_generators_reactive.txt
 # All units are considered with variable Q, within bounds.
 # Only units listed in this file will be considered with fixed reactive power value
-#"variant" "num" "bus" "id"
-set PARAM_UNIT_FIXQ  dimen 3 default {}; # [variant, num, bus]
+#"num" "id"
+set PARAM_UNIT_FIXQ  dimen 1 default {};
 param param_unit_fixq_id{PARAM_UNIT_FIXQ} symbolic;
-check {(t,g,n) in PARAM_UNIT_FIXQ inter UNIT}: unit_id[t,g,n] == param_unit_fixq_id[t,g,n];
+check {(t,g,n) in UNIT: g in PARAM_UNIT_FIXQ}: unit_id[t,g,n] == param_unit_fixq_id[g];
 
 
 
@@ -492,10 +519,10 @@ check {(t,g,n) in PARAM_UNIT_FIXQ inter UNIT}: unit_id[t,g,n] == param_unit_fixq
 # param_transformers.txt
 # All transformers are considered with fixed ratio
 # Only transformers listed in this file will be considered with variable ratio value
-#"variant" "num" "bus" "id"
-set PARAM_TRANSFORMERS_RATIO_VARIABLE  dimen 4 default {}; # [variant, num, bus1, bus2]
+#"num" "id"
+set PARAM_TRANSFORMERS_RATIO_VARIABLE  dimen 1 default {};
 param param_transformers_ratio_variable_id{PARAM_TRANSFORMERS_RATIO_VARIABLE} symbolic;
-check {(t,qq,m,n) in PARAM_TRANSFORMERS_RATIO_VARIABLE inter BRANCH}: branch_id[t,qq,m,n] == param_transformers_ratio_variable_id[t,qq,m,n];
+check {(t,qq,m,n) in BRANCH: qq in PARAM_TRANSFORMERS_RATIO_VARIABLE}: branch_id[t,qq,m,n] == param_transformers_ratio_variable_id[qq];
 
 
 
@@ -539,12 +566,13 @@ set SVCCC   := {(1,svc,n) in SVC: n in BUSCC};
 #
 # Variable shunts
 # Shunts wich are not connected (n=-1) but which are in PARAM_SHUNT are considered as connected to their possible bus, with variable reactance
-set SHUNT_VAR := setof {(1,s,n) in SHUNT inter PARAM_SHUNT: 
-  (s,n) in SHUNTCC # Remember n might be -1 if shunt_possiblebus[1,s,n] is in BUSCC
+set SHUNT_VAR := setof {(1,s,n) in SHUNT :
+  s in PARAM_SHUNT
+  and (s,n) in SHUNTCC # Remember n might be -1 if shunt_possiblebus[1,s,n] is in BUSCC
   and abs(shunt_valmin[1,s,n])+abs(shunt_valmax[1,s,n]) >= Pnull / base100MVA # Useless to allow change if values are too small
   } (s,shunt_possiblebus[1,s,n]);
 # Shunts with fixed values
-set SHUNT_FIX := setof {(1,s,n) in SHUNT diff PARAM_SHUNT: n in BUSCC} (s,n);
+set SHUNT_FIX := setof {(1,s,n) in SHUNT: s not in PARAM_SHUNT and n in BUSCC} (s,n);
 # If a shunt is not connected (n=-1) and it is not in PARAM_SHUNT, then it will not be 
 # reconnected by reactive opf. These shunts are not in SHUNT_VAR nor in SHUNT_FIX; they
 # are simply ignored
@@ -559,17 +587,17 @@ set SVCON := {(svc,n) in SVCCC: svc_vregul[1,svc,n]=="true" and svc_bmin[1,svc,n
 # Control parameters for reactive power of units
 #
 # If unit_Qc is not consistent, then reactive power will be a variable
-set UNIT_FIXQ := setof{(t,g,n) in PARAM_UNIT_FIXQ: (g,n) in UNITON and abs(unit_Qc[1,g,n])<PQmax } (g,n);
+set UNIT_FIXQ := {(g,n) in UNITON: g in PARAM_UNIT_FIXQ and abs(unit_Qc[1,g,n])<PQmax };
 
 #
 # Control parameters for ratios of transformers
 #
 set BRANCHCC_REGL_VAR := 
   { (qq,m,n) in BRANCHCC_REGL: 
-    (1,qq,m,n) in PARAM_TRANSFORMERS_RATIO_VARIABLE
+    qq in PARAM_TRANSFORMERS_RATIO_VARIABLE
     and regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]] < regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]]
   };
-set BRANCHCC_REGL_FIX :=BRANCHCC_REGL diff BRANCHCC_REGL_VAR;
+set BRANCHCC_REGL_FIX := BRANCHCC_REGL diff BRANCHCC_REGL_VAR;
 
 
 #
@@ -654,7 +682,7 @@ param branch_admi {(qq,m,n) in BRANCHCC} =
   then 1./sqrt(branch_Rdeph[qq,m,n]^2 + branch_Xdeph[qq,m,n]^2 )
   else 1./sqrt(branch_R[1,qq,m,n]^2   + branch_X_mod[qq,m,n]^2   );
 
-# TODO : passer la partie regleur en variable
+# Later in this file, a variable branch_Ror_var will be created, to replace branch_Ror when it is not variable
 param branch_Ror {(qq,m,n) in BRANCHCC} = 
     ( if ((qq,m,n) in BRANCHCC_REGL)
       then tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]]
@@ -815,7 +843,7 @@ var P{(g,n) in UNITON}
 #
 # Reactive generation
 #
-# todo: add trapeze of hexagone constraints for reactive power
+# todo: add trapeze or hexagone constraints for reactive power
 var Q{(g,n) in UNITON} <= corrected_unit_Qmax[g,n], >= corrected_unit_Qmin[g,n];
 
 
@@ -839,7 +867,7 @@ var svc_qvar{(svc,n) in SVCON} >= svc_bmin[1,svc,n], <= svc_bmax[1,svc,n];
 var vscconv_qvar{(v,n) in VSCCONVON}
   >= min(vscconv_qP[1,v,n],vscconv_qp0[1,v,n],vscconv_qp[1,v,n]),
   <= max(vscconv_QP[1,v,n],vscconv_Qp0[1,v,n],vscconv_Qp[1,v,n]);
-# todo: add trapeze of hexagone constraints for reactive power
+# todo: add trapeze or hexagone constraints for reactive power
 
 
 #
@@ -943,6 +971,17 @@ subject to ctr_balance_Q{PROBLEM_ACOPF,k in BUSCC}:
   = 0;
 
 
+#
+# Definitions for objective function
+#
+
+# Voltage target : ratio between Vmin and Vmax
+var target_voltage_ratio = sum{n in BUSCC: substation_Vnomi[1,bus_substation[1,n]] > ignore_voltage_bounds}
+  ( V[n] - (1-ratio_voltage_target)*voltage_lower_bound[1,bus_substation[1,n]] + ratio_voltage_target*voltage_upper_bound[1,bus_substation[1,n]] )**2;
+
+# Voltage target : value V0 in input data
+var target_voltage_data = sum{n in BUSVV} (V[n] - bus_V0[1,n])**2;
+
 
 #
 # Objective function and penalties
@@ -952,23 +991,32 @@ param penalty_invest_rea_neg := 10;
 param penalty_units_reactive := 0.1;
 param penalty_transfo_ratio  := 0.1;
 
+param penalty_active_power_high := 1;
+param penalty_active_power_low  := 0.01;
+
+param penalty_voltage_target_high := 1;
+param penalty_voltage_target_low  := 0.01;
+
 minimize problem_acopf_objective:
   sum{n in BUSCC_SLACK} (
       penalty_invest_rea_pos * slack1_balance_Q[n]
     + penalty_invest_rea_neg * slack2_balance_Q[n]
     )
   
-  #+(sum{n in BUSCC_SLACK} slack1_balance_Q[n] * slack2_balance_Q[n] ) * (penalite_invest_rea_pos+penalite_invest_rea_neg)
-  
   # todo revenir a une variation homogene de la prod
   # L'idee serait de demarrer avec des prods proportionnelle (utiliser alpha), mais si on n'y arrive 
   # pas alors on minimise l'ecart quadratique ou la somme
   #+ alpha
-  + sum{(g,n) in UNITON} ( (P[g,n]-unit_Pc[1,g,n])/max(1,abs(unit_Pc[1,g,n])) )**2 
-  #+ sum{(g,n) in UNITON} P[g,n]
+  + (if objective_choice==1 or objective_choice==2 then penalty_active_power_low else penalty_active_power_high)
+  * sum{(g,n) in UNITON} ( (P[g,n]-unit_Pc[1,g,n])/max(1,abs(unit_Pc[1,g,n])) )**2 
   
-  # Voltage for busses
-  + sum{n in BUSCC} (V[n]-0.5*(voltage_lower_bound[1,bus_substation[1,n]]+voltage_upper_bound[1,bus_substation[1,n]]))**2
+  # Voltage for busses, ratio between Vmin and Vmax
+  + (if objective_choice==1 then penalty_voltage_target_high else penalty_voltage_target_low)
+  * target_voltage_ratio
+  
+  # Voltage target : value V0 in input data
+  + (if objective_choice==2 then penalty_voltage_target_high else penalty_voltage_target_low)
+  * target_voltage_data
   
   # Reactive power of units
   + penalty_units_reactive * sum{(g,n) in UNITON} (Q[g,n]/max(1,abs(corrected_unit_Qmin[g,n]),abs(corrected_unit_Qmax[g,n])))**2
@@ -977,7 +1025,3 @@ minimize problem_acopf_objective:
   + penalty_transfo_ratio * sum{(qq,m,n) in BRANCHCC_REGL_VAR} (branch_Ror[qq,m,n]-branch_Ror_var[qq,m,n])**2
   ;
   #
-
-
-
-

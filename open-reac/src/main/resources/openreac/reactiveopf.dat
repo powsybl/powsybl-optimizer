@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# Copyright (c) 2022, RTE (http://www.rte-france.com)
+# Copyright (c) 2022 2023, RTE (http://www.rte-france.com)
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -9,7 +9,7 @@
 
 ###############################################################################
 # Reactive OPF
-# Author :  Jean Maeght 2022 2023
+# Author:  Jean Maeght 2022 2023
 ###############################################################################
 
 data;
@@ -72,6 +72,10 @@ param: HVDC: hvdc_type hvdc_conv1 hvdc_conv2 hvdc_r hvdc_Vnom hvdc_convertersMod
 #"variant" "num" "bus1" "bus2" "3wt num" "sub.1" "sub.2" "r (pu)" "x (pu)" "g1 (pu)" "g2 (pu)" "b1 (pu)" "b2 (pu)" "cst ratio (pu)" "ratio tc" "phase tc" "p1 (MW)" "p2 (MW)" "q1 (MVar)" "q2 (MVar)" "patl1 (A)" "patl2 (A)" "merged" "fault" "curative" "id" "description" 
 param: BRANCH: branch_3wt branch_subor branch_subex branch_R branch_X branch_Gor branch_Gex branch_Bor branch_Bex branch_cstratio branch_ptrRegl branch_ptrDeph branch_Por branch_Pex branch_Qor branch_Qex branch_patl1 branch_patl2 branch_merged branch_fault branch_curative branch_id branch_name := include ampl_network_branches.txt;
 
+# ampl_network_substations_override.txt
+#"num" "minV (pu)" "maxV (pu)" "id"
+param: BOUND_OVERRIDES: substation_new_Vmin, substation_new_Vmax, substation_new_checkId := include ampl_network_substations_override.txt;
+
 # param_shunts.txt
 #"variant" "num" "bus" "id"
 param: PARAM_SHUNT: param_shunt_id := include param_shunts.txt;
@@ -83,4 +87,3 @@ param: PARAM_UNIT_FIXQ: param_unit_fixq_id := include param_generators_reactive.
 # param_transformers.txt
 #"variant" "num" "bus1" "bus2" "id"
 param: PARAM_TRANSFORMERS_RATIO_VARIABLE: param_transformers_ratio_variable_id := include param_transformers.txt;
-

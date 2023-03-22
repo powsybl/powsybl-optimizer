@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# Copyright (c) 2022, RTE (http://www.rte-france.com)
+# Copyright (c) 2022 2023, RTE (http://www.rte-france.com)
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -9,7 +9,7 @@
 
 ###############################################################################
 # Reactive OPF
-# Author :  Jean Maeght 2022 2023
+# Author:  Jean Maeght 2022 2023
 ###############################################################################
 
 
@@ -28,12 +28,12 @@ if final_status == "OK" then {
     1,s,n,
     shunt_var[s,n],
     base100MVA * shunt_var[s,n] * V[n]^2,
-    shunt_sections_count[1,s,n] 
+    0 #shunt_sections_count[1,s,n] # don't know what this is, so write 0 
     > (fileOut);
   # Shunts which were not connected, and which have been reconnected by reactiveopf, with variable value
   printf {(s,n) in SHUNT_VAR: (1,s,-1) in SHUNT} "%i;%i;%i;%.3f;%.3f;%i;\n",
     1,s,n,shunt_var[s,n],base100MVA * shunt_var[s,n] * V[n]^2,
-    shunt_sections_count[1,s,-1] 
+    0 #shunt_sections_count[1,s,-1] # don't know what this is, so write 0 
     > (fileOut);
   close (fileOut);
 
@@ -141,7 +141,7 @@ close (fileOut);
 
 }
 
-# Useful during tests to create list of transfos
+# Useful during tests to create list of transformers
 if 0 then
 printf {(qq,m,n) in BRANCHCC_REGL: 
   substation_Vnomi[1,bus_substation[1,m]]>21 and substation_Vnomi[1,bus_substation[1,m]]<300 and
@@ -149,6 +149,8 @@ printf {(qq,m,n) in BRANCHCC_REGL:
   (substation_Vnomi[1,bus_substation[1,m]]>120 or substation_Vnomi[1,bus_substation[1,n]]>120) and
   (substation_Vnomi[1,bus_substation[1,m]]<120 or substation_Vnomi[1,bus_substation[1,n]]<120)
 } "1 %i %i %i %Q\n",qq,m,n,branch_id[1,qq,m,n] > param_transformers.txtt;
+
+
 
 ###############################################################################
 #
@@ -215,6 +217,8 @@ if length($SHELL) > 0 then {
 printf "%s %Q\n","directory",_cd > (fileOut);
 
 printf "\n" > (fileOut);
+printf "%s %i\n","objective_choice",objective_choice > (fileOut);
+printf "%s %f\n","ratio_voltage_target",ratio_voltage_target > (fileOut);
 printf "%s %f\n","Pnull",Pnull > (fileOut);
 printf "%s %f\n","Znull",Znull > (fileOut);
 printf "%s %f\n","epsilon_nominal_voltage",epsilon_nominal_voltage > (fileOut);

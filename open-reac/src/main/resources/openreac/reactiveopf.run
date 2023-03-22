@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# Copyright (c) 2022, RTE (http://www.rte-france.com)
+# Copyright (c) 2022 2023, RTE (http://www.rte-france.com)
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -9,7 +9,7 @@
 
 ###############################################################################
 # Reactive OPF
-# Author :  Jean Maeght 2022 2023
+# Author:  Jean Maeght 2022 2023
 ###############################################################################
 
 
@@ -48,7 +48,8 @@
 # Set of shunts which can be modified and/or connected is defined in param_shunts.txt
 # Among this variable shunts, if a shunt is not connected (bus==-1) but bus_possible is 
 # well defined, then this shunt may be used by opf
-# *** Format of param_shunt: 4 columns #variant num bus id
+#
+# *** Format of param_shunt: 2 columns #num id
 #
 
 
@@ -63,9 +64,23 @@
 # this file have a constant value for reactive power, equal to unit_Qc.
 # This value unit_Qc is used even if out of bounds Qmin Qmax of this unit
 # If unit_Qc is not consistent (larger than PQmax), then reactive power will be a variable
-# *** Format of param_generators_reactive: 4 columns # variant num bus id
+#
+# *** Format of param_generators_reactive: 2 columns #num id
+#
 # (Another way to fix reactive values is also posible: set minimum and 
 # maximum reactive power bounds to equal value)
+
+
+
+###############################################################################
+# Controls for ratios of transformers
+###############################################################################
+#
+# Default behavior is: no ratio of transformer are variable
+# If file param_transformers.txt is non empty, then all transformers listed in
+# this file have a variable value.
+#
+# *** Format of param_transformers.txt: 2 columns #num id
 #
 
 
@@ -96,17 +111,13 @@
 
 
 ###############################################################################
-# Controls for ratios of transformers
+# Overrides for voltage bounds
 ###############################################################################
+# In case user wants to replace voltage bounds by other values, here is an 
+# optional file where user may define new bounds for some (or all) substations.
 #
-# Default behavior is: no ratio of transformer are variable
-# If file param_transformers.txt is non empty, then all transformers listed in
-# this file have a variable value.
-# *** Format of param_transformers.txt: 5 columns # variant num bus1 bus2 id
+# *** Format of ampl_network_substations_override.txt: 4 columns #"num" "minV (pu)" "maxV (pu)" "id"
 #
-# todo
-# Controle pour les transfos : dire lesquels sont variables
-# Sinon aucun n'est variable
 
 
 # todo
@@ -114,7 +125,6 @@
 # La cible est la valeur v(pu) dans _buses.
 # Si aucune valeur v(pu) dans _buses (pour aucun bus), on vise le milieu pout tous les bus
 # Controles pour indiquer pour quels postes on vise la cible, sinon on vise pour tous ceux qui ont une cible
-
 
 
 
@@ -167,6 +177,7 @@ if operatingSystem == "linux" then {
   shell "if [ ! -f param_shunts.txt ];              then touch param_shunts.txt ;fi";
   shell "if [ ! -f param_generators_reactive.txt ]; then touch param_generators_reactive.txt ;fi";
   shell "if [ ! -f param_transformers.txt ];        then touch param_transformers.txt ;fi";
+  shell "if [ ! -f ampl_network_substations_override.txt ]; then touch ampl_network_substations_override.txt ;fi";
   shell "chmod a+rX . * 2>/dev/null";
 }
 if operatingSystem == "windows" then {
@@ -174,6 +185,7 @@ if operatingSystem == "windows" then {
   shell "if not exist param_shunts.txt              echo #empty > param_shunts.txt";
   shell "if not exist param_generators_reactive.txt echo #empty > param_generators_reactive.txt";
   shell "if not exist param_transformers.txt        echo #empty > param_transformers.txt";
+  shell "if not exist ampl_network_substations_override.txt echo #empty > ampl_network_substations_override.txt";
 }
 # If operating system is not linux nor windows, then these optional files are 
 # not optional anymore: you need to provide at least empty files
@@ -208,6 +220,21 @@ display PARAM_ALGO_VALUES;
 # Absolute parameter : base 100MVA.
 # Never change this unless you really know what you do
 param base100MVA := 100;
+
+# Choice of objective function
+param objective_choice integer default 0;
+if "objective_choice" in PARAM_ALGO_KEYS then let objective_choice := num(PARAM_ALGO_VALUES["objective_choice"]);
+printf "Parameter: choice for objective function := %Q (%s)\n",objective_choice,
+  if objective_choice==2 then "voltage targets are provided values"
+  else if objective_choice==1 then "voltage targets are Vmin+ratio*(Vmax-Vmin)"
+  else "active power minimization";
+
+# If voltage target is ratio between Vmin and Vmax
+param ratio_voltage_target default 0.5;
+if "ratio_voltage_target" in PARAM_ALGO_KEYS then let ratio_voltage_target := num(PARAM_ALGO_VALUES["ratio_voltage_target"]);
+check ratio_voltage_target >= 0 and ratio_voltage_target <= 1;
+if objective_choice==1
+then printf "Parameter: ratio for voltage target is := %f (%.2f%%)\n",ratio_voltage_target,ratio_voltage_target*100;
 
 # Limit for detecting zero value for power
 param Pnull default 0.01; # MW
@@ -488,7 +515,7 @@ let temp1 := min{(t,r) in REGL} regl_ratio_min[1,r];
 let temp2 := max{(t,r) in REGL} regl_ratio_max[1,r];
 printf "Minimal transformer ratio : %.3f\n",temp1;
 printf "Maximal transformer ratio : %.3f\n",temp2;
-for {(qq,m,n) in BRANCHCC_REGL: (1,qq,m,n) in PARAM_TRANSFORMERS_RATIO_VARIABLE
+for {(qq,m,n) in BRANCHCC_REGL: qq in PARAM_TRANSFORMERS_RATIO_VARIABLE
   and not regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]] < regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]]}
 {
   let messageInfo := sprintf (
@@ -863,10 +890,13 @@ solve problem_acopf_objective;
 let nb_iter_last := problem_acopf_objective.numiters;
 let nb_iter_total := nb_iter_total + nb_iter_last; 
 
+# <= 103 : feasible
+# 200 convergence to unfeasible
+# > 200 : failure
 param solve_result_num_limit := 200;
 
 if solve_result_num > solve_result_num_limit then 
-for {n in BUS2}
+for {n in 1 .. 2}
 {
   solve problem_acopf_objective;
   let nb_iter_last := problem_acopf_objective.numiters;
@@ -910,7 +940,7 @@ printf "######################################################################\n
 
 
 #
-# Displays aftoer solving
+# Displays after solving
 #
 
 display
@@ -949,7 +979,7 @@ then {
     card({n in BUSCC_SLACK: slack2_balance_Q[n]+slack1_balance_Q[n]>Pnull});
   if output_results > 0 then
     for {n in BUSCC_SLACK: slack1_balance_Q[n]+slack2_balance_Q[n] > Pnull}
-      printf "Bus %Q in substation %Q (%ikV) has non zero reactive slacks %.1f %.1f, Vmin=%.2f Vopt=%.2f Vmax=%.2f \n",
+      printf "Bus %Q in substation %Q (%ikV) has non zero reactive slacks %.1f %.1f, Vmin=%.3f Vopt=%.3f Vmax=%.3f \n",
         bus_id[1,n],substation_id[1,bus_substation[1,n]],substation_Vnomi[1,bus_substation[1,n]],
         slack1_balance_Q[n],slack2_balance_Q[n],
         voltage_lower_bound[1,bus_substation[1,n]],V[n],voltage_upper_bound[1,bus_substation[1,n]];
