@@ -12,7 +12,7 @@ import com.powsybl.ampl.executor.AmplParameters;
 import com.powsybl.openreac.parameters.input.*;
 import com.powsybl.openreac.parameters.output.IndicatorOutput;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
-import com.powsybl.openreac.parameters.output.ReactiveInvestmentOutput;
+import com.powsybl.openreac.parameters.output.ReactiveSlackOutput;
 
 import java.util.Collection;
 import java.util.List;
@@ -34,7 +34,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
     private final VariableShuntCompensators variableShuntCompensators;
     private final VariableTwoWindingsTransformers variableTwoWindingsTransformers;
     private final AlgorithmInput algorithmParams;
-    private final ReactiveInvestmentOutput reactiveInvestmentOutput;
+    private final ReactiveSlackOutput reactiveSlackOutput;
     private final IndicatorOutput indicators;
 
     public OpenReacAmplIOFiles(OpenReacParameters params) {
@@ -42,12 +42,12 @@ public class OpenReacAmplIOFiles implements AmplParameters {
         this.variableShuntCompensators = new VariableShuntCompensators(params.getVariableShuntCompensators());
         this.variableTwoWindingsTransformers = new VariableTwoWindingsTransformers(params.getVariableTwoWindingsTransformers());
         this.algorithmParams = new AlgorithmInput(params.getAlgorithmParams());
-        this.reactiveInvestmentOutput = new ReactiveInvestmentOutput();
+        this.reactiveSlackOutput = new ReactiveSlackOutput();
         this.indicators = new IndicatorOutput();
     }
 
-    public List<ReactiveInvestmentOutput.ReactiveInvestment> getReactiveInvestments() {
-        return reactiveInvestmentOutput.getInvestments();
+    public List<ReactiveSlackOutput.ReactiveSlack> getReactiveInvestments() {
+        return reactiveSlackOutput.getSlacks();
     }
 
     public Map<String, String> getIndicators() {
@@ -61,6 +61,6 @@ public class OpenReacAmplIOFiles implements AmplParameters {
 
     @Override
     public Collection<AmplOutputFile> getOutputParameters() {
-        return List.of(reactiveInvestmentOutput, indicators);
+        return List.of(reactiveSlackOutput, indicators);
     }
 }

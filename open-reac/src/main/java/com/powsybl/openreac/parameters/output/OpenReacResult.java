@@ -6,7 +6,7 @@
  */
 package com.powsybl.openreac.parameters.output;
 
-import com.powsybl.openreac.parameters.output.ReactiveInvestmentOutput.ReactiveInvestment;
+import com.powsybl.openreac.parameters.output.ReactiveSlackOutput.ReactiveSlack;
 
 import java.util.List;
 import java.util.Map;
@@ -22,13 +22,13 @@ public class OpenReacResult {
     }
 
     private final OpenReacStatus status;
-    private final List<ReactiveInvestment> reactiveInvestments;
+    private final List<ReactiveSlack> reactiveSlacks;
     private final Map<String, String> indicators;
 
-    public OpenReacResult(OpenReacStatus status, List<ReactiveInvestment> reactiveInvestments,
+    public OpenReacResult(OpenReacStatus status, List<ReactiveSlack> reactiveSlacks,
                           Map<String, String> indicators) {
         this.status = status;
-        this.reactiveInvestments = reactiveInvestments;
+        this.reactiveSlacks = reactiveSlacks;
         this.indicators = indicators;
     }
 
@@ -36,8 +36,8 @@ public class OpenReacResult {
         return status;
     }
 
-    public List<ReactiveInvestment> getReactiveInvestments() {
-        return reactiveInvestments;
+    public List<ReactiveSlack> getReactiveSlacks() {
+        return reactiveSlacks;
     }
 
     public Map<String, String> getIndicators() {

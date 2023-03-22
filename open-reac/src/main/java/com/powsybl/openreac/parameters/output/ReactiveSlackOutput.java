@@ -23,20 +23,30 @@ import java.util.List;
 
 /**
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ * Reactive slacks in load convention.
  */
-public class ReactiveInvestmentOutput implements AmplOutputFile {
-    // TODO determine sign for self investments
-    private static final boolean IS_SELF_POSITIVE = true;
-    private static final int SELF_FACTOR = IS_SELF_POSITIVE ? 1 : -1;
-    private static final int CAPACITOR_FACTOR = !IS_SELF_POSITIVE ? 1 : -1;
-    private final List<ReactiveInvestment> investments;
+public class ReactiveSlackOutput implements AmplOutputFile {
 
-    public ReactiveInvestmentOutput() {
-        this.investments = new LinkedList<>();
+    public static class ReactiveSlack {
+        public final String busId;
+        public final String substationId; // FIXME
+        public final double slack;
+
+        public ReactiveSlack(String busId, String substationId, double slack) {
+            this.busId = busId;
+            this.substationId = substationId;
+            this.slack = slack;
+        }
     }
 
-    public List<ReactiveInvestment> getInvestments() {
-        return investments;
+    private final List<ReactiveSlack> slacks;
+
+    public ReactiveSlackOutput() {
+        this.slacks = new LinkedList<>();
+    }
+
+    public List<ReactiveSlack> getSlacks() {
+        return slacks;
     }
 
     @Override
@@ -50,7 +60,7 @@ public class ReactiveInvestmentOutput implements AmplOutputFile {
         try {
             investmentsLines = Files.readAllLines(path, StandardCharsets.UTF_8);
         } catch (NoSuchFileException e) {
-            // FIXME investements file does not exist if there is none.
+            // FIXME reactive slacks file does not exist if there is none.
             return;
         }
         String headers = investmentsLines.get(0);
@@ -68,16 +78,17 @@ public class ReactiveInvestmentOutput implements AmplOutputFile {
     }
 
     private void readLine(String[] tokens) {
-        double slackCapacitor = CAPACITOR_FACTOR * readDouble(tokens[2]);
-        double slackSelf = SELF_FACTOR * readDouble(tokens[3]);
+        // slack capacitor is a generation of reactive power.
+        // slack self is a reactive load.
+        double slackCapacitor = -readDouble(tokens[2]);
+        double slackSelf = readDouble(tokens[3]);
         String id = readString(tokens[4]);
         String substationId = readString(tokens[5]);
         double slack = slackCapacitor + slackSelf;
         if (slack != slackCapacitor && slack != slackSelf) {
-            throw new AmplException(
-                    "Error reading reactive investments, can't be self and capacitor at the same time.");
+            throw new AmplException("Error reading reactive slacks, can't be self and capacitor at the same time.");
         }
-        investments.add(new ReactiveInvestment(id, substationId, slack));
+        slacks.add(new ReactiveSlack(id, substationId, slack));
     }
 
     private double readDouble(String d) {
@@ -89,17 +100,5 @@ public class ReactiveInvestmentOutput implements AmplOutputFile {
      */
     private String readString(String str) {
         return str.substring(1, str.length() - 1);
-    }
-
-    public static class ReactiveInvestment {
-        public final String busId;
-        public final String substationId;
-        public final double slack;
-
-        public ReactiveInvestment(String busId, String substationId, double slack) {
-            this.busId = busId;
-            this.substationId = substationId;
-            this.slack = slack;
-        }
     }
 }

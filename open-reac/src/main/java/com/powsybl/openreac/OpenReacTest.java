@@ -9,8 +9,8 @@ package com.powsybl.openreac;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
-import com.powsybl.openreac.parameters.output.ReactiveInvestmentOutput;
 import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
+import com.powsybl.openreac.parameters.output.ReactiveSlackOutput;
 
 import java.util.Map;
 
@@ -35,7 +35,7 @@ public final class OpenReacTest {
 
         // Exploiting OpenReac output
         System.out.println(openReacResult.getStatus());
-        for (ReactiveInvestmentOutput.ReactiveInvestment investment : openReacResult.getReactiveInvestments()) {
+        for (ReactiveSlackOutput.ReactiveSlack investment : openReacResult.getReactiveSlacks()) {
             System.out.println(
                     "investment : " + investment.busId + " " + investment.substationId + " " + investment.slack);
         }
