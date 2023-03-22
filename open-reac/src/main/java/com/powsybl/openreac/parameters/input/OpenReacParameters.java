@@ -16,7 +16,6 @@ import java.util.*;
 
 /**
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
- *
  * This class stores all inputs parameters specific to the OpenReac optimizer, and allow them to be loaded from yaml.
  * <p>
  * TODO read from yaml shunts, transfo, generators, specific voltages ?
@@ -82,10 +81,10 @@ public class OpenReacParameters extends AbstractExtendable<OpenReacParameters> {
     }
 
     /**
-     * Override voltage level bound in the network. This will modify the network when OpenReac is called.
+     * Override voltage level limits in the network. This will modify the network when OpenReac is called.
      *
-     * @param lowerVoltage factor to the nominal voltage of the voltage ID.
-     * @param upperVoltage factor to the nominal voltage of the voltage ID.
+     * @param lowerVoltage absolute value of the new lower voltage limit.
+     * @param upperVoltage absolute value of the new upper voltage limit.
      */
     public OpenReacParameters addSpecificVoltageDelta(String voltageLevelId, double lowerVoltage, double upperVoltage) {
         this.specificVoltageDelta.put(voltageLevelId, Pair.of(lowerVoltage, upperVoltage));

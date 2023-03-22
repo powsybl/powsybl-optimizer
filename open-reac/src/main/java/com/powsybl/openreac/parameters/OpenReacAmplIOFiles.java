@@ -9,6 +9,7 @@ package com.powsybl.openreac.parameters;
 import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.ampl.executor.AmplOutputFile;
 import com.powsybl.ampl.executor.AmplParameters;
+import com.powsybl.iidm.network.Network;
 import com.powsybl.openreac.parameters.input.*;
 import com.powsybl.openreac.parameters.output.IndicatorOutput;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
@@ -19,14 +20,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @author Nicolas Pierre <nicolas.pierre at artelys.com>
- *
  * OpenReacAmplIOFiles will interface all inputs and outputs needed for OpenReac to the abtracted Ampl Executor.
  * <p>
  * The user of OpenReac should not see this class directly. One should use {@link OpenReacParameters} for inputs
  * and {@link OpenReacResult} for outputs.
  * However, when adding new inputs (outputs) to OpenReac, one must add {@link AmplOutputFile} (@link AmplInputFile)
  * here through {@link OpenReacAmplIOFiles#getInputParameters} ({@link OpenReacAmplIOFiles#getOutputParameters()})
+ *
+ * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
 public class OpenReacAmplIOFiles implements AmplParameters {
 
@@ -36,12 +37,17 @@ public class OpenReacAmplIOFiles implements AmplParameters {
     private final AlgorithmInput algorithmParams;
     private final ReactiveSlackOutput reactiveSlackOutput;
     private final IndicatorOutput indicators;
+    private final VoltageLevelLimitsOverrideInput voltageLimitsOverride;
 
-    public OpenReacAmplIOFiles(OpenReacParameters params) {
+    public OpenReacAmplIOFiles(OpenReacParameters params, Network network) {
+        //inputs
         this.targetQGenerators = new TargetQGenerators(params.getTargetQGenerators());
         this.variableShuntCompensators = new VariableShuntCompensators(params.getVariableShuntCompensators());
         this.variableTwoWindingsTransformers = new VariableTwoWindingsTransformers(params.getVariableTwoWindingsTransformers());
         this.algorithmParams = new AlgorithmInput(params.getAlgorithmParams());
+        this.voltageLimitsOverride = new VoltageLevelLimitsOverrideInput(params.getSpecificVoltageDelta(), network);
+
+        //outputs
         this.reactiveSlackOutput = new ReactiveSlackOutput();
         this.indicators = new IndicatorOutput();
     }
@@ -56,7 +62,8 @@ public class OpenReacAmplIOFiles implements AmplParameters {
 
     @Override
     public Collection<AmplInputFile> getInputParameters() {
-        return List.of(targetQGenerators, variableShuntCompensators, variableTwoWindingsTransformers, algorithmParams);
+        return List.of(targetQGenerators, variableShuntCompensators, variableTwoWindingsTransformers, algorithmParams
+            ,voltageLimitsOverride);
     }
 
     @Override

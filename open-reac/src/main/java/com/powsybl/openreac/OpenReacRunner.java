@@ -29,9 +29,9 @@ public final class OpenReacRunner {
         AmplModel reactiveOpf = OpenReacModel.buildModel();
         ComputationManager manager = LocalComputationManager.getDefault();
         parameters.checkIntegrity(network);
-        OpenReacAmplIOFiles amplIoInterface = new OpenReacAmplIOFiles(parameters);
+        OpenReacAmplIOFiles amplIoInterface = new OpenReacAmplIOFiles(parameters, network);
         before(network, parameters);
-        AmplResults run = null;
+        AmplResults run;
         try {
             run = AmplModelRunner.run(network, variant, reactiveOpf, manager, amplIoInterface);
         }catch (Exception e){
@@ -45,17 +45,9 @@ public final class OpenReacRunner {
 
     /**
      * This function allows network modifications before the run.
-     * <p>
-     * For now, we only modify the voltage limits of voltage levels.
      */
     private static void before(Network network, OpenReacParameters params) {
-        for (String voltageLevelId : params.getSpecificVoltageDelta().keySet()) {
-            Pair<Double, Double> bounds = params.getSpecificVoltageDelta().get(voltageLevelId);
-            double nominalV = network.getVoltageLevel(voltageLevelId).getNominalV();
-            network.getVoltageLevel(voltageLevelId)
-                   .setLowVoltageLimit(nominalV * bounds.getLeft())
-                   .setHighVoltageLimit(nominalV * bounds.getRight());
-        }
+
     }
 
     /**
