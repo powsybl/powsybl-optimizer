@@ -25,10 +25,9 @@ public final class OpenReacTest {
         // Setup parameters
         OpenReacParameters parameters = new OpenReacParameters();
 
-        // Not working for now because the AMPL .dat file is not up-to-date
-        //        parameters.addVariableTransformator("transformer_id");
-        //        parameters.addFixedReactanceGenerators("generator_id");
-        //        parameters.addVariableReactanceShunts("shunt_id");
+        parameters.addVariableTwoWindingsTransformers("T4-7-1");
+        parameters.addTargetQGenerators("B1-G");
+//        parameters.addVariableShuntCompensators("shunt_id"); // No shunt in IEEE14
 
         OpenReacResult openReacResult = OpenReacRunner.run(network,
                 network.getVariantManager().getWorkingVariantId(), parameters);

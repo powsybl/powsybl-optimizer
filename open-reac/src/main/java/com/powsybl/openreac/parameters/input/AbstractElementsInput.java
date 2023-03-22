@@ -34,11 +34,10 @@ public abstract class AbstractElementsInput implements AmplInputFile {
     @Override
     public InputStream getParameterFileAsStream(StringToIntMapper<AmplSubset> stringToIntMapper) {
         StringBuilder dataBuilder = new StringBuilder();
-        dataBuilder.append("#NetworkId amplId powsyblId\n");
+        dataBuilder.append("#amplId powsyblId\n");
         for (String elementID : elementIds) {
             int amplId = stringToIntMapper.getInt(getElementAmplSubset(), elementID);
-            String[] tokens = {Integer.toString(AmplConstants.DEFAULT_VARIANT_INDEX), Integer.toString(
-                    amplId), addQuotes(elementID)};
+            String[] tokens = {Integer.toString(amplId), addQuotes(elementID)};
             dataBuilder.append(String.join(" ", tokens));
             dataBuilder.append("\n");
         }
