@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
 public class IndicatorOutput implements AmplOutputFile {
+    private static final String NULL_INDICATOR = "NULL_INDICATOR";
     private static final String INDICATOR_FILE_NAME = "reactiveopf_results_indic.txt";
     private static final Pattern STRING_MAYBE_IN_QUOTES = Pattern.compile("([^']\\S*|'.+?')\\s*");
     private Map<String, String> indicatorMap;
@@ -44,10 +45,11 @@ public class IndicatorOutput implements AmplOutputFile {
         List<String> indicatorsLines = Files.readAllLines(path, StandardCharsets.UTF_8);
         for (String line : indicatorsLines) {
             List<String> lineTokens = parseStringOptionalQuotes(line);
-            // We allow empty lines
-            if (lineTokens.size() != 2 && lineTokens.size() != 0) {
+            if (lineTokens.size() > 2) {
                 throw new AmplException(
-                        "Error reading indicators : Expected 2 tokens on a line, got " + lineTokens.size());
+                        "Error reading indicators : Expected 2 or less tokens on a line, got " + lineTokens.size());
+            } else if (lineTokens.size() == 1) {
+                readLine(lineTokens.get(0), NULL_INDICATOR);
             } else if (lineTokens.size() == 2) {
                 readLine(lineTokens.get(0), lineTokens.get(1));
             }
