@@ -6,10 +6,9 @@
  */
 package com.powsybl.openreac.parameters.output;
 
-import com.powsybl.ampl.converter.AmplException;
 import com.powsybl.ampl.converter.AmplSubset;
-import com.powsybl.ampl.executor.AmplOutputFile;
 import com.powsybl.commons.util.StringToIntMapper;
+import com.powsybl.openreac.parameters.IncompatibleModelError;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -25,7 +24,7 @@ import java.util.regex.Pattern;
 /**
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
-public class IndicatorOutput implements AmplOutputFile {
+public class IndicatorOutput extends AbstractNoThrowOutput {
     private static final String NULL_INDICATOR = "NULL_INDICATOR";
     private static final String INDICATOR_FILE_NAME = "reactiveopf_results_indic.txt";
     private static final Pattern STRING_MAYBE_IN_QUOTES = Pattern.compile("([^']\\S*|'.+?')\\s*");
@@ -41,16 +40,25 @@ public class IndicatorOutput implements AmplOutputFile {
     }
 
     @Override
-    public void read(Path path, StringToIntMapper<AmplSubset> stringToIntMapper) throws IOException {
-        List<String> indicatorsLines = Files.readAllLines(path, StandardCharsets.UTF_8);
+    public void read(Path path, StringToIntMapper<AmplSubset> stringToIntMapper) {
+        List<String> indicatorsLines = null;
+        try {
+            indicatorsLines = Files.readAllLines(path, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            // File reading went wrong, this can happen when the ampl crashed, or didn't converge. We must not throw to the user.
+            triggerErrorState();
+            return;
+        }
         for (String line : indicatorsLines) {
             List<String> lineTokens = parseStringOptionalQuotes(line);
-            if (lineTokens.size() > 2) {
-                throw new AmplException(
-                        "Error reading indicators : Expected 2 or less tokens on a line, got " + lineTokens.size());
-            } else if (lineTokens.size() == 1) {
+            int nbTokens = lineTokens.size();
+            if (nbTokens > 2) {
+                triggerErrorState();
+                throw new IncompatibleModelError(
+                        "Error reading " + getFileName() + ", wrong number of columns. Expected 2 or less, found:" + nbTokens);
+            } else if (nbTokens == 1) {
                 readLine(lineTokens.get(0), NULL_INDICATOR);
-            } else if (lineTokens.size() == 2) {
+            } else if (nbTokens == 2) {
                 readLine(lineTokens.get(0), lineTokens.get(1));
             }
         }

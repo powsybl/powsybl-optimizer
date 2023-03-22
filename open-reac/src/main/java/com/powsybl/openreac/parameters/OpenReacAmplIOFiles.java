@@ -63,4 +63,12 @@ public class OpenReacAmplIOFiles implements AmplParameters {
     public Collection<AmplOutputFile> getOutputParameters() {
         return List.of(reactiveSlackOutput, indicators);
     }
+
+    /**
+     * Will check that every output file parsing went well.
+     * @return <code>true</code> if ALL ouput file parsing didn't throw any IOExceptions
+     */
+    public boolean checkErrors() {
+        return reactiveInvestmentOutput.isErrorState() || indicators.isErrorState();
+    }
 }

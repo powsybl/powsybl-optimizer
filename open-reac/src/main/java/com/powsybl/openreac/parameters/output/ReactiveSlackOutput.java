@@ -9,14 +9,12 @@ package com.powsybl.openreac.parameters.output;
 import com.powsybl.ampl.converter.AmplConstants;
 import com.powsybl.ampl.converter.AmplException;
 import com.powsybl.ampl.converter.AmplSubset;
-import com.powsybl.ampl.executor.AmplOutputFile;
-import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.util.StringToIntMapper;
+import com.powsybl.openreac.parameters.IncompatibleModelError;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
@@ -25,7 +23,7 @@ import java.util.List;
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  * Reactive slacks in load convention.
  */
-public class ReactiveSlackOutput implements AmplOutputFile {
+public class ReactiveSlackOutput extends AbstractNoThrowOutput {
 
     public static class ReactiveSlack {
         public final String busId;
@@ -60,6 +58,8 @@ public class ReactiveSlackOutput implements AmplOutputFile {
         try {
             investmentsLines = Files.readAllLines(path, StandardCharsets.UTF_8);
         } catch (IOException e) {
+            // File reading went wrong, this can happen when the ampl crashed, or didn't converge. We must not throw to the user.
+            triggerErrorState();
             return;
         }
         String headers = investmentsLines.get(0);
@@ -67,7 +67,8 @@ public class ReactiveSlackOutput implements AmplOutputFile {
         String sep = ";";
         int readCols = headers.split(sep).length;
         if (readCols != expectedCols) {
-            throw new PowsyblException(
+            triggerErrorState();
+            throw new IncompatibleModelError(
                     "Error reading " + getFileName() + ", wrong number of columns. Expected: " + expectedCols + ", found:" + readCols);
         } else {
             for (String line : investmentsLines.subList(1, investmentsLines.size())) {
@@ -99,5 +100,17 @@ public class ReactiveSlackOutput implements AmplOutputFile {
      */
     private String readString(String str) {
         return str.substring(1, str.length() - 1);
+    }
+
+    public static class ReactiveInvestment {
+        public final String busId;
+        public final String substationId;
+        public final double slack;
+
+        public ReactiveInvestment(String busId, String substationId, double slack) {
+            this.busId = busId;
+            this.substationId = substationId;
+            this.slack = slack;
+        }
     }
 }

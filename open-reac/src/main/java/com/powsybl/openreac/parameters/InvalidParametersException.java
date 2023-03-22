@@ -1,6 +1,8 @@
 package com.powsybl.openreac.parameters;
 
-public class InvalidParametersException extends RuntimeException{
+import com.powsybl.commons.PowsyblException;
+
+public class InvalidParametersException extends PowsyblException {
     public InvalidParametersException(String message){
         super(message);
     }

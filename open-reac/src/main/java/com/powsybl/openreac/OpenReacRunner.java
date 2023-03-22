@@ -31,9 +31,15 @@ public final class OpenReacRunner {
         parameters.checkIntegrity(network);
         OpenReacAmplIOFiles amplIoInterface = new OpenReacAmplIOFiles(parameters);
         before(network, parameters);
-        AmplResults run = AmplModelRunner.run(network, variant, reactiveOpf, manager, amplIoInterface);
+        AmplResults run = null;
+        try {
+            run = AmplModelRunner.run(network, variant, reactiveOpf, manager, amplIoInterface);
+        }catch (Exception e){
+            // Ampl run crashed
+            run = new AmplResults(false);
+        }
         after(network, parameters);
-        return new OpenReacResult(run.isSuccess() ? OpenReacResult.OpenReacStatus.OK : OpenReacResult.OpenReacStatus.NOT_OK,
+        return new OpenReacResult(run.isSuccess() && amplIoInterface.checkErrors() ? OpenReacResult.OpenReacStatus.OK : OpenReacResult.OpenReacStatus.NOT_OK,
                 amplIoInterface.getReactiveInvestments(), amplIoInterface.getIndicators());
     }
 
