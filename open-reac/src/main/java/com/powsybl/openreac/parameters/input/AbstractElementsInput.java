@@ -21,7 +21,6 @@ import java.util.List;
 public abstract class AbstractElementsInput implements AmplInputFile {
     private final List<String> elementIds;
 
-
     public AbstractElementsInput(List<String> elementIds) {
         this.elementIds = elementIds;
     }

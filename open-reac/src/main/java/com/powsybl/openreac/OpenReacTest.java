@@ -22,25 +22,20 @@ public final class OpenReacTest {
     public static void main(String[] args) throws Exception {
 
         Network network = IeeeCdfNetworkFactory.create14Solved();
-        // Setup parameters
-        OpenReacParameters parameters = new OpenReacParameters();
 
+        OpenReacParameters parameters = new OpenReacParameters();
         parameters.addVariableTwoWindingsTransformers("T4-7-1");
         parameters.addTargetQGenerators("B1-G");
 //        parameters.addVariableShuntCompensators("shunt_id"); // No shunt in IEEE14
 
-        OpenReacResult openReacResult = OpenReacRunner.run(network,
-                network.getVariantManager().getWorkingVariantId(), parameters);
+        OpenReacResult openReacResult = OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), parameters);
 
-        // Exploiting OpenReac output
         System.out.println(openReacResult.getStatus());
         for (ReactiveSlackOutput.ReactiveSlack investment : openReacResult.getReactiveSlacks()) {
-            System.out.println(
-                    "investment : " + investment.busId + " " + investment.substationId + " " + investment.slack);
+            System.out.println("investment : " + investment.busId + " " + investment.substationId + " " + investment.slack);
         }
         for (Map.Entry<String, String> entry : openReacResult.getIndicators().entrySet()) {
             System.out.println(entry.getKey() + ": " + entry.getValue());
-
         }
     }
 

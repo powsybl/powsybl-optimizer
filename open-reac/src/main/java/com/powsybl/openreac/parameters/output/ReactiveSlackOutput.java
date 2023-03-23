@@ -68,8 +68,7 @@ public class ReactiveSlackOutput extends AbstractNoThrowOutput {
         int readCols = headers.split(sep).length;
         if (readCols != expectedCols) {
             triggerErrorState();
-            throw new IncompatibleModelError(
-                    "Error reading " + getFileName() + ", wrong number of columns. Expected: " + expectedCols + ", found:" + readCols);
+            throw new IncompatibleModelError("Error reading " + getFileName() + ", wrong number of columns. Expected: " + expectedCols + ", found:" + readCols);
         } else {
             for (String line : investmentsLines.subList(1, investmentsLines.size())) {
                 readLine(line.split(sep));
@@ -100,17 +99,5 @@ public class ReactiveSlackOutput extends AbstractNoThrowOutput {
      */
     private String readString(String str) {
         return str.substring(1, str.length() - 1);
-    }
-
-    public static class ReactiveInvestment {
-        public final String busId;
-        public final String substationId;
-        public final double slack;
-
-        public ReactiveInvestment(String busId, String substationId, double slack) {
-            this.busId = busId;
-            this.substationId = substationId;
-            this.slack = slack;
-        }
     }
 }

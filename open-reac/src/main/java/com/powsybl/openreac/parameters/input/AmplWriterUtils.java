@@ -15,5 +15,6 @@ public final class AmplWriterUtils {
     public static String addQuotes(String str) {
         return QUOTE + str + QUOTE;
     }
-    private AmplWriterUtils(){}
+
+    private AmplWriterUtils() { }
 }

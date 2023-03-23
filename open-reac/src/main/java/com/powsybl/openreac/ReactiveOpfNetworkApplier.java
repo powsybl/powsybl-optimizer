@@ -22,26 +22,25 @@ public class ReactiveOpfNetworkApplier extends DefaultAmplNetworkUpdater {
 
     @Override
     public void updateNetworkShunt(ShuntCompensator sc, int busNum, double q, double b, int sections) {
-        sc.setSectionCount(findSectionCount(sc, b));
+        findSectionCount(sc, b);
     }
 
     /**
      * As b is continuous in output files, we have to find the shunt closest section that matches with b.
      */
-    private int findSectionCount(ShuntCompensator sc, double b) {
-        int nbSection = 0;
-        if (b <= 0) {
-            return 0;
+    private void findSectionCount(ShuntCompensator sc, double b) {
+        double minDistance = Math.abs(b - sc.getB());
+        double distance;
+        int sectionCount = -1;
+        for (int i = 0; i <= sc.getMaximumSectionCount(); i++) {
+            distance = Math.abs(b - sc.getB(i));
+            if (distance < minDistance) {
+                minDistance = distance;
+                sectionCount = i;
+            }
         }
-        while (nbSection <= sc.getMaximumSectionCount() && sc.getB(nbSection) < b) {
-            ++nbSection;
-        }
-        if (nbSection == sc.getMaximumSectionCount()) {
-            return sc.getMaximumSectionCount();
-        } else if (Math.abs(sc.getB(nbSection) - b) < Math.abs(sc.getB(nbSection - 1) - b)) {
-            return nbSection;
-        } else {
-            return nbSection - 1;
+        if (sectionCount != -1) {
+            sc.setSectionCount(sectionCount);
         }
     }
 }

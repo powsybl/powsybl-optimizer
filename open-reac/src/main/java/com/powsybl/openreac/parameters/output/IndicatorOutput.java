@@ -54,8 +54,7 @@ public class IndicatorOutput extends AbstractNoThrowOutput {
             int nbTokens = lineTokens.size();
             if (nbTokens > 2) {
                 triggerErrorState();
-                throw new IncompatibleModelError(
-                        "Error reading " + getFileName() + ", wrong number of columns. Expected 2 or less, found:" + nbTokens);
+                throw new IncompatibleModelError("Error reading " + getFileName() + ", wrong number of columns. Expected 2 or less, found:" + nbTokens);
             } else if (nbTokens == 1) {
                 readLine(lineTokens.get(0), NULL_INDICATOR);
             } else if (nbTokens == 2) {

@@ -9,8 +9,9 @@ package com.powsybl.openreac.parameters.output;
 /**
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
-public abstract class AbstractNoThrowOutput implements NoThrowAmplOutput{
+public abstract class AbstractNoThrowOutput implements NoThrowAmplOutput {
     private boolean errorState;
+
     @Override
     public boolean isErrorState() {
         return errorState;
@@ -19,5 +20,4 @@ public abstract class AbstractNoThrowOutput implements NoThrowAmplOutput{
     protected void triggerErrorState() {
         errorState = true;
     }
-
 }

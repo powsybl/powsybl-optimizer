@@ -139,18 +139,18 @@ public class OpenReacParameters extends AbstractExtendable<OpenReacParameters> {
      * @throws InvalidParametersException
      */
     public void checkIntegrity(Network network) throws InvalidParametersException {
-        for(String shuntId : getVariableShuntCompensators()){
-            if(network.getShuntCompensator(shuntId) == null){
+        for (String shuntId : getVariableShuntCompensators()) {
+            if (network.getShuntCompensator(shuntId) == null) {
                 throw new InvalidParametersException(shuntId + " is not a valid Shunt ID in the network: " + network.getNameOrId());
             }
         }
-        for(String genId : getTargetQGenerators()){
-            if(network.getGenerator(genId) == null){
+        for (String genId : getTargetQGenerators()) {
+            if (network.getGenerator(genId) == null) {
                 throw new InvalidParametersException(genId + " is not a valid generator ID in the network: " + network.getNameOrId());
             }
         }
-        for(String transformerId : getVariableTwoWindingsTransformers()){
-            if(network.getTwoWindingsTransformer(transformerId) == null){
+        for (String transformerId : getVariableTwoWindingsTransformers()) {
+            if (network.getTwoWindingsTransformer(transformerId) == null) {
                 throw new InvalidParametersException(transformerId + " is not a valid transformer ID in the network: " + network.getNameOrId());
             }
         }

@@ -12,8 +12,7 @@ package com.powsybl.openreac.parameters;
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
 public class IncompatibleModelError extends Error {
-    public IncompatibleModelError(String message){
+    public IncompatibleModelError(String message) {
         super("Error of compatibility between the ampl model and the interface, this is a OpenReac issue.\n" + message);
     }
-
 }

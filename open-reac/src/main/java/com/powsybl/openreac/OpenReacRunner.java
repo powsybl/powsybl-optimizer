@@ -34,7 +34,7 @@ public final class OpenReacRunner {
         AmplResults run;
         try {
             run = AmplModelRunner.run(network, variant, reactiveOpf, manager, amplIoInterface);
-        }catch (Exception e){
+        } catch (Exception e) {
             // Ampl run crashed
             run = new AmplResults(false);
         }

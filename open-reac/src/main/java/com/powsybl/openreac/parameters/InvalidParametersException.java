@@ -12,7 +12,7 @@ import com.powsybl.commons.PowsyblException;
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
 public class InvalidParametersException extends PowsyblException {
-    public InvalidParametersException(String message){
+    public InvalidParametersException(String message) {
         super(message);
     }
 }
