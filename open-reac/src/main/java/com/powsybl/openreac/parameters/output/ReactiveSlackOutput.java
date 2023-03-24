@@ -55,23 +55,26 @@ public class ReactiveSlackOutput extends AbstractNoThrowOutput {
     @Override
     public void read(Path path, StringToIntMapper<AmplSubset> amplMapper) {
         List<String> investmentsLines;
-        try {
-            investmentsLines = Files.readAllLines(path, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            // File reading went wrong, this can happen when the ampl crashed, or didn't converge. We must not throw to the user.
-            triggerErrorState();
-            return;
-        }
-        String headers = investmentsLines.get(0);
-        int expectedCols = 6;
-        String sep = ";";
-        int readCols = headers.split(sep).length;
-        if (readCols != expectedCols) {
-            triggerErrorState();
-            throw new IncompatibleModelError("Error reading " + getFileName() + ", wrong number of columns. Expected: " + expectedCols + ", found:" + readCols);
-        } else {
-            for (String line : investmentsLines.subList(1, investmentsLines.size())) {
-                readLine(line.split(sep));
+        // if the file is missing, we know there is no reactive slack.
+        if(Files.isRegularFile(path)){
+            try {
+                investmentsLines = Files.readAllLines(path, StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                // File reading went wrong, this can happen when the ampl crashed, or didn't converge. We must not throw to the user.
+                triggerErrorState();
+                return;
+            }
+            String headers = investmentsLines.get(0);
+            int expectedCols = 6;
+            String sep = ";";
+            int readCols = headers.split(sep).length;
+            if (readCols != expectedCols) {
+                triggerErrorState();
+                throw new IncompatibleModelError("Error reading " + getFileName() + ", wrong number of columns. Expected: " + expectedCols + ", found:" + readCols);
+            } else {
+                for (String line : investmentsLines.subList(1, investmentsLines.size())) {
+                    readLine(line.split(sep));
+                }
             }
         }
     }
