@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# Copyright (c) 2022, RTE (http://www.rte-france.com)
+# Copyright (c) 2022,2023 RTE (http://www.rte-france.com), Coreso and TSCNet Services 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -12,6 +12,7 @@
 # Author : Jean Maeght 2022 2023
 # Author : Pierre Arvy 2023
 ###############################################################################
+
 
 ###############################################################################
 #                                 Crash indicator                             #
@@ -274,6 +275,8 @@ if ( tempo == 0 ) then
 printf "\n*** Connexity computation\n";
 let PROBLEM_CCOMP := {1};
 let PROBLEM_ACDA := { };
+let PROBLEM_DA_REFINED := { };
+
 option presolve 0;
 let tempstr := ctime();
 printf "# CCcomp solve: start (%s)\n\n",tempstr;
@@ -482,13 +485,19 @@ if tempo > 0.5 then {
 
 ###############################################################################
 #                                                                             #
-#                   Optimisation AC Divergence Analysis                       #
+#                   Optimisation Divergence Analysis                          #
 #                                                                             #
 ###############################################################################
 
+# target Voltages
+for {(g,n) in UNITCC_PV}
+{
+  let targetV_busPV[n] := unit_Vc[1,g,n];
+}
+
 let PROBLEM_CCOMP := { };
 let PROBLEM_ACDA := {1}; # Now we solve AC Divergence Analysis
-
+let PROBLEM_DA_REFINED := { };
 #
 # Initial values of variables with results of OLF
 #
@@ -500,12 +509,6 @@ let {n in BUSCC} teta[n] := bus_angl0_corrected[n];
 let {n in BUSCC} V[n] := bus_V0_corrected[n];
 display V;
 
-# target Voltages
-for {(g,n) in UNITCC_PV}
-{
-  let targetV_busPV[n] := unit_Vc[1,g,n];
-}
-
 printf "\n######################################################################\n";
 printf "Check of consistency of all the sets & parameters\n";
 printf "######################################################################\n";
@@ -516,7 +519,7 @@ check;
 #
 
 printf "\n######################################################################\n";
-printf "# ACopf solve: start (%s)\n\n",ctime();
+printf "# DA solve: start (%s)\n\n",ctime();
 let tempstr := ctime();
 
 option knitro_options "opttol=1 opttolabs=1e-1 feastol=1 feastolabs=1e-3 maxit=500";
@@ -568,9 +571,8 @@ else {
   let final_status := "OK";
 }
 
-printf "\n# ACopf solve: end   (%s -> %s)\n",tempstr,ctime();
+printf "\n# DA solve: end   (%s -> %s)\n",tempstr,ctime();
 printf "######################################################################\n\n";
-
 
 printf "######################################################################\n";
 printf "#                      Displays after solving                        #\n";
@@ -597,20 +599,25 @@ for {(qq,m,n) in BRANCHCC: (teta[m]-teta[n])>temp1*0.99 or (teta[m]-teta[n])<tem
   printf"\n";
   }
 
+display teta;
+display V;
+display z2;
+display z3;
+display z4;
 
 # Write voltage information in debug file
-printf "#bus_id;Vnom;V;Vlb;Vub;Vmin_mod;Vmax_mod;Vmin_OK;Vmax_OK;Vmin_ori;Vmax_ori;\n" > debug_bus.csv;
-for {n in BUSCC} printf "%Q;%i;%.4f;%.4f;%.4f;%.4f;%.4f;%s;%s;%.4f;%.4f;\n",
-  bus_id[1,n],substation_Vnomi[1,bus_substation[1,n]],
-  V[n],V[n].lb,V[n].ub,
-  voltage_lower_bound[1,bus_substation[1,n]],
-  voltage_upper_bound[1,bus_substation[1,n]],
-  if V[n]<voltage_lower_bound[1,bus_substation[1,n]] then "NOK" else "OK",
-  if V[n]>voltage_upper_bound[1,bus_substation[1,n]] then "NOK" else "OK",
-  substation_Vmin[1,bus_substation[1,n]],substation_Vmax[1,bus_substation[1,n]]
-  > debug_bus.csv;
-  ;
-close debug_bus.csv;
+# printf "#bus_id;Vnom;V;Vlb;Vub;Vmin_mod;Vmax_mod;Vmin_OK;Vmax_OK;Vmin_ori;Vmax_ori;\n" > debug_bus.csv;
+# for {n in BUSCC} printf "%Q;%i;%.4f;%.4f;%.4f;%.4f;%.4f;%s;%s;%.4f;%.4f;\n",
+#   bus_id[1,n],substation_Vnomi[1,bus_substation[1,n]],
+#   V[n],V[n].lb,V[n].ub,
+#   voltage_lower_bound[1,bus_substation[1,n]],
+#   voltage_upper_bound[1,bus_substation[1,n]],
+#   if V[n]<voltage_lower_bound[1,bus_substation[1,n]] then "NOK" else "OK",
+#   if V[n]>voltage_upper_bound[1,bus_substation[1,n]] then "NOK" else "OK",
+#   substation_Vmin[1,bus_substation[1,n]],substation_Vmax[1,bus_substation[1,n]]
+#   > debug_bus.csv;
+#   ;
+# close debug_bus.csv;
 
 
 
@@ -618,18 +625,90 @@ close debug_bus.csv;
 #                       Writing results and indicators                        #
 ###############################################################################
 
-include divergenceanalysoroutput.run;
+# include divergenceanalysoroutput.run;
+
+##################################################################################
+##################################################################################
+##################################################################################
+###                                                                            ###
+###                 Optimisation Divergence Analysis Refined                   ###
+###                                                                            ###
+##################################################################################
+##################################################################################
+##################################################################################
+
+printf "\n Compute main_penal_index and new targetV for PV-bus";
+
+# Target voltages after first optimization problem. We want them to be close to the ones found
+for {(g,n) in UNITCC_PV}{ let targetV_busPV_corrected[n] := V[n];}
+
+# Compute index of the highest value of penalization
+let main_penal_bus := setof{n in BUSCC_PQ : z4[n] >= (max {m in BUSCC_PQ} z4[m])} n;
+#let main_penal_value_z4 := 0;
+#for {n in BUSCC_PQ}
+#{
+#  if abs(z4[n]) > main_penal_value_z4 then{
+#    let main_penal_index_z4 := n;
+#    let main_penal_value_z4 := abs(z4[n]);
+#  }
+#}
+display main_penal_bus;
+
+for {n in BUSCC}
+{
+  let V_dar_0[n] := V[n];
+  let teta_dar_0[n] := teta[n];
+}
+
+let PROBLEM_CCOMP := { };
+let PROBLEM_ACDA := { };
+let PROBLEM_DA_REFINED := {1}; # Now we solve Divergence Analysis with refined constraints
+
+let {n in BUSCC} teta_dar[n] := teta_dar_0[n];
+let {n in BUSCC} V_dar[n] := V_dar_0[n];
+
+#
+# Solve
+#
+
+printf "\n######################################################################\n";
+printf "# Divergence Analysis Refined solving : start (%s)\n\n",ctime();
+let tempstr := ctime();
+
+option knitro_options "opttol=1 opttolabs=1e-1 feastol=1 feastolabs=1e-3 maxit=500";
+
+solve problem_divergence_analysis_refined;
+
+let nb_iter_last := problem_divergence_analysis_refined.numiters;
+let nb_iter_total := nb_iter_total + nb_iter_last; 
+
+if solve_result_num > solve_result_num_limit then 
+for {n in BUS2}
+{
+  solve problem_divergence_analysis_refined;
+  let nb_iter_last := problem_divergence_analysis_refined.numiters;
+  let nb_iter_total := nb_iter_total + nb_iter_last; 
+  if solve_result_num <= solve_result_num_limit then break; 
+}
+printf "\n# Divergence Analysis Refined solving : end   (%s -> %s)\n",tempstr,ctime();
+printf "######################################################################\n\n";
+
+display V, V_dar;
+display teta, teta_dar;
+display y;
+
+#display branch_Ror;
+#display branch_admi;
+#display branch_dephor;
+#display branch_angper;
+#display branch_Bor;
+#display branch_Bex;
+display main_penal_bus;
+
 
 ###############################################################################
 #                                End of file                                  #
 ###############################################################################
-
-display teta;
-display bus_V0;
-display V;
-display z2;
-display z3;
-display z4;
 
 printf "\n";
 printf "*** End of file divergenceanalysor.run : Optimization %ssuccessfull\n",if output_results>0 then "" else "un";

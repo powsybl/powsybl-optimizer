@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# Copyright (c) 2022, RTE (http://www.rte-france.com)
+# Copyright (c) 2022,2023 RTE (http://www.rte-france.com), Coreso and TSCNet Services 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -12,6 +12,7 @@
 # Author : Jean Maeght 2022 2023
 # Author : Pierre Arvy 2023
 ###############################################################################
+
 
 ###############################################################################
 #               Substations (ampl_network_substations.txt)                    #
@@ -589,6 +590,7 @@ param branch_dephex {(qq,m,n) in BRANCHCC} = 0; # In IIDM, everything is in bus1
 # Constraints are to be defined with
 set PROBLEM_CCOMP default {1};
 set PROBLEM_ACDA default { };
+set PROBLEM_DA_REFINED default { };
 
 ###############################################################################
 #                                                                             #
@@ -631,7 +633,6 @@ subject to ctr_null_phase_bus{PROBLEM_ACDA}: teta[null_phase_bus] = 0; # Phase o
 #
 var V{n in BUSCC}; 
 subject to ctr_voltage_PV_buses{PROBLEM_ACDA,k in BUSCC_PV}: V[k] - targetV_busPV[k]  + z2[k] = 0;
-
 
 #
 # Active and reactive powers
@@ -731,14 +732,187 @@ minimize problem_divergence_analysis:
   + beta_take_into_account_slackness_angles * sum{n in BUSCC} (teta[n] - bus_angl0_corrected[n]) ** 2 #~2pi
   ;
 
-###############################################################################
-#                                                                             #
-#       Variables and contraints for small divergence analysis                #
-#    We use the complexe notation of voltage : V*exp(i*teta). (with i**2=-1)  #
-#                                                                             #
-###############################################################################
+##################################################################################
+##################################################################################
+##################################################################################
+###                                                                            ###
+###       Variables and contraints for refined divergence analysis             ###
+###    The objective is now to find with precision what the problem is         ###
+###                                                                            ###
+##################################################################################
+##################################################################################
+##################################################################################
 
-# Only variables for constraints (3) and (4) because z_2 is clear on the problem 
-var z3_issue_finder{1..5}; # Penal for elements of active balance
-var z4_issue_finder{1..5}; # Penal for elements of reactive balance 
+param targetV_busPV_corrected{n in BUSCC_PV}; # defined in divergenceanalysor.run
+set main_penal_bus dimen 1 default {}; # defined in divergenceanalysor.run
 
+param V_dar_0{n in BUSCC};
+param teta_dar_0{n in BUSCC};
+
+# Penalization refined for constraints (3) and (4) 
+var y{1..4};
+subject to ctr_y1_min{PROBLEM_DA_REFINED}: y[1] >= (min {(qq,m,n) in BRANCHCC} branch_Ror[qq,m,n]);
+subject to ctr_y1_max{PROBLEM_DA_REFINED}: y[1] <= (max {(qq,m,n) in BRANCHCC} branch_Ror[qq,m,n]);
+subject to ctr_y2_min{PROBLEM_DA_REFINED}: y[2] >= (min {(qq,m,n) in BRANCHCC} branch_admi[qq,m,n]);
+subject to ctr_y2_max{PROBLEM_DA_REFINED}: y[2] <= (max {(qq,m,n) in BRANCHCC} branch_admi[qq,m,n]);
+subject to ctr_y3_min{PROBLEM_DA_REFINED}: y[3] >= (min {(qq,m,n) in BRANCHCC} branch_dephor[qq,m,n]);
+subject to ctr_y3_max{PROBLEM_DA_REFINED}: y[3] <= (max {(qq,m,n) in BRANCHCC} branch_dephor[qq,m,n]);
+subject to ctr_y4_min{PROBLEM_DA_REFINED}: y[4] >= (min {(qq,m,n) in BRANCHCC} branch_angper[qq,m,n]);
+subject to ctr_y4_max{PROBLEM_DA_REFINED}: y[4] <= (max {(qq,m,n) in BRANCHCC} branch_angper[qq,m,n]);
+
+
+
+# New variables, but we don't want them to move away from the one found by previous optimization problem
+var teta_dar{BUSCC};
+var V_dar{n in BUSCC}; 
+var svc_b_var_dar{(svc,n) in SVCCC} >= svc_bmin[1,svc,n], <= svc_bmax[1,svc,n];
+
+# Same constraints than previous problem, but this time target V = final V of previous opti problem.
+subject to ctr_null_phase_bus_dar{PROBLEM_DA_REFINED}: teta_dar[null_phase_bus] = 0;
+subject to ctr_voltage_PV_buses_dar{PROBLEM_DA_REFINED,k in BUSCC_PV}: V_dar[k] - targetV_busPV_corrected[k] = 0;
+
+#subject to ctr_null_phase_bus_dar_t{PROBLEM_DA_REFINED, k in BUSCC}: teta_dar[k] = teta_dar_0[k];
+subject to ctr_voltage_PV_buses_dar_t{PROBLEM_DA_REFINED,k in BUSCC}: V_dar[k] = V_dar_0[k];
+
+#
+# Flows in one direction, then the inverse
+#
+# Puissance active avec variable que j'ai déjà écrit. Remplacé par z3 plus tard.
+#(branch_Ror[qq,m,n] + z4_dar[1]) * V_dar[n] * (branch_admi[qq,m,n] + z4_dar[2]) 
+#  * sin(teta_dar[m]-teta_dar[n]+(branch_dephor[qq,m,n] + z4_dar[3])-(branch_angper[qq,m,n] + z4_dar[4]))
+#  + (branch_Ror[qq,m,n] + z4_dar[1])**2 * V_dar[m]
+#  * ((branch_admi[qq,m,n] + z4_dar[2]) * sin((branch_angper[qq,m,n] + z4_dar[4]))+(branch_Gor[1,qq,m,n] + z4_dar[5]))
+
+
+# TODO : Check the validity of the following equations.
+var Red_Tran_Act_Dir_dar{(qq,m,n) in BRANCHCC} =
+  if (m in main_penal_bus) then
+  (branch_Ror[qq,m,n]+y[1]) * V_dar[n] * (branch_admi[qq,m,n]+y[2]) * sin(teta_dar[m]-teta_dar[n]+(branch_dephor[qq,m,n]+y[3])-(branch_angper[qq,m,n]+y[4]))
+  + (branch_Ror[qq,m,n]+y[1])**2 * V_dar[m] * ((branch_admi[qq,m,n]+y[2])*sin(branch_angper[qq,m,n]+y[4])+branch_Gor[1,qq,m,n])
+  else 
+  branch_Ror[qq,m,n] * V_dar[n] * branch_admi[qq,m,n] * sin(teta_dar[m]-teta_dar[n]+branch_dephor[qq,m,n]-branch_angper[qq,m,n])
+  + branch_Ror[qq,m,n]**2 * V_dar[m] * (branch_admi[qq,m,n]*sin(branch_angper[qq,m,n])+branch_Gor[1,qq,m,n]);
+
+var Red_Tran_Rea_Dir_dar{(qq,m,n) in BRANCHCC} = 
+  if (m in main_penal_bus) then
+  - (branch_Ror[qq,m,n]+y[1]) * V_dar[n] * (branch_admi[qq,m,n]+y[2]) * cos(teta_dar[m]-teta_dar[n]+(branch_dephor[qq,m,n]+y[3])-(branch_angper[qq,m,n]+y[4]))
+  + (branch_Ror[qq,m,n]+y[1])**2 * V_dar[m] * ((branch_admi[qq,m,n]+y[2])*cos(branch_angper[qq,m,n]+y[4])-branch_Bor[1,qq,m,n])
+  else
+  - branch_Ror[qq,m,n] * V_dar[n] * branch_admi[qq,m,n] * cos(teta_dar[m]-teta_dar[n]+branch_dephor[qq,m,n]-branch_angper[qq,m,n])
+  + branch_Ror[qq,m,n]^2 * V_dar[m] * (branch_admi[qq,m,n]*cos(branch_angper[qq,m,n])-branch_Bor[1,qq,m,n]);
+
+var Red_Tran_Act_Inv_dar{(qq,m,n) in BRANCHCC} = 
+  if (m in main_penal_bus) then
+  (branch_Ror[qq,m,n]+y[1]) * V_dar[m] * (branch_admi[qq,m,n]+y[2]) * sin(teta_dar[n]-teta_dar[m]-(branch_dephor[qq,m,n]+y[3])-(branch_angper[qq,m,n]+y[4]))
+  + V_dar[n] * ((branch_admi[qq,m,n]+y[2])*sin(branch_angper[qq,m,n]+y[4])+branch_Gex[1,qq,m,n])
+  else
+  branch_Ror[qq,m,n] * V_dar[m] * branch_admi[qq,m,n] * sin(teta_dar[n]-teta_dar[m]-branch_dephor[qq,m,n]-branch_angper[qq,m,n])
+  + V_dar[n] * (branch_admi[qq,m,n]*sin(branch_angper[qq,m,n])+branch_Gex[1,qq,m,n]);
+
+var Red_Tran_Rea_Inv_dar{(qq,m,n) in BRANCHCC} =
+  if (m in main_penal_bus) then
+  - (branch_Ror[qq,m,n]+y[1]) * V_dar[m] * (branch_admi[qq,m,n]+y[2]) * cos(teta_dar[n]-teta_dar[m]-(branch_dephor[qq,m,n]+y[3])-(branch_angper[qq,m,n]+y[4]))
+  + V_dar[n] * ((branch_admi[qq,m,n]+y[2])*cos(branch_angper[qq,m,n]+y[4])-(branch_Bex[1,qq,m,n]))
+  else
+  - branch_Ror[qq,m,n] * V_dar[m] * branch_admi[qq,m,n] * cos(teta_dar[n]-teta_dar[m]-branch_dephor[qq,m,n]-branch_angper[qq,m,n])
+  + V_dar[n] * (branch_admi[qq,m,n]*cos(branch_angper[qq,m,n])-branch_Bex[1,qq,m,n])
+  ;
+
+#var Red_Tran_Act_Dir_dar{(qq,m,n) in BRANCHCC} =
+#  if (m in main_penal_bus) then
+#  (branch_Ror[qq,m,n]+y[1]) * V_dar[n] * (branch_admi[qq,m,n]) * sin(teta_dar[m]-teta_dar[n]+(branch_dephor[qq,m,n])-(branch_angper[qq,m,n]))
+#  + (branch_Ror[qq,m,n]+y[1])**2 * V_dar[m] * ((branch_admi[qq,m,n])*sin(branch_angper[qq,m,n])+branch_Gor[1,qq,m,n])
+#  else 
+#  branch_Ror[qq,m,n] * V_dar[n] * branch_admi[qq,m,n] * sin(teta_dar[m]-teta_dar[n]+branch_dephor[qq,m,n]-branch_angper[qq,m,n])
+#  + branch_Ror[qq,m,n]**2 * V_dar[m] * (branch_admi[qq,m,n]*sin(branch_angper[qq,m,n])+branch_Gor[1,qq,m,n]);
+#
+#var Red_Tran_Rea_Dir_dar{(qq,m,n) in BRANCHCC} = 
+#  if (m in main_penal_bus) then
+#  - (branch_Ror[qq,m,n]+y[1]) * V_dar[n] * (branch_admi[qq,m,n]) * cos(teta_dar[m]-teta_dar[n]+(branch_dephor[qq,m,n])-(branch_angper[qq,m,n]))
+#  + (branch_Ror[qq,m,n]+y[1])**2 * V_dar[m] * ((branch_admi[qq,m,n])*cos(branch_angper[qq,m,n])-branch_Bor[1,qq,m,n])
+#  else
+#  - branch_Ror[qq,m,n] * V_dar[n] * branch_admi[qq,m,n] * cos(teta_dar[m]-teta_dar[n]+branch_dephor[qq,m,n]-branch_angper[qq,m,n])
+#  + branch_Ror[qq,m,n]^2 * V_dar[m] * (branch_admi[qq,m,n]*cos(branch_angper[qq,m,n])-branch_Bor[1,qq,m,n]);
+#
+#var Red_Tran_Act_Inv_dar{(qq,m,n) in BRANCHCC} = 
+#  if (m in main_penal_bus) then
+#  (branch_Ror[qq,m,n]+y[1]) * V_dar[m] * (branch_admi[qq,m,n]) * sin(teta_dar[n]-teta_dar[m]-(branch_dephor[qq,m,n])-(branch_angper[qq,m,n]))
+#  + V_dar[n] * ((branch_admi[qq,m,n])*sin(branch_angper[qq,m,n])+branch_Gex[1,qq,m,n])
+#  else
+#  branch_Ror[qq,m,n] * V_dar[m] * branch_admi[qq,m,n] * sin(teta_dar[n]-teta_dar[m]-branch_dephor[qq,m,n]-branch_angper[qq,m,n])
+#  + V_dar[n] * (branch_admi[qq,m,n]*sin(branch_angper[qq,m,n])+branch_Gex[1,qq,m,n]);
+#
+#var Red_Tran_Rea_Inv_dar{(qq,m,n) in BRANCHCC} =
+#  if (m in main_penal_bus) then
+#  - (branch_Ror[qq,m,n]+y[1]) * V_dar[m] * (branch_admi[qq,m,n]) * cos(teta_dar[n]-teta_dar[m]-(branch_dephor[qq,m,n])-(branch_angper[qq,m,n]))
+#  + V_dar[n] * ((branch_admi[qq,m,n])*cos(branch_angper[qq,m,n])-(branch_Bex[1,qq,m,n]))
+#  else
+#  - branch_Ror[qq,m,n] * V_dar[m] * branch_admi[qq,m,n] * cos(teta_dar[n]-teta_dar[m]-branch_dephor[qq,m,n]-branch_angper[qq,m,n])
+#  + V_dar[n] * (branch_admi[qq,m,n]*cos(branch_angper[qq,m,n])-branch_Bex[1,qq,m,n])
+#  ;  
+
+#
+# Active Balance for all buses except slack bus
+#
+subject to ctr_balance_P_dar{PROBLEM_DA_REFINED,k in BUSCC diff {null_phase_bus}}:
+  # Flows
+    sum{(qq,k,n) in BRANCHCC} base100MVA * V_dar[k] * Red_Tran_Act_Dir_dar[qq,k,n]
+  + sum{(qq,m,k) in BRANCHCC} base100MVA * V_dar[k] * Red_Tran_Act_Inv_dar[qq,m,k]
+
+  # TODO : introduce Pin as a param
+  # Generating units
+  - sum{(g,k) in UNITCC} P[g,k] # Fixed valus
+  # Loads
+  + sum{(c,k) in LOADCC} load_PFix[1,c,k]     # Fixed value
+  # VSC converters
+  + sum{(v,k) in VSCCONVON} vscconv_P0[1,v,k] # Fixed value
+  # LCC converters
+  + sum{(l,k) in LCCCONVON} lccconv_P0[1,l,k] # Fixed value
+  = 0;
+
+#
+# Reactive Balance for PQ buses
+#
+
+subject to ctr_balance_Q_dar{PROBLEM_DA_REFINED,k in BUSCC_PQ}: 
+  # Flows
+    sum{(qq,k,n) in BRANCHCC} base100MVA * V_dar[k] * Red_Tran_Rea_Dir_dar[qq,k,n]
+  + sum{(qq,m,k) in BRANCHCC} base100MVA * V_dar[k] * Red_Tran_Rea_Inv_dar[qq,m,k]
+
+  # Senerating units
+  - sum{(g,k) in UNITCC} Q[g,k]
+  # Load
+  + sum{(c,k) in LOADCC} load_QFix[1,c,k]
+  # Shunts
+  - sum{(shunt,k) in SHUNTCC} base100MVA * shunt_valnom[1,shunt,k] * V_dar[k]^2
+  # SVC
+  #- sum{(svc,k) in SVCON} base100MVA * svc_qvar_dar[svc,k] * V_dar[k]^2
+  - sum{(svc,k) in SVCCC} base100MVA * svc_b_var_dar[svc,k] * V_dar[k]^2
+  # VSC converters
+  - sum{(v,k) in VSCCONVON} vscconv_Q0[1,v,k] # Fixed values
+  # LCC converters
+  + sum{(l,k) in LCCCONVON} lccconv_Q0[1,l,k] # Fixed values
+  = 0;
+
+
+###########################################
+#             Objective function          #
+###########################################
+
+minimize problem_divergence_analysis_refined:
+  0
+
+  # Homogene sum
+  + (log(abs(1 + y[1])))**2
+  + (log(abs(1 + y[2])))**2
+  + (log(abs(1 + y[3])))**2
+  + (log(abs(1 + y[4])))**2
+  #+ (log(1+abs(y[5])))**2
+  #+ (log(1+abs(y[6])))**2
+  #+ sum{i in 1..4} (y[i])**2
+
+  # Slack with initial values of V and teta
+  #+ 1000 * sum{n in BUSCC} (V_dar[n] - V_dar_0[n]) ** 2 #~0.5
+  + 1000 * sum{n in BUSCC} (teta_dar[n] - teta_dar_0[n]) ** 2 #~2pi
+  #+ 1 / (sum{i in 1..4} (y[i])**2)
+;
