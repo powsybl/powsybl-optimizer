@@ -50,7 +50,7 @@ public class IndicatorOutput extends AbstractNoThrowOutput {
             return;
         }
         for (String line : indicatorsLines) {
-            List<String> lineTokens = parseStringOptionalQuotes(line);
+            List<String> lineTokens = List.of(line.split(" ", 2));
             int nbTokens = lineTokens.size();
             if (nbTokens > 2) {
                 triggerErrorState();
