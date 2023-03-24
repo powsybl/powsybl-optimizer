@@ -1,0 +1,186 @@
+###############################################################################
+#
+# Copyright (c) 2022,2023 RTE (http://www.rte-france.com), Coreso and TSCNet Services 
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+###############################################################################
+
+###############################################################################
+# Divergence analysis
+# Author : Jean Maeght 2022 2023
+# Author : Pierre Arvy 2023
+###############################################################################
+
+###############################################################################
+#                                                                             #
+#                        Writing results for Analysis                         #
+#                                                                             #
+###############################################################################
+
+if final_status == "OK" then {
+
+  let fileOut := "analysis.txt";
+  printf "[LOG] Computation of brut force model on iIDM network.\n" > (fileOut);
+  
+  # Info on voltages
+  printf "[INFO] Maximal V computed is %.3f\n",
+      (max {n in BUSCC} V[n]);
+  printf "[INFO] Minimal V computed is %.3f\n",
+      (min {n in BUSCC} V[n]);
+
+  # Info on angles
+  printf "[INFO] Maximal theta computed is %.3f\n",
+      (max {n in BUSCC} teta[n]);
+  printf "[INFO] Minimal theta computed is %.3f\n",
+      (min {n in BUSCC} teta[n]);
+
+  # Info on z2 slack variable
+  # set max_z2_index := {n in BUSCC_PV: abs(z2[n]) == (max {p in BUSCC_PV} abs(z2[p]))}; 
+  # let z2_max_value := (max {p in BUSCC_PV} abs(z2[p]));
+  # param z2_max_value = min {i in S: w[i] = Lmax} i;
+  printf "[INFO] Maximal z2 computed is %.3f\n", (max {p in BUSCC_PV} abs(z2[p]));
+  printf "[INFO] Mean abs value of z2 coordinates : %.3f\n",
+      (sum {p in BUSCC_PV} abs(z2[p])) / card(BUSCC_PV);
+
+  # Info on y1 slack variable
+  printf "\n[INFO] Maximal y1 computed is %.3f, and represent a slack of TODO\%\n",
+      (max {(qq,m,n) in BRANCHCC} abs(y1[qq,m,n]));
+  printf "[INFO] Mean abs value of y1 coordinates : %.3f\n",
+      (sum {(qq,m,n) in BRANCHCC} abs(y1[qq,m,n])) / card(BRANCHCC);
+
+  # Info on y1 slack variable
+  printf "\n[INFO] Maximal y2 computed is %.3f, and represent a slack of TODO\%\n",
+      (max {(qq,m,n) in BRANCHCC} abs(y2[qq,m,n]));
+  printf "[INFO] Mean abs value of y2 coordinates : %.3f\n",
+      (sum {(qq,m,n) in BRANCHCC} abs(y2[qq,m,n])) / card(BRANCHCC);
+
+  # Info on y1 slack variable
+  printf "\n[INFO] Maximal y3 computed is %.3f, and represent a slack of TODO\%\n",
+      (max {(qq,m,n) in BRANCHCC} abs(y3[qq,m,n]));
+  printf "[INFO] Mean abs value of y3 coordinates : %.3f\n",
+      (sum {(qq,m,n) in BRANCHCC} abs(y3[qq,m,n])) / card(BRANCHCC);
+
+  # Info on y1 slack variable
+  printf "\n[INFO] Maximal y4 computed is %.3f, and represent a slack of TODO\%\n",
+      (max {(qq,m,n) in BRANCHCC} abs(y4[qq,m,n]));
+  printf "[INFO] Mean abs value of y4 coordinates : %.3f\n",
+      (sum {(qq,m,n) in BRANCHCC} abs(y4[qq,m,n])) / card(BRANCHCC);
+
+  # Info on y1 slack variable
+  printf "\n[INFO] Maximal y5 computed is %.3f, and represent a slack of TODO\%\n",
+      (max {(qq,m,n) in BRANCHCC} abs(y5[qq,m,n]));
+  printf "[INFO] Mean abs value of y5 coordinates : %.3f\n",
+      (sum {(qq,m,n) in BRANCHCC} abs(y5[qq,m,n])) / card(BRANCHCC);
+
+  # Info on y1 slack variable
+  printf "\n[INFO] Maximal y6 computed is %.3f, and represent a slack of TODO\%\n",
+      (max {(qq,m,n) in BRANCHCC} abs(y6[qq,m,n]));
+  printf "[INFO] Mean abs value of y6 coordinates : %.3f\n",
+      (sum {(qq,m,n) in BRANCHCC} abs(y6[qq,m,n])) / card(BRANCHCC);
+
+  # Info on y1 slack variable
+  printf "\n[INFO] Maximal y7 computed is %.3f, and represent a slack of TODO\%\n",
+      (max {(qq,m,n) in BRANCHCC} abs(y7[qq,m,n]));
+  printf "[INFO] Mean abs value of y7 coordinates : %.3f\n",
+      (sum {(qq,m,n) in BRANCHCC} abs(y7[qq,m,n])) / card(BRANCHCC);
+
+  # Info on y1 slack variable
+  printf "\n[INFO] Maximal y8 computed is %.3f, and represent a slack of TODO\%\n",
+      (max {(qq,m,n) in BRANCHCC} abs(y8[qq,m,n]));
+  printf "[INFO] Mean abs value of y8 coordinates : %.3f\n",
+      (sum {(qq,m,n) in BRANCHCC} abs(y8[qq,m,n])) / card(BRANCHCC);
+  
+  # Shunts which were not connected, and which have been reconnected by reactiveopf, with variable value
+  # printf {(s,n) in SHUNTCC: (1,s,-1) in SHUNT} "%i;%i;%i;%.3f;%.3f;%i;\n",
+  #  1,s,n,shunt_valnom[1,s,n],base100MVA * shunt_valnom[1,s,n] * V[n]^2,
+  #  shunt_sections_count[1,s,-1] 
+  #  > (fileOut);
+  # close (fileOut);
+
+}
+
+###############################################################################
+#                                                                             #
+#                           Writing indicator file                            #
+#                                                                             #
+###############################################################################
+
+let fileOut := "divergenceanalysor_results_indic.txt";
+
+printf "%s %s\n","final_status",final_status > (fileOut);
+
+printf "\n" > (fileOut);
+printf "%s %i\n","last_solve_result_num",solve_result_num > (fileOut);
+printf "%s %i\n","nb_iter_last",nb_iter_last > (fileOut);
+printf "%s %i\n","nb_iter_total",nb_iter_total > (fileOut);
+printf "%s %f\n","_ampl_elapsed_time",_ampl_elapsed_time > (fileOut);
+printf "%s %f\n","_total_solve_time",_total_solve_time > (fileOut);
+printf "%s %i\n","total_time",_total_solve_time+_ampl_elapsed_time > (fileOut);
+
+printf "\n" > (fileOut);
+printf "%s %s\n","operatingSystem",operatingSystem > (fileOut);
+if length($OS) > 0 then {
+  printf "%s %Q\n","OS",$OS > (fileOut); # Windows
+  printf "%s %Q\n","COMPUTERNAME",$COMPUTERNAME > (fileOut);
+}
+if length($SHELL) > 0 then {
+  printf "%s %Q\n","SHELL",$SHELL > (fileOut); # Linux
+  printf "%s %Q\n","HOSTNAME",$HOSTNAME > (fileOut);
+}
+printf "%s %Q\n","directory",_cd > (fileOut);
+
+printf "\n" > (fileOut);
+printf "%s %f\n","Pnull",Pnull > (fileOut);
+printf "%s %f\n","Znull",Znull > (fileOut);
+printf "%s %f\n","epsilon_nominal_voltage",epsilon_nominal_voltage > (fileOut);
+printf "%s %f\n","epsilon_min_voltage",epsilon_min_voltage > (fileOut);
+printf "%s %f\n","ignore_voltage_bounds",ignore_voltage_bounds > (fileOut);
+printf "%s %f\n","PQmax",PQmax > (fileOut);
+printf "%s %f\n","defaultPmax",defaultPmax > (fileOut);
+printf "%s %f\n","defaultPmin",defaultPmin > (fileOut);
+printf "%s %f\n","defaultQmaxPmaxRatio",defaultQmaxPmaxRatio > (fileOut);
+printf "%s %f\n","defaultQmin",defaultQmin > (fileOut);
+printf "%s %f\n","defaultQmax",defaultQmax > (fileOut);
+printf "%s %f\n","minimalQPrange",minimalQPrange > (fileOut);
+
+printf "\n" > (fileOut);
+printf "%s %i\n","nb_substations",card(SUBSTATIONS) > (fileOut);
+printf "%s %i\n","nb_bus_in_data_file",card(BUS) > (fileOut);
+printf "%s %i\n","nb_bus_in_ACDC_CC",card(BUS2) > (fileOut);
+printf "%s %i\n","nb_bus_in_AC_CC",card(BUSCC) > (fileOut);
+printf "%s %i\n","nb_bus_in_ACDC_but_out_AC_CC",card(BUS2 diff BUSCC) > (fileOut);
+printf "%s %i\n","nb_branch_in_data_file",card(BRANCH) > (fileOut);
+printf "%s %i\n","nb_branch_in_AC_CC",card(BRANCHCC) > (fileOut);
+printf "%s %i\n","nb_branch_with_nonsmall_impedance",card(BRANCHCC diff BRANCHZNULL) > (fileOut);
+printf "%s %i\n","nb_branch_with_zero_or_small_impedance",card(BRANCHZNULL) > (fileOut);
+printf "%s %i\n","nb_unit_in_data_file",card(UNIT) > (fileOut);
+printf "%s %i\n","nb_unit_in_AC_CC",card(UNITCC) > (fileOut);
+printf "%s %i\n","nb_load_in_data_file",card(LOAD) > (fileOut);
+printf "%s %i\n","nb_load_in_AC_CC",card(LOADCC) > (fileOut);
+printf "%s %i\n","nb_shunt_in_data_file",card(SHUNT) > (fileOut);
+printf "%s %i\n","nb_shunt_connectable_or_in_AC_CC",card(SHUNTCC) > (fileOut);
+printf "%s %i\n","nb_shunt_with_fixed_value",card(SHUNTCC) > (fileOut);
+printf "%s %i\n","nb_transformers_with_variable_ratio",card(BRANCHCC_REGL) > (fileOut);
+printf "%s %i\n","nb_svc_in_data_file",card(SVC) > (fileOut);
+printf "%s %i\n","nb_svc_in_AC_CC",card(SVCCC) > (fileOut);
+printf "%s %i\n","nb_vsc_converter_in_data_file",card(VSCCONV) > (fileOut);
+printf "%s %i\n","nb_vsc_converter_up_and_running",card(VSCCONVON) > (fileOut);
+printf "%s %i\n","nb_lcc_converter_in_data_file",card(LCCCONV) > (fileOut);
+printf "%s %i\n","nb_lcc_converter_up_and_running",card(LCCCONVON) > (fileOut);
+
+printf "\n" > (fileOut);
+printf "max_teta_ac %.2f\n",max({n in BUSCC} teta[n]) > (fileOut);
+printf "min_teta_ac %.2f\n",min({n in BUSCC} teta[n]) > (fileOut);
+printf "max_delta_teta_ac %2f\n",max({(qq,m,n) in BRANCHCC} (teta[m]-teta[n])) > (fileOut);
+printf "min_delta_teta_ac %2f\n",min({(qq,m,n) in BRANCHCC} (teta[m]-teta[n])) > (fileOut);
+
+# All messages added in messages container
+if card(messagesInfo) > 0 then {
+  let temp1:=1;
+  for { message in messagesInfo } {
+    printf "messageInfo%i %Q\n",temp1,message > (fileOut);
+    let temp1:=temp1+1;
+  }
+}

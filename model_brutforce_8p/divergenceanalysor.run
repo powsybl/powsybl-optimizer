@@ -1,0 +1,650 @@
+###############################################################################
+#
+# Copyright (c) 2022,2023 RTE (http://www.rte-france.com), Coreso and TSCNet Services 
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+###############################################################################
+
+###############################################################################
+# Divergence analysis
+# Author : Jean Maeght 2022 2023
+# Author : Pierre Arvy 2023
+###############################################################################
+
+###############################################################################
+#                                 Crash indicator                             #
+#     If execution of this .run ampl file terminates before writing results,  #
+#           then status CRASH is already written in indicators' file          #
+###############################################################################
+# Close any files which might have been opened previously
+close;
+printf "final_status CRASH\n" > divergenceanalysor_results_indic.txt;
+close;
+
+
+
+###############################################################################
+#                                     Start                                   #
+###############################################################################
+# Clean parameters, variables, constraints and any former models pre-existing
+reset;
+
+# Print date of start of calculation
+param ctime_start symbolic := ctime();
+printf "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
+printf "*** Start of file divergenceanalysor.run : %s\n",ctime_start;
+
+# Global status
+# Possible values : CRASH OK NOK UNKNOWN
+param final_status symbolic default "UNKNOWN";
+
+
+
+###############################################################################
+#                             Linux or windows?                               #
+###############################################################################
+param operatingSystem symbolic default "unknown";
+if length($OS) > 0 then let operatingSystem := "windows";
+if length($SHELL) > 0 then let operatingSystem := "linux";
+
+
+
+###############################################################################
+#                   Management of optional input files                        #
+###############################################################################
+# AMPL is able to manage empty files; in that case, sets and paramaeters anre well
+# initialized to empty sets or tables; so the minimum we need is empty file.
+# Maybe this is not the best way to manage optional parameter files...
+if operatingSystem == "linux" then {
+  shell "if [ ! -f param_algo.txt ];                then touch param_algo.txt ;fi";
+  shell "if [ ! -f param_shunts.txt ];              then touch param_shunts.txt ;fi";
+  shell "if [ ! -f param_generators_reactive.txt ]; then touch param_generators_reactive.txt ;fi";
+  shell "if [ ! -f param_transformers.txt ];        then touch param_transformers.txt ;fi";
+  shell "chmod a+rX . * 2>/dev/null";
+}
+if operatingSystem == "windows" then {
+  shell "if not exist param_algo.txt                echo #empty > param_algo.txt";
+  shell "if not exist param_shunts.txt              echo #empty > param_shunts.txt";
+  shell "if not exist param_generators_reactive.txt echo #empty > param_generators_reactive.txt";
+  shell "if not exist param_transformers.txt        echo #empty > param_transformers.txt";
+}
+# If operating system is not linux nor windows, then these optional files are 
+# not optional anymore: you need to provide at least empty files
+
+
+
+###############################################################################
+#                                                                             #
+#                               General options                               #
+#                                                                             #
+###############################################################################
+
+
+
+###############################################################################
+#                   Controls and associated parameters                        #
+###############################################################################
+
+#
+# Read main algorithm controls in file
+#
+printf "\n*** Reading algorithmic controls and parameters in file\n";
+model;
+set PARAM_ALGO_KEYS;
+param PARAM_ALGO_VALUES{PARAM_ALGO_KEYS} symbolic;
+data;
+param: PARAM_ALGO_KEYS: PARAM_ALGO_VALUES := include param_algo.txt;
+model;
+display PARAM_ALGO_VALUES;
+
+# Absolute parameter : base 100MVA.
+# Never change this unless you really know what you do
+param base100MVA := 100;
+
+# Limit for detecting zero value for power
+param Pnull default 0.01; # MW
+if "Pnull" in PARAM_ALGO_KEYS then let Pnull := num(PARAM_ALGO_VALUES["Pnull"]);
+printf "Parameter: threshold to decide wether an active or reactive power value is zero Pnull:=%Q (MW or Mvar or MVA)\n",Pnull;
+check Pnull > 0 and Pnull < 1;
+
+# Parameter for detection of branches with zero impedance
+param Znull default 1e-4;
+if "Znull" in PARAM_ALGO_KEYS then let Znull := num(PARAM_ALGO_VALUES["Znull"]);
+printf "Parameter: threshold to detect zero impedance branch Znull:=%Q pu\n",Znull;
+check Znull > 0 and Znull < 0.1;
+
+# Minimum consistency value for minimum voltage in kV
+# All busses with nominal voltage lower than epsilon_nominal_voltage will be ignored
+# This value has to be >0
+param epsilon_nominal_voltage default 1.0;
+if "epsilon_nominal_voltage" in PARAM_ALGO_KEYS then let epsilon_nominal_voltage := num(PARAM_ALGO_VALUES["epsilon_nominal_voltage"]);
+printf "Parameter: for consistency checks of minimum nominal voltages epsilon_nominal_voltage:= %Q kV\n",epsilon_nominal_voltage; 
+check epsilon_nominal_voltage > 0;
+
+# Minimum consistency value for voltage in PU
+# This value has to be >0 and <1
+param epsilon_min_voltage default 0.5;
+if "epsilon_min_voltage" in PARAM_ALGO_KEYS then let epsilon_min_voltage := num(PARAM_ALGO_VALUES["epsilon_min_voltage"]);
+printf "Parameter: for consistency checks of voltage bounds eps<=Vmin<Vmax<=2-eps, epsilon_min_voltage:= %Q pu\n",epsilon_min_voltage; 
+check epsilon_min_voltage > 0 and epsilon_min_voltage < 1;
+
+# Ignore voltage bounds for buses with nominal voltage lower than this parameter
+# For all busses with nominal voltage lower than ignore_voltage_bounds, voltage bonds will be ignored
+# and replaced by [epsilon_min_voltage ; 2 - epsilon_min_voltage]
+param ignore_voltage_bounds default 0;
+if "ignore_voltage_bounds" in PARAM_ALGO_KEYS then let ignore_voltage_bounds := num(PARAM_ALGO_VALUES["ignore_voltage_bounds"]);
+if ignore_voltage_bounds >= epsilon_nominal_voltage
+then printf "Parameter: for all busses with nominal voltage <= ignore_voltage_bounds=%.1f, voltage bounds are ignored and replaced by [%.3f;%.3f]\n",ignore_voltage_bounds,epsilon_min_voltage,2-epsilon_min_voltage;
+check ignore_voltage_bounds >= 0;
+
+# Consistency maximal value for P and Q
+# Any Pmax Pmin Qmax Qmin of generating unit with abolute value larger than PQmax is discarded
+# Largest nuclear plant in Europe are less than 2000GW. Value 9000 might be a problem for large hydro dams in the world (22GW)
+param PQmax default 9000;
+if "PQmax" in PARAM_ALGO_KEYS then let PQmax := num(PARAM_ALGO_VALUES["PQmax"]);
+printf "Parameter: maximum for generating units parameters Pmin Pmax Qmin Qmax = %Q MW or Mvar\n",PQmax; 
+
+param defaultPmax default 1000; # MW
+if "defaultPmax" in PARAM_ALGO_KEYS then let defaultPmax := num(PARAM_ALGO_VALUES["defaultPmax"]);
+printf "Parameter: %s = %Q MW\n","defaultPmax",defaultPmax;
+
+param defaultPmin default 0;    # MW
+if "defaultPmin" in PARAM_ALGO_KEYS then let defaultPmin := num(PARAM_ALGO_VALUES["defaultPmin"]);
+printf "Parameter: %s = %Q MW\n","defaultPmin",defaultPmin;
+
+param defaultQmaxPmaxRatio default 0.3; # Mvar/MW
+if "defaultQmaxPmaxRatio" in PARAM_ALGO_KEYS then let defaultQmaxPmaxRatio := num(PARAM_ALGO_VALUES["defaultQmaxPmaxRatio"]);
+printf "Parameter: %s = %Q Mvar/MW\n","defaultQmaxPmaxRatio",defaultQmaxPmaxRatio;
+# Il existe donc un lien entre P et Q, lequel ?
+
+param defaultQmin := -defaultQmaxPmaxRatio * defaultPmax;
+printf "Parameter: %s = %Q Mvar\n","defaultQmin",defaultQmin;
+
+param defaultQmax :=  defaultQmaxPmaxRatio * defaultPmax;
+printf "Parameter: %s = %Q Mvar\n","defaultQmax",defaultQmax;
+
+param minimalQPrange default 1; # MW or Mvar; if domain is smaller, Q or P is fixed
+if "minimalQPrange" in PARAM_ALGO_KEYS then let minimalQPrange := num(PARAM_ALGO_VALUES["minimalQPrange"]);
+printf "Parameter: %s = %Q MW or Mvar\n","minimalQPrange",minimalQPrange;
+
+
+
+
+
+###############################################################################
+#     Solver choice and options # TODO : Check if there it is what we want    #
+###############################################################################
+option solver knitroampl;
+option dual_initial_guesses 0;
+option presolve 10;
+option show_boundtol 0;
+
+suffix cfeastol IN;
+suffix xfeastol IN;
+
+suffix cscalefactor IN;
+suffix xscalefactor IN;
+suffix objscalefactor IN;
+
+suffix usercomp IN;
+suffix intvarstrategy IN;
+
+suffix knitro_feaserror OUT;
+suffix knitro_opterror OUT;
+suffix knitro_neval OUT;
+suffix knitro_niter OUT;
+
+
+
+###############################################################################
+#                               Global variables                              #
+###############################################################################
+
+# Gobal variables for writing and messages
+param fileOut symbolic default "dummy.txt";
+param errorMessage symbolic default "empty error message";
+
+# Messages to be written in final indicator file
+param messageInfo symbolic default "empty information message";
+set messagesInfo default {};
+
+# Number of iterations for AC OPF
+param nb_iter_last  integer default 0;
+param nb_iter_total integer default 0;
+
+# Additional dummy parameters, used for local computation
+# Remenber you cannot declare new variable in loop or "if"
+param temp1;
+param temp2;
+param temp3;
+param tempo;
+param tempstr symbolic default "empty string";
+
+
+
+###############################################################################
+#                       Inclusions files .mod and .dat                        #
+###############################################################################
+model "divergenceanalysor.mod";
+data  "divergenceanalysor.dat";
+
+
+###############################################################################
+# This command "check" means that all checks in .mod file are done right now  #
+###############################################################################
+check;
+
+
+
+###############################################################################
+#
+# Computation of "slack bus" or reference bus 
+# Check how the slack bus is calcualted in OLF and do the same thing i.e. how the most neighbors slack bus is calculated
+###############################################################################
+# This is not really a slack bus since this reactive OPF will change values 
+# of generation proportionally, to ensure global balance generation=losses+load
+# So this "slack node" is used only for zero phase constraint
+# This reference bus is also used to choose on which connect component computation is performed
+printf "\nComputation of bus with largest number of branches connected, in order to fix phase to 0 and to choose on which connex component reacive OPF will run\n";
+let temp1 := min(300,max{n in BUS2} substation_Vnomi[1,bus_substation[1,n]]);
+let null_phase_bus := min{n in BUS2} n;
+let tempo := 0;
+for {n in BUS2 : substation_Vnomi[1,bus_substation[1,n]] >= temp1 * 0.9}
+  let tempo := max (tempo, card({(qq,mm,n) in BRANCH2} union {(qq,n,nn) in BRANCH2}));
+for {n in BUS2 : substation_Vnomi[1,bus_substation[1,n]] >= temp1 * 0.9 && card({(qq,mm,n) in BRANCH2} union {(qq,n,nn) in BRANCH2}) == tempo}
+  let null_phase_bus := n;
+if ( tempo > 0 ) then
+  printf "Bus %QkV with most branches: %Q in substation %s/%s with %Q connected branches\n",
+  substation_Vnomi[1,bus_substation[1,null_phase_bus]],
+  null_phase_bus,
+  substation_id[1,bus_substation[1,null_phase_bus]],
+  substation_description[1,bus_substation[1,null_phase_bus]],
+  tempo;
+if ( tempo == 0 ) then
+  printf "Bus with most branches: not found. Take first bus (=%Q) for phase=0 constraint\n",null_phase_bus;
+
+###############################################################################
+#                                                                             #
+#           Connexity checks and computation of connex components             #
+#                                                                             #
+###############################################################################
+
+printf "\n*** Connexity computation\n";
+let PROBLEM_CCOMP := {1};
+let PROBLEM_ACDA := { };
+
+option presolve 0;
+let tempstr := ctime();
+printf "# CCcomp solve: start (%s)\n\n",tempstr;
+#
+solve cccomputation_objective;
+#
+if solve_result_num > 103 or card({n in BUS2: teta_ccomputation[n].val > 0.01 and teta_ccomputation[n].val < 0.99})>0 
+then {
+  # First return codes of knitro :
+  # See https://www.artelys.com/docs/knitro/3_referenceManual/knitroamplReference.html#return-codes
+  #   0 Locally optimal or satisfactory solution.
+  let errorMessage := "Optimization for connex component computation failed";
+  let final_status := "NOK";
+  include divergenceanalysorexit.run;
+}
+printf "# CCcomp solve: end   (%s -> %s)\n\n",tempstr,ctime();
+option presolve 10;
+
+# Here we keep the buses that have been calculated as linked to slack bus with AC lines
+# Definition of BUSCC below was the purpose of this optimization
+let BUSCC := {n in BUS2: teta_ccomputation[n].val <= 0.01};
+
+printf "\n*** Valid values of buses in main connex component";
+for{n in BUSCC}
+{
+  if bus_V0[1,n] < 0.5 or bus_V0[1,n] > 1.5 then{
+    printf "\n[WARNING] Bus %i has incoherent voltage value : %f", n, bus_V0[1,n];
+    let bus_V0_corrected[n] := 1;
+  } else let bus_V0_corrected[n] := bus_V0[1,n];
+
+  if bus_angl0[1,n] < -1.57079632679 or bus_angl0[1,n] > 1.57079632679 then{
+    printf "\n[WARNING] Bus %i has incoherent angle value : %f", n, bus_angl0[1,n];
+    let bus_angl0_corrected[n] := 0;
+  }else let bus_angl0_corrected[n] := bus_angl0[1,n];
+}
+
+printf "\n\n*** Connexity computation\n";
+for{n in BUS2 diff BUSCC}
+  printf "Bus %Q in substation %Q (Vnomi=%.2fkV, country=%Q) is out of main AC CC\n",
+    bus_id[1,n], substation_id[1,bus_substation[1,n]],
+    substation_Vnomi[1,bus_substation[1,n]], substation_country[1,bus_substation[1,n]];
+printf "Nb of busses in AC CC: %i\n",card(BUS2); 
+printf "Nb of busses in CC %Q: %i\n",bus_id[1,null_phase_bus],card(BUSCC);
+printf "Nb of busses in other CCs: %Q\n",card(BUS2)-card(BUSCC);
+
+printf "\n";
+
+
+
+###############################################################################
+#                              A few information                              #
+###############################################################################
+
+display
+maximal_voltage_upper_bound, minimal_voltage_lower_bound,
+card(SUBSTATIONS),card(BUS),card(BUS2),card(BUSCC),card(BUS2 diff BUSCC),
+card(BRANCH),card(BRANCHCC),card(BRANCHZNULL),card(BRANCHCC diff BRANCHZNULL),
+card(UNIT),card(UNITCC),
+card(LOAD),card(LOADCC),
+card(SHUNTCC),
+card(SVC),card(SVCCC),
+card(VSCCONV),card(VSCCONVON),
+card(LCCCONV),card(LCCCONVON),
+card(UNITCC_PQ),card(UNITCC_PQ_1),card(UNITCC_PQ_2),
+card(UNITCC_PV),
+card(UNITCC),
+card(BUSCC_PQ), card(BUSCC_PV)
+;
+
+# Is the case power globally power balanced? 
+let temp1 := sum{(c,n) in LOADCC} load_PFix[1,c,n];
+let temp2 := sum{(g,n) in UNITCC} unit_Pc[1,g,n];
+let temp3 :=  (sum{(vscconv,n) in VSCCONVON} vscconv_P0[1,vscconv,n])+(sum{(l,k) in LCCCONVON} lccconv_P0[1,l,k]);
+let global_initial_losses_ratio := (temp2-temp1-temp3)/(temp1+temp3);
+
+printf "HVDC injections (homogeneous to loads):\n";
+for {(v,n) in VSCCONVON} 
+  printf "VSC converter %Q in %Q: P0=%.1fMW is fixed, Q is variable\n",
+  vscconv_id[1,v,n],substation_id[1,bus_substation[1,n]],vscconv_P0[1,v,n];
+for {(l,n) in LCCCONVON}
+  printf "LCC converter %Q in %Q: P0=%.1fMW is fixed, Q0=%.1fMvar is fixed\n",
+  lccconv_id[1,l,n],substation_id[1,bus_substation[1,n]],lccconv_P0[1,l,n],lccconv_Q0[1,l,n];
+printf "Sum of HVDC conv.  H: %.0f MW\n", temp3;
+printf "Sum of loads       C: %.0f MW\n", temp1;
+printf "Sum of generations P: %.0f MW\n", temp2;
+printf "Balance    (P-C-H)/C: %.2f %%    (global_initial_losses_ratio=%f)\n\n", (temp2-temp1-temp3)/temp1*100,global_initial_losses_ratio;
+
+
+# Abnormally low nominal voltages
+for {(t,n) in BUS: substation_Vnomi[1,bus_substation[1,n]] < epsilon_nominal_voltage}
+  printf "Warning: bus %Q in substation %Q has nominal voltage %.2fkV < %QkV -> bus is ignored\n",
+  bus_id[1,n], substation_id[1,bus_substation[1,n]], substation_Vnomi[1,bus_substation[1,n]], epsilon_nominal_voltage;
+
+# Voltage bounds
+let temp1 := min{(t,s) in SUBSTATIONS: substation_Vmin[t,s] > 0} substation_Vmin[t,s];
+for {(t,s) in SUBSTATIONS: substation_Vmin[t,s] > 0 and substation_Vmin[t,s] <= temp1*1.01}
+  printf "Substations %Q with lowest  voltage lower bound Vnom=%ikV Vmin=%.3fpu\n",substation_id[t,s],substation_Vnomi[t,s],substation_Vmin[t,s];
+let temp1 := max{(t,s) in SUBSTATIONS: substation_Vmax[t,s] > 0} substation_Vmax[t,s];
+for {(t,s) in SUBSTATIONS: substation_Vmax[t,s] > 0 and substation_Vmax[t,s] >= temp1*0.99}
+  printf "Substations %Q with highest voltage upper bound Vnom=%ikV Vmax=%.3fpu\n",substation_id[t,s],substation_Vnomi[t,s],substation_Vmax[t,s];
+printf "If voltage lower bounds are missing or too small, they are set to %.3fpu\n",minimal_voltage_lower_bound;
+printf "If voltage upper bounds are missing or too high,  they are set to %.3fpu\n",maximal_voltage_upper_bound;
+let temp1 := card({n in BUSCC: substation_Vnomi[1,bus_substation[1,n]] <= ignore_voltage_bounds});
+if temp1 > 0 then
+printf "Voltage bounds for substations with nominal voltage <= %ikV are set to [%.3fpu;%.3fpu] (%i busses)\n",
+  ignore_voltage_bounds,minimal_voltage_lower_bound,maximal_voltage_upper_bound,temp1;
+printf "Maximal diameter of voltage interval: %.3f\n",max({(t,s) in SUBSTATIONS}(voltage_upper_bound[t,s] - voltage_lower_bound[t,s]));
+printf "Minimal diameter of voltage interval: %.3f\n",min({(t,s) in SUBSTATIONS}(voltage_upper_bound[t,s] - voltage_lower_bound[t,s]));
+
+#
+# Consistency of transformers ratios
+#
+
+let temp1 := min{(t,r) in REGL} regl_ratio_min[1,r];
+let temp2 := max{(t,r) in REGL} regl_ratio_max[1,r];
+printf "Minimal transformer ratio : %.3f\n",temp1;
+printf "Maximal transformer ratio : %.3f\n",temp2;
+for {(qq,m,n) in BRANCHCC_REGL: regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]] <= temp1 * 1.01
+  or regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]] >= temp2 * 0.99 }
+{
+  printf "Transformer %Q ratio_min=%.3f ratio_max=%.3f\n",
+  branch_id[1,qq,m,n],
+  regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]],
+  regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]]
+}
+# Looking for unconsistencies
+let tempo := 0; # If non zero, major inconsistency detected
+for {(qq,m,n) in BRANCHCC_REGL} {
+  let temp1 := regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]];
+  let temp2 := regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]];
+  if voltage_lower_bound[1,bus_substation[1,m]]*temp1*branch_cstratio[1,qq,m,n] > voltage_upper_bound[1,bus_substation[1,n]]
+  then {
+    if substation_Vnomi[1,bus_substation[1,m]] > ignore_voltage_bounds 
+      and substation_Vnomi[1,bus_substation[1,n]] > ignore_voltage_bounds
+      then let tempo := 1;
+    let messageInfo := sprintf (
+    "ERROR INFEASIBLE transformer %Q %Q(%ikV)->%Q(%ikV) cstratio=%.3f ratio_min=%.3f ratio_max=%.3f : Vmin1=%.3f * ratio_min > Vmax2=%.3f",
+    branch_id[1,qq,m,n],
+    substation_id[1,bus_substation[1,m]],substation_Vnomi[1,bus_substation[1,m]],
+    substation_id[1,bus_substation[1,n]],substation_Vnomi[1,bus_substation[1,n]],
+    branch_cstratio[1,qq,m,n],temp1,temp2,
+    voltage_lower_bound[1,bus_substation[1,m]],
+    voltage_upper_bound[1,bus_substation[1,n]]);
+    printf "%s\n",messageInfo;
+    let messagesInfo := messagesInfo union {messageInfo};  
+  }
+  if voltage_upper_bound[1,bus_substation[1,m]]*temp2*branch_cstratio[1,qq,m,n] < voltage_lower_bound[1,bus_substation[1,n]]
+  then {
+    if substation_Vnomi[1,bus_substation[1,m]] > ignore_voltage_bounds 
+      and substation_Vnomi[1,bus_substation[1,n]] > ignore_voltage_bounds
+      then let tempo := 1;
+    let messageInfo := sprintf (
+    "ERROR INFEASIBLE transformer %Q %Q(%ikV)->%Q(%ikV) cstratio=%.3f ratio_min=%.3f ratio_max=%.3f : Vmax1=%.3f * ratio_max < Vmin2=%.3f",
+    branch_id[1,qq,m,n],
+    substation_id[1,bus_substation[1,m]],substation_Vnomi[1,bus_substation[1,m]],
+    substation_id[1,bus_substation[1,n]],substation_Vnomi[1,bus_substation[1,n]],
+    branch_cstratio[1,qq,m,n],temp1,temp2,
+    voltage_upper_bound[1,bus_substation[1,m]],
+    voltage_lower_bound[1,bus_substation[1,n]]);
+    printf "%s\n",messageInfo;
+    let messagesInfo := messagesInfo union {messageInfo};  
+  }  
+}
+# Consistency for transformers with fixed ratio
+for {(qq,m,n) in BRANCHCC_REGL} {
+  let temp1 := tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]];
+  if voltage_lower_bound[1,bus_substation[1,m]]*temp1*branch_cstratio[1,qq,m,n] > voltage_upper_bound[1,bus_substation[1,n]]
+  then {
+    if substation_Vnomi[1,bus_substation[1,m]] > ignore_voltage_bounds 
+      and substation_Vnomi[1,bus_substation[1,n]] > ignore_voltage_bounds
+      then let tempo := 1;
+    let messageInfo := sprintf (
+    "ERROR INFEASIBLE transformer %Q %Q(%ikV)->%Q(%ikV) cstratio=%.3f fixed_ratio=%.3f : Vmin1=%.3f * ratio > Vmax2=%.3f",
+    branch_id[1,qq,m,n],
+    substation_id[1,bus_substation[1,m]],substation_Vnomi[1,bus_substation[1,m]],
+    substation_id[1,bus_substation[1,n]],substation_Vnomi[1,bus_substation[1,n]],
+    branch_cstratio[1,qq,m,n],temp1,
+    voltage_lower_bound[1,bus_substation[1,m]],
+    voltage_upper_bound[1,bus_substation[1,n]]);
+    printf "%s\n",messageInfo;
+    let messagesInfo := messagesInfo union {messageInfo};  
+  }
+  if voltage_upper_bound[1,bus_substation[1,m]]*temp1*branch_cstratio[1,qq,m,n] < voltage_lower_bound[1,bus_substation[1,n]]
+  then {
+    if substation_Vnomi[1,bus_substation[1,m]] > ignore_voltage_bounds 
+      and substation_Vnomi[1,bus_substation[1,n]] > ignore_voltage_bounds
+      then let tempo := 1;
+    let messageInfo := sprintf (
+    "ERROR INFEASIBLE transformer %Q %Q(%ikV)->%Q(%ikV) cstratio=%.3f fixed_ratio=%.3f : Vmax1=%.3f * ratio < Vmin2=%.3f",
+    branch_id[1,qq,m,n],
+    substation_id[1,bus_substation[1,m]],substation_Vnomi[1,bus_substation[1,m]],
+    substation_id[1,bus_substation[1,n]],substation_Vnomi[1,bus_substation[1,n]],
+    branch_cstratio[1,qq,m,n],temp1,
+    voltage_upper_bound[1,bus_substation[1,m]],
+    voltage_lower_bound[1,bus_substation[1,n]]);
+    printf "%s\n",messageInfo;
+    let messagesInfo := messagesInfo union {messageInfo};  
+  }  
+}
+if tempo > 0.5 then {
+  let errorMessage := "ERROR INFEASIBLE some voltages bounds and not feasible with transformers ratios";
+  let final_status := "NOK";
+  include divergenceanalysorexit.run;
+}
+
+
+###############################################################################
+#                                                                             #
+#                   Optimisation Divergence Analysis                          #
+#                                                                             #
+###############################################################################
+
+# target Voltages
+for {(g,n) in UNITCC_PV}
+{
+  let targetV_busPV[n] := unit_Vc[1,g,n];
+}
+
+let PROBLEM_CCOMP := { };
+let PROBLEM_ACDA := {1}; # Now we solve AC Divergence Analysis
+#
+# Initial values of variables with results of OLF
+#
+
+# Phases
+let {n in BUSCC} teta[n] := bus_angl0_corrected[n];
+
+# Voltages
+let {n in BUSCC} V[n] := bus_V0_corrected[n];
+display V;
+
+printf "\n######################################################################\n";
+printf "Check of consistency of all the sets & parameters\n";
+printf "######################################################################\n";
+check;
+
+#
+# Solve
+#
+
+display branch_admi;
+
+printf "\n######################################################################\n";
+printf "# DA solve: start (%s)\n\n",ctime();
+let tempstr := ctime();
+
+
+
+option knitro_options "opttol=1 opttolabs=1e-1 feastol=1 feastolabs=1e-3 maxit=500";
+
+solve problem_divergence_analysis;
+
+let nb_iter_last := problem_divergence_analysis.numiters;
+let nb_iter_total := nb_iter_total + nb_iter_last; 
+
+param solve_result_num_limit := 200;
+
+if solve_result_num > solve_result_num_limit then 
+for {n in BUS2}
+{
+  solve problem_divergence_analysis;
+  let nb_iter_last := problem_divergence_analysis.numiters;
+  let nb_iter_total := nb_iter_total + nb_iter_last; 
+  if solve_result_num <= solve_result_num_limit then break; 
+}
+
+
+#
+# Analysis of solve_result_num
+#
+
+# <= 103 : feasible
+# 200 convergence to unfeasible
+# > 200 : failure
+#
+param output_results binary default 0;
+if solve_result_num == 200 
+then {
+  let output_results := 0;
+  let messageInfo := "Optimization was ***not*** successfull - Convergence to an infeasible solution";
+  printf "%s\n", messageInfo;
+  let messagesInfo := messagesInfo union {messageInfo};
+  let final_status := "NOK";
+}
+else if solve_result_num > 103
+then {
+  let output_results := 0;
+  let messageInfo := "Optimization was ***not*** successfull - no solution found";
+  printf "%s\n", messageInfo;
+  let messagesInfo := messagesInfo union {messageInfo};
+  let final_status := "NOK";
+}
+else {
+  let output_results := 1;
+  let final_status := "OK";
+}
+
+printf "\n# DA solve: end   (%s -> %s)\n",tempstr,ctime();
+printf "######################################################################\n\n";
+
+printf "######################################################################\n";
+printf "#                      Displays after solving                        #\n";
+printf "######################################################################\n";
+
+display
+  nb_iter_last,nb_iter_total,
+  max({(qq,m,n) in BRANCHCC} branch_R[1,qq,m,n]),max({(qq,m,n) in BRANCHCC} branch_X[1,qq,m,n]),
+  max({n in BUSCC} teta[n]), #max({n in BUSCC} teta_dc[n]),
+  min({n in BUSCC} teta[n]), #min({n in BUSCC} teta_dc[n]),
+  max({(qq,m,n) in BRANCHCC} (teta[m]-teta[n])), #max({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[n])),
+  min({(qq,m,n) in BRANCHCC} (teta[m]-teta[n])), #min({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[n])),
+  min({n in BUSCC}V[n]),max({n in BUSCC}V[n])
+  ;
+
+let temp1 := max({(qq,m,n) in BRANCHCC} (teta[m]-teta[n]));
+let temp2 := min({(qq,m,n) in BRANCHCC} (teta[m]-teta[n]));
+
+for {(qq,m,n) in BRANCHCC: (teta[m]-teta[n])>temp1*0.99 or (teta[m]-teta[n])<temp2*0.99} {
+  printf "%Q R=%.3f X=%.3f delta=%.2f Vm=%.3f %.2f Vn=%.3f %.2f ",
+  branch_id[1,qq,m,n],branch_R[1,qq,m,n],branch_X[1,qq,m,n],teta[m]-teta[n],V[m],teta[m],V[n],teta[n];
+  printf "P1=%.1f Q1=%.1f ",base100MVA*V[m]*Red_Tran_Act_Dir[qq,m,n],base100MVA*V[m]*Red_Tran_Rea_Dir[qq,m,n];
+  printf "P2=%.1f Q2=%.1f ",base100MVA*V[m]*Red_Tran_Act_Inv[qq,m,n],base100MVA*V[m]*Red_Tran_Rea_Inv[qq,m,n];
+  printf"\n";
+  }
+
+display teta;
+display V;
+display z2;
+#display y1;
+#display y2;
+#display y3;
+#display y4;
+#display y5;
+#display y6;
+#display y7;
+#display y8;
+#display alpha_y1;
+#display alpha_y2;
+#display alpha_y3;
+#display alpha_y4;
+display bus_V0_corrected;
+
+# Write voltage information in debug file
+# printf "#bus_id;Vnom;V;Vlb;Vub;Vmin_mod;Vmax_mod;Vmin_OK;Vmax_OK;Vmin_ori;Vmax_ori;\n" > debug_bus.csv;
+# for {n in BUSCC} printf "%Q;%i;%.4f;%.4f;%.4f;%.4f;%.4f;%s;%s;%.4f;%.4f;\n",
+#   bus_id[1,n],substation_Vnomi[1,bus_substation[1,n]],
+#   V[n],V[n].lb,V[n].ub,
+#   voltage_lower_bound[1,bus_substation[1,n]],
+#   voltage_upper_bound[1,bus_substation[1,n]],
+#   if V[n]<voltage_lower_bound[1,bus_substation[1,n]] then "NOK" else "OK",
+#   if V[n]>voltage_upper_bound[1,bus_substation[1,n]] then "NOK" else "OK",
+#   substation_Vmin[1,bus_substation[1,n]],substation_Vmax[1,bus_substation[1,n]]
+#   > debug_bus.csv;
+#   ;
+# close debug_bus.csv;
+
+
+
+###############################################################################
+#                       Writing results and indicators                        #
+###############################################################################
+
+include divergenceanalysoroutput.run;
+
+
+###############################################################################
+#                                End of file                                  #
+###############################################################################
+
+printf "\n";
+printf "*** End of file divergenceanalysor.run : Optimization %ssuccessfull\n",if output_results>0 then "" else "un";
+printf "*** Start of file divergenceanalysor.run : %Q\n",ctime_start;
+printf "*** End   of file divergenceanalysor.run : %Q\n",ctime();
