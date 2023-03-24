@@ -10,7 +10,7 @@ package com.powsybl.openreac.parameters.output;
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
 public abstract class AbstractNoThrowOutput implements NoThrowAmplOutput {
-    private boolean errorState;
+    private boolean errorState = false;
 
     @Override
     public boolean isErrorState() {
