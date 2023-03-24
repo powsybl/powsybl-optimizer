@@ -56,7 +56,7 @@ public class ReactiveSlackOutput extends AbstractNoThrowOutput {
     public void read(Path path, StringToIntMapper<AmplSubset> amplMapper) {
         List<String> investmentsLines;
         // if the file is missing, we know there is no reactive slack.
-        if(Files.isRegularFile(path)){
+        if (Files.isRegularFile(path)) {
             try {
                 investmentsLines = Files.readAllLines(path, StandardCharsets.UTF_8);
             } catch (IOException e) {
