@@ -25,8 +25,7 @@ public class OpenReacResult {
     private final List<ReactiveSlack> reactiveSlacks;
     private final Map<String, String> indicators;
 
-    public OpenReacResult(OpenReacStatus status, List<ReactiveSlack> reactiveSlacks,
-                          Map<String, String> indicators) {
+    public OpenReacResult(OpenReacStatus status, List<ReactiveSlack> reactiveSlacks, Map<String, String> indicators) {
         this.status = status;
         this.reactiveSlacks = reactiveSlacks;
         this.indicators = indicators;

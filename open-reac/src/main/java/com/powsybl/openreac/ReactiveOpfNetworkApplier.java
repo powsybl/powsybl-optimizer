@@ -31,7 +31,7 @@ public class ReactiveOpfNetworkApplier extends DefaultAmplNetworkUpdater {
     private void findSectionCount(ShuntCompensator sc, double b) {
         double minDistance = Math.abs(b - sc.getB());
         double distance;
-        int sectionCount = -1;
+        int sectionCount = sc.getSectionCount();
         for (int i = 0; i <= sc.getMaximumSectionCount(); i++) {
             distance = Math.abs(b - sc.getB(i));
             if (distance < minDistance) {
@@ -39,7 +39,7 @@ public class ReactiveOpfNetworkApplier extends DefaultAmplNetworkUpdater {
                 sectionCount = i;
             }
         }
-        if (sectionCount != -1) {
+        if (sectionCount != sc.getSectionCount()) {
             sc.setSectionCount(sectionCount);
         }
     }

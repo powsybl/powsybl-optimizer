@@ -76,6 +76,6 @@ public class OpenReacAmplIOFiles implements AmplParameters {
      * @return <code>true</code> if ALL ouput file parsing didn't throw any IOExceptions
      */
     public boolean checkErrors() {
-        return reactiveSlackOutput.isErrorState() || indicators.isErrorState();
+        return !reactiveSlackOutput.isErrorState() && !indicators.isErrorState();
     }
 }

@@ -33,8 +33,11 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
         for (Map.Entry<String, Pair<Double, Double>> entry : voltageLimitsOverride.entrySet()) {
             String voltageLevelId = entry.getKey();
             Pair<Double, Double> limits = entry.getValue();
+            double previousLowVoltageLimit = network.getVoltageLevel(voltageLevelId).getLowVoltageLimit();
+            double previousHighVoltageLimit = network.getVoltageLevel(voltageLevelId).getHighVoltageLimit();
             double nominalV = network.getVoltageLevel(voltageLevelId).getNominalV();
-            normalizedVoltageLimitsOverride.put(voltageLevelId, Pair.of(limits.getLeft() / nominalV, limits.getRight() / nominalV));
+            normalizedVoltageLimitsOverride.put(voltageLevelId, Pair.of((previousLowVoltageLimit + limits.getLeft()) / nominalV,
+                    (previousHighVoltageLimit + limits.getRight()) / nominalV));
         }
     }
 

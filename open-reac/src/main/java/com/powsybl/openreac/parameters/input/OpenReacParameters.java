@@ -29,21 +29,21 @@ public class OpenReacParameters extends AbstractExtendable<OpenReacParameters> {
     public static final String VERSION = "1.0";
 
     /**
-     * This map allows to change the bounds of voltage levels.
+     * This map allows to change the limits of some voltage levels.
      * <ul>
      *     <li>
      *         Key: VoltageLevel ID in the network
      *     </li>
      *     <li>
-     *         Value: Pair for new voltage level bounds
+     *         Value: Pair for new voltage level limits
      *         <ul>
-     *            <li>Left: lower bound</li>
-     *            <li>Right: upper bound</li>
+     *            <li>Left: lower relative delta</li>
+     *            <li>Right: upper relatibe delta</li>
      *         </ul>
      *     </li>
      * </ul>
      */
-    private final Map<String, Pair<Double, Double>> specificVoltageDelta;
+    private final Map<String, Pair<Double, Double>> specificVoltageLimitDelta;
     /**
      * List of network's shunts ID
      */
@@ -71,23 +71,23 @@ public class OpenReacParameters extends AbstractExtendable<OpenReacParameters> {
         this.variableShuntCompensators = new LinkedList<>();
         this.targetQGenerators = new LinkedList<>();
         this.variableTwoWindingsTransformers = new LinkedList<>();
-        this.specificVoltageDelta = new HashMap<>();
+        this.specificVoltageLimitDelta = new HashMap<>();
         this.algoParamsMap = new HashMap<>();
     }
 
-    public OpenReacParameters addVariableShuntCompensators(String... shuntsIds) {
-        this.variableShuntCompensators.addAll(Arrays.asList(shuntsIds));
+    public OpenReacParameters addVariableShuntCompensators(List<String> shuntsIds) {
+        this.variableShuntCompensators.addAll(shuntsIds);
         return this;
     }
 
     /**
      * Override voltage level limits in the network. This will modify the network when OpenReac is called.
      *
-     * @param lowerVoltage absolute value of the new lower voltage limit.
-     * @param upperVoltage absolute value of the new upper voltage limit.
+     * @param lowDeltaLimit the relative delta value for low voltage limit.
+     * @param highDeltaLimit the relative delta value for high voltage limit.
      */
-    public OpenReacParameters addSpecificVoltageDelta(String voltageLevelId, double lowerVoltage, double upperVoltage) {
-        this.specificVoltageDelta.put(voltageLevelId, Pair.of(lowerVoltage, upperVoltage));
+    public OpenReacParameters addSpecificVoltageLimitDelta(String voltageLevelId, double lowDeltaLimit, double highDeltaLimit) {
+        this.specificVoltageLimitDelta.put(voltageLevelId, Pair.of(lowDeltaLimit, highDeltaLimit));
         return this;
     }
 
@@ -95,16 +95,16 @@ public class OpenReacParameters extends AbstractExtendable<OpenReacParameters> {
      * Fix the reactance of the given generators during the OpenReac solve.
      * The reactance is constant to the reactance stored in the network.
      */
-    public OpenReacParameters addTargetQGenerators(String... generatorsIds) {
-        this.targetQGenerators.addAll(Arrays.asList(generatorsIds));
+    public OpenReacParameters addTargetQGenerators(List<String> generatorsIds) {
+        this.targetQGenerators.addAll(generatorsIds);
         return this;
     }
 
     /**
      * Tells OpenReac that it can modify the ratio of the given transformers.
      */
-    public OpenReacParameters addVariableTwoWindingsTransformers(String... transformerIds) {
-        this.variableTwoWindingsTransformers.addAll(Arrays.asList(transformerIds));
+    public OpenReacParameters addVariableTwoWindingsTransformers(List<String> transformerIds) {
+        this.variableTwoWindingsTransformers.addAll(transformerIds);
         return this;
     }
 
@@ -118,7 +118,7 @@ public class OpenReacParameters extends AbstractExtendable<OpenReacParameters> {
     }
 
     public Map<String, Pair<Double, Double>> getSpecificVoltageDelta() {
-        return specificVoltageDelta;
+        return specificVoltageLimitDelta;
     }
 
     public List<String> getTargetQGenerators() {

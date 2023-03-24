@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Properties;
 
 import static com.powsybl.iidm.network.tools.ConversionToolUtils.*;
@@ -141,11 +142,11 @@ public class OpenReacTool implements Tool {
         OpenReacParameters openReacParameters = new OpenReacParameters();
         String inputFileListSeparator = ";";
         String[] shuntsList = inputParams.getProperty(SHUNTS_LIST, "").split(inputFileListSeparator);
-        openReacParameters.addVariableShuntCompensators(shuntsList);
+        openReacParameters.addVariableShuntCompensators(List.of(shuntsList));
         String[] generatorsList = inputParams.getProperty(SHUNTS_LIST, "").split(inputFileListSeparator);
-        openReacParameters.addTargetQGenerators(generatorsList);
+        openReacParameters.addTargetQGenerators(List.of(generatorsList));
         String[] transformerList = inputParams.getProperty(SHUNTS_LIST, "").split(inputFileListSeparator);
-        openReacParameters.addVariableTwoWindingsTransformers(transformerList);
+        openReacParameters.addVariableTwoWindingsTransformers(List.of(transformerList));
 
         for (String key : inputParams.stringPropertyNames()) {
             if (!key.equals(SHUNTS_LIST) && !key.equals(GENERATORS_LIST) && !key.equals(TRANSFORMER_LIST)) {
