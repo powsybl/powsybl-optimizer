@@ -34,6 +34,8 @@ public class OpenReacModel implements AmplModel {
     }
 
     private static final String NETWORK_DATA_PREFIX = "ampl";
+    private static final String INDICATOR_STATUS_KEY = "final_status";
+    private static final String INDICATOR_STATUS_SUCCESS = "OK";
 
     /**
      * A list containing the name of the files and their path in the resources
@@ -112,6 +114,11 @@ public class OpenReacModel implements AmplModel {
     public Collection<AmplReadableElement> getAmplReadableElement() {
         return Arrays.asList(AmplReadableElement.SHUNT, AmplReadableElement.GENERATOR,
                 AmplReadableElement.VSC_CONVERTER_STATION, AmplReadableElement.STATIC_VAR_COMPENSATOR);
+    }
+
+    @Override
+    public boolean checkModelConvergence(Map<String, String> map) {
+        return map.getOrDefault(INDICATOR_STATUS_KEY, "").equals(INDICATOR_STATUS_SUCCESS);
     }
 
     @Override

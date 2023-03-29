@@ -16,11 +16,6 @@ import java.util.Map;
  */
 public class OpenReacResult {
 
-    public enum OpenReacStatus {
-        OK,
-        NOT_OK
-    }
-
     private final OpenReacStatus status;
     private final List<ReactiveSlack> reactiveSlacks;
     private final Map<String, String> indicators;

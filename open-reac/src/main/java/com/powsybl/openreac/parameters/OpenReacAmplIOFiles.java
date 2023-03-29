@@ -11,13 +11,11 @@ import com.powsybl.ampl.executor.AmplOutputFile;
 import com.powsybl.ampl.executor.AmplParameters;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.openreac.parameters.input.*;
-import com.powsybl.openreac.parameters.output.IndicatorOutput;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * OpenReacAmplIOFiles will interface all inputs and outputs needed for OpenReac to the abtracted Ampl Executor.
@@ -25,7 +23,7 @@ import java.util.Map;
  * The user of OpenReac should not see this class directly. One should use {@link OpenReacParameters} for inputs
  * and {@link OpenReacResult} for outputs.
  * However, when adding new inputs (outputs) to OpenReac, one must add {@link AmplOutputFile} (@link AmplInputFile)
- * here through {@link OpenReacAmplIOFiles#getInputParameters} ({@link OpenReacAmplIOFiles#getOutputParameters()})
+ * here through {@link OpenReacAmplIOFiles#getInputParameters} ({@link OpenReacAmplIOFiles#getOutputParameters})
  *
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
@@ -36,7 +34,6 @@ public class OpenReacAmplIOFiles implements AmplParameters {
     private final VariableTwoWindingsTransformers variableTwoWindingsTransformers;
     private final AlgorithmInput algorithmParams;
     private final ReactiveSlackOutput reactiveSlackOutput;
-    private final IndicatorOutput indicators;
     private final VoltageLevelLimitsOverrideInput voltageLimitsOverride;
 
     public OpenReacAmplIOFiles(OpenReacParameters params, Network network) {
@@ -49,15 +46,10 @@ public class OpenReacAmplIOFiles implements AmplParameters {
 
         //outputs
         this.reactiveSlackOutput = new ReactiveSlackOutput();
-        this.indicators = new IndicatorOutput();
     }
 
     public List<ReactiveSlackOutput.ReactiveSlack> getReactiveInvestments() {
         return reactiveSlackOutput.getSlacks();
-    }
-
-    public Map<String, String> getIndicators() {
-        return indicators.getIndicators();
     }
 
     @Override
@@ -67,8 +59,11 @@ public class OpenReacAmplIOFiles implements AmplParameters {
     }
 
     @Override
-    public Collection<AmplOutputFile> getOutputParameters() {
-        return List.of(reactiveSlackOutput, indicators);
+    public Collection<AmplOutputFile> getOutputParameters(boolean isConvergenceOk) {
+        if(isConvergenceOk){
+            return List.of(reactiveSlackOutput);
+        }
+        return List.of();
     }
 
     /**
@@ -76,6 +71,6 @@ public class OpenReacAmplIOFiles implements AmplParameters {
      * @return <code>true</code> if ALL ouput file parsing didn't throw any IOExceptions
      */
     public boolean checkErrors() {
-        return !reactiveSlackOutput.isErrorState() && !indicators.isErrorState();
+        return !reactiveSlackOutput.isErrorState();
     }
 }

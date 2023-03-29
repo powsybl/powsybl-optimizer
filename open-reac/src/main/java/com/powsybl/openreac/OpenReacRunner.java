@@ -15,6 +15,7 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
+import com.powsybl.openreac.parameters.output.OpenReacStatus;
 
 /**
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
@@ -29,14 +30,8 @@ public final class OpenReacRunner {
         ComputationManager manager = LocalComputationManager.getDefault();
         parameters.checkIntegrity(network);
         OpenReacAmplIOFiles amplIoInterface = new OpenReacAmplIOFiles(parameters, network);
-        AmplResults run;
-        try {
-            run = AmplModelRunner.run(network, variant, reactiveOpf, manager, amplIoInterface);
-        } catch (Exception e) {
-            // Ampl run crashed
-            run = new AmplResults(false);
-        }
-        return new OpenReacResult(run.isSuccess() && amplIoInterface.checkErrors() ? OpenReacResult.OpenReacStatus.OK : OpenReacResult.OpenReacStatus.NOT_OK,
-                amplIoInterface.getReactiveInvestments(), amplIoInterface.getIndicators());
+        AmplResults run = AmplModelRunner.run(network, variant, reactiveOpf, manager, amplIoInterface);
+        return new OpenReacResult(run.isSuccess() && amplIoInterface.checkErrors() ? OpenReacStatus.OK : OpenReacStatus.NOT_OK,
+                amplIoInterface.getReactiveInvestments(), run.getIndicators());
     }
 }
