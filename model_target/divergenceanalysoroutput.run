@@ -1,0 +1,165 @@
+###############################################################################
+#
+# Copyright (c) 2022,2023 RTE (http://www.rte-france.com), Coreso and TSCNet Services 
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+###############################################################################
+
+###############################################################################
+# Divergence analysis
+# Author : Jean Maeght 2022 2023
+# Author : Pierre Arvy 2023
+###############################################################################
+
+###############################################################################
+#                                                                             #
+#                        Writing results for Analysis                         #
+#                                                                             #
+###############################################################################
+param abs_mean_s1 default 0;
+param abs_mean_sigma1 default 0;
+param abs_mean_sigma2 default 0;
+param abs_mean_sigma3 default 0;
+param abs_mean_sigma4 default 0;
+param abs_mean_sigma5 default 0;
+param abs_mean_sigma6 default 0;
+param abs_mean_sigma7 default 0;
+param abs_mean_sigma8 default 0;
+
+if final_status == "OK" then {
+
+  let fileOut := "analysis.txt";
+  printf "[LOG] Computation of brut force model on iIDM network.\n" > (fileOut);
+  
+  # Info on voltages
+  printf "[INFO] Maximal V computed is %.3f\n",
+      (max {n in BUSCC} V[n]);
+  printf "[INFO] Minimal V computed is %.3f\n",
+      (min {n in BUSCC} V[n]);
+
+  # Info on angles
+  printf "[INFO] Maximal theta computed is %.3f\n",
+      (max {n in BUSCC} teta[n]);
+  printf "[INFO] Minimal theta computed is %.3f\n",
+      (min {n in BUSCC} teta[n]);
+
+  # Info on s1 slack variable
+  printf "\n[INFO] Maximal s1 computed is %.3f\n", (max {p in BUSCC_PV} abs(s1[p]));
+  let abs_mean_s1 := (sum {p in BUSCC_PV} abs(s1[p])) / card(BUSCC_PV);
+  printf "[INFO] Mean abs value of s1 coordinates : %.3f\n", abs_mean_s1;
+  printf "[INFO] Standard deviation abs of s1 coordinates : %.3f\n", 
+        ((sum {p in BUSCC_PV} (abs(s1[p]) - abs_mean_s1)**2) / card(BUSCC_PV));
+
+  # Info on sigma1 slack variable
+  printf "\n[INFO] Maximal sigma1 computed is %.3f, and represent a slack of TODO\%\n",
+      (max {(qq,m,n) in BRANCHCC} abs(sigma1[qq,m,n]));
+  let abs_mean_sigma1 := (sum {(qq,m,n) in BRANCHCC} abs(sigma1[qq,m,n])) / card(BRANCHCC);
+  printf "[INFO] Mean abs value of sigma1 coordinates : %.3f\n", abs_mean_sigma1;
+  printf "[INFO] Standard deviation abs value of sigma1 coordinates : %.3f\n", 
+        ((sum {(qq,m,n) in BRANCHCC} (abs(sigma1[qq,m,n]) - abs_mean_sigma1)**2) / card(BRANCHCC));
+
+  # Info on sigma2 slack variable
+  printf "\n[INFO] Maximal sigma2 computed is %.3f, and represent a slack of TODO\%\n",
+      (max {(qq,m,n) in BRANCHCC} abs(sigma2[qq,m,n]));
+  let abs_mean_sigma2 := (sum {(qq,m,n) in BRANCHCC} abs(sigma2[qq,m,n])) / card(BRANCHCC);
+  printf "[INFO] Mean abs value of sigma2 coordinates : %.3f\n", abs_mean_sigma2;
+  printf "[INFO] Standard deviation abs value of sigma2 coordinates : %.3f\n", 
+        ((sum {(qq,m,n) in BRANCHCC} (abs(sigma2[qq,m,n]) - abs_mean_sigma2)**2) / card(BRANCHCC));
+
+  # Info on sigma3 slack variable
+  printf "\n[INFO] Maximal sigma3 computed is %.3f, and represent a slack of TODO\%\n",
+      (max {(qq,m,n) in BRANCHCC} abs(sigma3[qq,m,n]));
+  let abs_mean_sigma3 := (sum {(qq,m,n) in BRANCHCC} abs(sigma3[qq,m,n])) / card(BRANCHCC);
+  printf "[INFO] Mean abs value of sigma3 coordinates : %.3f\n", abs_mean_sigma3;
+  printf "[INFO] Standard deviation abs value of sigma3 coordinates : %.3f\n", 
+        ((sum {(qq,m,n) in BRANCHCC} (abs(sigma3[qq,m,n]) - abs_mean_sigma3)**2) / card(BRANCHCC));
+
+  # Info on sigma4 slack variable
+  printf "\n[INFO] Maximal sigma4 computed is %.3f, and represent a slack of TODO\%\n",
+      (max {(qq,m,n) in BRANCHCC} abs(sigma4[qq,m,n]));
+  let abs_mean_sigma4 := (sum {(qq,m,n) in BRANCHCC} abs(sigma4[qq,m,n])) / card(BRANCHCC);
+  printf "[INFO] Mean abs value of sigma4 coordinates : %.3f\n", abs_mean_sigma4;
+  printf "[INFO] Standard deviation abs value of sigma4 coordinates : %.3f\n", 
+        ((sum {(qq,m,n) in BRANCHCC} (abs(sigma4[qq,m,n]) - abs_mean_sigma4)**2) / card(BRANCHCC));
+
+  # Info on sigma5 slack variable
+  printf "\n[INFO] Maximal sigma5 computed is %.3f, and represent a slack of TODO\%\n",
+      (max {(qq,m,n) in BRANCHCC} abs(sigma5[qq,m,n]));
+  let abs_mean_sigma5 := (sum {(qq,m,n) in BRANCHCC} abs(sigma5[qq,m,n])) / card(BRANCHCC);
+  printf "[INFO] Mean abs value of sigma5 coordinates : %.3f\n", abs_mean_sigma5;
+  printf "[INFO] Standard deviation abs value of sigma5 coordinates : %.3f\n", 
+        ((sum {(qq,m,n) in BRANCHCC} (abs(sigma5[qq,m,n]) - abs_mean_sigma5)**2) / card(BRANCHCC));
+
+  # Info on sigma6 slack variable
+  printf "\n[INFO] Maximal sigma6 computed is %.3f, and represent a slack of TODO\%\n",
+      (max {(qq,m,n) in BRANCHCC} abs(sigma6[qq,m,n]));
+  let abs_mean_sigma6 := (sum {(qq,m,n) in BRANCHCC} abs(sigma6[qq,m,n])) / card(BRANCHCC);
+  printf "[INFO] Mean abs value of sigma6 coordinates : %.3f\n", abs_mean_sigma6;
+  printf "[INFO] Standard deviation abs value of sigma6 coordinates : %.3f\n", 
+        ((sum {(qq,m,n) in BRANCHCC} (abs(sigma6[qq,m,n]) - abs_mean_sigma6)**2) / card(BRANCHCC));
+
+  # Info on sigma7 slack variable
+  printf "\n[INFO] Maximal sigma7 computed is %.3f, and represent a slack of TODO\%\n",
+      (max {(qq,m,n) in BRANCHCC} abs(sigma7[qq,m,n]));
+  let abs_mean_sigma7 := (sum {(qq,m,n) in BRANCHCC} abs(sigma7[qq,m,n])) / card(BRANCHCC);
+  printf "[INFO] Mean abs value of sigma7 coordinates : %.3f\n", abs_mean_sigma7;
+  printf "[INFO] Standard deviation abs value of sigma7 coordinates : %.3f\n", 
+        ((sum {(qq,m,n) in BRANCHCC} (abs(sigma7[qq,m,n]) - abs_mean_sigma7)**2) / card(BRANCHCC));
+
+  # Info on sigma8 slack variable
+  printf "\n[INFO] Maximal sigma8 computed is %.3f, and represent a slack of TODO\%\n",
+      (max {(qq,m,n) in BRANCHCC} abs(sigma8[qq,m,n]));
+  let abs_mean_sigma8 := (sum {(qq,m,n) in BRANCHCC} abs(sigma8[qq,m,n])) / card(BRANCHCC);
+  printf "[INFO] Mean abs value of sigma8 coordinates : %.3f\n", abs_mean_sigma8;
+  printf "[INFO] Standard deviation abs value of sigma8 coordinates : %.3f\n", 
+        ((sum {(qq,m,n) in BRANCHCC} (abs(sigma8[qq,m,n]) - abs_mean_sigma8)**2) / card(BRANCHCC));
+  
+  # Shunts which were not connected, and which have been reconnected by reactiveopf, with variable value
+  # printf {(s,n) in SHUNTCC: (1,s,-1) in SHUNT} "%i;%i;%i;%.3f;%.3f;%i;\n",
+  #  1,s,n,shunt_valnom[1,s,n],base100MVA * shunt_valnom[1,s,n] * V[n]^2,
+  #  shunt_sections_count[1,s,-1] 
+  #  > (fileOut);
+  close (fileOut);
+
+}
+
+###############################################################################
+#                                                                             #
+#                           Writing indicator file                            #
+#                                                                             #
+###############################################################################
+
+if final_status == "OK" then {
+
+  let fileOut := "analysis_sigma.csv";
+  printf "branch;bus1;bus2;sigma1;sigma2;sigma3;sigma4;sigma5;sigma6;sigma7;sigma8\n" > (fileOut);
+  printf{(qq,m,n) in BRANCHCC} "%i;%i;%i;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f\n",
+        qq, m, n, sigma1[qq,m,n],sigma2[qq,m,n],sigma3[qq,m,n],sigma4[qq,m,n],sigma5[qq,m,n],sigma6[qq,m,n],sigma7[qq,m,n],sigma8[qq,m,n] 
+        > (fileOut);
+  close (fileOut);
+
+  let fileOut := "analysis_s.csv";
+  printf "busPV;targetV;V;s1\n" > (fileOut);
+  printf{n in BUSCC_PV} "%i;%.3f;%.3f;%.3f\n",
+        n, targetV_busPV[n], V[n], s1[n]
+        > (fileOut);
+  close (fileOut);
+
+  let fileOut := "analysis_Vtheta.csv";
+  printf "bus;V;theta\n" > (fileOut);
+  printf{n in BUSCC} "%i;%.3f;%.3f\n",
+        n, V[n], teta[n]
+        > (fileOut);
+  close (fileOut);
+}
+
+# All messages added in messages container
+if card(messagesInfo) > 0 then {
+  let temp1:=1;
+  for { message in messagesInfo } {
+    printf "messageInfo%i %Q\n",temp1,message > (fileOut);
+    let temp1:=temp1+1;
+  }
+}
