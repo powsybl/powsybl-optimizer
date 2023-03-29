@@ -83,6 +83,11 @@
             <version>1.0-rc2</version>
         </dependency>
         <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>1.7.32</version>
+        </dependency>
+        <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-tools</artifactId>
             <version>5.2.0-RC1</version>
