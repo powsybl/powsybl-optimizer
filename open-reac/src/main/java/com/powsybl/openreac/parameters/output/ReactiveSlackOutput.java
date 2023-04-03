@@ -27,12 +27,12 @@ public class ReactiveSlackOutput extends AbstractNoThrowOutput {
 
     public static class ReactiveSlack {
         public final String busId;
-        public final String substationId; // FIXME
+        public final String voltageLevelId;
         public final double slack;
 
-        public ReactiveSlack(String busId, String substationId, double slack) {
+        public ReactiveSlack(String busId, String voltageLevelId, double slack) {
             this.busId = busId;
-            this.substationId = substationId;
+            this.voltageLevelId = voltageLevelId;
             this.slack = slack;
         }
     }
@@ -60,7 +60,7 @@ public class ReactiveSlackOutput extends AbstractNoThrowOutput {
             try {
                 investmentsLines = Files.readAllLines(path, StandardCharsets.UTF_8);
             } catch (IOException e) {
-                // File reading went wrong, this can happen when the ampl crashed, or didn't converge. We must not throw to the user.
+                // File reading went wrong
                 triggerErrorState();
                 return;
             }
@@ -85,12 +85,12 @@ public class ReactiveSlackOutput extends AbstractNoThrowOutput {
         double slackCapacitor = -readDouble(tokens[2]);
         double slackSelf = readDouble(tokens[3]);
         String id = readString(tokens[4]);
-        String substationId = readString(tokens[5]);
+        String voltageLevelId = readString(tokens[5]);
         double slack = slackCapacitor + slackSelf;
         if (slack != slackCapacitor && slack != slackSelf) {
             throw new AmplException("Error reading reactive slacks, can't be self and capacitor at the same time.");
         }
-        slacks.add(new ReactiveSlack(id, substationId, slack));
+        slacks.add(new ReactiveSlack(id, voltageLevelId, slack));
     }
 
     private double readDouble(String d) {

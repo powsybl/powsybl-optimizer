@@ -41,7 +41,7 @@ public final class OpenReacTest {
 
         System.out.println(openReacResult.getStatus());
         for (ReactiveSlackOutput.ReactiveSlack investment : openReacResult.getReactiveSlacks()) {
-            System.out.println("investment : " + investment.busId + " " + investment.substationId + " " + investment.slack);
+            System.out.println("investment : " + investment.busId + " " + investment.voltageLevelId + " " + investment.slack);
         }
         List<Map.Entry<String, String>> sortedEntries = openReacResult.getIndicators().entrySet()
                                                             .stream()
