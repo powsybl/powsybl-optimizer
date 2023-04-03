@@ -12,8 +12,9 @@ import com.powsybl.iidm.network.Exporter;
 import com.powsybl.iidm.network.ImportConfig;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.tools.ConversionToolUtils;
-import com.powsybl.openreac.parameters.input.AlgorithmInput;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
+import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
+import com.powsybl.openreac.parameters.input.algo.OpenReacObjective;
 import com.powsybl.tools.Command;
 import com.powsybl.tools.Tool;
 import com.powsybl.tools.ToolRunningContext;
@@ -25,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
@@ -144,16 +146,16 @@ public class OpenReacTool implements Tool {
         String[] shuntsList = inputParams.getProperty(SHUNTS_LIST, "").split(inputFileListSeparator);
         openReacParameters.addVariableShuntCompensators(List.of(shuntsList));
         String[] generatorsList = inputParams.getProperty(SHUNTS_LIST, "").split(inputFileListSeparator);
-        openReacParameters.addTargetQGenerators(List.of(generatorsList));
+        openReacParameters.addConstantQGerenartors(List.of(generatorsList));
         String[] transformerList = inputParams.getProperty(SHUNTS_LIST, "").split(inputFileListSeparator);
         openReacParameters.addVariableTwoWindingsTransformers(List.of(transformerList));
 
         for (String key : inputParams.stringPropertyNames()) {
             if (!key.equals(SHUNTS_LIST) && !key.equals(GENERATORS_LIST) && !key.equals(TRANSFORMER_LIST)) {
-                AlgorithmInput.OpenReacAlgoParam algoParam = null;
+                OpenReacAlgoParam algoParam;
                 switch (key) {
                     case "foo":
-                        algoParam = AlgorithmInput.OpenReacAlgoParam.TEST_PARAM;
+                        algoParam = OpenReacObjective.MIN_GENERATION;
                         break;
                     default:
                         context.getOutputStream()
@@ -161,7 +163,7 @@ public class OpenReacTool implements Tool {
                                        "Algorithm parameter " + key + " does not match any OpenReacParameter. Skipping...");
                         continue;
                 }
-                openReacParameters.addAlgorithmParam(algoParam, inputParams.getProperty(key));
+                openReacParameters.addAlgorithmParam(Collections.singletonList(algoParam));
             }
         }
         return openReacParameters;
