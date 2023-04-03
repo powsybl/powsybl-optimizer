@@ -31,11 +31,12 @@ public final class OpenReacTest {
         Network network = IeeeCdfNetworkFactory.create118();
 
         OpenReacParameters parameters = new OpenReacParameters();
-        parameters.addAlgorithmParam(List.of(OpenReacObjective.SPECIFIC_VOLTAGE_PROFILE));
-        parameters.addVariableTwoWindingsTransformers(network.getTwoWindingsTransformerStream().limit(1).map(
-                TwoWindingsTransformer::getId).collect(Collectors.toList()));
-        parameters.addConstantQGerenartors(network.getGeneratorStream().limit(1).map(Generator::getId).collect(Collectors.toList()));
-        parameters.addVariableShuntCompensators(network.getShuntCompensatorStream().limit(1).map(ShuntCompensator::getId).collect(Collectors.toList()));
+//        parameters.addAlgorithmParam(List.of(new OptimisationVoltageRatio(1), OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_PROFILE))
+        parameters.addRatioVoltageObjective(1)
+                .addVariableTwoWindingsTransformers(network.getTwoWindingsTransformerStream().limit(1).map(
+                        TwoWindingsTransformer::getId).collect(Collectors.toList()))
+                .addConstantQGerenartors(network.getGeneratorStream().limit(1).map(Generator::getId).collect(Collectors.toList()))
+                .addVariableShuntCompensators(network.getShuntCompensatorStream().limit(1).map(ShuntCompensator::getId).collect(Collectors.toList()));
 
         OpenReacResult openReacResult = OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), parameters);
 
