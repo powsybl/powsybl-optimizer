@@ -12,9 +12,12 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.ShuntCompensator;
 import com.powsybl.iidm.network.TwoWindingsTransformer;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
+import com.powsybl.openreac.parameters.input.algo.OpenReacObjective;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput;
 
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -23,16 +26,16 @@ import java.util.stream.Collectors;
  */
 public final class OpenReacTest {
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
 
         Network network = IeeeCdfNetworkFactory.create118();
 
         OpenReacParameters parameters = new OpenReacParameters();
-        parameters.addVariableTwoWindingsTransformers(network.getTwoWindingsTransformerStream().map(TwoWindingsTransformer::getId).limit(10).collect(Collectors.toList()));
-        parameters.addTargetQGenerators(network.getGeneratorStream().map(Generator::getId).limit(3).collect(Collectors.toList()));
-        parameters.addVariableShuntCompensators(network.getShuntCompensatorStream().map(ShuntCompensator::getId).limit(10).collect(Collectors.toList()));
-
-        // parameters.addSpecificVoltageLimitDelta("vl", 10, 20);
+        parameters.addAlgorithmParam(List.of(OpenReacObjective.SPECIFIC_VOLTAGE_PROFILE));
+        parameters.addVariableTwoWindingsTransformers(network.getTwoWindingsTransformerStream().limit(1).map(
+                TwoWindingsTransformer::getId).collect(Collectors.toList()));
+        parameters.addConstantQGerenartors(network.getGeneratorStream().limit(1).map(Generator::getId).collect(Collectors.toList()));
+        parameters.addVariableShuntCompensators(network.getShuntCompensatorStream().limit(1).map(ShuntCompensator::getId).collect(Collectors.toList()));
 
         OpenReacResult openReacResult = OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), parameters);
 
@@ -40,7 +43,11 @@ public final class OpenReacTest {
         for (ReactiveSlackOutput.ReactiveSlack investment : openReacResult.getReactiveSlacks()) {
             System.out.println("investment : " + investment.busId + " " + investment.substationId + " " + investment.slack);
         }
-        for (Map.Entry<String, String> entry : openReacResult.getIndicators().entrySet()) {
+        List<Map.Entry<String, String>> sortedEntries = openReacResult.getIndicators().entrySet()
+                                                            .stream()
+                                                            .sorted(Comparator.comparing(Map.Entry::getKey))
+                                                            .collect(Collectors.toList());
+        for (Map.Entry<String, String> entry : sortedEntries) {
             System.out.println(entry.getKey() + ": " + entry.getValue());
         }
     }
