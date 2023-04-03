@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package com.powsybl.openreac.parameters.input;
+package com.powsybl.openreac.parameters.input.algo;
 
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.ampl.executor.AmplInputFile;
@@ -13,7 +13,7 @@ import com.powsybl.commons.util.StringToIntMapper;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
+import java.util.List;
 
 /**
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
@@ -21,24 +21,10 @@ import java.util.Map;
 public class AlgorithmInput implements AmplInputFile {
     private static final String ALGORITHM_INPUT_FILE = "param_algo.txt";
 
-    public enum OpenReacAlgoParam {
-        TEST_PARAM("test-ampl-parameter");
+    private final List<OpenReacAlgoParam> algoParameters;
 
-        private final String name;
-
-        OpenReacAlgoParam(String name) {
-            this.name = name;
-        }
-
-        String getName() {
-            return this.name;
-        }
-    }
-
-    private final Map<OpenReacAlgoParam, String> paramsMap;
-
-    public AlgorithmInput(Map<OpenReacAlgoParam, String> paramsMap) {
-        this.paramsMap = paramsMap;
+    public AlgorithmInput(List<OpenReacAlgoParam> algoParameters) {
+        this.algoParameters = algoParameters;
     }
 
     @Override
@@ -49,8 +35,8 @@ public class AlgorithmInput implements AmplInputFile {
     @Override
     public InputStream getParameterFileAsStream(StringToIntMapper<AmplSubset> stringToIntMapper) {
         StringBuilder dataBuilder = new StringBuilder();
-        for (Map.Entry<OpenReacAlgoParam, String> entry : paramsMap.entrySet()) {
-            dataBuilder.append(entry.getKey().getName()).append(" ").append(entry.getValue()).append("\n");
+        for (OpenReacAlgoParam param : algoParameters) {
+            dataBuilder.append(param.getName()).append(" ").append(param.getParamValue()).append("\n");
         }
         //add new line at the end of the file !
         dataBuilder.append("\n");
