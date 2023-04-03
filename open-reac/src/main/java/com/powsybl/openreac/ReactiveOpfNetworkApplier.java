@@ -16,13 +16,17 @@ import com.powsybl.iidm.network.*;
  */
 public class ReactiveOpfNetworkApplier extends DefaultAmplNetworkUpdater {
 
+    private final StringToIntMapper<AmplSubset> networkMapper;
+
     public ReactiveOpfNetworkApplier(StringToIntMapper<AmplSubset> networkMapper) {
         super(networkMapper);
+        this.networkMapper = networkMapper;
     }
 
     @Override
     public void updateNetworkShunt(ShuntCompensator sc, int busNum, double q, double b, int sections) {
         findSectionCount(sc, b);
+        this.busConnection(sc.getTerminal(), busNum, networkMapper);
     }
 
     /**
