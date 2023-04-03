@@ -97,6 +97,14 @@ public class OpenReacParameters {
         return this;
     }
 
+    /**
+     * Will use {@link OpenReacOptimisationObjective#BETWEEN_HIGH_AND_LOW_VOLTAGE_PROFILE} and {@link OptimisationVoltageRatio}.
+     * DO NOT CALL THIS MULTIPLE TIMES.
+     */
+    public OpenReacParameters addRatioVoltageObjective(double ratio) {
+        return addAlgorithmParam(List.of(new OptimisationVoltageRatio(ratio), OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_PROFILE));
+    }
+
     public List<String> getVariableShuntCompensators() {
         return variableShuntCompensators;
     }
