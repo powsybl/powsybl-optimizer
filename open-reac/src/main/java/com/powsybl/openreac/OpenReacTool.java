@@ -7,14 +7,24 @@
 package com.powsybl.openreac;
 
 import com.google.auto.service.AutoService;
+import com.powsybl.ampl.converter.AmplExporter;
 import com.powsybl.commons.PowsyblException;
+import com.powsybl.commons.datasource.DataSource;
+import com.powsybl.commons.datasource.FileDataSource;
 import com.powsybl.iidm.network.Exporter;
 import com.powsybl.iidm.network.ImportConfig;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.tools.ConversionToolUtils;
+import com.powsybl.loadflow.LoadFlow;
+import com.powsybl.loadflow.LoadFlowParameters;
+import com.powsybl.loadflow.LoadFlowResult;
+import com.powsybl.openreac.exceptions.InvalidParametersException;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
-import com.powsybl.openreac.parameters.input.algo.OpenReacObjective;
+import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
+import com.powsybl.openreac.parameters.input.algo.OptimisationVoltageRatio;
+import com.powsybl.openreac.parameters.output.OpenReacResult;
+import com.powsybl.openreac.parameters.output.ReactiveSlackOutput;
 import com.powsybl.tools.Command;
 import com.powsybl.tools.Tool;
 import com.powsybl.tools.ToolRunningContext;
@@ -26,9 +36,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.powsybl.iidm.network.tools.ConversionToolUtils.*;
 
@@ -66,36 +75,36 @@ public class OpenReacTool implements Tool {
             public Options getOptions() {
                 Options options = new Options();
                 options.addOption(Option.builder()
-                                        .longOpt(CASE_FILE)
-                                        .desc("the case path")
-                                        .hasArg()
-                                        .argName("FILE")
-                                        .required()
-                                        .build());
+                        .longOpt(CASE_FILE)
+                        .desc("the case path")
+                        .hasArg()
+                        .argName("FILE")
+                        .required()
+                        .build());
                 options.addOption(Option.builder()
-                                        .longOpt(OUTPUT_CASE_FORMAT)
-                                        .desc("modified network output format " + Exporter.getFormats())
-                                        .hasArg()
-                                        .argName("CASEFORMAT")
-                                        .required()
-                                        .build());
+                        .longOpt(OUTPUT_CASE_FORMAT)
+                        .desc("modified network output format " + Exporter.getFormats())
+                        .hasArg()
+                        .argName("CASEFORMAT")
+                        .required()
+                        .build());
                 options.addOption(Option.builder()
-                                        .longOpt(OUTPUT_CASE_FILE)
-                                        .desc("modified network base name")
-                                        .hasArg()
-                                        .argName("FILE")
-                                        .required()
-                                        .build());
+                        .longOpt(OUTPUT_CASE_FILE)
+                        .desc("modified network base name")
+                        .hasArg()
+                        .argName("FILE")
+                        .required()
+                        .build());
                 options.addOption(createImportParametersFileOption());
                 options.addOption(createImportParameterOption());
                 options.addOption(createExportParametersFileOption());
                 options.addOption(createExportParameterOption());
                 options.addOption(Option.builder()
-                                        .longOpt(OPEN_REAC_PARAMS)
-                                        .desc("the OpenReac configuation file")
-                                        .hasArg()
-                                        .argName("OPEN_REAC_PARAM_FILE")
-                                        .build());
+                        .longOpt(OPEN_REAC_PARAMS)
+                        .desc("the OpenReac configuation file")
+                        .hasArg()
+                        .argName("OPEN_REAC_PARAM_FILE")
+                        .build());
                 return options;
             }
 
@@ -111,7 +120,9 @@ public class OpenReacTool implements Tool {
         // getting parameters
         Path inputCaseFile = context.getFileSystem().getPath(commandLine.getOptionValue(CASE_FILE));
         Path outputCaseFile = context.getFileSystem().getPath(commandLine.getOptionValue(OUTPUT_CASE_FILE));
-
+        context.getFileSystem().getPath("./export/before_open_reac").toFile().mkdirs();
+        context.getFileSystem().getPath("./export/after_open_reac").toFile().mkdirs();
+        context.getFileSystem().getPath("./export/after_loadflow").toFile().mkdirs();
         context.getOutputStream().println("Parsing properties...");
         Properties inputParams = readProperties(commandLine, ConversionToolUtils.OptionType.IMPORT, context);
         OpenReacParameters openReacParameters = createOpenReacParameters(commandLine, context);
@@ -119,11 +130,28 @@ public class OpenReacTool implements Tool {
         context.getOutputStream().println("Loading network '" + inputCaseFile + "'...");
         Network network = loadingNetwork(context, inputCaseFile, inputParams);
 
+        context.getOutputStream().println("Exporting network with ampl.");
+        DataSource networkExportDataSource = new FileDataSource(context.getFileSystem().getPath("./export/before_open_reac"), "ampl");
+        new AmplExporter().export(network, null, networkExportDataSource);
+
         itoolsOpenReac(context, network, openReacParameters);
+
+        context.getOutputStream().println("Exporting network with ampl.");
+        networkExportDataSource = new FileDataSource(context.getFileSystem().getPath("./export/after_open_reac"), "ampl");
+        new AmplExporter().export(network, null, networkExportDataSource);
 
         context.getOutputStream().println("Exporting network '" + outputCaseFile + "' with the results...");
         exportNetwork(commandLine, context, outputCaseFile, network);
-        context.getOutputStream().println("OpenReac ran successfully.");
+
+        context.getOutputStream().println("Running a loadflow...");
+        LoadFlowResult result = LoadFlow.run(network, context.getShortTimeExecutionComputationManager(), LoadFlowParameters.load());
+
+        context.getOutputStream().println("Loadflow done.");
+
+        context.getOutputStream().println("Exporting network with ampl.");
+        networkExportDataSource = new FileDataSource(context.getFileSystem().getPath("./export/after_loadflow"), "ampl");
+        new AmplExporter().export(network, null, networkExportDataSource);
+        context.getOutputStream().println("All good. Exiting...");
     }
 
     private OpenReacParameters createOpenReacParameters(CommandLine line,
@@ -143,24 +171,41 @@ public class OpenReacTool implements Tool {
 
         OpenReacParameters openReacParameters = new OpenReacParameters();
         String inputFileListSeparator = ";";
-        String[] shuntsList = inputParams.getProperty(SHUNTS_LIST, "").split(inputFileListSeparator);
-        openReacParameters.addVariableShuntCompensators(List.of(shuntsList));
-        String[] generatorsList = inputParams.getProperty(SHUNTS_LIST, "").split(inputFileListSeparator);
-        openReacParameters.addConstantQGerenartors(List.of(generatorsList));
-        String[] transformerList = inputParams.getProperty(SHUNTS_LIST, "").split(inputFileListSeparator);
-        openReacParameters.addVariableTwoWindingsTransformers(List.of(transformerList));
+        if (inputParams.getProperty(SHUNTS_LIST) != null) {
+            String[] shuntsList = inputParams.getProperty(SHUNTS_LIST).split(inputFileListSeparator);
+            openReacParameters.addVariableShuntCompensators(List.of(shuntsList));
+        }
+        if (inputParams.getProperty(GENERATORS_LIST) != null) {
+            String[] generatorsList = inputParams.getProperty(GENERATORS_LIST).split(inputFileListSeparator);
+            openReacParameters.addConstantQGerenartors(List.of(generatorsList));
+        }
+        if (inputParams.getProperty(TRANSFORMER_LIST) != null) {
+            String[] transformerList = inputParams.getProperty(TRANSFORMER_LIST).split(inputFileListSeparator);
+            openReacParameters.addVariableTwoWindingsTransformers(List.of(transformerList));
+        }
 
         for (String key : inputParams.stringPropertyNames()) {
             if (!key.equals(SHUNTS_LIST) && !key.equals(GENERATORS_LIST) && !key.equals(TRANSFORMER_LIST)) {
                 OpenReacAlgoParam algoParam;
                 switch (key) {
-                    case "foo":
-                        algoParam = OpenReacObjective.MIN_GENERATION;
+                    case "obj_min_gen":
+                        algoParam = OpenReacOptimisationObjective.MIN_GENERATION;
+                        break;
+                    case "obj_target_ratio":
+                        String ratioStr = inputParams.getProperty(key, null);
+                        if (ratioStr == null) {
+                            throw new InvalidParametersException("obj_target_ratio must have a value indicating the ratio to nominal voltage level to target.");
+                        }
+                        openReacParameters.addAlgorithmParam(List.of(new OptimisationVoltageRatio(Double.parseDouble(ratioStr))));
+                        algoParam = OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_PROFILE;
+                        break;
+                    case "obj_provided_target_v":
+                        algoParam = OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE;
                         break;
                     default:
                         context.getOutputStream()
-                               .println(
-                                       "Algorithm parameter " + key + " does not match any OpenReacParameter. Skipping...");
+                                .println(
+                                        "Algorithm parameter " + key + " does not match any OpenReacParameter. Skipping...");
                         continue;
                 }
                 openReacParameters.addAlgorithmParam(Collections.singletonList(algoParam));
@@ -172,8 +217,19 @@ public class OpenReacTool implements Tool {
     private static void itoolsOpenReac(ToolRunningContext context, Network network,
                                        OpenReacParameters openReacParameters) {
         context.getOutputStream().println("Running OpenReac on the network...");
-        OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), openReacParameters);
+        OpenReacResult results = OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), openReacParameters);
+        List<Map.Entry<String, String>> sortedIndicators = results.getIndicators().entrySet().stream().sorted(Comparator.comparing(Map.Entry::getKey)).collect(Collectors.toList());
         context.getOutputStream().println("OpenReac optimisation done.");
+
+        context.getOutputStream().println("OpenReac status:" + results.getStatus().name());
+        context.getOutputStream().println("OpenReac indicators: ");
+        for (Map.Entry<String, String> indicator : sortedIndicators) {
+            context.getOutputStream().println(indicator.getKey() + " " + indicator.getValue());
+        }
+        context.getOutputStream().println("OpenReac reactive slacks: ");
+        for (ReactiveSlackOutput.ReactiveSlack investment : results.getReactiveSlacks()) {
+            System.out.println("Investment : " + investment.busId + " " + investment.voltageLevelId + " " + investment.slack);
+        }
     }
 
     private static void exportNetwork(CommandLine commandLine, ToolRunningContext context, Path outputCaseFile,

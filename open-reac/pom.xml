@@ -92,5 +92,10 @@
             <artifactId>powsybl-tools</artifactId>
             <version>5.2.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-loadflow-api</artifactId>
+            <version>5.2.0</version>
+        </dependency>
     </dependencies>
 </project>
