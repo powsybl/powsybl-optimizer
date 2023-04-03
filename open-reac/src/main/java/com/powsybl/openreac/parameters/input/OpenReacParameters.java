@@ -48,7 +48,7 @@ public class OpenReacParameters extends AbstractExtendable<OpenReacParameters> {
      * List of network's shunts ID
      */
     private final List<String> variableShuntCompensators;
-    private final List<String> targetQGenerators;
+    private final List<String> constantQGerenartors;
     private final List<String> variableTwoWindingsTransformers;
     private final Map<AlgorithmInput.OpenReacAlgoParam, String> algoParamsMap;
 
@@ -95,8 +95,8 @@ public class OpenReacParameters extends AbstractExtendable<OpenReacParameters> {
      * Fix the reactance of the given generators during the OpenReac solve.
      * The reactance is constant to the reactance stored in the network.
      */
-    public OpenReacParameters addTargetQGenerators(List<String> generatorsIds) {
-        this.targetQGenerators.addAll(generatorsIds);
+    public OpenReacParameters addConstantQGerenartors(List<String> generatorsIds) {
+        this.constantQGerenartors.addAll(generatorsIds);
         return this;
     }
 
@@ -121,8 +121,8 @@ public class OpenReacParameters extends AbstractExtendable<OpenReacParameters> {
         return specificVoltageLimitDelta;
     }
 
-    public List<String> getTargetQGenerators() {
-        return targetQGenerators;
+    public List<String> getConstantQGenerators() {
+        return constantQGerenartors;
     }
 
     public List<String> getVariableTwoWindingsTransformers() {
@@ -144,7 +144,7 @@ public class OpenReacParameters extends AbstractExtendable<OpenReacParameters> {
                 throw new InvalidParametersException(shuntId + " is not a valid Shunt ID in the network: " + network.getNameOrId());
             }
         }
-        for (String genId : getTargetQGenerators()) {
+        for (String genId : getConstantQGenerators()) {
             if (network.getGenerator(genId) == null) {
                 throw new InvalidParametersException(genId + " is not a valid generator ID in the network: " + network.getNameOrId());
             }

@@ -8,7 +8,7 @@ package com.powsybl.openreac.parameters.output;
 
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.commons.util.StringToIntMapper;
-import com.powsybl.openreac.parameters.IncompatibleModelError;
+import com.powsybl.openreac.exceptions.IncompatibleModelError;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

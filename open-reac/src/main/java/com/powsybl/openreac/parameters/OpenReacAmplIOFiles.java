@@ -11,6 +11,7 @@ import com.powsybl.ampl.executor.AmplOutputFile;
 import com.powsybl.ampl.executor.AmplParameters;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.openreac.parameters.input.*;
+import com.powsybl.openreac.parameters.input.algo.AlgorithmInput;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput;
 
@@ -29,7 +30,7 @@ import java.util.List;
  */
 public class OpenReacAmplIOFiles implements AmplParameters {
 
-    private final TargetQGenerators targetQGenerators;
+    private final ConstantQGerenartors constantQGerenartors;
     private final VariableShuntCompensators variableShuntCompensators;
     private final VariableTwoWindingsTransformers variableTwoWindingsTransformers;
     private final AlgorithmInput algorithmParams;
@@ -38,7 +39,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
 
     public OpenReacAmplIOFiles(OpenReacParameters params, Network network) {
         //inputs
-        this.targetQGenerators = new TargetQGenerators(params.getTargetQGenerators());
+        this.constantQGerenartors = new ConstantQGerenartors(params.getConstantQGenerators());
         this.variableShuntCompensators = new VariableShuntCompensators(params.getVariableShuntCompensators());
         this.variableTwoWindingsTransformers = new VariableTwoWindingsTransformers(params.getVariableTwoWindingsTransformers());
         this.algorithmParams = new AlgorithmInput(params.getAlgorithmParams());
@@ -54,7 +55,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
 
     @Override
     public Collection<AmplInputFile> getInputParameters() {
-        return List.of(targetQGenerators, variableShuntCompensators, variableTwoWindingsTransformers,
+        return List.of(constantQGerenartors, variableShuntCompensators, variableTwoWindingsTransformers,
                 algorithmParams, voltageLimitsOverride);
     }
 

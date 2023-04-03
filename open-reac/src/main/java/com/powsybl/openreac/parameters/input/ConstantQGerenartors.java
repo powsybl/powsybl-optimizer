@@ -16,10 +16,10 @@ import java.util.List;
  * List of generators that are not regulating voltage.
  * timestep num bus id
  */
-public class TargetQGenerators extends AbstractElementsInput {
+public class ConstantQGerenartors extends AbstractElementsInput {
     public static final String PARAM_GENERATOR_FILE_NAME = "param_generators_reactive.txt";
 
-    public TargetQGenerators(List<String> elementIds) {
+    public ConstantQGerenartors(List<String> elementIds) {
         super(elementIds);
     }
 
