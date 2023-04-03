@@ -10,7 +10,8 @@ package com.powsybl.openreac.parameters.input.algo;
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
 public interface OpenReacAlgoParam {
-        String getName();
-        String getParamValue();
+    String getName();
+
+    String getParamValue();
 
 }

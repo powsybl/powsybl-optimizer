@@ -11,7 +11,7 @@ package com.powsybl.openreac.parameters.input.algo;
  * to define the voltage ratio relative to nominal voltage, which OpenReac should converge to.
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
-public class OptimisationVoltageRatio implements OpenReacAlgoParam{
+public class OptimisationVoltageRatio implements OpenReacAlgoParam {
     private static final String RATIO_OBJECTIVE_VOLTAGE_KEY = "ratio_voltage_target";
     private final double ratio;
 

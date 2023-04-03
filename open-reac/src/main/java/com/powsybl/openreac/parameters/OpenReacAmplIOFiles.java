@@ -61,7 +61,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
 
     @Override
     public Collection<AmplOutputFile> getOutputParameters(boolean isConvergenceOk) {
-        if(isConvergenceOk){
+        if (isConvergenceOk) {
             return List.of(reactiveSlackOutput);
         }
         return List.of();
@@ -69,6 +69,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
 
     /**
      * Will check that every output file parsing went well.
+     *
      * @return <code>true</code> if ALL ouput file parsing didn't throw any IOExceptions
      */
     public boolean checkErrors() {

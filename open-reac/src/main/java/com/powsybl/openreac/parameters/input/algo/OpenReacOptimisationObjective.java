@@ -28,6 +28,7 @@ public enum OpenReacOptimisationObjective implements OpenReacAlgoParam {
     public String getName() {
         return this.name;
     }
+
     public String getParamValue() {
         return Integer.toString(amplKey);
     }

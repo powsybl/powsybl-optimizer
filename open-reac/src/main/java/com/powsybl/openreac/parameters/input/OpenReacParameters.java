@@ -22,6 +22,7 @@ import java.util.Map;
 
 /**
  * This class stores all inputs parameters specific to the OpenReac optimizer.
+ *
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
 public class OpenReacParameters {
@@ -66,9 +67,10 @@ public class OpenReacParameters {
 
     /**
      * Override voltage level limits in the network. This will NOT modify the network object.
+     *
      * @param specificVoltageLimits map containing keys : VoltageLevelId, and values are the new lower and upper limits
      */
-    public OpenReacParameters addSpecificVoltageLimit(Map<String,Pair<Double,Double>> specificVoltageLimits) {
+    public OpenReacParameters addSpecificVoltageLimit(Map<String, Pair<Double, Double>> specificVoltageLimits) {
         this.specificVoltageLimits.putAll(specificVoltageLimits);
         return this;
     }
@@ -117,6 +119,7 @@ public class OpenReacParameters {
 
     /**
      * Do some checks on the parameters given, such as provided IDs must correspond to the given network element
+     *
      * @param network Network on which ID are going to be infered
      * @throws InvalidParametersException
      */
@@ -139,7 +142,7 @@ public class OpenReacParameters {
         checkDuplicate(true, OpenReacOptimisationObjective.class);
         checkDuplicate(false, OptimisationVoltageRatio.class);
         if (isParameterPresent(OptimisationVoltageRatio.class)) {
-            if(getAlgorithmParams().stream().noneMatch(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_PROFILE::equals)){
+            if (getAlgorithmParams().stream().noneMatch(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_PROFILE::equals)) {
                 throw new InvalidParametersException("Parameter 'OptimisationVoltageRatio' must be used with 'BETWEEN_HIGH_AND_LOW_VOLTAGE_PROFILE'");
             }
         }
@@ -149,20 +152,21 @@ public class OpenReacParameters {
     /**
      * @return <code>true</code> if clazz is present in algo parameters.
      */
-    private boolean isParameterPresent(Class<? extends OpenReacAlgoParam> clazz){
+    private boolean isParameterPresent(Class<? extends OpenReacAlgoParam> clazz) {
         return getAlgorithmParams().stream().anyMatch(clazz::isInstance);
     }
 
     /**
      * Check that the given parameter is unique in the parameter list.
+     *
      * @param shouldThrow when it finds duplicates it will throw an exception if <code>true</code>, else it will only log a warning.
      */
-    private void checkDuplicate(boolean shouldThrow, Class<? extends OpenReacAlgoParam> clazz){
+    private void checkDuplicate(boolean shouldThrow, Class<? extends OpenReacAlgoParam> clazz) {
         String duplicateMessage = "Using multiple " + clazz + " parameters. It is undefined ratio will be used by OpenReac.";
-        if(getAlgorithmParams().stream().filter(clazz::isInstance).count() > 1){
-            if(shouldThrow){
+        if (getAlgorithmParams().stream().filter(clazz::isInstance).count() > 1) {
+            if (shouldThrow) {
                 throw new InvalidParametersException(duplicateMessage);
-            }else{
+            } else {
                 LOGGER.warn(duplicateMessage);
             }
         }
