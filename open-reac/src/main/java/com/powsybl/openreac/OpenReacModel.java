@@ -96,7 +96,7 @@ public class OpenReacModel implements AmplModel {
     }
 
     @Override
-    public AmplNetworkUpdaterFactory getNetworkApplierFactory() {
+    public AmplNetworkUpdaterFactory getNetworkUpdaterFactory() {
         return (mapper, network) -> new ReactiveOpfNetworkApplier(mapper);
     }
 
