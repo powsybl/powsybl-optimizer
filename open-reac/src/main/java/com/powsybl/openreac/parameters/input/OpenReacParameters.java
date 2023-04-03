@@ -6,27 +6,18 @@
  */
 package com.powsybl.openreac.parameters.input;
 
-import com.powsybl.commons.config.PlatformConfig;
-import com.powsybl.commons.extensions.AbstractExtendable;
 import com.powsybl.iidm.network.Network;
-import com.powsybl.openreac.parameters.InvalidParametersException;
+import com.powsybl.openreac.exceptions.InvalidParametersException;
+import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
 
 /**
+ * This class stores all inputs parameters specific to the OpenReac optimizer.
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
- * This class stores all inputs parameters specific to the OpenReac optimizer, and allow them to be loaded from yaml.
- * <p>
- * TODO read from yaml shunts, transfo, generators, specific voltages ?
  */
-public class OpenReacParameters extends AbstractExtendable<OpenReacParameters> {
-    private static final String MODULE_CONFIG_NAME = "open-reac";
-
-    private static final String MODIFIABLE_SHUNT_LIST = "modifiable-shunt-list";
-
-    // VERSION 1.0 : No reading from yaml but framework is here
-    public static final String VERSION = "1.0";
+public class OpenReacParameters {
 
     /**
      * This map allows to change the limits of some voltage levels.
@@ -43,36 +34,21 @@ public class OpenReacParameters extends AbstractExtendable<OpenReacParameters> {
      *     </li>
      * </ul>
      */
-    private final Map<String, Pair<Double, Double>> specificVoltageLimitDelta;
+    private final Map<String, Pair<Double, Double>> specificVoltageLimits;
     /**
      * List of network's shunts ID
      */
     private final List<String> variableShuntCompensators;
     private final List<String> constantQGerenartors;
     private final List<String> variableTwoWindingsTransformers;
-    private final Map<AlgorithmInput.OpenReacAlgoParam, String> algoParamsMap;
-
-    public static OpenReacParameters load() {
-        return load(PlatformConfig.defaultConfig());
-    }
-
-    private static OpenReacParameters load(PlatformConfig config) {
-        OpenReacParameters params = new OpenReacParameters();
-        return load(params, config);
-    }
-
-    private static OpenReacParameters load(OpenReacParameters params, PlatformConfig platformConfig) {
-        platformConfig.getOptionalModuleConfig(MODULE_CONFIG_NAME).ifPresent(config -> {
-        });
-        return params;
-    }
+    private final List<OpenReacAlgoParam> algoParamsList;
 
     public OpenReacParameters() {
-        this.variableShuntCompensators = new LinkedList<>();
-        this.targetQGenerators = new LinkedList<>();
-        this.variableTwoWindingsTransformers = new LinkedList<>();
-        this.specificVoltageLimitDelta = new HashMap<>();
-        this.algoParamsMap = new HashMap<>();
+        this.variableShuntCompensators = new ArrayList<>();
+        this.constantQGerenartors = new ArrayList<>();
+        this.variableTwoWindingsTransformers = new ArrayList<>();
+        this.specificVoltageLimits = new HashMap<>();
+        this.algoParamsList = new ArrayList<>();
     }
 
     public OpenReacParameters addVariableShuntCompensators(List<String> shuntsIds) {
@@ -81,13 +57,11 @@ public class OpenReacParameters extends AbstractExtendable<OpenReacParameters> {
     }
 
     /**
-     * Override voltage level limits in the network. This will modify the network when OpenReac is called.
-     *
-     * @param lowDeltaLimit the relative delta value for low voltage limit.
-     * @param highDeltaLimit the relative delta value for high voltage limit.
+     * Override voltage level limits in the network. This will NOT modify the network object.
+     * @param specificVoltageLimits map containing keys : VoltageLevelId, and values are the new lower and upper limits
      */
-    public OpenReacParameters addSpecificVoltageLimitDelta(String voltageLevelId, double lowDeltaLimit, double highDeltaLimit) {
-        this.specificVoltageLimitDelta.put(voltageLevelId, Pair.of(lowDeltaLimit, highDeltaLimit));
+    public OpenReacParameters addSpecificVoltageLimit(Map<String,Pair<Double,Double>> specificVoltageLimits) {
+        this.specificVoltageLimits.putAll(specificVoltageLimits);
         return this;
     }
 
@@ -108,8 +82,8 @@ public class OpenReacParameters extends AbstractExtendable<OpenReacParameters> {
         return this;
     }
 
-    public OpenReacParameters addAlgorithmParam(AlgorithmInput.OpenReacAlgoParam param, String value) {
-        this.algoParamsMap.put(param, value);
+    public OpenReacParameters addAlgorithmParam(List<OpenReacAlgoParam> params) {
+        this.algoParamsList.addAll(params);
         return this;
     }
 
@@ -118,7 +92,7 @@ public class OpenReacParameters extends AbstractExtendable<OpenReacParameters> {
     }
 
     public Map<String, Pair<Double, Double>> getSpecificVoltageDelta() {
-        return specificVoltageLimitDelta;
+        return specificVoltageLimits;
     }
 
     public List<String> getConstantQGenerators() {
@@ -129,8 +103,8 @@ public class OpenReacParameters extends AbstractExtendable<OpenReacParameters> {
         return variableTwoWindingsTransformers;
     }
 
-    public Map<AlgorithmInput.OpenReacAlgoParam, String> getAlgorithmParams() {
-        return algoParamsMap;
+    public List<OpenReacAlgoParam> getAlgorithmParams() {
+        return algoParamsList;
     }
 
     /**
