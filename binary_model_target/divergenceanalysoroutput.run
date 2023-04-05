@@ -1,0 +1,153 @@
+###############################################################################
+#
+# Copyright (c) 2022,2023 RTE (http://www.rte-france.com), Coreso and TSCNet Services 
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+###############################################################################
+
+###############################################################################
+# Divergence analysis
+# Author : Jean Maeght 2022 2023
+# Author : Pierre Arvy 2023
+###############################################################################
+
+########################################################################################
+#                                                                                      #
+#                        Printing some information on variables                        #
+#                                                                                      #
+########################################################################################
+
+param abs_mean_s1 default 0;
+param abs_mean_sigma1 default 0;
+param abs_mean_sigma2 default 0;
+param abs_mean_sigma3 default 0;
+param abs_mean_sigma4 default 0;
+param abs_mean_sigma5 default 0;
+param abs_mean_sigma6 default 0;
+param abs_mean_sigma7 default 0;
+param abs_mean_sigma8 default 0;
+
+if final_status == "OK" then {
+  
+  # Info on ...
+
+  # ... voltage
+  printf "[INFO] Maximal V computed is %.3f\n",
+      (max {n in BUSCC} V[n]);
+  printf "[INFO] Minimal V computed is %.3f\n",
+      (min {n in BUSCC} V[n]);
+
+  # ... angles
+  printf "[INFO] Maximal theta computed is %.3f\n",
+      (max {n in BUSCC} teta[n]);
+  printf "[INFO] Minimal theta computed is %.3f\n",
+      (min {n in BUSCC} teta[n]);
+
+  # ... s1 slack variable
+  printf "\n[INFO] Maximal |s1| computed : %.3f\n", (max {p in BUSCC_PV} abs(s1[p]));
+  let abs_mean_s1 := (sum {p in BUSCC_PV} abs(s1[p])) / card(BUSCC_PV);
+  printf "[INFO] Mean abs value of s1 coordinates : %.3f\n", abs_mean_s1;
+  printf "[INFO] Standard deviation abs of s1 coordinates : %.3f\n", 
+        ((sum {p in BUSCC_PV} (abs(s1[p]) - abs_mean_s1)**2) / card(BUSCC_PV));
+
+  # ... sigma1 slack variable
+  printf "\n[INFO] Maximal |sigma1| computed : %.3f\n",
+      (max {(qq,m,n) in BRANCHCC} abs(sigma1[qq,m,n]));
+  let abs_mean_sigma1 := (sum {(qq,m,n) in BRANCHCC} abs(sigma1[qq,m,n])) / card(BRANCHCC);
+  printf "[INFO] Mean abs value of sigma1 coordinates : %.3f\n", abs_mean_sigma1;
+  printf "[INFO] Standard deviation abs value of sigma1 coordinates : %.3f\n", 
+        ((sum {(qq,m,n) in BRANCHCC} (abs(sigma1[qq,m,n]) - abs_mean_sigma1)**2) / card(BRANCHCC));
+
+  # ... sigma2 slack variable
+  printf "\n[INFO] Maximal |sigma2| computed : %.3f\n",
+      (max {(qq,m,n) in BRANCHCC} abs(sigma2[qq,m,n]));
+  let abs_mean_sigma2 := (sum {(qq,m,n) in BRANCHCC} abs(sigma2[qq,m,n])) / card(BRANCHCC);
+  printf "[INFO] Mean abs value of sigma2 coordinates : %.3f\n", abs_mean_sigma2;
+  printf "[INFO] Standard deviation abs value of sigma2 coordinates : %.3f\n", 
+        ((sum {(qq,m,n) in BRANCHCC} (abs(sigma2[qq,m,n]) - abs_mean_sigma2)**2) / card(BRANCHCC));
+
+  # ... sigma3 slack variable
+  printf "\n[INFO] Maximal |sigma3| computed : %.3f\n",
+      (max {(qq,m,n) in BRANCHCC} abs(sigma3[qq,m,n]));
+  let abs_mean_sigma3 := (sum {(qq,m,n) in BRANCHCC} abs(sigma3[qq,m,n])) / card(BRANCHCC);
+  printf "[INFO] Mean abs value of sigma3 coordinates : %.3f\n", abs_mean_sigma3;
+  printf "[INFO] Standard deviation abs value of sigma3 coordinates : %.3f\n", 
+        ((sum {(qq,m,n) in BRANCHCC} (abs(sigma3[qq,m,n]) - abs_mean_sigma3)**2) / card(BRANCHCC));
+
+  # ... sigma4 slack variable
+  printf "\n[INFO] Maximal |sigma4| computed : %.3f\n",
+      (max {(qq,m,n) in BRANCHCC} abs(sigma4[qq,m,n]));
+  let abs_mean_sigma4 := (sum {(qq,m,n) in BRANCHCC} abs(sigma4[qq,m,n])) / card(BRANCHCC);
+  printf "[INFO] Mean abs value of sigma4 coordinates : %.3f\n", abs_mean_sigma4;
+  printf "[INFO] Standard deviation abs value of sigma4 coordinates : %.3f\n", 
+        ((sum {(qq,m,n) in BRANCHCC} (abs(sigma4[qq,m,n]) - abs_mean_sigma4)**2) / card(BRANCHCC));
+
+  # ... sigma5 slack variable
+  printf "\n[INFO] Maximal |sigma5| computed : %.3f\n",
+      (max {(qq,m,n) in BRANCHCC} abs(sigma5[qq,m,n]));
+  let abs_mean_sigma5 := (sum {(qq,m,n) in BRANCHCC} abs(sigma5[qq,m,n])) / card(BRANCHCC);
+  printf "[INFO] Mean abs value of sigma5 coordinates : %.3f\n", abs_mean_sigma5;
+  printf "[INFO] Standard deviation abs value of sigma5 coordinates : %.3f\n", 
+        ((sum {(qq,m,n) in BRANCHCC} (abs(sigma5[qq,m,n]) - abs_mean_sigma5)**2) / card(BRANCHCC));
+
+  # ... sigma6 slack variable
+  printf "\n[INFO] Maximal |sigma6| computed : %.3f\n",
+      (max {(qq,m,n) in BRANCHCC} abs(sigma6[qq,m,n]));
+  let abs_mean_sigma6 := (sum {(qq,m,n) in BRANCHCC} abs(sigma6[qq,m,n])) / card(BRANCHCC);
+  printf "[INFO] Mean abs value of sigma6 coordinates : %.3f\n", abs_mean_sigma6;
+  printf "[INFO] Standard deviation abs value of sigma6 coordinates : %.3f\n", 
+        ((sum {(qq,m,n) in BRANCHCC} (abs(sigma6[qq,m,n]) - abs_mean_sigma6)**2) / card(BRANCHCC));
+
+  # ... sigma7 slack variable
+  printf "\n[INFO] Maximal |sigma7| computed : %.3f\n",
+      (max {(qq,m,n) in BRANCHCC} abs(sigma7[qq,m,n]));
+  let abs_mean_sigma7 := (sum {(qq,m,n) in BRANCHCC} abs(sigma7[qq,m,n])) / card(BRANCHCC);
+  printf "[INFO] Mean abs value of sigma7 coordinates : %.3f\n", abs_mean_sigma7;
+  printf "[INFO] Standard deviation abs value of sigma7 coordinates : %.3f\n", 
+        ((sum {(qq,m,n) in BRANCHCC} (abs(sigma7[qq,m,n]) - abs_mean_sigma7)**2) / card(BRANCHCC));
+
+  # ... sigma8 slack variable
+  printf "\n[INFO] Maximal |sigma8| computed : %.3f\n",
+      (max {(qq,m,n) in BRANCHCC} abs(sigma8[qq,m,n]));
+  let abs_mean_sigma8 := (sum {(qq,m,n) in BRANCHCC} abs(sigma8[qq,m,n])) / card(BRANCHCC);
+  printf "[INFO] Mean abs value of sigma8 coordinates : %.3f\n", abs_mean_sigma8;
+  printf "[INFO] Standard deviation abs value of sigma8 coordinates : %.3f\n", 
+        ((sum {(qq,m,n) in BRANCHCC} (abs(sigma8[qq,m,n]) - abs_mean_sigma8)**2) / card(BRANCHCC));
+  
+  close (fileOut);
+}
+
+###############################################################################
+#                                                                             #
+#               Exportation of penalization data for analysis                 #
+#                                                                             #
+###############################################################################
+
+if final_status == "OK" then {
+
+  let fileOut := "values_sigma.csv";
+  printf "branch;bus1;bus2;admittance;dephor;angper;sigma1;sigma2;sigma3;sigma4;sigma5;sigma6;sigma7;sigma8;b_sigma1;b_sigma2;b_sigma3;b_sigma4;b_sigma5;b_sigma6;b_sigma7;b_sigma8;id\n" > (fileOut);
+  printf{(qq,m,n) in BRANCHCC} "%i;%i;%i;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%Q\n",
+        qq, m, n, branch_admi[qq,m,n], branch_dephor[qq,m,n], branch_angper[qq,m,n],
+        sigma1[qq,m,n],sigma2[qq,m,n],sigma3[qq,m,n],sigma4[qq,m,n],sigma5[qq,m,n],sigma6[qq,m,n],sigma7[qq,m,n],sigma8[qq,m,n],
+        b_sigma1[qq,m,n],b_sigma2[qq,m,n],b_sigma3[qq,m,n],b_sigma4[qq,m,n],b_sigma5[qq,m,n],b_sigma6[qq,m,n],b_sigma7[qq,m,n],b_sigma8[qq,m,n],
+        branch_id[1,qq,m,n] 
+        > (fileOut);
+  close (fileOut);
+
+  let fileOut := "values_s.csv";
+  printf "busPV;targetV;V;s1;b_s1;id\n" > (fileOut);
+  printf{n in BUSCC_PV} "%i;%.3f;%.3f;%.3f;%.3f;%Q\n",
+        n, targetV_busPV[n], V[n], s1[n], b_s1[n], bus_id[1,n]
+        > (fileOut);
+  close (fileOut);
+
+  let fileOut := "values_Vtheta.csv";
+  printf "bus;V;theta;id\n" > (fileOut);
+  printf{n in BUSCC} "%i;%.3f;%.3f;%Q\n",
+        n, V[n], teta[n], bus_id[1,n]
+        > (fileOut);
+  close (fileOut);
+}
