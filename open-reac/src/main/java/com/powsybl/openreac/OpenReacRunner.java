@@ -25,13 +25,15 @@ public final class OpenReacRunner {
     private OpenReacRunner() {
     }
 
-    public static OpenReacResult run(Network network, String variant, OpenReacParameters parameters) {
-        AmplModel reactiveOpf = OpenReacModel.buildModel();
-        ComputationManager manager = LocalComputationManager.getDefault();
+    public static OpenReacResult run(Network network, String variantId, OpenReacParameters parameters) {
+        return run(network, variantId, parameters, new OpenReacConfig(false), LocalComputationManager.getDefault());
+    }
+
+    public static OpenReacResult run(Network network, String variantId, OpenReacParameters parameters, OpenReacConfig config, ComputationManager manager) {
         parameters.checkIntegrity(network);
-        OpenReacConfig config = OpenReacConfig.load();
+        AmplModel reactiveOpf = OpenReacModel.buildModel();
         OpenReacAmplIOFiles amplIoInterface = new OpenReacAmplIOFiles(parameters, network, config.isDebug());
-        AmplResults run = AmplModelRunner.run(network, variant, reactiveOpf, manager, amplIoInterface);
+        AmplResults run = AmplModelRunner.run(network, variantId, reactiveOpf, manager, amplIoInterface);
         return new OpenReacResult(run.isSuccess() && amplIoInterface.checkErrors() ? OpenReacStatus.OK : OpenReacStatus.NOT_OK,
                 amplIoInterface.getReactiveInvestments(), run.getIndicators());
     }
