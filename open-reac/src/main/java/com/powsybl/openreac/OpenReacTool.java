@@ -120,9 +120,9 @@ public class OpenReacTool implements Tool {
         // getting parameters
         Path inputCaseFile = context.getFileSystem().getPath(commandLine.getOptionValue(CASE_FILE));
         Path outputCaseFile = context.getFileSystem().getPath(commandLine.getOptionValue(OUTPUT_CASE_FILE));
-        context.getFileSystem().getPath("./export/before_open_reac").toFile().mkdirs();
-        context.getFileSystem().getPath("./export/after_open_reac").toFile().mkdirs();
-        context.getFileSystem().getPath("./export/after_loadflow").toFile().mkdirs();
+        Files.createDirectories(context.getFileSystem().getPath("./export/before_open_reac"));
+        Files.createDirectories(context.getFileSystem().getPath("./export/after_open_reac"));
+        Files.createDirectories(context.getFileSystem().getPath("./export/after_loadflow"));
         context.getOutputStream().println("Parsing properties...");
         Properties inputParams = readProperties(commandLine, ConversionToolUtils.OptionType.IMPORT, context);
         OpenReacParameters openReacParameters = createOpenReacParameters(commandLine, context);
@@ -228,7 +228,7 @@ public class OpenReacTool implements Tool {
         }
         context.getOutputStream().println("OpenReac reactive slacks: ");
         for (ReactiveSlackOutput.ReactiveSlack investment : results.getReactiveSlacks()) {
-            System.out.println("Investment : " + investment.busId + " " + investment.voltageLevelId + " " + investment.slack);
+            context.getOutputStream().println("Investment : " + investment.busId + " " + investment.voltageLevelId + " " + investment.slack);
         }
     }
 
