@@ -84,7 +84,7 @@ public class OpenReacModel implements AmplModel {
         modelFiles.addAll(runFiles);
         this.modelNameAndPath = modelFiles.stream()
                                           .map(file -> Pair.of(file, resourcesFolder + "/" + file))
-                                          .collect(Collectors.toCollection(LinkedList::new));
+                                          .collect(Collectors.toList());
     }
 
     /**
@@ -104,7 +104,7 @@ public class OpenReacModel implements AmplModel {
                     }
                     return Pair.of(nameAndPath.getLeft(), resourceAsStream);
                 })
-                .collect(Collectors.toCollection(LinkedList::new));
+                .collect(Collectors.toList());
     }
 
     @Override
