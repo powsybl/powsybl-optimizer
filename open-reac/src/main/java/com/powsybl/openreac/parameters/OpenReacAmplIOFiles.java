@@ -36,8 +36,9 @@ public class OpenReacAmplIOFiles implements AmplParameters {
     private final AlgorithmInput algorithmParams;
     private final ReactiveSlackOutput reactiveSlackOutput;
     private final VoltageLevelLimitsOverrideInput voltageLimitsOverride;
+    private final boolean debug;
 
-    public OpenReacAmplIOFiles(OpenReacParameters params, Network network) {
+    public OpenReacAmplIOFiles(OpenReacParameters params, Network network, boolean debug) {
         //inputs
         this.constantQGenerators = new ConstantQGenerators(params.getConstantQGenerators());
         this.variableShuntCompensators = new VariableShuntCompensators(params.getVariableShuntCompensators());
@@ -47,6 +48,8 @@ public class OpenReacAmplIOFiles implements AmplParameters {
 
         //outputs
         this.reactiveSlackOutput = new ReactiveSlackOutput();
+
+        this.debug = debug;
     }
 
     public List<ReactiveSlackOutput.ReactiveSlack> getReactiveInvestments() {
@@ -74,5 +77,11 @@ public class OpenReacAmplIOFiles implements AmplParameters {
      */
     public boolean checkErrors() {
         return !reactiveSlackOutput.isErrorState();
+    }
+
+    // FIXME
+    //@Override
+    public boolean isDebug() {
+        return debug;
     }
 }
