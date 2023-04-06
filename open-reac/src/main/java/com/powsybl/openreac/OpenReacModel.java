@@ -90,6 +90,7 @@ public class OpenReacModel implements AmplModel {
     /**
      * @return each pair contains the name, and the InputStream of the file
      */
+    @Override
     public List<Pair<String, InputStream>> getModelAsStream() {
         return modelNameAndPath.stream()
                 .map(nameAndPath -> {
@@ -106,6 +107,7 @@ public class OpenReacModel implements AmplModel {
                 .collect(Collectors.toCollection(LinkedList::new));
     }
 
+    @Override
     public List<String> getAmplRunFiles() {
         return this.runFiles;
     }

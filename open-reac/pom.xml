@@ -85,17 +85,6 @@
         </dependency>
 
         <dependency>
-            <groupId>com.powsybl</groupId>
-            <artifactId>powsybl-config-classic</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.powsybl</groupId>
-            <artifactId>powsybl-iidm-impl</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-
-        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
@@ -111,6 +100,16 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-config-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-iidm-impl</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-ieee-cdf-converter</artifactId>
