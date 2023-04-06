@@ -177,7 +177,7 @@ public class OpenReacTool implements Tool {
         }
         if (inputParams.getProperty(GENERATORS_LIST) != null) {
             String[] generatorsList = inputParams.getProperty(GENERATORS_LIST).split(inputFileListSeparator);
-            openReacParameters.addConstantQGerenartors(List.of(generatorsList));
+            openReacParameters.addConstantQGenerators(List.of(generatorsList));
         }
         if (inputParams.getProperty(TRANSFORMER_LIST) != null) {
             String[] transformerList = inputParams.getProperty(TRANSFORMER_LIST).split(inputFileListSeparator);

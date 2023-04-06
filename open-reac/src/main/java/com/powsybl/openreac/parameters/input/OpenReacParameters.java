@@ -31,13 +31,13 @@ public class OpenReacParameters {
 
     private final Map<String, Pair<Double, Double>> specificVoltageLimits;
     private final List<String> variableShuntCompensators;
-    private final List<String> constantQGerenartors;
+    private final List<String> constantQGenerators;
     private final List<String> variableTwoWindingsTransformers;
     private final List<OpenReacAlgoParam> algoParamsList;
 
     public OpenReacParameters() {
         this.variableShuntCompensators = new ArrayList<>();
-        this.constantQGerenartors = new ArrayList<>();
+        this.constantQGenerators = new ArrayList<>();
         this.variableTwoWindingsTransformers = new ArrayList<>();
         this.specificVoltageLimits = new HashMap<>();
         this.algoParamsList = new ArrayList<>();
@@ -65,8 +65,8 @@ public class OpenReacParameters {
      * A list of generators that are not controlling voltage during the optimization.
      * The reactive power produced by the generator is constant and equals `targetQ`.
      */
-    public OpenReacParameters addConstantQGerenartors(List<String> generatorsIds) {
-        this.constantQGerenartors.addAll(generatorsIds);
+    public OpenReacParameters addConstantQGenerators(List<String> generatorsIds) {
+        this.constantQGenerators.addAll(generatorsIds);
         return this;
     }
 
@@ -100,7 +100,7 @@ public class OpenReacParameters {
     }
 
     public List<String> getConstantQGenerators() {
-        return constantQGerenartors;
+        return constantQGenerators;
     }
 
     public List<String> getVariableTwoWindingsTransformers() {

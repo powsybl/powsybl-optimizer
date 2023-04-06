@@ -33,7 +33,7 @@ public final class OpenReacTest {
 //        parameters.addAlgorithmParam(List.of(new OptimisationVoltageRatio(1), OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_PROFILE))
         parameters.addRatioVoltageObjective(1)
                 .addVariableTwoWindingsTransformers(network.getTwoWindingsTransformerStream().limit(1).map(TwoWindingsTransformer::getId).collect(Collectors.toList()))
-                .addConstantQGerenartors(network.getGeneratorStream().limit(1).map(Generator::getId).collect(Collectors.toList()))
+                .addConstantQGenerators(network.getGeneratorStream().limit(1).map(Generator::getId).collect(Collectors.toList()))
                 .addVariableShuntCompensators(network.getShuntCompensatorStream().limit(1).map(ShuntCompensator::getId).collect(Collectors.toList()));
 
         OpenReacResult openReacResult = OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), parameters);

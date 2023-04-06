@@ -30,7 +30,7 @@ import java.util.List;
  */
 public class OpenReacAmplIOFiles implements AmplParameters {
 
-    private final ConstantQGerenartors constantQGerenartors;
+    private final ConstantQGenerators constantQGenerators;
     private final VariableShuntCompensators variableShuntCompensators;
     private final VariableTwoWindingsTransformers variableTwoWindingsTransformers;
     private final AlgorithmInput algorithmParams;
@@ -39,7 +39,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
 
     public OpenReacAmplIOFiles(OpenReacParameters params, Network network) {
         //inputs
-        this.constantQGerenartors = new ConstantQGerenartors(params.getConstantQGenerators());
+        this.constantQGenerators = new ConstantQGenerators(params.getConstantQGenerators());
         this.variableShuntCompensators = new VariableShuntCompensators(params.getVariableShuntCompensators());
         this.variableTwoWindingsTransformers = new VariableTwoWindingsTransformers(params.getVariableTwoWindingsTransformers());
         this.algorithmParams = new AlgorithmInput(params.getAlgorithmParams());
@@ -55,7 +55,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
 
     @Override
     public Collection<AmplInputFile> getInputParameters() {
-        return List.of(constantQGerenartors, variableShuntCompensators, variableTwoWindingsTransformers,
+        return List.of(constantQGenerators, variableShuntCompensators, variableTwoWindingsTransformers,
                 algorithmParams, voltageLimitsOverride);
     }
 
