@@ -6,13 +6,15 @@
  */
 package com.powsybl.openreac.exceptions;
 
+import com.powsybl.commons.PowsyblException;
+
 /**
  * Throw this error when the interface between ampl and java is not correct.
  * This is an internal OpenReac error. It is not the user fault.
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
-public class IncompatibleModelError extends Error {
-    public IncompatibleModelError(String message) {
+public class IncompatibleModelException extends PowsyblException {
+    public IncompatibleModelException(String message) {
         super("Error of compatibility between the ampl model and the interface, this is a OpenReac issue.\n" + message);
     }
 }

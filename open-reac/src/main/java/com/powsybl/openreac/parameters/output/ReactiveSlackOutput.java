@@ -10,14 +10,15 @@ import com.powsybl.ampl.converter.AmplConstants;
 import com.powsybl.ampl.converter.AmplException;
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.commons.util.StringToIntMapper;
-import com.powsybl.openreac.exceptions.IncompatibleModelError;
+import com.powsybl.openreac.exceptions.IncompatibleModelException;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
@@ -25,14 +26,17 @@ import java.util.List;
  */
 public class ReactiveSlackOutput extends AbstractNoThrowOutput {
 
+    public static final int EXPECTED_COLS = 6;
+    private static final String SEP = ";";
+
     public static class ReactiveSlack {
         public final String busId;
         public final String voltageLevelId;
         public final double slack;
 
         public ReactiveSlack(String busId, String voltageLevelId, double slack) {
-            this.busId = busId;
-            this.voltageLevelId = voltageLevelId;
+            this.busId = Objects.requireNonNull(busId);
+            this.voltageLevelId = Objects.requireNonNull(voltageLevelId);
             this.slack = slack;
         }
 
@@ -49,11 +53,7 @@ public class ReactiveSlackOutput extends AbstractNoThrowOutput {
         }
     }
 
-    private final List<ReactiveSlack> slacks;
-
-    public ReactiveSlackOutput() {
-        this.slacks = new LinkedList<>();
-    }
+    private final List<ReactiveSlack> slacks = new ArrayList<>();
 
     public List<ReactiveSlack> getSlacks() {
         return slacks;
@@ -77,15 +77,13 @@ public class ReactiveSlackOutput extends AbstractNoThrowOutput {
                 return;
             }
             String headers = investmentsLines.get(0);
-            int expectedCols = 6;
-            String sep = ";";
-            int readCols = headers.split(sep).length;
-            if (readCols != expectedCols) {
+            int readCols = headers.split(SEP).length;
+            if (readCols != EXPECTED_COLS) {
                 triggerErrorState();
-                throw new IncompatibleModelError("Error reading " + getFileName() + ", wrong number of columns. Expected: " + expectedCols + ", found:" + readCols);
+                throw new IncompatibleModelException("Error reading " + getFileName() + ", wrong number of columns. Expected: " + EXPECTED_COLS + ", found:" + readCols);
             } else {
                 for (String line : investmentsLines.subList(1, investmentsLines.size())) {
-                    readLine(line.split(sep));
+                    readLine(line.split(SEP));
                 }
             }
         }

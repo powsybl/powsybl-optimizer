@@ -10,6 +10,7 @@ import com.powsybl.openreac.parameters.output.ReactiveSlackOutput.ReactiveSlack;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
@@ -21,9 +22,9 @@ public class OpenReacResult {
     private final Map<String, String> indicators;
 
     public OpenReacResult(OpenReacStatus status, List<ReactiveSlack> reactiveSlacks, Map<String, String> indicators) {
-        this.status = status;
-        this.reactiveSlacks = reactiveSlacks;
-        this.indicators = indicators;
+        this.status = Objects.requireNonNull(status);
+        this.reactiveSlacks = Objects.requireNonNull(reactiveSlacks);
+        this.indicators = Objects.requireNonNull(indicators);
     }
 
     public OpenReacStatus getStatus() {

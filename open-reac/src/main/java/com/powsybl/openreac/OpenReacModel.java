@@ -6,7 +6,9 @@
  */
 package com.powsybl.openreac;
 
-import com.powsybl.ampl.converter.*;
+import com.powsybl.ampl.converter.AmplNetworkUpdaterFactory;
+import com.powsybl.ampl.converter.AmplReadableElement;
+import com.powsybl.ampl.converter.OutputFileFormat;
 import com.powsybl.ampl.executor.AmplModel;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -27,10 +29,28 @@ import static com.powsybl.ampl.converter.AmplConstants.DEFAULT_VARIANT_INDEX;
  */
 public class OpenReacModel implements AmplModel {
 
+    public static final OutputFileFormat OUTPUT_FILE_FORMAT = new OutputFileFormat() {
+
+        @Override
+        public String getTokenSeparator() {
+            return ";";
+        }
+
+        @Override
+        public String getFileExtension() {
+            return "csv";
+        }
+
+        @Override
+        public Charset getFileEncoding() {
+            return StandardCharsets.UTF_8;
+        }
+    };
+
     public static OpenReacModel buildModel() {
         return new OpenReacModel("reactiveopf_results", "openreac",
-                Arrays.asList("reactiveopf.run", "reactiveopfoutput.run", "reactiveopfexit.run"),
-                Arrays.asList("reactiveopf.mod", "reactiveopf.dat"));
+                List.of("reactiveopf.run", "reactiveopfoutput.run", "reactiveopfexit.run"),
+                List.of("reactiveopf.mod", "reactiveopf.dat"));
     }
 
     private static final String NETWORK_DATA_PREFIX = "ampl";
@@ -40,9 +60,9 @@ public class OpenReacModel implements AmplModel {
     /**
      * A list containing the name of the files and their path in the resources
      */
-    private List<Pair<String, String>> modelNameAndPath;
-    private List<String> runFiles;
-    private String outputFilePrefix;
+    private final List<Pair<String, String>> modelNameAndPath;
+    private final List<String> runFiles;
+    private final String outputFilePrefix;
 
     /**
      * Create a ampl Model to be executed
@@ -112,7 +132,7 @@ public class OpenReacModel implements AmplModel {
 
     @Override
     public Collection<AmplReadableElement> getAmplReadableElement() {
-        return Arrays.asList(AmplReadableElement.SHUNT, AmplReadableElement.GENERATOR,
+        return List.of(AmplReadableElement.SHUNT, AmplReadableElement.GENERATOR,
                 AmplReadableElement.VSC_CONVERTER_STATION, AmplReadableElement.STATIC_VAR_COMPENSATOR);
     }
 
@@ -123,23 +143,6 @@ public class OpenReacModel implements AmplModel {
 
     @Override
     public OutputFileFormat getOutputFormat() {
-        return new OutputFileFormat() {
-
-            @Override
-            public String getTokenSeparator() {
-                return ";";
-            }
-
-            @Override
-            public String getFileExtension() {
-                return "csv";
-            }
-
-            @Override
-            public Charset getFileEncoding() {
-                return StandardCharsets.UTF_8;
-            }
-
-        };
+        return OUTPUT_FILE_FORMAT;
     }
 }
