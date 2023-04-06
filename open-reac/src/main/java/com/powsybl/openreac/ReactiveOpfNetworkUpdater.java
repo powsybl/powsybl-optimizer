@@ -14,11 +14,11 @@ import com.powsybl.iidm.network.*;
 /**
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
-public class ReactiveOpfNetworkApplier extends DefaultAmplNetworkUpdater {
+public class ReactiveOpfNetworkUpdater extends DefaultAmplNetworkUpdater {
 
     private final StringToIntMapper<AmplSubset> networkMapper;
 
-    public ReactiveOpfNetworkApplier(StringToIntMapper<AmplSubset> networkMapper) {
+    public ReactiveOpfNetworkUpdater(StringToIntMapper<AmplSubset> networkMapper) {
         super(networkMapper);
         this.networkMapper = networkMapper;
     }
