@@ -10,6 +10,7 @@ package com.powsybl.openreac.parameters.input;
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
 public final class AmplWriterUtils {
+
     private static final String QUOTE = "'";
 
     public static String addQuotes(String str) {

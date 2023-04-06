@@ -17,6 +17,7 @@ import java.util.List;
  * timestep num bus id
  */
 public class ConstantQGerenartors extends AbstractElementsInput {
+
     public static final String PARAM_GENERATOR_FILE_NAME = "param_generators_reactive.txt";
 
     public ConstantQGerenartors(List<String> elementIds) {

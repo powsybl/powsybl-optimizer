@@ -17,6 +17,7 @@ import java.util.List;
  * timestep num bus id
  */
 public class VariableShuntCompensators extends AbstractElementsInput {
+
     public static final String PARAM_SHUNT_FILE_NAME = "param_shunts.txt";
 
     public VariableShuntCompensators(List<String> elementIds) {

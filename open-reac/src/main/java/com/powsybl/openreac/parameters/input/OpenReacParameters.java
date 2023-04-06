@@ -26,27 +26,10 @@ import java.util.Map;
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
 public class OpenReacParameters {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(OpenReacParameters.class);
 
-    /**
-     * This map allows to change the limits of some voltage levels.
-     * <ul>
-     *     <li>
-     *         Key: VoltageLevel ID in the network
-     *     </li>
-     *     <li>
-     *         Value: Pair for new voltage level limits
-     *         <ul>
-     *            <li>Left: lower relative delta</li>
-     *            <li>Right: upper relatibe delta</li>
-     *         </ul>
-     *     </li>
-     * </ul>
-     */
     private final Map<String, Pair<Double, Double>> specificVoltageLimits;
-    /**
-     * List of network's shunts ID
-     */
     private final List<String> variableShuntCompensators;
     private final List<String> constantQGerenartors;
     private final List<String> variableTwoWindingsTransformers;
@@ -60,15 +43,18 @@ public class OpenReacParameters {
         this.algoParamsList = new ArrayList<>();
     }
 
+    /**
+     * A list of shunt compensators which susceptance should be considered as variable by the optimizer.
+     * The otpimizer computes a continuous value that is rounded when results are integrated in the network.
+     */
     public OpenReacParameters addVariableShuntCompensators(List<String> shuntsIds) {
         this.variableShuntCompensators.addAll(shuntsIds);
         return this;
     }
 
     /**
-     * Override voltage level limits in the network. This will NOT modify the network object.
-     *
-     * @param specificVoltageLimits map containing keys : VoltageLevelId, and values are the new lower and upper limits
+     * Override some voltage level limits in the network. This will NOT modify the network object.
+     * @param specificVoltageLimits map containing keys : VoltageLevelId, and values are the low and high delta limits.
      */
     public OpenReacParameters addSpecificVoltageLimit(Map<String, Pair<Double, Double>> specificVoltageLimits) {
         this.specificVoltageLimits.putAll(specificVoltageLimits);
@@ -76,8 +62,8 @@ public class OpenReacParameters {
     }
 
     /**
-     * Fix the reactance of the given generators during the OpenReac solve.
-     * The reactance is constant to the reactance stored in the network.
+     * A list of generators that are not controlling voltage during the optimization.
+     * The reactive power produced by the generator is constant and equals `targetQ`.
      */
     public OpenReacParameters addConstantQGerenartors(List<String> generatorsIds) {
         this.constantQGerenartors.addAll(generatorsIds);
@@ -85,7 +71,7 @@ public class OpenReacParameters {
     }
 
     /**
-     * Tells OpenReac that it can modify the ratio of the given transformers.
+     * A list of two windings transformers which ratio should be considered as variable by the optimizer.
      */
     public OpenReacParameters addVariableTwoWindingsTransformers(List<String> transformerIds) {
         this.variableTwoWindingsTransformers.addAll(transformerIds);

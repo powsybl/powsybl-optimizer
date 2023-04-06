@@ -25,6 +25,7 @@ import java.util.regex.Pattern;
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
 public class IndicatorOutput extends AbstractNoThrowOutput {
+
     private static final String NULL_INDICATOR = "NULL_INDICATOR";
     private static final String INDICATOR_FILE_NAME = "reactiveopf_results_indic.txt";
     private static final Pattern STRING_MAYBE_IN_QUOTES = Pattern.compile("([^']\\S*|'.+?')\\s*");

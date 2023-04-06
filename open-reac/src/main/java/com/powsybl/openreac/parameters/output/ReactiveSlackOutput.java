@@ -35,6 +35,18 @@ public class ReactiveSlackOutput extends AbstractNoThrowOutput {
             this.voltageLevelId = voltageLevelId;
             this.slack = slack;
         }
+
+        public String getBusId() {
+            return busId;
+        }
+
+        public String getVoltageLevelId() {
+            return voltageLevelId;
+        }
+
+        public double getSlack() {
+            return slack;
+        }
     }
 
     private final List<ReactiveSlack> slacks;

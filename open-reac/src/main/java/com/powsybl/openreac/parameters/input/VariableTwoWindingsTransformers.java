@@ -15,6 +15,7 @@ import java.util.List;
  * List of transformers of which tap position can be modified by OpenReac.
  */
 public class VariableTwoWindingsTransformers extends AbstractElementsInput {
+
     public static final String PARAM_TRANSFORMER_FILE_NAME = "param_transformers.txt";
 
     public VariableTwoWindingsTransformers(List<String> elementIds) {

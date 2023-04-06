@@ -6,6 +6,9 @@
  */
 package com.powsybl.openreac.parameters.output;
 
+/**
+ * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ */
 public enum OpenReacStatus {
     /**
      * OpenReac run is successful.

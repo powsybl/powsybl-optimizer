@@ -19,6 +19,7 @@ import java.util.List;
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
 public abstract class AbstractElementsInput implements AmplInputFile {
+
     private final List<String> elementIds;
 
     public AbstractElementsInput(List<String> elementIds) {
