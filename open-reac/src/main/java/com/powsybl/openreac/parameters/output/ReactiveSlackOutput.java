@@ -66,23 +66,23 @@ public class ReactiveSlackOutput extends AbstractNoThrowOutput {
 
     @Override
     public void read(Path path, StringToIntMapper<AmplSubset> amplMapper) {
-        List<String> investmentsLines;
+        List<String> reactiveSlackLines;
         // if the file is missing, we know there is no reactive slack.
         if (Files.isRegularFile(path)) {
             try {
-                investmentsLines = Files.readAllLines(path, StandardCharsets.UTF_8);
+                reactiveSlackLines = Files.readAllLines(path, StandardCharsets.UTF_8);
             } catch (IOException e) {
                 // File reading went wrong
                 triggerErrorState();
                 return;
             }
-            String headers = investmentsLines.get(0);
+            String headers = reactiveSlackLines.get(0);
             int readCols = headers.split(SEP).length;
             if (readCols != EXPECTED_COLS) {
                 triggerErrorState();
                 throw new IncompatibleModelException("Error reading " + getFileName() + ", wrong number of columns. Expected: " + EXPECTED_COLS + ", found:" + readCols);
             } else {
-                for (String line : investmentsLines.subList(1, investmentsLines.size())) {
+                for (String line : reactiveSlackLines.subList(1, reactiveSlackLines.size())) {
                     readLine(line.split(SEP));
                 }
             }

@@ -227,8 +227,8 @@ public class OpenReacTool implements Tool {
             context.getOutputStream().println(indicator.getKey() + " " + indicator.getValue());
         }
         context.getOutputStream().println("OpenReac reactive slacks: ");
-        for (ReactiveSlackOutput.ReactiveSlack investment : results.getReactiveSlacks()) {
-            context.getOutputStream().println("Investment : " + investment.busId + " " + investment.voltageLevelId + " " + investment.slack);
+        for (ReactiveSlackOutput.ReactiveSlack reactiveSlack : results.getReactiveSlacks()) {
+            context.getOutputStream().println("reactiveSlack : " + reactiveSlack.busId + " " + reactiveSlack.voltageLevelId + " " + reactiveSlack.slack);
         }
     }
 

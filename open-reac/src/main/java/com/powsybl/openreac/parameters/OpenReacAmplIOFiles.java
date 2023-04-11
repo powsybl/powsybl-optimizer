@@ -52,7 +52,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
         this.debug = debug;
     }
 
-    public List<ReactiveSlackOutput.ReactiveSlack> getReactiveInvestments() {
+    public List<ReactiveSlackOutput.ReactiveSlack> getReactiveSlack() {
         return reactiveSlackOutput.getSlacks();
     }
 
