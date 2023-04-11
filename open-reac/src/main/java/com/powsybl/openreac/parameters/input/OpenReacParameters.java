@@ -29,7 +29,7 @@ public class OpenReacParameters {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OpenReacParameters.class);
 
-    private final Map<String, Pair<Double, Double>> specificVoltageLimits;
+    private final Map<String, VoltageLimitOverride> specificVoltageLimits;
     private final List<String> variableShuntCompensators;
     private final List<String> constantQGenerators;
     private final List<String> variableTwoWindingsTransformers;
@@ -54,9 +54,10 @@ public class OpenReacParameters {
 
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.
-     * @param specificVoltageLimits map containing keys : VoltageLevelId, and values are the low and high delta limits.
+     *
+     * @param specificVoltageLimits map containing keys : VoltageLevelId, and VoltageLimitOverride with absolute values.
      */
-    public OpenReacParameters addSpecificVoltageLimit(Map<String, Pair<Double, Double>> specificVoltageLimits) {
+    public OpenReacParameters addSpecificVoltageLimit(Map<String, VoltageLimitOverride> specificVoltageLimits) {
         this.specificVoltageLimits.putAll(specificVoltageLimits);
         return this;
     }
@@ -95,7 +96,7 @@ public class OpenReacParameters {
         return variableShuntCompensators;
     }
 
-    public Map<String, Pair<Double, Double>> getSpecificVoltageDelta() {
+    public Map<String, VoltageLimitOverride> getSpecificVoltageLimits() {
         return specificVoltageLimits;
     }
 

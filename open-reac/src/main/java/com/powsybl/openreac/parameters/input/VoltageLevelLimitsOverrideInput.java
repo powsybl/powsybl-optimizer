@@ -10,7 +10,7 @@ import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.iidm.network.Network;
-import org.apache.commons.lang3.tuple.Pair;
+import com.powsybl.openreac.parameters.AmplIOUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -25,9 +25,9 @@ import java.util.Objects;
 public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
 
     private static final String FILENAME = "ampl_network_substations_override.txt";
-    private final Map<String, Pair<Double, Double>> normalizedVoltageLimitsOverride;
+    private final Map<String, VoltageLimitOverride> normalizedVoltageLimitsOverride;
 
-    public VoltageLevelLimitsOverrideInput(Map<String, Pair<Double, Double>> voltageLimitsOverride, Network network) {
+    public VoltageLevelLimitsOverrideInput(Map<String, VoltageLimitOverride> voltageLimitsOverride, Network network) {
         Objects.requireNonNull(voltageLimitsOverride);
         Objects.requireNonNull(network);
         this.normalizedVoltageLimitsOverride = new HashMap<>();
@@ -38,15 +38,15 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
      * voltageLimitsOverride contains absolute voltage limits.
      * This function compute limits in per-unit quantities.
      */
-    private void transformToNormalizedVoltage(Map<String, Pair<Double, Double>> voltageLimitsOverride, Network network) {
-        for (Map.Entry<String, Pair<Double, Double>> entry : voltageLimitsOverride.entrySet()) {
+    private void transformToNormalizedVoltage(Map<String, VoltageLimitOverride> voltageLimitsOverride, Network network) {
+        for (Map.Entry<String, VoltageLimitOverride> entry : voltageLimitsOverride.entrySet()) {
             String voltageLevelId = entry.getKey();
-            Pair<Double, Double> limits = entry.getValue();
+            VoltageLimitOverride limits = entry.getValue();
             double previousLowVoltageLimit = network.getVoltageLevel(voltageLevelId).getLowVoltageLimit();
             double previousHighVoltageLimit = network.getVoltageLevel(voltageLevelId).getHighVoltageLimit();
             double nominalV = network.getVoltageLevel(voltageLevelId).getNominalV();
-            normalizedVoltageLimitsOverride.put(voltageLevelId, Pair.of((previousLowVoltageLimit + limits.getLeft()) / nominalV,
-                    (previousHighVoltageLimit + limits.getRight()) / nominalV));
+            normalizedVoltageLimitsOverride.put(voltageLevelId, new VoltageLimitOverride((previousLowVoltageLimit + limits.getLowerVoltageLimit()) / nominalV,
+                    (previousHighVoltageLimit + limits.getUpperVoltageLimit()) / nominalV));
         }
     }
 
@@ -58,18 +58,19 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
     @Override
     public InputStream getParameterFileAsStream(StringToIntMapper<AmplSubset> stringToIntMapper) {
         StringBuilder dataBuilder = new StringBuilder();
-        dataBuilder.append("#num minV (pu) maxV (pu) id\n");
-        for (Map.Entry<String, Pair<Double, Double>> entry : normalizedVoltageLimitsOverride.entrySet()) {
+        dataBuilder.append("#num minV (pu) maxV (pu) id");
+        dataBuilder.append(System.lineSeparator());
+        for (Map.Entry<String, VoltageLimitOverride> entry : normalizedVoltageLimitsOverride.entrySet()) {
             String voltageLevelId = entry.getKey();
-            Pair<Double, Double> limits = entry.getValue();
+            VoltageLimitOverride limits = entry.getValue();
             int amplId = stringToIntMapper.getInt(AmplSubset.VOLTAGE_LEVEL, voltageLevelId);
-            String[] tokens = {Integer.toString(amplId), Double.toString(limits.getLeft()),
-                    Double.toString(limits.getRight()), AmplWriterUtils.addQuotes(voltageLevelId)};
+            String[] tokens = {Integer.toString(amplId), Double.toString(limits.getLowerVoltageLimit()),
+                    Double.toString(limits.getUpperVoltageLimit()), AmplIOUtils.addQuotes(voltageLevelId)};
             dataBuilder.append(String.join(" ", tokens));
-            dataBuilder.append("\n");
+            dataBuilder.append(System.lineSeparator());
         }
         //add new line at the end of the file !
-        dataBuilder.append("\n");
+        dataBuilder.append(System.lineSeparator());
         return new ByteArrayInputStream(dataBuilder.toString().getBytes(StandardCharsets.UTF_8));
     }
 }
