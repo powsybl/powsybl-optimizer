@@ -9,6 +9,7 @@ package com.powsybl.openreac.parameters.input;
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.commons.util.StringToIntMapper;
+import com.powsybl.openreac.parameters.AmplIOUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -32,7 +33,7 @@ public abstract class AbstractElementsInput implements AmplInputFile {
         dataBuilder.append("#amplId powsyblId\n");
         for (String elementID : elementIds) {
             int amplId = stringToIntMapper.getInt(getElementAmplSubset(), elementID);
-            String[] tokens = {Integer.toString(amplId), AmplWriterUtils.addQuotes(elementID)};
+            String[] tokens = {Integer.toString(amplId), AmplIOUtils.addQuotes(elementID)};
             dataBuilder.append(String.join(" ", tokens));
             dataBuilder.append(System.lineSeparator());
         }
