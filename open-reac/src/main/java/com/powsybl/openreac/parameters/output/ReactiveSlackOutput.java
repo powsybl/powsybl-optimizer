@@ -11,6 +11,7 @@ import com.powsybl.ampl.converter.AmplException;
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.openreac.exceptions.IncompatibleModelException;
+import com.powsybl.openreac.parameters.AmplIOUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -94,8 +95,8 @@ public class ReactiveSlackOutput extends AbstractNoThrowOutput {
         // slack self is a reactive load.
         double slackCapacitor = -readDouble(tokens[2]);
         double slackSelf = readDouble(tokens[3]);
-        String id = readString(tokens[4]);
-        String voltageLevelId = readString(tokens[5]);
+        String id = AmplIOUtils.removeQuotes(tokens[4]);
+        String voltageLevelId = AmplIOUtils.removeQuotes(tokens[5]);
         double slack = slackCapacitor + slackSelf;
         if (slack != slackCapacitor && slack != slackSelf) {
             throw new AmplException("Error reading reactive slacks, can't be self and capacitor at the same time.");
@@ -107,10 +108,4 @@ public class ReactiveSlackOutput extends AbstractNoThrowOutput {
         return Float.parseFloat(d) != AmplConstants.INVALID_FLOAT_VALUE ? Double.parseDouble(d) : Double.NaN;
     }
 
-    /**
-     * removes quotes on strings
-     */
-    private String readString(String str) {
-        return str.substring(1, str.length() - 1);
-    }
 }
