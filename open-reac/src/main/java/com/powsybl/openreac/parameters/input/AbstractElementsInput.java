@@ -34,7 +34,7 @@ public abstract class AbstractElementsInput implements AmplInputFile {
             int amplId = stringToIntMapper.getInt(getElementAmplSubset(), elementID);
             String[] tokens = {Integer.toString(amplId), AmplWriterUtils.addQuotes(elementID)};
             dataBuilder.append(String.join(" ", tokens));
-            dataBuilder.append("\n");
+            dataBuilder.append(System.lineSeparator());
         }
         //add new line at the end of the file !
         dataBuilder.append("\n");
