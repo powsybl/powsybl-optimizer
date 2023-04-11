@@ -146,7 +146,7 @@ public class OpenReacTool implements Tool {
         context.getOutputStream().println("Running a loadflow...");
         LoadFlowResult result = LoadFlow.run(network, context.getShortTimeExecutionComputationManager(), LoadFlowParameters.load());
 
-        context.getOutputStream().println("Loadflow done.");
+        context.getOutputStream().println("Loadflow done. Is ok ? " + result.isOk());
 
         context.getOutputStream().println("Exporting network with ampl.");
         networkExportDataSource = new FileDataSource(context.getFileSystem().getPath("./export/after_loadflow"), "ampl");
