@@ -11,14 +11,10 @@ import com.powsybl.openreac.exceptions.InvalidParametersException;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 import com.powsybl.openreac.parameters.input.algo.OptimisationVoltageRatio;
-import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * This class stores all inputs parameters specific to the OpenReac optimizer.
@@ -34,6 +30,8 @@ public class OpenReacParameters {
     private final List<String> constantQGenerators;
     private final List<String> variableTwoWindingsTransformers;
     private final List<OpenReacAlgoParam> algoParamsList;
+    private OpenReacOptimisationObjective objective;
+    private Optional<OptimisationVoltageRatio> objVoltageRatio;
 
     public OpenReacParameters() {
         this.variableShuntCompensators = new ArrayList<>();
@@ -41,6 +39,8 @@ public class OpenReacParameters {
         this.variableTwoWindingsTransformers = new ArrayList<>();
         this.specificVoltageLimits = new HashMap<>();
         this.algoParamsList = new ArrayList<>();
+        this.objective = null;
+        this.objVoltageRatio = Optional.empty();
     }
 
     /**
@@ -85,11 +85,11 @@ public class OpenReacParameters {
     }
 
     /**
-     * Will use {@link OpenReacOptimisationObjective#BETWEEN_HIGH_AND_LOW_VOLTAGE_PROFILE} and {@link OptimisationVoltageRatio}.
-     * DO NOT CALL THIS MULTIPLE TIMES.
+     * @see OptimisationVoltageRatio
      */
-    public OpenReacParameters addRatioVoltageObjective(double ratio) {
-        return addAlgorithmParam(List.of(new OptimisationVoltageRatio(ratio), OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_PROFILE));
+    public OpenReacParameters setRatioVoltageObjective(double ratio) {
+        this.objVoltageRatio = Optional.of(new OptimisationVoltageRatio(ratio));
+        return this;
     }
 
     public List<String> getVariableShuntCompensators() {
@@ -108,8 +108,11 @@ public class OpenReacParameters {
         return variableTwoWindingsTransformers;
     }
 
-    public List<OpenReacAlgoParam> getAlgorithmParams() {
-        return algoParamsList;
+    public List<OpenReacAlgoParam> getAllAlgorithmParams() {
+        ArrayList<OpenReacAlgoParam> algoParams = new ArrayList<>(algoParamsList.size() + 2);
+        algoParams.add(objective);
+        objVoltageRatio.ifPresent(algoParams::add);
+        return algoParams;
     }
 
     /**
@@ -134,36 +137,21 @@ public class OpenReacParameters {
                 throw new InvalidParametersException(transformerId + " is not a valid transformer ID in the network: " + network.getNameOrId());
             }
         }
-        checkDuplicate(true, OpenReacOptimisationObjective.class);
-        checkDuplicate(false, OptimisationVoltageRatio.class);
-        if (isParameterPresent(OptimisationVoltageRatio.class)) {
-            if (getAlgorithmParams().stream().noneMatch(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_PROFILE::equals)) {
-                throw new InvalidParametersException("Parameter 'OptimisationVoltageRatio' must be used with 'BETWEEN_HIGH_AND_LOW_VOLTAGE_PROFILE'");
-            }
+        Objects.requireNonNull(objective);
+        if (objective.equals(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_PROFILE) && objVoltageRatio.isEmpty()) {
+            throw new InvalidParametersException("Using " + OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_PROFILE +
+                    " as objective, you must set the ratio with OpenReacParameters.setRatioVoltageObjective");
         }
 
     }
 
-    /**
-     * @return <code>true</code> if clazz is present in algo parameters.
-     */
-    private boolean isParameterPresent(Class<? extends OpenReacAlgoParam> clazz) {
-        return getAlgorithmParams().stream().anyMatch(clazz::isInstance);
+    public OpenReacOptimisationObjective getObjective() {
+        return this.objective;
     }
 
-    /**
-     * Check that the given parameter is unique in the parameter list.
-     *
-     * @param shouldThrow when it finds duplicates it will throw an exception if <code>true</code>, else it will only log a warning.
-     */
-    private void checkDuplicate(boolean shouldThrow, Class<? extends OpenReacAlgoParam> clazz) {
-        String duplicateMessage = "Using multiple " + clazz + " parameters. It is undefined ratio will be used by OpenReac.";
-        if (getAlgorithmParams().stream().filter(clazz::isInstance).count() > 1) {
-            if (shouldThrow) {
-                throw new InvalidParametersException(duplicateMessage);
-            } else {
-                LOGGER.warn(duplicateMessage);
-            }
-        }
+    public OpenReacParameters setObjective(OpenReacOptimisationObjective obj) {
+        Objects.requireNonNull(obj);
+        this.objective = obj;
+        return this;
     }
 }

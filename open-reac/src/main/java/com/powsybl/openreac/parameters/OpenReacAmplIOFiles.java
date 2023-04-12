@@ -43,7 +43,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
         this.constantQGenerators = new ConstantQGenerators(params.getConstantQGenerators());
         this.variableShuntCompensators = new VariableShuntCompensators(params.getVariableShuntCompensators());
         this.variableTwoWindingsTransformers = new VariableTwoWindingsTransformers(params.getVariableTwoWindingsTransformers());
-        this.algorithmParams = new AlgorithmInput(params.getAlgorithmParams());
+        this.algorithmParams = new AlgorithmInput(params.getAllAlgorithmParams());
         this.voltageLimitsOverride = new VoltageLevelLimitsOverrideInput(params.getSpecificVoltageLimits(), network);
 
         //outputs

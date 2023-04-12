@@ -18,6 +18,7 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.ShuntCompensator;
 import com.powsybl.iidm.network.TwoWindingsTransformer;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
+import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.OpenReacStatus;
 import org.junit.jupiter.api.AfterEach;
@@ -56,7 +57,8 @@ class OpenReacRunnerTest {
         Network network = IeeeCdfNetworkFactory.create118();
 
         OpenReacParameters parameters = new OpenReacParameters()
-                .addRatioVoltageObjective(1)
+                .setObjective(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_PROFILE)
+                .setRatioVoltageObjective(0.7)
                 .addVariableTwoWindingsTransformers(network.getTwoWindingsTransformerStream().limit(1).map(TwoWindingsTransformer::getId).collect(Collectors.toList()))
                 .addConstantQGenerators(network.getGeneratorStream().limit(1).map(Generator::getId).collect(Collectors.toList()))
                 .addVariableShuntCompensators(network.getShuntCompensatorStream().limit(1).map(ShuntCompensator::getId).collect(Collectors.toList()));
