@@ -1,0 +1,4 @@
+obj_min_gen
+variable-shunts-list var-shunt;var-shunt-2
+fixed-generators-list constant-q-gen
+variable-transformers-list 2-winding-transfo
