@@ -29,7 +29,7 @@ public class OpenReacParameters {
     private final List<String> variableShuntCompensators;
     private final List<String> constantQGenerators;
     private final List<String> variableTwoWindingsTransformers;
-    private final List<OpenReacAlgoParam> algoParamsList;
+    private final List<OpenReacAlgoParam> genericParamsList;
     private OpenReacOptimisationObjective objective;
     private Optional<OptimisationVoltageRatio> objVoltageRatio;
 
@@ -38,7 +38,7 @@ public class OpenReacParameters {
         this.constantQGenerators = new ArrayList<>();
         this.variableTwoWindingsTransformers = new ArrayList<>();
         this.specificVoltageLimits = new HashMap<>();
-        this.algoParamsList = new ArrayList<>();
+        this.genericParamsList = new ArrayList<>();
         this.objective = null;
         this.objVoltageRatio = Optional.empty();
     }
@@ -80,7 +80,7 @@ public class OpenReacParameters {
     }
 
     public OpenReacParameters addAlgorithmParam(List<OpenReacAlgoParam> params) {
-        this.algoParamsList.addAll(params);
+        this.genericParamsList.addAll(params);
         return this;
     }
 
@@ -109,10 +109,13 @@ public class OpenReacParameters {
     }
 
     public List<OpenReacAlgoParam> getAllAlgorithmParams() {
-        ArrayList<OpenReacAlgoParam> algoParams = new ArrayList<>(algoParamsList.size() + 2);
-        algoParams.add(objective);
-        objVoltageRatio.ifPresent(algoParams::add);
-        return algoParams;
+        ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>(genericParamsList.size() + 2);
+        allAlgoParams.addAll(genericParamsList);
+        if(objective != null){
+            allAlgoParams.add(objective);
+        }
+        objVoltageRatio.ifPresent(allAlgoParams::add);
+        return allAlgoParams;
     }
 
     /**
@@ -137,7 +140,9 @@ public class OpenReacParameters {
                 throw new InvalidParametersException(transformerId + " is not a valid transformer ID in the network: " + network.getNameOrId());
             }
         }
-        Objects.requireNonNull(objective);
+        if(objective == null){
+           throw new InvalidParametersException("You must define a valid optimization objective. Use OpenReacParameters.setObjective");
+        }
         if (objective.equals(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_PROFILE) && objVoltageRatio.isEmpty()) {
             throw new InvalidParametersException("Using " + OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_PROFILE +
                     " as objective, you must set the ratio with OpenReacParameters.setRatioVoltageObjective");
