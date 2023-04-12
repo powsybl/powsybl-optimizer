@@ -37,6 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Nicolas PIERRE <nicolas.pierre at artelys.com>
  */
 class OpenReacRunnerTest {
 
@@ -81,4 +82,5 @@ class OpenReacRunnerTest {
             assertTrue(openReacResult.getReactiveSlacks().isEmpty());
         }
     }
+
 }
