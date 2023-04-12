@@ -7,10 +7,9 @@
 package com.powsybl.openreac;
 
 import com.google.auto.service.AutoService;
-import com.powsybl.ampl.converter.AmplExporter;
+import com.powsybl.ampl.executor.AmplConfig;
+import com.powsybl.ampl.executor.AmplModelExecutionHandler;
 import com.powsybl.commons.PowsyblException;
-import com.powsybl.commons.datasource.DataSource;
-import com.powsybl.commons.datasource.FileDataSource;
 import com.powsybl.iidm.network.Exporter;
 import com.powsybl.iidm.network.ImportConfig;
 import com.powsybl.iidm.network.Network;
@@ -19,10 +18,9 @@ import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.loadflow.LoadFlowResult;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
+import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
-import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
-import com.powsybl.openreac.parameters.input.algo.OptimisationVoltageRatio;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput;
 import com.powsybl.tools.Command;
@@ -36,7 +34,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.stream.Collectors;
 
 import static com.powsybl.iidm.network.tools.ConversionToolUtils.*;
@@ -131,14 +131,12 @@ public class OpenReacTool implements Tool {
         Network network = loadingNetwork(context, inputCaseFile, inputParams);
 
         context.getOutputStream().println("Exporting network with ampl.");
-        DataSource networkExportDataSource = new FileDataSource(context.getFileSystem().getPath("./export/before_open_reac"), "ampl");
-        new AmplExporter().export(network, null, networkExportDataSource);
+        exportOpenReacRunningFolder(context, network, openReacParameters, "./export/before_open_reac");
 
         itoolsOpenReac(context, network, openReacParameters);
 
         context.getOutputStream().println("Exporting network with ampl.");
-        networkExportDataSource = new FileDataSource(context.getFileSystem().getPath("./export/after_open_reac"), "ampl");
-        new AmplExporter().export(network, null, networkExportDataSource);
+        exportOpenReacRunningFolder(context, network, openReacParameters, "./export/after_open_reac");
 
         context.getOutputStream().println("Exporting network '" + outputCaseFile + "' with the results...");
         exportNetwork(commandLine, context, outputCaseFile, network);
@@ -149,8 +147,7 @@ public class OpenReacTool implements Tool {
         context.getOutputStream().println("Loadflow done. Is ok ? " + result.isOk());
 
         context.getOutputStream().println("Exporting network with ampl.");
-        networkExportDataSource = new FileDataSource(context.getFileSystem().getPath("./export/after_loadflow"), "ampl");
-        new AmplExporter().export(network, null, networkExportDataSource);
+        exportOpenReacRunningFolder(context, network, openReacParameters, "./export/after_loadflow");
         context.getOutputStream().println("All good. Exiting...");
     }
 
@@ -215,7 +212,7 @@ public class OpenReacTool implements Tool {
                                        OpenReacParameters openReacParameters) {
         context.getOutputStream().println("Running OpenReac on the network...");
         OpenReacResult results = OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), openReacParameters);
-        List<Map.Entry<String, String>> sortedIndicators = results.getIndicators().entrySet().stream().sorted(Comparator.comparing(Map.Entry::getKey)).collect(Collectors.toList());
+        List<Map.Entry<String, String>> sortedIndicators = results.getIndicators().entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toList());
         context.getOutputStream().println("OpenReac optimisation done.");
 
         context.getOutputStream().println("OpenReac status:" + results.getStatus().name());
@@ -227,6 +224,23 @@ public class OpenReacTool implements Tool {
         for (ReactiveSlackOutput.ReactiveSlack reactiveSlack : results.getReactiveSlacks()) {
             context.getOutputStream().println("reactiveSlack : " + reactiveSlack.busId + " " + reactiveSlack.voltageLevelId + " " + reactiveSlack.slack);
         }
+    }
+
+    /**
+     * Export the folder that will run ampl with mainly OpenReac files and network export in ampl format.
+     *
+     * @implNote Quite a HACK, it should be exposed as a utility from powsybl-core.
+     */
+    private static void exportOpenReacRunningFolder(ToolRunningContext context, Network network,
+                                                    OpenReacParameters openReacParameters, String contextRelativePath) throws IOException {
+        AmplModelExecutionHandler amplModelExecutionHandler = new AmplModelExecutionHandler(
+                OpenReacModel.buildModel(),
+                network,
+                network.getVariantManager().getWorkingVariantId(),
+                AmplConfig.load(),
+                new OpenReacAmplIOFiles(openReacParameters, network, false)
+        );
+        amplModelExecutionHandler.before(context.getFileSystem().getPath(contextRelativePath));
     }
 
     private static void exportNetwork(CommandLine commandLine, ToolRunningContext context, Path outputCaseFile,
