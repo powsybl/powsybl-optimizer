@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class OpenReacParametersTest {
     @Test
-    public void testObjectiveIntegrityChecks(){
+    public void testObjectiveIntegrityChecks() {
         Network network = IeeeCdfNetworkFactory.create118();
         OpenReacParameters parameters = new OpenReacParameters();
 
@@ -31,6 +31,7 @@ public class OpenReacParametersTest {
         parameters.setRatioVoltageObjective(1);
         assertDoesNotThrow(() -> parameters.checkIntegrity(network), "Default configuration with BETWEEN_HIGH_AND_LOW_VOLTAGE_PROFILE and ratio voltage set should not throw");
     }
+
     @Test
     public void testParametersIntegrityChecks() {
         Network network = IeeeCdfNetworkFactory.create118();

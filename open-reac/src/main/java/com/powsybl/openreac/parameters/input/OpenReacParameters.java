@@ -111,7 +111,7 @@ public class OpenReacParameters {
     public List<OpenReacAlgoParam> getAllAlgorithmParams() {
         ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>(genericParamsList.size() + 2);
         allAlgoParams.addAll(genericParamsList);
-        if(objective != null){
+        if (objective != null) {
             allAlgoParams.add(objective);
         }
         objVoltageRatio.ifPresent(allAlgoParams::add);
@@ -140,8 +140,8 @@ public class OpenReacParameters {
                 throw new InvalidParametersException(transformerId + " is not a valid transformer ID in the network: " + network.getNameOrId());
             }
         }
-        if(objective == null){
-           throw new InvalidParametersException("You must define a valid optimization objective. Use OpenReacParameters.setObjective");
+        if (objective == null) {
+            throw new InvalidParametersException("You must define a valid optimization objective. Use OpenReacParameters.setObjective");
         }
         if (objective.equals(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_PROFILE) && objVoltageRatio.isEmpty()) {
             throw new InvalidParametersException("Using " + OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_PROFILE +

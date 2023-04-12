@@ -27,11 +27,12 @@ public final class AmplIOUtils {
      */
     public static String removeQuotes(String str) {
         Objects.requireNonNull(str);
-        if(str.length() < 2){
+        if (str.length() < 2) {
             throw new PowsyblException("Too small string while trying to remove quotes on : " + str);
         }
         return str.substring(1, str.length() - 1);
     }
 
-    private AmplIOUtils() { }
+    private AmplIOUtils() {
+    }
 }
