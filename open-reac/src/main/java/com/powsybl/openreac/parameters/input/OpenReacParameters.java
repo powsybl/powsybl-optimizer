@@ -57,7 +57,7 @@ public class OpenReacParameters {
      *
      * @param specificVoltageLimits map containing keys : VoltageLevelId, and VoltageLimitOverride with absolute values.
      */
-    public OpenReacParameters addSpecificVoltageLimit(Map<String, VoltageLimitOverride> specificVoltageLimits) {
+    public OpenReacParameters addSpecificVoltageLimits(Map<String, VoltageLimitOverride> specificVoltageLimits) {
         this.specificVoltageLimits.putAll(specificVoltageLimits);
         return this;
     }
