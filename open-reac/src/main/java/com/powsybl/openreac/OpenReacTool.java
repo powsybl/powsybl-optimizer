@@ -186,29 +186,26 @@ public class OpenReacTool implements Tool {
 
         for (String key : inputParams.stringPropertyNames()) {
             if (!key.equals(SHUNTS_LIST) && !key.equals(GENERATORS_LIST) && !key.equals(TRANSFORMER_LIST)) {
-                OpenReacAlgoParam algoParam;
                 switch (key) {
                     case "obj_min_gen":
-                        algoParam = OpenReacOptimisationObjective.MIN_GENERATION;
+                        openReacParameters.setObjective(OpenReacOptimisationObjective.MIN_GENERATION);
                         break;
                     case "obj_target_ratio":
                         String ratioStr = inputParams.getProperty(key, null);
                         if (ratioStr == null) {
                             throw new InvalidParametersException("obj_target_ratio must have a value indicating the ratio to nominal voltage level to target.");
                         }
-                        openReacParameters.addAlgorithmParam(List.of(new OptimisationVoltageRatio(Double.parseDouble(ratioStr))));
-                        algoParam = OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_PROFILE;
+                        openReacParameters.setRatioVoltageObjective(Double.parseDouble(ratioStr));
+                        openReacParameters.setObjective(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_PROFILE);
                         break;
                     case "obj_provided_target_v":
-                        algoParam = OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE;
+                        openReacParameters.setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE);
                         break;
                     default:
                         context.getOutputStream()
                                 .println(
                                         "Algorithm parameter " + key + " does not match any OpenReacParameter. Skipping...");
-                        continue;
                 }
-                openReacParameters.addAlgorithmParam(Collections.singletonList(algoParam));
             }
         }
         return openReacParameters;
