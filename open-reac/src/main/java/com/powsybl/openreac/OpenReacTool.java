@@ -49,7 +49,9 @@ import static com.powsybl.iidm.network.tools.ConversionToolUtils.*;
 public class OpenReacTool implements Tool {
     private static final String CASE_FILE = "case-file";
     private static final String OUTPUT_CASE_FORMAT = "output-case-format";
+    private static final String OUTPUT_CASE_FORMAT_DEFAULT = "XIIDM";
     private static final String OUTPUT_CASE_FILE = "output-case-file";
+    private static final String OUTPUT_CASE_FILE_DEFAULT = "resolved";
     private static final String SHUNTS_LIST = "variable-shunts-list";
     private static final String GENERATORS_LIST = "fixed-generators-list";
     private static final String TRANSFORMER_LIST = "variable-transformers-list";
@@ -87,14 +89,12 @@ public class OpenReacTool implements Tool {
                         .desc("modified network output format " + Exporter.getFormats())
                         .hasArg()
                         .argName("CASEFORMAT")
-                        .required()
                         .build());
                 options.addOption(Option.builder()
                         .longOpt(OUTPUT_CASE_FILE)
                         .desc("modified network base name")
                         .hasArg()
                         .argName("FILE")
-                        .required()
                         .build());
                 options.addOption(createImportParametersFileOption());
                 options.addOption(createImportParameterOption());
@@ -120,7 +120,7 @@ public class OpenReacTool implements Tool {
     public void run(CommandLine commandLine, ToolRunningContext context) throws Exception {
         // getting parameters
         Path inputCaseFile = context.getFileSystem().getPath(commandLine.getOptionValue(CASE_FILE));
-        Path outputCaseFile = context.getFileSystem().getPath(commandLine.getOptionValue(OUTPUT_CASE_FILE));
+        Path outputCaseFile = context.getFileSystem().getPath(commandLine.getOptionValue(OUTPUT_CASE_FILE, OUTPUT_CASE_FILE_DEFAULT));
         Files.createDirectories(context.getFileSystem().getPath("./export/before_open_reac"));
         Files.createDirectories(context.getFileSystem().getPath("./export/after_open_reac"));
         Files.createDirectories(context.getFileSystem().getPath("./export/after_loadflow"));
@@ -152,7 +152,7 @@ public class OpenReacTool implements Tool {
         context.getOutputStream().println("All good. Exiting...");
     }
 
-    public static void exportLoadFlowMetrics(ToolRunningContext context, Map<String, String> metrics) throws IOException {
+    public void exportLoadFlowMetrics(ToolRunningContext context, Map<String, String> metrics) throws IOException {
         StringBuilder builder = new StringBuilder();
         for (Map.Entry<String, String> metric : metrics.entrySet()) {
             builder.append(metric.getKey()).append(" ").append(metric.getValue()).append(System.lineSeparator());
@@ -160,7 +160,7 @@ public class OpenReacTool implements Tool {
         Files.writeString(context.getFileSystem().getPath("./loadflow_metrics.txt"), builder.toString(), StandardOpenOption.CREATE);
     }
 
-    public static OpenReacParameters createOpenReacParameters(CommandLine line,
+    public OpenReacParameters createOpenReacParameters(CommandLine line,
                                                         ToolRunningContext context) throws IOException {
 
         Properties inputParams = new Properties();
@@ -217,7 +217,7 @@ public class OpenReacTool implements Tool {
         return openReacParameters;
     }
 
-    public static void itoolsOpenReac(ToolRunningContext context, Network network,
+    public void itoolsOpenReac(ToolRunningContext context, Network network,
                                        OpenReacParameters openReacParameters) {
         context.getOutputStream().println("Running OpenReac on the network...");
         OpenReacResult results = OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), openReacParameters);
@@ -240,7 +240,7 @@ public class OpenReacTool implements Tool {
      *
      * @implNote Quite a HACK, it should be exposed as a utility from powsybl-core.
      */
-    public static void exportOpenReacRunningFolder(ToolRunningContext context, Network network,
+    public void exportOpenReacRunningFolder(ToolRunningContext context, Network network,
                                                     OpenReacParameters openReacParameters, String contextRelativePath) throws IOException {
         AmplModelExecutionHandler amplModelExecutionHandler = new AmplModelExecutionHandler(
                 OpenReacModel.buildModel(),
@@ -252,14 +252,14 @@ public class OpenReacTool implements Tool {
         amplModelExecutionHandler.before(context.getFileSystem().getPath(contextRelativePath));
     }
 
-    public static void exportNetwork(CommandLine commandLine, ToolRunningContext context, Path outputCaseFile,
+    public void exportNetwork(CommandLine commandLine, ToolRunningContext context, Path outputCaseFile,
                                       Network network) throws IOException {
-        String outputCaseFormat = commandLine.getOptionValue(OUTPUT_CASE_FORMAT);
+        String outputCaseFormat = commandLine.getOptionValue(OUTPUT_CASE_FORMAT, OUTPUT_CASE_FORMAT_DEFAULT);
         Properties outputParams = readProperties(commandLine, OptionType.EXPORT, context);
         network.write(outputCaseFormat, outputParams, outputCaseFile);
     }
 
-    public static Network loadingNetwork(ToolRunningContext context, Path inputCaseFile, Properties inputParams) {
+    public Network loadingNetwork(ToolRunningContext context, Path inputCaseFile, Properties inputParams) {
         Network network = Network.read(inputCaseFile, context.getShortTimeExecutionComputationManager(),
                 ImportConfig.load(), inputParams);
         if (network == null) {
