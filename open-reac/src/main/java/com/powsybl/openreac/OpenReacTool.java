@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -143,7 +144,7 @@ public class OpenReacTool implements Tool {
 
         context.getOutputStream().println("Running a loadflow...");
         LoadFlowResult result = LoadFlow.run(network, context.getShortTimeExecutionComputationManager(), LoadFlowParameters.load());
-
+        exportLoadFlowMetrics(context, result.getMetrics());
         context.getOutputStream().println("Loadflow done. Is ok ? " + result.isOk());
 
         context.getOutputStream().println("Exporting network with ampl.");
@@ -151,7 +152,15 @@ public class OpenReacTool implements Tool {
         context.getOutputStream().println("All good. Exiting...");
     }
 
-    private OpenReacParameters createOpenReacParameters(CommandLine line,
+    public static void exportLoadFlowMetrics(ToolRunningContext context, Map<String, String> metrics) throws IOException {
+        StringBuilder builder = new StringBuilder();
+        for (Map.Entry<String, String> metric : metrics.entrySet()) {
+            builder.append(metric.getKey()).append(" ").append(metric.getValue()).append(System.lineSeparator());
+        }
+        Files.writeString(context.getFileSystem().getPath("./loadflow_metrics.txt"), builder.toString(), StandardOpenOption.CREATE);
+    }
+
+    public static OpenReacParameters createOpenReacParameters(CommandLine line,
                                                         ToolRunningContext context) throws IOException {
 
         Properties inputParams = new Properties();
@@ -208,7 +217,7 @@ public class OpenReacTool implements Tool {
         return openReacParameters;
     }
 
-    private static void itoolsOpenReac(ToolRunningContext context, Network network,
+    public static void itoolsOpenReac(ToolRunningContext context, Network network,
                                        OpenReacParameters openReacParameters) {
         context.getOutputStream().println("Running OpenReac on the network...");
         OpenReacResult results = OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), openReacParameters);
@@ -231,7 +240,7 @@ public class OpenReacTool implements Tool {
      *
      * @implNote Quite a HACK, it should be exposed as a utility from powsybl-core.
      */
-    private static void exportOpenReacRunningFolder(ToolRunningContext context, Network network,
+    public static void exportOpenReacRunningFolder(ToolRunningContext context, Network network,
                                                     OpenReacParameters openReacParameters, String contextRelativePath) throws IOException {
         AmplModelExecutionHandler amplModelExecutionHandler = new AmplModelExecutionHandler(
                 OpenReacModel.buildModel(),
@@ -243,14 +252,14 @@ public class OpenReacTool implements Tool {
         amplModelExecutionHandler.before(context.getFileSystem().getPath(contextRelativePath));
     }
 
-    private static void exportNetwork(CommandLine commandLine, ToolRunningContext context, Path outputCaseFile,
+    public static void exportNetwork(CommandLine commandLine, ToolRunningContext context, Path outputCaseFile,
                                       Network network) throws IOException {
         String outputCaseFormat = commandLine.getOptionValue(OUTPUT_CASE_FORMAT);
         Properties outputParams = readProperties(commandLine, OptionType.EXPORT, context);
         network.write(outputCaseFormat, outputParams, outputCaseFile);
     }
 
-    private static Network loadingNetwork(ToolRunningContext context, Path inputCaseFile, Properties inputParams) {
+    public static Network loadingNetwork(ToolRunningContext context, Path inputCaseFile, Properties inputParams) {
         Network network = Network.read(inputCaseFile, context.getShortTimeExecutionComputationManager(),
                 ImportConfig.load(), inputParams);
         if (network == null) {
