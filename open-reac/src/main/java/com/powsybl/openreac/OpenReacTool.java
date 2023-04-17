@@ -201,8 +201,8 @@ public class OpenReacTool implements Tool {
                         if (ratioStr == null) {
                             throw new InvalidParametersException("obj_target_ratio must have a value indicating the ratio to nominal voltage level to target.");
                         }
-                        openReacParameters.setRatioVoltageObjective(Double.parseDouble(ratioStr));
-                        openReacParameters.setObjective(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_PROFILE);
+                        openReacParameters.setObjectiveDistance(Double.parseDouble(ratioStr));
+                        openReacParameters.setObjective(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT);
                         break;
                     case "obj_provided_target_v":
                         openReacParameters.setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE);

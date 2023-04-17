@@ -11,9 +11,15 @@ package com.powsybl.openreac.parameters.input.algo;
  */
 public enum OpenReacOptimisationObjective implements OpenReacAlgoParam {
 
-    MIN_GENERATION(0), BETWEEN_HIGH_AND_LOW_VOLTAGE_PROFILE(1), SPECIFIC_VOLTAGE_PROFILE(2);
+    /** Use this to minimizes the global generation */
+    MIN_GENERATION(0),
+    /** Use this to target a voltage profile between the low voltage limit
+     *  and high voltage limit. Use parameter */
+    BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT(1),
+    /** Use this to target a specific voltage profile */
+    SPECIFIC_VOLTAGE_PROFILE(2);
 
-    private static final String OBJECTIVE_PARMA_KEY = "objective_choice";
+    private static final String OBJECTIVE_PARAM_KEY = "objective_choice";
     private final String name;
     private final int amplKey;
 
@@ -21,7 +27,7 @@ public enum OpenReacOptimisationObjective implements OpenReacAlgoParam {
      * @param amplKey value used in param_algo.txt to define the given objective.
      */
     OpenReacOptimisationObjective(int amplKey) {
-        this.name = OBJECTIVE_PARMA_KEY;
+        this.name = OBJECTIVE_PARAM_KEY;
         this.amplKey = amplKey;
     }
 

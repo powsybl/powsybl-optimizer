@@ -10,9 +10,7 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
-import com.powsybl.openreac.parameters.input.algo.OptimisationVoltageRatio;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.powsybl.openreac.parameters.input.algo.ObjectiveDistance;
 
 import java.util.*;
 
@@ -23,42 +21,32 @@ import java.util.*;
  */
 public class OpenReacParameters {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(OpenReacParameters.class);
-
-    private final Map<String, VoltageLimitOverride> specificVoltageLimits;
-    private final List<String> variableShuntCompensators;
-    private final List<String> constantQGenerators;
-    private final List<String> variableTwoWindingsTransformers;
-    private final List<OpenReacAlgoParam> genericParamsList;
-    private OpenReacOptimisationObjective objective;
-    private Optional<OptimisationVoltageRatio> objVoltageRatio;
+    private final Map<String, VoltageLimitOverride> specificVoltageLimits = new HashMap<>();
+    private final List<String> variableShuntCompensators = new ArrayList<>();
+    private final List<String> constantQGenerators = new ArrayList<>();
+    private final List<String> variableTwoWindingsTransformers = new ArrayList<>();
+    private final List<OpenReacAlgoParam> genericParamsList = new ArrayList<>();
+    private OpenReacOptimisationObjective objective = OpenReacOptimisationObjective.MIN_GENERATION;
+    private Optional<ObjectiveDistance> objectiveDistance = Optional.empty();
 
     public OpenReacParameters() {
-        this.variableShuntCompensators = new ArrayList<>();
-        this.constantQGenerators = new ArrayList<>();
-        this.variableTwoWindingsTransformers = new ArrayList<>();
-        this.specificVoltageLimits = new HashMap<>();
-        this.genericParamsList = new ArrayList<>();
-        this.objective = null;
-        this.objVoltageRatio = Optional.empty();
-    }
-
-    /**
-     * A list of shunt compensators which susceptance should be considered as variable by the optimizer.
-     * The otpimizer computes a continuous value that is rounded when results are integrated in the network.
-     */
-    public OpenReacParameters addVariableShuntCompensators(List<String> shuntsIds) {
-        this.variableShuntCompensators.addAll(shuntsIds);
-        return this;
     }
 
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.
-     *
-     * @param specificVoltageLimits map containing keys : VoltageLevelId, and VoltageLimitOverride with absolute values.
+     * param specificVoltageLimits map containing keys : VoltageLevelId, and values are the low and high delta limits (kV).
      */
     public OpenReacParameters addSpecificVoltageLimits(Map<String, VoltageLimitOverride> specificVoltageLimits) {
         this.specificVoltageLimits.putAll(specificVoltageLimits);
+        return this;
+    }
+
+    /**
+     * A list of shunt compensators which susceptance should be considered as variable by the optimizer.
+     * The optimizer computes a continuous value that is rounded when results are integrated in the network.
+     */
+    public OpenReacParameters addVariableShuntCompensators(List<String> shuntsIds) {
+        this.variableShuntCompensators.addAll(shuntsIds);
         return this;
     }
 
@@ -85,10 +73,26 @@ public class OpenReacParameters {
     }
 
     /**
-     * @see OptimisationVoltageRatio
+     * The definition of the objective function for the optimization.
      */
-    public OpenReacParameters setRatioVoltageObjective(double ratio) {
-        this.objVoltageRatio = Optional.of(new OptimisationVoltageRatio(ratio));
+    public OpenReacOptimisationObjective getObjective() {
+        return this.objective;
+    }
+
+    /**
+     * The definition of the objective function for the optimization.
+     */
+    public OpenReacParameters setObjective(OpenReacOptimisationObjective obj) {
+        Objects.requireNonNull(obj);
+        this.objective = obj;
+        return this;
+    }
+
+    /**
+     * @see ObjectiveDistance is a parameter used for {@link OpenReacOptimisationObjective#BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT}.
+     */
+    public OpenReacParameters setObjectiveDistance(double objectiveDistance) {
+        this.objectiveDistance = Optional.of(new ObjectiveDistance(objectiveDistance));
         return this;
     }
 
@@ -114,7 +118,7 @@ public class OpenReacParameters {
         if (objective != null) {
             allAlgoParams.add(objective);
         }
-        objVoltageRatio.ifPresent(allAlgoParams::add);
+        objectiveDistance.ifPresent(allAlgoParams::add);
         return allAlgoParams;
     }
 
@@ -127,36 +131,23 @@ public class OpenReacParameters {
     public void checkIntegrity(Network network) throws InvalidParametersException {
         for (String shuntId : getVariableShuntCompensators()) {
             if (network.getShuntCompensator(shuntId) == null) {
-                throw new InvalidParametersException(shuntId + " is not a valid Shunt ID in the network: " + network.getNameOrId());
+                throw new InvalidParametersException("Shunt " + shuntId + " not found in the network.");
             }
         }
         for (String genId : getConstantQGenerators()) {
             if (network.getGenerator(genId) == null) {
-                throw new InvalidParametersException(genId + " is not a valid generator ID in the network: " + network.getNameOrId());
+                throw new InvalidParametersException("Generator " + genId + " not found in the network.");
             }
         }
         for (String transformerId : getVariableTwoWindingsTransformers()) {
             if (network.getTwoWindingsTransformer(transformerId) == null) {
-                throw new InvalidParametersException(transformerId + " is not a valid transformer ID in the network: " + network.getNameOrId());
+                throw new InvalidParametersException("Two windings transfromer " + transformerId + " not found in the network.");
             }
         }
-        if (objective == null) {
-            throw new InvalidParametersException("You must define a valid optimization objective. Use OpenReacParameters.setObjective");
-        }
-        if (objective.equals(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_PROFILE) && objVoltageRatio.isEmpty()) {
-            throw new InvalidParametersException("Using " + OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_PROFILE +
-                    " as objective, you must set the ratio with OpenReacParameters.setRatioVoltageObjective");
+        if (objective.equals(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT) && objectiveDistance.isEmpty()) {
+            throw new InvalidParametersException("In using " + OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT +
+                    " as objective, a distance in percent between low and high voltage limits is expected.");
         }
 
-    }
-
-    public OpenReacOptimisationObjective getObjective() {
-        return this.objective;
-    }
-
-    public OpenReacParameters setObjective(OpenReacOptimisationObjective obj) {
-        Objects.requireNonNull(obj);
-        this.objective = obj;
-        return this;
     }
 }

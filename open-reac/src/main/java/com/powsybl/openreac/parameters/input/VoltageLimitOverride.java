@@ -7,24 +7,25 @@
 package com.powsybl.openreac.parameters.input;
 
 /**
- * Business class to store an override of a Voltage level.
+ * Class to store an override of a voltage level voltage limits.
  *
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
 public class VoltageLimitOverride {
-    private final double lowerVoltageLimit;
-    private final double upperVoltageLimit;
 
-    public double getLowerVoltageLimit() {
-        return lowerVoltageLimit;
+    private final double deltaLowVoltageLimit;
+    private final double deltaHighVoltageLimit;
+
+    public double getDeltaLowVoltageLimit() {
+        return deltaLowVoltageLimit;
     }
 
-    public double getUpperVoltageLimit() {
-        return upperVoltageLimit;
+    public double getDeltaHighVoltageLimit() {
+        return deltaHighVoltageLimit;
     }
 
-    public VoltageLimitOverride(double lowerVoltageLimit, double upperVoltageLimit) {
-        this.lowerVoltageLimit = lowerVoltageLimit;
-        this.upperVoltageLimit = upperVoltageLimit;
+    public VoltageLimitOverride(double deltaLowVoltageLimit, double deltaHighVoltageLimit) {
+        this.deltaLowVoltageLimit = deltaLowVoltageLimit;
+        this.deltaHighVoltageLimit = deltaHighVoltageLimit;
     }
 }

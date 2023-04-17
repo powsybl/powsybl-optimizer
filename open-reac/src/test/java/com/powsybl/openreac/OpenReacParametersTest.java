@@ -16,20 +16,20 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class OpenReacParametersTest {
+
     @Test
     public void testObjectiveIntegrityChecks() {
         Network network = IeeeCdfNetworkFactory.create118();
         OpenReacParameters parameters = new OpenReacParameters();
 
-        assertNull(parameters.getObjective(), "Objective must be explicitly defined by the user.");
-        assertThrows(InvalidParametersException.class, () -> parameters.checkIntegrity(network), "No objective defined should throw.");
+        assertEquals(parameters.getObjective(), OpenReacOptimisationObjective.MIN_GENERATION);
         assertThrows(NullPointerException.class, () -> parameters.setObjective(null), "We can't unset objective function.");
         parameters.setObjective(OpenReacOptimisationObjective.MIN_GENERATION);
         assertDoesNotThrow(() -> parameters.checkIntegrity(network), "Default configuration with only objective should be ok.");
-        parameters.setObjective(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_PROFILE);
-        assertThrows(InvalidParametersException.class, () -> parameters.checkIntegrity(network), "BETWEEN_HIGH_AND_LOW_VOLTAGE_PROFILE without ratio voltage set should throw");
-        parameters.setRatioVoltageObjective(1);
-        assertDoesNotThrow(() -> parameters.checkIntegrity(network), "Default configuration with BETWEEN_HIGH_AND_LOW_VOLTAGE_PROFILE and ratio voltage set should not throw");
+        parameters.setObjective(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT);
+        assertThrows(InvalidParametersException.class, () -> parameters.checkIntegrity(network), "BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT without ratio voltage set should throw");
+        parameters.setObjectiveDistance(1);
+        assertDoesNotThrow(() -> parameters.checkIntegrity(network), "Default configuration with BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT and ratio voltage set should not throw");
     }
 
     @Test
@@ -42,7 +42,7 @@ public class OpenReacParametersTest {
         assertEquals(0, parameters.getSpecificVoltageLimits().size(), "SpecificVoltageLimits should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getConstantQGenerators().size(), "ConstantQGenerators should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getVariableShuntCompensators().size(), "VariableShuntCompensators should be empty when using default OpenReacParameter constructor.");
-        assertEquals(0, parameters.getAllAlgorithmParams().size(), "AllAlgorithmParams should be empty when using default OpenReacParameter constructor.");
+        assertEquals(1, parameters.getAllAlgorithmParams().size());
 
         // adding an objective, to have a valid OpenReacParameter object
         parameters.setObjective(OpenReacOptimisationObjective.MIN_GENERATION);

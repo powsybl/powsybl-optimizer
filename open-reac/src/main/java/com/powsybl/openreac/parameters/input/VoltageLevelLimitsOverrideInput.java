@@ -45,8 +45,8 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
             double previousLowVoltageLimit = network.getVoltageLevel(voltageLevelId).getLowVoltageLimit();
             double previousHighVoltageLimit = network.getVoltageLevel(voltageLevelId).getHighVoltageLimit();
             double nominalV = network.getVoltageLevel(voltageLevelId).getNominalV();
-            normalizedVoltageLimitsOverride.put(voltageLevelId, new VoltageLimitOverride((previousLowVoltageLimit + limits.getLowerVoltageLimit()) / nominalV,
-                    (previousHighVoltageLimit + limits.getUpperVoltageLimit()) / nominalV));
+            normalizedVoltageLimitsOverride.put(voltageLevelId, new VoltageLimitOverride((previousLowVoltageLimit + limits.getDeltaLowVoltageLimit()) / nominalV,
+                    (previousHighVoltageLimit + limits.getDeltaHighVoltageLimit()) / nominalV));
         }
     }
 
@@ -64,8 +64,8 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
             String voltageLevelId = entry.getKey();
             VoltageLimitOverride limits = entry.getValue();
             int amplId = stringToIntMapper.getInt(AmplSubset.VOLTAGE_LEVEL, voltageLevelId);
-            String[] tokens = {Integer.toString(amplId), Double.toString(limits.getLowerVoltageLimit()),
-                    Double.toString(limits.getUpperVoltageLimit()), AmplIOUtils.addQuotes(voltageLevelId)};
+            String[] tokens = {Integer.toString(amplId), Double.toString(limits.getDeltaLowVoltageLimit()),
+                    Double.toString(limits.getDeltaHighVoltageLimit()), AmplIOUtils.addQuotes(voltageLevelId)};
             dataBuilder.append(String.join(" ", tokens));
             dataBuilder.append(System.lineSeparator());
         }

@@ -7,21 +7,24 @@
 package com.powsybl.openreac.parameters.input.algo;
 
 /**
- * Must be used with {@link OpenReacOptimisationObjective#BETWEEN_HIGH_AND_LOW_VOLTAGE_PROFILE}
- * to define the voltage ratio relative to nominal voltage, which OpenReac should converge to.
+ * Must be used with {@link OpenReacOptimisationObjective#BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT}
+ * to define the voltage between low and high voltage limits, which OpenReac should converge to.
+ * Zero percent means that it should converge to low voltage limits. 100 percents means that it should
+ * converge to high voltage limits.
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
-public class OptimisationVoltageRatio implements OpenReacAlgoParam {
-    private static final String RATIO_OBJECTIVE_VOLTAGE_KEY = "ratio_voltage_target";
+public class ObjectiveDistance implements OpenReacAlgoParam {
+
+    private static final String OBJECTIVE_DISTANCE_KEY = "ratio_voltage_target";
     private final double ratio;
 
-    public OptimisationVoltageRatio(double ratio) {
+    public ObjectiveDistance(double ratio) {
         this.ratio = ratio;
     }
 
     @Override
     public String getName() {
-        return RATIO_OBJECTIVE_VOLTAGE_KEY;
+        return OBJECTIVE_DISTANCE_KEY;
     }
 
     @Override

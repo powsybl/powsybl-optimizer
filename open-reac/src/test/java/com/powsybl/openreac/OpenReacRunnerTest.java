@@ -58,8 +58,8 @@ class OpenReacRunnerTest {
         Network network = IeeeCdfNetworkFactory.create118();
 
         OpenReacParameters parameters = new OpenReacParameters()
-                .setObjective(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_PROFILE)
-                .setRatioVoltageObjective(0.7)
+                .setObjective(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT)
+                .setObjectiveDistance(70)
                 .addVariableTwoWindingsTransformers(network.getTwoWindingsTransformerStream().limit(1).map(TwoWindingsTransformer::getId).collect(Collectors.toList()))
                 .addConstantQGenerators(network.getGeneratorStream().limit(1).map(Generator::getId).collect(Collectors.toList()))
                 .addVariableShuntCompensators(network.getShuntCompensatorStream().limit(1).map(ShuntCompensator::getId).collect(Collectors.toList()));
