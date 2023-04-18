@@ -144,6 +144,16 @@ public class OpenReacParameters {
                 throw new InvalidParametersException("Two windings transfromer " + transformerId + " not found in the network.");
             }
         }
+        for (String voltageLevelId : getSpecificVoltageLimits().keySet()) {
+            if (network.getVoltageLevel(voltageLevelId) == null) {
+                throw new InvalidParametersException("Voltage level " + voltageLevelId + " not found in the network.");
+            } else if (network.getVoltageLevel(voltageLevelId).getNominalV()
+                    + getSpecificVoltageLimits().get(voltageLevelId).getDeltaLowVoltageLimit()
+                    < 0) {
+                throw new InvalidParametersException("Voltage level " + voltageLevelId + " override leads to negative lower voltage level.");
+            }
+        }
+
         if (objective.equals(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT) && objectiveDistance.isEmpty()) {
             throw new InvalidParametersException("In using " + OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT +
                     " as objective, a distance in percent between low and high voltage limits is expected.");
