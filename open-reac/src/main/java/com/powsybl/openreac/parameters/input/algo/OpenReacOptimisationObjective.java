@@ -6,17 +6,26 @@
  */
 package com.powsybl.openreac.parameters.input.algo;
 
+import com.powsybl.openreac.parameters.input.OpenReacParameters;
+
 /**
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
 public enum OpenReacOptimisationObjective implements OpenReacAlgoParam {
 
-    /** Use this to minimizes the global generation */
+    /**
+     * Use this to minimizes the global generation
+     */
     MIN_GENERATION(0),
-    /** Use this to target a voltage profile between the low voltage limit
-     *  and high voltage limit. Use parameter */
+    /**
+     * Use this to target a voltage profile between the low voltage limit
+     * and high voltage limit.
+     * @see OpenReacParameters#setObjectiveDistance
+     */
     BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT(1),
-    /** Use this to target a specific voltage profile */
+    /**
+     * Use this to target a specific voltage profile
+     */
     SPECIFIC_VOLTAGE_PROFILE(2);
 
     private static final String OBJECTIVE_PARAM_KEY = "objective_choice";

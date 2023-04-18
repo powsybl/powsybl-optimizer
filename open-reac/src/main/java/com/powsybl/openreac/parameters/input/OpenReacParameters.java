@@ -89,10 +89,14 @@ public class OpenReacParameters {
     }
 
     /**
+     * A 0% objective means the model will target lower voltage limit.
+     * <p>
+     * A 100% objective means the model will target upper voltage limit.
+     * @param objectiveDistance is in %
      * @see ObjectiveDistance is a parameter used for {@link OpenReacOptimisationObjective#BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT}.
      */
     public OpenReacParameters setObjectiveDistance(double objectiveDistance) {
-        this.objectiveDistance = Optional.of(new ObjectiveDistance(objectiveDistance));
+        this.objectiveDistance = Optional.of(new ObjectiveDistance(objectiveDistance / 100));
         return this;
     }
 
