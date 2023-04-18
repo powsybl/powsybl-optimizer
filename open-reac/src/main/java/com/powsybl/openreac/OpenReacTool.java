@@ -7,10 +7,8 @@
 package com.powsybl.openreac;
 
 import com.google.auto.service.AutoService;
-import com.powsybl.ampl.executor.AmplConfig;
-import com.powsybl.ampl.executor.AmplModelExecutionHandler;
 import com.powsybl.commons.PowsyblException;
-import com.powsybl.iidm.network.Exporter;
+import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.iidm.network.ImportConfig;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.tools.ConversionToolUtils;
@@ -18,11 +16,9 @@ import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.loadflow.LoadFlowResult;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
-import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
-import com.powsybl.openreac.parameters.output.ReactiveSlackOutput;
 import com.powsybl.tools.Command;
 import com.powsybl.tools.Tool;
 import com.powsybl.tools.ToolRunningContext;
@@ -35,10 +31,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.stream.Collectors;
+import java.util.*;
 
 import static com.powsybl.iidm.network.tools.ConversionToolUtils.*;
 
@@ -48,14 +41,11 @@ import static com.powsybl.iidm.network.tools.ConversionToolUtils.*;
 @AutoService(Tool.class)
 public class OpenReacTool implements Tool {
     private static final String CASE_FILE = "case-file";
-    private static final String OUTPUT_CASE_FORMAT = "output-case-format";
-    private static final String OUTPUT_CASE_FORMAT_DEFAULT = "XIIDM";
-    private static final String OUTPUT_CASE_FILE = "output-case-file";
-    private static final String OUTPUT_CASE_FILE_DEFAULT = "resolved";
     private static final String SHUNTS_LIST = "variable-shunts-list";
     private static final String GENERATORS_LIST = "fixed-generators-list";
     private static final String TRANSFORMER_LIST = "variable-transformers-list";
     private static final String OPEN_REAC_PARAMS = "open-reac-params";
+    public static final String EXECUTION_OPENREAC = "execution/openreac";
 
     @Override
     public Command getCommand() {
@@ -84,18 +74,6 @@ public class OpenReacTool implements Tool {
                         .argName("FILE")
                         .required()
                         .build());
-                options.addOption(Option.builder()
-                        .longOpt(OUTPUT_CASE_FORMAT)
-                        .desc("modified network output format " + Exporter.getFormats())
-                        .hasArg()
-                        .argName("CASEFORMAT")
-                        .build());
-                options.addOption(Option.builder()
-                        .longOpt(OUTPUT_CASE_FILE)
-                        .desc("modified network base name")
-                        .hasArg()
-                        .argName("FILE")
-                        .build());
                 options.addOption(createImportParametersFileOption());
                 options.addOption(createImportParameterOption());
                 options.addOption(createExportParametersFileOption());
@@ -120,10 +98,7 @@ public class OpenReacTool implements Tool {
     public void run(CommandLine commandLine, ToolRunningContext context) throws Exception {
         // getting parameters
         Path inputCaseFile = context.getFileSystem().getPath(commandLine.getOptionValue(CASE_FILE));
-        Path outputCaseFile = context.getFileSystem().getPath(commandLine.getOptionValue(OUTPUT_CASE_FILE, OUTPUT_CASE_FILE_DEFAULT));
-        Files.createDirectories(context.getFileSystem().getPath("./export/before_open_reac"));
-        Files.createDirectories(context.getFileSystem().getPath("./export/after_open_reac"));
-        Files.createDirectories(context.getFileSystem().getPath("./export/after_loadflow"));
+        Files.createDirectories(context.getFileSystem().getPath(EXECUTION_OPENREAC));
         context.getOutputStream().println("Parsing properties...");
         Properties inputParams = readProperties(commandLine, ConversionToolUtils.OptionType.IMPORT, context);
         OpenReacParameters openReacParameters = createOpenReacParameters(commandLine, context);
@@ -131,24 +106,15 @@ public class OpenReacTool implements Tool {
         context.getOutputStream().println("Loading network '" + inputCaseFile + "'...");
         Network network = loadingNetwork(context, inputCaseFile, inputParams);
 
-        context.getOutputStream().println("Exporting network with ampl.");
-        exportOpenReacRunningFolder(context, network, openReacParameters, "./export/before_open_reac");
-
         itoolsOpenReac(context, network, openReacParameters);
-
-        context.getOutputStream().println("Exporting network with ampl.");
-        exportOpenReacRunningFolder(context, network, openReacParameters, "./export/after_open_reac");
-
-        context.getOutputStream().println("Exporting network '" + outputCaseFile + "' with the results...");
-        exportNetwork(commandLine, context, outputCaseFile, network);
 
         context.getOutputStream().println("Running a loadflow...");
         LoadFlowResult result = LoadFlow.run(network, context.getShortTimeExecutionComputationManager(), LoadFlowParameters.load());
         exportLoadFlowMetrics(context, result.getMetrics());
         context.getOutputStream().println("Loadflow done. Is ok ? " + result.isOk());
 
-        context.getOutputStream().println("Exporting network with ampl.");
-        exportOpenReacRunningFolder(context, network, openReacParameters, "./export/after_loadflow");
+        itoolsOpenReac(context, network, openReacParameters);
+
         context.getOutputStream().println("All good. Exiting...");
     }
 
@@ -161,7 +127,7 @@ public class OpenReacTool implements Tool {
     }
 
     public OpenReacParameters createOpenReacParameters(CommandLine line,
-                                                        ToolRunningContext context) throws IOException {
+                                                       ToolRunningContext context) throws IOException {
 
         Properties inputParams = new Properties();
         String filename = line.getOptionValue(OPEN_REAC_PARAMS, null);
@@ -218,45 +184,23 @@ public class OpenReacTool implements Tool {
     }
 
     public void itoolsOpenReac(ToolRunningContext context, Network network,
-                                       OpenReacParameters openReacParameters) {
+                               OpenReacParameters openReacParameters) throws IOException {
         context.getOutputStream().println("Running OpenReac on the network...");
-        OpenReacResult results = OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), openReacParameters);
-        List<Map.Entry<String, String>> sortedIndicators = results.getIndicators().entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toList());
-        context.getOutputStream().println("OpenReac optimisation done.");
-
-        context.getOutputStream().println("OpenReac status:" + results.getStatus().name());
-        context.getOutputStream().println("OpenReac indicators: ");
-        for (Map.Entry<String, String> indicator : sortedIndicators) {
-            context.getOutputStream().println(indicator.getKey() + " " + indicator.getValue());
+        OpenReacConfig config = new OpenReacConfig(true);
+        OpenReacResult results;
+        try (LocalComputationManager computationManager = new LocalComputationManager(context.getFileSystem().getPath(EXECUTION_OPENREAC))) {
+            results = OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), openReacParameters, config, computationManager);
+            // Finding the last folder modified in the directory of the LocalComputationManager to tell the user which folder correspond.
+            String[] amplRunningFolderList = context.getFileSystem().getPath(EXECUTION_OPENREAC).toFile().list();
+            Objects.requireNonNull(amplRunningFolderList, "OpenReac did not run in the specified folder. Unexpected error.");
+            Optional<Path> workingDir = Arrays.stream(amplRunningFolderList)
+                    .map(filename -> context.getFileSystem().getPath(EXECUTION_OPENREAC, filename))
+                    .max(Comparator.comparing(path -> path.toFile().lastModified()));
+            context.getOutputStream().println("OpenReac optimisation done in " + workingDir.map(p -> p.toAbsolutePath().toString()).orElse("NOT_FOUND"));
         }
-        context.getOutputStream().println("OpenReac reactive slacks: ");
-        for (ReactiveSlackOutput.ReactiveSlack reactiveSlack : results.getReactiveSlacks()) {
-            context.getOutputStream().println("reactiveSlack : " + reactiveSlack.busId + " " + reactiveSlack.voltageLevelId + " " + reactiveSlack.slack);
-        }
-    }
 
-    /**
-     * Export the folder that will run ampl with mainly OpenReac files and network export in ampl format.
-     *
-     * @implNote Quite a HACK, it should be exposed as a utility from powsybl-core.
-     */
-    public void exportOpenReacRunningFolder(ToolRunningContext context, Network network,
-                                                    OpenReacParameters openReacParameters, String contextRelativePath) throws IOException {
-        AmplModelExecutionHandler amplModelExecutionHandler = new AmplModelExecutionHandler(
-                OpenReacModel.buildModel(),
-                network,
-                network.getVariantManager().getWorkingVariantId(),
-                AmplConfig.load(),
-                new OpenReacAmplIOFiles(openReacParameters, network, false)
-        );
-        amplModelExecutionHandler.before(context.getFileSystem().getPath(contextRelativePath));
-    }
+        context.getOutputStream().println("OpenReac status : " + results.getStatus().name());
 
-    public void exportNetwork(CommandLine commandLine, ToolRunningContext context, Path outputCaseFile,
-                                      Network network) throws IOException {
-        String outputCaseFormat = commandLine.getOptionValue(OUTPUT_CASE_FORMAT, OUTPUT_CASE_FORMAT_DEFAULT);
-        Properties outputParams = readProperties(commandLine, OptionType.EXPORT, context);
-        network.write(outputCaseFormat, outputParams, outputCaseFile);
     }
 
     public Network loadingNetwork(ToolRunningContext context, Path inputCaseFile, Properties inputParams) {
