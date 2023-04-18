@@ -1,0 +1,74 @@
+###############################################################################
+#
+# Copyright (c) 2022,2023 RTE (http://www.rte-france.com), Coreso and TSCNet Services 
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+###############################################################################
+
+###############################################################################
+# Divergence analysis
+# Author : Jean Maeght 2022 2023
+# Author : Pierre Arvy 2023
+###############################################################################
+
+###############################################################################
+#                                                                             #
+#               Exportation of penalization data for analysis                 #
+#                                                                             #
+##############################################################################
+
+if final_status == "OK" then {
+
+  # Sigma values in dbb computation
+  let fileOut := "results/sigma_penal_dbb.csv";
+  printf "# Values of sigma penal var after detection opt\n" > (fileOut);
+  printf "branch;bus1;bus2;admittance;dephor;angper;sigma1;sigma2;sigma3;sigma4;sigma5;sigma6;sigma7;sigma8;b_branch;id\n" > (fileOut);
+  printf{(qq,m,n) in BRANCHCC} "%i;%i;%i;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;""%s""\n",
+        qq, m, n, branch_admi[qq,m,n], branch_dephor[qq,m,n], branch_angper[qq,m,n],
+        sigma1[qq,m,n],sigma2[qq,m,n],sigma3[qq,m,n],sigma4[qq,m,n],sigma5[qq,m,n],sigma6[qq,m,n],sigma7[qq,m,n],sigma8[qq,m,n],
+        b_branch[qq,m,n],
+        branch_id[1,qq,m,n] 
+        > (fileOut);
+  close (fileOut);
+
+  # Sigma values in dbp computation
+  let fileOut := "results/sigma_penal_dbp.csv";
+  printf "# Values of sigma penal var after detection opt\n" > (fileOut);
+  printf "branch;bus1;bus2;admittance;dephor;angper;sigma1;sigma2;sigma3;sigma4;sigma5;sigma6;sigma7;sigma8;b_sigma1;b_sigma2;b_sigma3;b_sigma4;b_sigma5;b_sigma6;b_sigma7;b_sigma8;id\n" > (fileOut);
+  printf{(qq,m,n) in BRANCHCC} "%i;%i;%i;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%Q\n",
+        qq, m, n, branch_admi[qq,m,n], branch_dephor[qq,m,n], branch_angper[qq,m,n],
+        sigma1[qq,m,n],sigma2[qq,m,n],sigma3[qq,m,n],sigma4[qq,m,n],sigma5[qq,m,n],sigma6[qq,m,n],sigma7[qq,m,n],sigma8[qq,m,n],
+        b_sigma1[qq,m,n],b_sigma2[qq,m,n],b_sigma3[qq,m,n],b_sigma4[qq,m,n],b_sigma5[qq,m,n],b_sigma6[qq,m,n],b_sigma7[qq,m,n],b_sigma8[qq,m,n],
+        branch_id[1,qq,m,n] 
+        > (fileOut);
+  close (fileOut);
+
+  # s1 values for all opt problems
+  let fileOut := "results/s1_penal.csv";
+  printf "# Values of s penal var after detection opt\n" > (fileOut);
+  printf "busPV;targetV;V;s1;b_s1;id\n" > (fileOut);
+  printf{n in BUSCC_PV} "%i;%.5f;%.5f;%.5f;%.5f;%Q\n",
+        n, targetV_busPV[n], V[n], s1[n], b_s1[n], bus_id[1,n]
+        > (fileOut);
+  close (fileOut);
+
+  # V and theta values for all problems
+  let fileOut := "results/Vtheta_var.csv";
+  printf "# Values of V/theta var after detection opt\n" > (fileOut);
+  printf "bus;V;theta;id\n" > (fileOut);
+  printf{n in BUSCC} "%i;%.5f;%.5f;%Q\n",
+        n, V[n], teta[n], bus_id[1,n]
+        > (fileOut);
+  close (fileOut);
+
+  # For future exploitation of results in a refined model !
+  let fileOut := "results/values_Vtheta.txt";
+  printf "# Values of V/theta var after detection opt\n" > (fileOut);
+  printf "# bus V theta id\n" > (fileOut);
+  printf{n in BUSCC} "%i %.5f %.5f %Q\n",
+        n, V[n], teta[n], bus_id[1,n]
+        > (fileOut);
+  close (fileOut);
+}
