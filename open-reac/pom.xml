@@ -21,8 +21,29 @@
     <name>OpenReac</name>
 
     <properties>
-        <powsybl-core.version>5.2.0</powsybl-core.version>
+        <powsybl-core.version>5.2.1</powsybl-core.version>
     </properties>
+
+    <developers>
+        <developer>
+            <name>Nicolas PIERRE</name>
+            <email>nicolas.pierre@artelys.com</email>
+            <organization>Artelys</organization>
+            <organizationUrl>https://www.artelys.com</organizationUrl>
+        </developer>
+        <developer>
+            <name>Geoffroy JAMGOTCHIAN</name>
+            <email>geoffroy.jamgotchian@rte-france.com</email>
+            <organization>RTE</organization>
+            <organizationUrl>https://www.rte-france.com</organizationUrl>
+        </developer>
+        <developer>
+            <name>Anne TILLOY</name>
+            <email>anne.tilloy@rte-france.com</email>
+            <organization>RTE</organization>
+            <organizationUrl>https://www.rte-france.com</organizationUrl>
+        </developer>
+    </developers>
 
     <build>
         <plugins>
