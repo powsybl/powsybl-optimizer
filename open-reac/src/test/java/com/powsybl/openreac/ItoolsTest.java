@@ -46,7 +46,7 @@ class ItoolsTest {
         String minimalLine = "--case-file network.iidm";
         assertDoesNotThrow(() -> new DefaultParser().parse(tool.getCommand().getOptions(), minimalLine.split(" ")), "minimal arguments should be input network");
 
-        String specificOpenReacLine = "--case-file network.xiidm --output-case-file network-resolved --output-case-format XIIDM --open-reac-params params.txt";
+        String specificOpenReacLine = "--case-file network.xiidm --open-reac-params params.txt";
         assertDoesNotThrow(() -> new DefaultParser().parse(tool.getCommand().getOptions(), minimalLine.split(" ")), "OpenReac Tool should handle all those args " + specificOpenReacLine);
 
     }
