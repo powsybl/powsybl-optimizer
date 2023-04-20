@@ -13,3 +13,22 @@ To check, start a bash and run :
 ```bash
 knitroampl stub
 ```
+## Itools
+This project also provides an utilty to run OpenReac with Itools.
+
+1. Run OpenReac on the provided network.
+2. Run LoadFlow on the result.
+3. Run another OpenReac on the loadflow result.
+
+You will have the running OpenReac folders next to your working directory.
+
+You can also customize the algorithm parameters directly with the option `--open-reac-params params.txt`.
+Note on the objective parameters, you must provide one of these lines:
+``` properties
+# Minimum power generation (default)
+obj_min_gen
+# Target low_voltage_limit + (high_voltage_limit - low_voltage_limit) * RATIO for each equipement
+obj_target_ratio RATIO
+# Use the target voltage provided in the network file
+obj_provided_target_v
+```
