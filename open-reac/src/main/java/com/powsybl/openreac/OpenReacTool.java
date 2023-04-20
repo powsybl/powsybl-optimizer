@@ -174,9 +174,7 @@ public class OpenReacTool implements Tool {
                         openReacParameters.setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE);
                         break;
                     default:
-                        context.getOutputStream()
-                                .println(
-                                        "Algorithm parameter " + key + " does not match any OpenReacParameter. Skipping...");
+                        openReacParameters.addAlgorithmParam(key, inputParams.getProperty(key, ""));
                 }
             }
         }

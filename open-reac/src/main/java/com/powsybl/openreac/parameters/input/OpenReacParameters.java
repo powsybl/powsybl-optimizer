@@ -72,6 +72,21 @@ public class OpenReacParameters {
         return this;
     }
 
+    public OpenReacParameters addAlgorithmParam(String name, String value) {
+        this.genericParamsList.add(new OpenReacAlgoParam() {
+            @Override
+            public String getName() {
+                return name;
+            }
+
+            @Override
+            public String getParamValue() {
+                return value;
+            }
+        });
+        return this;
+    }
+
     /**
      * The definition of the objective function for the optimization.
      */
