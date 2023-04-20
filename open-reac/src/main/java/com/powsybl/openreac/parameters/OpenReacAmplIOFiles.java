@@ -79,8 +79,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
         return !reactiveSlackOutput.isErrorState();
     }
 
-    // FIXME
-    //@Override
+    @Override
     public boolean isDebug() {
         return debug;
     }
