@@ -592,12 +592,23 @@ param branch_dephex {(qq,m,n) in BRANCHCC} = 0; # In IIDM, everything is in bus1
 param max_targetV := (max {n in BUSCC_PV} targetV_busPV[n]);
 param max_branch_Ror := (max {(qq,m,n) in BRANCHCC} branch_Ror[qq,m,n]);
 param max_branch_admi := (max {(qq,m,n) in BRANCHCC} branch_admi[qq,m,n]);
-param max_branch_dephor := (max {(qq,m,n) in BRANCHCC} branch_dephor[qq,m,n]);
+param max_branch_dephor := (max {(qq,m,n) in BRANCHCC} abs(branch_dephor[qq,m,n]));
 param max_branch_angper := (max {(qq,m,n) in BRANCHCC} branch_angper[qq,m,n]);
 param max_branch_Gor := (max {(qq,m,n) in BRANCHCC} abs(branch_Gor[1,qq,m,n]));
 param max_branch_Bor := (max {(qq,m,n) in BRANCHCC} abs(branch_Bor[1,qq,m,n]));
 param max_branch_Gex := (max {(qq,m,n) in BRANCHCC} abs(branch_Gex[1,qq,m,n]));
 param max_branch_Bex := (max {(qq,m,n) in BRANCHCC} abs(branch_Bex[1,qq,m,n]));
+
+# Get the minimum of each parameter (will be used for optimization resume)
+param min_targetV := (min {n in BUSCC_PV} targetV_busPV[n]);
+param min_branch_Ror := (min {(qq,m,n) in BRANCHCC} branch_Ror[qq,m,n]);
+param min_branch_admi := (min {(qq,m,n) in BRANCHCC} branch_admi[qq,m,n]);
+param min_branch_dephor := (min {(qq,m,n) in BRANCHCC} branch_dephor[qq,m,n]);
+param min_branch_angper := (min {(qq,m,n) in BRANCHCC} branch_angper[qq,m,n]);
+param min_branch_Gor := (min {(qq,m,n) in BRANCHCC} branch_Gor[1,qq,m,n]);
+param min_branch_Bor := (min {(qq,m,n) in BRANCHCC} branch_Bor[1,qq,m,n]);
+param min_branch_Gex := (min {(qq,m,n) in BRANCHCC} branch_Gex[1,qq,m,n]);
+param min_branch_Bex := (min {(qq,m,n) in BRANCHCC} branch_Bex[1,qq,m,n]);
 
 # Get absolute mean of each parameter (will be used for optimization resume)
 param abs_mean_targetV := (sum {n in BUSCC_PV} targetV_busPV[n]) / card(BUSCC_PV);

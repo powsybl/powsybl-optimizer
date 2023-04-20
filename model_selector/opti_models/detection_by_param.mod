@@ -48,52 +48,57 @@ subject to ctr_b_sigma8_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}:
 #
 
 # Lower bounds of penal var
-subject to ctr_s1_min_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV}: s1[n] + targetV_busPV[n] >= 0.2;
-subject to ctr_sigma1_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma1[qq,m,n] + branch_Ror[qq,m,n] >= 0;
-subject to ctr_sigma2_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma2[qq,m,n] + branch_admi[qq,m,n] >= 0;
-subject to ctr_sigma3_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma3[qq,m,n] + branch_dephor[qq,m,n] >= - 3.141592;
-subject to ctr_sigma4_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma4[qq,m,n] + branch_angper[qq,m,n] >= - 3.141592;
-subject to ctr_sigma5_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma5[qq,m,n] + branch_Gor[1,qq,m,n] >= -max_branch_Gor;
-subject to ctr_sigma6_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma6[qq,m,n] + branch_Bor[1,qq,m,n] >= -max_branch_Bor;
-subject to ctr_sigma7_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma7[qq,m,n] + branch_Gex[1,qq,m,n] >= -max_branch_Gex;
-subject to ctr_sigma8_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma8[qq,m,n] + branch_Bex[1,qq,m,n] >= -max_branch_Bex;
+subject to ctr_s1_min_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV}: s1[n] + targetV_busPV[n] >= s1_inf;
+subject to ctr_sigma1_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma1[qq,m,n] + branch_Ror[qq,m,n] >= sigma1_inf;
+subject to ctr_sigma2_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma2[qq,m,n] + branch_admi[qq,m,n] >= sigma2_inf;
+subject to ctr_sigma3_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma3[qq,m,n] + branch_dephor[qq,m,n] >= sigma3_inf;
+subject to ctr_sigma4_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma4[qq,m,n] + branch_angper[qq,m,n] >= sigma4_inf;
+subject to ctr_sigma5_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma5[qq,m,n] + branch_Gor[1,qq,m,n] >= sigma5_inf;
+subject to ctr_sigma6_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma6[qq,m,n] + branch_Bor[1,qq,m,n] >= sigma6_inf;
+subject to ctr_sigma7_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma7[qq,m,n] + branch_Gex[1,qq,m,n] >= sigma7_inf;
+subject to ctr_sigma8_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma8[qq,m,n] + branch_Bex[1,qq,m,n] >= sigma8_inf;
 
 # Upper bounds of penal var
-subject to ctr_s1_max_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV}: s1[n] + targetV_busPV[n] <= 1.8;
-subject to ctr_sigma1_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma1[qq,m,n] + branch_Ror[qq,m,n] <= 10;
-subject to ctr_sigma2_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma2[qq,m,n] + branch_admi[qq,m,n] <= max_branch_admi;
-subject to ctr_sigma3_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma3[qq,m,n] + branch_dephor[qq,m,n] <= 3.141592;
-subject to ctr_sigma4_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma4[qq,m,n] + branch_angper[qq,m,n] <= 3.141592;
-subject to ctr_sigma5_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma5[qq,m,n] + branch_Gor[1,qq,m,n] <= max_branch_Gor;
-subject to ctr_sigma6_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma6[qq,m,n] + branch_Bor[1,qq,m,n] <= max_branch_Bor;
-subject to ctr_sigma7_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma7[qq,m,n] + branch_Gex[1,qq,m,n] <= max_branch_Gex;
-subject to ctr_sigma8_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma8[qq,m,n] + branch_Bex[1,qq,m,n] <= max_branch_Bex;
+subject to ctr_s1_max_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV}: s1[n] + targetV_busPV[n] <= s1_sup;
+subject to ctr_sigma1_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma1[qq,m,n] + branch_Ror[qq,m,n] <= sigma1_sup;
+subject to ctr_sigma2_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma2[qq,m,n] + branch_admi[qq,m,n] <= sigma2_sup;
+subject to ctr_sigma3_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma3[qq,m,n] + branch_dephor[qq,m,n] <= sigma3_sup;
+subject to ctr_sigma4_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma4[qq,m,n] + branch_angper[qq,m,n] <= sigma4_sup;
+subject to ctr_sigma5_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma5[qq,m,n] + branch_Gor[1,qq,m,n] <= sigma5_sup;
+subject to ctr_sigma6_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma6[qq,m,n] + branch_Bor[1,qq,m,n] <= sigma6_sup;
+subject to ctr_sigma7_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma7[qq,m,n] + branch_Gex[1,qq,m,n] <= sigma7_sup;
+subject to ctr_sigma8_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma8[qq,m,n] + branch_Bex[1,qq,m,n] <= sigma8_sup;
+
+# Rho+sigma1 entre 0.5 et 2. Y entre admi_min. Enlever 1 pour tout ce qui n'est pas min/max. Mettre 0.001 pour les autres.
+#
+
+
 
 #
 # Activation of b variables if s/sigma var != 0
 #
 
 # if s/sigma variable > 0
-subject to ctr_b_s1_pos_dbp{PROBLEM_DETECTION_PARAM, k in BUSCC_PV}: s1[k] <= (1.8 - targetV_busPV[k]) * b_s1[k];
-subject to ctr_b_sigma1_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma1[qq,m,n] <= (10 - branch_Ror[qq,m,n] + 1) * b_sigma1[qq,m,n];
-subject to ctr_b_sigma2_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma2[qq,m,n] <= (max_branch_admi - branch_admi[qq,m,n] + 1) * b_sigma2[qq,m,n];
-subject to ctr_b_sigma3_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma3[qq,m,n] <= (3.141592 - branch_dephor[qq,m,n] + 1) * b_sigma3[qq,m,n];
-subject to ctr_b_sigma4_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma4[qq,m,n] <= (3.141592 - branch_angper[qq,m,n] + 1) * b_sigma4[qq,m,n];
-subject to ctr_b_sigma5_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma5[qq,m,n] <= (max_branch_Gor - branch_Gor[1,qq,m,n] + 1) * b_sigma5[qq,m,n];
-subject to ctr_b_sigma6_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma6[qq,m,n] <= (max_branch_Bor - branch_Bor[1,qq,m,n] + 1) * b_sigma6[qq,m,n];
-subject to ctr_b_sigma7_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma7[qq,m,n] <= (max_branch_Gex - branch_Gex[1,qq,m,n] + 1) * b_sigma7[qq,m,n];
-subject to ctr_b_sigma8_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma8[qq,m,n] <= (max_branch_Bex - branch_Bex[1,qq,m,n] + 1) * b_sigma8[qq,m,n];
+subject to ctr_b_s1_pos_dbp{PROBLEM_DETECTION_PARAM, k in BUSCC_PV}: s1[k] <= (s1_sup - targetV_busPV[k] + 0.001) * b_s1[k];
+subject to ctr_b_sigma1_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma1[qq,m,n] <= (sigma1_sup - branch_Ror[qq,m,n] + 0.001) * b_sigma1[qq,m,n];
+subject to ctr_b_sigma2_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma2[qq,m,n] <= (sigma2_sup - branch_admi[qq,m,n] + 0.001) * b_sigma2[qq,m,n];
+subject to ctr_b_sigma3_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma3[qq,m,n] <= (sigma3_sup - branch_dephor[qq,m,n] + 0.001) * b_sigma3[qq,m,n];
+subject to ctr_b_sigma4_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma4[qq,m,n] <= (sigma4_sup - branch_angper[qq,m,n] + 0.001) * b_sigma4[qq,m,n];
+subject to ctr_b_sigma5_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma5[qq,m,n] <= (sigma5_sup - branch_Gor[1,qq,m,n] + 0.001) * b_sigma5[qq,m,n];
+subject to ctr_b_sigma6_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma6[qq,m,n] <= (sigma6_sup - branch_Bor[1,qq,m,n] + 0.001) * b_sigma6[qq,m,n];
+subject to ctr_b_sigma7_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma7[qq,m,n] <= (sigma7_sup - branch_Gex[1,qq,m,n] + 0.001) * b_sigma7[qq,m,n];
+subject to ctr_b_sigma8_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma8[qq,m,n] <= (sigma8_sup - branch_Bex[1,qq,m,n] + 0.001) * b_sigma8[qq,m,n];
 
 # if s/sigma variable < 0
-subject to ctr_b_s1_neg_dbp{PROBLEM_DETECTION_PARAM, k in BUSCC_PV}: s1[k] >= (0.2 - 1 - targetV_busPV[k]) * b_s1[k];
-subject to ctr_b_sigma1_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma1[qq,m,n] >= (0 - branch_Ror[qq,m,n] - 1) * b_sigma1[qq,m,n];
-subject to ctr_b_sigma2_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma2[qq,m,n] >= (0 - branch_admi[qq,m,n]- 1) * b_sigma2[qq,m,n];
-subject to ctr_b_sigma3_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma3[qq,m,n] >= (-3.141592 - branch_dephor[qq,m,n]- 1) * b_sigma3[qq,m,n];
-subject to ctr_b_sigma4_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma4[qq,m,n] >= (-3.141592 - branch_angper[qq,m,n]- 1) * b_sigma4[qq,m,n];
-subject to ctr_b_sigma5_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma5[qq,m,n] >= (-max_branch_Gor - branch_Gor[1,qq,m,n]- 1) * b_sigma5[qq,m,n];
-subject to ctr_b_sigma6_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma6[qq,m,n] >= (-max_branch_Bor - branch_Bor[1,qq,m,n]- 1) * b_sigma6[qq,m,n];
-subject to ctr_b_sigma7_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma7[qq,m,n] >= (-max_branch_Gex - branch_Gex[1,qq,m,n]- 1) * b_sigma7[qq,m,n];
-subject to ctr_b_sigma8_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma8[qq,m,n] >= (-max_branch_Bex - branch_Bex[1,qq,m,n]- 1) * b_sigma8[qq,m,n];
+subject to ctr_b_s1_neg_dbp{PROBLEM_DETECTION_PARAM, k in BUSCC_PV}: s1[k] >= (s1_inf - 0.001 - targetV_busPV[k]) * b_s1[k];
+subject to ctr_b_sigma1_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma1[qq,m,n] >= (sigma1_inf - branch_Ror[qq,m,n] - 0.001) * b_sigma1[qq,m,n];
+subject to ctr_b_sigma2_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma2[qq,m,n] >= (sigma2_inf - branch_admi[qq,m,n]- 0.001) * b_sigma2[qq,m,n];
+subject to ctr_b_sigma3_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma3[qq,m,n] >= (sigma3_inf - branch_dephor[qq,m,n]- 0.001) * b_sigma3[qq,m,n];
+subject to ctr_b_sigma4_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma4[qq,m,n] >= (sigma4_inf - branch_angper[qq,m,n]- 0.001) * b_sigma4[qq,m,n];
+subject to ctr_b_sigma5_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma5[qq,m,n] >= (sigma5_inf - branch_Gor[1,qq,m,n]- 0.001) * b_sigma5[qq,m,n];
+subject to ctr_b_sigma6_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma6[qq,m,n] >= (sigma6_inf - branch_Bor[1,qq,m,n]- 0.001) * b_sigma6[qq,m,n];
+subject to ctr_b_sigma7_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma7[qq,m,n] >= (sigma7_inf - branch_Gex[1,qq,m,n]- 0.001) * b_sigma7[qq,m,n];
+subject to ctr_b_sigma8_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}: sigma8[qq,m,n] >= (sigma8_inf - branch_Bex[1,qq,m,n]- 0.001) * b_sigma8[qq,m,n];
 
 #####################################
 #                                   #

@@ -291,6 +291,10 @@ card(UNITCC),
 card(BUSCC_PQ), card(BUSCC_PV)
 ;
 
+display BUSCC;
+
+display BRANCHCC;
+
 # Is the case power globally power balanced? 
 let temp1 := sum{(c,n) in LOADCC} load_PFix[1,c,n];
 let temp2 := sum{(g,n) in UNITCC} unit_Pc[1,g,n];
@@ -592,6 +596,16 @@ display
   min({n in BUSCC} teta[n]),
   min({n in BUSCC}V[n]),max({n in BUSCC}V[n])
   ;
+
+
+
+#display sigma1;
+#display b_branch;
+
+for{(qq,m,n) in BRANCHCC}{
+  if b_branch[qq,m,n] >= 0.0001 then printf "Branch %s detected\n", branch_id[1,qq,m,n];
+}
+
 
 include print_resume_slacks.run;
 
