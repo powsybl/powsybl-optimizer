@@ -277,7 +277,7 @@ printf "\n";
 display
 maximal_voltage_upper_bound, minimal_voltage_lower_bound,
 card(SUBSTATIONS),card(BUS),card(BUS2),card(BUSCC),card(BUS2 diff BUSCC),
-card(BRANCH),card(BRANCHCC),card(BRANCHZNULL),card(BRANCHCC diff BRANCHZNULL),
+card(BRANCH),card(BRANCHCC),card(BRANCHZNULL),card(BRANCHCC diff BRANCHZNULL), card(BRANCHCC_PENALIZED),
 card(BRANCHCC_DEPH), card(BRANCHCC_REGL),
 card(UNIT),card(UNITCC),
 card(LOAD),card(LOADCC),
@@ -450,14 +450,14 @@ if (param_detection == 1) then {
   let PROBLEM_DETECTION_EQUATIONS := { };
   
   let {n in BUSCC_PV} b_s1[n] := 0;
-  let {(qq,m,n) in BRANCHCC} b_sigma1[qq,m,n] := 0;
-  let {(qq,m,n) in BRANCHCC} b_sigma2[qq,m,n] := 0;
-  let {(qq,m,n) in BRANCHCC} b_sigma3[qq,m,n] := 0;
-  let {(qq,m,n) in BRANCHCC} b_sigma4[qq,m,n] := 0;
-  let {(qq,m,n) in BRANCHCC} b_sigma5[qq,m,n] := 0;
-  let {(qq,m,n) in BRANCHCC} b_sigma6[qq,m,n] := 0;
-  let {(qq,m,n) in BRANCHCC} b_sigma7[qq,m,n] := 0;
-  let {(qq,m,n) in BRANCHCC} b_sigma8[qq,m,n] := 0;
+  let {(qq,m,n) in BRANCHCC_PENALIZED} b_sigma1[qq,m,n] := 0;
+  let {(qq,m,n) in BRANCHCC_PENALIZED} b_sigma2[qq,m,n] := 0;
+  let {(qq,m,n) in BRANCHCC_PENALIZED} b_sigma3[qq,m,n] := 0;
+  let {(qq,m,n) in BRANCHCC_PENALIZED} b_sigma4[qq,m,n] := 0;
+  let {(qq,m,n) in BRANCHCC_PENALIZED} b_sigma5[qq,m,n] := 0;
+  let {(qq,m,n) in BRANCHCC_PENALIZED} b_sigma6[qq,m,n] := 0;
+  let {(qq,m,n) in BRANCHCC_PENALIZED} b_sigma7[qq,m,n] := 0;
+  let {(qq,m,n) in BRANCHCC_PENALIZED} b_sigma8[qq,m,n] := 0;
 
 } else if (branch_detection == 1) then {
 
@@ -466,7 +466,7 @@ if (param_detection == 1) then {
   let PROBLEM_DETECTION_EQUATIONS := { };
 
   let {n in BUSCC_PV} b_s1[n] := 0;
-  let {(qq,m,n) in BRANCHCC} b_branch[qq,m,n] := 0;
+  let {(qq,m,n) in BRANCHCC_PENALIZED} b_branch[qq,m,n] := 0;
 
 } else if (equations_detection == 1) then {
 
@@ -589,7 +589,7 @@ for {(qq,m,n) in BRANCHCC: (teta[m]-teta[n])>temp1*0.99 or (teta[m]-teta[n])<tem
 display
   nb_iter_last,
   nb_iter_total,
-  max({(qq,m,n) in BRANCHCC} branch_R[1,qq,m,n]),max({(qq,m,n) in BRANCHCC} branch_X[1,qq,m,n]),
+  max({(qq,m,n) in BRANCHCC_PENALIZED} branch_R[1,qq,m,n]),max({(qq,m,n) in BRANCHCC_PENALIZED} branch_X[1,qq,m,n]),
   max({(qq,m,n) in BRANCHCC} (teta[m]-teta[n])),
   min({(qq,m,n) in BRANCHCC} (teta[m]-teta[n])),
   max({n in BUSCC} teta[n]),
@@ -602,7 +602,7 @@ display
 #display sigma1;
 #display b_branch;
 
-for{(qq,m,n) in BRANCHCC}{
+for{(qq,m,n) in BRANCHCC_PENALIZED}{
   if b_branch[qq,m,n] >= 0.0001 then printf "Branch %s detected\n", branch_id[1,qq,m,n];
 }
 
@@ -614,6 +614,10 @@ include print_resume_slacks.run;
 ###############################################################################
 
 include results_exporter.run;
+
+for{(qq,m,n) in BRANCHCC_PENALIZED}{
+  if b_sigma8[qq,m,n] >= 0.2 then printf "Waaaaaoiuuuuuh %i %i %i\n", qq, m, n;
+}
 
 ###############################################################################
 #                                End of file                                  #

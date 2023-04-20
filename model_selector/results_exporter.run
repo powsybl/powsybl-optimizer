@@ -25,7 +25,7 @@ if final_status == "OK" then {
   let fileOut := "results/sigma_penal_dbb.csv";
   printf "# Values of sigma penal var after detection opt\n" > (fileOut);
   printf "branch;bus1;bus2;admittance;dephor;angper;sigma1;sigma2;sigma3;sigma4;sigma5;sigma6;sigma7;sigma8;b_branch;id\n" > (fileOut);
-  printf{(qq,m,n) in BRANCHCC} "%i;%i;%i;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;""%s""\n",
+  printf{(qq,m,n) in BRANCHCC_PENALIZED} "%i;%i;%i;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;""%s""\n",
         qq, m, n, branch_admi[qq,m,n], branch_dephor[qq,m,n], branch_angper[qq,m,n],
         sigma1[qq,m,n],sigma2[qq,m,n],sigma3[qq,m,n],sigma4[qq,m,n],sigma5[qq,m,n],sigma6[qq,m,n],sigma7[qq,m,n],sigma8[qq,m,n],
         b_branch[qq,m,n],
@@ -37,7 +37,7 @@ if final_status == "OK" then {
   let fileOut := "results/sigma_penal_dbp.csv";
   printf "# Values of sigma penal var after detection opt\n" > (fileOut);
   printf "branch;bus1;bus2;admittance;dephor;angper;sigma1;sigma2;sigma3;sigma4;sigma5;sigma6;sigma7;sigma8;b_sigma1;b_sigma2;b_sigma3;b_sigma4;b_sigma5;b_sigma6;b_sigma7;b_sigma8;id\n" > (fileOut);
-  printf{(qq,m,n) in BRANCHCC} "%i;%i;%i;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%Q\n",
+  printf{(qq,m,n) in BRANCHCC_PENALIZED} "%i;%i;%i;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%Q\n",
         qq, m, n, branch_admi[qq,m,n], branch_dephor[qq,m,n], branch_angper[qq,m,n],
         sigma1[qq,m,n],sigma2[qq,m,n],sigma3[qq,m,n],sigma4[qq,m,n],sigma5[qq,m,n],sigma6[qq,m,n],sigma7[qq,m,n],sigma8[qq,m,n],
         b_sigma1[qq,m,n],b_sigma2[qq,m,n],b_sigma3[qq,m,n],b_sigma4[qq,m,n],b_sigma5[qq,m,n],b_sigma6[qq,m,n],b_sigma7[qq,m,n],b_sigma8[qq,m,n],

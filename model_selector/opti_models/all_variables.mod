@@ -30,14 +30,14 @@ var s2{n in BUSCC diff {null_phase_bus}};
 var s3{n in BUSCC_PQ};
 
 # Slack variables for parameters on branches
-var sigma1{(qq,m,n) in BRANCHCC};
-var sigma2{(qq,m,n) in BRANCHCC};
-var sigma3{(qq,m,n) in BRANCHCC};
-var sigma4{(qq,m,n) in BRANCHCC};
-var sigma5{(qq,m,n) in BRANCHCC};
-var sigma6{(qq,m,n) in BRANCHCC};
-var sigma7{(qq,m,n) in BRANCHCC};
-var sigma8{(qq,m,n) in BRANCHCC};
+var sigma1{(qq,m,n) in BRANCHCC_PENALIZED};
+var sigma2{(qq,m,n) in BRANCHCC_PENALIZED};
+var sigma3{(qq,m,n) in BRANCHCC_PENALIZED};
+var sigma4{(qq,m,n) in BRANCHCC_PENALIZED};
+var sigma5{(qq,m,n) in BRANCHCC_PENALIZED};
+var sigma6{(qq,m,n) in BRANCHCC_PENALIZED};
+var sigma7{(qq,m,n) in BRANCHCC_PENALIZED};
+var sigma8{(qq,m,n) in BRANCHCC_PENALIZED};
 
 #
 # Binary variables for activation of previous slack variables
@@ -49,14 +49,14 @@ var b_s2{n in BUSCC diff {null_phase_bus}} binary;
 var b_s3{n in BUSCC_PQ} binary;
 
 # Detection by branches
-var b_branch{(qq,m,n) in BRANCHCC} binary;
+var b_branch{(qq,m,n) in BRANCHCC_PENALIZED} binary;
 
 # Detection by params
-var b_sigma1{(qq,m,n) in BRANCHCC} binary;
-var b_sigma2{(qq,m,n) in BRANCHCC} binary;
-var b_sigma3{(qq,m,n) in BRANCHCC} binary;
-var b_sigma4{(qq,m,n) in BRANCHCC} binary;
-var b_sigma5{(qq,m,n) in BRANCHCC} binary;
-var b_sigma6{(qq,m,n) in BRANCHCC} binary;
-var b_sigma7{(qq,m,n) in BRANCHCC} binary;
-var b_sigma8{(qq,m,n) in BRANCHCC} binary;
+var b_sigma1{(qq,m,n) in BRANCHCC_PENALIZED} binary;
+var b_sigma2{(qq,m,n) in BRANCHCC_PENALIZED} binary;
+var b_sigma3{(qq,m,n) in BRANCHCC_PENALIZED} binary;
+var b_sigma4{(qq,m,n) in BRANCHCC_PENALIZED} binary;
+var b_sigma5{(qq,m,n) in BRANCHCC_PENALIZED} binary;
+var b_sigma6{(qq,m,n) in BRANCHCC_PENALIZED} binary;
+var b_sigma7{(qq,m,n) in BRANCHCC_PENALIZED} binary;
+var b_sigma8{(qq,m,n) in BRANCHCC_PENALIZED} binary;
