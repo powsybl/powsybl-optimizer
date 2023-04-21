@@ -6,6 +6,9 @@
  */
 package com.powsybl.openreac;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.google.auto.service.AutoService;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.computation.local.LocalComputationManager;
@@ -17,6 +20,7 @@ import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.loadflow.LoadFlowResult;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
+import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.tools.Command;
@@ -44,6 +48,7 @@ public class OpenReacTool implements Tool {
     private static final String SHUNTS_LIST = "variable-shunts-list";
     private static final String GENERATORS_LIST = "fixed-generators-list";
     private static final String TRANSFORMER_LIST = "variable-transformers-list";
+    private static final String VOLTAGE_OVERRIDE_LIST = "voltage-level-override";
     private static final String OPEN_REAC_PARAMS = "open-reac-params";
     public static final String EXECUTION_OPENREAC = "execution/openreac";
 
@@ -129,52 +134,74 @@ public class OpenReacTool implements Tool {
     public OpenReacParameters createOpenReacParameters(CommandLine line,
                                                        ToolRunningContext context) throws IOException {
 
-        Properties inputParams = new Properties();
         String filename = line.getOptionValue(OPEN_REAC_PARAMS, null);
+        JsonNode jsonNode = new ObjectMapper().readTree("{}");
         if (filename != null) {
             try (InputStream inputStream = Files.newInputStream(context.getFileSystem().getPath(filename))) {
-                if (filename.endsWith(".xml")) {
-                    inputParams.loadFromXML(inputStream);
+                if (filename.endsWith(".json")) {
+                    jsonNode = new ObjectMapper().readTree(inputStream);
                 } else {
-                    inputParams.load(inputStream);
+                    throw new InvalidParametersException("Format of properties must be json.");
                 }
             }
         }
 
         OpenReacParameters openReacParameters = new OpenReacParameters();
-        String inputFileListSeparator = ";";
-        if (inputParams.getProperty(SHUNTS_LIST) != null) {
-            String[] shuntsList = inputParams.getProperty(SHUNTS_LIST).split(inputFileListSeparator);
-            openReacParameters.addVariableShuntCompensators(List.of(shuntsList));
+        if (jsonNode.get(SHUNTS_LIST) != null && jsonNode.get(SHUNTS_LIST).isArray()) {
+            ArrayNode array = (ArrayNode) jsonNode.get(SHUNTS_LIST);
+            array.forEach(node -> openReacParameters.addVariableShuntCompensators(List.of(node.asText())));
         }
-        if (inputParams.getProperty(GENERATORS_LIST) != null) {
-            String[] generatorsList = inputParams.getProperty(GENERATORS_LIST).split(inputFileListSeparator);
-            openReacParameters.addConstantQGenerators(List.of(generatorsList));
+        if (jsonNode.get(GENERATORS_LIST) != null && jsonNode.get(GENERATORS_LIST).isArray()) {
+            ArrayNode array = (ArrayNode) jsonNode.get(GENERATORS_LIST);
+            array.forEach(node -> openReacParameters.addConstantQGenerators(List.of(node.asText())));
         }
-        if (inputParams.getProperty(TRANSFORMER_LIST) != null) {
-            String[] transformerList = inputParams.getProperty(TRANSFORMER_LIST).split(inputFileListSeparator);
-            openReacParameters.addVariableTwoWindingsTransformers(List.of(transformerList));
+        if (jsonNode.get(TRANSFORMER_LIST) != null && jsonNode.get(TRANSFORMER_LIST).isArray()) {
+            ArrayNode array = (ArrayNode) jsonNode.get(TRANSFORMER_LIST);
+            array.forEach(node -> openReacParameters.addVariableTwoWindingsTransformers(List.of(node.asText())));
         }
-
-        for (String key : inputParams.stringPropertyNames()) {
+        if (jsonNode.get(VOLTAGE_OVERRIDE_LIST) != null && jsonNode.get(VOLTAGE_OVERRIDE_LIST).isArray()) {
+            ArrayNode array = (ArrayNode) jsonNode.get(VOLTAGE_OVERRIDE_LIST);
+            array.forEach(node -> {
+                String voltageId = node.get("id").asText();
+                double lowerPercent = node.get("lower").asDouble();
+                double upperPercent = node.get("upper").asDouble();
+                openReacParameters.addSpecificVoltageLimits(Map.of(voltageId, new VoltageLimitOverride(lowerPercent, upperPercent)));
+            });
+        }
+        boolean objectiveSet = false;
+        for (Iterator<String> it = jsonNode.fieldNames(); it.hasNext(); ) {
+            String key = it.next();
             if (!key.equals(SHUNTS_LIST) && !key.equals(GENERATORS_LIST) && !key.equals(TRANSFORMER_LIST)) {
                 switch (key) {
                     case "obj_min_gen":
-                        openReacParameters.setObjective(OpenReacOptimisationObjective.MIN_GENERATION);
-                        break;
-                    case "obj_target_ratio":
-                        String ratioStr = inputParams.getProperty(key, null);
-                        if (ratioStr == null) {
-                            throw new InvalidParametersException("obj_target_ratio must have a value indicating the ratio to nominal voltage level to target.");
+                        if (objectiveSet) {
+                            throw new InvalidParametersException("Objective is set twice in JSON. Please put only one.");
                         }
-                        openReacParameters.setObjectiveDistance(Double.parseDouble(ratioStr));
-                        openReacParameters.setObjective(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT);
+                        openReacParameters.setObjective(OpenReacOptimisationObjective.MIN_GENERATION);
+                        objectiveSet = true;
                         break;
                     case "obj_provided_target_v":
+                        if (objectiveSet) {
+                            throw new InvalidParametersException("Objective is set twice in JSON. Please put only one.");
+                        }
                         openReacParameters.setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE);
+                        objectiveSet = true;
+                        break;
+                    case "obj_target_ratio":
+                        if (objectiveSet) {
+                            throw new InvalidParametersException("Objective is set twice in JSON. Please put only one.");
+
+                        }
+                        if (jsonNode.get(key).isNull()) {
+                            throw new InvalidParametersException("obj_target_ratio must have a value indicating the ratio to nominal voltage level to target.");
+                        }
+                        double ratio = jsonNode.get(key).asDouble();
+                        openReacParameters.setObjectiveDistance(ratio);
+                        openReacParameters.setObjective(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT);
+                        objectiveSet = true;
                         break;
                     default:
-                        openReacParameters.addAlgorithmParam(key, inputParams.getProperty(key, ""));
+                        openReacParameters.addAlgorithmParam(key, jsonNode.get(key).asText());
                 }
             }
         }

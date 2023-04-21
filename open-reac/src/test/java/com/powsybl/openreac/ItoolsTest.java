@@ -10,6 +10,7 @@ import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
+import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 import com.powsybl.tools.ToolRunningContext;
 import org.apache.commons.cli.CommandLine;
@@ -22,6 +23,7 @@ import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -53,14 +55,17 @@ class ItoolsTest {
 
     @Test
     public void testCreateOpenReacParameters() throws ParseException, IOException {
-        Files.copy(getClass().getResourceAsStream("/openreac-params.txt"), fileSystem.getPath("params.txt"));
-        String line = "--case-file network.iidm --open-reac-params params.txt";
+        Files.copy(getClass().getResourceAsStream("/openreac-params.json"), fileSystem.getPath("params.json"));
+        String line = "--case-file network.iidm --open-reac-params params.json";
         CommandLine cmdLine = new DefaultParser().parse(tool.getCommand().getOptions(), line.split(" "));
         OpenReacParameters loadedParams = tool.createOpenReacParameters(cmdLine, context);
         assertEquals(List.of("2-winding-transfo"), loadedParams.getVariableTwoWindingsTransformers(), "Parsing of OpenReac parameters is wrong.");
         assertEquals(List.of("constant-q-gen"), loadedParams.getConstantQGenerators(), "Parsing of OpenReac parameters is wrong.");
         assertEquals(List.of("var-shunt", "var-shunt-2"), loadedParams.getVariableShuntCompensators(), "Parsing of OpenReac parameters is wrong.");
-        assertEquals(OpenReacOptimisationObjective.MIN_GENERATION, loadedParams.getObjective(), "Parsing of OpenReac parameters is wrong.");
+        assertEquals(Map.of("voltageLevelId", new VoltageLimitOverride(-5, 5)),
+                loadedParams.getSpecificVoltageLimits(),
+                "Parsing of OpenReac parameters is wrong.");
+        assertEquals(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE, loadedParams.getObjective(), "Parsing of OpenReac parameters is wrong.");
     }
 
 }
