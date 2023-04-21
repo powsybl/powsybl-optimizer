@@ -22,13 +22,41 @@ This project also provides an utilty to run OpenReac with Itools.
 
 You will have the running OpenReac folders next to your working directory.
 
-You can also customize the algorithm parameters directly with the option `--open-reac-params params.txt`.
-Note on the objective parameters, you must provide one of these lines:
-``` properties
+### Syntax
+
+```` bash
+itools open-reac --case-file NETWORK [--open-reac-params PARAM_FILE]
+````
+
+You can customize OpenReac parameters directly with the option `--open-reac-params params.json`.
+Here are the specific mappings.
+``` json
+{
+  "obj_min_gen" : null,
+  # list of shunt with variable Q
+  "variable-shunts-list" : ["var-shunt", "var-shunt-2"],
+  # list of generators with constant Q
+  "fixed-generators-list" : ["constant-q-gen"],
+  # list of transformers with variable ratio
+  "variable-transformers-list" : ["2-winding-transfo"],
+  # list of voltage limit override (delta from nominal voltage)
+  "voltage-level-override" : [
+    {
+      "id": "voltageLevelId",
+      "lower": "-5",
+      "upper": "5"
+    }
+  ]
+  # All other key or key value mapping will be passed as algorithm parameters
+}
+```
+Here is a quick description for each objective and how to put them in the json.
+```
+# =============== Objectives ================
 # Minimum power generation (default)
-obj_min_gen
+"obj_min_gen" : null
 # Target low_voltage_limit + (high_voltage_limit - low_voltage_limit) * RATIO for each equipement
-obj_target_ratio RATIO
+"obj_target_ratio": RATIO
 # Use the target voltage provided in the network file
-obj_provided_target_v
+"obj_provided_target_v" : null
 ```
