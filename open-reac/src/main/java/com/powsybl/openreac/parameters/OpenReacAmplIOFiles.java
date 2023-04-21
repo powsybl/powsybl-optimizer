@@ -14,7 +14,10 @@ import com.powsybl.openreac.parameters.input.*;
 import com.powsybl.openreac.parameters.input.algo.AlgorithmInput;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput;
+import com.powsybl.openreac.parameters.output.network.AbstractNetworkOutput;
+import com.powsybl.openreac.parameters.output.network.GeneratorNetworkOutput;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -36,6 +39,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
     private final AlgorithmInput algorithmParams;
     private final ReactiveSlackOutput reactiveSlackOutput;
     private final VoltageLevelLimitsOverrideInput voltageLimitsOverride;
+    private final List<AbstractNetworkOutput> networkModifOuputs;
     private final boolean debug;
 
     public OpenReacAmplIOFiles(OpenReacParameters params, Network network, boolean debug) {
@@ -48,12 +52,17 @@ public class OpenReacAmplIOFiles implements AmplParameters {
 
         //outputs
         this.reactiveSlackOutput = new ReactiveSlackOutput();
+        this.networkModifOuputs = List.of(new GeneratorNetworkOutput(network));
 
         this.debug = debug;
     }
 
-    public List<ReactiveSlackOutput.ReactiveSlack> getReactiveSlack() {
-        return reactiveSlackOutput.getSlacks();
+    public ReactiveSlackOutput getReactiveSlackOutput() {
+        return reactiveSlackOutput;
+    }
+
+    public List<AbstractNetworkOutput> getNetworkModifOuputs() {
+        return networkModifOuputs;
     }
 
     @Override
@@ -65,7 +74,10 @@ public class OpenReacAmplIOFiles implements AmplParameters {
     @Override
     public Collection<AmplOutputFile> getOutputParameters(boolean isConvergenceOk) {
         if (isConvergenceOk) {
-            return List.of(reactiveSlackOutput);
+            List<AmplOutputFile> list = new ArrayList<>(networkModifOuputs.size() + 1);
+            list.addAll(networkModifOuputs);
+            list.add(reactiveSlackOutput);
+            return list;
         }
         return List.of();
     }
