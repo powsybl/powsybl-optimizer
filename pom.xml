@@ -15,17 +15,17 @@
     <parent>
         <groupId>com.powsybl</groupId>
         <artifactId>powsybl-parent</artifactId>
-        <version>8</version>
+        <version>9</version>
         <relativePath/>
     </parent>
 
     <artifactId>powsybl-optimizer</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>0.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>PowSyBl Optimizer</name>
     <description>PowSyBl modules for optimal powerflow models</description>
-    <url>http://www.powsybl.com</url>
+    <url>https://www.powsybl.com</url>
 
     <licenses>
         <license>
@@ -61,19 +61,6 @@
 
     <properties>
         <java.version>11</java.version>
-        <powsybl-dependencies.version>2022.0.0</powsybl-dependencies.version>
     </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>com.powsybl</groupId>
-                <artifactId>powsybl-dependencies</artifactId>
-                <version>${powsybl-dependencies.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
 </project>

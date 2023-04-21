@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Copyright (c) 2023, RTE (http://www.rte-france.com)
+    This Source Code Form is subject to the terms of the Mozilla Public
+    License, v. 2.0. If a copy of the MPL was not distributed with this
+    file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.powsybl</groupId>
+        <artifactId>powsybl-optimizer</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <packaging>jar</packaging>
+    <artifactId>powsybl-open-reac</artifactId>
+    <name>OpenReac</name>
+    <description>OpenReac optimizer</description>
+
+    <properties>
+        <powsybl-core.version>5.2.1</powsybl-core.version>
+    </properties>
+
+    <developers>
+        <developer>
+            <name>Nicolas PIERRE</name>
+            <email>nicolas.pierre@artelys.com</email>
+            <organization>Artelys</organization>
+            <organizationUrl>https://www.artelys.com</organizationUrl>
+        </developer>
+        <developer>
+            <name>Geoffroy JAMGOTCHIAN</name>
+            <email>geoffroy.jamgotchian@rte-france.com</email>
+            <organization>RTE</organization>
+            <organizationUrl>https://www.rte-france.com</organizationUrl>
+        </developer>
+        <developer>
+            <name>Anne TILLOY</name>
+            <email>anne.tilloy@rte-france.com</email>
+            <organization>RTE</organization>
+            <organizationUrl>https://www.rte-france.com</organizationUrl>
+        </developer>
+    </developers>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifestEntries>
+                            <Automatic-Module-Name>com.powsybl.openreac</Automatic-Module-Name>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.powsybl</groupId>
+                <artifactId>powsybl-core</artifactId>
+                <version>${powsybl-core.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-ampl-converter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-ampl-executor</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-iidm-extensions</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-loadflow-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-tools</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.auto.service</groupId>
+            <artifactId>auto-service</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.jimfs</groupId>
+            <artifactId>jimfs</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-config-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-iidm-impl</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-ieee-cdf-converter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>
