@@ -27,7 +27,7 @@ public class OpenReacParameters {
     private final List<String> variableTwoWindingsTransformers = new ArrayList<>();
     private final List<OpenReacAlgoParam> genericParamsList = new ArrayList<>();
     private OpenReacOptimisationObjective objective = OpenReacOptimisationObjective.MIN_GENERATION;
-    private Optional<ObjectiveDistance> objectiveDistance = Optional.empty();
+    private ObjectiveDistance objectiveDistance;
 
     public OpenReacParameters() {
     }
@@ -111,7 +111,7 @@ public class OpenReacParameters {
      * @see ObjectiveDistance is a parameter used for {@link OpenReacOptimisationObjective#BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT}.
      */
     public OpenReacParameters setObjectiveDistance(double objectiveDistance) {
-        this.objectiveDistance = Optional.of(new ObjectiveDistance(objectiveDistance / 100));
+        this.objectiveDistance = new ObjectiveDistance(objectiveDistance / 100);
         return this;
     }
 
@@ -137,7 +137,9 @@ public class OpenReacParameters {
         if (objective != null) {
             allAlgoParams.add(objective);
         }
-        objectiveDistance.ifPresent(allAlgoParams::add);
+        if (objectiveDistance != null) {
+            allAlgoParams.add(objectiveDistance);
+        }
         return allAlgoParams;
     }
 
@@ -173,7 +175,7 @@ public class OpenReacParameters {
             }
         }
 
-        if (objective.equals(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT) && objectiveDistance.isEmpty()) {
+        if (objective.equals(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT) && objectiveDistance == null) {
             throw new InvalidParametersException("In using " + OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT +
                     " as objective, a distance in percent between low and high voltage limits is expected.");
         }

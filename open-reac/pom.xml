@@ -19,6 +19,7 @@
     <packaging>jar</packaging>
     <artifactId>powsybl-open-reac</artifactId>
     <name>OpenReac</name>
+    <description>OpenReac optimizer</description>
 
     <properties>
         <powsybl-core.version>5.2.1</powsybl-core.version>
