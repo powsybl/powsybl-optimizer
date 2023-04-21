@@ -134,8 +134,7 @@ public class OpenReacModel implements AmplModel {
 
     @Override
     public Collection<AmplReadableElement> getAmplReadableElement() {
-        return List.of(AmplReadableElement.SHUNT, AmplReadableElement.GENERATOR,
-                AmplReadableElement.VSC_CONVERTER_STATION, AmplReadableElement.STATIC_VAR_COMPENSATOR);
+        return List.of();
     }
 
     @Override
