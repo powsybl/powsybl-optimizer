@@ -14,8 +14,7 @@ import com.powsybl.openreac.parameters.input.*;
 import com.powsybl.openreac.parameters.input.algo.AlgorithmInput;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput;
-import com.powsybl.openreac.parameters.output.network.AbstractNetworkOutput;
-import com.powsybl.openreac.parameters.output.network.GeneratorNetworkOutput;
+import com.powsybl.openreac.parameters.output.network.OpenReacModifications;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,7 +38,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
     private final AlgorithmInput algorithmParams;
     private final ReactiveSlackOutput reactiveSlackOutput;
     private final VoltageLevelLimitsOverrideInput voltageLimitsOverride;
-    private final List<AbstractNetworkOutput> networkModifOuputs;
+    private final OpenReacModifications networkModifOuputs;
     private final boolean debug;
 
     public OpenReacAmplIOFiles(OpenReacParameters params, Network network, boolean debug) {
@@ -52,7 +51,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
 
         //outputs
         this.reactiveSlackOutput = new ReactiveSlackOutput();
-        this.networkModifOuputs = List.of(new GeneratorNetworkOutput(network));
+        this.networkModifOuputs = new OpenReacModifications(network);
 
         this.debug = debug;
     }
@@ -61,7 +60,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
         return reactiveSlackOutput;
     }
 
-    public List<AbstractNetworkOutput> getNetworkModifOuputs() {
+    public OpenReacModifications getNetworkModifOuputs() {
         return networkModifOuputs;
     }
 
@@ -74,8 +73,9 @@ public class OpenReacAmplIOFiles implements AmplParameters {
     @Override
     public Collection<AmplOutputFile> getOutputParameters(boolean isConvergenceOk) {
         if (isConvergenceOk) {
-            List<AmplOutputFile> list = new ArrayList<>(networkModifOuputs.size() + 1);
-            list.addAll(networkModifOuputs);
+            List<AmplOutputFile> networkModifOutputFiles = networkModifOuputs.getOutputFiles();
+            List<AmplOutputFile> list = new ArrayList<>(networkModifOutputFiles.size() + 1);
+            list.addAll(networkModifOutputFiles);
             list.add(reactiveSlackOutput);
             return list;
         }

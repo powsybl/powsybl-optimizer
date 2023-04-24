@@ -6,11 +6,10 @@
  */
 package com.powsybl.openreac.parameters.output;
 
-import com.powsybl.iidm.modification.NetworkModification;
+import com.powsybl.iidm.modification.GeneratorModification;
 import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput.ReactiveSlack;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -22,16 +21,15 @@ public class OpenReacResult {
 
     private final OpenReacStatus status;
     private final List<ReactiveSlack> reactiveSlacks;
-    private final List<NetworkModification> networkModificationList;
     private final Map<String, String> indicators;
+    private final List<GeneratorModification> generatorModifications;
 
     public OpenReacResult(OpenReacStatus status, OpenReacAmplIOFiles amplIOFiles, Map<String, String> indicators) {
         Objects.requireNonNull(amplIOFiles);
         this.status = Objects.requireNonNull(status);
-        this.indicators = Objects.requireNonNull(indicators);
-        this.reactiveSlacks = amplIOFiles.getReactiveSlackOutput().getSlacks();
-        this.networkModificationList = new ArrayList<>();
-        amplIOFiles.getNetworkModifOuputs().forEach(networkModif -> networkModificationList.addAll(networkModif.getModifications()));
+        this.indicators = Map.copyOf(Objects.requireNonNull(indicators));
+        this.reactiveSlacks = List.copyOf(amplIOFiles.getReactiveSlackOutput().getSlacks());
+        this.generatorModifications = List.copyOf(amplIOFiles.getNetworkModifOuputs().getGeneratorModifications());
     }
 
     public OpenReacStatus getStatus() {
@@ -46,9 +44,8 @@ public class OpenReacResult {
         return indicators;
     }
 
-    //TODO We don't have any description about the network modifications for now
-    public List<NetworkModification> getNetworkModificationList() {
-        return networkModificationList;
+    public List<GeneratorModification> getNetworkModificationList() {
+        return generatorModifications;
     }
 
 }
