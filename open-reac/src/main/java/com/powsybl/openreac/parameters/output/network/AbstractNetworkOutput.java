@@ -22,13 +22,15 @@ import java.util.regex.Pattern;
 
 /**
  * Abstract class that reads output from ampl and generates network modifications
+ *
+ * @param <T> The type of modification read in the output file
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
-public abstract class AbstractNetworkOutput extends AbstractNoThrowOutput {
+public abstract class AbstractNetworkOutput<T extends NetworkModification> extends AbstractNoThrowOutput {
 
     private final Predicate<String> COMMENTED_LINE_TEST = Pattern.compile("\\s*#.*").asMatchPredicate();
 
-    private final List<NetworkModification> modifications = new ArrayList<>();
+    private final List<T> modifications = new ArrayList<>();
 
     /**
      * @return the name of the element that will be read.
@@ -48,9 +50,9 @@ public abstract class AbstractNetworkOutput extends AbstractNoThrowOutput {
         } catch (IOException e) {
             triggerErrorState();
         }
-        if(lines != null){
+        if (lines != null) {
             for (String line : lines) {
-                if(!COMMENTED_LINE_TEST.test(line)){
+                if (!COMMENTED_LINE_TEST.test(line)) {
                     String[] tokens = line.split(OpenReacModel.OUTPUT_FILE_FORMAT.getTokenSeparator());
                     modifications.add(doReadLine(tokens, stringToIntMapper));
                 }
@@ -58,9 +60,9 @@ public abstract class AbstractNetworkOutput extends AbstractNoThrowOutput {
         }
     }
 
-    protected abstract NetworkModification doReadLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper);
+    protected abstract T doReadLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper);
 
-    public List<NetworkModification> getModifications() {
+    public List<T> getModifications() {
         return modifications;
     }
 }

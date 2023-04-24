@@ -15,7 +15,7 @@ import com.powsybl.iidm.network.Network;
 /**
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
-public class GeneratorNetworkOutput extends AbstractNetworkOutput {
+public class GeneratorNetworkOutput extends AbstractNetworkOutput<GeneratorModification> {
     private static final String ELEMENT = "generators";
     private static final int ID_COLUMN_INDEX = 1;
     private static final int TARGET_V_COLUMN_INDEX = 4;
@@ -32,7 +32,7 @@ public class GeneratorNetworkOutput extends AbstractNetworkOutput {
     }
 
     @Override
-    protected NetworkModification doReadLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
+    protected GeneratorModification doReadLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
         String id = stringToIntMapper.getId(AmplSubset.GENERATOR, Integer.parseInt(tokens[ID_COLUMN_INDEX]));
         double targetV = Double.parseDouble(tokens[TARGET_V_COLUMN_INDEX]);
         double targetQ = Double.parseDouble(tokens[TARGET_Q_COLUMN_INDEX]);
