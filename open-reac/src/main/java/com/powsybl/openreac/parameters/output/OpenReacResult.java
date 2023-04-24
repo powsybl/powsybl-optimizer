@@ -44,7 +44,7 @@ public class OpenReacResult {
         return indicators;
     }
 
-    public List<GeneratorModification> getNetworkModificationList() {
+    public List<GeneratorModification> getGeneratorModifications() {
         return generatorModifications;
     }
 
