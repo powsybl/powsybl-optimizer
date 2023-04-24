@@ -78,6 +78,7 @@ class OpenReacRunnerTest {
             OpenReacResult openReacResult = OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), parameters, config, computationManager);
 
             assertEquals(OpenReacStatus.OK, openReacResult.getStatus());
+            assertEquals(34, openReacResult.getGeneratorModifications().size());
             assertEquals(75, openReacResult.getIndicators().size());
             assertTrue(openReacResult.getReactiveSlacks().isEmpty());
         }
