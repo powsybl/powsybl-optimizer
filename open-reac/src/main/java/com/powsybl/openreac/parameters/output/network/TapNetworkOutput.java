@@ -32,7 +32,7 @@ public class TapNetworkOutput extends AbstractNetworkOutput<TapPositionModificat
 
         return new TapPositionModification(id,
                 TapPositionModification.TransformerElement.TWO_WINDING_TRANSFORMER,
-                TapPositionModification.TransformerType.RATIO,
+                TapPositionModification.TapType.RATIO,
                 tapPosition,
                 OptionalInt.empty());
     }
