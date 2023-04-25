@@ -7,28 +7,54 @@
 package com.powsybl.openreac.parameters.output.network;
 
 import com.powsybl.ampl.executor.AmplOutputFile;
-import com.powsybl.iidm.modification.GeneratorModification;
+import com.powsybl.iidm.modification.*;
 import com.powsybl.iidm.network.Network;
 
 import java.util.List;
 
 /**
  * Data class to store all outputs resulting of NetworkModification.
+ *
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ * @implNote This class does nothing exept grouping class extending <code>AbstractNetworkOutput</code>.
  */
 public class OpenReacModifications {
 
     private final GeneratorNetworkOutput genOutput;
+    private final ShuntCompensatorNetworkOutput shuntsOutput;
+    private final VscNetworkOutput vscOutput;
+    private final SvcNetworkOutput svcOutput;
+    private final TapNetworkOutput tapOutput;
 
     public OpenReacModifications(Network network) {
         genOutput = new GeneratorNetworkOutput(network);
+        shuntsOutput = new ShuntCompensatorNetworkOutput(network);
+        vscOutput = new VscNetworkOutput(network);
+        svcOutput = new SvcNetworkOutput(network);
+        tapOutput = new TapNetworkOutput();
     }
 
     public List<AmplOutputFile> getOutputFiles() {
-        return List.of(genOutput);
+        return List.of(genOutput, shuntsOutput, vscOutput, svcOutput, tapOutput);
     }
 
     public List<GeneratorModification> getGeneratorModifications() {
         return genOutput.getModifications();
+    }
+
+    public List<SectionModification> getShuntModifications() {
+        return shuntsOutput.getModifications();
+    }
+
+    public List<VscConverterStationModification> getVscModifications() {
+        return vscOutput.getModifications();
+    }
+
+    public List<StaticVarCompensatorModification> getSvcModifications() {
+        return svcOutput.getModifications();
+    }
+
+    public List<TapPositionModification> getTapModifications() {
+        return tapOutput.getModifications();
     }
 }

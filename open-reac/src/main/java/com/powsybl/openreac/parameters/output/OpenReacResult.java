@@ -6,7 +6,7 @@
  */
 package com.powsybl.openreac.parameters.output;
 
-import com.powsybl.iidm.modification.GeneratorModification;
+import com.powsybl.iidm.modification.*;
 import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput.ReactiveSlack;
 
@@ -23,6 +23,10 @@ public class OpenReacResult {
     private final List<ReactiveSlack> reactiveSlacks;
     private final Map<String, String> indicators;
     private final List<GeneratorModification> generatorModifications;
+    private final List<SectionModification> shuntsModifications;
+    private final List<VscConverterStationModification> vscModifications;
+    private final List<StaticVarCompensatorModification> svcModifications;
+    private final List<TapPositionModification> tapModifications;
 
     public OpenReacResult(OpenReacStatus status, OpenReacAmplIOFiles amplIOFiles, Map<String, String> indicators) {
         Objects.requireNonNull(amplIOFiles);
@@ -30,6 +34,10 @@ public class OpenReacResult {
         this.indicators = Map.copyOf(Objects.requireNonNull(indicators));
         this.reactiveSlacks = List.copyOf(amplIOFiles.getReactiveSlackOutput().getSlacks());
         this.generatorModifications = List.copyOf(amplIOFiles.getNetworkModifOuputs().getGeneratorModifications());
+        this.shuntsModifications = List.copyOf(amplIOFiles.getNetworkModifOuputs().getShuntModifications());
+        this.vscModifications = List.copyOf(amplIOFiles.getNetworkModifOuputs().getVscModifications());
+        this.svcModifications = List.copyOf(amplIOFiles.getNetworkModifOuputs().getSvcModifications());
+        this.tapModifications = List.copyOf(amplIOFiles.getNetworkModifOuputs().getTapModifications());
     }
 
     public OpenReacStatus getStatus() {
@@ -48,4 +56,19 @@ public class OpenReacResult {
         return generatorModifications;
     }
 
+    public List<SectionModification> getShuntsModifications() {
+        return shuntsModifications;
+    }
+
+    public List<StaticVarCompensatorModification> getSvcModifications() {
+        return svcModifications;
+    }
+
+    public List<TapPositionModification> getTapModifications() {
+        return tapModifications;
+    }
+
+    public List<VscConverterStationModification> getVscModifications() {
+        return vscModifications;
+    }
 }
