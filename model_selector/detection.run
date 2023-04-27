@@ -291,10 +291,6 @@ card(UNITCC),
 card(BUSCC_PQ), card(BUSCC_PV)
 ;
 
-display BUSCC;
-
-display BRANCHCC;
-
 # Is the case power globally power balanced? 
 let temp1 := sum{(c,n) in LOADCC} load_PFix[1,c,n];
 let temp2 := sum{(g,n) in UNITCC} unit_Pc[1,g,n];
@@ -489,7 +485,7 @@ printf "# DA solve: start (%s)\n\n",ctime();
 let tempstr := ctime();
 
 
-option knitro_options "opttol=1 opttolabs=1e-1 feastol=1 feastolabs=1e-3 maxit=500 mip_intvar_strategy=1 mip_heuristic_strategy=3 mip_opt_gap_rel=1 mip_opt_gap_abs=1 mip_maxtime_real=120 mip_restart=0 mip_multistart=1";
+option knitro_options "opttol=1 opttolabs=1e-1 feastol=1 feastolabs=1e-3 maxit=500 mip_intvar_strategy=1 mip_heuristic_strategy=3 mip_maxtime_real=100 mip_multistart=1";
 
 # Solve the problem selected
 if (param_detection == 1) then {
@@ -569,20 +565,19 @@ for {(qq,m,n) in BRANCHCC: (teta[m]-teta[n])>temp1*0.99 or (teta[m]-teta[n])<tem
   printf "%Q, between buses %i and %i :\nR=%.3f X=%.3f delta_teta=%.2f Vm=%.3f teta_m=%.2f Vn=%.3f teta_n=%.2f ",
   branch_id[1,qq,m,n],m,n,branch_R[1,qq,m,n],branch_X[1,qq,m,n],teta[m]-teta[n],V[m],teta[m],V[n],teta[n];
   printf "P1=%.1f Q1=%.1f ",
-          if (branch_detection == 1) then base100MVA*V[m]*Red_Tran_Act_Dir_dbb[qq,m,n]
-          else if (param_detection == 1) then base100MVA*V[m]*Red_Tran_Act_Dir_dbp[qq,m,n]
-          else if (equations_detection == 1) then base100MVA*V[m]*Red_Tran_Act_Dir_dbe[qq,m,n],
-          if (branch_detection == 1) then base100MVA*V[m]*Red_Tran_Rea_Dir_dbb[qq,m,n]
-          else if (param_detection == 1) then base100MVA*V[m]*Red_Tran_Rea_Dir_dbp[qq,m,n]
-          else if (equations_detection == 1) then base100MVA*V[m]*Red_Tran_Rea_Dir_dbe[qq,m,n];
+          if (is_penal_on_YKsi == 1) then base100MVA*V[m]*Red_Tran_Act_Dir_YKsi[qq,m,n]
+          else if (is_penal_on_GB == 1) then base100MVA*V[m]*Red_Tran_Act_Dir_GB[qq,m,n],
+
+          if (is_penal_on_YKsi == 1) then base100MVA*V[m]*Red_Tran_Rea_Dir_YKsi[qq,m,n]
+          else if (is_penal_on_GB == 1) then base100MVA*V[m]*Red_Tran_Rea_Dir_GB[qq,m,n];
 
   printf "P2=%.1f Q2=%.1f ",
-          if (branch_detection == 1) then base100MVA*V[m]*Red_Tran_Act_Inv_dbb[qq,m,n]
-          else if (param_detection == 1) then base100MVA*V[m]*Red_Tran_Act_Inv_dbp[qq,m,n]
-          else if (equations_detection == 1) then base100MVA*V[m]*Red_Tran_Act_Inv_dbe[qq,m,n],
-          if (branch_detection == 1) then base100MVA*V[m]*Red_Tran_Rea_Inv_dbb[qq,m,n]
-          else if (param_detection == 1) then base100MVA*V[m]*Red_Tran_Rea_Inv_dbp[qq,m,n]
-          else if (equations_detection == 1) then base100MVA*V[m]*Red_Tran_Rea_Inv_dbe[qq,m,n];
+          if (is_penal_on_YKsi == 1) then base100MVA*V[m]*Red_Tran_Act_Inv_YKsi[qq,m,n]
+          else if (is_penal_on_GB == 1) then base100MVA*V[m]*Red_Tran_Act_Inv_GB[qq,m,n],
+
+          if (is_penal_on_YKsi == 1) then base100MVA*V[m]*Red_Tran_Rea_Inv_YKsi[qq,m,n]
+          else if (is_penal_on_GB == 1) then base100MVA*V[m]*Red_Tran_Rea_Inv_GB[qq,m,n];
+          
   printf"\n";
 }
 
@@ -603,7 +598,7 @@ display
 #display b_branch;
 
 for{(qq,m,n) in BRANCHCC_PENALIZED}{
-  if b_branch[qq,m,n] >= 0.0001 then printf "Branch %s detected\n", branch_id[1,qq,m,n];
+  if b_branch[qq,m,n] >= 0.9 then printf "Branch %s detected\n", branch_id[1,qq,m,n];
 }
 
 
@@ -615,10 +610,9 @@ include print_resume_slacks.run;
 
 include results_exporter.run;
 
-for{(qq,m,n) in BRANCHCC_PENALIZED}{
-  if b_sigma8[qq,m,n] >= 0.2 then printf "Waaaaaoiuuuuuh %i %i %i\n", qq, m, n;
-}
-
+#for{(qq,m,n) in BRANCHCC_PENALIZED}{
+#  if b_sigma8[qq,m,n] >= 0.2 then printf "Waaaaaouuuuuh %i %i %i\n", qq, m, n;
+#}
 ###############################################################################
 #                                End of file                                  #
 ###############################################################################

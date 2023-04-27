@@ -565,15 +565,29 @@ param branch_Rdeph{(qq,m,n) in BRANCHCC_DEPH} =
   else branch_R[1,qq,m,n]
   ;
 
+# About the resistance of the lines
+
 param branch_angper{(qq,m,n) in BRANCHCC_PENALIZED} =
-  if (qq,m,n) in BRANCHCC_DEPH
-  then atan2(branch_Rdeph[qq,m,n], branch_Xdeph[qq,m,n])
+  if (qq,m,n) in BRANCHCC_DEPH then
+  atan2(branch_Rdeph[qq,m,n], branch_Xdeph[qq,m,n])
   else atan2(branch_R[1,qq,m,n]  , branch_X_mod[qq,m,n]);
 
-param branch_admi {(qq,m,n) in BRANCHCC_PENALIZED} =  
+param branch_admi{(qq,m,n) in BRANCHCC_PENALIZED} =  
   if (qq,m,n) in BRANCHCC_DEPH then
   1./sqrt(branch_Rdeph[qq,m,n]^2 + branch_Xdeph[qq,m,n]^2 )
-  else 1./sqrt(branch_R[1,qq,m,n]^2   + branch_X_mod[qq,m,n]^2   );
+  else 1./sqrt(branch_R[1,qq,m,n]^2 + branch_X_mod[qq,m,n]^2);
+
+param branch_G{(qq,m,n) in BRANCHCC_PENALIZED} = 
+  if (qq,m,n) in BRANCHCC_DEPH then
+  branch_Rdeph[qq,m,n] / (branch_Rdeph[qq,m,n]^2 + branch_Xdeph[qq,m,n]^2)
+  else branch_R[1,qq,m,n] / (branch_R[1,qq,m,n]^2 + branch_X_mod[qq,m,n]^2);
+
+param branch_B{(qq,m,n) in BRANCHCC_PENALIZED} = # TODO : IS IT - or + ????
+  if (qq,m,n) in BRANCHCC_DEPH then
+  -branch_Xdeph[qq,m,n] / (branch_Rdeph[qq,m,n]^2 + branch_Xdeph[qq,m,n]^2)
+  else -branch_X_mod[qq,m,n] / (branch_R[1,qq,m,n]^2 + branch_X_mod[qq,m,n]^2);
+
+# About rho / alpha of transformers
 
 param branch_Ror {(qq,m,n) in BRANCHCC_PENALIZED} =
     ( if ((qq,m,n) in BRANCHCC_REGL)
@@ -593,6 +607,9 @@ param branch_dephor {(qq,m,n) in BRANCHCC_PENALIZED} =
   else 0;
 param branch_dephex {(qq,m,n) in BRANCHCC_PENALIZED} = 0; # In IIDM, everything is in bus1 so dephase at bus2 is always 0 -->
 
+#param max_branch_Ror_tct {(qq,m,n) in BRANCHCC_REGL} := (max {(v,table,tap) in TAPS : table == branch_ptrRegl[1,qq,m,n]} tap_ratio[v,table,tap]);
+#param max_branch_dephor_tct {(qq,m,n) in BRANCHCC_DEPH} := (max {(v,table,tap) in TAPS : table == branch_ptrDeph[1,qq,m,n]} tap_angle[v,table,tap]);
+
 # Get the maximum of each parameter (will be used for optimization resume)
 param max_targetV := (max {n in BUSCC_PV} targetV_busPV[n]);
 param max_branch_Ror := (max {(qq,m,n) in BRANCHCC_PENALIZED} branch_Ror[qq,m,n]);
@@ -603,6 +620,8 @@ param max_branch_Gor := (max {(qq,m,n) in BRANCHCC_PENALIZED} abs(branch_Gor[1,q
 param max_branch_Bor := (max {(qq,m,n) in BRANCHCC_PENALIZED} abs(branch_Bor[1,qq,m,n]));
 param max_branch_Gex := (max {(qq,m,n) in BRANCHCC_PENALIZED} abs(branch_Gex[1,qq,m,n]));
 param max_branch_Bex := (max {(qq,m,n) in BRANCHCC_PENALIZED} abs(branch_Bex[1,qq,m,n]));
+param max_branch_G := (max {(qq,m,n) in BRANCHCC_PENALIZED} branch_G[qq,m,n]);
+param max_branch_B := (max {(qq,m,n) in BRANCHCC_PENALIZED} branch_B[qq,m,n]);
 
 # Get the minimum of each parameter (will be used for optimization resume)
 param min_targetV := (min {n in BUSCC_PV} targetV_busPV[n]);
@@ -614,6 +633,8 @@ param min_branch_Gor := (min {(qq,m,n) in BRANCHCC_PENALIZED} branch_Gor[1,qq,m,
 param min_branch_Bor := (min {(qq,m,n) in BRANCHCC_PENALIZED} branch_Bor[1,qq,m,n]);
 param min_branch_Gex := (min {(qq,m,n) in BRANCHCC_PENALIZED} branch_Gex[1,qq,m,n]);
 param min_branch_Bex := (min {(qq,m,n) in BRANCHCC_PENALIZED} branch_Bex[1,qq,m,n]);
+param min_branch_G := (min {(qq,m,n) in BRANCHCC_PENALIZED} branch_G[qq,m,n]);
+param min_branch_B := (min {(qq,m,n) in BRANCHCC_PENALIZED} branch_B[qq,m,n]);
 
 # Get absolute mean of each parameter (will be used for optimization resume)
 param abs_mean_targetV := (sum {n in BUSCC_PV} targetV_busPV[n]) / card(BUSCC_PV);

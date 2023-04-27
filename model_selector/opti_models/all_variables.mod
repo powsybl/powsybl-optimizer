@@ -60,3 +60,6 @@ var b_sigma5{(qq,m,n) in BRANCHCC_PENALIZED} binary;
 var b_sigma6{(qq,m,n) in BRANCHCC_PENALIZED} binary;
 var b_sigma7{(qq,m,n) in BRANCHCC_PENALIZED} binary;
 var b_sigma8{(qq,m,n) in BRANCHCC_PENALIZED} binary;
+
+include "opti_models/lf_YKsi_variables.mod";
+include "opti_models/lf_GB_variables.mod";
