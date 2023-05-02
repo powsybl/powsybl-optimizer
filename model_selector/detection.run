@@ -610,12 +610,13 @@ include print_resume_slacks.run;
 
 include results_exporter.run;
 
-#for{(qq,m,n) in BRANCHCC_PENALIZED}{
-#  if b_sigma8[qq,m,n] >= 0.2 then printf "Waaaaaouuuuuh %i %i %i\n", qq, m, n;
-#}
 ###############################################################################
 #                                End of file                                  #
 ###############################################################################
+
+
+
+
 
 printf "\n";
 printf "*** End of file divergence analysis : Optimization %ssuccessfull\n",if output_results>0 then "" else "un";

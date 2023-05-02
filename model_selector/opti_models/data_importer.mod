@@ -607,8 +607,13 @@ param branch_dephor {(qq,m,n) in BRANCHCC_PENALIZED} =
   else 0;
 param branch_dephex {(qq,m,n) in BRANCHCC_PENALIZED} = 0; # In IIDM, everything is in bus1 so dephase at bus2 is always 0 -->
 
-#param max_branch_Ror_tct {(qq,m,n) in BRANCHCC_REGL} := (max {(v,table,tap) in TAPS : table == branch_ptrRegl[1,qq,m,n]} tap_ratio[v,table,tap]);
-#param max_branch_dephor_tct {(qq,m,n) in BRANCHCC_DEPH} := (max {(v,table,tap) in TAPS : table == branch_ptrDeph[1,qq,m,n]} tap_angle[v,table,tap]);
+
+# Get max/min values for rho/alpha param, on each rtc/ptc
+param max_branch_Ror_tct {(v,rtc) in REGL} = max {(vv,tab,tap) in TAPS : regl_table[v,rtc] == tab} tap_ratio[vv,tab,tap];
+param min_branch_Ror_tct {(v,rtc) in REGL} = min {(vv,tab,tap) in TAPS : regl_table[v,rtc] == tab} tap_ratio[vv,tab,tap];
+
+param max_branch_alpha_tct {(v,ptc) in DEPH} = max {(vv,tab,tap) in TAPS : deph_table[v,ptc] == tab} tap_angle[vv,tab,tap];
+param min_branch_alpha_tct {(v,ptc) in DEPH} = min {(vv,tab,tap) in TAPS : deph_table[v,ptc] == tab} tap_angle[vv,tab,tap];
 
 # Get the maximum of each parameter (will be used for optimization resume)
 param max_targetV := (max {n in BUSCC_PV} targetV_busPV[n]);

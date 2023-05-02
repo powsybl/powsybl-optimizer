@@ -41,8 +41,9 @@ var Red_Tran_Rea_Inv_GB{(qq,m,n) in BRANCHCC} =
   - (branch_B[qq,m,n] + sigma4[qq,m,n]) * cos(teta[n] - teta[m] - (branch_dephor[qq,m,n] + sigma3[qq,m,n])))
   - V[n] * ((branch_B[qq,m,n] + sigma4[qq,m,n]) + (branch_Bex[1,qq,m,n] + sigma8[qq,m,n]));
 
-
+#
 # Flows on opened banches
+#
 
 var Act_branch_bus_2_opened_GB{(qq,m,n) in BRANCH_WITH_SHUNT_1} =
   (branch_Ror[qq,m,n]+sigma1[qq,m,n])**2 * V[m] * 
