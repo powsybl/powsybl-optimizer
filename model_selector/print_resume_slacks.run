@@ -40,11 +40,11 @@ if final_status == "OK" then {
 
   # ... sigma1 slack variable
   printf "\n[INFO] Maximal |sigma1| computed : %.6f\n",
-      (max {(qq,m,n) in BRANCHCC_PENALIZED} abs(sigma1[qq,m,n]));
-  let abs_mean_sigma1 := (sum {(qq,m,n) in BRANCHCC_PENALIZED} abs(sigma1[qq,m,n])) / card(BRANCHCC_PENALIZED);
+      (max {(qq,m,n) in BRANCHCC_REGL} abs(sigma1[qq,m,n]));
+  let abs_mean_sigma1 := (sum {(qq,m,n) in BRANCHCC_REGL} abs(sigma1[qq,m,n])) / card(BRANCHCC_REGL);
   printf "[INFO] Mean abs value of sigma1 coordinates : %.6f\n", abs_mean_sigma1;
   printf "[INFO] Standard deviation abs value of sigma1 coordinates : %.6f\n", 
-        ((sum {(qq,m,n) in BRANCHCC_PENALIZED} (abs(sigma1[qq,m,n]) - abs_mean_sigma1)**2) / card(BRANCHCC_PENALIZED));
+        ((sum {(qq,m,n) in BRANCHCC_REGL} (abs(sigma1[qq,m,n]) - abs_mean_sigma1)**2) / card(BRANCHCC_REGL));
 
   # ... sigma2 slack variable
   printf "\n[INFO] Maximal |sigma2| computed : %.6f\n",
@@ -56,11 +56,11 @@ if final_status == "OK" then {
 
   # ... sigma3 slack variable
   printf "\n[INFO] Maximal |sigma3| computed : %.6f\n",
-      (max {(qq,m,n) in BRANCHCC_PENALIZED} abs(sigma3[qq,m,n]));
-  let abs_mean_sigma3 := (sum {(qq,m,n) in BRANCHCC_PENALIZED} abs(sigma3[qq,m,n])) / card(BRANCHCC_PENALIZED);
+      (max {(qq,m,n) in BRANCHCC_DEPH} abs(sigma3[qq,m,n]));
+  let abs_mean_sigma3 := (sum {(qq,m,n) in BRANCHCC_DEPH} abs(sigma3[qq,m,n])) / card(BRANCHCC_DEPH);
   printf "[INFO] Mean abs value of sigma3 coordinates : %.6f\n", abs_mean_sigma3;
   printf "[INFO] Standard deviation abs value of sigma3 coordinates : %.6f\n", 
-        ((sum {(qq,m,n) in BRANCHCC_PENALIZED} (abs(sigma3[qq,m,n]) - abs_mean_sigma3)**2) / card(BRANCHCC_PENALIZED));
+        ((sum {(qq,m,n) in BRANCHCC_DEPH} (abs(sigma3[qq,m,n]) - abs_mean_sigma3)**2) / card(BRANCHCC_DEPH));
 
   # ... sigma4 slack variable
   printf "\n[INFO] Maximal |sigma4| computed : %.6f\n",

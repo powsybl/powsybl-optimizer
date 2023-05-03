@@ -191,7 +191,7 @@ check {(t,s,n)  in SHUNT}: (t,n) in BUS or n==-1;
 check {(t,s,n)  in SHUNT}: n==-1 or shunt_possiblebus[t,s,n]==n;
 check {(t,s,-1) in SHUNT}: (t,shunt_possiblebus[t,s,-1]) in BUS or shunt_possiblebus[t,s,-1]==-1;
 check {(t,s,n)  in SHUNT}: (t,shunt_substation[t,s,n]) in SUBSTATIONS;
-check {(t,s,n)  in SHUNT}: shunt_valmin[1,s,n] < shunt_valmax[1,s,n];
+check {(t,s,n)  in SHUNT}: shunt_valmin[1,s,n] <= shunt_valmax[1,s,n];
 
 # Case of a reactance : check valmin < 0 and valmax=0
 check {(t,s,n) in SHUNT}: shunt_valmin[1,s,n] <= 0;

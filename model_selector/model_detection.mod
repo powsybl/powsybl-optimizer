@@ -14,6 +14,7 @@
 ###############################################################################
 
 # Introduire boolean ici pour savoir le traitement que je devrais faire derriere.
+param no_penal default 0;
 param branch_detection default 0;
 param param_detection default 1;
 param equations_detection default 0;
@@ -51,18 +52,10 @@ param sigma1_sup_default := 2;
 param sigma3_inf_default := - 3.141592 / 2;
 param sigma3_sup_default := 3.141592 / 2;
 
-param sigma1_inf {(qq,m,n) in BRANCHCC_PENALIZED} := if (qq,m,n) in BRANCHCC_REGL
-                                                    then max(sigma1_inf_default, sigma1_inf_tct[qq,m,n]) 
-                                                    else sigma1_inf_default;
-param sigma3_inf {(qq,m,n) in BRANCHCC_PENALIZED} := if (qq,m,n) in BRANCHCC_DEPH
-                                                    then max(sigma3_inf_default, sigma3_inf_tct[qq,m,n])
-                                                    else sigma3_inf_default;
-param sigma1_sup {(qq,m,n) in BRANCHCC_PENALIZED} := if (qq,m,n) in BRANCHCC_REGL
-                                                    then min(sigma1_sup_default, sigma1_sup_tct[qq,m,n])
-                                                    else sigma1_sup_default;
-param sigma3_sup {(qq,m,n) in BRANCHCC_PENALIZED} := if (qq,m,n) in BRANCHCC_DEPH
-                                                    then min(sigma3_sup_default, sigma3_sup_tct[qq,m,n])
-                                                    else sigma3_sup_default;
+param sigma1_inf {(qq,m,n) in BRANCHCC_REGL} := sigma1_inf_tct[qq,m,n];
+param sigma3_inf {(qq,m,n) in BRANCHCC_DEPH} := sigma3_inf_tct[qq,m,n];
+param sigma1_sup {(qq,m,n) in BRANCHCC_REGL} := sigma1_sup_tct[qq,m,n];
+param sigma3_sup {(qq,m,n) in BRANCHCC_DEPH} := sigma3_sup_tct[qq,m,n];
                                         
 
 
@@ -84,6 +77,7 @@ param sigma8_sup := max_branch_Bex;
 
 
 # Inclusion of all optimization problems
-include "opti_models/detection_by_branches_YKsi.mod";
+include "opti_models/no_penal.mod";
+include "opti_models/detection_by_branches_GB.mod";
 include "opti_models/detection_by_param_YKsi.mod";
 include "opti_models/detection_by_equations_YKsi.mod";

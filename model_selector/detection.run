@@ -205,6 +205,7 @@ printf "\n*** Connexity computation\n";
 let PROBLEM_CCOMP := {1};
 
 # Let all other problems be non active
+let PROBLEM_NO_PENAL := { };
 let PROBLEM_DETECTION_PARAM := {};
 let PROBLEM_DETECTION_BRANCHES := {};
 let PROBLEM_DETECTION_EQUATIONS := {};
@@ -439,16 +440,24 @@ let {n in BUSCC} teta[n] := bus_angl0_corrected[n];
 
 # Activation of the good problem and initial values of corresponding penal var
 let PROBLEM_CCOMP := { };
-if (param_detection == 1) then {
 
+
+if (no_penal == 1) then {
+  let PROBLEM_NO_PENAL := {1};
+  let PROBLEM_DETECTION_PARAM := { };
+  let PROBLEM_DETECTION_BRANCHES := { };
+  let PROBLEM_DETECTION_EQUATIONS := { };
+
+} else if (param_detection == 1) then {
+  let PROBLEM_NO_PENAL := { };
   let PROBLEM_DETECTION_PARAM := {1};
   let PROBLEM_DETECTION_BRANCHES := { };
   let PROBLEM_DETECTION_EQUATIONS := { };
   
   let {n in BUSCC_PV} b_s1[n] := 0;
-  let {(qq,m,n) in BRANCHCC_PENALIZED} b_sigma1[qq,m,n] := 0;
+  let {(qq,m,n) in BRANCHCC_REGL} b_sigma1[qq,m,n] := 0;
   let {(qq,m,n) in BRANCHCC_PENALIZED} b_sigma2[qq,m,n] := 0;
-  let {(qq,m,n) in BRANCHCC_PENALIZED} b_sigma3[qq,m,n] := 0;
+  let {(qq,m,n) in BRANCHCC_DEPH} b_sigma3[qq,m,n] := 0;
   let {(qq,m,n) in BRANCHCC_PENALIZED} b_sigma4[qq,m,n] := 0;
   let {(qq,m,n) in BRANCHCC_PENALIZED} b_sigma5[qq,m,n] := 0;
   let {(qq,m,n) in BRANCHCC_PENALIZED} b_sigma6[qq,m,n] := 0;
@@ -456,7 +465,7 @@ if (param_detection == 1) then {
   let {(qq,m,n) in BRANCHCC_PENALIZED} b_sigma8[qq,m,n] := 0;
 
 } else if (branch_detection == 1) then {
-
+  let PROBLEM_NO_PENAL := { };
   let PROBLEM_DETECTION_PARAM := { };
   let PROBLEM_DETECTION_BRANCHES := {1};
   let PROBLEM_DETECTION_EQUATIONS := { };
@@ -465,7 +474,7 @@ if (param_detection == 1) then {
   let {(qq,m,n) in BRANCHCC_PENALIZED} b_branch[qq,m,n] := 0;
 
 } else if (equations_detection == 1) then {
-
+  let PROBLEM_NO_PENAL := { };
   let PROBLEM_DETECTION_PARAM := { };
   let PROBLEM_DETECTION_BRANCHES := { };
   let PROBLEM_DETECTION_EQUATIONS := {1};
@@ -485,10 +494,15 @@ printf "# DA solve: start (%s)\n\n",ctime();
 let tempstr := ctime();
 
 
-option knitro_options "opttol=1 opttolabs=1e-1 feastol=1 feastolabs=1e-3 maxit=500 mip_intvar_strategy=1 mip_heuristic_strategy=3 mip_maxtime_real=100 mip_multistart=1";
+option knitro_options "opttol=1 opttolabs=1e-1 feastol=1 feastolabs=1e-3 maxit=600 mip_intvar_strategy=1 mip_heuristic_strategy=3 mip_multistart=1";
 
 # Solve the problem selected
-if (param_detection == 1) then {
+if (no_penal == 1) then {
+
+  solve problem_no_penal;
+  let nb_iter_last := problem_no_penal.numiters;
+
+} else if (param_detection == 1) then {
 
   solve problem_dbp;
   let nb_iter_last := problem_dbp.numiters;
@@ -597,9 +611,9 @@ display
 #display sigma1;
 #display b_branch;
 
-for{(qq,m,n) in BRANCHCC_PENALIZED}{
-  if b_branch[qq,m,n] >= 0.9 then printf "Branch %s detected\n", branch_id[1,qq,m,n];
-}
+#for{(qq,m,n) in BRANCHCC_PENALIZED}{
+#  if b_branch[qq,m,n] >= 0.9 then printf "Branch %s detected\n", branch_id[1,qq,m,n];
+#}
 
 
 include print_resume_slacks.run;
@@ -613,9 +627,6 @@ include results_exporter.run;
 ###############################################################################
 #                                End of file                                  #
 ###############################################################################
-
-
-
 
 
 printf "\n";
