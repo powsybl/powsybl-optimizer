@@ -96,6 +96,7 @@ check{(t,n) in BUS}: (t,bus_substation[t,n]) in SUBSTATIONS;
 set SLACK;
 param slack_bus{SLACK} symbolic;
 param null_phase_bus;
+#check abs(bus_angl0[1,null_phase_bus]) < 10e-8;
 
 #set PENAL;
 #param penal_bus{PENAL};
@@ -504,10 +505,8 @@ set SVCCC   := setof {(1,svc,n) in SVC: n in BUSCC} (svc,n);
 param eps_PQ := 0.1;
 set UNITCC_PQ_1 := setof {(g,n) in UNITCC : unit_vregul[1,g,n] == "false"} (g,n);
 set UNITCC_PQ_2 := setof {(g,n) in UNITCC : unit_vregul[1,g,n] == "true"
-                                          and  unit_Q0[1,g,n] <= unit_Qp0[1,g,n] + eps_PQ
-                                          and  unit_Q0[1,g,n] >= unit_Qp0[1,g,n] - eps_PQ
-                                          and  unit_Q0[1,g,n] <= unit_qp0[1,g,n] + eps_PQ
-                                          and  unit_Q0[1,g,n] >= unit_qp0[1,g,n] - eps_PQ} (g,n);
+                                          and  ((unit_Q0[1,g,n] <= unit_Qp0[1,g,n] + eps_PQ and unit_Q0[1,g,n] >= unit_Qp0[1,g,n] - eps_PQ)
+                                          or  (unit_Q0[1,g,n] <= unit_qp0[1,g,n] + eps_PQ and unit_Q0[1,g,n] >= unit_qp0[1,g,n] - eps_PQ))} (g,n);
 set UNITCC_PQ := UNITCC_PQ_1 union UNITCC_PQ_2;
 set UNITCC_PV := UNITCC diff UNITCC_PQ;
 
