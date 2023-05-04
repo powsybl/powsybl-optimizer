@@ -18,7 +18,7 @@ import java.util.OptionalInt;
 public class TapNetworkOutput extends AbstractNetworkOutput<TapPositionModification> {
     private static final String ELEMENT = "rtc";
     private static final int ID_COLUMN_INDEX = 1;
-    private static final int TAP_POS_COLUMN_INDEX = 4;
+    private static final int TAP_POS_COLUMN_INDEX = 2;
 
     @Override
     public String getElement() {
