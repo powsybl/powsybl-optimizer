@@ -607,15 +607,6 @@ display
   ;
 
 
-
-#display sigma1;
-#display b_branch;
-
-#for{(qq,m,n) in BRANCHCC_PENALIZED}{
-#  if b_branch[qq,m,n] >= 0.9 then printf "Branch %s detected\n", branch_id[1,qq,m,n];
-#}
-
-
 include print_resume_slacks.run;
 
 ###############################################################################
@@ -628,8 +619,20 @@ include results_exporter.run;
 #                                End of file                                  #
 ###############################################################################
 
-display BRANCHCC_DEPH;
-display card(BRANCHCC_DEPH);
+display abs_mean_branch_Gor;
+display abs_mean_branch_Bor;
+display abs_mean_branch_Gex;
+display abs_mean_branch_Bex;
+
+display max_branch_Gor;
+display min_branch_Gor;
+display max_branch_Bor;
+display min_branch_Bor;
+display max_branch_Gex;
+display min_branch_Gex;
+display max_branch_Bex;
+display min_branch_Bex;
+
 
 printf "\n";
 printf "*** End of file divergence analysis : Optimization %ssuccessfull\n",if output_results>0 then "" else "un";

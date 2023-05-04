@@ -53,10 +53,10 @@ subject to ctr_sigma1_max_dbb{PROBLEM_DETECTION_BRANCHES, (qq,m,n) in BRANCHCC_R
 subject to ctr_sigma2_max_dbb{PROBLEM_DETECTION_BRANCHES, (qq,m,n) in BRANCHCC_PENALIZED}: sigma2[qq,m,n] + branch_G[qq,m,n] <= sigma2_sup;
 subject to ctr_sigma3_max_dbb{PROBLEM_DETECTION_BRANCHES, (qq,m,n) in BRANCHCC_DEPH}: sigma3[qq,m,n] + branch_dephor[qq,m,n] <= sigma3_sup[qq,m,n];
 subject to ctr_sigma4_max_dbb{PROBLEM_DETECTION_BRANCHES, (qq,m,n) in BRANCHCC_PENALIZED}: sigma4[qq,m,n] + branch_B[qq,m,n] <= sigma4_sup;
-subject to ctr_sigma5_max_dbb{PROBLEM_DETECTION_BRANCHES, (qq,m,n) in BRANCHCC_PENALIZED}: sigma5[qq,m,n] + branch_Gor[1,qq,m,n] <= sigma5_sup;
-subject to ctr_sigma6_max_dbb{PROBLEM_DETECTION_BRANCHES, (qq,m,n) in BRANCHCC_PENALIZED}: sigma6[qq,m,n] + branch_Bor[1,qq,m,n] <= sigma6_sup;
-subject to ctr_sigma7_max_dbb{PROBLEM_DETECTION_BRANCHES, (qq,m,n) in BRANCHCC_PENALIZED}: sigma7[qq,m,n] + branch_Gex[1,qq,m,n] <= sigma7_sup;
-subject to ctr_sigma8_max_dbb{PROBLEM_DETECTION_BRANCHES, (qq,m,n) in BRANCHCC_PENALIZED}: sigma8[qq,m,n] + branch_Bex[1,qq,m,n] <= sigma8_sup;
+subject to ctr_sigma5_max_dbb{PROBLEM_DETECTION_BRANCHES, (qq,m,n) in BRANCHCC_PENALIZED}: sigma5[qq,m,n] + branch_Gor[1,qq,m,n] <= sigma5_sup[qq,m,n];
+subject to ctr_sigma6_max_dbb{PROBLEM_DETECTION_BRANCHES, (qq,m,n) in BRANCHCC_PENALIZED}: sigma6[qq,m,n] + branch_Bor[1,qq,m,n] <= sigma6_sup[qq,m,n];
+subject to ctr_sigma7_max_dbb{PROBLEM_DETECTION_BRANCHES, (qq,m,n) in BRANCHCC_PENALIZED}: sigma7[qq,m,n] + branch_Gex[1,qq,m,n] <= sigma7_sup[qq,m,n];
+subject to ctr_sigma8_max_dbb{PROBLEM_DETECTION_BRANCHES, (qq,m,n) in BRANCHCC_PENALIZED}: sigma8[qq,m,n] + branch_Bex[1,qq,m,n] <= sigma8_sup[qq,m,n];
 
 #
 # Activation of b variables if s/sigma var != 0
@@ -68,10 +68,10 @@ subject to ctr_b_sigma1_pos_dbb{PROBLEM_DETECTION_BRANCHES, (qq,m,n) in BRANCHCC
 subject to ctr_b_sigma2_pos_dbb{PROBLEM_DETECTION_BRANCHES, (qq,m,n) in BRANCHCC_PENALIZED}: sigma2[qq,m,n] <= (sigma2_sup - branch_G[qq,m,n] + 0.001) * b_branch[qq,m,n];
 subject to ctr_b_sigma3_pos_dbb{PROBLEM_DETECTION_BRANCHES, (qq,m,n) in BRANCHCC_DEPH}: sigma3[qq,m,n] <= (sigma3_sup[qq,m,n] - branch_dephor[qq,m,n] + 0.001) * b_branch[qq,m,n];
 subject to ctr_b_sigma4_pos_dbb{PROBLEM_DETECTION_BRANCHES, (qq,m,n) in BRANCHCC_PENALIZED}: sigma4[qq,m,n] <= (sigma4_sup - branch_B[qq,m,n] + 0.001) * b_branch[qq,m,n];
-subject to ctr_b_sigma5_pos_dbb{PROBLEM_DETECTION_BRANCHES, (qq,m,n) in BRANCHCC_PENALIZED}: sigma5[qq,m,n] <= (sigma5_sup - branch_Gor[1,qq,m,n] + 0.001) * b_branch[qq,m,n];
-subject to ctr_b_sigma6_pos_dbb{PROBLEM_DETECTION_BRANCHES, (qq,m,n) in BRANCHCC_PENALIZED}: sigma6[qq,m,n] <= (sigma6_sup - branch_Bor[1,qq,m,n] + 0.001) * b_branch[qq,m,n];
-subject to ctr_b_sigma7_pos_dbb{PROBLEM_DETECTION_BRANCHES, (qq,m,n) in BRANCHCC_PENALIZED}: sigma7[qq,m,n] <= (sigma7_sup - branch_Gex[1,qq,m,n] + 0.001) * b_branch[qq,m,n];
-subject to ctr_b_sigma8_pos_dbb{PROBLEM_DETECTION_BRANCHES, (qq,m,n) in BRANCHCC_PENALIZED}: sigma8[qq,m,n] <= (sigma8_sup - branch_Bex[1,qq,m,n] + 0.001) * b_branch[qq,m,n];
+subject to ctr_b_sigma5_pos_dbb{PROBLEM_DETECTION_BRANCHES, (qq,m,n) in BRANCHCC_PENALIZED}: sigma5[qq,m,n] <= (sigma5_sup[qq,m,n] - branch_Gor[1,qq,m,n] + 0.001) * b_branch[qq,m,n];
+subject to ctr_b_sigma6_pos_dbb{PROBLEM_DETECTION_BRANCHES, (qq,m,n) in BRANCHCC_PENALIZED}: sigma6[qq,m,n] <= (sigma6_sup[qq,m,n] - branch_Bor[1,qq,m,n] + 0.001) * b_branch[qq,m,n];
+subject to ctr_b_sigma7_pos_dbb{PROBLEM_DETECTION_BRANCHES, (qq,m,n) in BRANCHCC_PENALIZED}: sigma7[qq,m,n] <= (sigma7_sup[qq,m,n] - branch_Gex[1,qq,m,n] + 0.001) * b_branch[qq,m,n];
+subject to ctr_b_sigma8_pos_dbb{PROBLEM_DETECTION_BRANCHES, (qq,m,n) in BRANCHCC_PENALIZED}: sigma8[qq,m,n] <= (sigma8_sup[qq,m,n] - branch_Bex[1,qq,m,n] + 0.001) * b_branch[qq,m,n];
 
 # if s/sigma variable < 0
 subject to ctr_b_s1_neg_dbb{PROBLEM_DETECTION_BRANCHES, k in BUSCC_PV}: s1[k] >= (s1_inf - targetV_busPV[k] - 0.001) * b_s1[k];

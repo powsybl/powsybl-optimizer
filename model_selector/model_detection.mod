@@ -51,12 +51,11 @@ param sigma1_sup_default := 2;
 param sigma3_inf_default := - 3.141592 / 2;
 param sigma3_sup_default := 3.141592 / 2;
 
-param sigma1_inf {(qq,m,n) in BRANCHCC_REGL} := sigma1_inf_tct[qq,m,n];
-param sigma3_inf {(qq,m,n) in BRANCHCC_DEPH} := sigma3_inf_tct[qq,m,n];
-param sigma1_sup {(qq,m,n) in BRANCHCC_REGL} := sigma1_sup_tct[qq,m,n];
-param sigma3_sup {(qq,m,n) in BRANCHCC_DEPH} := sigma3_sup_tct[qq,m,n];
-                                        
+param sigma1_inf {(qq,m,n) in BRANCHCC_REGL} := 0.5 * branch_cstratio[1,qq,m,n];
+param sigma1_sup {(qq,m,n) in BRANCHCC_REGL} := 2 * branch_cstratio[1,qq,m,n];
 
+param sigma3_inf {(qq,m,n) in BRANCHCC_DEPH} := if sigma3_inf_tct[qq,m,n] < 0 then max(sigma3_inf_tct[qq,m,n] * 1.3, sigma3_inf_default) else sigma3_inf_tct[qq,m,n] * 0.7;
+param sigma3_sup {(qq,m,n) in BRANCHCC_DEPH} := if sigma3_inf_tct[qq,m,n] < 0 then sigma3_sup_tct[qq,m,n] * 0.7 else min(sigma3_sup_tct[qq,m,n] * 1.3, sigma3_sup_default);
 
 # Bound inf for Y/Xi or R/X parameters (depends on model used)
 param sigma2_inf := if is_penal_on_YKsi == 1 then 0 else min_branch_G;
@@ -65,15 +64,21 @@ param sigma2_sup := if is_penal_on_YKsi == 1 then max_branch_admi else max_branc
 param sigma4_sup := if is_penal_on_YKsi == 1 then 3.141592 else max_branch_B;
 
 # Bound inf for G/B parameters
-param sigma5_inf := -max_branch_Gor;
-param sigma6_inf := -max_branch_Bor;
-param sigma7_inf := -max_branch_Gex;
-param sigma8_inf := -max_branch_Bex;
-param sigma5_sup := max_branch_Gor;
-param sigma6_sup := max_branch_Bor;
-param sigma7_sup := max_branch_Gex;
-param sigma8_sup := max_branch_Bex;
+param sigma5_inf := 0;
+param sigma6_inf := 0;
+param sigma7_inf := 0;
+param sigma8_inf := 0;
 
+# Upper bound in practice for usual network
+param sigma5_sup_default := 0.1;
+param sigma6_sup_default := 1.35;
+param sigma7_sup_default := 0.1;
+param sigma8_sup_default := 1.35;
+
+param sigma5_sup {(qq,m,n) in BRANCHCC_PENALIZED} := if branch_Gor[1,qq,m,n] == 0 then sigma5_sup_default else min(sigma5_sup_default, 2 * abs(branch_Gor[1,qq,m,n]));
+param sigma6_sup {(qq,m,n) in BRANCHCC_PENALIZED} := if branch_Bor[1,qq,m,n] == 0 then sigma6_sup_default else min(sigma6_sup_default, 2 * abs(branch_Bor[1,qq,m,n]));
+param sigma7_sup {(qq,m,n) in BRANCHCC_PENALIZED} := if branch_Gex[1,qq,m,n] == 0 then sigma7_sup_default else min(sigma7_sup_default, 2 * abs(branch_Gex[1,qq,m,n]));
+param sigma8_sup {(qq,m,n) in BRANCHCC_PENALIZED} := if branch_Bex[1,qq,m,n] == 0 then sigma8_sup_default else min(sigma8_sup_default, 2 * abs(branch_Bex[1,qq,m,n]));
 
 # Inclusion of all optimization problems
 include "opti_models/no_penal.mod";
