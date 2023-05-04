@@ -35,7 +35,7 @@ var Red_Tran_Rea_Inv_YKsi{(qq,m,n) in BRANCHCC} =
   + V[n] * ((branch_admi[qq,m,n]+sigma2[qq,m,n])*cos(branch_angper[qq,m,n]+sigma4[qq,m,n])-(branch_Bex[1,qq,m,n]+sigma8[qq,m,n]));
 
 #
-# Flows on shunts
+# Flows on branches with one side opened
 #
 
 var Act_branch_bus_2_opened_YKsi{(qq,m,n) in BRANCH_WITH_SHUNT_1} =

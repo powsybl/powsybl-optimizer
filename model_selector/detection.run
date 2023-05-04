@@ -350,7 +350,7 @@ for {(qq,m,n) in BRANCHCC_REGL: regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]] <= te
 }
 # Looking for unconsistencies
 let tempo := 0; # If non zero, major inconsistency detected
-for {(qq,m,n) in BRANCHCC_REGL} {
+for {(qq,m,n) in BRANCHCC_REGL diff (BRANCH_WITH_SHUNT_1 union BRANCH_WITH_SHUNT_2)} { # TODO : The unconsistency is checked only for rtc in branchcc and not with opened ones
   let temp1 := regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]];
   let temp2 := regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]];
   if voltage_lower_bound[1,bus_substation[1,m]]*temp1*branch_cstratio[1,qq,m,n] > voltage_upper_bound[1,bus_substation[1,n]]
@@ -387,7 +387,7 @@ for {(qq,m,n) in BRANCHCC_REGL} {
   }  
 }
 # Consistency for transformers with fixed ratio
-for {(qq,m,n) in BRANCHCC_REGL} {
+for {(qq,m,n) in BRANCHCC_REGL diff (BRANCH_WITH_SHUNT_1 union BRANCH_WITH_SHUNT_2)} { # TODO : The unconsistency is checked only for rtc in branchcc and not with opened ones
   let temp1 := tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]];
   if voltage_lower_bound[1,bus_substation[1,m]]*temp1*branch_cstratio[1,qq,m,n] > voltage_upper_bound[1,bus_substation[1,n]]
   then {
@@ -430,7 +430,7 @@ for {(qq,m,n) in BRANCHCC_REGL} {
 #                                                                             #
 ###############################################################################
 
-# TODO : Check the assignation of svc_targetV is correct !!!!
+# TODO : Check assignation of svc_targetV is correct !
 let {(g,n) in UNITCC_PV} targetV_busPV[n] := unit_Vc[1,g,n];
 let {(svc,n) in SVCCC_PV} targetV_busPV[n] := svc_targetV[1,svc,n];
 
@@ -628,6 +628,8 @@ include results_exporter.run;
 #                                End of file                                  #
 ###############################################################################
 
+display BRANCHCC_DEPH;
+display card(BRANCHCC_DEPH);
 
 printf "\n";
 printf "*** End of file divergence analysis : Optimization %ssuccessfull\n",if output_results>0 then "" else "un";

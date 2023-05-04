@@ -101,7 +101,7 @@ subject to ctr_balance_P_dbb{PROBLEM_DETECTION_BRANCHES,k in BUSCC diff {null_ph
   # Flows
     sum{(qq,k,n) in BRANCHCC} base100MVA * V[k] * Red_Tran_Act_Dir_GB[qq,k,n]
   + sum{(qq,m,k) in BRANCHCC} base100MVA * V[k] * Red_Tran_Act_Inv_GB[qq,m,k]
-    # Flows on branches with a shunt on earth # TODO : CHANGE THE COMMENT HERE
+  # Flows on branches with one side opened
   + sum{(qq,k,n) in BRANCH_WITH_SHUNT_1} base100MVA * V[k] * Act_branch_bus_2_opened_GB[qq,k,n]
   + sum{(qq,m,k) in BRANCH_WITH_SHUNT_2} base100MVA * V[k] * Act_branch_bus_1_opened_GB[qq,m,k]
   # Generating units
@@ -122,7 +122,7 @@ subject to ctr_balance_Q_dbb{PROBLEM_DETECTION_BRANCHES,k in BUSCC_PQ}:
   # Flows
     sum{(qq,k,n) in BRANCHCC} base100MVA * V[k] * Red_Tran_Rea_Dir_GB[qq,k,n]
   + sum{(qq,m,k) in BRANCHCC} base100MVA * V[k] * Red_Tran_Rea_Inv_GB[qq,m,k]
-    # Flows on branches with a shunt on earth # TODO : CHANGE THE COMMENT HERE
+    # Flows on branches with one side opened
   + sum{(qq,k,n) in BRANCH_WITH_SHUNT_1} base100MVA * V[k] * Rea_branch_bus_2_opened_GB[qq,k,n]
   + sum{(qq,m,k) in BRANCH_WITH_SHUNT_2} base100MVA * V[k] * Rea_branch_bus_1_opened_GB[qq,m,k]
   # Senerating units

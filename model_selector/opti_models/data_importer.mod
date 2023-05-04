@@ -494,8 +494,8 @@ set BRANCHZNULL := {(qq,m,n) in BRANCHCC_PENALIZED: branch_R[1,qq,m,n]^2+branch_
 
 # NB : SHUNTCC are the shunts that are fixed. Could be variable but we do not want for now
 set SHUNTCC := {(1,s,n) in SHUNT: n in BUSCC or shunt_possiblebus[1,s,n] in BUSCC}; # We want to be able to reconnect shunts
-set BRANCHCC_REGL := {(qq,m,n) in BRANCHCC diff BRANCHZNULL: branch_ptrRegl[1,qq,m,n] != -1 }; # TODO TODO TODO changer BRANCHCC en BRANCHCC_PENALIZED
-set BRANCHCC_DEPH := {(qq,m,n) in BRANCHCC diff BRANCHZNULL: branch_ptrDeph[1,qq,m,n] != -1 }; # TODO TODO TODO changer BRANCHCC en BRANCHCC_PENALIZED
+set BRANCHCC_REGL := {(qq,m,n) in BRANCHCC_PENALIZED diff BRANCHZNULL: branch_ptrRegl[1,qq,m,n] != -1 }; # TODO TODO TODO changer BRANCHCC en BRANCHCC_PENALIZED
+set BRANCHCC_DEPH := {(qq,m,n) in BRANCHCC_PENALIZED diff BRANCHZNULL: branch_ptrDeph[1,qq,m,n] != -1 }; # TODO TODO TODO changer BRANCHCC en BRANCHCC_PENALIZED
 set SVCCC   := setof {(1,svc,n) in SVC: n in BUSCC} (svc,n);
 
 #

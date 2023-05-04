@@ -67,7 +67,6 @@ var Rea_branch_bus_2_opened_GB{(qq,m,n) in BRANCH_WITH_SHUNT_1} =
   + (-(branch_Bex[1,qq,m,n] + sigma8[qq,m,n]) -(branch_B[qq,m,n] + sigma4[qq,m,n]))**2 ) # Shunt
   );
 
-# FIXME : Verifier les equations ici, surement une erreur.
 var Act_branch_bus_1_opened_GB{(qq,m,n) in BRANCH_WITH_SHUNT_2} =
   V[n] * 
   ((branch_Gex[1,qq,m,n] + sigma7[qq,m,n]) 

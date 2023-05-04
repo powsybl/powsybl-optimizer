@@ -13,7 +13,6 @@
 # Author : Pierre Arvy 2023
 ###############################################################################
 
-# Introduire boolean ici pour savoir le traitement que je devrais faire derriere.
 param no_penal default 0;
 param branch_detection default 0;
 param param_detection default 1;

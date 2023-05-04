@@ -41,7 +41,7 @@ subject to ctr_balance_P_no_penal{PROBLEM_NO_PENAL,k in BUSCC diff {null_phase_b
   # Flows on branches
     sum{(qq,k,n) in BRANCHCC} base100MVA * V[k] * Red_Tran_Act_Dir_no_penal[qq,k,n]
   + sum{(qq,m,k) in BRANCHCC} base100MVA * V[k] * Red_Tran_Act_Inv_no_penal[qq,m,k]
-  # Flows on branches with a shunt on earth # TODO : CHANGE THE COMMENT HERE
+  # Flows on branches with one side opened
   + sum{(qq,k,n) in BRANCH_WITH_SHUNT_1} base100MVA * V[k] * Act_branch_bus_2_opened_no_penal[qq,k,n]
   + sum{(qq,m,k) in BRANCH_WITH_SHUNT_2} base100MVA * V[k] * Act_branch_bus_1_opened_no_penal[qq,m,k]
   # Generating units
@@ -62,7 +62,7 @@ subject to ctr_balance_Q_no_penal{PROBLEM_NO_PENAL,k in BUSCC_PQ}:
   # Flows
     sum{(qq,k,n) in BRANCHCC} base100MVA * V[k] * Red_Tran_Rea_Dir_no_penal[qq,k,n]
   + sum{(qq,m,k) in BRANCHCC} base100MVA * V[k] * Red_Tran_Rea_Inv_no_penal[qq,m,k]
-  # Flows on branches with a shunt on earth # TODO : CHANGE THE COMMENT HERE
+  # Flows on branches with one side opened
   + sum{(qq,k,n) in BRANCH_WITH_SHUNT_1} base100MVA * V[k] * Rea_branch_bus_2_opened_no_penal[qq,k,n]
   + sum{(qq,m,k) in BRANCH_WITH_SHUNT_2} base100MVA * V[k] * Rea_branch_bus_1_opened_no_penal[qq,m,k]
   # Senerating units
