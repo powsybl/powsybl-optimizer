@@ -473,19 +473,19 @@ set BRANCH2:= setof {(1,qq,m,n) in BRANCH: m in BUS2 and n in BUS2} (qq,m,n);
 #
 # Elements in the final component (after checking of theta = 0)
 #
-set BUSCC dimen 1 default {}; # Def in reacriveopf.run
+set BUSCC dimen 1 default {};
 #check {n in BUSCC}: bus_V0[1,n] >= epsilon_min_voltage; # Check buses have valid voltage value
-# Un check sur la cardinalite de BUSCC et BUS2 ?
+
 param bus_V0_corrected{n in BUSCC};
 param bus_angl0_corrected{n in BUSCC};
 
 set BRANCHCC:= setof {(1,qq,m,n) in BRANCH: m in BUSCC and n in BUSCC} (qq,m,n); 
-set BRANCH_WITH_SHUNT_1 := setof {(1,qq,m,n) in BRANCH: m in BUSCC and n == -1} (qq,m,n);
-set BRANCH_WITH_SHUNT_2 := setof {(1,qq,m,n) in BRANCH: m == -1 and n in BUSCC} (qq,m,n);
+set BRANCH_WITH_SIDE_2_OPENED := setof {(1,qq,m,n) in BRANCH: m in BUSCC and n == -1} (qq,m,n);
+set BRANCH_WITH_SIDE_1_OPENED := setof {(1,qq,m,n) in BRANCH: m == -1 and n in BUSCC} (qq,m,n);
 
-set BRANCHCC_PENALIZED:= BRANCHCC union BRANCH_WITH_SHUNT_1 union BRANCH_WITH_SHUNT_2;
+set BRANCHCC_PENALIZED:= BRANCHCC union BRANCH_WITH_SIDE_2_OPENED union BRANCH_WITH_SIDE_1_OPENED;
 
-set LOADCC  := setof {(1,c,n)    in LOAD  : n in BUSCC               } (c,n);
+set LOADCC  := setof {(1,c,n)    in LOAD  : n in BUSCC} (c,n);
 set UNITCC  := setof {(1,g,n)    in UNIT  : n in BUSCC} (g,n);
 
 #
@@ -495,8 +495,8 @@ set BRANCHZNULL := {(qq,m,n) in BRANCHCC_PENALIZED: branch_R[1,qq,m,n]^2+branch_
 
 # NB : SHUNTCC are the shunts that are fixed. Could be variable but we do not want for now
 set SHUNTCC := {(1,s,n) in SHUNT: n in BUSCC or shunt_possiblebus[1,s,n] in BUSCC}; # We want to be able to reconnect shunts
-set BRANCHCC_REGL := {(qq,m,n) in BRANCHCC_PENALIZED diff BRANCHZNULL: branch_ptrRegl[1,qq,m,n] != -1 }; # TODO TODO TODO changer BRANCHCC en BRANCHCC_PENALIZED
-set BRANCHCC_DEPH := {(qq,m,n) in BRANCHCC_PENALIZED diff BRANCHZNULL: branch_ptrDeph[1,qq,m,n] != -1 }; # TODO TODO TODO changer BRANCHCC en BRANCHCC_PENALIZED
+set BRANCHCC_REGL := {(qq,m,n) in BRANCHCC_PENALIZED diff BRANCHZNULL: branch_ptrRegl[1,qq,m,n] != -1 }; 
+set BRANCHCC_DEPH := {(qq,m,n) in BRANCHCC_PENALIZED diff BRANCHZNULL: branch_ptrDeph[1,qq,m,n] != -1 };
 set SVCCC   := setof {(1,svc,n) in SVC: n in BUSCC} (svc,n);
 
 #
@@ -508,20 +508,29 @@ set UNITCC_PQ_2 := setof {(g,n) in UNITCC : unit_vregul[1,g,n] == "true"
                                           and  ((unit_Q0[1,g,n] <= unit_Qp0[1,g,n] + eps_PQ and unit_Q0[1,g,n] >= unit_Qp0[1,g,n] - eps_PQ)
                                           or  (unit_Q0[1,g,n] <= unit_qp0[1,g,n] + eps_PQ and unit_Q0[1,g,n] >= unit_qp0[1,g,n] - eps_PQ))} (g,n);
 set UNITCC_PQ := UNITCC_PQ_1 union UNITCC_PQ_2;
+
 set UNITCC_PV := UNITCC diff UNITCC_PQ;
 
-set SVCCC_PQ_1 := setof {(svc,n) in SVCCC : svc_vregul[1,svc,n] == "false"} (svc,n);
-set SVCCC_PQ_2 := setof {(svc,n) in SVCCC : svc_vregul[1,svc,n] == "true"
-                                            and bus_V0[1,n] <= svc_targetV[1,svc,n] + eps_PQ
-                                            and bus_V0[1,n] >= svc_targetV[1,svc,n] - eps_PQ} (svc,n);
+set SVCCC_PV := setof {(svc,n) in SVCCC : svc_vregul[1,svc,n] == "true"
+                                            and bus_V0[1,n] <= svc_targetV[1,svc,n] + 0.001
+                                            and bus_V0[1,n] >= svc_targetV[1,svc,n] - 0.001} (svc,n);
+
+set SVCCC_PQ_1 := setof {(svc,n) in SVCCC diff SVCCC_PV : svc_vregul[1,svc,n] == "false"} (svc,n);
+set SVCCC_PQ_2 := setof {(svc,n) in SVCCC diff (SVCCC_PV union SVCCC_PQ_1)} (svc,n);
 set SVCCC_PQ := SVCCC_PQ_1 union SVCCC_PQ_2;
-set SVCCC_PV := SVCCC diff SVCCC_PQ;
+
+#set SVCCC_PQ_1 := setof {(svc,n) in SVCCC : svc_vregul[1,svc,n] == "false"} (svc,n);
+#set SVCCC_PQ_2 := setof {(svc,n) in SVCCC : svc_vregul[1,svc,n] == "true"
+#                                            and bus_V0[1,n] <= svc_targetV[1,svc,n] + 0.01
+#                                            and bus_V0[1,n] >= svc_targetV[1,svc,n] - 0.01} (svc,n);
+#set SVCCC_PQ := SVCCC_PQ_1 union SVCCC_PQ_2;
+#set SVCCC_PV := SVCCC diff SVCCC_PQ;
 
 # Buses that are PQ and PV
 set BUSCC_PV_1 := setof {(g,n) in UNITCC_PV} n;
 set BUSCC_PV_2 := setof {(svc,n) in SVCCC_PV} n;
 
-set BUSCC_PV := (setof {(g,n) in UNITCC_PV} n) union (setof {(svc,n) in SVCCC_PV} n);
+set BUSCC_PV := BUSCC_PV_1 union BUSCC_PV_2;
 set BUSCC_PQ := BUSCC diff BUSCC_PV;
 
 param targetV_busPV{n in BUSCC_PV}; # def in divergenceanalysor.run

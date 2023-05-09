@@ -117,8 +117,8 @@ subject to ctr_balance_P_dbp{PROBLEM_DETECTION_PARAM,k in BUSCC diff {null_phase
     sum{(qq,k,n) in BRANCHCC} base100MVA * V[k] * Red_Tran_Act_Dir_GB[qq,k,n]
   + sum{(qq,m,k) in BRANCHCC} base100MVA * V[k] * Red_Tran_Act_Inv_GB[qq,m,k]
   # Flows on branches with one side opened
-  + sum{(qq,k,n) in BRANCH_WITH_SHUNT_1} base100MVA * V[k] * Act_branch_bus_2_opened_GB[qq,k,n]
-  + sum{(qq,m,k) in BRANCH_WITH_SHUNT_2} base100MVA * V[k] * Act_branch_bus_1_opened_GB[qq,m,k]
+  + sum{(qq,k,n) in BRANCH_WITH_SIDE_2_OPENED} base100MVA * V[k] * Act_branch_bus_2_opened_GB[qq,k,n]
+  + sum{(qq,m,k) in BRANCH_WITH_SIDE_1_OPENED} base100MVA * V[k] * Act_branch_bus_1_opened_GB[qq,m,k]
   # Generating units
   - sum{(g,k) in UNITCC} unit_Pc[1,g,k] # Fixed value
   # Loads
@@ -138,8 +138,8 @@ subject to ctr_balance_Q_dbp{PROBLEM_DETECTION_PARAM,k in BUSCC_PQ}:
     sum{(qq,k,n) in BRANCHCC} base100MVA * V[k] * Red_Tran_Rea_Dir_GB[qq,k,n]
   + sum{(qq,m,k) in BRANCHCC} base100MVA * V[k] * Red_Tran_Rea_Inv_GB[qq,m,k]
   # Flows on branches with one side opened
-  + sum{(qq,k,n) in BRANCH_WITH_SHUNT_1} base100MVA * V[k] * Rea_branch_bus_2_opened_GB[qq,k,n]
-  + sum{(qq,m,k) in BRANCH_WITH_SHUNT_2} base100MVA * V[k] * Rea_branch_bus_1_opened_GB[qq,m,k]
+  + sum{(qq,k,n) in BRANCH_WITH_SIDE_2_OPENED} base100MVA * V[k] * Rea_branch_bus_2_opened_GB[qq,k,n]
+  + sum{(qq,m,k) in BRANCH_WITH_SIDE_1_OPENED} base100MVA * V[k] * Rea_branch_bus_1_opened_GB[qq,m,k]
   # Senerating units
   - sum{(g,k) in UNITCC} unit_Qc[1,g,k] # Fixed value
   # Load
@@ -147,7 +147,7 @@ subject to ctr_balance_Q_dbp{PROBLEM_DETECTION_PARAM,k in BUSCC_PQ}:
   # Shunts
   - sum{(shunt,k) in SHUNTCC} base100MVA * shunt_valnom[1,shunt,k] * V[k]^2
   # SVC that does not regulate voltage
-  - sum{(svc,k) in SVCCC_PQ_1} svc_Q0[1,svc,k] # Fixed value
+  - sum{(svc,k) in SVCCC_PQ_1 : -1000 <= svc_Q0[1,svc,k] and svc_Q0[1,svc,k] <= 1000} svc_Q0[1,svc,k] # Fixed value
   - sum{(svc,k) in SVCCC_PQ_2} if bus_V0[1,k] > svc_targetV[1,svc,k] 
                               then base100MVA * svc_bmin[1,svc,k] * V[k]^2
                               else base100MVA * svc_bmax[1,svc,k] * V[k]^2

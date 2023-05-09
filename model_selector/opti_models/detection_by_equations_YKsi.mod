@@ -98,7 +98,7 @@ subject to ctr_balance_Q_dbe{PROBLEM_DETECTION_EQUATIONS, k in BUSCC_PQ}:
   # Shunts
   - sum{(shunt,k) in SHUNTCC} base100MVA * shunt_valnom[1,shunt,k] * V[k]^2
   # SVC that does not regulate voltage
-  - sum{(svc,k) in SVCCC_PQ_1} svc_Q0[1,svc,k] # Fixed value
+  - sum{(svc,k) in SVCCC_PQ_1 : -1000 <= svc_Q0[1,svc,k] and svc_Q0[1,svc,k] <= 1000} svc_Q0[1,svc,k] # Fixed value
   - sum{(svc,k) in SVCCC_PQ_2} if bus_V0[1,k] > svc_targetV[1,svc,k] 
                               then base100MVA * svc_bmin[1,svc,k] * V[k]^2
                               else base100MVA * svc_bmax[1,svc,k] * V[k]^2

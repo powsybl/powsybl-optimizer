@@ -38,7 +38,7 @@ var Red_Tran_Rea_Inv_YKsi{(qq,m,n) in BRANCHCC} =
 # Flows on branches with one side opened
 #
 
-var Act_branch_bus_2_opened_YKsi{(qq,m,n) in BRANCH_WITH_SHUNT_1} =
+var Act_branch_bus_2_opened_YKsi{(qq,m,n) in BRANCH_WITH_SIDE_2_OPENED} =
   (rho_penalized[qq,m,n])**2 * V[m] * 
   ((branch_Gor[1,qq,m,n] + sigma5[qq,m,n]) 
   + (branch_admi[qq,m,n] + sigma2[qq,m,n])**2 * (branch_Gex[1,qq,m,n] + sigma7[qq,m,n]) 
@@ -49,7 +49,7 @@ var Act_branch_bus_2_opened_YKsi{(qq,m,n) in BRANCH_WITH_SHUNT_1} =
   + (-(branch_Bex[1,qq,m,n] + sigma8[qq,m,n]) + (branch_admi[qq,m,n] + sigma2[qq,m,n]) * cos(branch_angper[qq,m,n] + sigma4[qq,m,n]))**2 ) # Shunt
   );
 
-var Rea_branch_bus_2_opened_YKsi{(qq,m,n) in BRANCH_WITH_SHUNT_1} = 
+var Rea_branch_bus_2_opened_YKsi{(qq,m,n) in BRANCH_WITH_SIDE_2_OPENED} = 
   - (rho_penalized[qq,m,n])**2 * V[m] *
   ((branch_Bor[1,qq,m,n] + sigma6[qq,m,n]) 
   + (branch_admi[qq,m,n] + sigma2[qq,m,n])**2 * (branch_Bex[1,qq,m,n] + sigma8[qq,m,n])
@@ -60,7 +60,7 @@ var Rea_branch_bus_2_opened_YKsi{(qq,m,n) in BRANCH_WITH_SHUNT_1} =
   + (-(branch_Bex[1,qq,m,n] + sigma8[qq,m,n]) + (branch_admi[qq,m,n] + sigma2[qq,m,n]) * cos((branch_angper[qq,m,n] + sigma4[qq,m,n])))**2 ) # Shunt
   );
 
-var Act_branch_bus_1_opened_YKsi{(qq,m,n) in BRANCH_WITH_SHUNT_2} =
+var Act_branch_bus_1_opened_YKsi{(qq,m,n) in BRANCH_WITH_SIDE_1_OPENED} =
   V[n] * 
   ((branch_Gex[1,qq,m,n] + sigma7[qq,m,n]) 
   + (branch_admi[qq,m,n] + sigma2[qq,m,n])**2 * (branch_Gor[1,qq,m,n] + sigma5[qq,m,n]) 
@@ -71,7 +71,7 @@ var Act_branch_bus_1_opened_YKsi{(qq,m,n) in BRANCH_WITH_SHUNT_2} =
   + (-(branch_Bor[1,qq,m,n] + sigma6[qq,m,n]) + (branch_admi[qq,m,n] + sigma2[qq,m,n]) * cos((branch_angper[qq,m,n] + sigma4[qq,m,n])))**2 ) # Shunt
   );
 
-var Rea_branch_bus_1_opened_YKsi{(qq,m,n) in BRANCH_WITH_SHUNT_2} = 
+var Rea_branch_bus_1_opened_YKsi{(qq,m,n) in BRANCH_WITH_SIDE_1_OPENED} = 
   - V[n] *
   ((branch_Bex[1,qq,m,n] + sigma8[qq,m,n]) 
   + (branch_admi[qq,m,n] + sigma2[qq,m,n])**2 * (branch_Bor[1,qq,m,n] + sigma6[qq,m,n])

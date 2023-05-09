@@ -76,7 +76,3 @@ param: BRANCH: branch_3wt branch_subor branch_subex branch_R branch_X branch_Gor
 #"slack"
 param: SLACK: slack_bus := include data_network/slackbus.txt;
 
-# slackbus.txt
-#"slack"
-#param: PENAL: penal_bus := include data/bus_important_penal.txt;
-

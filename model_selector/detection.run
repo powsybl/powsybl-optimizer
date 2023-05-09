@@ -197,6 +197,9 @@ else if most_meshed_selection == 1 then {
     substation_description[1,bus_substation[1,null_phase_bus]],
   tempo; }
 
+# Check angle of slack bus is null in AMPL import
+check abs(bus_angl0[1,null_phase_bus]) <= 1e-8;
+
 ###############################################################################
 #           Connexity checks and computation of connex components             #
 ###############################################################################
@@ -206,9 +209,9 @@ let PROBLEM_CCOMP := {1};
 
 # Let all other problems be non active
 let PROBLEM_NO_PENAL := { };
-let PROBLEM_DETECTION_PARAM := {};
-let PROBLEM_DETECTION_BRANCHES := {};
-let PROBLEM_DETECTION_EQUATIONS := {};
+let PROBLEM_DETECTION_PARAM := { };
+let PROBLEM_DETECTION_BRANCHES := { };
+let PROBLEM_DETECTION_EQUATIONS := { };
 
 option knitro_options "outlev=0"; # Avoid printing of too much information.
 option presolve 0;
@@ -350,7 +353,7 @@ for {(qq,m,n) in BRANCHCC_REGL: regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]] <= te
 }
 # Looking for unconsistencies
 let tempo := 0; # If non zero, major inconsistency detected
-for {(qq,m,n) in BRANCHCC_REGL diff (BRANCH_WITH_SHUNT_1 union BRANCH_WITH_SHUNT_2)} { # TODO : The unconsistency is checked only for rtc in branchcc and not with opened ones
+for {(qq,m,n) in BRANCHCC_REGL diff (BRANCH_WITH_SIDE_2_OPENED union BRANCH_WITH_SIDE_1_OPENED)} { # TODO : The unconsistency is checked only for rtc in branchcc and not with opened ones
   let temp1 := regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]];
   let temp2 := regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]];
   if voltage_lower_bound[1,bus_substation[1,m]]*temp1*branch_cstratio[1,qq,m,n] > voltage_upper_bound[1,bus_substation[1,n]]
@@ -387,7 +390,7 @@ for {(qq,m,n) in BRANCHCC_REGL diff (BRANCH_WITH_SHUNT_1 union BRANCH_WITH_SHUNT
   }  
 }
 # Consistency for transformers with fixed ratio
-for {(qq,m,n) in BRANCHCC_REGL diff (BRANCH_WITH_SHUNT_1 union BRANCH_WITH_SHUNT_2)} { # TODO : The unconsistency is checked only for rtc in branchcc and not with opened ones
+for {(qq,m,n) in BRANCHCC_REGL diff (BRANCH_WITH_SIDE_2_OPENED union BRANCH_WITH_SIDE_1_OPENED)} { # TODO : The unconsistency is checked only for rtc in branchcc and not with opened ones
   let temp1 := tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]];
   if voltage_lower_bound[1,bus_substation[1,m]]*temp1*branch_cstratio[1,qq,m,n] > voltage_upper_bound[1,bus_substation[1,n]]
   then {
@@ -494,7 +497,7 @@ printf "# DA solve: start (%s)\n\n",ctime();
 let tempstr := ctime();
 
 
-option knitro_options "opttol=1 opttolabs=1e-1 feastol=1 feastolabs=1e-3 maxit=600 mip_intvar_strategy=1 mip_heuristic_strategy=3 mip_multistart=1";
+option knitro_options "opttol=1 opttolabs=1e-1 feastol=1 feastolabs=1e-3 maxit=1500 mip_intvar_strategy=1 mip_heuristic_strategy=3 mip_multistart=1 ms_enable=0";
 
 # Solve the problem selected
 if (no_penal == 1) then {
@@ -619,20 +622,17 @@ include results_exporter.run;
 #                                End of file                                  #
 ###############################################################################
 
-display abs_mean_branch_Gor;
-display abs_mean_branch_Bor;
-display abs_mean_branch_Gex;
-display abs_mean_branch_Bex;
+# display BRANCH_WITH_SIDE_2_OPENED;
+# display BRANCH_WITH_SIDE_1_OPENED;
+# display Act_branch_bus_2_opened_GB;
+# display BUSCC;
 
-display max_branch_Gor;
-display min_branch_Gor;
-display max_branch_Bor;
-display min_branch_Bor;
-display max_branch_Gex;
-display min_branch_Gex;
-display max_branch_Bex;
-display min_branch_Bex;
+display SVCCC_PQ;
+display SVCCC_PV;
+display targetV_busPV;
 
+display BUSCC_PV_1;
+display BUSCC_PV_2;
 
 printf "\n";
 printf "*** End of file divergence analysis : Optimization %ssuccessfull\n",if output_results>0 then "" else "un";
