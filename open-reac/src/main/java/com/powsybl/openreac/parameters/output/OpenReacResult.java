@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
+ * OpenReac user interface to get results information.
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
 public class OpenReacResult {
@@ -28,6 +29,11 @@ public class OpenReacResult {
     private final List<StaticVarCompensatorModification> svcModifications;
     private final List<TapPositionModification> tapModifications;
 
+    /**
+     * @param status the final status of the OpenReac run.
+     * @param amplIOFiles a file interface to fetch output file information.
+     * @param indicators a standard map written by the OpenReac ampl model.
+     */
     public OpenReacResult(OpenReacStatus status, OpenReacAmplIOFiles amplIOFiles, Map<String, String> indicators) {
         Objects.requireNonNull(amplIOFiles);
         this.status = Objects.requireNonNull(status);
