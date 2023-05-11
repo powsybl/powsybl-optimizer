@@ -9,7 +9,6 @@ package com.powsybl.openreac.parameters.output.network;
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.iidm.modification.GeneratorModification;
-import com.powsybl.iidm.modification.NetworkModification;
 import com.powsybl.iidm.network.Network;
 
 /**
@@ -34,7 +33,7 @@ public class GeneratorNetworkOutput extends AbstractNetworkOutput<GeneratorModif
     @Override
     protected GeneratorModification doReadLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
         String id = stringToIntMapper.getId(AmplSubset.GENERATOR, Integer.parseInt(tokens[ID_COLUMN_INDEX]));
-        double targetV = Double.parseDouble(tokens[TARGET_V_COLUMN_INDEX]);
+        double targetV = Double.parseDouble(tokens[TARGET_V_COLUMN_INDEX]) * network.getGenerator(id).getRegulatingTerminal().getVoltageLevel().getNominalV();
         double targetQ = Double.parseDouble(tokens[TARGET_Q_COLUMN_INDEX]);
 
         GeneratorModification.Modifs modifs = new GeneratorModification.Modifs();
