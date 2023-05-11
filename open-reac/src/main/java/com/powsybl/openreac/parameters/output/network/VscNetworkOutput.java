@@ -39,7 +39,11 @@ public class VscNetworkOutput extends AbstractNetworkOutput<VscConverterStationM
     @Override
     protected VscConverterStationModification doReadLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
         String id = stringToIntMapper.getId(AmplSubset.VSC_CONVERTER_STATION, Integer.parseInt(tokens[ID_COLUMN_INDEX]));
-        OptionalDouble targetV = OptionalDouble.of(Double.parseDouble(tokens[SET_POINT_V_COLUMN_INDEX]));
+        OptionalDouble targetV = OptionalDouble.of(
+            Double.parseDouble(tokens[SET_POINT_V_COLUMN_INDEX]) * network.getVscConverterStation(id)
+                .getRegulatingTerminal()
+                .getVoltageLevel()
+                .getNominalV());
         OptionalDouble targetQ = OptionalDouble.of(Double.parseDouble(tokens[SET_POINT_Q_COLUMN_INDEX]));
 
         if (targetQ.getAsDouble() == network.getVscConverterStation(id).getReactivePowerSetpoint()) {
