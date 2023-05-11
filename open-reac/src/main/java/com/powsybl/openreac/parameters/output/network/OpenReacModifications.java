@@ -24,11 +24,11 @@ public class OpenReacModifications {
         genOutput = new GeneratorNetworkOutput(network);
     }
 
-    public List<AmplOutputFile> getOutputFiles(){
+    public List<AmplOutputFile> getOutputFiles() {
         return List.of(genOutput);
     }
 
-    public List<GeneratorModification> getGeneratorModifications(){
+    public List<GeneratorModification> getGeneratorModifications() {
         return genOutput.getModifications();
     }
 }

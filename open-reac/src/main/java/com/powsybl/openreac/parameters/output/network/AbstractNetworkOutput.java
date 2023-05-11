@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
  */
 public abstract class AbstractNetworkOutput<T extends NetworkModification> extends AbstractNoThrowOutput {
 
-    private final Predicate<String> COMMENTED_LINE_TEST = Pattern.compile("\\s*#.*").asMatchPredicate();
+    private static final Predicate<String> COMMENTED_LINE_TEST = Pattern.compile("\\s*#.*").asMatchPredicate();
 
     private final List<T> modifications = new ArrayList<>();
 
