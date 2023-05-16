@@ -10,8 +10,7 @@ import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.iidm.modification.StaticVarCompensatorModification;
 import com.powsybl.iidm.network.Network;
-
-import java.util.OptionalDouble;
+import com.powsybl.iidm.network.StaticVarCompensator;
 
 /**
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
@@ -37,18 +36,18 @@ public class SvcNetworkOutput extends AbstractNetworkOutput<StaticVarCompensator
                                                           StringToIntMapper<AmplSubset> stringToIntMapper) {
         String id = stringToIntMapper.getId(AmplSubset.STATIC_VAR_COMPENSATOR,
             Integer.parseInt(tokens[ID_COLUMN_INDEX]));
-        OptionalDouble targetV = OptionalDouble.of(
-            Double.parseDouble(tokens[SET_POINT_V_COLUMN_INDEX]) * network.getStaticVarCompensator(id)
+        StaticVarCompensator staticVarCompensator = network.getStaticVarCompensator(id);
+        Double targetV = Double.parseDouble(tokens[SET_POINT_V_COLUMN_INDEX]) * staticVarCompensator
                 .getRegulatingTerminal()
                 .getVoltageLevel()
-                .getNominalV());
-        OptionalDouble targetQ = OptionalDouble.of(Double.parseDouble(tokens[SET_POINT_Q_COLUMN_INDEX]));
+                .getNominalV();
+        Double targetQ = Double.parseDouble(tokens[SET_POINT_Q_COLUMN_INDEX]);
 
-        if (targetQ.getAsDouble() == network.getStaticVarCompensator(id).getReactivePowerSetpoint()) {
-            targetQ = OptionalDouble.empty();
+        if (targetQ == staticVarCompensator.getReactivePowerSetpoint()) {
+            targetQ = null;
         }
-        if (targetV.getAsDouble() == network.getStaticVarCompensator(id).getVoltageSetpoint()) {
-            targetV = OptionalDouble.empty();
+        if (targetV == staticVarCompensator.getVoltageSetpoint()) {
+            targetV = null;
         }
         return new StaticVarCompensatorModification(id, targetV, targetQ);
     }

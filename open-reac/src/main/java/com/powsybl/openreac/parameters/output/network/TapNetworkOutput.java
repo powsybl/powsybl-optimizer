@@ -8,14 +8,12 @@ package com.powsybl.openreac.parameters.output.network;
 
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.commons.util.StringToIntMapper;
-import com.powsybl.iidm.modification.TapPositionModification;
-
-import java.util.OptionalInt;
+import com.powsybl.iidm.modification.tap.RatioTapPositionModification;
 
 /**
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
-public class TapNetworkOutput extends AbstractNetworkOutput<TapPositionModification> {
+public class TapNetworkOutput extends AbstractNetworkOutput<RatioTapPositionModification> {
     private static final String ELEMENT = "rtc";
     private static final int ID_COLUMN_INDEX = 1;
     private static final int TAP_POS_COLUMN_INDEX = 2;
@@ -26,14 +24,10 @@ public class TapNetworkOutput extends AbstractNetworkOutput<TapPositionModificat
     }
 
     @Override
-    protected TapPositionModification doReadLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
+    protected RatioTapPositionModification doReadLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
         String id = stringToIntMapper.getId(AmplSubset.RATIO_TAP_CHANGER, Integer.parseInt(tokens[ID_COLUMN_INDEX]));
         int tapPosition = Integer.parseInt(tokens[TAP_POS_COLUMN_INDEX]);
 
-        return new TapPositionModification(id,
-                TapPositionModification.TransformerElement.TWO_WINDING_TRANSFORMER,
-                TapPositionModification.TapType.RATIO,
-                tapPosition,
-                OptionalInt.empty());
+        return RatioTapPositionModification.createTwoWindingsRtcPosition(id, tapPosition);
     }
 }

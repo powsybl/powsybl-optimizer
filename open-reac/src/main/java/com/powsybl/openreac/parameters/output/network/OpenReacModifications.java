@@ -8,6 +8,7 @@ package com.powsybl.openreac.parameters.output.network;
 
 import com.powsybl.ampl.executor.AmplOutputFile;
 import com.powsybl.iidm.modification.*;
+import com.powsybl.iidm.modification.tap.RatioTapPositionModification;
 import com.powsybl.iidm.network.Network;
 
 import java.util.List;
@@ -42,7 +43,7 @@ public class OpenReacModifications {
         return genOutput.getModifications();
     }
 
-    public List<SectionModification> getShuntModifications() {
+    public List<ShuntCompensatorPositionModification> getShuntModifications() {
         return shuntsOutput.getModifications();
     }
 
@@ -54,7 +55,7 @@ public class OpenReacModifications {
         return svcOutput.getModifications();
     }
 
-    public List<TapPositionModification> getTapModifications() {
+    public List<RatioTapPositionModification> getTapModifications() {
         return tapOutput.getModifications();
     }
 }

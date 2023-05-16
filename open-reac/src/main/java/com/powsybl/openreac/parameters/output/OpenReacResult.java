@@ -7,6 +7,7 @@
 package com.powsybl.openreac.parameters.output;
 
 import com.powsybl.iidm.modification.*;
+import com.powsybl.iidm.modification.tap.RatioTapPositionModification;
 import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput.ReactiveSlack;
 
@@ -24,10 +25,10 @@ public class OpenReacResult {
     private final List<ReactiveSlack> reactiveSlacks;
     private final Map<String, String> indicators;
     private final List<GeneratorModification> generatorModifications;
-    private final List<SectionModification> shuntsModifications;
+    private final List<ShuntCompensatorPositionModification> shuntsModifications;
     private final List<VscConverterStationModification> vscModifications;
     private final List<StaticVarCompensatorModification> svcModifications;
-    private final List<TapPositionModification> tapModifications;
+    private final List<RatioTapPositionModification> tapModifications;
 
     /**
      * @param status the final status of the OpenReac run.
@@ -62,7 +63,7 @@ public class OpenReacResult {
         return generatorModifications;
     }
 
-    public List<SectionModification> getShuntsModifications() {
+    public List<ShuntCompensatorPositionModification> getShuntsModifications() {
         return shuntsModifications;
     }
 
@@ -70,7 +71,7 @@ public class OpenReacResult {
         return svcModifications;
     }
 
-    public List<TapPositionModification> getTapModifications() {
+    public List<RatioTapPositionModification> getTapModifications() {
         return tapModifications;
     }
 

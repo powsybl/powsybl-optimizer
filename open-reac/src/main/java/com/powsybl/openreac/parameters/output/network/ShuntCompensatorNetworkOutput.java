@@ -8,14 +8,14 @@ package com.powsybl.openreac.parameters.output.network;
 
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.commons.util.StringToIntMapper;
-import com.powsybl.iidm.modification.SectionModification;
+import com.powsybl.iidm.modification.ShuntCompensatorPositionModification;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.ShuntCompensator;
 
 /**
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
-public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<SectionModification> {
+public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCompensatorPositionModification> {
     private static final String ELEMENT = "shunts";
     private static final int ID_COLUMN_INDEX = 1;
     private static final int B_COLUMN_INDEX = 3;
@@ -31,10 +31,10 @@ public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<Section
     }
 
     @Override
-    protected SectionModification doReadLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
+    protected ShuntCompensatorPositionModification doReadLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
         String id = stringToIntMapper.getId(AmplSubset.SHUNT, Integer.parseInt(tokens[ID_COLUMN_INDEX]));
         double b = Double.parseDouble(tokens[B_COLUMN_INDEX]);
-        return new SectionModification(id, findSectionCount(network.getShuntCompensator(id), b));
+        return new ShuntCompensatorPositionModification(id, findSectionCount(network.getShuntCompensator(id), b));
     }
 
     /**
