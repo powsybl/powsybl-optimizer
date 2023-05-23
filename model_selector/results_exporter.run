@@ -25,9 +25,12 @@ if final_status == "OK" then {
   if branch_detection == 1 then{
       let fileOut := "results/sigma_penal_dbb.csv";
       printf "# Values of sigma penal var after detection opt\n" > (fileOut);
-      printf "branch;bus1;bus2;admittance;dephor;angper;sigma1;sigma2;sigma3;sigma4;sigma5;sigma6;sigma7;sigma8;b_branch;id\n" > (fileOut);
-      printf{(qq,m,n) in BRANCHCC_PENALIZED} "%i;%i;%i;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;""%s""\n",
-            qq, m, n, branch_admi[qq,m,n], branch_dephor[qq,m,n], branch_angper[qq,m,n],
+      printf "branch;bus1;bus2;rho;admittance;dephor;angper;g1 (pu);b1 (pu);g2 (pu);b2 (pu);sigma1;sigma2;sigma3;sigma4;sigma5;sigma6;sigma7;sigma8;b_branch;id\n" > (fileOut);
+      printf{(qq,m,n) in BRANCHCC_PENALIZED} "%i;%i;%i;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;""%s""\n",
+            qq, m, n, 
+            branch_Ror[qq,m,n], branch_admi[qq,m,n], branch_dephor[qq,m,n], branch_angper[qq,m,n], 
+            branch_Gor_corrected[1,qq,m,n],branch_Bor_corrected[1,qq,m,n],branch_Gex_corrected[1,qq,m,n],branch_Bex_corrected[1,qq,m,n],
+            
             if (qq,m,n) in BRANCHCC_REGL then sigma1[qq,m,n] else 0,
             sigma2[qq,m,n],
             if (qq,m,n) in BRANCHCC_DEPH then sigma3[qq,m,n] else 0,
@@ -40,9 +43,12 @@ if final_status == "OK" then {
       # Sigma values in dbp computation
       let fileOut := "results/sigma_penal_dbp.csv";
       printf "# Values of sigma penal var after detection opt\n" > (fileOut);
-      printf "branch;bus1;bus2;admittance;dephor;angper;sigma1;sigma2;sigma3;sigma4;sigma5;sigma6;sigma7;sigma8;b_sigma1;b_sigma2;b_sigma3;b_sigma4;b_sigma5;b_sigma6;b_sigma7;b_sigma8;id\n" > (fileOut);
-      printf{(qq,m,n) in BRANCHCC_PENALIZED} "%i;%i;%i;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%Q\n",
-            qq, m, n, branch_admi[qq,m,n], branch_dephor[qq,m,n], branch_angper[qq,m,n],
+      printf "branch;bus1;bus2;rho;admittance;dephor;angper;g1 (pu);b1 (pu);g2 (pu);b2 (pu);sigma1;sigma2;sigma3;sigma4;sigma5;sigma6;sigma7;sigma8;b_sigma1;b_sigma2;b_sigma3;b_sigma4;b_sigma5;b_sigma6;b_sigma7;b_sigma8;id\n" > (fileOut);
+      printf{(qq,m,n) in BRANCHCC_PENALIZED} "%i;%i;%i;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%Q\n",
+            qq, m, n, 
+            branch_Ror[qq,m,n], branch_admi[qq,m,n], branch_dephor[qq,m,n], branch_angper[qq,m,n], 
+            branch_Gor_corrected[1,qq,m,n],branch_Bor_corrected[1,qq,m,n],branch_Gex_corrected[1,qq,m,n],branch_Bex_corrected[1,qq,m,n],
+            
             if (qq,m,n) in BRANCHCC_REGL then sigma1[qq,m,n] else 0,
             sigma2[qq,m,n],
             if (qq,m,n) in BRANCHCC_DEPH then sigma3[qq,m,n] else 0,
@@ -66,14 +72,6 @@ if final_status == "OK" then {
         > (fileOut);
   close (fileOut);
 
-  # V and theta values for all problems
-  let fileOut := "results/Vtheta_var.csv";
-  printf "# Values of V/theta var after detection opt\n" > (fileOut);
-  printf "bus;V;theta;id\n" > (fileOut);
-  printf{n in BUSCC} "%i;%.5f;%.5f;%Q\n",
-        n, V[n], teta[n], bus_id[1,n]
-        > (fileOut);
-  close (fileOut);
 
   # For future exploitation of results in a refined model !
   let fileOut := "results/values_Vtheta.txt";
@@ -84,3 +82,16 @@ if final_status == "OK" then {
         > (fileOut);
   close (fileOut);
 }
+
+# V and theta values for all problems
+let fileOut := "results/Vtheta_var.csv";
+printf "# Values of V/theta var after detection opt\n" > (fileOut);
+printf "bus;V;theta;id\n" > (fileOut);
+printf{n in BUSCC} "%i;%.5f;%.5f;%Q\n",
+      n, V[n], teta[n], bus_id[1,n]
+      > (fileOut);
+close (fileOut);
+
+let fileOut := "results/status.txt";
+printf "%i", if output_results > 0 then 1 else 0 > (fileOut);
+close (fileOut);
