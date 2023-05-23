@@ -7,7 +7,7 @@
 package com.powsybl.openreac.parameters.output;
 
 import com.powsybl.iidm.modification.*;
-import com.powsybl.iidm.modification.tap.RatioTapPositionModification;
+import com.powsybl.iidm.modification.tapchanger.RatioTapPositionModification;
 import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput.ReactiveSlack;
 

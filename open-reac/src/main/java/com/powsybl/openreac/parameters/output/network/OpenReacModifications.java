@@ -8,7 +8,7 @@ package com.powsybl.openreac.parameters.output.network;
 
 import com.powsybl.ampl.executor.AmplOutputFile;
 import com.powsybl.iidm.modification.*;
-import com.powsybl.iidm.modification.tap.RatioTapPositionModification;
+import com.powsybl.iidm.modification.tapchanger.RatioTapPositionModification;
 import com.powsybl.iidm.network.Network;
 
 import java.util.List;

@@ -8,7 +8,7 @@ package com.powsybl.openreac.parameters.output.network;
 
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.commons.util.StringToIntMapper;
-import com.powsybl.iidm.modification.tap.RatioTapPositionModification;
+import com.powsybl.iidm.modification.tapchanger.RatioTapPositionModification;
 
 /**
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
@@ -28,6 +28,6 @@ public class TapNetworkOutput extends AbstractNetworkOutput<RatioTapPositionModi
         String id = stringToIntMapper.getId(AmplSubset.RATIO_TAP_CHANGER, Integer.parseInt(tokens[ID_COLUMN_INDEX]));
         int tapPosition = Integer.parseInt(tokens[TAP_POS_COLUMN_INDEX]);
 
-        return RatioTapPositionModification.createTwoWindingsRtcPosition(id, tapPosition);
+        return new RatioTapPositionModification(id, tapPosition);
     }
 }
