@@ -29,8 +29,8 @@ subject to ctr_s1_min_dbe{PROBLEM_DETECTION_EQUATIONS, n in BUSCC_PV}: s1[n] + t
 subject to ctr_s1_max_dbe{PROBLEM_DETECTION_EQUATIONS, n in BUSCC_PV}: s1[n] + targetV_busPV[n] <= 1.8;
 
 param abs_borne_s2{k in BUSCC diff {null_phase_bus}} =
-  sum{(qq,k,n) in BRANCHCC} base100MVA * 1.2 * 1.2 * branch_Ror[qq,k,n] * (branch_admi[qq,k,n] + branch_Ror[qq,k,n] * (branch_admi[qq,k,n] + abs(branch_Gor[1,qq,k,n])))
-  + sum{(qq,m,k) in BRANCHCC} + base100MVA * 1.2 * 1.2 * (branch_Ror[qq,m,k] * branch_admi[qq,m,k] + branch_admi[qq,m,k] + abs(branch_Gex[1,qq,m,k]))
+  sum{(qq,k,n) in BRANCHCC} base100MVA * 1.2 * 1.2 * branch_Ror[qq,k,n] * (branch_admi[qq,k,n] + branch_Ror[qq,k,n] * (branch_admi[qq,k,n] + abs(branch_Gor_corrected[1,qq,k,n])))
+  + sum{(qq,m,k) in BRANCHCC} + base100MVA * 1.2 * 1.2 * (branch_Ror[qq,m,k] * branch_admi[qq,m,k] + branch_admi[qq,m,k] + abs(branch_Gex_corrected[1,qq,m,k]))
 
 + abs(- sum{(g,k) in UNITCC} unit_Pc[1,g,k]
   + sum{(c,k) in LOADCC} load_PFix[1,c,k]
@@ -39,8 +39,8 @@ param abs_borne_s2{k in BUSCC diff {null_phase_bus}} =
 
 param abs_borne_s3{k in BUSCC_PQ} =
 
-    sum{(qq,k,n) in BRANCHCC} abs(base100MVA * 1.2 * 1.2 * branch_Ror[qq,k,n] * (branch_admi[qq,k,n] + branch_Ror[qq,k,n] * (branch_admi[qq,k,n] + abs(branch_Bor[1,qq,k,n]))))
-  + sum{(qq,m,k) in BRANCHCC} abs(base100MVA * 1.2 * 1.2 * (branch_Ror[qq,m,k] * branch_admi[qq,m,k] + branch_admi[qq,m,k] + abs(branch_Bex[1,qq,m,k])))
+    sum{(qq,k,n) in BRANCHCC} abs(base100MVA * 1.2 * 1.2 * branch_Ror[qq,k,n] * (branch_admi[qq,k,n] + branch_Ror[qq,k,n] * (branch_admi[qq,k,n] + abs(branch_Bor_corrected[1,qq,k,n]))))
+  + sum{(qq,m,k) in BRANCHCC} abs(base100MVA * 1.2 * 1.2 * (branch_Ror[qq,m,k] * branch_admi[qq,m,k] + branch_admi[qq,m,k] + abs(branch_Bex_corrected[1,qq,m,k])))
 
   + abs(- sum{(g,k) in UNITCC} unit_Qc[1,g,k]
   + sum{(c,k) in LOADCC} load_QFix[1,c,k]
@@ -67,6 +67,11 @@ subject to ctr_b_s3_neg_dbe{PROBLEM_DETECTION_EQUATIONS, k in BUSCC_PQ}: s3[k] >
 #############################################
 #             LoadFlow Constraints          #
 #############################################
+
+# Consistency of voltage values for PQ-bus
+subject to ctr_voltage_values_min_dbe{PROBLEM_DETECTION_EQUATIONS, n in BUSCC_PQ}: V[n] <= 1.25;
+subject to ctr_voltage_values_max_dbe{PROBLEM_DETECTION_EQUATIONS, n in BUSCC_PQ}: V[n] >= 0.75;
+
 
 subject to ctr_null_phase_bus_dbe{PROBLEM_DETECTION_EQUATIONS}: teta[null_phase_bus] = 0; # Slack bus
 

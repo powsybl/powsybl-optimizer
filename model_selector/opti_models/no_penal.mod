@@ -21,13 +21,17 @@ set PROBLEM_NO_PENAL default { };
 #                                   #  
 #####################################
 
+subject to ctr_voltage_values_2{PROBLEM_NO_PENAL, n in BUSCC_PQ}: V[n] <= 1.25;
+subject to ctr_voltage_values_4{PROBLEM_NO_PENAL, n in BUSCC_PQ}: V[n] >= 0.75;
 
 #############################################
 #     Slack bus and voltage regulation      #
 #############################################
 
 subject to ctr_null_phase_bus_no_penal{PROBLEM_NO_PENAL}: teta[null_phase_bus] = 0;
-subject to ctr_voltage_PV_buses_no_penal{PROBLEM_NO_PENAL, k in BUSCC_PV}: V[k] - targetV_busPV[k] = 0;
+# TODO : CHange here, i put bus_V0 but it should be targetV !
+#subject to ctr_voltage_PV_buses_no_penal{PROBLEM_NO_PENAL, k in BUSCC_PV}: V[k] - targetV_busPV[k] = 0;
+subject to ctr_voltage_PV_buses_no_penal{PROBLEM_NO_PENAL, k in BUSCC_PV}: V[k] - bus_V0[1,k] = 0;
 
 ############################################################
 #     Active and reactive powers variables/constraints     #  

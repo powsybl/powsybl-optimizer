@@ -21,7 +21,8 @@
 
 
 # V and teta parameters for all the buses
-var V{n in BUSCC} >= 0.8, <= 1.2; 
+var V{n in BUSCC};
+
 var teta{n in BUSCC} <= 3.141592, >= -3.141592;
 
 # Slack variables for equations PV, P balance and Q balance
@@ -30,17 +31,17 @@ var s2{n in BUSCC diff {null_phase_bus}};
 var s3{n in BUSCC_PQ};
 
 # Slack variables for parameters on branches
-var sigma1{(qq,m,n) in BRANCHCC_REGL};
+var sigma1{(qq,m,n) in BRANCHCC_TRANSFORMER};
 var sigma2{(qq,m,n) in BRANCHCC_PENALIZED};
-var sigma3{(qq,m,n) in BRANCHCC_DEPH};
+var sigma3{(qq,m,n) in BRANCHCC_TRANSFORMER};
 var sigma4{(qq,m,n) in BRANCHCC_PENALIZED};
 var sigma5{(qq,m,n) in BRANCHCC_PENALIZED};
 var sigma6{(qq,m,n) in BRANCHCC_PENALIZED};
 var sigma7{(qq,m,n) in BRANCHCC_PENALIZED};
 var sigma8{(qq,m,n) in BRANCHCC_PENALIZED};
 
-var rho_penalized{(qq,m,n) in BRANCHCC_PENALIZED} = if (qq,m,n) in BRANCHCC_REGL then branch_Ror[qq,m,n]+sigma1[qq,m,n] else branch_Ror[qq,m,n];
-var alpha_penalized{(qq,m,n) in BRANCHCC_PENALIZED} = if (qq,m,n) in BRANCHCC_DEPH then branch_dephor[qq,m,n]+sigma3[qq,m,n] else branch_dephor[qq,m,n];
+var rho_penalized{(qq,m,n) in BRANCHCC_PENALIZED} = if (qq,m,n) in BRANCHCC_TRANSFORMER then branch_Ror[qq,m,n]+sigma1[qq,m,n] else branch_Ror[qq,m,n];
+var alpha_penalized{(qq,m,n) in BRANCHCC_PENALIZED} = if (qq,m,n) in BRANCHCC_TRANSFORMER then branch_dephor[qq,m,n]+sigma3[qq,m,n] else branch_dephor[qq,m,n];
 
 #
 # Binary variables for activation of previous slack variables
@@ -55,9 +56,9 @@ var b_s3{n in BUSCC_PQ} binary;
 var b_branch{(qq,m,n) in BRANCHCC_PENALIZED} binary;
 
 # Detection by params
-var b_sigma1{(qq,m,n) in BRANCHCC_REGL} binary;
+var b_sigma1{(qq,m,n) in BRANCHCC_TRANSFORMER} binary;
 var b_sigma2{(qq,m,n) in BRANCHCC_PENALIZED} binary;
-var b_sigma3{(qq,m,n) in BRANCHCC_DEPH} binary;
+var b_sigma3{(qq,m,n) in BRANCHCC_TRANSFORMER} binary;
 var b_sigma4{(qq,m,n) in BRANCHCC_PENALIZED} binary;
 var b_sigma5{(qq,m,n) in BRANCHCC_PENALIZED} binary;
 var b_sigma6{(qq,m,n) in BRANCHCC_PENALIZED} binary;
