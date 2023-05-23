@@ -127,7 +127,7 @@ subject to ctr_balance_P_dbb{PROBLEM_DETECTION_BRANCHES,k in BUSCC diff {null_ph
   # Loads
   + sum{(c,k) in LOADCC} load_PFix[1,c,k]     # Fixed value
   # VSC converters
-  + sum{(v,k) in VSCCONVON} vscconv_P0[1,v,k] # Fixed value
+  - sum{(v,k) in VSCCONVON} vscconv_P0[1,v,k] # Fixed value
   # LCC converters
   + sum{(l,k) in LCCCONVON} lccconv_P0[1,l,k] # Fixed value
   = 0;
