@@ -147,6 +147,7 @@ param nb_iter_total integer default 0;
 param temp1;
 param temp2;
 param temp3;
+param temp4;
 param tempo;
 param tempstr symbolic default "empty string";
 
@@ -157,6 +158,42 @@ param tempstr symbolic default "empty string";
 
 model "model_detection.mod";
 data  "network_data.dat";
+
+#for{(1,qq,m,n) in BRANCH}{
+#    if (branch_3wt[1,qq,m,n] != -1) then {
+#        # For the regleur
+#        if (branch_ptrRegl[1,qq,m,n] != -1) then {
+#            for{(1,yo,tap) in TAPS : yo == regl_table[1,branch_ptrRegl[1,qq,m,n]]}{
+#                
+#                let temp1 := (substation_Vnomi[1, branch_subor[1,qq,m,n]]) ** 2;
+#                let temp2 := (substation_Vnomi[1, branch_subex[1,qq,m,n]]) ** 2;
+#
+#                if (match(branch_id[1,qq,m,n], "leg1")) then {
+#                    let tap_x[1,yo,tap] := tap_x[1,yo,tap] * temp2 / temp1;
+#                } else {
+#                    #printf "tap x before : %.6f", tap_x[1,yo,tap];
+#                    let tap_x[1,yo,tap] := tap_x[1,yo,tap] * temp1 / temp2;
+#                    #printf "tap x after : %.6f", tap_x[1,yo,tap];
+#                } 
+#            }
+#        }
+#
+#        # For the dephaseur
+#        if (branch_ptrDeph[1,qq,m,n] != -1) then {
+#            for{(1,yo,tap) in TAPS : yo == deph_table[1,branch_ptrDeph[1,qq,m,n]]}{
+#
+#                let temp1 := (substation_Vnomi[1, branch_subor[1,qq,m,n]]) ** 2;
+#                let temp2 := (substation_Vnomi[1, branch_subex[1,qq,m,n]]) ** 2;
+#
+#                if (match(branch_id[1,qq,m,n], "leg1")) then {
+#                    let tap_x[1,yo,tap] := tap_x[1,yo,tap] * temp2 / temp1;
+#                } else {
+#                    let tap_x[1,yo,tap] := tap_x[1,yo,tap] * temp1 / temp2;
+#                } 
+#            }
+#        }
+#    }
+#}
 
 
 ###############################################################################
@@ -239,27 +276,136 @@ option presolve 10;
 # Definition of BUSCC below was the purpose of this optimization
 let BUSCC := {n in BUS2: teta_ccomputation[n].val <= 0.01};
 
+param nb_rtc_leg1;
+param nb_rtc_leg2;
+param nb_rtc_leg3;
+param nb_ptc_leg1;
+param nb_ptc_leg2;
+param nb_ptc_leg3;
+
+let nb_rtc_leg1 := 0;
+let nb_rtc_leg2 := 0;
+let nb_rtc_leg3 := 0;
+let nb_ptc_leg1 := 0;
+let nb_ptc_leg2 := 0;
+let nb_ptc_leg3 := 0;
+
+# Count the number of rtc/ptc on the legs of 3wt
+for{(qq,m,n) in BRANCHCC_PENALIZED : branch_3wt[1,qq,m,n] != -1}{
+  if (match(branch_id[1,qq,m,n], "leg1") > 0) then {
+    if branch_ptrRegl[1,qq,m,n] != -1 then let nb_rtc_leg1 := nb_rtc_leg1 + 1;
+    if branch_ptrDeph[1,qq,m,n] != -1 then let nb_ptc_leg1 := nb_ptc_leg1 + 1;
+  }
+  else if (match(branch_id[1,qq,m,n], "leg2") > 0) then {
+    if branch_ptrRegl[1,qq,m,n] != -1 then let nb_rtc_leg2 := nb_rtc_leg2 + 1;
+    if branch_ptrDeph[1,qq,m,n] != -1 then let nb_ptc_leg2 := nb_ptc_leg2 + 1;
+  }
+  else if (match(branch_id[1,qq,m,n], "leg3") > 0) then {
+    if branch_ptrRegl[1,qq,m,n] != -1 then let nb_rtc_leg3 := nb_rtc_leg3 + 1;
+    if branch_ptrDeph[1,qq,m,n] != -1 then let nb_ptc_leg3 := nb_ptc_leg3 + 1;
+  }
+}
+
+for{(1,qq,m,n) in BRANCH}{
+  if (branch_3wt[1,qq,m,n] != -1) then {
+    # Re per unit values on branches of 3wt
+
+                  let temp1 := (substation_Vnomi[1, branch_subor[1,qq,m,n]]) ** 2;
+                  let temp2 := (substation_Vnomi[1, branch_subex[1,qq,m,n]]) ** 2;
+                  
+                  # If leg 1, the per unitage must be done in reverse side
+                  if (match(branch_id[1,qq,m,n], "leg1") > 0) then {
+                    let branch_cstratio_corrected[1,qq,m,n] := branch_cstratio[1,qq,m,n] * (substation_Vnomi[1, branch_subex[1,qq,m,n]] / substation_Vnomi[1, branch_subor[1,qq,m,n]]);
+                    let branch_R_corrected[1,qq,m,n] := branch_R[1,qq,m,n] * temp2 / temp1;
+                    let branch_X_corrected[1,qq,m,n] := branch_X[1,qq,m,n] * temp2 / temp1;
+                    let branch_Gor_corrected[1,qq,m,n] := branch_Gor[1,qq,m,n] * temp1 / temp2;
+                    let branch_Gex_corrected[1,qq,m,n] := branch_Gex[1,qq,m,n] * temp1 / temp2;
+                    let branch_Bor_corrected[1,qq,m,n] := branch_Bor[1,qq,m,n] * temp1 / temp2;
+                    let branch_Bex_corrected[1,qq,m,n] := branch_Bex[1,qq,m,n] * temp1 / temp2;
+
+                  # For leg 2 and leg 3
+                  } else {
+                    let branch_cstratio_corrected[1,qq,m,n] := branch_cstratio[1,qq,m,n] * (substation_Vnomi[1, branch_subor[1,qq,m,n]] / substation_Vnomi[1, branch_subex[1,qq,m,n]]);
+                    let branch_R_corrected[1,qq,m,n] := branch_R[1,qq,m,n] * temp1 / temp2;
+                    let branch_X_corrected[1,qq,m,n] := branch_X[1,qq,m,n] * temp1 / temp2;
+                    let branch_Gor_corrected[1,qq,m,n] := branch_Gor[1,qq,m,n] * temp2 / temp1;
+                    let branch_Gex_corrected[1,qq,m,n] := branch_Gex[1,qq,m,n] * temp2 / temp1;
+                    let branch_Bor_corrected[1,qq,m,n] := branch_Bor[1,qq,m,n] * temp2 / temp1;
+                    let branch_Bex_corrected[1,qq,m,n] := branch_Bex[1,qq,m,n] * temp2 / temp1;
+                  }
+
+    # If not a 3wt, then keep current values
+    } else {
+                  let branch_cstratio_corrected[1,qq,m,n] := branch_cstratio[1,qq,m,n];
+                  let branch_R_corrected[1,qq,m,n] := branch_R[1,qq,m,n];
+                  let branch_X_corrected[1,qq,m,n] := branch_X[1,qq,m,n];
+                  let branch_Gor_corrected[1,qq,m,n] := branch_Gor[1,qq,m,n];
+                  let branch_Gex_corrected[1,qq,m,n] := branch_Gex[1,qq,m,n];
+                  let branch_Bor_corrected[1,qq,m,n] := branch_Bor[1,qq,m,n];
+                  let branch_Bex_corrected[1,qq,m,n] := branch_Bex[1,qq,m,n];
+    }
+
+}
+
 # Validation of V and theta input values
 let temp1 := 0;
 let temp2 := 0;
 for{n in BUSCC}
 {
   if bus_V0[1,n] < 0.5 or bus_V0[1,n] > 1.5 then{
-    #printf "\n[WARNING] Bus %i has incoherent voltage value : %f", n, bus_V0[1,n];
-    let bus_V0_corrected[n] := 1;
+  # printf "\n[WARNING] Bus %i has incoherent voltage value : %f", n, bus_V0[1,n];
+  
+    if n in BUSCC_3WT then {
+        let temp3 := 0;
+        let temp4 := 0;
+
+        for {(qq,mm,mn) in BRANCHCC : branch_3wt[1,qq,mm,mn] != -1 and mm == n}{
+          let temp3 := temp3 + branch_Ror[qq,mm,mn] * (1 / branch_X_mod[qq,mm,mn]) * bus_V0[1,mn];
+          let temp4 := temp4 + (1 / branch_X_mod[qq,mm,mn]);
+        }
+
+        for {(qq,mm,mn) in BRANCHCC : branch_3wt[1,qq,mm,mn] != -1 and mn == n}{
+          let temp3 := temp3 + branch_Ror[qq,mm,mn] * (1 / branch_X_mod[qq,mm,mn]) * bus_V0[1,mm];
+          let temp4 := temp4 + (1 / branch_X_mod[qq,mm,mn]);
+        }
+
+        let bus_V0_corrected[n] := temp3 / temp4;
+    } else {
+        let bus_V0_corrected[n] := 1;
+
+    }
     let temp1 := temp1 + 1;
   } else let bus_V0_corrected[n] := bus_V0[1,n];
 
   if bus_angl0[1,n] < -1.57079632679 or bus_angl0[1,n] > 1.57079632679 then{
     #printf "\n[WARNING] Bus %i has incoherent angle value : %f", n, bus_angl0[1,n];
-    let bus_angl0_corrected[n] := 0;
+    
+    if n in BUSCC_3WT then {
+        let temp3 := 0;
+        let temp4 := 0;
+
+        for {(qq,mm,mn) in BRANCHCC : branch_3wt[1,qq,mm,mn] != -1 and mm == n}{
+          let temp3 := temp3 + (1 / branch_X_mod[qq,mm,mn]) * (bus_angl0[1,mn] + branch_dephor[qq,mm,mn]);
+          let temp4 := temp4 + (1 / branch_X_mod[qq,mm,mn]);
+        }
+
+        for {(qq,mm,mn) in BRANCHCC : branch_3wt[1,qq,mm,mn] != -1 and mn == n}{
+          let temp3 := temp3 + (1 / branch_X_mod[qq,mm,mn]) * (bus_angl0[1,mm] + branch_dephor[qq,mm,mn]);
+          let temp4 := temp4 + (1 / branch_X_mod[qq,mm,mn]);
+        }
+
+        let bus_angl0_corrected[n] := temp3 / temp4;
+    } else {
+        let bus_angl0_corrected[n] := 0;
+    }
+    
     let temp2 := temp2 + 1;
-  }else let bus_angl0_corrected[n] := bus_angl0[1,n];
+  } else let bus_angl0_corrected[n] := bus_angl0[1,n];
 }
 
 printf "\n*** About the input values of V and theta\n";
 printf "Number of incoherent V values : %i / %i\n", temp1, card(BUSCC);
-printf "Number of incoherent theta values : %i / %i\n", temp2, card(BUSCC);
+printf "Number of incoherent theta values : %i / %i\n\n", temp2, card(BUSCC);
 
 printf "\n\n*** Connexity computation\n";
 for{n in BUS2 diff BUSCC}
@@ -282,6 +428,7 @@ display
 maximal_voltage_upper_bound, minimal_voltage_lower_bound,
 card(SUBSTATIONS),card(BUS),card(BUS2),card(BUSCC),card(BUS2 diff BUSCC),
 card(BRANCH),card(BRANCHCC),card(BRANCHZNULL),card(BRANCHCC diff BRANCHZNULL), card(BRANCHCC_PENALIZED),
+card(BRANCH_WITH_SIDE_1_OPENED), card(BRANCH_WITH_SIDE_2_OPENED),
 card(BRANCHCC_DEPH), card(BRANCHCC_REGL),
 card(UNIT),card(UNITCC),
 card(LOAD),card(LOADCC),
@@ -356,7 +503,7 @@ let tempo := 0; # If non zero, major inconsistency detected
 for {(qq,m,n) in BRANCHCC_REGL diff (BRANCH_WITH_SIDE_2_OPENED union BRANCH_WITH_SIDE_1_OPENED)} { # TODO : The unconsistency is checked only for rtc in branchcc and not with opened ones
   let temp1 := regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]];
   let temp2 := regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]];
-  if voltage_lower_bound[1,bus_substation[1,m]]*temp1*branch_cstratio[1,qq,m,n] > voltage_upper_bound[1,bus_substation[1,n]]
+  if voltage_lower_bound[1,bus_substation[1,m]]*temp1*branch_cstratio_corrected[1,qq,m,n] > voltage_upper_bound[1,bus_substation[1,n]]
   then {
     if substation_Vnomi[1,bus_substation[1,m]] > ignore_voltage_bounds 
       and substation_Vnomi[1,bus_substation[1,n]] > ignore_voltage_bounds
@@ -366,13 +513,13 @@ for {(qq,m,n) in BRANCHCC_REGL diff (BRANCH_WITH_SIDE_2_OPENED union BRANCH_WITH
     branch_id[1,qq,m,n],
     substation_id[1,bus_substation[1,m]],substation_Vnomi[1,bus_substation[1,m]],
     substation_id[1,bus_substation[1,n]],substation_Vnomi[1,bus_substation[1,n]],
-    branch_cstratio[1,qq,m,n],temp1,temp2,
+    branch_cstratio_corrected[1,qq,m,n],temp1,temp2,
     voltage_lower_bound[1,bus_substation[1,m]],
     voltage_upper_bound[1,bus_substation[1,n]]);
     printf "%s\n",messageInfo;
     let messagesInfo := messagesInfo union {messageInfo};  
   }
-  if voltage_upper_bound[1,bus_substation[1,m]]*temp2*branch_cstratio[1,qq,m,n] < voltage_lower_bound[1,bus_substation[1,n]]
+  if voltage_upper_bound[1,bus_substation[1,m]]*temp2*branch_cstratio_corrected[1,qq,m,n] < voltage_lower_bound[1,bus_substation[1,n]]
   then {
     if substation_Vnomi[1,bus_substation[1,m]] > ignore_voltage_bounds 
       and substation_Vnomi[1,bus_substation[1,n]] > ignore_voltage_bounds
@@ -382,7 +529,7 @@ for {(qq,m,n) in BRANCHCC_REGL diff (BRANCH_WITH_SIDE_2_OPENED union BRANCH_WITH
     branch_id[1,qq,m,n],
     substation_id[1,bus_substation[1,m]],substation_Vnomi[1,bus_substation[1,m]],
     substation_id[1,bus_substation[1,n]],substation_Vnomi[1,bus_substation[1,n]],
-    branch_cstratio[1,qq,m,n],temp1,temp2,
+    branch_cstratio_corrected[1,qq,m,n],temp1,temp2,
     voltage_upper_bound[1,bus_substation[1,m]],
     voltage_lower_bound[1,bus_substation[1,n]]);
     printf "%s\n",messageInfo;
@@ -392,7 +539,7 @@ for {(qq,m,n) in BRANCHCC_REGL diff (BRANCH_WITH_SIDE_2_OPENED union BRANCH_WITH
 # Consistency for transformers with fixed ratio
 for {(qq,m,n) in BRANCHCC_REGL diff (BRANCH_WITH_SIDE_2_OPENED union BRANCH_WITH_SIDE_1_OPENED)} { # TODO : The unconsistency is checked only for rtc in branchcc and not with opened ones
   let temp1 := tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]];
-  if voltage_lower_bound[1,bus_substation[1,m]]*temp1*branch_cstratio[1,qq,m,n] > voltage_upper_bound[1,bus_substation[1,n]]
+  if voltage_lower_bound[1,bus_substation[1,m]]*temp1*branch_cstratio_corrected[1,qq,m,n] > voltage_upper_bound[1,bus_substation[1,n]]
   then {
     if substation_Vnomi[1,bus_substation[1,m]] > ignore_voltage_bounds 
       and substation_Vnomi[1,bus_substation[1,n]] > ignore_voltage_bounds
@@ -402,13 +549,13 @@ for {(qq,m,n) in BRANCHCC_REGL diff (BRANCH_WITH_SIDE_2_OPENED union BRANCH_WITH
     branch_id[1,qq,m,n],
     substation_id[1,bus_substation[1,m]],substation_Vnomi[1,bus_substation[1,m]],
     substation_id[1,bus_substation[1,n]],substation_Vnomi[1,bus_substation[1,n]],
-    branch_cstratio[1,qq,m,n],temp1,
+    branch_cstratio_corrected[1,qq,m,n],temp1,
     voltage_lower_bound[1,bus_substation[1,m]],
     voltage_upper_bound[1,bus_substation[1,n]]);
     printf "%s\n",messageInfo;
     let messagesInfo := messagesInfo union {messageInfo};  
   }
-  if voltage_upper_bound[1,bus_substation[1,m]]*temp1*branch_cstratio[1,qq,m,n] < voltage_lower_bound[1,bus_substation[1,n]]
+  if voltage_upper_bound[1,bus_substation[1,m]]*temp1*branch_cstratio_corrected[1,qq,m,n] < voltage_lower_bound[1,bus_substation[1,n]]
   then {
     if substation_Vnomi[1,bus_substation[1,m]] > ignore_voltage_bounds 
       and substation_Vnomi[1,bus_substation[1,n]] > ignore_voltage_bounds
@@ -418,7 +565,7 @@ for {(qq,m,n) in BRANCHCC_REGL diff (BRANCH_WITH_SIDE_2_OPENED union BRANCH_WITH
     branch_id[1,qq,m,n],
     substation_id[1,bus_substation[1,m]],substation_Vnomi[1,bus_substation[1,m]],
     substation_id[1,bus_substation[1,n]],substation_Vnomi[1,bus_substation[1,n]],
-    branch_cstratio[1,qq,m,n],temp1,
+    branch_cstratio_corrected[1,qq,m,n],temp1,
     voltage_upper_bound[1,bus_substation[1,m]],
     voltage_lower_bound[1,bus_substation[1,n]]);
     printf "%s\n",messageInfo;
@@ -433,11 +580,13 @@ for {(qq,m,n) in BRANCHCC_REGL diff (BRANCH_WITH_SIDE_2_OPENED union BRANCH_WITH
 #                                                                             #
 ###############################################################################
 
-# TODO : Check assignation of svc_targetV is correct !
+# Assignation of target V
 let {(g,n) in UNITCC_PV} targetV_busPV[n] := unit_Vc[1,g,n];
 let {(svc,n) in SVCCC_PV} targetV_busPV[n] := svc_targetV[1,svc,n];
 
 # Initial values of variables with results of OLF
+#let {n in BUSCC} V[n] := 1;
+#let {n in BUSCC} teta[n] := 0;
 let {n in BUSCC} V[n] := bus_V0_corrected[n];
 let {n in BUSCC} teta[n] := bus_angl0_corrected[n];
 
@@ -524,18 +673,6 @@ if (no_penal == 1) then {
 let nb_iter_total := nb_iter_total + nb_iter_last; 
 
 
-# A supprimer si jamais on voit que cela ne devrait pas marcher.
-#param solve_result_num_limit := 200;
-#
-#if solve_result_num > solve_result_num_limit then 
-#for {n in BUS2}
-#{
-#  solve problem_divergence_analysis;
-#  let nb_iter_last := problem_divergence_analysis.numiters;
-#  let nb_iter_total := nb_iter_total + nb_iter_last; 
-#  if solve_result_num <= solve_result_num_limit then break; 
-#}
-
 
 #
 # Analysis of solve_result_num
@@ -544,7 +681,7 @@ let nb_iter_total := nb_iter_total + nb_iter_last;
 # <= 103 : feasible
 # 200 convergence to unfeasible
 # > 200 : failure
-#
+
 param output_results binary default 0;
 if solve_result_num == 200 
 then {
@@ -580,7 +717,7 @@ let temp2 := min({(qq,m,n) in BRANCHCC} (teta[m]-teta[n]));
 printf "Branches with max/min delta angles :\n";
 for {(qq,m,n) in BRANCHCC: (teta[m]-teta[n])>temp1*0.99 or (teta[m]-teta[n])<temp2*0.99} {
   printf "%Q, between buses %i and %i :\nR=%.3f X=%.3f delta_teta=%.2f Vm=%.3f teta_m=%.2f Vn=%.3f teta_n=%.2f ",
-  branch_id[1,qq,m,n],m,n,branch_R[1,qq,m,n],branch_X[1,qq,m,n],teta[m]-teta[n],V[m],teta[m],V[n],teta[n];
+  branch_id[1,qq,m,n],m,n,branch_R_corrected[1,qq,m,n],branch_X_corrected[1,qq,m,n],teta[m]-teta[n],V[m],teta[m],V[n],teta[n];
   printf "P1=%.1f Q1=%.1f ",
           if (is_penal_on_YKsi == 1) then base100MVA*V[m]*Red_Tran_Act_Dir_YKsi[qq,m,n]
           else if (is_penal_on_GB == 1) then base100MVA*V[m]*Red_Tran_Act_Dir_GB[qq,m,n],
@@ -601,7 +738,7 @@ for {(qq,m,n) in BRANCHCC: (teta[m]-teta[n])>temp1*0.99 or (teta[m]-teta[n])<tem
 display
   nb_iter_last,
   nb_iter_total,
-  max({(qq,m,n) in BRANCHCC_PENALIZED} branch_R[1,qq,m,n]),max({(qq,m,n) in BRANCHCC_PENALIZED} branch_X[1,qq,m,n]),
+  max({(qq,m,n) in BRANCHCC_PENALIZED} branch_R_corrected[1,qq,m,n]),max({(qq,m,n) in BRANCHCC_PENALIZED} branch_X_corrected[1,qq,m,n]),
   max({(qq,m,n) in BRANCHCC} (teta[m]-teta[n])),
   min({(qq,m,n) in BRANCHCC} (teta[m]-teta[n])),
   max({n in BUSCC} teta[n]),
@@ -618,21 +755,16 @@ include print_resume_slacks.run;
 
 include results_exporter.run;
 
+printf "\n";
+if (card(REGL) == 0) then printf "[INFO] No rtc on the network\n";
+if (card(DEPH) == 0) then printf "[INFO] No ptc on the network\n";
+if (card({(1,qq,m,n) in BRANCH : branch_3wt[1,qq,m,n] != -1}) == 0) then printf "[INFO] No 3wt on the network\n";
+
+display nb_rtc_leg1, nb_rtc_leg2, nb_rtc_leg3, nb_ptc_leg1, nb_ptc_leg2, nb_ptc_leg3;
+
 ###############################################################################
 #                                End of file                                  #
 ###############################################################################
-
-# display BRANCH_WITH_SIDE_2_OPENED;
-# display BRANCH_WITH_SIDE_1_OPENED;
-# display Act_branch_bus_2_opened_GB;
-# display BUSCC;
-
-display SVCCC_PQ;
-display SVCCC_PV;
-display targetV_busPV;
-
-display BUSCC_PV_1;
-display BUSCC_PV_2;
 
 printf "\n";
 printf "*** End of file divergence analysis : Optimization %ssuccessfull\n",if output_results>0 then "" else "un";
