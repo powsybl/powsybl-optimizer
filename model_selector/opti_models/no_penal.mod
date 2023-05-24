@@ -53,7 +53,7 @@ subject to ctr_balance_P_no_penal{PROBLEM_NO_PENAL,k in BUSCC diff {null_phase_b
   # Loads
   + sum{(c,k) in LOADCC} load_PFix[1,c,k]     # Fixed value
   # VSC converters
-  + sum{(v,k) in VSCCONVON} vscconv_P0[1,v,k] # Fixed value
+  - sum{(v,k) in VSCCONVON} vscconv_P0[1,v,k] # Fixed value
   # LCC converters
   + sum{(l,k) in LCCCONVON} lccconv_P0[1,l,k] # Fixed values
   = 0;
@@ -76,10 +76,10 @@ subject to ctr_balance_Q_no_penal{PROBLEM_NO_PENAL,k in BUSCC_PQ}:
   # Shunts
   - sum{(shunt,k) in SHUNTCC} base100MVA * shunt_valnom[1,shunt,k] * V[k]^2
   # SVC that does not regulate voltage
-  - sum{(svc,k) in SVCCC_PQ_1 : -1000 <= svc_Q0[1,svc,k] and svc_Q0[1,svc,k] <= 1000} svc_Q0[1,svc,k] # Fixed value
-  - sum{(svc,k) in SVCCC_PQ_2} if bus_V0[1,k] > svc_targetV[1,svc,k] 
-                              then base100MVA * svc_bmin[1,svc,k] * V[k]^2
-                              else base100MVA * svc_bmax[1,svc,k] * V[k]^2
+  #- sum{(svc,k) in SVCCC_PQ_1 : -1000 <= svc_Q0[1,svc,k] and svc_Q0[1,svc,k] <= 1000} svc_Q0[1,svc,k] # Fixed value
+  #- sum{(svc,k) in SVCCC_PQ_2} if bus_V0[1,k] > svc_targetV[1,svc,k] 
+  #                            then base100MVA * svc_bmin[1,svc,k] * V[k]^2
+  #                            else base100MVA * svc_bmax[1,svc,k] * V[k]^2
   # VSC converters
   - sum{(v,k) in VSCCONVON} vscconv_Q0[1,v,k] # Fixed values
   # LCC converters
