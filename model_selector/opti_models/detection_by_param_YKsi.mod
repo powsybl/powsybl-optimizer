@@ -171,9 +171,9 @@ subject to ctr_balance_Q_dbp{PROBLEM_DETECTION_PARAM,k in BUSCC_PQ}:
 minimize problem_dbp:
   0
   + sum{n in BUSCC_PV} b_s1[n] #* ((targetV_busPV[n] + 10e-5) / (s1[n] + 10e-5))**2
-  + sum{(qq,m,n) in BRANCHCC_REGL} b_sigma1[qq,m,n] #* ((branch_Ror[qq,m,n] + 10e-5) / (sigma1[qq,m,n] + 10e-5))**2
+  + sum{(qq,m,n) in BRANCHCC_TRANSFORMER} b_sigma1[qq,m,n] #* ((branch_Ror[qq,m,n] + 10e-5) / (sigma1[qq,m,n] + 10e-5))**2
   + 3 * sum{(qq,m,n) in BRANCHCC_PENALIZED} b_sigma2[qq,m,n] #* ((branch_admi[qq,m,n] + 10e-5) / (sigma2[qq,m,n] + 10e-5))**2 # We do not want to move admittance too easily.
-  + sum{(qq,m,n) in BRANCHCC_DEPH} b_sigma3[qq,m,n] #* ((branch_dephor[qq,m,n] + 10e-5) / (sigma3[qq,m,n] + 10e-5))**2
+  + sum{(qq,m,n) in BRANCHCC_TRANSFORMER} b_sigma3[qq,m,n] #* ((branch_dephor[qq,m,n] + 10e-5) / (sigma3[qq,m,n] + 10e-5))**2
   + sum{(qq,m,n) in BRANCHCC_PENALIZED} b_sigma4[qq,m,n] #* ((branch_angper[qq,m,n] + 10e-5) / (sigma4[qq,m,n] + 10e-5))**2
   + sum{(qq,m,n) in BRANCHCC_PENALIZED} b_sigma5[qq,m,n] #* ((branch_Gor[1,qq,m,n] + 10e-5) / (sigma5[qq,m,n] + 10e-5))**2
   + sum{(qq,m,n) in BRANCHCC_PENALIZED} b_sigma6[qq,m,n] #* ((branch_Bor[1,qq,m,n] + 10e-5) / (sigma6[qq,m,n] + 10e-5))**2

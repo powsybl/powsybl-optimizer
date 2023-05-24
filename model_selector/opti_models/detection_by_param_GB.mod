@@ -172,9 +172,9 @@ subject to ctr_balance_Q_dbp{PROBLEM_DETECTION_PARAM,k in BUSCC_PQ}:
 minimize problem_dbp:
   0
   + sum{n in BUSCC_PV} b_s1[n]
-  + sum{(qq,m,n) in BRANCHCC_REGL} b_sigma1[qq,m,n]
+  + sum{(qq,m,n) in BRANCHCC_TRANSFORMER} b_sigma1[qq,m,n]
   + 3 * sum{(qq,m,n) in BRANCHCC_PENALIZED} b_sigma2[qq,m,n] # We do not want to move admittance too easily.
-  + sum{(qq,m,n) in BRANCHCC_DEPH} b_sigma3[qq,m,n]
+  + sum{(qq,m,n) in BRANCHCC_TRANSFORMER} b_sigma3[qq,m,n]
   + 3 * sum{(qq,m,n) in BRANCHCC_PENALIZED} b_sigma4[qq,m,n]
   + sum{(qq,m,n) in BRANCHCC_PENALIZED} b_sigma5[qq,m,n]
   + sum{(qq,m,n) in BRANCHCC_PENALIZED} b_sigma6[qq,m,n]

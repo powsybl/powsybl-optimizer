@@ -21,6 +21,8 @@
 
 if final_status == "OK" then {
 
+  printf "\n";
+
   # Sigma values in dbb computation
   if branch_detection == 1 then{
       let fileOut := "results/sigma_penal_dbb.csv";
@@ -31,14 +33,15 @@ if final_status == "OK" then {
             branch_Ror[qq,m,n], branch_admi[qq,m,n], branch_dephor[qq,m,n], branch_angper[qq,m,n], 
             branch_Gor_corrected[1,qq,m,n],branch_Bor_corrected[1,qq,m,n],branch_Gex_corrected[1,qq,m,n],branch_Bex_corrected[1,qq,m,n],
             
-            if (qq,m,n) in BRANCHCC_REGL then sigma1[qq,m,n] else 0,
+            if (qq,m,n) in BRANCHCC_TRANSFORMER then sigma1[qq,m,n] else 0,
             sigma2[qq,m,n],
-            if (qq,m,n) in BRANCHCC_DEPH then sigma3[qq,m,n] else 0,
+            if (qq,m,n) in BRANCHCC_TRANSFORMER then sigma3[qq,m,n] else 0,
             sigma4[qq,m,n],sigma5[qq,m,n],sigma6[qq,m,n],sigma7[qq,m,n],sigma8[qq,m,n],
             b_branch[qq,m,n],
             branch_id[1,qq,m,n] 
             > (fileOut);
       close (fileOut);
+      printf "Exportation of sigma_penal_dbb.csv done.\n";
   } else if param_detection == 1 then {
       # Sigma values in dbp computation
       let fileOut := "results/sigma_penal_dbp.csv";
@@ -49,18 +52,19 @@ if final_status == "OK" then {
             branch_Ror[qq,m,n], branch_admi[qq,m,n], branch_dephor[qq,m,n], branch_angper[qq,m,n], 
             branch_Gor_corrected[1,qq,m,n],branch_Bor_corrected[1,qq,m,n],branch_Gex_corrected[1,qq,m,n],branch_Bex_corrected[1,qq,m,n],
             
-            if (qq,m,n) in BRANCHCC_REGL then sigma1[qq,m,n] else 0,
+            if (qq,m,n) in BRANCHCC_TRANSFORMER then sigma1[qq,m,n] else 0,
             sigma2[qq,m,n],
-            if (qq,m,n) in BRANCHCC_DEPH then sigma3[qq,m,n] else 0,
+            if (qq,m,n) in BRANCHCC_TRANSFORMER then sigma3[qq,m,n] else 0,
             sigma4[qq,m,n],sigma5[qq,m,n],sigma6[qq,m,n],sigma7[qq,m,n],sigma8[qq,m,n],
             
-            if (qq,m,n) in BRANCHCC_REGL then b_sigma1[qq,m,n] else 0,
+            if (qq,m,n) in BRANCHCC_TRANSFORMER then b_sigma1[qq,m,n] else 0,
             b_sigma2[qq,m,n],
-            if (qq,m,n) in BRANCHCC_DEPH then b_sigma3[qq,m,n] else 0,
+            if (qq,m,n) in BRANCHCC_TRANSFORMER then b_sigma3[qq,m,n] else 0,
             b_sigma4[qq,m,n],b_sigma5[qq,m,n],b_sigma6[qq,m,n],b_sigma7[qq,m,n],b_sigma8[qq,m,n],
             branch_id[1,qq,m,n] 
             > (fileOut);
       close (fileOut);
+      printf "Exportation of sigma_penal_dbp.csv done.\n";
   }
 
   # s1 values for all opt problems
@@ -71,6 +75,7 @@ if final_status == "OK" then {
         n, targetV_busPV[n], V[n], s1[n], b_s1[n], bus_id[1,n]
         > (fileOut);
   close (fileOut);
+  printf "Exportation of s1_penal.csv done.\n";
 
 
   # For future exploitation of results in a refined model !
@@ -81,6 +86,7 @@ if final_status == "OK" then {
         n, V[n], teta[n], bus_id[1,n]
         > (fileOut);
   close (fileOut);
+  printf "Exportation of values_Vtheta.txt done.\n";
 }
 
 # V and theta values for all problems
@@ -91,7 +97,10 @@ printf{n in BUSCC} "%i;%.5f;%.5f;%Q\n",
       n, V[n], teta[n], bus_id[1,n]
       > (fileOut);
 close (fileOut);
+printf "Exportation of Vtheta_var.csv done.\n";
+
 
 let fileOut := "results/status.txt";
 printf "%i", if output_results > 0 then 1 else 0 > (fileOut);
 close (fileOut);
+printf "Exportation of status.txt done.\n";
