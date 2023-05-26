@@ -8,6 +8,7 @@ package com.powsybl.openreac;
 
 import com.powsybl.ampl.converter.AmplNetworkUpdaterFactory;
 import com.powsybl.ampl.converter.AmplReadableElement;
+import com.powsybl.ampl.converter.DefaultAmplNetworkUpdater;
 import com.powsybl.ampl.converter.OutputFileFormat;
 import com.powsybl.ampl.executor.AmplModel;
 import org.apache.commons.lang3.tuple.Pair;
@@ -120,7 +121,7 @@ public class OpenReacModel implements AmplModel {
 
     @Override
     public AmplNetworkUpdaterFactory getNetworkUpdaterFactory() {
-        return (mapper, network) -> new OpenReacNetworkUpdater(mapper);
+        return (mapper, network) -> new DefaultAmplNetworkUpdater(mapper);
     }
 
     @Override
