@@ -25,7 +25,7 @@ public class OpenReacResult {
     private final List<ReactiveSlack> reactiveSlacks;
     private final Map<String, String> indicators;
     private final List<GeneratorModification> generatorModifications;
-    private final List<ShuntCompensatorPositionModification> shuntsModifications;
+    private final List<ShuntCompensatorModification> shuntsModifications;
     private final List<VscConverterStationModification> vscModifications;
     private final List<StaticVarCompensatorModification> svcModifications;
     private final List<RatioTapPositionModification> tapModifications;
@@ -63,7 +63,7 @@ public class OpenReacResult {
         return generatorModifications;
     }
 
-    public List<ShuntCompensatorPositionModification> getShuntsModifications() {
+    public List<ShuntCompensatorModification> getShuntsModifications() {
         return shuntsModifications;
     }
 

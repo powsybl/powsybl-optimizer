@@ -8,17 +8,18 @@ package com.powsybl.openreac.parameters.output.network;
 
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.commons.util.StringToIntMapper;
-import com.powsybl.iidm.modification.ShuntCompensatorPositionModification;
+import com.powsybl.iidm.modification.ShuntCompensatorModification;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.ShuntCompensator;
 
 /**
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
-public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCompensatorPositionModification> {
+public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCompensatorModification> {
     private static final String ELEMENT = "shunts";
     private static final int ID_COLUMN_INDEX = 1;
     private static final int B_COLUMN_INDEX = 3;
+    private static final int BUS_COLUMN_INDEX = 2;
     private final Network network;
 
     public ShuntCompensatorNetworkOutput(Network network) {
@@ -31,10 +32,18 @@ public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCo
     }
 
     @Override
-    protected ShuntCompensatorPositionModification doReadLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
+    protected ShuntCompensatorModification doReadLine(String[] tokens,
+                                                      StringToIntMapper<AmplSubset> stringToIntMapper) {
         String id = stringToIntMapper.getId(AmplSubset.SHUNT, Integer.parseInt(tokens[ID_COLUMN_INDEX]));
         double b = Double.parseDouble(tokens[B_COLUMN_INDEX]);
-        return new ShuntCompensatorPositionModification(id, findSectionCount(network.getShuntCompensator(id), b));
+        String busId = stringToIntMapper.getId(AmplSubset.BUS, Integer.parseInt(tokens[BUS_COLUMN_INDEX]));
+        Boolean reconnect = null;
+        ShuntCompensator shuntCompensator = network.getShuntCompensator(id);
+        if (busId != null && shuntCompensator != null && busId.equals(
+            shuntCompensator.getTerminal().getBusView().getConnectableBus().getId())) {
+            reconnect = true;
+        }
+        return new ShuntCompensatorModification(id, reconnect, shuntCompensator == null ? null : findSectionCount(shuntCompensator, b));
     }
 
     /**

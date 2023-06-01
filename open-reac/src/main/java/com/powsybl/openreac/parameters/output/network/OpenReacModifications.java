@@ -43,7 +43,7 @@ public class OpenReacModifications {
         return genOutput.getModifications();
     }
 
-    public List<ShuntCompensatorPositionModification> getShuntModifications() {
+    public List<ShuntCompensatorModification> getShuntModifications() {
         return shuntsOutput.getModifications();
     }
 
