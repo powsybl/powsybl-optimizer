@@ -66,7 +66,7 @@ check maximal_voltage_upper_bound >= minimal_voltage_lower_bound;
 param voltage_lower_bound{(t,s) in SUBSTATIONS} := 
   max(minimal_voltage_lower_bound,substation_Vmin[t,s]);
 param voltage_upper_bound{(t,s) in SUBSTATIONS} :=
-  if substation_Vmax[t,s] <= voltage_lower_bound[t,s]
+  if substation_Vmax[t,s] < voltage_lower_bound[t,s]
   then maximal_voltage_upper_bound
   else min(maximal_voltage_upper_bound,substation_Vmax[t,s]);
 check {(t,s) in SUBSTATIONS}: voltage_lower_bound[t,s] <= voltage_upper_bound[t,s];
@@ -488,9 +488,9 @@ set BUSCC dimen 1 default {};
 param bus_V0_corrected{n in BUSCC};
 param bus_angl0_corrected{n in BUSCC};
 
-set BRANCHCC:= setof {(1,qq,m,n) in BRANCH: m in BUSCC and n in BUSCC} (qq,m,n); 
-set BRANCH_WITH_SIDE_2_OPENED := setof {(1,qq,m,n) in BRANCH: m in BUSCC and n == -1} (qq,m,n);
-set BRANCH_WITH_SIDE_1_OPENED := setof {(1,qq,m,n) in BRANCH: m == -1 and n in BUSCC} (qq,m,n);
+set BRANCHCC:= setof {(1,qq,m,n) in BRANCH: m in BUSCC and n in BUSCC } (qq,m,n); 
+set BRANCH_WITH_SIDE_2_OPENED := setof {(1,qq,m,n) in BRANCH: m in BUSCC and n == -1 and m != n} (qq,m,n);
+set BRANCH_WITH_SIDE_1_OPENED := setof {(1,qq,m,n) in BRANCH: m == -1 and n in BUSCC and m != n} (qq,m,n);
 
 set BRANCHCC_PENALIZED:= BRANCHCC union BRANCH_WITH_SIDE_2_OPENED union BRANCH_WITH_SIDE_1_OPENED;
 
@@ -537,7 +537,7 @@ set BUSCC_PV := BUSCC_PV_1 union BUSCC_PV_2;
 set BUSCC_PQ := BUSCC diff BUSCC_PV;
 
 set BRANCHCC_3WT := setof {(qq,m,n) in BRANCHCC_PENALIZED : branch_3wt[1,qq,m,n] != -1} (qq,m,n);
-set BUSCC_3WT := setof {(qq,m,n) in BRANCHCC : branch_3wt[1,qq,m,n] != -1 and match(branch_id[1,qq,m,n], "leg1") > 0} m;
+set BUSCC_3WT := setof {(qq,m,n) in BRANCHCC : branch_3wt[1,qq,m,n] != -1} n;
 
 param targetV_busPV{n in BUSCC_PV}; # def in divergenceanalysor.run
 # TODO: add checking consistency of BUSCC_PQ, BUSCC_PV, UNITCC_PQ and UNITCC_PV
@@ -569,11 +569,21 @@ check {(qq,m,n) in BRANCHCC_PENALIZED}: abs(branch_X_mod[qq,m,n]) > 0;
 ###############################################################################
 
 # Variable reactance, depanding on tap
-param branch_Xdeph{(qq,m,n) in BRANCHCC_DEPH} = tap_x[1,deph_table[1,branch_ptrDeph[1,qq,m,n]],deph_tap0[1,branch_ptrDeph[1,qq,m,n]]];
+param branch_Xdeph{(qq,m,n) in BRANCHCC_TRANSFORMER} =
+  if (qq,m,n) in BRANCHCC_DEPH and (qq,m,n) in BRANCHCC_REGL
+  and tap_x[1,deph_table[1,branch_ptrDeph[1,qq,m,n]],deph_tap0[1,branch_ptrDeph[1,qq,m,n]]] 
+      * tap_x[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]] / branch_X[1,qq,m,n] > Znull
+  then tap_x[1,deph_table[1,branch_ptrDeph[1,qq,m,n]],deph_tap0[1,branch_ptrDeph[1,qq,m,n]]] 
+      * tap_x[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]] / branch_X[1,qq,m,n]
+  else if (qq,m,n) in BRANCHCC_DEPH and tap_x[1,deph_table[1,branch_ptrDeph[1,qq,m,n]],deph_tap0[1,branch_ptrDeph[1,qq,m,n]]] > Znull
+  then tap_x[1,deph_table[1,branch_ptrDeph[1,qq,m,n]],deph_tap0[1,branch_ptrDeph[1,qq,m,n]]]
+  else if (qq,m,n) in BRANCHCC_REGL and tap_x[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]] > Znull
+  then tap_x[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]]
+  else Znull;
 
 # Resistance variable selon la prise
 # Comme on ne dispose pas de valeurs variables de R dans les tables des lois des TDs, on fait varier R proportionellement a X
-param branch_Rdeph{(qq,m,n) in BRANCHCC_DEPH} =
+param branch_Rdeph{(qq,m,n) in BRANCHCC_TRANSFORMER} =
   if abs(branch_X_mod[qq,m,n]) >= Znull 
   then branch_R_corrected[1,qq,m,n]*branch_Xdeph[qq,m,n]/branch_X_mod[qq,m,n]
   else branch_R_corrected[1,qq,m,n]
@@ -582,22 +592,22 @@ param branch_Rdeph{(qq,m,n) in BRANCHCC_DEPH} =
 # About the resistance of the lines
 
 param branch_angper{(qq,m,n) in BRANCHCC_PENALIZED} =
-  if (qq,m,n) in BRANCHCC_DEPH then
+  if (qq,m,n) in BRANCHCC_TRANSFORMER then
   atan2(branch_Rdeph[qq,m,n], branch_Xdeph[qq,m,n])
-  else atan2(branch_R_corrected[1,qq,m,n]  , branch_X_mod[qq,m,n]);
+  else atan2(branch_R_corrected[1,qq,m,n], branch_X_mod[qq,m,n]);
 
 param branch_admi{(qq,m,n) in BRANCHCC_PENALIZED} =  
-  if (qq,m,n) in BRANCHCC_DEPH then
+  if (qq,m,n) in BRANCHCC_TRANSFORMER then
   1./sqrt(branch_Rdeph[qq,m,n]^2 + branch_Xdeph[qq,m,n]^2 )
   else 1./sqrt(branch_R_corrected[1,qq,m,n]^2 + branch_X_mod[qq,m,n]^2);
 
 param branch_G{(qq,m,n) in BRANCHCC_PENALIZED} = 
-  if (qq,m,n) in BRANCHCC_DEPH then
+  if (qq,m,n) in BRANCHCC_TRANSFORMER then
   branch_Rdeph[qq,m,n] / (branch_Rdeph[qq,m,n]^2 + branch_Xdeph[qq,m,n]^2)
   else branch_R_corrected[1,qq,m,n] / (branch_R_corrected[1,qq,m,n]^2 + branch_X_mod[qq,m,n]^2);
 
-param branch_B{(qq,m,n) in BRANCHCC_PENALIZED} = # TODO : Check if this is a correct sign
-  if (qq,m,n) in BRANCHCC_DEPH then
+param branch_B{(qq,m,n) in BRANCHCC_PENALIZED} =  
+  if (qq,m,n) in BRANCHCC_TRANSFORMER then
   -branch_Xdeph[qq,m,n] / (branch_Rdeph[qq,m,n]^2 + branch_Xdeph[qq,m,n]^2)
   else -branch_X_mod[qq,m,n] / (branch_R_corrected[1,qq,m,n]^2 + branch_X_mod[qq,m,n]^2);
 
@@ -608,20 +618,21 @@ param branch_Ror {(qq,m,n) in BRANCHCC_PENALIZED} =
       then tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]]
       else 1.0
     )
-  * ( if ((qq,m,n) in BRANCHCC_DEPH)
+  * ( if ((qq,m,n) in BRANCHCC_DEPH) # TODO : Shouldn't be diff BRANCHCC_REGL ??
       then tap_ratio[1,deph_table[1,branch_ptrDeph[1,qq,m,n]],deph_tap0[1,branch_ptrDeph[1,qq,m,n]]]
       else 1.0
     )
   * (branch_cstratio_corrected[1,qq,m,n]);
-param branch_Rex {(q,m,n) in BRANCHCC_PENALIZED} = 1; # In IIDM, everything is in bus1 so ratio at bus2 is always 1
+param branch_Rex {(q,m,n) in BRANCHCC_PENALIZED} = 1;
 
 param branch_dephor {(qq,m,n) in BRANCHCC_PENALIZED} =
   if ((qq,m,n) in BRANCHCC_DEPH)
   then tap_angle[1,deph_table[1,branch_ptrDeph[1,qq,m,n]],deph_tap0[1,branch_ptrDeph[1,qq,m,n]]]
-  #else if ((qq,m,n) in BRANCHCC_REGL)
+  # TODO : Check if this is correct
+  #else if ((qq,m,n) in BRANCHCC_REGL diff BRANCHCC_DEPH)
   #then tap_angle[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]]
   else 0;
-param branch_dephex {(qq,m,n) in BRANCHCC_PENALIZED} = 0; # In IIDM, everything is in bus1 so dephase at bus2 is always 0
+param branch_dephex {(qq,m,n) in BRANCHCC_PENALIZED} = 0;
 
 
 # Get max/min values for rho/alpha param, on each rtc/ptc
@@ -633,13 +644,9 @@ param min_branch_regl {(qq,m,n) in BRANCHCC_TRANSFORMER} = if (qq,m,n) in BRANCH
                                                           then min {(vv,tab,tap) in TAPS : regl_table[1,branch_ptrRegl[1,qq,m,n]] == tab} tap_ratio[vv,tab,tap]
                                                           else min {(vv,tab,tap) in TAPS : deph_table[1,branch_ptrDeph[1,qq,m,n]] == tab} tap_ratio[vv,tab,tap];
 
-param max_branch_deph {(qq,m,n) in BRANCHCC_TRANSFORMER} = if (qq,m,n) in BRANCHCC_DEPH 
-                                                          then max {(vv,tab,tap) in TAPS : deph_table[1,branch_ptrDeph[1,qq,m,n]] == tab} tap_angle[vv,tab,tap]
-                                                          else max {(vv,tab,tap) in TAPS : regl_table[1,branch_ptrRegl[1,qq,m,n]] == tab} tap_angle[vv,tab,tap];
+param max_branch_deph {(qq,m,n) in BRANCHCC_DEPH} = max {(vv,tab,tap) in TAPS : deph_table[1,branch_ptrDeph[1,qq,m,n]] == tab} tap_angle[vv,tab,tap];
 
-param min_branch_deph {(qq,m,n) in BRANCHCC_TRANSFORMER} = if (qq,m,n) in BRANCHCC_DEPH 
-                                                          then min {(vv,tab,tap) in TAPS : deph_table[1,branch_ptrDeph[1,qq,m,n]] == tab} tap_angle[vv,tab,tap]
-                                                          else min {(vv,tab,tap) in TAPS : regl_table[1,branch_ptrRegl[1,qq,m,n]] == tab} tap_angle[vv,tab,tap];
+param min_branch_deph {(qq,m,n) in BRANCHCC_DEPH} = min {(vv,tab,tap) in TAPS : deph_table[1,branch_ptrDeph[1,qq,m,n]] == tab} tap_angle[vv,tab,tap];
 
 # Get the maximum of each parameter (will be used for optimization resume)
 param max_targetV := (max {n in BUSCC_PV} targetV_busPV[n]);

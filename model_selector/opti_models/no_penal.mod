@@ -21,8 +21,13 @@ set PROBLEM_NO_PENAL default { };
 #                                   #  
 #####################################
 
-subject to ctr_voltage_values_2{PROBLEM_NO_PENAL, n in BUSCC_PQ}: V[n] <= 1.25;
-subject to ctr_voltage_values_4{PROBLEM_NO_PENAL, n in BUSCC_PQ}: V[n] >= 0.75;
+subject to ctr_voltage_values_PQ_sup{PROBLEM_NO_PENAL, n in BUSCC_PQ diff BUSCC_3WT}: V[n] <= 1.25;
+subject to ctr_voltage_values_PQ_inf{PROBLEM_NO_PENAL, n in BUSCC_PQ diff BUSCC_3WT}: V[n] >= 0.75;
+
+subject to ctr_voltage_values_3wt_sup{PROBLEM_NO_PENAL, n in BUSCC_3WT}: V[n] <= 10;
+subject to ctr_voltage_values_3wt_inf{PROBLEM_NO_PENAL, n in BUSCC_3WT}: V[n] >= 0;
+
+
 
 #############################################
 #     Slack bus and voltage regulation      #
@@ -76,10 +81,10 @@ subject to ctr_balance_Q_no_penal{PROBLEM_NO_PENAL,k in BUSCC_PQ}:
   # Shunts
   - sum{(shunt,k) in SHUNTCC} base100MVA * shunt_valnom[1,shunt,k] * V[k]^2
   # SVC that does not regulate voltage
-  #- sum{(svc,k) in SVCCC_PQ_1 : -1000 <= svc_Q0[1,svc,k] and svc_Q0[1,svc,k] <= 1000} svc_Q0[1,svc,k] # Fixed value
-  #- sum{(svc,k) in SVCCC_PQ_2} if bus_V0[1,k] > svc_targetV[1,svc,k] 
-  #                            then base100MVA * svc_bmin[1,svc,k] * V[k]^2
-  #                            else base100MVA * svc_bmax[1,svc,k] * V[k]^2
+  - sum{(svc,k) in SVCCC_PQ_1 : -1000 <= svc_Q0[1,svc,k] and svc_Q0[1,svc,k] <= 1000} svc_Q0[1,svc,k] # Fixed value
+  - sum{(svc,k) in SVCCC_PQ_2} if bus_V0[1,k] > svc_targetV[1,svc,k] 
+                              then base100MVA * svc_bmin[1,svc,k] * V[k]^2
+                              else base100MVA * svc_bmax[1,svc,k] * V[k]^2
   # VSC converters
   - sum{(v,k) in VSCCONVON} vscconv_Q0[1,v,k] # Fixed values
   # LCC converters

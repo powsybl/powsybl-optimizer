@@ -35,7 +35,7 @@ if final_status == "OK" then {
             
             if (qq,m,n) in BRANCHCC_TRANSFORMER then sigma1[qq,m,n] else 0,
             sigma2[qq,m,n],
-            if (qq,m,n) in BRANCHCC_TRANSFORMER then sigma3[qq,m,n] else 0,
+            if (qq,m,n) in BRANCHCC_DEPH then sigma3[qq,m,n] else 0,
             sigma4[qq,m,n],sigma5[qq,m,n],sigma6[qq,m,n],sigma7[qq,m,n],sigma8[qq,m,n],
             b_branch[qq,m,n],
             branch_id[1,qq,m,n] 
@@ -54,12 +54,12 @@ if final_status == "OK" then {
             
             if (qq,m,n) in BRANCHCC_TRANSFORMER then sigma1[qq,m,n] else 0,
             sigma2[qq,m,n],
-            if (qq,m,n) in BRANCHCC_TRANSFORMER then sigma3[qq,m,n] else 0,
+            if (qq,m,n) in BRANCHCC_DEPH then sigma3[qq,m,n] else 0,
             sigma4[qq,m,n],sigma5[qq,m,n],sigma6[qq,m,n],sigma7[qq,m,n],sigma8[qq,m,n],
             
             if (qq,m,n) in BRANCHCC_TRANSFORMER then b_sigma1[qq,m,n] else 0,
             b_sigma2[qq,m,n],
-            if (qq,m,n) in BRANCHCC_TRANSFORMER then b_sigma3[qq,m,n] else 0,
+            if (qq,m,n) in BRANCHCC_DEPH then b_sigma3[qq,m,n] else 0,
             b_sigma4[qq,m,n],b_sigma5[qq,m,n],b_sigma6[qq,m,n],b_sigma7[qq,m,n],b_sigma8[qq,m,n],
             branch_id[1,qq,m,n] 
             > (fileOut);

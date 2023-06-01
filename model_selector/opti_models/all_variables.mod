@@ -33,7 +33,7 @@ var s3{n in BUSCC_PQ};
 # Slack variables for parameters on branches
 var sigma1{(qq,m,n) in BRANCHCC_TRANSFORMER};
 var sigma2{(qq,m,n) in BRANCHCC_PENALIZED};
-var sigma3{(qq,m,n) in BRANCHCC_TRANSFORMER};
+var sigma3{(qq,m,n) in BRANCHCC_DEPH};
 var sigma4{(qq,m,n) in BRANCHCC_PENALIZED};
 var sigma5{(qq,m,n) in BRANCHCC_PENALIZED};
 var sigma6{(qq,m,n) in BRANCHCC_PENALIZED};
@@ -41,7 +41,7 @@ var sigma7{(qq,m,n) in BRANCHCC_PENALIZED};
 var sigma8{(qq,m,n) in BRANCHCC_PENALIZED};
 
 var rho_penalized{(qq,m,n) in BRANCHCC_PENALIZED} = if (qq,m,n) in BRANCHCC_TRANSFORMER then branch_Ror[qq,m,n]+sigma1[qq,m,n] else branch_Ror[qq,m,n];
-var alpha_penalized{(qq,m,n) in BRANCHCC_PENALIZED} = if (qq,m,n) in BRANCHCC_TRANSFORMER then branch_dephor[qq,m,n]+sigma3[qq,m,n] else branch_dephor[qq,m,n];
+var alpha_penalized{(qq,m,n) in BRANCHCC_PENALIZED} = if (qq,m,n) in BRANCHCC_DEPH then branch_dephor[qq,m,n]+sigma3[qq,m,n] else branch_dephor[qq,m,n];
 
 #
 # Binary variables for activation of previous slack variables
@@ -58,7 +58,7 @@ var b_branch{(qq,m,n) in BRANCHCC_PENALIZED} binary;
 # Detection by params
 var b_sigma1{(qq,m,n) in BRANCHCC_TRANSFORMER} binary;
 var b_sigma2{(qq,m,n) in BRANCHCC_PENALIZED} binary;
-var b_sigma3{(qq,m,n) in BRANCHCC_TRANSFORMER} binary;
+var b_sigma3{(qq,m,n) in BRANCHCC_DEPH} binary;
 var b_sigma4{(qq,m,n) in BRANCHCC_PENALIZED} binary;
 var b_sigma5{(qq,m,n) in BRANCHCC_PENALIZED} binary;
 var b_sigma6{(qq,m,n) in BRANCHCC_PENALIZED} binary;

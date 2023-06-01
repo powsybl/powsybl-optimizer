@@ -159,43 +159,6 @@ param tempstr symbolic default "empty string";
 model "model_detection.mod";
 data  "network_data.dat";
 
-#for{(1,qq,m,n) in BRANCH}{
-#    if (branch_3wt[1,qq,m,n] != -1) then {
-#        # For the regleur
-#        if (branch_ptrRegl[1,qq,m,n] != -1) then {
-#            for{(1,yo,tap) in TAPS : yo == regl_table[1,branch_ptrRegl[1,qq,m,n]]}{
-#                
-#                let temp1 := (substation_Vnomi[1, branch_subor[1,qq,m,n]]) ** 2;
-#                let temp2 := (substation_Vnomi[1, branch_subex[1,qq,m,n]]) ** 2;
-#
-#                if (match(branch_id[1,qq,m,n], "leg1")) then {
-#                    let tap_x[1,yo,tap] := tap_x[1,yo,tap] * temp2 / temp1;
-#                } else {
-#                    #printf "tap x before : %.6f", tap_x[1,yo,tap];
-#                    let tap_x[1,yo,tap] := tap_x[1,yo,tap] * temp1 / temp2;
-#                    #printf "tap x after : %.6f", tap_x[1,yo,tap];
-#                } 
-#            }
-#        }
-#
-#        # For the dephaseur
-#        if (branch_ptrDeph[1,qq,m,n] != -1) then {
-#            for{(1,yo,tap) in TAPS : yo == deph_table[1,branch_ptrDeph[1,qq,m,n]]}{
-#
-#                let temp1 := (substation_Vnomi[1, branch_subor[1,qq,m,n]]) ** 2;
-#                let temp2 := (substation_Vnomi[1, branch_subex[1,qq,m,n]]) ** 2;
-#
-#                if (match(branch_id[1,qq,m,n], "leg1")) then {
-#                    let tap_x[1,yo,tap] := tap_x[1,yo,tap] * temp2 / temp1;
-#                } else {
-#                    let tap_x[1,yo,tap] := tap_x[1,yo,tap] * temp1 / temp2;
-#                } 
-#            }
-#        }
-#    }
-#}
-
-
 ###############################################################################
 # This command "check" means that all checks in .mod file are done right now  #
 ###############################################################################
@@ -307,44 +270,13 @@ for{(qq,m,n) in BRANCHCC_PENALIZED : branch_3wt[1,qq,m,n] != -1}{
 }
 
 for{(1,qq,m,n) in BRANCH}{
-  if (branch_3wt[1,qq,m,n] != -1) then {
-    # Re per unit values on branches of 3wt
-
-                  let temp1 := (substation_Vnomi[1, branch_subor[1,qq,m,n]]) ** 2;
-                  let temp2 := (substation_Vnomi[1, branch_subex[1,qq,m,n]]) ** 2;
-                  
-                  # If leg 1, the per unitage must be done in reverse side
-                  if (match(branch_id[1,qq,m,n], "leg1") > 0) then {
-                    let branch_cstratio_corrected[1,qq,m,n] := branch_cstratio[1,qq,m,n] * (substation_Vnomi[1, branch_subex[1,qq,m,n]] / substation_Vnomi[1, branch_subor[1,qq,m,n]]);
-                    let branch_R_corrected[1,qq,m,n] := branch_R[1,qq,m,n] * temp2 / temp1;
-                    let branch_X_corrected[1,qq,m,n] := branch_X[1,qq,m,n] * temp2 / temp1;
-                    let branch_Gor_corrected[1,qq,m,n] := branch_Gor[1,qq,m,n] * temp1 / temp2;
-                    let branch_Gex_corrected[1,qq,m,n] := branch_Gex[1,qq,m,n] * temp1 / temp2;
-                    let branch_Bor_corrected[1,qq,m,n] := branch_Bor[1,qq,m,n] * temp1 / temp2;
-                    let branch_Bex_corrected[1,qq,m,n] := branch_Bex[1,qq,m,n] * temp1 / temp2;
-
-                  # For leg 2 and leg 3
-                  } else {
-                    let branch_cstratio_corrected[1,qq,m,n] := branch_cstratio[1,qq,m,n] * (substation_Vnomi[1, branch_subor[1,qq,m,n]] / substation_Vnomi[1, branch_subex[1,qq,m,n]]);
-                    let branch_R_corrected[1,qq,m,n] := branch_R[1,qq,m,n] * temp1 / temp2;
-                    let branch_X_corrected[1,qq,m,n] := branch_X[1,qq,m,n] * temp1 / temp2;
-                    let branch_Gor_corrected[1,qq,m,n] := branch_Gor[1,qq,m,n] * temp2 / temp1;
-                    let branch_Gex_corrected[1,qq,m,n] := branch_Gex[1,qq,m,n] * temp2 / temp1;
-                    let branch_Bor_corrected[1,qq,m,n] := branch_Bor[1,qq,m,n] * temp2 / temp1;
-                    let branch_Bex_corrected[1,qq,m,n] := branch_Bex[1,qq,m,n] * temp2 / temp1;
-                  }
-
-    # If not a 3wt, then keep current values
-    } else {
-                  let branch_cstratio_corrected[1,qq,m,n] := branch_cstratio[1,qq,m,n];
-                  let branch_R_corrected[1,qq,m,n] := branch_R[1,qq,m,n];
-                  let branch_X_corrected[1,qq,m,n] := branch_X[1,qq,m,n];
-                  let branch_Gor_corrected[1,qq,m,n] := branch_Gor[1,qq,m,n];
-                  let branch_Gex_corrected[1,qq,m,n] := branch_Gex[1,qq,m,n];
-                  let branch_Bor_corrected[1,qq,m,n] := branch_Bor[1,qq,m,n];
-                  let branch_Bex_corrected[1,qq,m,n] := branch_Bex[1,qq,m,n];
-    }
-
+  let branch_cstratio_corrected[1,qq,m,n] := branch_cstratio[1,qq,m,n];
+  let branch_R_corrected[1,qq,m,n] := branch_R[1,qq,m,n];
+  let branch_X_corrected[1,qq,m,n] := branch_X[1,qq,m,n];
+  let branch_Gor_corrected[1,qq,m,n] := branch_Gor[1,qq,m,n];
+  let branch_Gex_corrected[1,qq,m,n] := branch_Gex[1,qq,m,n];
+  let branch_Bor_corrected[1,qq,m,n] := branch_Bor[1,qq,m,n];
+  let branch_Bex_corrected[1,qq,m,n] := branch_Bex[1,qq,m,n];
 }
 
 # Validation of V and theta input values
@@ -353,50 +285,49 @@ let temp2 := 0;
 for{n in BUSCC}
 {
   if bus_V0[1,n] < 0.5 or bus_V0[1,n] > 1.5 then{
-  # printf "\n[WARNING] Bus %i has incoherent voltage value : %f", n, bus_V0[1,n];
-  
+   printf "\n[WARNING] Bus %i has incoherent voltage value : %f", n, bus_V0[1,n];
+
     if n in BUSCC_3WT then {
         let temp3 := 0;
         let temp4 := 0;
 
-        for {(qq,mm,mn) in BRANCHCC : branch_3wt[1,qq,mm,mn] != -1 and mm == n}{
-          let temp3 := temp3 + branch_Ror[qq,mm,mn] * (1 / branch_X_mod[qq,mm,mn]) * bus_V0[1,mn];
-          let temp4 := temp4 + (1 / branch_X_mod[qq,mm,mn]);
-        }
-
         for {(qq,mm,mn) in BRANCHCC : branch_3wt[1,qq,mm,mn] != -1 and mn == n}{
-          let temp3 := temp3 + branch_Ror[qq,mm,mn] * (1 / branch_X_mod[qq,mm,mn]) * bus_V0[1,mm];
-          let temp4 := temp4 + (1 / branch_X_mod[qq,mm,mn]);
+          if (qq,mm,mn) in BRANCHCC_TRANSFORMER then {
+            let temp3 := temp3 + branch_Ror[qq,mm,mn] * (1 / branch_Xdeph[qq,mm,mn]) * bus_V0[1,mn];
+            let temp4 := temp4 + (1 / branch_Xdeph[qq,mm,mn]);
+          } else {
+            let temp3 := temp3 + branch_Ror[qq,mm,mn] * (1 / branch_X_mod[qq,mm,mn]) * bus_V0[1,mn];
+            let temp4 := temp4 + (1 / branch_X_mod[qq,mm,mn]);
+          }
         }
 
         let bus_V0_corrected[n] := temp3 / temp4;
     } else {
-        let bus_V0_corrected[n] := 1;
-
+       let bus_V0_corrected[n] := 1;
     }
     let temp1 := temp1 + 1;
   } else let bus_V0_corrected[n] := bus_V0[1,n];
 
   if bus_angl0[1,n] < -1.57079632679 or bus_angl0[1,n] > 1.57079632679 then{
-    #printf "\n[WARNING] Bus %i has incoherent angle value : %f", n, bus_angl0[1,n];
+    printf "\n[WARNING] Bus %i has incoherent angle value : %f", n, bus_angl0[1,n];
     
     if n in BUSCC_3WT then {
         let temp3 := 0;
         let temp4 := 0;
 
-        for {(qq,mm,mn) in BRANCHCC : branch_3wt[1,qq,mm,mn] != -1 and mm == n}{
-          let temp3 := temp3 + (1 / branch_X_mod[qq,mm,mn]) * (bus_angl0[1,mn] + branch_dephor[qq,mm,mn]);
-          let temp4 := temp4 + (1 / branch_X_mod[qq,mm,mn]);
-        }
-
         for {(qq,mm,mn) in BRANCHCC : branch_3wt[1,qq,mm,mn] != -1 and mn == n}{
-          let temp3 := temp3 + (1 / branch_X_mod[qq,mm,mn]) * (bus_angl0[1,mm] + branch_dephor[qq,mm,mn]);
-          let temp4 := temp4 + (1 / branch_X_mod[qq,mm,mn]);
+          if (qq,mm,mn) in BRANCHCC_TRANSFORMER then {
+            let temp3 := temp3 + (1 / branch_Xdeph[qq,mm,mn]) * (bus_angl0[1,mm] + branch_dephor[qq,mm,mn]);
+            let temp4 := temp4 + (1 / branch_Xdeph[qq,mm,mn]);
+          } else {
+            let temp3 := temp3 + (1 / branch_X_mod[qq,mm,mn]) * (bus_angl0[1,mm]); #+ branch_dephor[qq,mm,mn]);
+            let temp4 := temp4 + (1 / branch_X_mod[qq,mm,mn]);
+          }
         }
 
         let bus_angl0_corrected[n] := temp3 / temp4;
     } else {
-        let bus_angl0_corrected[n] := 0;
+       let bus_angl0_corrected[n] := 0;
     }
     
     let temp2 := temp2 + 1;
@@ -765,6 +696,11 @@ display nb_rtc_leg1, nb_rtc_leg2, nb_rtc_leg3, nb_ptc_leg1, nb_ptc_leg2, nb_ptc_
 ###############################################################################
 #                                End of file                                  #
 ###############################################################################
+
+for{(1,qq,m,n) in BRANCH}{
+  if branch_ptrDeph[1,qq,m,n] != -1 and branch_ptrRegl[1,qq,m,n] != -1 then printf "Rtc and ptc on the branch %Q\n", branch_id[1,qq,m,n];
+  if m == n and (qq,m,n) in BRANCHCC then printf "Branch with same buses two sides %Q", branch_id[1,qq,m,n];
+}
 
 printf "\n";
 printf "*** End of file divergence analysis : Optimization %ssuccessfull\n",if output_results>0 then "" else "un";

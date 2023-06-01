@@ -59,13 +59,13 @@ if final_status == "OK" then {
         ((sum {(qq,m,n) in BRANCHCC_PENALIZED} (abs(sigma2[qq,m,n]) - abs_mean_sigma2)**2) / card(BRANCHCC_PENALIZED));
 
   # ... sigma3 slack variable
-  if card(BRANCHCC_TRANSFORMER) > 0 then {
+  if card(BRANCHCC_DEPH) > 0 then {
       printf "\n[INFO] Maximal |sigma3| computed : %.6f\n",
-            (max {(qq,m,n) in BRANCHCC_TRANSFORMER} abs(sigma3[qq,m,n]));
-      let abs_mean_sigma3 := (sum {(qq,m,n) in BRANCHCC_TRANSFORMER} abs(sigma3[qq,m,n])) / card(BRANCHCC_TRANSFORMER);
+            (max {(qq,m,n) in BRANCHCC_DEPH} abs(sigma3[qq,m,n]));
+      let abs_mean_sigma3 := (sum {(qq,m,n) in BRANCHCC_DEPH} abs(sigma3[qq,m,n])) / card(BRANCHCC_DEPH);
       printf "[INFO] Mean abs value of sigma3 coordinates : %.6f\n", abs_mean_sigma3;
       printf "[INFO] Standard deviation abs value of sigma3 coordinates : %.6f\n", 
-            ((sum {(qq,m,n) in BRANCHCC_TRANSFORMER} (abs(sigma3[qq,m,n]) - abs_mean_sigma3)**2) / card(BRANCHCC_TRANSFORMER));
+            ((sum {(qq,m,n) in BRANCHCC_DEPH} (abs(sigma3[qq,m,n]) - abs_mean_sigma3)**2) / card(BRANCHCC_DEPH));
   } else {
       printf "\n[WARNING] No rtc/ptc so no sigma3 penalization.\n";
   }
