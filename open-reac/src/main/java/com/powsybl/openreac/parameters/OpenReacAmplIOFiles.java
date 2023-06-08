@@ -14,14 +14,14 @@ import com.powsybl.openreac.parameters.input.*;
 import com.powsybl.openreac.parameters.input.algo.AlgorithmInput;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput;
-import com.powsybl.openreac.parameters.output.network.OpenReacModifications;
+import com.powsybl.openreac.parameters.output.network.NetworkModifications;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 /**
- * OpenReacAmplIOFiles will interface all inputs and outputs needed for OpenReac to the abtracted Ampl Executor.
+ * OpenReacAmplIOFiles will interface all inputs and outputs needed for OpenReac to the abstracted Ampl Executor.
  * <p>
  * The user of OpenReac should not see this class directly. One should use {@link OpenReacParameters} for inputs
  * and {@link OpenReacResult} for outputs.
@@ -38,7 +38,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
     private final AlgorithmInput algorithmParams;
     private final ReactiveSlackOutput reactiveSlackOutput;
     private final VoltageLevelLimitsOverrideInput voltageLimitsOverride;
-    private final OpenReacModifications networkModifOuputs;
+    private final NetworkModifications networkModifications;
     private final boolean debug;
 
     public OpenReacAmplIOFiles(OpenReacParameters params, Network network, boolean debug) {
@@ -51,7 +51,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
 
         //outputs
         this.reactiveSlackOutput = new ReactiveSlackOutput();
-        this.networkModifOuputs = new OpenReacModifications(network);
+        this.networkModifications = new NetworkModifications(network);
 
         this.debug = debug;
     }
@@ -60,8 +60,8 @@ public class OpenReacAmplIOFiles implements AmplParameters {
         return reactiveSlackOutput;
     }
 
-    public OpenReacModifications getNetworkModifOuputs() {
-        return networkModifOuputs;
+    public NetworkModifications getNetworkModifications() {
+        return networkModifications;
     }
 
     @Override
@@ -73,9 +73,9 @@ public class OpenReacAmplIOFiles implements AmplParameters {
     @Override
     public Collection<AmplOutputFile> getOutputParameters(boolean isConvergenceOk) {
         if (isConvergenceOk) {
-            List<AmplOutputFile> networkModifOutputFiles = networkModifOuputs.getOutputFiles();
-            List<AmplOutputFile> list = new ArrayList<>(networkModifOutputFiles.size() + 1);
-            list.addAll(networkModifOutputFiles);
+            List<AmplOutputFile> networkModificationsOutputFiles = networkModifications.getOutputFiles();
+            List<AmplOutputFile> list = new ArrayList<>(networkModificationsOutputFiles.size() + 1);
+            list.addAll(networkModificationsOutputFiles);
             list.add(reactiveSlackOutput);
             return list;
         }

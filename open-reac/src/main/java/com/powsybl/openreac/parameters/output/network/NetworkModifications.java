@@ -16,19 +16,19 @@ import java.util.List;
  * Data class to store all outputs resulting of NetworkModification.
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
-public class OpenReacModifications {
+public class NetworkModifications {
 
-    private final GeneratorNetworkOutput genOutput;
+    private final GeneratorNetworkOutput generatorNetworkOutput;
 
-    public OpenReacModifications(Network network) {
-        genOutput = new GeneratorNetworkOutput(network);
+    public NetworkModifications(Network network) {
+        generatorNetworkOutput = new GeneratorNetworkOutput(network);
     }
 
     public List<AmplOutputFile> getOutputFiles() {
-        return List.of(genOutput);
+        return List.of(generatorNetworkOutput);
     }
 
     public List<GeneratorModification> getGeneratorModifications() {
-        return genOutput.getModifications();
+        return generatorNetworkOutput.getModifications();
     }
 }

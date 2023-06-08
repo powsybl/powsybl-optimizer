@@ -29,7 +29,7 @@ public class OpenReacResult {
         this.status = Objects.requireNonNull(status);
         this.indicators = Map.copyOf(Objects.requireNonNull(indicators));
         this.reactiveSlacks = List.copyOf(amplIOFiles.getReactiveSlackOutput().getSlacks());
-        this.generatorModifications = List.copyOf(amplIOFiles.getNetworkModifOuputs().getGeneratorModifications());
+        this.generatorModifications = List.copyOf(amplIOFiles.getNetworkModifications().getGeneratorModifications());
     }
 
     public OpenReacStatus getStatus() {
