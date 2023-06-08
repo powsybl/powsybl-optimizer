@@ -8,6 +8,7 @@ package com.powsybl.openreac;
 
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
+import com.powsybl.commons.test.ComparisonUtils;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.computation.local.LocalCommandExecutor;
 import com.powsybl.computation.local.LocalComputationConfig;
@@ -23,11 +24,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.FileSystem;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -37,12 +41,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author Nicolas PIERRE <nicolas.pierre at artelys.com>
  */
 class OpenReacRunnerTest {
-
-    private FileSystem fileSystem;
+    protected FileSystem fileSystem;
+    protected Path tmpDir;
 
     @BeforeEach
-    void setUp() {
+    public void setUp() throws IOException {
         fileSystem = Jimfs.newFileSystem(Configuration.unix());
+        tmpDir = Files.createDirectory(fileSystem.getPath("tmp"));
     }
 
     @AfterEach
@@ -50,40 +55,25 @@ class OpenReacRunnerTest {
         fileSystem.close();
     }
 
+    private void assertEqualsToRef(Path p, String refFileName) throws IOException {
+        try (InputStream actual = Files.newInputStream(p)) {
+            ComparisonUtils.compareTxt(getClass().getResourceAsStream(refFileName), actual);
+        }
+    }
+
+    private Path getAmplExecPath() throws IOException {
+        Path execFolder;
+        try (Stream<Path> walk = Files.walk(tmpDir)) {
+            execFolder = walk.limit(2).collect(Collectors.toList()).get(1);
+        }
+        return execFolder;
+    }
+
     @Test
-    void test() throws IOException {
+    void testInputFile() throws IOException {
         Network network = IeeeCdfNetworkFactory.create118();
-        // adding rtc to every transformer to have TapModifications
-        network.getTwoWindingsTransformerStream().forEach(
-            t -> t.newRatioTapChanger()
-                .setLowTapPosition(0)
-                .setTapPosition(0)
-                .beginStep()
-                .setR(0.01)
-                .setX(0.0001)
-                .setB(0)
-                .setG(0)
-                .setRho(1.1).endStep().add());
-        // adding a svc and a vsc to have a valid id in the ampl mapping
-        VoltageLevel vl = network.getVoltageLevelStream().iterator().next();
-        vl.getBusBreakerView().newBus().setId("bus-1").add();
-        vl.newStaticVarCompensator()
-            .setId("dummyStaticVarCompensator")
-            .setBus("bus-1")
-            .setBmin(1.1)
-            .setBmax(1.3)
-            .setRegulationMode(StaticVarCompensator.RegulationMode.OFF)
-            .add();
-        vl.newVscConverterStation()
-            .setId("dummyVscConverterStation")
-            .setConnectableBus("bus-1")
-            .setBus("bus-1")
-            .setLossFactor(1.1f)
-            .setVoltageSetpoint(405.0)
-            .setVoltageRegulatorOn(true)
-            .add();
-        OpenReacParameters parameters = new OpenReacParameters()
-            .setObjective(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT)
+        OpenReacParameters parameters = new OpenReacParameters().setObjective(
+                OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT)
             .setObjectiveDistance(70)
             .addVariableTwoWindingsTransformers(network.getTwoWindingsTransformerStream()
                 .limit(1)
@@ -94,21 +84,72 @@ class OpenReacRunnerTest {
             .addVariableShuntCompensators(
                 network.getShuntCompensatorStream().limit(1).map(ShuntCompensator::getId).collect(Collectors.toList()));
 
-        OpenReacConfig config = new OpenReacConfig(false);
+        LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
+            List.of("empty_case/reactiveopf_results_indic.txt"));
+        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
+            localCommandExecutor, ForkJoinPool.commonPool())) {
+            OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), parameters,
+                new OpenReacConfig(true), computationManager);
+            Path execFolder = getAmplExecPath();
+            assertEqualsToRef(execFolder.resolve("param_algo.txt"), "/expected_inputs/param_algo.txt");
+            assertEqualsToRef(execFolder.resolve("param_generators_reactive.txt"),
+                "/expected_inputs/param_generators_reactive.txt");
+            assertEqualsToRef(execFolder.resolve("param_shunts.txt"), "/expected_inputs/param_shunts.txt");
+            assertEqualsToRef(execFolder.resolve("param_transformers.txt"), "/expected_inputs/param_transformers.txt");
+        }
+    }
 
-        Path tmpDir = fileSystem.getPath("/work");
+    @Test
+    public void testOutputFileParsing() throws IOException {
+        Network network = IeeeCdfNetworkFactory.create118();
+        // To parse correctly data from output files, there must be an ID in the Ampl mapper
+        // For this we add dummy elements to the network,
+        // they will get exported, but the ampl mapper will have IDs for them.
+        // All the values are bad, and they are not used.
+        // RTC
+        network.getTwoWindingsTransformerStream()
+            .forEach(t -> t.newRatioTapChanger()
+                .setLowTapPosition(0)
+                .setTapPosition(0)
+                .beginStep()
+                .setR(0.01)
+                .setX(0.0001)
+                .setB(0)
+                .setG(0)
+                .setRho(1.1)
+                .endStep()
+                .add());
+        // SVC
+        VoltageLevel vl = network.getVoltageLevelStream().iterator().next();
+        vl.getBusBreakerView().newBus().setId("bus-1").add();
+        vl.newStaticVarCompensator()
+            .setId("dummyStaticVarCompensator")
+            .setBus("bus-1")
+            .setBmin(1.1)
+            .setBmax(1.3)
+            .setRegulationMode(StaticVarCompensator.RegulationMode.OFF)
+            .add();
+        // VSC
+        vl.newVscConverterStation()
+            .setId("dummyVscConverterStation")
+            .setConnectableBus("bus-1")
+            .setBus("bus-1")
+            .setLossFactor(1.1f)
+            .setVoltageSetpoint(405.0)
+            .setVoltageRegulatorOn(true)
+            .add();
 
         LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
-            List.of("reactiveopf_results_generators.csv",
-                "reactiveopf_results_indic.txt",
-                "reactiveopf_results_rtc.csv",
-                "reactiveopf_results_shunts.csv",
-                "reactiveopf_results_static_var_compensators.csv",
-                "reactiveopf_results_vsc_converter_stations.csv"));
+            List.of("mock_outputs/reactiveopf_results_generators.csv",
+                "mock_outputs/reactiveopf_results_indic.txt", "mock_outputs/reactiveopf_results_rtc.csv",
+                "mock_outputs/reactiveopf_results_shunts.csv",
+                "mock_outputs/reactiveopf_results_static_var_compensators.csv",
+                "mock_outputs/reactiveopf_results_vsc_converter_stations.csv"));
         try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
             localCommandExecutor, ForkJoinPool.commonPool())) {
             OpenReacResult openReacResult = OpenReacRunner.run(network,
-                network.getVariantManager().getWorkingVariantId(), parameters, config, computationManager);
+                network.getVariantManager().getWorkingVariantId(), new OpenReacParameters(), new OpenReacConfig(true),
+                computationManager);
 
             assertEquals(OpenReacStatus.OK, openReacResult.getStatus());
             assertEquals(1, openReacResult.getShuntsModifications().size());
