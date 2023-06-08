@@ -8,15 +8,18 @@ package com.powsybl.openreac.parameters.output;
 
 import com.powsybl.iidm.modification.*;
 import com.powsybl.iidm.modification.tapchanger.RatioTapPositionModification;
+import com.powsybl.iidm.network.Network;
 import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput.ReactiveSlack;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 /**
  * OpenReac user interface to get results information.
+ *
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
 public class OpenReacResult {
@@ -31,9 +34,9 @@ public class OpenReacResult {
     private final List<RatioTapPositionModification> tapModifications;
 
     /**
-     * @param status the final status of the OpenReac run.
+     * @param status      the final status of the OpenReac run.
      * @param amplIOFiles a file interface to fetch output file information.
-     * @param indicators a standard map written by the OpenReac ampl model.
+     * @param indicators  a standard map written by the OpenReac ampl model.
      */
     public OpenReacResult(OpenReacStatus status, OpenReacAmplIOFiles amplIOFiles, Map<String, String> indicators) {
         Objects.requireNonNull(amplIOFiles);
@@ -77,5 +80,25 @@ public class OpenReacResult {
 
     public List<VscConverterStationModification> getVscModifications() {
         return vscModifications;
+    }
+
+    public List<NetworkModification> getAllModifs() {
+        List<NetworkModification> modifs = new ArrayList<>(getGeneratorModifications().size() +
+            getShuntsModifications().size() +
+            getSvcModifications().size() +
+            getTapModifications().size() +
+            getVscModifications().size());
+        modifs.addAll(getGeneratorModifications());
+        modifs.addAll(getShuntsModifications());
+        modifs.addAll(getSvcModifications());
+        modifs.addAll(getTapModifications());
+        modifs.addAll(getVscModifications());
+        return modifs;
+    }
+
+    public void applyAllModifications(Network network) {
+        for (NetworkModification modif : getAllModifs()) {
+            modif.apply(network);
+        }
     }
 }
