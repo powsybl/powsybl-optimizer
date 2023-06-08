@@ -35,6 +35,6 @@ public final class OpenReacRunner {
         OpenReacAmplIOFiles amplIoInterface = new OpenReacAmplIOFiles(parameters, network, config.isDebug());
         AmplResults run = AmplModelRunner.run(network, variantId, reactiveOpf, manager, amplIoInterface);
         return new OpenReacResult(run.isSuccess() && amplIoInterface.checkErrors() ? OpenReacStatus.OK : OpenReacStatus.NOT_OK,
-                amplIoInterface.getReactiveSlack(), run.getIndicators());
+                amplIoInterface, run.getIndicators());
     }
 }

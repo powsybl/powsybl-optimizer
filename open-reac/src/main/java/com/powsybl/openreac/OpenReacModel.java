@@ -22,12 +22,13 @@ import static com.powsybl.ampl.converter.AmplConstants.DEFAULT_VARIANT_INDEX;
 
 /**
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
- *
  * OpenReac: a reactive opf to set target tension of the generators.
  * Enumeration to link resources ampl models to java code.
  * It allows to get the list of InputStream of the ampl model resources.
  */
 public class OpenReacModel implements AmplModel {
+
+    public static final String OUTPUT_FILE_PREFIX = "reactiveopf_results";
 
     public static final OutputFileFormat OUTPUT_FILE_FORMAT = new OutputFileFormat() {
 
@@ -48,9 +49,9 @@ public class OpenReacModel implements AmplModel {
     };
 
     public static OpenReacModel buildModel() {
-        return new OpenReacModel("reactiveopf_results", "openreac",
-                List.of("reactiveopf.run", "reactiveopfoutput.run", "reactiveopfexit.run"),
-                List.of("reactiveopf.mod", "reactiveopf.dat"));
+        return new OpenReacModel(OUTPUT_FILE_PREFIX, "openreac",
+                List.of("reactiveopf.run"),
+                List.of("reactiveopf.mod", "reactiveopf.dat", "reactiveopfoutput.run", "reactiveopfexit.run"));
     }
 
     private static final String NETWORK_DATA_PREFIX = "ampl";
@@ -134,8 +135,7 @@ public class OpenReacModel implements AmplModel {
 
     @Override
     public Collection<AmplReadableElement> getAmplReadableElement() {
-        return List.of(AmplReadableElement.SHUNT, AmplReadableElement.GENERATOR,
-                AmplReadableElement.VSC_CONVERTER_STATION, AmplReadableElement.STATIC_VAR_COMPENSATOR);
+        return List.of();
     }
 
     @Override

@@ -6,6 +6,8 @@
  */
 package com.powsybl.openreac.parameters.output;
 
+import com.powsybl.iidm.modification.GeneratorModification;
+import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput.ReactiveSlack;
 
 import java.util.List;
@@ -20,11 +22,14 @@ public class OpenReacResult {
     private final OpenReacStatus status;
     private final List<ReactiveSlack> reactiveSlacks;
     private final Map<String, String> indicators;
+    private final List<GeneratorModification> generatorModifications;
 
-    public OpenReacResult(OpenReacStatus status, List<ReactiveSlack> reactiveSlacks, Map<String, String> indicators) {
+    public OpenReacResult(OpenReacStatus status, OpenReacAmplIOFiles amplIOFiles, Map<String, String> indicators) {
+        Objects.requireNonNull(amplIOFiles);
         this.status = Objects.requireNonNull(status);
-        this.reactiveSlacks = Objects.requireNonNull(reactiveSlacks);
-        this.indicators = Objects.requireNonNull(indicators);
+        this.indicators = Map.copyOf(Objects.requireNonNull(indicators));
+        this.reactiveSlacks = List.copyOf(amplIOFiles.getReactiveSlackOutput().getSlacks());
+        this.generatorModifications = List.copyOf(amplIOFiles.getNetworkModifications().getGeneratorModifications());
     }
 
     public OpenReacStatus getStatus() {
@@ -38,4 +43,9 @@ public class OpenReacResult {
     public Map<String, String> getIndicators() {
         return indicators;
     }
+
+    public List<GeneratorModification> getGeneratorModifications() {
+        return generatorModifications;
+    }
+
 }

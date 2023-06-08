@@ -111,6 +111,14 @@
 
 
 ###############################################################################
+# Batteries
+###############################################################################
+# Active power battery_p0 and reactive power battery_q0 are used as a fixed values
+# No additional parameter file needed
+
+
+
+###############################################################################
 # Overrides for voltage bounds
 ###############################################################################
 # In case user wants to replace voltage bounds by other values, here is an 
@@ -118,13 +126,6 @@
 #
 # *** Format of ampl_network_substations_override.txt: 4 columns #"num" "minV (pu)" "maxV (pu)" "id"
 #
-
-
-# todo
-# Controle pour minimiser la prod ou bien viser un plan de tension cible
-# La cible est la valeur v(pu) dans _buses.
-# Si aucune valeur v(pu) dans _buses (pour aucun bus), on vise le milieu pout tous les bus
-# Controles pour indiquer pour quels postes on vise la cible, sinon on vise pour tous ceux qui ont une cible
 
 
 
@@ -169,7 +170,7 @@ if length($SHELL) > 0 then let operatingSystem := "linux";
 ###############################################################################
 # Management of optional input files
 ###############################################################################
-# AMPL is able to manage empty files; in that case, sets and paramaeters anre well
+# AMPL is able to manage empty files; in that case, sets and parameters are well
 # initialized to empty sets or tables; so the minimum we need is empty file.
 # Maybe this is not the best way to manage optional parameter files...
 if operatingSystem == "linux" then {
@@ -235,6 +236,13 @@ if "ratio_voltage_target" in PARAM_ALGO_KEYS then let ratio_voltage_target := nu
 check ratio_voltage_target >= 0 and ratio_voltage_target <= 1;
 if objective_choice==1
 then printf "Parameter: ratio for voltage target is := %f (%.2f%%)\n",ratio_voltage_target,ratio_voltage_target*100;
+
+# coeff_alpha == 1 : minimize sum of generation, all generating units vary with 1 unique variable alpha
+# coeff_alpha == 0 : minimize sum of squared difference between target and value
+param coeff_alpha default 1.0;
+if "coeff_alpha" in PARAM_ALGO_KEYS then let coeff_alpha := num(PARAM_ALGO_VALUES["coeff_alpha"]);
+printf "Parameter: coeff_alpha to choose wether generation vary homogeneously (coeff_alpha=1) or independantly (coeff_alpha=0) is := %.2f\n",coeff_alpha;
+check coeff_alpha >=0 and coeff_alpha <= 1;
 
 # Limit for detecting zero value for power
 param Pnull default 0.01; # MW
@@ -466,6 +474,7 @@ card(LCCCONV),card(LCCCONVON)
 # Is the case power globally power balanced? 
 let temp1 := sum{(c,n) in LOADCC} load_PFix[1,c,n];
 let temp2 := sum{(g,n) in UNITON} unit_Pc[1,g,n];
+let temp2 := temp2 + sum{(b,n) in BATTERYCC} battery_p0[1,b,n];
 let temp3 :=  (sum{(vscconv,n) in VSCCONVON} vscconv_P0[1,vscconv,n])+(sum{(l,k) in LCCCONVON} lccconv_P0[1,l,k]);
 let global_initial_losses_ratio := (temp2-temp1-temp3)/(temp1+temp3);
 
@@ -479,6 +488,7 @@ for {(l,n) in LCCCONVON}
 printf "Sum of HVDC conv.  H: %.0f MW\n", temp3;
 printf "Sum of loads       C: %.0f MW\n", temp1;
 printf "Sum of generations P: %.0f MW\n", temp2;
+printf "  (including batteries for %.1f MW\n", sum{(b,n) in BATTERYCC} battery_p0[1,b,n];
 printf "Balance    (P-C-H)/C: %.2f %%    (global_initial_losses_ratio=%f)\n\n", (temp2-temp1-temp3)/temp1*100,global_initial_losses_ratio;
 
 # Branches with low current limits (but keep in mind they are not used; this is just for information)
@@ -816,6 +826,7 @@ for {(g,n) in UNITON : abs(P_dcopf[g,n]-unit_Pc[1,g,n]) >= temp2*0.99}
 # Balance check
 let temp1 := sum{(c,n) in LOADCC} load_PFix[1,c,n];
 let temp2 := sum{(g,n) in UNITON} P_dcopf[g,n];
+let temp2 := temp2 + sum{(b,n) in BATTERYCC} battery_p0[1,b,n];
 let temp3 :=  (sum{(vscconv,n) in VSCCONVON} vscconv_P0[1,vscconv,n])+(sum{(l,k) in LCCCONVON} lccconv_P0[1,l,k]);
 printf "Sum of HVDC conv.  H: %.0f MW\n", temp3;
 printf "Sum of loads       C: %.0f MW\n", temp1;
@@ -869,7 +880,8 @@ let {n in BUSCC diff BUSVV} V[n] := voltage_lower_bound[1,bus_substation[1,n]]
 
 let {n in BUSCC_SLACK} slack1_balance_Q[n] := 0;
 let {n in BUSCC_SLACK} slack2_balance_Q[n] := 0;
-let {(g,n) in UNITON} P[g,n] := max(P_dcopf[g,n],unit_Pc[1,g,n]);
+let alpha := 0.01;
+let {(g,n) in UNITON} P_bounded[g,n] := max(P_dcopf[g,n],unit_Pc[1,g,n]);
 let {(g,n) in UNITON} Q[g,n] := 0.5*(corrected_unit_Qmax[g,n] + corrected_unit_Qmin[g,n]);
 let {(shunt,n) in SHUNT_VAR} shunt_var[shunt,n] := min{(1,shunt,k) in SHUNT} shunt_valnom[1,shunt,k];
 let {(svc,n) in SVCON} svc_qvar[svc,n] := 0.1;
@@ -883,7 +895,7 @@ printf "\n######################################################################
 printf "# ACopf solve: start (%s)\n\n",ctime();
 let tempstr := ctime();
 
-option knitro_options "opttol=1 opttolabs=1e-1 feastol=1 feastolabs=1e-3 maxit=500";
+option knitro_options "opttol=1 opttolabs=1e-1 feastol=1 feastolabs=1e-3 maxit=200";
 
 solve problem_acopf_objective;
 
@@ -903,6 +915,20 @@ for {n in 1 .. 2}
   let nb_iter_total := nb_iter_total + nb_iter_last; 
   if solve_result_num <= solve_result_num_limit then break; 
 }
+
+# In case of failure and coeff_alpha was 1, then switch to coeff_alpha=0 to give more freedom to generation
+if solve_result_num > solve_result_num_limit and coeff_alpha >= 0.999 then 
+for {n in 1 .. 2}
+{
+  printf "*** change coeff_alpha from  %f ",coeff_alpha;
+  let coeff_alpha := 0.0;
+  printf " to %f\n",coeff_alpha;
+  solve problem_acopf_objective;
+  let nb_iter_last := problem_acopf_objective.numiters;
+  let nb_iter_total := nb_iter_total + nb_iter_last; 
+  if solve_result_num <= solve_result_num_limit then break; 
+}
+
 
 
 #
@@ -985,6 +1011,17 @@ then {
         voltage_lower_bound[1,bus_substation[1,n]],V[n],voltage_upper_bound[1,bus_substation[1,n]];
 }
 
+
+
+###############################################################################
+#
+# Writing results and indicators
+#
+###############################################################################
+include reactiveopfoutput.run;
+
+
+
 # Write voltage information in debug file
 printf "#bus_id;Vnom;V;Vlb;Vub;Vmin_mod;Vmax_mod;Vmin_OK;Vmax_OK;Vmin_ori;Vmax_ori;sQ1;sQ2;\n" > debug_bus.csv;
 for {n in BUSCC} printf "%Q;%i;%.4f;%.4f;%.4f;%.4f;%.4f;%s;%s;%.4f;%.4f;%.2f;%.2f;\n",
@@ -1001,15 +1038,23 @@ for {n in BUSCC} printf "%Q;%i;%.4f;%.4f;%.4f;%.4f;%.4f;%s;%s;%.4f;%.4f;%.2f;%.2
   ;
 close debug_bus.csv;
 
-
-
-###############################################################################
-#
-# Writing results and indicators
-#
-###############################################################################
-include reactiveopfoutput.run;
-
+if 1==0 then {
+# Write units which are not in uniton (debug only)
+let fileOut := "reactiveopf_results_generators_Pnull.csv";
+printf "#variant;num;bus;vRegul;V(pu);targetP(MW);targetQ(Mvar);P(MW);Q(MW);id;bus_id;\n" > (fileOut);
+printf{(g,n) in UNITCC diff UNITON} "%i;%i;%i;%Q;%.3f;%.3f;%.3f;%.3f;%.3f;%Q;%Q;\n",
+  1,g,n,
+  unit_vregul[1,g,n],
+  V[n],
+  unit_Pc[1,g,n],
+  unit_Qc[1,g,n],
+  unit_P0[1,g,n],
+  unit_Q0[1,g,n],
+  unit_id[1,g,n],
+  bus_id[1,n]
+  > (fileOut);
+close (fileOut);
+}
 
 
 ###############################################################################
