@@ -182,6 +182,7 @@ class OpenReacRunnerTest {
             OpenReacResult openReacResult = OpenReacRunner.run(network,
                 network.getVariantManager().getWorkingVariantId(), new OpenReacParameters(), new OpenReacConfig(true),
                 computationManager);
+            assertEquals(OpenReacStatus.OK, openReacResult.getStatus());
             openReacResult.applyAllModifications(network);
         }
         LoadFlowResult loadFlowResult = LoadFlow.run(network);
@@ -203,6 +204,8 @@ class OpenReacRunnerTest {
     @Test
     public void testSvc() throws IOException {
         Network network = VoltageControlNetworkFactory.createWithStaticVarCompensator();
+        network.getStaticVarCompensatorStream().forEach(svc -> svc.setRegulationMode(
+            StaticVarCompensator.RegulationMode.VOLTAGE));
         testAllModifAndLoadFlow(network, "openreac-output-svc");
     }
 
