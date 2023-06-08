@@ -175,8 +175,10 @@ class OpenReacRunnerTest {
                 subFolder + "/reactiveopf_results_shunts.csv",
                 subFolder + "/reactiveopf_results_static_var_compensators.csv",
                 subFolder + "/reactiveopf_results_vsc_converter_stations.csv"));
-        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
-            localCommandExecutor, ForkJoinPool.commonPool())) {
+        // tests really run openreac, doesn't work without a proper ampl config
+        //        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
+//            localCommandExecutor, ForkJoinPool.commonPool())) {
+        try (ComputationManager computationManager = new LocalComputationManager()) {
             OpenReacResult openReacResult = OpenReacRunner.run(network,
                 network.getVariantManager().getWorkingVariantId(), new OpenReacParameters(), new OpenReacConfig(true),
                 computationManager);
@@ -214,6 +216,17 @@ class OpenReacRunnerTest {
     public void testShuntReconnection() throws IOException {
         Network network = ShuntNetworkFactory.create();
         testAllModifAndLoadFlow(network, "openreac-output-shunt");
+    }
+
+    @Test
+    public void test(){
+        Network network = IeeeCdfNetworkFactory.create118();
+        OpenReacParameters parameters = new OpenReacParameters();
+        OpenReacResult openReacResult = OpenReacRunner.run(network,
+            network.getVariantManager().getWorkingVariantId(),
+            parameters,
+            new OpenReacConfig(true),
+            LocalComputationManager.getDefault());
     }
 
 }
