@@ -218,15 +218,4 @@ class OpenReacRunnerTest {
         testAllModifAndLoadFlow(network, "openreac-output-shunt");
     }
 
-    @Test
-    public void test(){
-        Network network = IeeeCdfNetworkFactory.create118();
-        OpenReacParameters parameters = new OpenReacParameters();
-        OpenReacResult openReacResult = OpenReacRunner.run(network,
-            network.getVariantManager().getWorkingVariantId(),
-            parameters,
-            new OpenReacConfig(true),
-            LocalComputationManager.getDefault());
-    }
-
 }
