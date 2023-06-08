@@ -111,12 +111,12 @@ class OpenReacRunnerTest {
                 network.getVariantManager().getWorkingVariantId(), parameters, config, computationManager);
 
             assertEquals(OpenReacStatus.OK, openReacResult.getStatus());
-            assertEquals(34, openReacResult.getGeneratorModifications().size());
             assertEquals(1, openReacResult.getShuntsModifications().size());
             assertEquals(2, openReacResult.getTapModifications().size());
             assertEquals(1, openReacResult.getSvcModifications().size());
             assertEquals(1, openReacResult.getVscModifications().size());
-            assertEquals(75, openReacResult.getIndicators().size());
+            assertEquals(54, openReacResult.getGeneratorModifications().size());
+            assertEquals(78, openReacResult.getIndicators().size());
             assertTrue(openReacResult.getReactiveSlacks().isEmpty());
         }
     }

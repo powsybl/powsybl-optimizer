@@ -283,6 +283,8 @@ check {(t,b,n) in BATTERY} : (t,n) in BUS union {(t,-1)};
 check {(t,b,n) in BATTERY} : (t,battery_substation[t,b,n]) in SUBSTATIONS;
 check {(t,b,n) in BATTERY: (t,n) in BUS} : battery_substation[t,b,n] == bus_substation[t,n];
 check {(t,b,n) in BATTERY} : battery_Pmin[t,b,n] <= battery_Pmax[t,b,n] ;
+check {(t,b,n) in BATTERY} : abs(battery_p0[t,b,n]) <= PQmax;
+check {(t,b,n) in BATTERY} : abs(battery_q0[t,b,n]) <= PQmax;
 
 
 
@@ -539,15 +541,16 @@ set BUS2:= setof {(1,n) in BUS:
 set BRANCH2:= setof {(1,qq,m,n) in BRANCH: m in BUS2 and n in BUS2} (qq,m,n);
 
 set BUSCC dimen 1 default {};
-set BRANCHCC:= {(qq,m,n) in BRANCH2: m in BUSCC and n in BUSCC};
-set LOADCC  := setof {(1,c,n)    in LOAD  : n in BUSCC               } (c,n);
-set UNITCC  := setof {(1,g,n)    in UNIT  : n in BUSCC               } (g,n);
+set BRANCHCC  := {(qq,m,n) in BRANCH2: m in BUSCC and n in BUSCC};
+set LOADCC    := setof {(1,c,n) in LOAD    : n in BUSCC} (c,n);
+set UNITCC    := setof {(1,g,n) in UNIT    : n in BUSCC} (g,n);
+set BATTERYCC := setof {(1,b,n) in BATTERY : n in BUSCC} (b,n);
 
 # Busses with valid voltage value
 set BUSVV := {n in BUSCC : bus_V0[1,n] >= epsilon_min_voltage}; 
 
-# Warning: units with zero target are considered as out of order
 # Units up and generating:
+# Warning: units with Ptarget=0 are considered as out of order
 set UNITON := {(g,n) in UNITCC : abs(unit_Pc[1,g,n]) >= Pnull};
 
 # Branches with zero or near zero impedances
@@ -620,7 +623,6 @@ set LCCCONVON := setof{(t,l,n) in LCCCONV:
   and abs(lccconv_P0[1,l,n]) <= PQmax
   and abs(lccconv_Q0[1,l,n]) <= PQmax
   } (l,n);
-
 
 
 
@@ -770,6 +772,7 @@ var balance_neg{BUSCC} >= 0;
 # Balance at each bus
 subject to ctr_balance{PROBLEM_DCOPF, n in BUSCC}:
   - sum{(g,n) in UNITON} P_dcopf[g,n]
+  - sum{(b,n) in BATTERYCC} battery_p0[1,b,n]
   + sum{(c,n) in LOADCC} load_PFix[1,c,n]
   + sum{(qq,n,m) in BRANCHCC} activeflow[qq,n,m] # active power flow outgoing on branch qq at bus n
   - sum{(qq,m,n) in BRANCHCC} activeflow[qq,m,n] # active power flow entering in bus n on branch qq
@@ -829,15 +832,16 @@ var V{n in BUSCC}
 #
 
 # Active generation
-var alpha <=1, >=1; # If alpha==1 then all units are at Pmax
-var P{(g,n) in UNITON} 
-# todo mieux gerer la production lorsqu'on aure progresse pour la realisabilite
-/*
- = unit_Pc[1,g,n] + 
-  if ( unit_Pc[1,g,n] < corrected_unit_Pmax[g,n] - Pnull and unit_Pc[1,g,n] > Pnull) 
-  then alpha*(corrected_unit_Pmax[g,n]- unit_Pc[1,g,n]);
-  */
-  <= max(unit_Pc[1,g,n],corrected_unit_Pmax[g,n]), >= min(unit_Pc[1,g,n],corrected_unit_Pmin[g,n]);
+var alpha <=1, >=-1; # If alpha==1 then all units are at Pmax
+var P_bounded{(g,n) in UNITON} <= max(unit_Pc[1,g,n],corrected_unit_Pmax[g,n]), >= min(unit_Pc[1,g,n],corrected_unit_Pmin[g,n]);
+# If coeff_alpha == 1 then all P are defined by the single variable alpha
+# If coeff_alpha == 0 then all P are free within their respective bounds
+# todo faire des tests avec les valeurs de coeff_alpha
+var P{(g,n) in UNITON} =
+  if   ( unit_Pc[1,g,n] < (corrected_unit_Pmax[g,n] - Pnull) and unit_Pc[1,g,n] > Pnull )
+  then (     coeff_alpha   * ( unit_Pc[1,g,n] + alpha*(corrected_unit_Pmax[g,n]- unit_Pc[1,g,n]) )
+         + (1-coeff_alpha) *   P_bounded[g,n] )
+  else unit_Pc[1,g,n] ;
 
 
 #
@@ -918,6 +922,8 @@ subject to ctr_balance_P{PROBLEM_ACOPF,k in BUSCC}:
   + sum{(qq,m,k) in BRANCHCC} base100MVA * V[k] * Red_Tran_Act_Inv[qq,m,k]
   # Generating units
   - sum{(g,k) in UNITON} P[g,k]
+  # Batteries
+  - sum{(b,k) in BATTERYCC} battery_p0[1,b,k]
   # Loads
   + sum{(c,k) in LOADCC} load_PFix[1,c,k]     # Fixed value
   # VSC converters
@@ -935,12 +941,10 @@ subject to ctr_balance_P{PROBLEM_ACOPF,k in BUSCC}:
 # If there is a unit, or SVC, or VSC, they already have reactive power generation, so no need to add slack variables
 set BUSCC_SLACK :=  {n in BUSCC: 
   (
-  #(card({(c,n) in LOADCC})>0 or card({(t,s,n) in SHUNT})>0) and
   card{(g,n) in UNITON: (g,n) not in UNIT_FIXQ}==0
   and card{(svc,n) in SVCON}==0
   and card{(vscconv,n) in VSCCONVON}==0
   )
-  #or (card(setof{(qq,m,n) in BRANCHCC}m)+card(setof{(qq,n,m) in BRANCHCC}m))==1 # Bus connected with only one other bus
   } ;
 var slack1_balance_Q{BUSCC_SLACK} >=0, <= 500; # 500 Mvar is already HUGE
 var slack2_balance_Q{BUSCC_SLACK} >=0, <= 500;
@@ -950,10 +954,12 @@ subject to ctr_balance_Q{PROBLEM_ACOPF,k in BUSCC}:
   # Flows
     sum{(qq,k,n) in BRANCHCC} base100MVA * V[k] * Red_Tran_Rea_Dir[qq,k,n]
   + sum{(qq,m,k) in BRANCHCC} base100MVA * V[k] * Red_Tran_Rea_Inv[qq,m,k]
-  # Senerating units
+  # Generating units
   - sum{(g,k) in UNITON: (g,k) not in UNIT_FIXQ } Q[g,k]
   - sum{(g,k) in UNIT_FIXQ} unit_Qc[1,g,k]
-  # Soad
+  # Batteries
+  - sum{(b,k) in BATTERYCC} battery_q0[1,b,k]
+  # Loads
   + sum{(c,k) in LOADCC} load_QFix[1,c,k]
   # Shunts
   - sum{(shunt,k) in SHUNT_FIX} base100MVA * shunt_valnom[1,shunt,k] * V[k]^2
@@ -1003,12 +1009,10 @@ minimize problem_acopf_objective:
     + penalty_invest_rea_neg * slack2_balance_Q[n]
     )
   
-  # todo revenir a une variation homogene de la prod
-  # L'idee serait de demarrer avec des prods proportionnelle (utiliser alpha), mais si on n'y arrive 
-  # pas alors on minimise l'ecart quadratique ou la somme
-  #+ alpha
+  # coeff_alpha == 1 : minimize sum of generation, all generating units vary with 1 unique variable alpha
+  # coeff_alpha == 0 : minimize sum of squared difference between target and value
   + (if objective_choice==1 or objective_choice==2 then penalty_active_power_low else penalty_active_power_high)
-  * sum{(g,n) in UNITON} ( (P[g,n]-unit_Pc[1,g,n])/max(1,abs(unit_Pc[1,g,n])) )**2 
+  * sum{(g,n) in UNITON} (coeff_alpha * P[g,n] + (1-coeff_alpha)*( (P[g,n]-unit_Pc[1,g,n])/max(1,abs(unit_Pc[1,g,n])) )**2 ) 
   
   # Voltage for busses, ratio between Vmin and Vmax
   + (if objective_choice==1 then penalty_voltage_target_high else penalty_voltage_target_low)

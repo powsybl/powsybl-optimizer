@@ -40,11 +40,11 @@ public class OpenReacResult {
         this.status = Objects.requireNonNull(status);
         this.indicators = Map.copyOf(Objects.requireNonNull(indicators));
         this.reactiveSlacks = List.copyOf(amplIOFiles.getReactiveSlackOutput().getSlacks());
-        this.generatorModifications = List.copyOf(amplIOFiles.getNetworkModifOuputs().getGeneratorModifications());
-        this.shuntsModifications = List.copyOf(amplIOFiles.getNetworkModifOuputs().getShuntModifications());
-        this.vscModifications = List.copyOf(amplIOFiles.getNetworkModifOuputs().getVscModifications());
-        this.svcModifications = List.copyOf(amplIOFiles.getNetworkModifOuputs().getSvcModifications());
-        this.tapModifications = List.copyOf(amplIOFiles.getNetworkModifOuputs().getTapModifications());
+        this.generatorModifications = List.copyOf(amplIOFiles.getNetworkModifications().getGeneratorModifications());
+        this.shuntsModifications = List.copyOf(amplIOFiles.getNetworkModifications().getShuntModifications());
+        this.vscModifications = List.copyOf(amplIOFiles.getNetworkModifications().getVscModifications());
+        this.svcModifications = List.copyOf(amplIOFiles.getNetworkModifications().getSvcModifications());
+        this.tapModifications = List.copyOf(amplIOFiles.getNetworkModifications().getTapModifications());
     }
 
     public OpenReacStatus getStatus() {

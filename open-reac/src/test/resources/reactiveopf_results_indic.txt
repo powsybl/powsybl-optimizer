@@ -1,20 +1,22 @@
 final_status OK
 dcopf_status OK
 
+ctime_start 'Thu Jun 08 10:24:41 2023'
 last_solve_result_num 0
-nb_iter_last 40
-nb_iter_total 40
-_ampl_elapsed_time 0.025057
-_total_solve_time 0.111212
+nb_iter_last 41
+nb_iter_total 41
+_ampl_elapsed_time 0.202000
+_total_solve_time 0.312500
 total_time 0
 
-operatingSystem linux
-SHELL '/bin/bash'
-HOSTNAME ''
-directory '/tmp/ampl_13482611771555082678'
+operatingSystem windows
+OS 'Windows_NT'
+COMPUTERNAME 'ARTELYS-PC158'
+directory 'C:\Users\ARTELY~1\AppData\Local\Temp\ampl_16506254575477997295'
 
 objective_choice 1
-ratio_voltage_target 1.000000
+ratio_voltage_target 0.700000
+coeff_alpha 1.000000
 Pnull 0.010000
 Znull 0.000100
 epsilon_nominal_voltage 1.000000
@@ -60,121 +62,23 @@ nb_vsc_converter_in_data_file 0
 nb_vsc_converter_up_and_running 0
 nb_lcc_converter_in_data_file 0
 nb_lcc_converter_up_and_running 0
+nb_batteries 0
+sum_batteries_pmax 0.0
+sum_batteries_pmin 0.0
 
 max_teta_dc 0.13
-max_teta_ac 1.35
+max_teta_ac 0.00
 teta_max 3.13
 min_teta_dc -0.39
-min_teta_ac -0.18
+min_teta_ac -3.07
 teta_min -3.39
 max_delta_teta_dc 0.226270
-max_delta_teta_ac 0.567872
+max_delta_teta_ac 1.089368
 min_delta_teta_dc -0.206321
-min_delta_teta_ac -0.496002
+min_delta_teta_ac -0.908258
 
 nb_reactive_slacks 0
 nb_slacks_condensator 0
 sum_slacks_condensator 0.0
 nb_slacks_self 0
 sum_slacks_self 0.0
-final_status OK
-dcopf_status OK
-
-last_solve_result_num 0
-nb_iter_last 40
-nb_iter_total 40
-_ampl_elapsed_time 0.026580
-_total_solve_time 0.111212
-total_time 0
-
-operatingSystem linux
-SHELL '/bin/bash'
-HOSTNAME ''
-directory '/tmp/ampl_13482611771555082678'
-
-objective_choice 1
-ratio_voltage_target 1.000000
-Pnull 0.010000
-Znull 0.000100
-epsilon_nominal_voltage 1.000000
-epsilon_min_voltage 0.500000
-ignore_voltage_bounds 0.000000
-PQmax 9000.000000
-defaultPmax 1000.000000
-defaultPmin 0.000000
-defaultQmaxPmaxRatio 0.300000
-defaultQmin -300.000000
-defaultQmax 300.000000
-minimalQPrange 1.000000
-
-nb_substations 118
-nb_bus_in_data_file 118
-nb_bus_in_ACDC_CC 118
-nb_bus_in_AC_CC 118
-nb_bus_in_ACDC_but_out_AC_CC 0
-nb_bus_with_voltage_value 118
-nb_bus_with_reactive_slacks 84
-nb_bus_without_reactive_slacks 34
-nb_branch_in_data_file 186
-nb_branch_in_AC_CC 186
-nb_branch_with_nonsmall_impedance 186
-nb_branch_with_zero_or_small_impedance 0
-nb_unit_in_data_file 54
-nb_unit_in_AC_CC 54
-nb_unit_up_and_running 34
-nb_unit_with_variable_reactive_power 34
-nb_unit_with_fixed_reactive_power 0
-nb_load_in_data_file 91
-nb_load_in_AC_CC 91
-nb_shunt_in_data_file 14
-nb_shunt_connectable_or_in_AC_CC 14
-nb_shunt_with_fixed_value 13
-nb_shunt_with_variable_value 1
-nb_transformers_with_variable_ratio 0
-nb_transformers_with_fixed_ratio 0
-nb_svc_in_data_file 0
-nb_svc_in_AC_CC 0
-nb_svc_up_and_operating 0
-nb_vsc_converter_in_data_file 0
-nb_vsc_converter_up_and_running 0
-nb_lcc_converter_in_data_file 0
-nb_lcc_converter_up_and_running 0
-
-max_teta_dc 0.13
-max_teta_ac 1.35
-teta_max 3.13
-min_teta_dc -0.39
-min_teta_ac -0.18
-teta_min -3.39
-max_delta_teta_dc 0.226270
-max_delta_teta_ac 0.567872
-min_delta_teta_dc -0.206321
-min_delta_teta_ac -0.496002
-
-nb_reactive_slacks 0
-nb_slacks_condensator 0
-sum_slacks_condensator 0.0
-nb_slacks_self 0
-sum_slacks_self 0.0
-final_status OK
-errorMessage 'empty error message'
-ctime_start 'Thu Apr 06 16:55:35 2023'
-
-dcopf_status OK
-operatingSystem linux
-SHELL '/bin/bash'
-HOSTNAME ''
-directory '/tmp/ampl_13482611771555082678'
-
-Pnull 0.010000
-Znull 0.000100
-epsilon_nominal_voltage 1.000000
-epsilon_min_voltage 0.500000
-ignore_voltage_bounds 0.000000
-PQmax 9000.000000
-defaultPmax 1000.000000
-defaultPmin 0.000000
-defaultQmaxPmaxRatio 0.300000
-defaultQmin -300.000000
-defaultQmax 300.000000
-minimalQPrange 1.000000
