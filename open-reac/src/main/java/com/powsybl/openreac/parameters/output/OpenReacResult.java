@@ -28,7 +28,7 @@ public class OpenReacResult {
     private final List<ShuntCompensatorModification> shuntsModifications;
     private final List<VscConverterStationModification> vscModifications;
     private final List<StaticVarCompensatorModification> svcModifications;
-    private final List<RatioTapPositionModification> tapModifications;
+    private final List<RatioTapPositionModification> tapPositionModifications;
 
     /**
      * @param status the final status of the OpenReac run.
@@ -44,7 +44,7 @@ public class OpenReacResult {
         this.shuntsModifications = List.copyOf(amplIOFiles.getNetworkModifications().getShuntModifications());
         this.vscModifications = List.copyOf(amplIOFiles.getNetworkModifications().getVscModifications());
         this.svcModifications = List.copyOf(amplIOFiles.getNetworkModifications().getSvcModifications());
-        this.tapModifications = List.copyOf(amplIOFiles.getNetworkModifications().getTapModifications());
+        this.tapPositionModifications = List.copyOf(amplIOFiles.getNetworkModifications().getTapPositionModifications());
     }
 
     public OpenReacStatus getStatus() {
@@ -71,8 +71,8 @@ public class OpenReacResult {
         return svcModifications;
     }
 
-    public List<RatioTapPositionModification> getTapModifications() {
-        return tapModifications;
+    public List<RatioTapPositionModification> getTapPositionModifications() {
+        return tapPositionModifications;
     }
 
     public List<VscConverterStationModification> getVscModifications() {

@@ -112,7 +112,7 @@ class OpenReacRunnerTest {
 
             assertEquals(OpenReacStatus.OK, openReacResult.getStatus());
             assertEquals(1, openReacResult.getShuntsModifications().size());
-            assertEquals(2, openReacResult.getTapModifications().size());
+            assertEquals(2, openReacResult.getTapPositionModifications().size());
             assertEquals(1, openReacResult.getSvcModifications().size());
             assertEquals(1, openReacResult.getVscModifications().size());
             assertEquals(54, openReacResult.getGeneratorModifications().size());

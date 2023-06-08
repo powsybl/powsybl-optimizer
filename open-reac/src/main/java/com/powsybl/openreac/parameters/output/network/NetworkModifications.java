@@ -26,18 +26,18 @@ public class NetworkModifications {
     private final ShuntCompensatorNetworkOutput shuntsOutput;
     private final VscNetworkOutput vscOutput;
     private final SvcNetworkOutput svcOutput;
-    private final TapNetworkOutput tapOutput;
+    private final TapPositionNetworkOutput tapPositionOutput;
 
     public NetworkModifications(Network network) {
         generatorNetworkOutput = new GeneratorNetworkOutput(network);
         shuntsOutput = new ShuntCompensatorNetworkOutput(network);
         vscOutput = new VscNetworkOutput(network);
         svcOutput = new SvcNetworkOutput(network);
-        tapOutput = new TapNetworkOutput();
+        tapPositionOutput = new TapPositionNetworkOutput();
     }
 
     public List<AmplOutputFile> getOutputFiles() {
-        return List.of(generatorNetworkOutput, shuntsOutput, vscOutput, svcOutput, tapOutput);
+        return List.of(generatorNetworkOutput, shuntsOutput, vscOutput, svcOutput, tapPositionOutput);
     }
 
     public List<GeneratorModification> getGeneratorModifications() {
@@ -56,7 +56,7 @@ public class NetworkModifications {
         return svcOutput.getModifications();
     }
 
-    public List<RatioTapPositionModification> getTapModifications() {
-        return tapOutput.getModifications();
+    public List<RatioTapPositionModification> getTapPositionModifications() {
+        return tapPositionOutput.getModifications();
     }
 }

@@ -13,7 +13,7 @@ import com.powsybl.iidm.modification.tapchanger.RatioTapPositionModification;
 /**
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
-public class TapNetworkOutput extends AbstractNetworkOutput<RatioTapPositionModification> {
+public class TapPositionNetworkOutput extends AbstractNetworkOutput<RatioTapPositionModification> {
     private static final String ELEMENT = "rtc";
     private static final int ID_COLUMN_INDEX = 1;
     private static final int TAP_POS_COLUMN_INDEX = 2;
