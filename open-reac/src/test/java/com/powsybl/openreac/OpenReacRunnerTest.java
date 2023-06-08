@@ -15,6 +15,11 @@ import com.powsybl.computation.local.LocalComputationConfig;
 import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
 import com.powsybl.iidm.network.*;
+import com.powsybl.loadflow.LoadFlow;
+import com.powsybl.loadflow.LoadFlowResult;
+import com.powsybl.openreac.network.HvdcNetworkFactory;
+import com.powsybl.openreac.network.ShuntNetworkFactory;
+import com.powsybl.openreac.network.VoltageControlNetworkFactory;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
@@ -160,6 +165,55 @@ class OpenReacRunnerTest {
             assertEquals(78, openReacResult.getIndicators().size());
             assertTrue(openReacResult.getReactiveSlacks().isEmpty());
         }
+    }
+
+    private void testAllModifAndLoadFlow(Network network, String subFolder) throws IOException {
+        LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
+            List.of(subFolder + "/reactiveopf_results_generators.csv",
+                subFolder + "/reactiveopf_results_indic.txt",
+                subFolder + "/reactiveopf_results_rtc.csv",
+                subFolder + "/reactiveopf_results_shunts.csv",
+                subFolder + "/reactiveopf_results_static_var_compensators.csv",
+                subFolder + "/reactiveopf_results_vsc_converter_stations.csv"));
+        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
+            localCommandExecutor, ForkJoinPool.commonPool())) {
+            OpenReacResult openReacResult = OpenReacRunner.run(network,
+                network.getVariantManager().getWorkingVariantId(), new OpenReacParameters(), new OpenReacConfig(true),
+                computationManager);
+            openReacResult.applyAllModifications(network);
+        }
+        LoadFlowResult loadFlowResult = LoadFlow.run(network);
+        assertTrue(loadFlowResult.isOk());
+    }
+
+    @Test
+    public void testOnlyGenerator() throws IOException {
+        Network network = IeeeCdfNetworkFactory.create14();
+        testAllModifAndLoadFlow(network, "openreac-output-ieee14");
+    }
+
+    @Test
+    public void testHvdc() throws IOException {
+        Network network = HvdcNetworkFactory.createNetworkWithGenerators();
+        testAllModifAndLoadFlow(network, "openreac-output-hvdc");
+    }
+
+    @Test
+    public void testSvc() throws IOException {
+        Network network = VoltageControlNetworkFactory.createWithStaticVarCompensator();
+        testAllModifAndLoadFlow(network, "openreac-output-svc");
+    }
+
+    @Test
+    public void testVsc() throws IOException {
+        Network network = HvdcNetworkFactory.createVsc();
+        testAllModifAndLoadFlow(network, "openreac-output-vsc");
+    }
+
+    @Test
+    public void testShuntReconnection() throws IOException {
+        Network network = ShuntNetworkFactory.create();
+        testAllModifAndLoadFlow(network, "openreac-output-shunt");
     }
 
 }
