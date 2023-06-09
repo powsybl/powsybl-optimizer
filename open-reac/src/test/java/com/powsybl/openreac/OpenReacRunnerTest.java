@@ -180,6 +180,7 @@ class OpenReacRunnerTest {
             OpenReacResult openReacResult = OpenReacRunner.run(network,
                 network.getVariantManager().getWorkingVariantId(), parameters, new OpenReacConfig(true),
                 computationManager);
+            assertEquals(OpenReacStatus.OK, openReacResult.getStatus());
             openReacResult.applyAllModifications(network);
         }
         LoadFlowResult loadFlowResult = LoadFlow.run(network);
