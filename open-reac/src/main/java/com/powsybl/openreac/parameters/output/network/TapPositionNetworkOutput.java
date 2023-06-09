@@ -9,14 +9,20 @@ package com.powsybl.openreac.parameters.output.network;
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.iidm.modification.tapchanger.RatioTapPositionModification;
+import com.powsybl.iidm.network.Network;
 
 /**
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
 public class TapPositionNetworkOutput extends AbstractNetworkOutput<RatioTapPositionModification> {
     private static final String ELEMENT = "rtc";
-    private static final int ID_COLUMN_INDEX = 1;
+    private static final int TRANSFO_ID_COLUMN_INDEX = 1;
     private static final int TAP_POS_COLUMN_INDEX = 2;
+    private final Network network;
+
+    public TapPositionNetworkOutput(Network network) {
+        this.network = network;
+    }
 
     @Override
     public String getElement() {
@@ -25,9 +31,9 @@ public class TapPositionNetworkOutput extends AbstractNetworkOutput<RatioTapPosi
 
     @Override
     protected RatioTapPositionModification doReadLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
-        String id = stringToIntMapper.getId(AmplSubset.RATIO_TAP_CHANGER, Integer.parseInt(tokens[ID_COLUMN_INDEX]));
-        int tapPosition = Integer.parseInt(tokens[TAP_POS_COLUMN_INDEX]);
-
-        return new RatioTapPositionModification(id, tapPosition);
+        String transfoId = stringToIntMapper.getId(AmplSubset.BRANCH, Integer.parseInt(tokens[TRANSFO_ID_COLUMN_INDEX]));
+        int tapPosition = -1 + network.getTwoWindingsTransformer(transfoId).getRatioTapChanger().getLowTapPosition()
+            + Integer.parseInt(tokens[TAP_POS_COLUMN_INDEX]);
+        return new RatioTapPositionModification(transfoId, tapPosition);
     }
 }

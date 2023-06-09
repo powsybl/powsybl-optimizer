@@ -18,7 +18,6 @@ import com.powsybl.iidm.network.*;
 import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowResult;
 import com.powsybl.openreac.network.HvdcNetworkFactory;
-import com.powsybl.openreac.network.ShuntNetworkFactory;
 import com.powsybl.openreac.network.VoltageControlNetworkFactory;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
@@ -170,12 +169,14 @@ class OpenReacRunnerTest {
     private void testAllModifAndLoadFlow(Network network, String subFolder, OpenReacParameters parameters) throws IOException {
         LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
             List.of(subFolder + "/reactiveopf_results_generators.csv",
-                    subFolder + "/reactiveopf_results_indic.txt",
-                    subFolder + "/reactiveopf_results_rtc.csv",
-                    subFolder + "/reactiveopf_results_shunts.csv",
-                    subFolder + "/reactiveopf_results_static_var_compensators.csv",
-                    subFolder + "/reactiveopf_results_vsc_converter_stations.csv"));
-        // FIXME later
+                subFolder + "/reactiveopf_results_indic.txt",
+                subFolder + "/reactiveopf_results_rtc.csv",
+                subFolder + "/reactiveopf_results_shunts.csv",
+                subFolder + "/reactiveopf_results_static_var_compensators.csv",
+                subFolder + "/reactiveopf_results_vsc_converter_stations.csv"));
+        // tests really run openreac, doesn't work without a proper ampl config
+        //        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
+//            localCommandExecutor, ForkJoinPool.commonPool())) {
         try (ComputationManager computationManager = new LocalComputationManager()) {
             OpenReacResult openReacResult = OpenReacRunner.run(network,
                 network.getVariantManager().getWorkingVariantId(), parameters, new OpenReacConfig(true),

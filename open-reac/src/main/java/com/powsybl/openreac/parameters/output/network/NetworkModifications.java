@@ -33,7 +33,7 @@ public class NetworkModifications {
         shuntsOutput = new ShuntCompensatorNetworkOutput(network);
         vscOutput = new VscNetworkOutput(network);
         svcOutput = new SvcNetworkOutput(network);
-        tapPositionOutput = new TapPositionNetworkOutput();
+        tapPositionOutput = new TapPositionNetworkOutput(network);
     }
 
     public List<AmplOutputFile> getOutputFiles() {
