@@ -64,12 +64,14 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
         for (Map.Entry<String, VoltageLimitOverride> entry : normalizedVoltageLimitsOverride.entrySet()) {
             String voltageLevelId = entry.getKey();
             VoltageLimitOverride limits = entry.getValue();
-            int amplId = stringToIntMapper.getInt(AmplSubset.VOLTAGE_LEVEL, voltageLevelId);
-            double newHighVoltageLimit = Double.isNaN(limits.getDeltaHighVoltageLimit()) ? AmplConstants.INVALID_FLOAT_VALUE : limits.getDeltaHighVoltageLimit();
-            double newLowVoltageLimit = Double.isNaN(limits.getDeltaLowVoltageLimit()) ? AmplConstants.INVALID_FLOAT_VALUE : limits.getDeltaLowVoltageLimit();
-            String[] tokens = {Integer.toString(amplId), Double.toString(newLowVoltageLimit), Double.toString(newHighVoltageLimit), AmplIOUtils.addQuotes(voltageLevelId)};
-            dataBuilder.append(String.join(" ", tokens));
-            dataBuilder.append(System.lineSeparator());
+            if (Double.isNaN(limits.getDeltaHighVoltageLimit()) || Double.isNaN(limits.getDeltaLowVoltageLimit())) {
+                int amplId = stringToIntMapper.getInt(AmplSubset.VOLTAGE_LEVEL, voltageLevelId);
+                double newHighVoltageLimit = Double.isNaN(limits.getDeltaHighVoltageLimit()) ? AmplConstants.INVALID_FLOAT_VALUE : limits.getDeltaHighVoltageLimit();
+                double newLowVoltageLimit = Double.isNaN(limits.getDeltaLowVoltageLimit()) ? AmplConstants.INVALID_FLOAT_VALUE : limits.getDeltaLowVoltageLimit();
+                String[] tokens = {Integer.toString(amplId), Double.toString(newLowVoltageLimit), Double.toString(newHighVoltageLimit), AmplIOUtils.addQuotes(voltageLevelId)};
+                dataBuilder.append(String.join(" ", tokens));
+                dataBuilder.append(System.lineSeparator());
+            }
         }
         //add new line at the end of the file !
         dataBuilder.append(System.lineSeparator());
