@@ -22,7 +22,7 @@
 # The 1st column "variant" may also be used to define time step, in case this
 # PowSyBl format is used for multi-timestep OPF. This is why the letter for
 # the variant is mostly 't' and not 'v' (in power system, v is for voltage).
-set SUBSTATIONS dimen 2; #See this in error message? Use "ampl reactiveopf.run" instead of .mod 
+set SUBSTATIONS dimen 2; #See this in error message? Use "ampl reactiveopf.run" instead of .mod
 param substation_horizon     {SUBSTATIONS} symbolic;
 param substation_fodist      {SUBSTATIONS};
 param substation_Vnomi       {SUBSTATIONS}; # kV
@@ -48,11 +48,11 @@ check{(t,s) in SUBSTATIONS: substation_Vmin[t,s] >= epsilon_min_voltage and subs
 # Typical value is 0.5 although academics would use 0.9 or 0.95
 check epsilon_min_voltage > 0 and epsilon_min_voltage < 1;
 # Bounds below will be used for substations without bounds or with bad bounds (eg 0.01pu or 20pu are bad values)
-param minimal_voltage_lower_bound := 
+param minimal_voltage_lower_bound :=
   if card({(t,s) in SUBSTATIONS: substation_Vmin[t,s] > 0}) > 0
   then max(epsilon_min_voltage,min{(t,s) in SUBSTATIONS: substation_Vmin[t,s] > 0} substation_Vmin[t,s])
   else epsilon_min_voltage;
-param maximal_voltage_upper_bound := 
+param maximal_voltage_upper_bound :=
   if card({(t,s) in SUBSTATIONS: substation_Vmin[t,s] > 0}) > 0
   then min(2-epsilon_min_voltage,max{(t,s) in SUBSTATIONS: substation_Vmax[t,s] > 0} substation_Vmax[t,s])
   else 2-epsilon_min_voltage;
@@ -84,7 +84,7 @@ check {(t,s) in SUBSTATIONS: s in BOUND_OVERRIDES}: substation_new_Vmin[s] < sub
 # Negative value for substation_Vmin or substation_Vmax means that the value is undefined
 # In that case, minimal_voltage_lower_bound or maximal_voltage_upper_bound is used instead
 
-param voltage_lower_bound{(t,s) in SUBSTATIONS} := 
+param voltage_lower_bound{(t,s) in SUBSTATIONS} :=
   max( minimal_voltage_lower_bound,
        if s in BOUND_OVERRIDES then substation_new_Vmin[s] else substation_Vmin[t,s]
       );
@@ -164,7 +164,7 @@ check {(t,g,n) in UNIT}: unit_Pmax[t,g,n] >= unit_Pmin[t,g,n];
 
 # Global inital losses_ratio: value of (P-C-H)/(C+H) in data files
 # Value is 0 if no losses
-# Value 0.02 means % of losses 
+# Value 0.02 means % of losses
 param global_initial_losses_ratio default 0.02; # Typical value value for transmission
 
 
@@ -217,7 +217,7 @@ check {(t,s,n)  in SHUNT}: (t,n) in BUS or n==-1;
 check {(t,s,n)  in SHUNT}: n==-1 or shunt_possiblebus[t,s,n]==n;
 check {(t,s,-1) in SHUNT}: (t,shunt_possiblebus[t,s,-1]) in BUS or shunt_possiblebus[t,s,-1]==-1;
 check {(t,s,n)  in SHUNT}: (t,shunt_substation[t,s,n]) in SUBSTATIONS;
-check {(t,s,n)  in SHUNT}: shunt_valmin[1,s,n] < shunt_valmax[1,s,n];
+check {(t,s,n)  in SHUNT}: shunt_valmin[1,s,n] <= shunt_valmax[1,s,n];
 
 # Case of a reactance : check valmin < 0 and valmax=0
 check {(t,s,n) in SHUNT}: shunt_valmin[1,s,n] <= 0;
@@ -477,7 +477,7 @@ param hvdc_id             {HVDC} symbolic;
 param hvdc_description    {HVDC} symbolic;
 
 # Consistency checks
-check {(t,h) in HVDC}: hvdc_type[t,h] == 1 or hvdc_type[t,h] == 2;  
+check {(t,h) in HVDC}: hvdc_type[t,h] == 1 or hvdc_type[t,h] == 2;
 check {(t,h) in HVDC}: hvdc_conv1[t,h] != hvdc_conv2[t,h];
 check {(t,h) in HVDC:  hvdc_type[t,h] == 1}: hvdc_conv1[t,h] in setof{(t,n,bus) in VSCCONV}n;
 check {(t,h) in HVDC:  hvdc_type[t,h] == 1}: hvdc_conv2[t,h] in setof{(t,n,bus) in VSCCONV}n;
@@ -533,9 +533,9 @@ check {(t,qq,m,n) in BRANCH: qq in PARAM_TRANSFORMERS_RATIO_VARIABLE}: branch_id
 ###############################################################################
 
 # Elements in main connex component
-set BUS2:= setof {(1,n) in BUS: 
-  bus_CC[1,n] == 0 
-  and n >= 0 
+set BUS2:= setof {(1,n) in BUS:
+  bus_CC[1,n] == 0
+  and n >= 0
   and substation_Vnomi[1,bus_substation[1,n]] >= epsilon_nominal_voltage
   } n;
 set BRANCH2:= setof {(1,qq,m,n) in BRANCH: m in BUS2 and n in BUS2} (qq,m,n);
@@ -547,7 +547,7 @@ set UNITCC    := setof {(1,g,n) in UNIT    : n in BUSCC} (g,n);
 set BATTERYCC := setof {(1,b,n) in BATTERY : n in BUSCC} (b,n);
 
 # Busses with valid voltage value
-set BUSVV := {n in BUSCC : bus_V0[1,n] >= epsilon_min_voltage}; 
+set BUSVV := {n in BUSCC : bus_V0[1,n] >= epsilon_min_voltage};
 
 # Units up and generating:
 # Warning: units with Ptarget=0 are considered as out of order
@@ -576,7 +576,7 @@ set SHUNT_VAR := setof {(1,s,n) in SHUNT :
   } (s,shunt_possiblebus[1,s,n]);
 # Shunts with fixed values
 set SHUNT_FIX := setof {(1,s,n) in SHUNT: s not in PARAM_SHUNT and n in BUSCC} (s,n);
-# If a shunt is not connected (n=-1) and it is not in PARAM_SHUNT, then it will not be 
+# If a shunt is not connected (n=-1) and it is not in PARAM_SHUNT, then it will not be
 # reconnected by reactive opf. These shunts are not in SHUNT_VAR nor in SHUNT_FIX; they
 # are simply ignored
 
@@ -595,8 +595,8 @@ set UNIT_FIXQ := {(g,n) in UNITON: g in PARAM_UNIT_FIXQ and abs(unit_Qc[1,g,n])<
 #
 # Control parameters for ratios of transformers
 #
-set BRANCHCC_REGL_VAR := 
-  { (qq,m,n) in BRANCHCC_REGL: 
+set BRANCHCC_REGL_VAR :=
+  { (qq,m,n) in BRANCHCC_REGL:
     qq in PARAM_TRANSFORMERS_RATIO_VARIABLE
     and regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]] < regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]]
   };
@@ -606,19 +606,19 @@ set BRANCHCC_REGL_FIX := BRANCHCC_REGL diff BRANCHCC_REGL_VAR;
 #
 # VSC converter stations
 #
-set VSCCONVON := setof{(t,v,n) in VSCCONV: 
+set VSCCONVON := setof{(t,v,n) in VSCCONV:
   n in BUSCC
   and abs(vscconv_P0[t,v,n]  ) <= PQmax
   and abs(vscconv_Pmin[t,v,n]) <= PQmax
   and abs(vscconv_Pmax[t,v,n]) <= PQmax
-  and vscconv_P0[t,v,n] >= vscconv_Pmin[t,v,n] 
+  and vscconv_P0[t,v,n] >= vscconv_Pmin[t,v,n]
   and vscconv_P0[t,v,n] <= vscconv_Pmax[t,v,n]
   } (v,n);
 
 #
 # LCC converter stations
 #
-set LCCCONVON := setof{(t,l,n) in LCCCONV: 
+set LCCCONVON := setof{(t,l,n) in LCCCONV:
   n in BUSCC
   and abs(lccconv_P0[1,l,n]) <= PQmax
   and abs(lccconv_Q0[1,l,n]) <= PQmax
@@ -633,7 +633,7 @@ set LCCCONVON := setof{(t,l,n) in LCCCONV:
 param branch_X_mod{(qq,m,n) in BRANCHCC} :=
   if (qq,m,n) in BRANCHZNULL then Znull
   else branch_X[1,qq,m,n];
-check {(qq,m,n) in BRANCHCC}: abs(branch_X_mod[qq,m,n]) > 0; 
+check {(qq,m,n) in BRANCHCC}: abs(branch_X_mod[qq,m,n]) > 0;
 
 
 ###############################################################################
@@ -655,7 +655,7 @@ param corrected_unit_Qmax{UNITON} default defaultQmax;
 ###############################################################################
 param Fmax{(qq,m,n) in BRANCHCC} :=
   1.732 * 0.001
-  * max(substation_Vnomi[1,bus_substation[1,m]]*abs(branch_patl1[1,qq,m,n]),substation_Vnomi[1,bus_substation[1,n]]*abs(branch_patl2[1,qq,m,n])); 
+  * max(substation_Vnomi[1,bus_substation[1,m]]*abs(branch_patl1[1,qq,m,n]),substation_Vnomi[1,bus_substation[1,n]]*abs(branch_patl2[1,qq,m,n]));
 
 
 
@@ -679,13 +679,13 @@ param branch_angper{(qq,m,n) in BRANCHCC} =
   then atan2(branch_Rdeph[qq,m,n], branch_Xdeph[qq,m,n])
   else atan2(branch_R[1,qq,m,n]  , branch_X_mod[qq,m,n]  );
 
-param branch_admi {(qq,m,n) in BRANCHCC} = 
+param branch_admi {(qq,m,n) in BRANCHCC} =
   if (qq,m,n) in BRANCHCC_DEPH
   then 1./sqrt(branch_Rdeph[qq,m,n]^2 + branch_Xdeph[qq,m,n]^2 )
   else 1./sqrt(branch_R[1,qq,m,n]^2   + branch_X_mod[qq,m,n]^2   );
 
 # Later in this file, a variable branch_Ror_var will be created, to replace branch_Ror when it is not variable
-param branch_Ror {(qq,m,n) in BRANCHCC} = 
+param branch_Ror {(qq,m,n) in BRANCHCC} =
     ( if ((qq,m,n) in BRANCHCC_REGL)
       then tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]]
       else 1.0
@@ -789,7 +789,7 @@ param penalty_gen     := 1;
 param penalty_balance := 1000;
 
 minimize problem_dcopf_objective:
-    penalty_gen     * sum{(g,n) in UNITON} ((P_dcopf[g,n]-unit_Pc[1,g,n])/max(0.01*abs(unit_Pc[1,g,n]),1))**2 
+    penalty_gen     * sum{(g,n) in UNITON} ((P_dcopf[g,n]-unit_Pc[1,g,n])/max(0.01*abs(unit_Pc[1,g,n]),1))**2
   + penalty_balance * sum{n in BUSCC} ( balance_pos[n] + balance_neg[n] )
   ;
 
@@ -813,11 +813,11 @@ var teta{BUSCC} <= teta_max, >= teta_min;
 subject to ctr_null_phase_bus{PROBLEM_ACOPF}: teta[null_phase_bus] = 0;
 
 # Modulus of voltage
-var V{n in BUSCC} 
-  <= 
+var V{n in BUSCC}
+  <=
   if substation_Vnomi[1,bus_substation[1,n]] <= ignore_voltage_bounds then 2-epsilon_min_voltage else
   voltage_upper_bound[1,bus_substation[1,n]],
-  >= 
+  >=
   if substation_Vnomi[1,bus_substation[1,n]] <= ignore_voltage_bounds then epsilon_min_voltage else
   voltage_lower_bound[1,bus_substation[1,n]];
 
@@ -827,7 +827,7 @@ var V{n in BUSCC}
 #
 # General idea: generation is an input data, but as voltage may vary, generation may vary a little.
 # Variations of generation is totally controlled by unique scalar variable alpha
-# Before and after optimization, there is no waranty that P is within 
+# Before and after optimization, there is no waranty that P is within
 # its "bounds" [corrected_unit_Pmin;corrected_unit_Pmax]
 #
 
@@ -855,9 +855,9 @@ var Q{(g,n) in UNITON} <= corrected_unit_Qmax[g,n], >= corrected_unit_Qmin[g,n];
 # Variable shunts
 #
 var shunt_var{(shunt,n) in SHUNT_VAR}
-  >= min{(1,shunt,k) in SHUNT} shunt_valmin[1,shunt,k], 
+  >= min{(1,shunt,k) in SHUNT} shunt_valmin[1,shunt,k],
   <= max{(1,shunt,k) in SHUNT} shunt_valmax[1,shunt,k];
- 
+
 
 #
 # SVC reactive generation
@@ -877,7 +877,7 @@ var vscconv_qvar{(v,n) in VSCCONVON}
 #
 # Ratios of transformers
 #
-var branch_Ror_var{(qq,m,n) in BRANCHCC_REGL_VAR} 
+var branch_Ror_var{(qq,m,n) in BRANCHCC_REGL_VAR}
   >= regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]],
   <= regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]];
 
@@ -887,19 +887,19 @@ var branch_Ror_var{(qq,m,n) in BRANCHCC_REGL_VAR}
 
 var Red_Tran_Act_Dir{(qq,m,n) in BRANCHCC } =
     V[n] * branch_admi[qq,m,n] * sin(teta[m]-teta[n]+branch_dephor[qq,m,n]-branch_angper[qq,m,n])
-    * (if (qq,m,n) in BRANCHCC_REGL_VAR then branch_Ror_var[qq,m,n]*branch_cstratio[1,qq,m,n] else branch_Ror[qq,m,n]) 
+    * (if (qq,m,n) in BRANCHCC_REGL_VAR then branch_Ror_var[qq,m,n]*branch_cstratio[1,qq,m,n] else branch_Ror[qq,m,n])
   + V[m] * (branch_admi[qq,m,n]*sin(branch_angper[qq,m,n])+branch_Gor[1,qq,m,n])
     * (if (qq,m,n) in BRANCHCC_REGL_VAR then branch_Ror_var[qq,m,n]*branch_cstratio[1,qq,m,n] else branch_Ror[qq,m,n])**2
   ;
 
-var Red_Tran_Rea_Dir{(qq,m,n) in BRANCHCC } = 
+var Red_Tran_Rea_Dir{(qq,m,n) in BRANCHCC } =
   - V[n] * branch_admi[qq,m,n] * cos(teta[m]-teta[n]+branch_dephor[qq,m,n]-branch_angper[qq,m,n])
     * (if (qq,m,n) in BRANCHCC_REGL_VAR then branch_Ror_var[qq,m,n]*branch_cstratio[1,qq,m,n] else branch_Ror[qq,m,n])
   + V[m] * (branch_admi[qq,m,n]*cos(branch_angper[qq,m,n])-branch_Bor[1,qq,m,n])
-    * (if (qq,m,n) in BRANCHCC_REGL_VAR then branch_Ror_var[qq,m,n]*branch_cstratio[1,qq,m,n] else branch_Ror[qq,m,n])^2 
+    * (if (qq,m,n) in BRANCHCC_REGL_VAR then branch_Ror_var[qq,m,n]*branch_cstratio[1,qq,m,n] else branch_Ror[qq,m,n])^2
   ;
 
-var Red_Tran_Act_Inv{(qq,m,n) in BRANCHCC } = 
+var Red_Tran_Act_Inv{(qq,m,n) in BRANCHCC } =
     V[m] * branch_admi[qq,m,n] * sin(teta[n]-teta[m]-branch_dephor[qq,m,n]-branch_angper[qq,m,n])
     * (if (qq,m,n) in BRANCHCC_REGL_VAR then branch_Ror_var[qq,m,n]*branch_cstratio[1,qq,m,n] else branch_Ror[qq,m,n])
   + V[n] * (branch_admi[qq,m,n]*sin(branch_angper[qq,m,n])+branch_Gex[1,qq,m,n])
@@ -939,7 +939,7 @@ subject to ctr_balance_P{PROBLEM_ACOPF,k in BUSCC}:
 
 # Reactive balance slack variables only if there is a load or a shunt connected
 # If there is a unit, or SVC, or VSC, they already have reactive power generation, so no need to add slack variables
-set BUSCC_SLACK :=  {n in BUSCC: 
+set BUSCC_SLACK :=  {n in BUSCC:
   (
   card{(g,n) in UNITON: (g,n) not in UNIT_FIXQ}==0
   and card{(svc,n) in SVCON}==0
@@ -950,7 +950,7 @@ var slack1_balance_Q{BUSCC_SLACK} >=0, <= 500; # 500 Mvar is already HUGE
 var slack2_balance_Q{BUSCC_SLACK} >=0, <= 500;
 #subject to ctr_compl_slack_Q{PROBLEM_ACOPF,k in BUSCC_SLACK}: slack1_balance_Q[k] >= 0 complements slack2_balance_Q[k] >= 0;
 
-subject to ctr_balance_Q{PROBLEM_ACOPF,k in BUSCC}: 
+subject to ctr_balance_Q{PROBLEM_ACOPF,k in BUSCC}:
   # Flows
     sum{(qq,k,n) in BRANCHCC} base100MVA * V[k] * Red_Tran_Rea_Dir[qq,k,n]
   + sum{(qq,m,k) in BRANCHCC} base100MVA * V[k] * Red_Tran_Rea_Inv[qq,m,k]
@@ -971,7 +971,7 @@ subject to ctr_balance_Q{PROBLEM_ACOPF,k in BUSCC}:
   # LCC converters
   + sum{(l,k) in LCCCONVON} lccconv_Q0[1,l,k] # Fixed value
   # Slack variables
-  + if k in BUSCC_SLACK then 
+  + if k in BUSCC_SLACK then
   (- slack1_balance_Q[k]  # Homogeneous to a generation of reactive power (condensator)
    + slack2_balance_Q[k]) # homogeneous to a reactive load (self)
   = 0;
@@ -1008,23 +1008,23 @@ minimize problem_acopf_objective:
       penalty_invest_rea_pos * slack1_balance_Q[n]
     + penalty_invest_rea_neg * slack2_balance_Q[n]
     )
-  
+
   # coeff_alpha == 1 : minimize sum of generation, all generating units vary with 1 unique variable alpha
   # coeff_alpha == 0 : minimize sum of squared difference between target and value
   + (if objective_choice==1 or objective_choice==2 then penalty_active_power_low else penalty_active_power_high)
-  * sum{(g,n) in UNITON} (coeff_alpha * P[g,n] + (1-coeff_alpha)*( (P[g,n]-unit_Pc[1,g,n])/max(1,abs(unit_Pc[1,g,n])) )**2 ) 
-  
+  * sum{(g,n) in UNITON} (coeff_alpha * P[g,n] + (1-coeff_alpha)*( (P[g,n]-unit_Pc[1,g,n])/max(1,abs(unit_Pc[1,g,n])) )**2 )
+
   # Voltage for busses, ratio between Vmin and Vmax
   + (if objective_choice==1 then penalty_voltage_target_high else penalty_voltage_target_low)
   * target_voltage_ratio
-  
+
   # Voltage target : value V0 in input data
   + (if objective_choice==2 then penalty_voltage_target_high else penalty_voltage_target_low)
   * target_voltage_data
-  
+
   # Reactive power of units
   + penalty_units_reactive * sum{(g,n) in UNITON} (Q[g,n]/max(1,abs(corrected_unit_Qmin[g,n]),abs(corrected_unit_Qmax[g,n])))**2
-  
+
   # Ratio of transformers
   + penalty_transfo_ratio * sum{(qq,m,n) in BRANCHCC_REGL_VAR} (branch_Ror[qq,m,n]-branch_Ror_var[qq,m,n])**2
   ;
