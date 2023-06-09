@@ -7,9 +7,11 @@
 package com.powsybl.openreac.parameters.output.network;
 
 import com.powsybl.ampl.converter.AmplSubset;
+import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.iidm.modification.tapchanger.RatioTapPositionModification;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.TwoWindingsTransformer;
 
 /**
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
@@ -32,7 +34,11 @@ public class TapPositionNetworkOutput extends AbstractNetworkOutput<RatioTapPosi
     @Override
     protected RatioTapPositionModification doReadLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
         String transfoId = stringToIntMapper.getId(AmplSubset.BRANCH, Integer.parseInt(tokens[TRANSFO_ID_COLUMN_INDEX]));
-        int tapPosition = -1 + network.getTwoWindingsTransformer(transfoId).getRatioTapChanger().getLowTapPosition()
+        TwoWindingsTransformer twt = network.getTwoWindingsTransformer(transfoId);
+        if (twt == null || !twt.hasRatioTapChanger()) {
+            throw new PowsyblException("Error parsing rtc from " + getFileName() + ", invalid number.");
+        }
+        int tapPosition = -1 + twt.getRatioTapChanger().getLowTapPosition()
             + Integer.parseInt(tokens[TAP_POS_COLUMN_INDEX]);
         return new RatioTapPositionModification(transfoId, tapPosition);
     }
