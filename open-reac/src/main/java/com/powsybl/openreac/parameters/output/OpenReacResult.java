@@ -86,12 +86,12 @@ public class OpenReacResult {
         List<NetworkModification> modifs = new ArrayList<>(getGeneratorModifications().size() +
             getShuntsModifications().size() +
             getSvcModifications().size() +
-            getTapModifications().size() +
+            getTapPositionModifications().size() +
             getVscModifications().size());
         modifs.addAll(getGeneratorModifications());
         modifs.addAll(getShuntsModifications());
         modifs.addAll(getSvcModifications());
-        modifs.addAll(getTapModifications());
+        modifs.addAll(getTapPositionModifications());
         modifs.addAll(getVscModifications());
         return modifs;
     }
