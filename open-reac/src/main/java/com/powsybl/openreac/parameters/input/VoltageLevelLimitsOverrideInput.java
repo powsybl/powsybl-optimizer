@@ -6,6 +6,7 @@
  */
 package com.powsybl.openreac.parameters.input;
 
+import com.powsybl.ampl.converter.AmplConstants;
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.commons.util.StringToIntMapper;
@@ -64,8 +65,9 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
             String voltageLevelId = entry.getKey();
             VoltageLimitOverride limits = entry.getValue();
             int amplId = stringToIntMapper.getInt(AmplSubset.VOLTAGE_LEVEL, voltageLevelId);
-            String[] tokens = {Integer.toString(amplId), Double.toString(limits.getDeltaLowVoltageLimit()),
-                    Double.toString(limits.getDeltaHighVoltageLimit()), AmplIOUtils.addQuotes(voltageLevelId)};
+            double newHighVoltageLimit = Double.isNaN(limits.getDeltaHighVoltageLimit()) ? AmplConstants.INVALID_FLOAT_VALUE : limits.getDeltaHighVoltageLimit();
+            double newLowVoltageLimit = Double.isNaN(limits.getDeltaLowVoltageLimit()) ? AmplConstants.INVALID_FLOAT_VALUE : limits.getDeltaLowVoltageLimit();
+            String[] tokens = {Integer.toString(amplId), Double.toString(newLowVoltageLimit), Double.toString(newHighVoltageLimit), AmplIOUtils.addQuotes(voltageLevelId)};
             dataBuilder.append(String.join(" ", tokens));
             dataBuilder.append(System.lineSeparator());
         }
