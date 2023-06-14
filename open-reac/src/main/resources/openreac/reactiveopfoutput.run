@@ -234,6 +234,7 @@ printf "\n" > (fileOut);
 printf "%s %i\n","objective_choice",objective_choice > (fileOut);
 printf "%s %f\n","ratio_voltage_target",ratio_voltage_target > (fileOut);
 printf "%s %f\n","coeff_alpha",coeff_alpha > (fileOut);
+printf "%s %i\n","binary_shunts",binary_shunts > (fileOut);
 printf "%s %f\n","Pnull",Pnull > (fileOut);
 printf "%s %f\n","Znull",Znull > (fileOut);
 printf "%s %f\n","epsilon_nominal_voltage",epsilon_nominal_voltage > (fileOut);
@@ -246,6 +247,16 @@ printf "%s %f\n","defaultQmaxPmaxRatio",defaultQmaxPmaxRatio > (fileOut);
 printf "%s %f\n","defaultQmin",defaultQmin > (fileOut);
 printf "%s %f\n","defaultQmax",defaultQmax > (fileOut);
 printf "%s %f\n","minimalQPrange",minimalQPrange > (fileOut);
+
+printf "%s %f\n","penalty_invest_rea_pos",penalty_invest_rea_pos > (fileOut);
+printf "%s %f\n","penalty_invest_rea_neg",penalty_invest_rea_neg > (fileOut);
+printf "%s %f\n","penalty_shunt",penalty_shunt > (fileOut);
+printf "%s %f\n","penalty_units_reactive",penalty_units_reactive > (fileOut);
+printf "%s %f\n","penalty_transfo_ratio",penalty_transfo_ratio > (fileOut);
+printf "%s %f\n","penalty_active_power_high",penalty_active_power_high > (fileOut);
+printf "%s %f\n","penalty_active_power_low",penalty_active_power_low > (fileOut);
+printf "%s %f\n","penalty_voltage_target_high",penalty_voltage_target_high > (fileOut);
+printf "%s %f\n","penalty_voltage_target_low",penalty_voltage_target_low > (fileOut);
 
 printf "\n" > (fileOut);
 printf "%s %i\n","nb_substations",card(SUBSTATIONS) > (fileOut);
@@ -267,10 +278,13 @@ printf "%s %i\n","nb_unit_with_variable_reactive_power",card(UNITON diff UNIT_FI
 printf "%s %i\n","nb_unit_with_fixed_reactive_power",card(UNIT_FIXQ) > (fileOut);
 printf "%s %i\n","nb_load_in_data_file",card(LOAD) > (fileOut);
 printf "%s %i\n","nb_load_in_AC_CC",card(LOADCC) > (fileOut);
-printf "%s %i\n","nb_shunt_in_data_file",card(SHUNT) > (fileOut);
-printf "%s %i\n","nb_shunt_connectable_or_in_AC_CC",card(SHUNTCC) > (fileOut);
-printf "%s %i\n","nb_shunt_with_fixed_value",card(SHUNT_FIX) > (fileOut);
-printf "%s %i\n","nb_shunt_with_variable_value",card(SHUNT_VAR) > (fileOut);
+printf "%s %i\n","nb_shunts_in_data_file",card(SHUNT) > (fileOut);
+printf "%s %i\n","nb_shunts_connectable_or_in_AC_CC",card(SHUNTCC) > (fileOut);
+printf "%s %i\n","nb_shunts_with_fixed_value",card(SHUNT_FIX) > (fileOut);
+printf "%s %i\n","nb_shunts_with_variable_value",card(SHUNT_VAR) > (fileOut);
+printf "%s %i\n","nb_shunts_with_binary_value",
+  card( {(shunt,n) in SHUNT_VAR: shunt_var_binary[shunt,n].intvarstrategy == 2} )
+  > (fileOut);
 printf "%s %i\n","nb_transformers_with_variable_ratio",card(BRANCHCC_REGL_VAR) > (fileOut);
 printf "%s %i\n","nb_transformers_with_fixed_ratio",card(BRANCHCC_REGL_FIX) > (fileOut);
 printf "%s %i\n","nb_svc_in_data_file",card(SVC) > (fileOut);
