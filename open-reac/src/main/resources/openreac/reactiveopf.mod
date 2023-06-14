@@ -210,7 +210,7 @@ param shunt_id            {SHUNT} symbolic;
 param shunt_nom           {SHUNT} symbolic;
 param shunt_P0            {SHUNT};
 param shunt_Q0            {SHUNT}; # Reactive power load: valnom >= 0 means Q0 <= 0
-param shunt_sections_count{SHUNT} integer;
+param shunt_sections_count{SHUNT} integer; # should be in [0 ; shunt_interPoints + 1]
 
 # Consistency checks
 check {(t,s,n)  in SHUNT}: (t,n) in BUS or n==-1;
@@ -225,6 +225,8 @@ check {(t,s,n) in SHUNT : shunt_valmin[1,s,n] <= -Pnull / base100MVA}: shunt_val
 # Case of a condo : check valmin = 0 and valmax>0
 check {(t,s,n) in SHUNT}: shunt_valmax[1,s,n] >= 0;
 check {(t,s,n) in SHUNT : shunt_valmax[1,s,n] >=  Pnull / base100MVA}: shunt_valmin[1,s,n] >= -Pnull / base100MVA;
+# Reminder: in all modelling, it is assumed that shunt_valmax >= 0, shun_valmin <= 0, and product is 0
+check {(t,s,n) in SHUNT}: abs(shunt_valmax[1,s,n]*shunt_valmin[1,s,n]) < Pnull / base100MVA;
 
 
 
@@ -394,10 +396,6 @@ check {(t,qq,m,n) in BRANCH}:
 check {(t,qq,m,n) in BRANCH}: (t,branch_ptrRegl[t,qq,m,n]) in REGL union {(1,-1)};
 check {(t,qq,m,n) in BRANCH}: (t,branch_ptrDeph[t,qq,m,n]) in DEPH union {(1,-1)};
 
-# Admittances
-#param branch_G {(t,qq,m,n) in BRANCH} = +branch_R[t,qq,m,n]/(branch_R[t,qq,m,n]^2+branch_X[t,qq,m,n]^2);
-#param branch_B {(t,qq,m,n) in BRANCH} = -branch_X[t,qq,m,n]/(branch_R[t,qq,m,n]^2+branch_X[t,qq,m,n]^2);
-
 
 
 ###############################################################################
@@ -494,11 +492,25 @@ check {(t,h) in HVDC}: hvdc_targetP[t,h] <= hvdc_Pmax[t,h];
 # Controls for shunts decision
 ###############################################################################
 # param_shunts.txt
-# All shunts are considered fixed to their value in ampl_network_shunts.txt (set and parameters based on SHUNT above)
+# All shunts are considered fixed to their value in ampl_network_shunts.txt (set 
+# and parameters based on SHUNT above)
 # Only shunts listed here will be changed by this reactive opf
-set PARAM_SHUNT  dimen 1 default {};
+set PARAM_SHUNT dimen 1 default {};
 param param_shunt_id{PARAM_SHUNT} symbolic;
-check {(t,s,n) in SHUNT: n in PARAM_SHUNT}: shunt_id[t,s,n] == param_shunt_id[s];
+check {(t,s,n) in SHUNT: s in PARAM_SHUNT}: shunt_id[t,s,n] == param_shunt_id[s];
+
+
+
+###############################################################################
+# Costs for shunts usage
+###############################################################################
+# param_shunts_costs.txt
+# For shunts which are variable, cost for using them. Optional
+set PARAM_SHUNT_COST dimen 1 default {};
+param param_shunt_cost_value{PARAM_SHUNT_COST} default 0.0;
+param param_shunt_cost_id{PARAM_SHUNT_COST} symbolic;
+check {(t,s,n) in SHUNT: s in PARAM_SHUNT_COST}: shunt_id[t,s,n] == param_shunt_cost_id[s];
+check {s in PARAM_SHUNT_COST}: param_shunt_cost_value[s] >= 0;
 
 
 
@@ -579,6 +591,11 @@ set SHUNT_FIX := setof {(1,s,n) in SHUNT: s not in PARAM_SHUNT and n in BUSCC} (
 # If a shunt is not connected (n=-1) and it is not in PARAM_SHUNT, then it will not be 
 # reconnected by reactive opf. These shunts are not in SHUNT_VAR nor in SHUNT_FIX; they
 # are simply ignored
+
+# Reminder: shunt_valmax >= 0, shun_valmin <= 0, and product is 0
+# Maximum one single shunt at each bus
+check {(shunt,n) in SHUNT_VAR}: card({(1,shunt,k) in SHUNT})==1;
+
 
 #
 # Control parameters for SVC
@@ -854,10 +871,12 @@ var Q{(g,n) in UNITON} <= corrected_unit_Qmax[g,n], >= corrected_unit_Qmin[g,n];
 #
 # Variable shunts
 #
+# reminder: shunt_valmax >= 0, shun_valmin <= 0, and product is 0
+# Binary variables may be relaxed as continuous variables just before optimization, using suffix intvarstrategy=1
+var shunt_var_binary{(shunt,n) in SHUNT_VAR} binary; 
 var shunt_var{(shunt,n) in SHUNT_VAR}
-  >= min{(1,shunt,k) in SHUNT} shunt_valmin[1,shunt,k], 
-  <= max{(1,shunt,k) in SHUNT} shunt_valmax[1,shunt,k];
- 
+  = shunt_var_binary[shunt,n] * 
+  ( max{(1,shunt,k) in SHUNT} shunt_valmax[1,shunt,k] + min{(1,shunt,k) in SHUNT} shunt_valmin[1,shunt,k] );
 
 #
 # SVC reactive generation
@@ -963,7 +982,7 @@ subject to ctr_balance_Q{PROBLEM_ACOPF,k in BUSCC}:
   + sum{(c,k) in LOADCC} load_QFix[1,c,k]
   # Shunts
   - sum{(shunt,k) in SHUNT_FIX} base100MVA * shunt_valnom[1,shunt,k] * V[k]^2
-  - sum{(shunt,k) in SHUNT_VAR} base100MVA * shunt_var[shunt,k] * V[k]^2
+  - sum{(shunt,k) in SHUNT_VAR} base100MVA * shunt_var[shunt,k]      * V[k]^2
   # SVC
   - sum{(svc,k) in SVCON} base100MVA * svc_qvar[svc,k] * V[k]^2
   # VSC converters
@@ -973,7 +992,7 @@ subject to ctr_balance_Q{PROBLEM_ACOPF,k in BUSCC}:
   # Slack variables
   + if k in BUSCC_SLACK then 
   (- slack1_balance_Q[k]  # Homogeneous to a generation of reactive power (condensator)
-   + slack2_balance_Q[k]) # homogeneous to a reactive load (self)
+   + slack2_balance_Q[k]) # Homogeneous to a reactive load (self)
   = 0;
 
 
@@ -992,17 +1011,6 @@ var target_voltage_data = sum{n in BUSVV} (V[n] - bus_V0[1,n])**2;
 #
 # Objective function and penalties
 #
-param penalty_invest_rea_pos := 10;
-param penalty_invest_rea_neg := 10;
-param penalty_units_reactive := 0.1;
-param penalty_transfo_ratio  := 0.1;
-
-param penalty_active_power_high := 1;
-param penalty_active_power_low  := 0.01;
-
-param penalty_voltage_target_high := 1;
-param penalty_voltage_target_low  := 0.01;
-
 minimize problem_acopf_objective:
   sum{n in BUSCC_SLACK} (
       penalty_invest_rea_pos * slack1_balance_Q[n]
@@ -1021,6 +1029,13 @@ minimize problem_acopf_objective:
   # Voltage target : value V0 in input data
   + (if objective_choice==2 then penalty_voltage_target_high else penalty_voltage_target_low)
   * target_voltage_data
+  
+  # Shunts
+  + sum{(shunt,n) in SHUNT_VAR} (
+    (if shunt in PARAM_SHUNT_COST then min(param_shunt_cost_value[shunt],penalty_invest_rea_pos) else penalty_shunt) 
+    * shunt_var_binary[shunt,n]
+    * ( max{(1,shunt,k) in SHUNT} shunt_valmax[1,shunt,k] - min{(1,shunt,k) in SHUNT} shunt_valmin[1,shunt,k] ) # reminder: shunt_valmax >= 0, shun_valmin <= 0, and product is 0
+    )
   
   # Reactive power of units
   + penalty_units_reactive * sum{(g,n) in UNITON} (Q[g,n]/max(1,abs(corrected_unit_Qmin[g,n]),abs(corrected_unit_Qmax[g,n])))**2

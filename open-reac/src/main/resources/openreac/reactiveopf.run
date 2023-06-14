@@ -49,7 +49,16 @@
 # Among this variable shunts, if a shunt is not connected (bus==-1) but bus_possible is 
 # well defined, then this shunt may be used by opf
 #
-# *** Format of param_shunt: 2 columns #num id
+# *** Format of param_shunts.txt: 2 columns #"num" "id"
+#
+
+###############################################################################
+# Costs for shunts usage
+###############################################################################
+# In case user wants to define cost for shunt usage, here is an 
+# optional file where user may define costs for some (or all) shunts.
+#
+# *** Format of param_shunt_cost.txt: 3 columns #"num" "cost (per MVar)" "id"
 #
 
 
@@ -63,7 +72,8 @@
 # If file param_generators_reactive.txt is non empty, then all unit listed in
 # this file have a constant value for reactive power, equal to unit_Qc.
 # This value unit_Qc is used even if out of bounds Qmin Qmax of this unit
-# If unit_Qc is not consistent (larger than PQmax), then reactive power will be a variable
+# If unit_Qc is not consistent (larger than PQmax), then reactive power will 
+# be a variable
 #
 # *** Format of param_generators_reactive: 2 columns #num id
 #
@@ -176,6 +186,7 @@ if length($SHELL) > 0 then let operatingSystem := "linux";
 if operatingSystem == "linux" then {
   shell "if [ ! -f param_algo.txt ];                then touch param_algo.txt ;fi";
   shell "if [ ! -f param_shunts.txt ];              then touch param_shunts.txt ;fi";
+  shell "if [ ! -f param_shunts_costs.txt ];        then touch param_shunts_costs.txt ;fi";
   shell "if [ ! -f param_generators_reactive.txt ]; then touch param_generators_reactive.txt ;fi";
   shell "if [ ! -f param_transformers.txt ];        then touch param_transformers.txt ;fi";
   shell "if [ ! -f ampl_network_substations_override.txt ]; then touch ampl_network_substations_override.txt ;fi";
@@ -184,6 +195,7 @@ if operatingSystem == "linux" then {
 if operatingSystem == "windows" then {
   shell "if not exist param_algo.txt                echo #empty > param_algo.txt";
   shell "if not exist param_shunts.txt              echo #empty > param_shunts.txt";
+  shell "if not exist param_shunts_costs.txt        echo #empty > param_shunts_costs.txt";
   shell "if not exist param_generators_reactive.txt echo #empty > param_generators_reactive.txt";
   shell "if not exist param_transformers.txt        echo #empty > param_transformers.txt";
   shell "if not exist ampl_network_substations_override.txt echo #empty > ampl_network_substations_override.txt";
@@ -243,6 +255,15 @@ param coeff_alpha default 1.0;
 if "coeff_alpha" in PARAM_ALGO_KEYS then let coeff_alpha := num(PARAM_ALGO_VALUES["coeff_alpha"]);
 printf "Parameter: coeff_alpha to choose wether generation vary homogeneously (coeff_alpha=1) or independantly (coeff_alpha=0) is := %.2f\n",coeff_alpha;
 check coeff_alpha >=0 and coeff_alpha <= 1;
+
+# Looking for binary shunts or continuous shunts
+param binary_shunts default 0; # 0 or 1
+if "binary_shunts" in PARAM_ALGO_KEYS then let binary_shunts := num(PARAM_ALGO_VALUES["binary_shunts"]);
+printf "Parameter: binary_shunts:=%Q (0 or 1) ",binary_shunts;
+if binary_shunts < 0.5
+  then printf "-> all variables shunts are computed as continuous variables\n";
+  else printf "-> all variables binary shunts are computed as binary variables (non binary variable shunts are computed as continuous)\n";
+check binary_shunts >= 0 and binary_shunts <= 1;
 
 # Limit for detecting zero value for power
 param Pnull default 0.01; # MW
@@ -309,7 +330,52 @@ param minimalQPrange default 1; # MW or Mvar; if domain is smaller, Q or P is fi
 if "minimalQPrange" in PARAM_ALGO_KEYS then let minimalQPrange := num(PARAM_ALGO_VALUES["minimalQPrange"]);
 printf "Parameter: %s = %Q MW or Mvar\n","minimalQPrange",minimalQPrange;
 
+#
+# Parameters for costs in objective function
+#
+param penalty_invest_rea_pos default 10;
+if "penalty_invest_rea_pos" in PARAM_ALGO_KEYS then let penalty_invest_rea_pos := num(PARAM_ALGO_VALUES["penalty_invest_rea_pos"]);
+printf "Parameter: %s = %Q per MVar (linear cost)\n","penalty_invest_rea_pos",penalty_invest_rea_pos;
+check penalty_invest_rea_pos > 0;
 
+param penalty_invest_rea_neg default 10;
+if "penalty_invest_rea_neg" in PARAM_ALGO_KEYS then let penalty_invest_rea_neg := num(PARAM_ALGO_VALUES["penalty_invest_rea_neg"]);
+printf "Parameter: %s = %Q per Mvar (linear cost)\n","penalty_invest_rea_neg",penalty_invest_rea_neg;
+check penalty_invest_rea_neg > 0;
+
+param penalty_shunt default 0.1;
+if "penalty_shunt" in PARAM_ALGO_KEYS then let penalty_shunt := num(PARAM_ALGO_VALUES["penalty_shunt"]);
+printf "Parameter: %s = %Q per Mvar (linear cost)\n","penalty_shunt",penalty_shunt;
+check penalty_shunt > 0;
+
+param penalty_units_reactive := 0.1;
+if "penalty_units_reactive" in PARAM_ALGO_KEYS then let penalty_units_reactive := num(PARAM_ALGO_VALUES["penalty_units_reactive"]);
+printf "Parameter: %s = %Q per Mvar (quadratic proximal cost)\n","penalty_units_reactive",penalty_units_reactive;
+check penalty_units_reactive > 0;
+
+param penalty_transfo_ratio default 0.1;
+if "penalty_transfo_ratio" in PARAM_ALGO_KEYS then let penalty_transfo_ratio := num(PARAM_ALGO_VALUES["penalty_transfo_ratio"]);
+printf "Parameter: %s  = %Q (ratio has no unit) (quadratic proximal cost)\n","penalty_transfo_ratio",penalty_transfo_ratio;
+check penalty_transfo_ratio > 0;
+
+param penalty_active_power_high default 1;
+if "penalty_active_power_high" in PARAM_ALGO_KEYS then let penalty_active_power_high := num(PARAM_ALGO_VALUES["penalty_active_power_high"]);
+printf "Parameter: %s = %Q per MW (coef_alpha linear cost + (1-coef_alpha) quadratic proximal cost)\n","penalty_active_power_high",penalty_active_power_high;
+check penalty_active_power_high > 0;
+
+param penalty_active_power_low default 0.01;
+if "penalty_active_power_low" in PARAM_ALGO_KEYS then let penalty_active_power_low := num(PARAM_ALGO_VALUES["penalty_active_power_low"]);
+printf "Parameter: %s  = %Q per MW (coef_alpha linear cost + (1-coef_alpha) quadratic proximal cost)\n","penalty_active_power_low",penalty_active_power_low;
+check penalty_active_power_low > 0;
+
+param penalty_voltage_target_high default 1;
+if "penalty_voltage_target_high" in PARAM_ALGO_KEYS then let penalty_voltage_target_high := num(PARAM_ALGO_VALUES["penalty_voltage_target_high"]);
+printf "Parameter: %s = %Q per kV pu (quadratic proximal cost)\n","penalty_voltage_target_high",penalty_voltage_target_high;
+check penalty_voltage_target_high > 0;
+
+param penalty_voltage_target_low default 0.01;
+if "penalty_voltage_target_low" in PARAM_ALGO_KEYS then let penalty_voltage_target_low := num(PARAM_ALGO_VALUES["penalty_voltage_target_low"]);
+printf "Parameter: %s  = %Q per kV pu (quadratic proximal cost)\n","penalty_voltage_target_low",penalty_voltage_target_low;
 
 
 
@@ -866,9 +932,18 @@ let PROBLEM_ACOPF := {1};
 
 
 #
+# Binary values for shunts
+# Here we define wether the variable shunt will be really 
+# binary (intvarstrategy=2) or continuous (intvarstrategy=1)
+#
+let {(shunt,n) in SHUNT_VAR} shunt_var_binary[shunt,n].intvarstrategy := 1; # relax -> shunts are continuous
+if binary_shunts >= 0.5
+ then let {(shunt,n) in SHUNT_VAR: max({(1,shunt,k) in SHUNT}shunt_interPoints[1,shunt,k])<=0} 
+   shunt_var_binary[shunt,n].intvarstrategy := 2; # binary with mpec strategy
+
+#
 # Initial values
 #
-
 
 # DC values used as initialization for phases
 let {n in BUSCC} teta[n] := teta_dc[n];
@@ -883,7 +958,7 @@ let {n in BUSCC_SLACK} slack2_balance_Q[n] := 0;
 let alpha := 0.01;
 let {(g,n) in UNITON} P_bounded[g,n] := max(P_dcopf[g,n],unit_Pc[1,g,n]);
 let {(g,n) in UNITON} Q[g,n] := 0.5*(corrected_unit_Qmax[g,n] + corrected_unit_Qmin[g,n]);
-let {(shunt,n) in SHUNT_VAR} shunt_var[shunt,n] := min{(1,shunt,k) in SHUNT} shunt_valnom[1,shunt,k];
+let {(shunt,n) in SHUNT_VAR} shunt_var_binary[shunt,n] := min{(1,shunt,k) in SHUNT} shunt_sections_count[1,shunt,k];
 let {(svc,n) in SVCON} svc_qvar[svc,n] := 0.1;
 let {(v,n) in VSCCONVON} vscconv_qvar[v,n] := if abs(vscconv_targetQ[1,v,n]) < PQmax then vscconv_targetQ[1,v,n] else 0;
 let {(qq,m,n) in BRANCHCC_REGL_VAR} branch_Ror_var[qq,m,n] := branch_Ror[qq,m,n];
@@ -908,8 +983,13 @@ let nb_iter_total := nb_iter_total + nb_iter_last;
 param solve_result_num_limit := 200;
 
 if solve_result_num > solve_result_num_limit then 
-for {n in 1 .. 2}
+for {nb in 1 .. 2}
 {
+  # All shunts are now continuous
+  if card( {(shunt,n) in SHUNT_VAR: shunt_var_binary[shunt,n].intvarstrategy == 2} ) > 0
+  then printf "Warning: due to convergence issues, %i variable binary shunts are now continuous\n",
+    card( {(shunt,n) in SHUNT_VAR: shunt_var_binary[shunt,n].intvarstrategy == 2} );
+  let {(shunt,n) in SHUNT_VAR} shunt_var_binary[shunt,n].intvarstrategy := 1; # relax -> shunts are continuous
   solve problem_acopf_objective;
   let nb_iter_last := problem_acopf_objective.numiters;
   let nb_iter_total := nb_iter_total + nb_iter_last; 
@@ -918,7 +998,7 @@ for {n in 1 .. 2}
 
 # In case of failure and coeff_alpha was 1, then switch to coeff_alpha=0 to give more freedom to generation
 if solve_result_num > solve_result_num_limit and coeff_alpha >= 0.999 then 
-for {n in 1 .. 2}
+for {nb in 1 .. 2}
 {
   printf "*** change coeff_alpha from  %f ",coeff_alpha;
   let coeff_alpha := 0.0;
@@ -1003,7 +1083,8 @@ then {
     max{n in BUSCC_SLACK} slack1_balance_Q[n],
     max{n in BUSCC_SLACK} slack2_balance_Q[n],
     card({n in BUSCC_SLACK: slack2_balance_Q[n]+slack1_balance_Q[n]>Pnull});
-  if output_results > 0 then
+  if output_results > 0 and card({n in BUSCC_SLACK: slack1_balance_Q[n]+slack2_balance_Q[n] > Pnull})<=50
+  then
     for {n in BUSCC_SLACK: slack1_balance_Q[n]+slack2_balance_Q[n] > Pnull}
       printf "Bus %Q in substation %Q (%ikV) has non zero reactive slacks %.1f %.1f, Vmin=%.3f Vopt=%.3f Vmax=%.3f \n",
         bus_id[1,n],substation_id[1,bus_substation[1,n]],substation_Vnomi[1,bus_substation[1,n]],
