@@ -222,6 +222,7 @@ class OpenReacRunnerTest {
     @Test
     public void testTransformer() throws IOException {
         Network network = VoltageControlNetworkFactory.createNetworkWithT2wt();
+        network.getTwoWindingsTransformer("T2wT").getRatioTapChanger().setTapPosition(2);
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.addConstantQGenerators(List.of("GEN_1"));
         parameters.addVariableTwoWindingsTransformers(List.of("T2wT"));
