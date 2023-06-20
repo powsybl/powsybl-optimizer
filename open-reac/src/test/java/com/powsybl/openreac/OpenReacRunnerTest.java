@@ -197,14 +197,17 @@ class OpenReacRunnerTest {
     @Test
     public void testHvdc() throws IOException {
         Network network = HvdcNetworkFactory.createNetworkWithGenerators2();
+        network.getVscConverterStation("cs3").getTerminal().setP(0.0);
+        network.getVscConverterStation("cs4").getTerminal().setP(0.0);
         OpenReacParameters parameters = new OpenReacParameters();
-        parameters.addConstantQGenerators(List.of("g1", "g2", "g5", "g6")); // not working
+        parameters.addConstantQGenerators(List.of("g1", "g2", "g5", "g6"));
         testAllModifAndLoadFlow(network, "openreac-output-vsc", parameters);
     }
 
     @Test
     public void testSvc() throws IOException {
         Network network = VoltageControlNetworkFactory.createWithStaticVarCompensator();
+        network.getVoltageLevelStream().forEach(vl -> vl.setHighVoltageLimit(380).setHighVoltageLimit(420));
         network.getStaticVarCompensator("svc1").setVoltageSetpoint(390).setRegulationMode(StaticVarCompensator.RegulationMode.VOLTAGE);
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.addConstantQGenerators(List.of("g1"));
@@ -227,6 +230,14 @@ class OpenReacRunnerTest {
         parameters.addConstantQGenerators(List.of("GEN_1"));
         parameters.addVariableTwoWindingsTransformers(List.of("T2wT"));
         testAllModifAndLoadFlow(network, "openreac-output-transfo", parameters);
+    }
+
+    @Test
+    public void testRealNetwork() throws IOException {
+        // Network {CC0 SC0}: 53 generators have an inconsistent target voltage and have been discarded from voltage control
+        Network network = IeeeCdfNetworkFactory.create118();
+        OpenReacParameters parameters = new OpenReacParameters();
+        testAllModifAndLoadFlow(network, "openreac-118", parameters);
     }
 
     public static Network create() {
