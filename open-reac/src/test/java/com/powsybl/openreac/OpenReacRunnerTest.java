@@ -189,13 +189,13 @@ class OpenReacRunnerTest {
     }
 
     @Test
-    public void testOnlyGenerator() throws IOException {
+    void testOnlyGenerator() throws IOException {
         Network network = IeeeCdfNetworkFactory.create14();
         testAllModifAndLoadFlow(network, "openreac-output-ieee14", new OpenReacParameters());
     }
 
     @Test
-    public void testHvdc() throws IOException {
+    void testHvdc() throws IOException {
         Network network = HvdcNetworkFactory.createNetworkWithGenerators2();
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.addConstantQGenerators(List.of("g1", "g2", "g5", "g6")); // not working
@@ -203,7 +203,7 @@ class OpenReacRunnerTest {
     }
 
     @Test
-    public void testSvc() throws IOException {
+    void testSvc() throws IOException {
         Network network = VoltageControlNetworkFactory.createWithStaticVarCompensator();
         network.getStaticVarCompensator("svc1").setVoltageSetpoint(390).setRegulationMode(StaticVarCompensator.RegulationMode.VOLTAGE);
         OpenReacParameters parameters = new OpenReacParameters();
@@ -212,7 +212,7 @@ class OpenReacRunnerTest {
     }
 
     @Test
-    public void testShuntReconnection() throws IOException {
+    void testShuntReconnection() throws IOException {
         Network network = create();
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.addVariableShuntCompensators(List.of("SHUNT"));
@@ -220,7 +220,7 @@ class OpenReacRunnerTest {
     }
 
     @Test
-    public void testTransformer() throws IOException {
+    void testTransformer() throws IOException {
         Network network = VoltageControlNetworkFactory.createNetworkWithT2wt();
         network.getTwoWindingsTransformer("T2wT").getRatioTapChanger().setTapPosition(2);
         OpenReacParameters parameters = new OpenReacParameters();
