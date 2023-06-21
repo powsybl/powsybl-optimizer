@@ -1,18 +1,18 @@
 final_status OK
 dcopf_status OK
 
-ctime_start 'Thu Jun 08 16:53:11 2023'
+ctime_start 'Wed Jun 21 09:45:21 2023'
 last_solve_result_num 0
 nb_iter_last 7
 nb_iter_total 7
-_ampl_elapsed_time 0.407000
-_total_solve_time 0.078125
+_ampl_elapsed_time 0.046000
+_total_solve_time 0.046875
 total_time 0
 
 operatingSystem windows
 OS 'Windows_NT'
 COMPUTERNAME 'ARTELYS-PC158'
-directory 'C:\Users\ARTELY~1\AppData\Local\Temp\ampl_13026635110347579518'
+directory 'C:\Users\ARTELY~1\AppData\Local\Temp\ampl_8333906440246745744'
 
 objective_choice 0
 ratio_voltage_target 0.500000

@@ -1,0 +1,4 @@
+#Loads (two-windings-transformer-control/InitialState)
+#"variant" "num" "bus" "substation" "p0 (MW)" "q0 (MVar)" "fault" "curative" "id" "description" "p (MW)" "q (MVar)"
+1 1 2 2 11.2000 7.50000 0 0 "LOAD_2" "LOAD_2" -99999.0 -99999.0
+1 2 3 3 5.00000 0.00000 0 0 "LOAD_3" "LOAD_3" -99999.0 -99999.0

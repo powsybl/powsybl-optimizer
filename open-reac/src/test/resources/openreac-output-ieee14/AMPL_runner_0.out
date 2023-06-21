@@ -1,0 +1,400 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*** Start of file reactiveopf.run : Wed Jun 21 09:45:21 2023
+
+*** Reading algorithmic controls and parameters in file
+PARAM_ALGO_VALUES [*] :=
+objective_choice  0
+;
+
+Parameter: choice for objective function := 0 (active power minimization)
+Parameter: coeff_alpha to choose wether generation vary homogeneously (coeff_alpha=1) or independantly (coeff_alpha=0) is := 1.00
+Parameter: threshold to decide wether an active or reactive power value is zero Pnull:=0.01 (MW or Mvar or MVA)
+Parameter: threshold to detect zero impedance branch Znull:=0.0001 pu
+Parameter: for consistency checks of minimum nominal voltages epsilon_nominal_voltage:= 1 kV
+Parameter: for consistency checks of voltage bounds eps<=Vmin<Vmax<=2-eps, epsilon_min_voltage:= 0.5 pu
+Parameter: maximum for generating units' parameters Pmin Pmax Qmin Qmax = 9000 MW or Mvar
+Parameter: defaultPmax = 1000 MW
+Parameter: defaultPmin = 0 MW
+Parameter: defaultQmaxPmaxRatio = 0.3 Mvar/MW
+Parameter: defaultQmin = -300 Mvar
+Parameter: defaultQmax = 300 Mvar
+Parameter: minimalQPrange = 1 MW or Mvar
+
+Computation of bus with largest number of branches connected, in order to fix phase to 0 and to choose on which connex component reacive OPF will run
+Bus 135kV with most branches: 4 in substation VL4/VL4 with 5 connected branches
+
+*** Connexity computation
+# CCcomp solve: start (Wed Jun 21 09:45:21 2023)
+
+Artelys Knitro 13.1.0: 
+=======================================
+             Trial License
+       (NOT FOR COMMERCIAL USE)
+         Artelys Knitro 13.1.0
+=======================================
+
+No start point provided -- Knitro computing one.
+
+Knitro presolve eliminated 13 variables and 21 constraints.
+
+concurrent_evals:        0
+datacheck:               0
+hessian_no_f:            1
+The problem is identified as an LP.
+The problem is identified as bound constrained only.
+Knitro fixing 12 variables eliminated from the presolve.
+
+Problem Characteristics                                 (   Presolved)
+-----------------------
+Objective goal:  Maximize
+Objective type:  linear
+Number of variables:                                 14 (           1)
+    bounded below only:                               0 (           0)
+    bounded above only:                               0 (           0)
+    bounded below and above:                         14 (           0)
+    fixed:                                            0 (           1)
+    free:                                             0 (           0)
+Number of constraints:                               21 (           0)
+    linear equalities:                               21 (           0)
+    quadratic equalities:                             0 (           0)
+    gen. nonlinear equalities:                        0 (           0)
+    linear one-sided inequalities:                    0 (           0)
+    quadratic one-sided inequalities:                 0 (           0)
+    gen. nonlinear one-sided inequalities:            0 (           0)
+    linear two-sided inequalities:                    0 (           0)
+    quadratic two-sided inequalities:                 0 (           0)
+    gen. nonlinear two-sided inequalities:            0 (           0)
+Number of nonzeros in Jacobian:                      41 (           0)
+Number of nonzeros in Hessian:                        0 (           0)
+
+WARNING: Problem has more equality constraints than variables.
+
+Knitro using the Interior-Point/Barrier Direct algorithm.
+
+  Iter      Objective      FeasError   OptError    ||Step||    CGits 
+--------  --------------  ----------  ----------  ----------  -------
+       0    0.000000e+00   0.000e+00
+
+EXIT: Optimal solution found.
+
+Final Statistics
+----------------
+Final objective value               =   0.00000000000000e+00
+Final feasibility error (abs / rel) =   0.00e+00 / 0.00e+00
+Final optimality error  (abs / rel) =   9.99e-16 / 9.99e-16
+# of iterations                     =          0 
+# of CG iterations                  =          0 
+# of function evaluations           =          0
+# of gradient evaluations           =          0
+# of Hessian evaluations            =          0
+Total program time (secs)           =       0.001 (     0.000 CPU time)
+Time spent in evaluations (secs)    =       0.000
+
+===============================================================================
+
+Knitro 13.1.0: Locally optimal or satisfactory solution.
+objective 0; feasibility error 0
+0 iterations; 0 function evaluations
+
+suffix feaserror OUT;
+suffix opterror OUT;
+suffix numfcevals OUT;
+suffix numiters OUT;
+# CCcomp solve: end   (Wed Jun 21 09:45:21 2023 -> Wed Jun 21 09:45:21 2023)
+
+
+*** Connexity computation
+Nb of busses in AC+DC CC: 14
+Nb of busses in CC 'VL4_0': 14
+Nb of busses in other CCs: 0
+
+maximal_voltage_upper_bound = 1.5
+minimal_voltage_lower_bound = 0.5
+card(SUBSTATIONS) = 14
+card(BUS) = 14
+card(BUS2) = 14
+card(BUSCC) = 14
+card(BUS2 diff BUSCC) = 0
+card(BUSVV) = 14
+card(BUSCC_SLACK) = 12
+card(BUSCC diff BUSCC_SLACK) = 2
+card(BRANCH) = 20
+card(BRANCHCC) = 20
+card(BRANCHZNULL) = 0
+card(BRANCHCC diff BRANCHZNULL) = 20
+card(UNIT) = 5
+card(UNITCC) = 5
+card(UNITON) = 2
+card(UNITON diff UNIT_FIXQ) = 2
+card(UNIT_FIXQ) = 0
+card(LOAD) = 11
+card(LOADCC) = 11
+card(SHUNTCC) = 1
+card(SHUNT_FIX) = 1
+card(SHUNT_VAR) = 0
+card(SVC) = 0
+card(SVCCC) = 0
+card(SVCON) = 0
+card(VSCCONV) = 0
+card(VSCCONVON) = 0
+card(LCCCONV) = 0
+card(LCCCONVON) = 0
+
+HVDC injections (homogeneous to loads):
+Sum of HVDC conv.  H: 0 MW
+Sum of loads       C: 259 MW
+Sum of generations P: 272 MW
+  (including batteries for 0.0 MW
+Balance    (P-C-H)/C: 5.17 %    (global_initial_losses_ratio=0.051737)
+
+Branch 'L6-11-1' Fmax=2078.38MW is small ; Vnom1=12kV Vnom2=12kV patl1=-99999A patl2=-99999A (Fmax not used, this is just for information)
+Branch 'L6-12-1' Fmax=2078.38MW is small ; Vnom1=12kV Vnom2=12kV patl1=-99999A patl2=-99999A (Fmax not used, this is just for information)
+Branch 'L6-13-1' Fmax=2078.38MW is small ; Vnom1=12kV Vnom2=12kV patl1=-99999A patl2=-99999A (Fmax not used, this is just for information)
+Branch 'L7-9-1' Fmax=2424.78MW is small ; Vnom1=14kV Vnom2=12kV patl1=-99999A patl2=-99999A (Fmax not used, this is just for information)
+Branch 'L9-10-1' Fmax=2078.38MW is small ; Vnom1=12kV Vnom2=12kV patl1=-99999A patl2=-99999A (Fmax not used, this is just for information)
+Branch 'L9-14-1' Fmax=2078.38MW is small ; Vnom1=12kV Vnom2=12kV patl1=-99999A patl2=-99999A (Fmax not used, this is just for information)
+Branch 'L10-11-1' Fmax=2078.38MW is small ; Vnom1=12kV Vnom2=12kV patl1=-99999A patl2=-99999A (Fmax not used, this is just for information)
+Branch 'L12-13-1' Fmax=2078.38MW is small ; Vnom1=12kV Vnom2=12kV patl1=-99999A patl2=-99999A (Fmax not used, this is just for information)
+Branch 'L13-14-1' Fmax=2078.38MW is small ; Vnom1=12kV Vnom2=12kV patl1=-99999A patl2=-99999A (Fmax not used, this is just for information)
+If voltage lower bounds are missing or too small, they are set to 0.500pu
+If voltage upper bounds are missing or too high,  they are set to 1.500pu
+Maximal diameter of voltage interval: 1.000
+Minimal diameter of voltage interval: 1.000
+Minimal transformer ratio : Infinity
+Maximal transformer ratio : -Infinity
+
+'unit_Pmax' for 'B1-G' is 9999 -> corrected to 1000
+'unit_Pmin' for 'B1-G' is -9999 -> corrected to 0
+'unit_Pmax' for 'B2-G' is 9999 -> corrected to 1000
+'unit_Pmin' for 'B2-G' is -9999 -> corrected to 0
+
+Raw extremal values: -9999 <= 'unit_Pmin' <= -9999
+Active generation:   40 <= 'unit_Pc' <= 232.4
+Raw extremal values: 9999 <= 'unit_Pmax' <= 9999
+Raw extremal values: -1.79769e+308 <= 'unit_qP' <= -40
+Raw extremal values: -1.79769e+308 <= 'unit_qp' <= -40
+Raw extremal values: 50 <= 'unit_QP' <= 1.79769e+308
+Raw extremal values: 50 <= 'unit_Qp' <= 1.79769e+308
+Corrected extremal values: 0 <= 'corrected_unit_Pmin' <= 0
+Corrected extremal values: 1000 <= 'corrected_unit_Pmax' <= 1000
+Corrected extremal values: -300 <= 'corrected_unit_qP' <= -40
+Corrected extremal values: -300 <= 'corrected_unit_qp' <= -40
+Corrected extremal values: 50 <= 'corrected_unit_QP' <= 300
+Corrected extremal values: 50 <= 'corrected_unit_Qp' <= 300
+
+######################################################################
+# DCopf solve: start (Wed Jun 21 09:45:21 2023)
+
+Artelys Knitro 13.1.0: 
+=======================================
+             Trial License
+       (NOT FOR COMMERCIAL USE)
+         Artelys Knitro 13.1.0
+=======================================
+
+No start point provided -- Knitro computing one.
+
+Knitro presolve eliminated 0 variables and 0 constraints.
+
+concurrent_evals:        0
+datacheck:               0
+hessian_no_f:            1
+The problem is identified as a convex QP.
+
+Problem Characteristics                                 (   Presolved)
+-----------------------
+Objective goal:  Minimize
+Objective type:  quadratic
+Number of variables:                                 63 (          63)
+    bounded below only:                              28 (          28)
+    bounded above only:                               0 (           0)
+    bounded below and above:                         13 (          13)
+    fixed:                                            0 (           0)
+    free:                                            22 (          22)
+Number of constraints:                               34 (          34)
+    linear equalities:                               34 (          34)
+    quadratic equalities:                             0 (           0)
+    gen. nonlinear equalities:                        0 (           0)
+    linear one-sided inequalities:                    0 (           0)
+    quadratic one-sided inequalities:                 0 (           0)
+    gen. nonlinear one-sided inequalities:            0 (           0)
+    linear two-sided inequalities:                    0 (           0)
+    quadratic two-sided inequalities:                 0 (           0)
+    gen. nonlinear two-sided inequalities:            0 (           0)
+Number of nonzeros in Jacobian:                     125 (         125)
+Number of nonzeros in Hessian:                        2 (           2)
+
+Knitro using the Interior-Point/Barrier Direct algorithm.
+
+  Iter      Objective      FeasError   OptError    ||Step||    CGits 
+--------  --------------  ----------  ----------  ----------  -------
+       0    5.369505e+04   2.160e+03
+       4    2.805829e+01   2.698e-04   1.022e-06   7.852e-03        0
+
+EXIT: Optimal solution found.
+
+Final Statistics
+----------------
+Final objective value               =   2.80582905864162e+01
+Final feasibility error (abs / rel) =   2.70e-04 / 1.25e-07
+Final optimality error  (abs / rel) =   1.02e-06 / 1.02e-08
+# of iterations                     =          4 
+# of CG iterations                  =          0 
+# of function evaluations           =          0
+# of gradient evaluations           =          0
+# of Hessian evaluations            =          0
+Total program time (secs)           =       0.001 (     0.016 CPU time)
+Time spent in evaluations (secs)    =       0.000
+
+===============================================================================
+
+Knitro 13.1.0: Locally optimal or satisfactory solution.
+objective 28.05829059; feasibility error 0.00027
+4 iterations; 0 function evaluations
+
+# DCopf solve: end   (Wed Jun 21 09:45:21 2023 -> Wed Jun 21 09:45:21 2023)
+######################################################################
+
+OK all slack variables for DCOPF are null
+Maximum flow: 149.66 MW
+Maximum flow 149.66 MW is on branch 'L1-2-1'
+Maximum deviation between generation and target: 11.31 MW
+Generating unit 'B1-G' : Pc=232.40MW P=221.09MW (Pmin=-9999.00MW Pmax=9999.00MW)
+Sum of HVDC conv.  H: 0 MW
+Sum of loads       C: 259 MW
+Sum of generations P: 259 MW
+Balance    (P-C-H)/C: -0.00 %
+
+teta_max = 3.18579
+teta_min = -3.11751
+max({n in BUSCC} (teta_dc[n])) = 0.185788
+min({n in BUSCC} (teta_dc[n])) = -0.117511
+max({(qq,m,n) in BRANCHCC} (teta_dc[m] - teta_dc[n])) = 0.15933
+min({(qq,m,n) in BRANCHCC} (teta_dc[m] - teta_dc[n])) = -0.0413681
+
+Branches with large Delta Teta:
+'L1-5-1' R=0.0540 X=0.2230 delta=0.16 teta_m=0.19 teta_n=0.03 F=71.44
+'L3-4-1' R=0.0670 X=0.1710 delta=-0.04 teta_m=-0.04 teta_n=0.00 F=-24.19
+
+######################################################################
+# ACopf solve: start (Wed Jun 21 09:45:21 2023)
+
+Artelys Knitro 13.1.0: opttol=1
+opttolabs=1e-1
+feastol=1
+feastolabs=1e-3
+maxit=200
+
+=======================================
+             Trial License
+       (NOT FOR COMMERCIAL USE)
+         Artelys Knitro 13.1.0
+=======================================
+
+Knitro presolve eliminated 0 variables and 0 constraints.
+
+concurrent_evals:        0
+datacheck:               0
+feastol:                 1
+hessian_no_f:            1
+maxit:                   200
+opttol:                  1
+opttol_abs:              0.1
+Knitro shifted start point further inside presolved bounds (24 variables).
+
+Problem Characteristics                                 (   Presolved)
+-----------------------
+Objective goal:  Minimize
+Objective type:  quadratic
+Number of variables:                                 54 (          54)
+    bounded below only:                               0 (           0)
+    bounded above only:                               0 (           0)
+    bounded below and above:                         54 (          54)
+    fixed:                                            0 (           0)
+    free:                                             0 (           0)
+Number of constraints:                               28 (          28)
+    linear equalities:                                0 (           0)
+    quadratic equalities:                             0 (           0)
+    gen. nonlinear equalities:                       28 (          28)
+    linear one-sided inequalities:                    0 (           0)
+    quadratic one-sided inequalities:                 0 (           0)
+    gen. nonlinear one-sided inequalities:            0 (           0)
+    linear two-sided inequalities:                    0 (           0)
+    quadratic two-sided inequalities:                 0 (           0)
+    gen. nonlinear two-sided inequalities:            0 (           0)
+Number of nonzeros in Jacobian:                     232 (         232)
+Number of nonzeros in Hessian:                      112 (         112)
+
+Knitro using the Interior-Point/Barrier Direct algorithm.
+
+  Iter      Objective      FeasError   OptError    ||Step||    CGits 
+--------  --------------  ----------  ----------  ----------  -------
+       0    5.276128e+02   1.933e+02
+       7    2.741344e+02   7.921e-04   1.449e-05   2.124e+00        0
+
+EXIT: Locally optimal solution found.
+
+Final Statistics
+----------------
+Final objective value               =   2.74134392381707e+02
+Final feasibility error (abs / rel) =   7.92e-04 / 4.10e-06
+Final optimality error  (abs / rel) =   1.45e-05 / 1.45e-07
+# of iterations                     =          7 
+# of CG iterations                  =          0 
+# of function evaluations           =          9
+# of gradient evaluations           =          9
+# of Hessian evaluations            =          7
+Total program time (secs)           =       0.001 (     0.000 CPU time)
+Time spent in evaluations (secs)    =       0.000
+
+===============================================================================
+
+Knitro 13.1.0: Locally optimal or satisfactory solution.
+objective 274.1343924; feasibility error 0.000792
+7 iterations; 9 function evaluations
+
+# ACopf solve: end   (Wed Jun 21 09:45:21 2023 -> Wed Jun 21 09:45:21 2023)
+######################################################################
+
+nb_iter_last = 7
+nb_iter_total = 7
+max({(qq,m,n) in BRANCHCC} (branch_R[1,qq,m,n])) = 0.22092
+max({(qq,m,n) in BRANCHCC} (branch_X[1,qq,m,n])) = 0.55618
+teta_max = 3.18579
+max({n in BUSCC} (teta[n])) = 0.167477
+max({n in BUSCC} (teta_dc[n])) = 0.185788
+teta_min = -3.11751
+min({n in BUSCC} (teta[n])) = -0.11472
+min({n in BUSCC} (teta_dc[n])) = -0.117511
+max({(qq,m,n) in BRANCHCC} (teta[m] - teta[n])) = 0.140548
+max({(qq,m,n) in BRANCHCC} (teta_dc[m] - teta_dc[n])) = 0.15933
+min({(qq,m,n) in BRANCHCC} (teta[m] - teta[n])) = -0.0415319
+min({(qq,m,n) in BRANCHCC} (teta_dc[m] - teta_dc[n])) = -0.0413681
+min({n in BUSCC} (V[n])) = 0.909201
+max({n in BUSCC} (V[n])) = 1.5
+
+'L1-5-1' R=0.054 X=0.223 delta=0.14 Vm=1.084 0.17 Vn=0.995 0.03 sQn 0.00 0.00 P1=74.9 Q1=26.8 P2=-78.3 Q2=-21.5 
+'L3-4-1' R=0.067 X=0.171 delta=-0.04 Vm=0.971 -0.04 Vn=0.991 0.00 sQm 0.00 0.00 sQn 0.00 0.00 P1=-23.9 Q1=-1.9 P2=23.8 Q2=1.7 
+
+*** End of file reactiveopf.run : Optimization successfull
+*** Start of file reactiveopf.run : 'Wed Jun 21 09:45:21 2023'
+*** End   of file reactiveopf.run : 'Wed Jun 21 09:45:21 2023'

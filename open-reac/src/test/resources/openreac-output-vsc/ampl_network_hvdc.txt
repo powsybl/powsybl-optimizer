@@ -1,0 +1,3 @@
+#HVDC lines (test/InitialState)
+#"variant" "num" "type" "converterStation1" "converterStation2" "r (ohm)" "nomV (KV)" "convertersMode" "targetP (MW)" "maxP (MW)" "fault" "curative" "id" "description"
+1 1 1 1 2 0.100000 400.000 "SIDE_1_INVERTER_SIDE_2_RECTIFIER" 2.00000 2.00000 0 0 "hvdc34" "hvdc34"
