@@ -174,10 +174,10 @@ class OpenReacRunnerTest {
                 subFolder + "/reactiveopf_results_shunts.csv",
                 subFolder + "/reactiveopf_results_static_var_compensators.csv",
                 subFolder + "/reactiveopf_results_vsc_converter_stations.csv"));
-        // tests really run openreac, doesn't work without a proper ampl config
-        //        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
-//            localCommandExecutor, ForkJoinPool.commonPool())) {
-        try (ComputationManager computationManager = new LocalComputationManager()) {
+        // To really run open reac, use the commentede line below. Be sure that open-reac/src/test/resources/com/powsybl/config/test/config.yml contains your ampl path
+        // try (ComputationManager computationManager = new LocalComputationManager()) {
+        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
+            localCommandExecutor, ForkJoinPool.commonPool())) {
             OpenReacResult openReacResult = OpenReacRunner.run(network,
                 network.getVariantManager().getWorkingVariantId(), parameters, new OpenReacConfig(true),
                 computationManager);
@@ -237,7 +237,7 @@ class OpenReacRunnerTest {
         // Network {CC0 SC0}: 53 generators have an inconsistent target voltage and have been discarded from voltage control
         Network network = IeeeCdfNetworkFactory.create118();
         OpenReacParameters parameters = new OpenReacParameters();
-        testAllModifAndLoadFlow(network, "openreac-118", parameters);
+        testAllModifAndLoadFlow(network, "openreac-output-real-network", parameters);
     }
 
     public static Network create() {
