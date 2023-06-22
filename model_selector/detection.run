@@ -51,7 +51,7 @@ printf "Parameter: threshold to decide wether an active or reactive power value 
 # always check Pnull > 0 and Pnull < 1;
 
 # Parameter for detection of branches with zero impedance
-param Znull default 1e-4;
+param Znull default 1e-4; 
 printf "Parameter: threshold to detect zero impedance branch Znull:=%Q pu\n",Znull;
 # always check Znull > 0 and Znull < 0.1;
 
@@ -198,7 +198,7 @@ else if most_meshed_selection == 1 then {
   tempo; }
 
 # Check angle of slack bus is null in AMPL import
-check abs(bus_angl0[1,null_phase_bus]) <= 1e-8;
+#check abs(bus_angl0[1,null_phase_bus]) <= 1e-8;
 
 ###############################################################################
 #           Connexity checks and computation of connex components             #
@@ -577,7 +577,7 @@ printf "# DA solve: start (%s)\n\n",ctime();
 let tempstr := ctime();
 
 
-option knitro_options "opttol=1 opttolabs=1e-1 feastol=1 feastolabs=1e-3 maxit=1500 mip_intvar_strategy=1 mip_heuristic_strategy=3 mip_multistart=1 ms_enable=0";
+option knitro_options "opttol=1 opttolabs=1e-1 feastol=1 feastolabs=1e-3 maxit=1500 mip_intvar_strategy=0 mip_heuristic_strategy=3 mip_multistart=1 ms_enable=0 mip_maxtime_real=150";
 
 # Solve the problem selected
 if (no_penal == 1) then {
@@ -701,6 +701,31 @@ for{(1,qq,m,n) in BRANCH}{
   if branch_ptrDeph[1,qq,m,n] != -1 and branch_ptrRegl[1,qq,m,n] != -1 then printf "Rtc and ptc on the branch %Q\n", branch_id[1,qq,m,n];
   if m == n and (qq,m,n) in BRANCHCC then printf "Branch with same buses two sides %Q", branch_id[1,qq,m,n];
 }
+
+#display branch_Xdeph;
+
+#for{(qq,m,n) in BRANCHCC}{
+#  if (qq,m,n) in BRANCHCC_TRANSFORMER and abs(teta[m] - teta[n]) > min(3.141592 / 2, abs(1.1 * Fmax[qq,m,n] / 100 * branch_Xdeph[qq,m,n] / branch_Ror[qq,m,n])) then{
+#    printf "diff theta %i - theta %i = %.5f\n", m, n, abs(teta[m] - teta[n]);
+#    printf "Value of Max flow on transformer : %.5f\n",min(3.141592 / 2, abs(1.1 * Fmax[qq,m,n] / 100 * branch_Xdeph[qq,m,n] / branch_Ror[qq,m,n]));
+#  }
+#
+#  else if (abs(teta[m] - teta[n]) > min(3.141592 / 2, abs(1.1 * Fmax[qq,m,n] / 100 * branch_X_mod[qq,m,n] / branch_Ror[qq,m,n]))) then {
+#    printf "diff theta %i - theta %i = %.5f\n", m, n, abs(teta[m] - teta[n]);
+#    printf "Value of Max flow : %.5f\n",min(3.141592 / 2, abs(1.1 * Fmax[qq,m,n] / 100 * branch_X_mod[qq,m,n] / branch_Ror[qq,m,n]));
+#  }
+#
+#}
+
+#for{(qq,m,n) in BRANCHCC_DIFF_THETA_CONST}{ 
+# printf "Branch %i %i %i : %.5f.\n", qq,m,n,if (qq,m,n) in BRANCHCC_TRANSFORMER and abs(branch_Xdeph[qq,m,n]) > 0.05 then
+#      min(1.570796, abs(1.1 * Fmax[qq,m,n] / 100 * branch_Xdeph[qq,m,n] / branch_Ror[qq,m,n]))
+#      else if abs(branch_X_mod[qq,m,n]) > 0.05 then
+#      min(1.570796, abs(1.1 * Fmax[qq,m,n] / 100 * branch_X_mod[qq,m,n] / branch_Ror[qq,m,n]))
+#      else
+#      1.570796
+#      ;
+#}
 
 printf "\n";
 printf "*** End of file divergence analysis : Optimization %ssuccessfull\n",if output_results>0 then "" else "un";

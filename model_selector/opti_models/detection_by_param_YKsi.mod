@@ -16,8 +16,8 @@
 set PROBLEM_DETECTION_PARAM default { };
 
 # Activation/desactivation of penal variables
-subject to ctr_s1_null_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV}: if(is_voltage_rho_control == 0) then s1[n] = 0;
-subject to ctr_sigma1_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_TRANSFORMER}: if(is_voltage_rho_control == 0) then sigma1[qq,m,n] = 0;
+subject to ctr_s1_null_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV}: if(is_voltage_control == 0) then s1[n] = 0;
+subject to ctr_sigma1_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_TRANSFORMER}: if(is_rho_control == 0) then sigma1[qq,m,n] = 0;
 subject to ctr_sigma2_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}: if(is_admi_xi_control == 0) then sigma2[qq,m,n] = 0;
 subject to ctr_sigma3_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_DEPH}: if(is_angle_deph_control == 0) then sigma3[qq,m,n] = 0;
 subject to ctr_sigma4_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}: if(is_admi_xi_control == 0) then sigma4[qq,m,n] = 0;
@@ -26,9 +26,12 @@ subject to ctr_sigma6_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PEN
 subject to ctr_sigma7_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}: if(is_G_B_control == 0) then sigma7[qq,m,n] = 0;
 subject to ctr_sigma8_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}: if(is_G_B_control == 0) then sigma8[qq,m,n] = 0;
 
+subject to ctr_s1_for_svc_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV_2}: if (is_targetV_svc == 0) then s1[n] = 0;
+subject to ctr_s1_for_units_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV_1}: if (is_targetV_units == 0) then s1[n] = 0;
+
 # Activation/desactivation of binary penal variables
-subject to ctr_b_s1_null_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV}: if(is_voltage_rho_control == 0) then b_s1[n] = 0;
-subject to ctr_b_sigma1_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_TRANSFORMER}: if(is_voltage_rho_control == 0) then b_sigma1[qq,m,n] = 0;
+subject to ctr_b_s1_null_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV}: if(is_voltage_control == 0) then b_s1[n] = 0;
+subject to ctr_b_sigma1_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_TRANSFORMER}: if(is_rho_control == 0) then b_sigma1[qq,m,n] = 0;
 subject to ctr_b_sigma2_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}: if(is_admi_xi_control == 0) then b_sigma2[qq,m,n] = 0;
 subject to ctr_b_sigma3_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_DEPH}: if(is_angle_deph_control == 0) then b_sigma3[qq,m,n] = 0;
 subject to ctr_b_sigma4_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}: if(is_admi_xi_control == 0) then b_sigma4[qq,m,n] = 0;
@@ -36,6 +39,9 @@ subject to ctr_b_sigma5_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_P
 subject to ctr_b_sigma6_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}: if(is_G_B_control == 0) then b_sigma6[qq,m,n] = 0;
 subject to ctr_b_sigma7_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}: if(is_G_B_control == 0) then b_sigma7[qq,m,n] = 0;
 subject to ctr_b_sigma8_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}: if(is_G_B_control == 0) then b_sigma8[qq,m,n] = 0;
+
+subject to ctr_b_s1_for_svc_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV_2}: if (is_targetV_svc == 0) then b_s1[n] = 0;
+subject to ctr_b_s1_for_units_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV_1}: if (is_targetV_units == 0) then b_s1[n] = 0;
 
 #
 # Bounds for penal variables. Are based on job knowledge
@@ -87,7 +93,7 @@ subject to ctr_b_sigma4_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PE
 subject to ctr_b_sigma5_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}: sigma5[qq,m,n] >= (sigma5_inf - branch_Gor_corrected[1,qq,m,n]- 0.001) * b_sigma5[qq,m,n];
 subject to ctr_b_sigma6_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}: sigma6[qq,m,n] >= (sigma6_inf - branch_Bor_corrected[1,qq,m,n]- 0.001) * b_sigma6[qq,m,n];
 subject to ctr_b_sigma7_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}: sigma7[qq,m,n] >= (sigma7_inf - branch_Gex_corrected[1,qq,m,n]- 0.001) * b_sigma7[qq,m,n];
-subject to ctr_b_sigma8_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}: sigma8[qq,m,n] >= (sigma8_inf - branch_Bex_corrected[1,qq,m,n]- 0.001) * b_sigma8[qq,m,n];
+subject to ctr_b_sigma8_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}: sigma8[qq,m,n] >= (sigma8_inf - branch_Bex_corrected[1,qq,m,n]- 0.001) * b_sigma8[qq,m,n];#
 
 #####################################
 #                                   #
@@ -160,6 +166,20 @@ subject to ctr_balance_Q_dbp{PROBLEM_DETECTION_PARAM,k in BUSCC_PQ}:
   + sum{(l,k) in LCCCONVON} lccconv_Q0[1,l,k] # Fixed values
   = 0;
 
+###########################################
+#                                         #
+#             Additional Cut              #
+#                                         #
+###########################################
+
+#subject to ctr_thetas_diff_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_DIFF_THETA_CONST}: abs(teta[m] - teta[n]) <= 
+#      if (qq,m,n) in BRANCHCC_TRANSFORMER and abs(branch_Xdeph[qq,m,n]) > 0.05 then
+#      min(1.570796, abs(1.1 * Fmax[qq,m,n] / 100 * branch_Xdeph[qq,m,n] / branch_Ror[qq,m,n]))
+#      else if abs(branch_X_mod[qq,m,n]) > 0.05 then
+#      min(1.570796, abs(1.1 * Fmax[qq,m,n] / 100 * branch_X_mod[qq,m,n] / branch_Ror[qq,m,n]))
+#      else
+#      1.570796
+#      ;
 
 ###########################################
 #                                         #
@@ -170,33 +190,13 @@ subject to ctr_balance_Q_dbp{PROBLEM_DETECTION_PARAM,k in BUSCC_PQ}:
 
 minimize problem_dbp:
   0
-  + sum{n in BUSCC_PV} b_s1[n] #* ((targetV_busPV[n] + 10e-5) / (s1[n] + 10e-5))**2
-  + sum{(qq,m,n) in BRANCHCC_TRANSFORMER} b_sigma1[qq,m,n] #* ((branch_Ror[qq,m,n] + 10e-5) / (sigma1[qq,m,n] + 10e-5))**2
-  + 3 * sum{(qq,m,n) in BRANCHCC_PENALIZED} b_sigma2[qq,m,n] #* ((branch_admi[qq,m,n] + 10e-5) / (sigma2[qq,m,n] + 10e-5))**2 # We do not want to move admittance too easily.
-  + sum{(qq,m,n) in BRANCHCC_DEPH} b_sigma3[qq,m,n] #* ((branch_dephor[qq,m,n] + 10e-5) / (sigma3[qq,m,n] + 10e-5))**2
-  + sum{(qq,m,n) in BRANCHCC_PENALIZED} b_sigma4[qq,m,n] #* ((branch_angper[qq,m,n] + 10e-5) / (sigma4[qq,m,n] + 10e-5))**2
-  + sum{(qq,m,n) in BRANCHCC_PENALIZED} b_sigma5[qq,m,n] #* ((branch_Gor[1,qq,m,n] + 10e-5) / (sigma5[qq,m,n] + 10e-5))**2
-  + sum{(qq,m,n) in BRANCHCC_PENALIZED} b_sigma6[qq,m,n] #* ((branch_Bor[1,qq,m,n] + 10e-5) / (sigma6[qq,m,n] + 10e-5))**2
-  + sum{(qq,m,n) in BRANCHCC_PENALIZED} b_sigma7[qq,m,n] #* ((branch_Bor[1,qq,m,n] + 10e-5) / (sigma7[qq,m,n] + 10e-5))**2
-  + sum{(qq,m,n) in BRANCHCC_PENALIZED} b_sigma8[qq,m,n] #* ((branch_Bex_corrected[1,qq,m,n] + 10e-5) / (sigma8[qq,m,n] + 10e-5))**2
-
-  #+ sum{n in BUSCC_PV} log(1 +  (targetV_busPV[n] / (100 * s1[n] + 10e-5))**2 )
-  #+ sum{(qq,m,n) in BRANCHCC_PENALIZED} log(1 + (branch_Ror[qq,m,n] / (100 * sigma1[qq,m,n] + 10e-5)) ** 2 )
-  #+ sum{(qq,m,n) in BRANCHCC_PENALIZED} log(1 + (branch_admi[qq,m,n] / (100 * sigma2[qq,m,n] + 10e-5)) ** 2)
-  #+ sum{(qq,m,n) in BRANCHCC_PENALIZED} log(1 + (branch_dephor[qq,m,n] / (100 * sigma3[qq,m,n] + 10e-5)) ** 2)
-  #+ sum{(qq,m,n) in BRANCHCC_PENALIZED} log(1 + (branch_angper[qq,m,n] / (100 * sigma4[qq,m,n] + 10e-5)) ** 2)
-  #+ sum{(qq,m,n) in BRANCHCC_PENALIZED} log(1 + (branch_Gor[1,qq,m,n] / (100 * sigma5[qq,m,n] + 10e-5)) ** 2)
-  #+ sum{(qq,m,n) in BRANCHCC_PENALIZED} log(1 + (branch_Bor[1,qq,m,n] / (100 * sigma6[qq,m,n] + 10e-5)) ** 2)
-  #+ sum{(qq,m,n) in BRANCHCC_PENALIZED} log(1 + (branch_Gex[1,qq,m,n] / (100 * sigma7[qq,m,n] + 10e-5)) ** 2)
-  #+ sum{(qq,m,n) in BRANCHCC_PENALIZED} log(1 + (branch_Bex_corrected[1,qq,m,n] / (100 * sigma8[qq,m,n] + 10e-5)) ** 2)
-
-  #+ sum{n in BUSCC_PV} log(1 + abs(s1[n] / (targetV_busPV[n] + 0.00001)))
-  #+ sum{(qq,m,n) in BRANCHCC_PENALIZED} abs(sigma1[qq,m,n]) / (abs_mean_branch_Ror + 0.00001) 
-  #+ sum{(qq,m,n) in BRANCHCC_PENALIZED} abs(sigma2[qq,m,n]) / (abs_mean_branch_admi + 0.00001) 
-  #+ sum{(qq,m,n) in BRANCHCC_PENALIZED} abs(sigma3[qq,m,n]) / (abs_mean_branch_dephor + 0.00001)
-  #+ sum{(qq,m,n) in BRANCHCC_PENALIZED} abs(sigma4[qq,m,n]) / (abs_mean_branch_angper + 0.00001)
-  #+ sum{(qq,m,n) in BRANCHCC_PENALIZED} abs(sigma5[qq,m,n]) / (abs_mean_branch_Gor + 0.00001)
-  #+ sum{(qq,m,n) in BRANCHCC_PENALIZED} abs(sigma6[qq,m,n]) / (abs_mean_branch_Bor + 0.00001)
-  #+ sum{(qq,m,n) in BRANCHCC_PENALIZED} abs(sigma7[qq,m,n]) / (abs_mean_branch_Gex + 0.00001)
-  #+ sum{(qq,m,n) in BRANCHCC_PENALIZED} abs(sigma8[qq,m,n]) / (abs_mean_branch_Bex + 0.00001)
+  + sum{n in BUSCC_PV} b_s1[n] 
+  + sum{(qq,m,n) in BRANCHCC_TRANSFORMER} b_sigma1[qq,m,n] 
+  + 3 * sum{(qq,m,n) in BRANCHCC_PENALIZED} b_sigma2[qq,m,n] 
+  + sum{(qq,m,n) in BRANCHCC_DEPH} b_sigma3[qq,m,n] 
+  + sum{(qq,m,n) in BRANCHCC_PENALIZED} b_sigma4[qq,m,n] 
+  + sum{(qq,m,n) in BRANCHCC_PENALIZED} b_sigma5[qq,m,n] 
+  + sum{(qq,m,n) in BRANCHCC_PENALIZED} b_sigma6[qq,m,n] 
+  + sum{(qq,m,n) in BRANCHCC_PENALIZED} b_sigma7[qq,m,n] 
+  + sum{(qq,m,n) in BRANCHCC_PENALIZED} b_sigma8[qq,m,n] 
   ;

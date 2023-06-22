@@ -21,12 +21,8 @@ set PROBLEM_NO_PENAL default { };
 #                                   #  
 #####################################
 
-subject to ctr_voltage_values_PQ_sup{PROBLEM_NO_PENAL, n in BUSCC_PQ diff BUSCC_3WT}: V[n] <= 1.25;
-subject to ctr_voltage_values_PQ_inf{PROBLEM_NO_PENAL, n in BUSCC_PQ diff BUSCC_3WT}: V[n] >= 0.75;
-
-subject to ctr_voltage_values_3wt_sup{PROBLEM_NO_PENAL, n in BUSCC_3WT}: V[n] <= 10;
-subject to ctr_voltage_values_3wt_inf{PROBLEM_NO_PENAL, n in BUSCC_3WT}: V[n] >= 0;
-
+subject to ctr_voltage_values_PQ_sup{PROBLEM_NO_PENAL, n in BUSCC_PQ}: V[n] <= 1.25;
+subject to ctr_voltage_values_PQ_inf{PROBLEM_NO_PENAL, n in BUSCC_PQ}: V[n] >= 0.75;
 
 
 #############################################
@@ -34,9 +30,10 @@ subject to ctr_voltage_values_3wt_inf{PROBLEM_NO_PENAL, n in BUSCC_3WT}: V[n] >=
 #############################################
 
 subject to ctr_null_phase_bus_no_penal{PROBLEM_NO_PENAL}: teta[null_phase_bus] = 0;
-# TODO : CHange here, i put bus_V0 but it should be targetV !
-#subject to ctr_voltage_PV_buses_no_penal{PROBLEM_NO_PENAL, k in BUSCC_PV}: V[k] - targetV_busPV[k] = 0;
-subject to ctr_voltage_PV_buses_no_penal{PROBLEM_NO_PENAL, k in BUSCC_PV}: V[k] - bus_V0[1,k] = 0;
+subject to ctr_voltage_PV_buses_no_penal{PROBLEM_NO_PENAL, k in BUSCC_PV}: V[k] - targetV_busPV[k] = 0;
+
+subject to test_1{PROBLEM_NO_PENAL, (qq,m,n) in BRANCHCC}: teta[m] - teta[n] <= 3.141592/2;
+subject to test_2{PROBLEM_NO_PENAL, (qq,m,n) in BRANCHCC}: teta[m] - teta[n] >= -3.141592/2;
 
 ############################################################
 #     Active and reactive powers variables/constraints     #  
@@ -92,6 +89,21 @@ subject to ctr_balance_Q_no_penal{PROBLEM_NO_PENAL,k in BUSCC_PQ}:
   = 0;
 
 
+###########################################
+#                                         #
+#              Additional Cut             #
+#                                         #
+###########################################
+
+subject to ctr_thetas_diff_np{PROBLEM_NO_PENAL, (qq,m,n) in BRANCHCC_DIFF_THETA_CONST}: abs(teta[m] - teta[n]) <= 
+      if (qq,m,n) in BRANCHCC_TRANSFORMER and abs(branch_Xdeph[qq,m,n]) > 0.05 then
+      min(1.570796, abs(1.1 * Fmax[qq,m,n] / 100 * branch_Xdeph[qq,m,n] / branch_Ror[qq,m,n]))
+      else if abs(branch_X_mod[qq,m,n]) > 0.05 then
+      min(1.570796, abs(1.1 * Fmax[qq,m,n] / 100 * branch_X_mod[qq,m,n] / branch_Ror[qq,m,n]))
+      else
+      1.570796
+      ;
+    
 ###########################################
 #                                         #
 #             Objective function          #

@@ -179,6 +179,7 @@ param shunt_valmin        {SHUNT}; # Susceptance B in p.u.: compute B*100*V^2 to
 param shunt_valmax        {SHUNT}; # Susceptance B in p.u.: compute B*100*V^2 to get MVAr
 param shunt_interPoints   {SHUNT}; # Intermediate points: if there are 0 interPoint, it means that either min or max are possible
 param shunt_valnom        {SHUNT}; # Susceptance B in p.u.: compute B*100*V^2 to get MVAr. If value >= 0, this means reactive power generation
+#param shunt_g             {SHUNT};
 param shunt_fault         {SHUNT};
 param shunt_curative      {SHUNT};
 param shunt_id            {SHUNT} symbolic;
@@ -500,7 +501,12 @@ set UNITCC  := setof {(1,g,n)    in UNIT  : n in BUSCC} (g,n);
 #
 # Shunts, regleurs et dephaseurs
 #
-set BRANCHZNULL := {(qq,m,n) in BRANCHCC_PENALIZED: branch_R_corrected[1,qq,m,n]^2+branch_X_corrected[1,qq,m,n]^2 <= Znull^2};
+#set BRANCHZNULL := {(qq,m,n) in BRANCHCC_PENALIZED: 
+#                   branch_R_corrected[1,qq,m,n]^2+branch_X_corrected[1,qq,m,n]^2 <= Znull^2}; # With per unit
+
+set BRANCHZNULL := {(qq,m,n) in BRANCHCC_PENALIZED: 
+                    (branch_R_corrected[1,qq,m,n]*substation_Vnomi[1,branch_subex[1,qq,m,n]]^2/base100MVA)^2
+                   +(branch_X_corrected[1,qq,m,n]*substation_Vnomi[1,branch_subex[1,qq,m,n]]^2/base100MVA)^2 <= Znull^2}; # Without per unit
 
 # NB : SHUNTCC are the shunts that are fixed. Could be variable but we do not want for now
 set SHUNTCC := {(1,s,n) in SHUNT: n in BUSCC or shunt_possiblebus[1,s,n] in BUSCC}; # We want to be able to reconnect shunts
@@ -522,8 +528,8 @@ set UNITCC_PQ := UNITCC_PQ_1 union UNITCC_PQ_2;
 set UNITCC_PV := UNITCC diff UNITCC_PQ;
 
 set SVCCC_PV := setof {(svc,n) in SVCCC : svc_vregul[1,svc,n] == "true"
-                                            and bus_V0[1,n] <= svc_targetV[1,svc,n] + 0.001
-                                            and bus_V0[1,n] >= svc_targetV[1,svc,n] - 0.001} (svc,n);
+                                            and bus_V0[1,n] <= svc_targetV[1,svc,n] + 0.01
+                                            and bus_V0[1,n] >= svc_targetV[1,svc,n] - 0.01} (svc,n);
 
 set SVCCC_PQ_1 := setof {(svc,n) in SVCCC diff SVCCC_PV : svc_vregul[1,svc,n] == "false"} (svc,n);
 set SVCCC_PQ_2 := setof {(svc,n) in SVCCC diff (SVCCC_PV union SVCCC_PQ_1)} (svc,n);
@@ -551,8 +557,7 @@ set VSCCONVON := setof{(t,v,n) in VSCCONV} (v,n);
 # LCC converter stations
 check {(t,l,n) in LCCCONV}: n in BUSCC and abs(lccconv_P0[1,l,n]) <= PQmax 
                             and abs(lccconv_Q0[1,l,n]) <= PQmax;
-set LCCCONVON := setof{(t,l,n) in LCCCONV} (l,n);
-
+set LCCCONVON := setof{(t,l,n) in LCCCONV} (l,n); 
 
 ###############################################################################
 #                         Corrected values for reactances                     #
@@ -560,7 +565,9 @@ set LCCCONVON := setof{(t,l,n) in LCCCONV} (l,n);
 
 # If in BRANCHZNULL, then set X to ZNULL
 param branch_X_mod{(qq,m,n) in BRANCHCC_PENALIZED} :=
-  if (qq,m,n) in BRANCHZNULL then Znull
+  if ((qq,m,n) in BRANCHZNULL and branch_X_corrected[1,qq,m,n] >= 0) then Znull
+  else if ((qq,m,n) in BRANCHZNULL and branch_X_corrected[1,qq,m,n] < 0) then -Znull
+  else if (branch_X_corrected[1,qq,m,n] == 0) then Znull
   else branch_X_corrected[1,qq,m,n];
 check {(qq,m,n) in BRANCHCC_PENALIZED}: abs(branch_X_mod[qq,m,n]) > 0;
 
@@ -571,23 +578,58 @@ check {(qq,m,n) in BRANCHCC_PENALIZED}: abs(branch_X_mod[qq,m,n]) > 0;
 # Variable reactance, depanding on tap
 param branch_Xdeph{(qq,m,n) in BRANCHCC_TRANSFORMER} =
   if (qq,m,n) in BRANCHCC_DEPH and (qq,m,n) in BRANCHCC_REGL
-  and tap_x[1,deph_table[1,branch_ptrDeph[1,qq,m,n]],deph_tap0[1,branch_ptrDeph[1,qq,m,n]]] 
-      * tap_x[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]] / branch_X[1,qq,m,n] > Znull
+  and abs(tap_x[1,deph_table[1,branch_ptrDeph[1,qq,m,n]],deph_tap0[1,branch_ptrDeph[1,qq,m,n]]] 
+      * tap_x[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]] / branch_X[1,qq,m,n]) > Znull
   then tap_x[1,deph_table[1,branch_ptrDeph[1,qq,m,n]],deph_tap0[1,branch_ptrDeph[1,qq,m,n]]] 
       * tap_x[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]] / branch_X[1,qq,m,n]
-  else if (qq,m,n) in BRANCHCC_DEPH and tap_x[1,deph_table[1,branch_ptrDeph[1,qq,m,n]],deph_tap0[1,branch_ptrDeph[1,qq,m,n]]] > Znull
-  then tap_x[1,deph_table[1,branch_ptrDeph[1,qq,m,n]],deph_tap0[1,branch_ptrDeph[1,qq,m,n]]]
-  else if (qq,m,n) in BRANCHCC_REGL and tap_x[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]] > Znull
+
+  else if (qq,m,n) in BRANCHCC_DEPH and (qq,m,n) in BRANCHCC_REGL and
+  tap_x[1,deph_table[1,branch_ptrDeph[1,qq,m,n]],deph_tap0[1,branch_ptrDeph[1,qq,m,n]]] 
+      * tap_x[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]] / branch_X[1,qq,m,n] > 0
+  then Znull
+
+  else if (qq,m,n) in BRANCHCC_DEPH and (qq,m,n) in BRANCHCC_REGL and
+  tap_x[1,deph_table[1,branch_ptrDeph[1,qq,m,n]],deph_tap0[1,branch_ptrDeph[1,qq,m,n]]] 
+      * tap_x[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]] / branch_X[1,qq,m,n] < 0
+  then -Znull
+
+  else if (qq,m,n) in BRANCHCC_DEPH and abs(tap_x[1,deph_table[1,branch_ptrDeph[1,qq,m,n]],deph_tap0[1,branch_ptrDeph[1,qq,m,n]]]) > Znull
+  then tap_x[1,deph_table[1,branch_ptrDeph[1,qq,m,n]],deph_tap0[1,branch_ptrDeph[1,qq,m,n]]] # Without abs here
+
+  else if (qq,m,n) in BRANCHCC_DEPH and tap_x[1,deph_table[1,branch_ptrDeph[1,qq,m,n]],deph_tap0[1,branch_ptrDeph[1,qq,m,n]]] > 0
+  then Znull
+
+  else if (qq,m,n) in BRANCHCC_DEPH and tap_x[1,deph_table[1,branch_ptrDeph[1,qq,m,n]],deph_tap0[1,branch_ptrDeph[1,qq,m,n]]] < 0
+  then -Znull
+
+  else if (qq,m,n) in BRANCHCC_REGL and abs(tap_x[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]]) > Znull
   then tap_x[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]]
+
+  else if (qq,m,n) in BRANCHCC_REGL and tap_x[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]] > 0
+  then Znull
+
+  else if (qq,m,n) in BRANCHCC_REGL and tap_x[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]] < 0
+  then -Znull
+  
   else Znull;
 
 # Resistance variable selon la prise
 # Comme on ne dispose pas de valeurs variables de R dans les tables des lois des TDs, on fait varier R proportionellement a X
-param branch_Rdeph{(qq,m,n) in BRANCHCC_TRANSFORMER} =
+param branch_Rdeph{(qq,m,n) in BRANCHCC_TRANSFORMER} = #branch_R_corrected[1,qq,m,n]
   if abs(branch_X_mod[qq,m,n]) >= Znull 
   then branch_R_corrected[1,qq,m,n]*branch_Xdeph[qq,m,n]/branch_X_mod[qq,m,n]
   else branch_R_corrected[1,qq,m,n]
   ;
+
+
+# Set of branches on which we can deduce a cut for theta diff (depending on Fmax)
+set BRANCHCC_DIFF_THETA_CONST := setof {(qq,m,n) in BRANCHCC diff BRANCHCC_3WT: min(branch_patl1[1,qq,m,n], branch_patl2[1,qq,m,n]) > 250 
+                                          and (branch_X_mod[qq,m,n] > 0.05 or ((qq,m,n) in BRANCHCC_TRANSFORMER and branch_Xdeph[qq,m,n] > 0.05))} (qq,m,n); 
+param Fmax{(qq,m,n) in BRANCHCC_DIFF_THETA_CONST} :=
+  1.732 * 0.001
+  * max(substation_Vnomi[1,bus_substation[1,m]]*abs(branch_patl1[1,qq,m,n]),substation_Vnomi[1,bus_substation[1,n]]*abs(branch_patl2[1,qq,m,n]));
+
+#check {(qq,m,n) in BRANCHCC_TRANSFORMER}: branch_Rdeph[qq,m,n] > 0;
 
 # About the resistance of the lines
 
@@ -628,9 +670,6 @@ param branch_Rex {(q,m,n) in BRANCHCC_PENALIZED} = 1;
 param branch_dephor {(qq,m,n) in BRANCHCC_PENALIZED} =
   if ((qq,m,n) in BRANCHCC_DEPH)
   then tap_angle[1,deph_table[1,branch_ptrDeph[1,qq,m,n]],deph_tap0[1,branch_ptrDeph[1,qq,m,n]]]
-  # TODO : Check if this is correct
-  #else if ((qq,m,n) in BRANCHCC_REGL diff BRANCHCC_DEPH)
-  #then tap_angle[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]]
   else 0;
 param branch_dephex {(qq,m,n) in BRANCHCC_PENALIZED} = 0;
 

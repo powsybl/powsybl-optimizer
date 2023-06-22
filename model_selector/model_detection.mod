@@ -13,18 +13,22 @@
 # Author : Pierre Arvy 2023
 ###############################################################################
 
-param no_penal default 1;
+param no_penal default 0;
 param branch_detection default 0;
-param param_detection default 0;
+param param_detection default 1;
 param equations_detection default 0;
 
 param is_penal_on_YKsi := 1;
 param is_penal_on_GB := 1 - is_penal_on_YKsi;
 
-param is_voltage_rho_control := 1; # For voltages and rho
-param is_admi_xi_control := 1; # For admittance and Xi
-param is_angle_deph_control := 1; # For angle dephasage A_i
-param is_G_B_control := 1; # For G_or, G_ex, B_or and B_ex
+param is_voltage_control := 1;
+param is_rho_control := 0;
+param is_admi_xi_control := 0; # For admittance and Xi
+param is_angle_deph_control := 0; # For angle dephasage A_i
+param is_G_B_control := 0; # For G_or, G_ex, B_or and B_ex
+
+param is_targetV_units = 1;
+param is_targetV_svc = 1;
 
 # Selection of data importer
 include "opti_models/data_importer.mod";
@@ -71,9 +75,9 @@ param sigma4_sup := if is_penal_on_YKsi == 1 then 3.141592 else max_branch_B;
 
 # Bound inf for G/B parameters
 param sigma5_inf := 0;
-param sigma6_inf := -0.8; # TODO : Check if 0 is not better
+param sigma6_inf := -0.8; # TODO : Improve X bound by looking if there are X negative values in the network. Most of the time, negative values are on the 3wt legs.
 param sigma7_inf := 0;
-param sigma8_inf := -0.8; # TODO : Check if 0 is not better
+param sigma8_inf := -0.8; # TODO : Improve X bound by looking if there are X negative values in the network. Most of the time, negative values are on the 3wt legs.
 
 # Upper bound in practice for usual network
 param sigma5_sup_default := 0.1;

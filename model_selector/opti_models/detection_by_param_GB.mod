@@ -16,8 +16,8 @@
 set PROBLEM_DETECTION_PARAM default { };
 
 # Activation/desactivation of penal variables
-subject to ctr_s1_null_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV}: if(is_voltage_rho_control == 0) then s1[n] = 0;
-subject to ctr_sigma1_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_TRANSFORMER}: if(is_voltage_rho_control == 0) then sigma1[qq,m,n] = 0;
+subject to ctr_s1_null_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV}: if(is_voltage_control == 0) then s1[n] = 0;
+subject to ctr_sigma1_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_TRANSFORMER}: if(is_rho_control == 0) then sigma1[qq,m,n] = 0;
 subject to ctr_sigma2_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}: if(is_admi_xi_control == 0) then sigma2[qq,m,n] = 0;
 subject to ctr_sigma3_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_DEPH}: if(is_angle_deph_control == 0) then sigma3[qq,m,n] = 0;
 subject to ctr_sigma4_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}: if(is_admi_xi_control == 0) then sigma4[qq,m,n] = 0;
@@ -26,9 +26,12 @@ subject to ctr_sigma6_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PEN
 subject to ctr_sigma7_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}: if(is_G_B_control == 0) then sigma7[qq,m,n] = 0;
 subject to ctr_sigma8_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}: if(is_G_B_control == 0) then sigma8[qq,m,n] = 0;
 
+subject to ctr_s1_for_svc_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV_2}: if (is_targetV_svc == 0) then s1[n] = 0;
+subject to ctr_s1_for_units_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV_1}: if (is_targetV_units == 0) then s1[n] = 0;
+
 # Activation/desactivation of binary penal variables
-subject to ctr_b_s1_null_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV}: if(is_voltage_rho_control == 0) then b_s1[n] = 0;
-subject to ctr_b_sigma1_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_TRANSFORMER}: if(is_voltage_rho_control == 0) then b_sigma1[qq,m,n] = 0;
+subject to ctr_b_s1_null_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV}: if(is_voltage_control == 0) then b_s1[n] = 0;
+subject to ctr_b_sigma1_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_TRANSFORMER}: if(is_rho_control == 0) then b_sigma1[qq,m,n] = 0;
 subject to ctr_b_sigma2_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}: if(is_admi_xi_control == 0) then b_sigma2[qq,m,n] = 0;
 subject to ctr_b_sigma3_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_DEPH}: if(is_angle_deph_control == 0) then b_sigma3[qq,m,n] = 0;
 subject to ctr_b_sigma4_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}: if(is_admi_xi_control == 0) then b_sigma4[qq,m,n] = 0;
@@ -36,6 +39,9 @@ subject to ctr_b_sigma5_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_P
 subject to ctr_b_sigma6_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}: if(is_G_B_control == 0) then b_sigma6[qq,m,n] = 0;
 subject to ctr_b_sigma7_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}: if(is_G_B_control == 0) then b_sigma7[qq,m,n] = 0;
 subject to ctr_b_sigma8_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}: if(is_G_B_control == 0) then b_sigma8[qq,m,n] = 0;
+
+subject to ctr_b_s1_for_svc_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV_2}: if (is_targetV_svc == 0) then b_s1[n] = 0;
+subject to ctr_b_s1_for_units_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV_1}: if (is_targetV_units == 0) then b_s1[n] = 0;
 
 #
 # Bounds for penal variables. Are based on job knowledge
