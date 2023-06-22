@@ -28,12 +28,12 @@ if final_status == "OK" then {
     1,s,n,
     shunt_var[s,n],
     base100MVA * shunt_var[s,n] * V[n]^2,
-    0 #shunt_sections_count[1,s,n] # don't know what this is, so write 0 
+    0 #shunt_sections_count[1,s,n] # don't know what this is, so write 0
     > (fileOut);
   # Shunts which were not connected, and which have been reconnected by reactiveopf, with variable value
   printf {(s,n) in SHUNT_VAR: (1,s,-1) in SHUNT} "%i;%i;%i;%.3f;%.3f;%i;\n",
     1,s,n,shunt_var[s,n],base100MVA * shunt_var[s,n] * V[n]^2,
-    0 #shunt_sections_count[1,s,-1] # don't know what this is, so write 0 
+    0 #shunt_sections_count[1,s,-1] # don't know what this is, so write 0
     > (fileOut);
   close (fileOut);
 
@@ -132,7 +132,7 @@ if final_status == "OK" then {
 let fileOut := "reactiveopf_results_rtc.csv";
 printf "#variant;num;tap;\n" > (fileOut);
 for{(qq,m,n) in BRANCHCC_REGL_VAR} {
-  let temp1 := 
+  let temp1 :=
     min{(1,regl_table[1,branch_ptrRegl[1,qq,m,n]],tap) in TAPS}
       abs(branch_Ror_var[qq,m,n]-tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],tap]);
   let temp2 :=
@@ -156,7 +156,7 @@ close (fileOut);
 
 # Useful during tests to create list of transformers
 if 0 then
-printf {(qq,m,n) in BRANCHCC_REGL: 
+printf {(qq,m,n) in BRANCHCC_REGL:
   substation_Vnomi[1,bus_substation[1,m]]>21 and substation_Vnomi[1,bus_substation[1,m]]<300 and
   substation_Vnomi[1,bus_substation[1,n]]>21 and substation_Vnomi[1,bus_substation[1,n]]<300 and
   (substation_Vnomi[1,bus_substation[1,m]]>120 or substation_Vnomi[1,bus_substation[1,n]]>120) and
@@ -170,7 +170,7 @@ printf {(qq,m,n) in BRANCHCC_REGL:
 # Writing results for reactive slacks
 #
 ###############################################################################
-if final_status == "OK" 
+if final_status == "OK"
 and card({n in BUSCC_SLACK: slack1_balance_Q[n]>Pnull or slack2_balance_Q[n]>Pnull}) > 0
 then {
 
@@ -179,7 +179,7 @@ printf "#variant;bus;slack_condensator(Mvar);slack_self(Mvar);id;substation;\n" 
 printf{n in BUSCC_SLACK: slack1_balance_Q[n]>Pnull or slack2_balance_Q[n]>Pnull}
   "%i;%i;%.2f;%.2f;%Q;%Q;\n",
   1,n,
-  if slack1_balance_Q[n]>Pnull then slack1_balance_Q[n] else 0, 
+  if slack1_balance_Q[n]>Pnull then slack1_balance_Q[n] else 0,
   if slack2_balance_Q[n]>Pnull then slack2_balance_Q[n] else 0,
   bus_id[1,n],
   substation_id[1,bus_substation[1,n]]
