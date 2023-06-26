@@ -7,7 +7,6 @@
 package com.powsybl.openreac.parameters.output;
 
 import com.powsybl.ampl.converter.AmplConstants;
-import com.powsybl.ampl.converter.AmplException;
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.openreac.exceptions.IncompatibleModelException;
@@ -98,9 +97,6 @@ public class ReactiveSlackOutput extends AbstractNoThrowOutput {
         String id = AmplIOUtils.removeQuotes(tokens[4]);
         String voltageLevelId = AmplIOUtils.removeQuotes(tokens[5]);
         double slack = slackCapacitor + slackSelf;
-        if (slack != slackCapacitor && slack != slackSelf) {
-            throw new AmplException("Error reading reactive slacks, can't be self and capacitor at the same time.");
-        }
         slacks.add(new ReactiveSlack(id, voltageLevelId, slack));
     }
 

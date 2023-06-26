@@ -25,10 +25,23 @@ public final class OpenReacRunner {
     private OpenReacRunner() {
     }
 
+    /**
+     * Run OpenReac on the given network. It will NOT modify the network.
+     * @param variantId the network variant to use. It will set the variant on the network.
+     * @param parameters Parameters to customize the OpenReac run.
+     * @return All information about the run and possible modifications to apply.
+     */
     public static OpenReacResult run(Network network, String variantId, OpenReacParameters parameters) {
         return run(network, variantId, parameters, new OpenReacConfig(false), LocalComputationManager.getDefault());
     }
 
+    /**
+     * Run OpenReac on the given network. It will NOT modify the network.
+     * @param variantId the network variant to use. It will set the variant on the network.
+     * @param parameters Parameters to customize the OpenReac run.
+     * @param config allows debugging
+     * @return All information about the run and possible modifications to apply.
+     */
     public static OpenReacResult run(Network network, String variantId, OpenReacParameters parameters, OpenReacConfig config, ComputationManager manager) {
         parameters.checkIntegrity(network);
         AmplModel reactiveOpf = OpenReacModel.buildModel();

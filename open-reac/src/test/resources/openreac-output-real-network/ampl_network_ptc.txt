@@ -1,0 +1,2 @@
+#Phase tap changers (ieee118cdf/InitialState)
+#"variant" "num" "tap" "table" "fault" "curative" "id"

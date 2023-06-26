@@ -1,0 +1,2 @@
+#Temporary current limits (svc/InitialState)
+#"variant" "num" "branch" "side" "limit (A)" "accept. duration (s)" "fault" "curative"

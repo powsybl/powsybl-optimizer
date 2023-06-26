@@ -1,0 +1,2 @@
+#Tap changer table (svc/InitialState)
+#"variant" "num" "tap" "var ratio" "x (pu)" "angle (rad)" "fault" "curative"
