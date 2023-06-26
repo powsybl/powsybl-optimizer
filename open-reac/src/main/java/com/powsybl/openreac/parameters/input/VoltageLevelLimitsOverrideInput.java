@@ -64,7 +64,7 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
         for (Map.Entry<String, VoltageLimitOverride> entry : normalizedVoltageLimitsOverride.entrySet()) {
             String voltageLevelId = entry.getKey();
             VoltageLimitOverride limits = entry.getValue();
-            if (Double.isNaN(limits.getDeltaHighVoltageLimit()) || Double.isNaN(limits.getDeltaLowVoltageLimit())) {
+            if (!Double.isNaN(limits.getDeltaHighVoltageLimit()) || !Double.isNaN(limits.getDeltaLowVoltageLimit())) {
                 int amplId = stringToIntMapper.getInt(AmplSubset.VOLTAGE_LEVEL, voltageLevelId);
                 double newHighVoltageLimit = Double.isNaN(limits.getDeltaHighVoltageLimit()) ? AmplConstants.INVALID_FLOAT_VALUE : limits.getDeltaHighVoltageLimit();
                 double newLowVoltageLimit = Double.isNaN(limits.getDeltaLowVoltageLimit()) ? AmplConstants.INVALID_FLOAT_VALUE : limits.getDeltaLowVoltageLimit();
