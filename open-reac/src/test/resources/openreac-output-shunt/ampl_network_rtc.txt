@@ -1,0 +1,2 @@
+#Ratio tap changers (svc/InitialState)
+#"variant" "num" "tap" "table" "onLoad" "fault" "curative" "id"

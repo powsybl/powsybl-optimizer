@@ -1,0 +1,3 @@
+#Loads (svc/InitialState)
+#"variant" "num" "bus" "substation" "p0 (MW)" "q0 (MVar)" "fault" "curative" "id" "description" "p (MW)" "q (MVar)"
+1 1 2 2 101.000 150.000 0 0 "ld1" "ld1" -99999.0 -99999.0

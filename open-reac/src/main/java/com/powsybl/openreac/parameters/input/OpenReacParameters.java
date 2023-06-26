@@ -34,7 +34,7 @@ public class OpenReacParameters {
 
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.
-     * param specificVoltageLimits map containing keys : VoltageLevelId, and values are the low and high delta limits (kV).
+     * @param specificVoltageLimits keys: a VoltageLevel ID, values: low and high delta limits (kV).
      */
     public OpenReacParameters addSpecificVoltageLimits(Map<String, VoltageLimitOverride> specificVoltageLimits) {
         this.specificVoltageLimits.putAll(specificVoltageLimits);
@@ -42,8 +42,8 @@ public class OpenReacParameters {
     }
 
     /**
-     * A list of shunt compensators which susceptance should be considered as variable by the optimizer.
-     * The optimizer computes a continuous value that is rounded when results are integrated in the network.
+     * A list of shunt compensators, which susceptance will be considered as variable by the optimizer.
+     * The optimizer computes a continuous value that is rounded when results are stored in {@link com.powsybl.openreac.parameters.output.OpenReacResult}.
      */
     public OpenReacParameters addVariableShuntCompensators(List<String> shuntsIds) {
         this.variableShuntCompensators.addAll(shuntsIds);
@@ -51,8 +51,7 @@ public class OpenReacParameters {
     }
 
     /**
-     * A list of generators that are not controlling voltage during the optimization.
-     * The reactive power produced by the generator is constant and equals `targetQ`.
+     * The reactive power produced by every generator in the list will be constant and equal to `targetQ`.
      */
     public OpenReacParameters addConstantQGenerators(List<String> generatorsIds) {
         this.constantQGenerators.addAll(generatorsIds);
@@ -60,18 +59,24 @@ public class OpenReacParameters {
     }
 
     /**
-     * A list of two windings transformers which ratio should be considered as variable by the optimizer.
+     * A list of two windings transformers, which ratio will be considered as variable by the optimizer.
      */
     public OpenReacParameters addVariableTwoWindingsTransformers(List<String> transformerIds) {
         this.variableTwoWindingsTransformers.addAll(transformerIds);
         return this;
     }
 
+    /**
+     * Add a parameter to the optimization engine
+     */
     public OpenReacParameters addAlgorithmParam(List<OpenReacAlgoParam> params) {
         this.genericParamsList.addAll(params);
         return this;
     }
 
+    /**
+     * Add a parameter to the optimization engine
+     */
     public OpenReacParameters addAlgorithmParam(String name, String value) {
         this.genericParamsList.add(new OpenReacAlgoParam() {
             @Override

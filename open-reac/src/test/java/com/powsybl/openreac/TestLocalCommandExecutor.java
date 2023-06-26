@@ -27,9 +27,12 @@ public class TestLocalCommandExecutor implements LocalCommandExecutor {
     }
 
     @Override
-    public int execute(String program, List<String> args, Path outFile, Path errFile, Path workingDir, Map<String, String> env) throws IOException {
+    public int execute(String program, List<String> args, Path outFile, Path errFile, Path workingDir,
+                       Map<String, String> env) throws IOException {
         for (String outputFileName : outputFileNames) {
-            Files.copy(getClass().getResourceAsStream("/" + outputFileName), workingDir.resolve(outputFileName));
+            String[] splittedPath = outputFileName.split("/");
+            String fileName = splittedPath[splittedPath.length - 1];
+            Files.copy(getClass().getResourceAsStream("/" + outputFileName), workingDir.resolve(fileName));
         }
         return 0;
     }

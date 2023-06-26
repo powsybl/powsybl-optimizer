@@ -1,0 +1,2 @@
+#Temporary current limits (ieee14cdf/InitialState)
+#"variant" "num" "branch" "side" "limit (A)" "accept. duration (s)" "fault" "curative"
