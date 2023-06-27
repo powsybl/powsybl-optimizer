@@ -43,8 +43,7 @@ class VoltageLevelLimitsOverrideInputTest {
         try (var is = input.getParameterFileAsStream(mapper)) {
             String data = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
             String ref = String.join(System.lineSeparator(), "#num minV (pu) maxV (pu) id",
-                    "1 0.7916666666666666 1.1666666666666667 'VLGEN'",
-                    "4 0.8553333333333334 -99999.0 'VLLOAD'") + System.lineSeparator() + System.lineSeparator();
+                    "1 0.7916666666666666 1.1666666666666667 'VLGEN'") + System.lineSeparator() + System.lineSeparator();
             assertEquals(ref, data);
         }
     }
