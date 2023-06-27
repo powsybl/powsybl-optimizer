@@ -15,6 +15,7 @@ import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.iidm.network.test.EurostagTutorialExample1Factory;
+import com.powsybl.openreac.exceptions.InvalidParametersException;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -25,7 +26,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
- *
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
 class VoltageLevelLimitsOverrideInputTest {
@@ -35,20 +35,20 @@ class VoltageLevelLimitsOverrideInputTest {
         Network network = EurostagTutorialExample1Factory.create();
         VoltageLevel vlgen = network.getVoltageLevel("VLGEN");
         vlgen.setLowVoltageLimit(20)
-                .setHighVoltageLimit(26);
+            .setHighVoltageLimit(26);
         // if vl has one NaN, the override is ignored
         VoltageLevel vlload = network.getVoltageLevel("VLLOAD");
         vlload.setLowVoltageLimit(130);
         vlload.setHighVoltageLimit(Double.NaN);
         Map<String, VoltageLimitOverride> voltageLimitsOverride = Map.of("VLGEN", new VoltageLimitOverride(-1, 2),
-                                                                         "VLHV1", new VoltageLimitOverride(-1.3, 2.5),
-                                                                         "VLLOAD", new VoltageLimitOverride(-1.7, 4.2));
+            "VLHV1", new VoltageLimitOverride(-1.3, 2.5),
+            "VLLOAD", new VoltageLimitOverride(-1.7, 4.2));
         VoltageLevelLimitsOverrideInput input = new VoltageLevelLimitsOverrideInput(voltageLimitsOverride, network);
         StringToIntMapper<AmplSubset> mapper = AmplUtil.createMapper(network);
         try (var is = input.getParameterFileAsStream(mapper)) {
             String data = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
             String ref = String.join(System.lineSeparator(), "#num minV (pu) maxV (pu) id",
-                    "1 0.7916666666666666 1.1666666666666667 'VLGEN'") + System.lineSeparator() + System.lineSeparator();
+                "1 0.7916666666666666 1.1666666666666667 'VLGEN'") + System.lineSeparator() + System.lineSeparator();
             assertEquals(ref, data);
         }
     }
@@ -59,9 +59,25 @@ class VoltageLevelLimitsOverrideInputTest {
         VoltageLevel vl = network.getVoltageLevels().iterator().next();
         vl.setLowVoltageLimit(Double.NaN);
         vl.setHighVoltageLimit(480);
-        assertThrows(PowsyblException.class, () -> new OpenReacParameters().checkIntegrity(network));
+        OpenReacParameters params = new OpenReacParameters();
+        assertThrows(PowsyblException.class, () -> params.checkIntegrity(network));
         vl.setLowVoltageLimit(480);
         vl.setHighVoltageLimit(Double.NaN);
-        assertThrows(PowsyblException.class, () -> new OpenReacParameters().checkIntegrity(network));
+        assertThrows(PowsyblException.class, () -> params.checkIntegrity(network));
+    }
+
+    @Test
+    void testInvalidOverride() {
+        Network network = IeeeCdfNetworkFactory.create118();
+        VoltageLevel vl = network.getVoltageLevels().iterator().next();
+        vl.setLowVoltageLimit(400);
+        vl.setHighVoltageLimit(480);
+        OpenReacParameters params = new OpenReacParameters();
+        params.addSpecificVoltageLimits(Map.of(vl.getId(), new VoltageLimitOverride(-410, 0)));
+        assertThrows(InvalidParametersException.class, () -> params.checkIntegrity(network));
+
+        OpenReacParameters params2 = new OpenReacParameters();
+        params2.addSpecificVoltageLimits(Map.of("UNKNOWN_ID", new VoltageLimitOverride(0, 0)));
+        assertThrows(InvalidParametersException.class, () -> params2.checkIntegrity(network));
     }
 }
