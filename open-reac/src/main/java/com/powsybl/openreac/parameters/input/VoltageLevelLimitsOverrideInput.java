@@ -37,7 +37,7 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
 
     /**
      * voltageLimitsOverride contains absolute voltage limits.
-     * This function compute limits in per-unit quantities.
+     * This function compute limits in pair-unit quantities.
      */
     private void transformToNormalizedVoltage(Map<String, VoltageLimitOverride> voltageLimitsOverride, Network network) {
         for (Map.Entry<String, VoltageLimitOverride> entry : voltageLimitsOverride.entrySet()) {
@@ -45,9 +45,12 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
             VoltageLimitOverride limits = entry.getValue();
             double previousLowVoltageLimit = network.getVoltageLevel(voltageLevelId).getLowVoltageLimit();
             double previousHighVoltageLimit = network.getVoltageLevel(voltageLevelId).getHighVoltageLimit();
-            double nominalV = network.getVoltageLevel(voltageLevelId).getNominalV();
-            normalizedVoltageLimitsOverride.put(voltageLevelId, new VoltageLimitOverride((previousLowVoltageLimit + limits.getDeltaLowVoltageLimit()) / nominalV,
-                    (previousHighVoltageLimit + limits.getDeltaHighVoltageLimit()) / nominalV));
+            // If one of the limit is not defined, we ignore the override
+            if (!Double.isNaN(previousLowVoltageLimit) && !Double.isNaN(previousHighVoltageLimit)){
+                double nominalV = network.getVoltageLevel(voltageLevelId).getNominalV();
+                normalizedVoltageLimitsOverride.put(voltageLevelId, new VoltageLimitOverride((previousLowVoltageLimit + limits.getDeltaLowVoltageLimit()) / nominalV,
+                        (previousHighVoltageLimit + limits.getDeltaHighVoltageLimit()) / nominalV));
+            }
         }
     }
 
