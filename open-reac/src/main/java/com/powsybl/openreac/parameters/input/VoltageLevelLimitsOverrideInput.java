@@ -46,7 +46,7 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
             double previousLowVoltageLimit = network.getVoltageLevel(voltageLevelId).getLowVoltageLimit();
             double previousHighVoltageLimit = network.getVoltageLevel(voltageLevelId).getHighVoltageLimit();
             // If one of the limit is not defined, we ignore the override
-            if (!Double.isNaN(previousLowVoltageLimit) && !Double.isNaN(previousHighVoltageLimit)){
+            if (!Double.isNaN(previousLowVoltageLimit) && !Double.isNaN(previousHighVoltageLimit)) {
                 double nominalV = network.getVoltageLevel(voltageLevelId).getNominalV();
                 normalizedVoltageLimitsOverride.put(voltageLevelId, new VoltageLimitOverride((previousLowVoltageLimit + limits.getDeltaLowVoltageLimit()) / nominalV,
                         (previousHighVoltageLimit + limits.getDeltaHighVoltageLimit()) / nominalV));

@@ -187,7 +187,7 @@ public class OpenReacParameters {
                 }
             }
         }
-        for (VoltageLevel vl : network.getVoltageLevels()){
+        for (VoltageLevel vl : network.getVoltageLevels()) {
             double lowLimit = vl.getLowVoltageLimit();
             double highLimit = vl.getHighVoltageLimit();
             if ((Double.isNaN(highLimit) && !Double.isNaN(lowLimit)) || (Double.isNaN(lowLimit) && !Double.isNaN(
