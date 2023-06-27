@@ -11,14 +11,10 @@ import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.ampl.converter.AmplUtil;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.util.StringToIntMapper;
-import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.iidm.network.test.EurostagTutorialExample1Factory;
-import com.powsybl.openreac.OpenReacConfig;
-import com.powsybl.openreac.OpenReacRunner;
-import com.powsybl.openreac.parameters.output.OpenReacResult;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
