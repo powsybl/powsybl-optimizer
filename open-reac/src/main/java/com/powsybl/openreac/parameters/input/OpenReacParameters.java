@@ -6,7 +6,9 @@
  */
 package com.powsybl.openreac.parameters.input;
 
+import com.powsybl.commons.PowsyblException;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
@@ -34,6 +36,8 @@ public class OpenReacParameters {
 
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.
+     * <p>
+     * The override is ignored if one or both of the voltage limit are NaN.
      * @param specificVoltageLimits keys: a VoltageLevel ID, values: low and high delta limits (kV).
      */
     public OpenReacParameters addSpecificVoltageLimits(Map<String, VoltageLimitOverride> specificVoltageLimits) {
@@ -171,12 +175,26 @@ public class OpenReacParameters {
             }
         }
         for (String voltageLevelId : getSpecificVoltageLimits().keySet()) {
-            if (network.getVoltageLevel(voltageLevelId) == null) {
+            VoltageLevel voltageLevel = network.getVoltageLevel(voltageLevelId);
+            VoltageLimitOverride override = getSpecificVoltageLimits().get(voltageLevelId);
+            if (voltageLevel == null) {
                 throw new InvalidParametersException("Voltage level " + voltageLevelId + " not found in the network.");
-            } else if (network.getVoltageLevel(voltageLevelId).getNominalV()
-                    + getSpecificVoltageLimits().get(voltageLevelId).getDeltaLowVoltageLimit()
-                    < 0) {
-                throw new InvalidParametersException("Voltage level " + voltageLevelId + " override leads to negative lower voltage level.");
+            } else {
+                if (voltageLevel.getNominalV()
+                        + override.getDeltaLowVoltageLimit()
+                        < 0) {
+                    throw new InvalidParametersException("Voltage level " + voltageLevelId + " override leads to negative lower voltage level.");
+                }
+            }
+        }
+        for (VoltageLevel vl : network.getVoltageLevels()){
+            double lowLimit = vl.getLowVoltageLimit();
+            double highLimit = vl.getHighVoltageLimit();
+            if ((Double.isNaN(highLimit) && !Double.isNaN(lowLimit)) || (Double.isNaN(lowLimit) && !Double.isNaN(
+                highLimit))) {
+                throw new PowsyblException(
+                    "Voltage level '" + vl.getId() + "' has only one voltage limit defined (min:" + lowLimit +
+                        ", max:" + highLimit + "). Please define none or both.");
             }
         }
 
