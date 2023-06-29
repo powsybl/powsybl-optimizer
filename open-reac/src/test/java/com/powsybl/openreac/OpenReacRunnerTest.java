@@ -207,7 +207,7 @@ class OpenReacRunnerTest {
     @Test
     public void testSvc() throws IOException {
         Network network = VoltageControlNetworkFactory.createWithStaticVarCompensator();
-        network.getVoltageLevelStream().forEach(vl -> vl.setHighVoltageLimit(380).setHighVoltageLimit(420));
+        network.getVoltageLevelStream().forEach(vl -> vl.setLowVoltageLimit(380).setHighVoltageLimit(420));
         network.getStaticVarCompensator("svc1").setVoltageSetpoint(390).setRegulationMode(StaticVarCompensator.RegulationMode.VOLTAGE);
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.addConstantQGenerators(List.of("g1"));
