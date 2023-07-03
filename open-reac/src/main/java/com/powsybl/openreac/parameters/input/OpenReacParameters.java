@@ -11,8 +11,8 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
+import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParamImpl;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
-import com.powsybl.openreac.parameters.input.algo.ObjectiveDistance;
 
 import java.util.*;
 
@@ -23,16 +23,22 @@ import java.util.*;
  */
 public class OpenReacParameters {
 
+    private static final String OBJECTIVE_DISTANCE_KEY = "ratio_voltage_target";
+
     private final Map<String, VoltageLimitOverride> specificVoltageLimits = new HashMap<>();
     private final List<String> variableShuntCompensators = new ArrayList<>();
     private final List<String> constantQGenerators = new ArrayList<>();
     private final List<String> variableTwoWindingsTransformers = new ArrayList<>();
-    private final List<OpenReacAlgoParam> genericParamsList = new ArrayList<>();
+    private final List<OpenReacAlgoParam> algorithmParams = new ArrayList<>();
     private OpenReacOptimisationObjective objective = OpenReacOptimisationObjective.MIN_GENERATION;
-    private ObjectiveDistance objectiveDistance;
 
-    public OpenReacParameters() {
-    }
+    /*
+     * Must be used with {@link OpenReacOptimisationObjective#BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT}
+     * to define the voltage between low and high voltage limits, which OpenReac should converge to.
+     * Zero percent means that it should converge to low voltage limits. 100 percents means that it should
+     * converge to high voltage limits.
+     */
+    private Double objectiveDistance;
 
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.
@@ -41,7 +47,7 @@ public class OpenReacParameters {
      * @param specificVoltageLimits keys: a VoltageLevel ID, values: low and high delta limits (kV).
      */
     public OpenReacParameters addSpecificVoltageLimits(Map<String, VoltageLimitOverride> specificVoltageLimits) {
-        this.specificVoltageLimits.putAll(specificVoltageLimits);
+        this.specificVoltageLimits.putAll(Objects.requireNonNull(specificVoltageLimits));
         return this;
     }
 
@@ -73,8 +79,8 @@ public class OpenReacParameters {
     /**
      * Add a parameter to the optimization engine
      */
-    public OpenReacParameters addAlgorithmParam(List<OpenReacAlgoParam> params) {
-        this.genericParamsList.addAll(params);
+    public OpenReacParameters addAlgorithmParam(List<OpenReacAlgoParam> algorithmParams) {
+        this.algorithmParams.addAll(algorithmParams);
         return this;
     }
 
@@ -82,34 +88,31 @@ public class OpenReacParameters {
      * Add a parameter to the optimization engine
      */
     public OpenReacParameters addAlgorithmParam(String name, String value) {
-        this.genericParamsList.add(new OpenReacAlgoParam() {
-            @Override
-            public String getName() {
-                return name;
-            }
-
-            @Override
-            public String getParamValue() {
-                return value;
-            }
-        });
+        algorithmParams.add(new OpenReacAlgoParamImpl(name, value));
         return this;
+    }
+
+    public List<OpenReacAlgoParam> getAlgorithmParams() {
+        return algorithmParams;
     }
 
     /**
      * The definition of the objective function for the optimization.
      */
     public OpenReacOptimisationObjective getObjective() {
-        return this.objective;
+        return objective;
     }
 
     /**
      * The definition of the objective function for the optimization.
      */
-    public OpenReacParameters setObjective(OpenReacOptimisationObjective obj) {
-        Objects.requireNonNull(obj);
-        this.objective = obj;
+    public OpenReacParameters setObjective(OpenReacOptimisationObjective objective) {
+        this.objective = Objects.requireNonNull(objective);
         return this;
+    }
+
+    public Double getObjectiveDistance() {
+        return objectiveDistance;
     }
 
     /**
@@ -117,10 +120,9 @@ public class OpenReacParameters {
      * <p>
      * A 100% objective means the model will target upper voltage limit.
      * @param objectiveDistance is in %
-     * @see ObjectiveDistance is a parameter used for {@link OpenReacOptimisationObjective#BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT}.
      */
     public OpenReacParameters setObjectiveDistance(double objectiveDistance) {
-        this.objectiveDistance = new ObjectiveDistance(objectiveDistance / 100);
+        this.objectiveDistance = objectiveDistance;
         return this;
     }
 
@@ -141,13 +143,13 @@ public class OpenReacParameters {
     }
 
     public List<OpenReacAlgoParam> getAllAlgorithmParams() {
-        ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>(genericParamsList.size() + 2);
-        allAlgoParams.addAll(genericParamsList);
+        ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>(algorithmParams.size() + 2);
+        allAlgoParams.addAll(algorithmParams);
         if (objective != null) {
-            allAlgoParams.add(objective);
+            allAlgoParams.add(objective.toParam());
         }
         if (objectiveDistance != null) {
-            allAlgoParams.add(objectiveDistance);
+            allAlgoParams.add(new OpenReacAlgoParamImpl(OBJECTIVE_DISTANCE_KEY, Double.toString(objectiveDistance / 100)));
         }
         return allAlgoParams;
     }

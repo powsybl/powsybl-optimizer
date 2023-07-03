@@ -36,7 +36,7 @@ public class AlgorithmInput implements AmplInputFile {
     public InputStream getParameterFileAsStream(StringToIntMapper<AmplSubset> stringToIntMapper) {
         StringBuilder dataBuilder = new StringBuilder();
         for (OpenReacAlgoParam param : algoParameters) {
-            dataBuilder.append(param.getName()).append(" ").append(param.getParamValue()).append("\n");
+            dataBuilder.append(param.getName()).append(" ").append(param.getValue()).append("\n");
         }
         //add new line at the end of the file !
         dataBuilder.append("\n");

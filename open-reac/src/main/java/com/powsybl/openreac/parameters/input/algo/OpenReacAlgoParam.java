@@ -13,5 +13,5 @@ public interface OpenReacAlgoParam {
 
     String getName();
 
-    String getParamValue();
+    String getValue();
 }

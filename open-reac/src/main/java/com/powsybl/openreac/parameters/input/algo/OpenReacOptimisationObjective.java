@@ -11,7 +11,7 @@ import com.powsybl.openreac.parameters.input.OpenReacParameters;
 /**
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
-public enum OpenReacOptimisationObjective implements OpenReacAlgoParam {
+public enum OpenReacOptimisationObjective {
 
     /**
      * Use this to minimizes the global generation
@@ -29,22 +29,17 @@ public enum OpenReacOptimisationObjective implements OpenReacAlgoParam {
     SPECIFIC_VOLTAGE_PROFILE(2);
 
     private static final String OBJECTIVE_PARAM_KEY = "objective_choice";
-    private final String name;
+
     private final int amplKey;
 
     /**
      * @param amplKey value used in param_algo.txt to define the given objective.
      */
     OpenReacOptimisationObjective(int amplKey) {
-        this.name = OBJECTIVE_PARAM_KEY;
         this.amplKey = amplKey;
     }
 
-    public String getName() {
-        return this.name;
-    }
-
-    public String getParamValue() {
-        return Integer.toString(amplKey);
+    public OpenReacAlgoParam toParam() {
+        return new OpenReacAlgoParamImpl(OBJECTIVE_PARAM_KEY, Integer.toString(amplKey));
     }
 }
