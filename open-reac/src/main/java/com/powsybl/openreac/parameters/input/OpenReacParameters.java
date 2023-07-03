@@ -13,6 +13,8 @@ import com.powsybl.openreac.exceptions.InvalidParametersException;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParamImpl;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -22,6 +24,8 @@ import java.util.*;
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
 public class OpenReacParameters {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(OpenReacParameters.class);
 
     private static final String OBJECTIVE_DISTANCE_KEY = "ratio_voltage_target";
 
@@ -192,6 +196,10 @@ public class OpenReacParameters {
         for (VoltageLevel vl : network.getVoltageLevels()) {
             double lowLimit = vl.getLowVoltageLimit();
             double highLimit = vl.getHighVoltageLimit();
+            if (lowLimit == 0 && Double.isNaN(highLimit)) {
+                lowLimit = Double.NaN;
+                LOGGER.warn("Voltage level '{}' has an unsupported limit [0, NaN], fix to [NaN, NaN]", vl.getId());
+            }
             if ((Double.isNaN(highLimit) && !Double.isNaN(lowLimit)) || (Double.isNaN(lowLimit) && !Double.isNaN(
                 highLimit))) {
                 throw new PowsyblException(
