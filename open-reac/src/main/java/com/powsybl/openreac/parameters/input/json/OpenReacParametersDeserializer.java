@@ -24,9 +24,9 @@ import java.util.List;
  * @author Hugo Marcellin <hugo.marcelin at rte-france.com>
  */
 
-public class OpenReactParametersDeserializer extends StdDeserializer<OpenReacParameters> {
+public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacParameters> {
 
-    public OpenReactParametersDeserializer() {
+    public OpenReacParametersDeserializer() {
         super(OpenReacParameters.class);
     }
 

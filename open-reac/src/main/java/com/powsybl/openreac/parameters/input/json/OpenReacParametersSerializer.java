@@ -16,11 +16,11 @@ import java.io.IOException;
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
-public class OpenReactParametersSerializer extends StdSerializer<OpenReacParameters> {
+public class OpenReacParametersSerializer extends StdSerializer<OpenReacParameters> {
 
     private static final String VERSION = "1.0";
 
-    public OpenReactParametersSerializer() {
+    public OpenReacParametersSerializer() {
         super(OpenReacParameters.class);
     }
 

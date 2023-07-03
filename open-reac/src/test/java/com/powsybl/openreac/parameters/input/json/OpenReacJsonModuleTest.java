@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
-class OpenReactJsonModuleTest {
+class OpenReacJsonModuleTest {
 
     @Test
     void test() throws IOException {

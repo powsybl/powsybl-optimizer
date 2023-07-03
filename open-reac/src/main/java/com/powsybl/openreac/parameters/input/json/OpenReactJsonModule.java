@@ -18,10 +18,10 @@ import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
 public class OpenReactJsonModule extends SimpleModule {
 
     public OpenReactJsonModule() {
-        addSerializer(OpenReacParameters.class, new OpenReactParametersSerializer());
+        addSerializer(OpenReacParameters.class, new OpenReacParametersSerializer());
         addSerializer(VoltageLimitOverride.class, new VoltageLimitOverrideSerializer());
         addSerializer(OpenReacAlgoParam.class, new OpenReacAlgoParamSerializer());
-        addDeserializer(OpenReacParameters.class, new OpenReactParametersDeserializer());
+        addDeserializer(OpenReacParameters.class, new OpenReacParametersDeserializer());
         addDeserializer(VoltageLimitOverride.class, new VoltageLimitOverrideDeserializer());
         addDeserializer(OpenReacAlgoParam.class, new OpenReacAlgoParamDeserializer());
     }
