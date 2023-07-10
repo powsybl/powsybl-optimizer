@@ -497,7 +497,7 @@ check {(t,h) in HVDC}: hvdc_targetP[t,h] <= hvdc_Pmax[t,h];
 # Only shunts listed here will be changed by this reactive opf
 set PARAM_SHUNT  dimen 1 default {};
 param param_shunt_id{PARAM_SHUNT} symbolic;
-check {(t,s,n) in SHUNT: n in PARAM_SHUNT}: shunt_id[t,s,n] == param_shunt_id[s];
+check {(t,s,n) in SHUNT: s in PARAM_SHUNT}: shunt_id[t,s,n] == param_shunt_id[s];
 
 
 
