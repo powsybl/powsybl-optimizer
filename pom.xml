@@ -57,6 +57,7 @@
 
     <modules>
         <module>open-reac</module>
+        <module>divergence-analyser</module>
     </modules>
 
     <properties>
