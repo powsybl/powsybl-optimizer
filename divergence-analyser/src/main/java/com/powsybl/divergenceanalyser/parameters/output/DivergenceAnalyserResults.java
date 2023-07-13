@@ -67,8 +67,20 @@ public class DivergenceAnalyserResults {
                 double vNom2 = twt.getTerminal2().getBusView().getBus().getVoltageLevel().getNominalV();
                 double dePerUnit = AmplConstants.SB / (vNom2 * vNom2);
 
+                // TODO : Must change the modifications that are applied when there is a 2wt
+                if (twt.getPhaseTapChanger() != null) {
+                    twt.getPhaseTapChanger().getCurrentStep().setR(Math.cos(Math.PI / 2 - modif.getNewXi()) / (modif.getNewY() / dePerUnit));
+                    twt.getPhaseTapChanger().getCurrentStep().setX(Math.sin(Math.PI / 2 - modif.getNewXi()) / (modif.getNewY() / dePerUnit));
+                }
+
+                if (twt.getRatioTapChanger() != null) {
+                    twt.getRatioTapChanger().getCurrentStep().setR(Math.cos(Math.PI / 2 - modif.getNewXi()) / (modif.getNewY() / dePerUnit));
+                    twt.getRatioTapChanger().getCurrentStep().setX(Math.sin(Math.PI / 2 - modif.getNewXi()) / (modif.getNewY() / dePerUnit));
+                }
+
                 twt.setR(Math.cos(Math.PI / 2 - modif.getNewXi()) / (modif.getNewY() / dePerUnit));
                 twt.setX(Math.sin(Math.PI / 2 - modif.getNewXi()) / (modif.getNewY() / dePerUnit));
+
                 twt.setG(modif.getNewG1() * dePerUnit);
                 twt.setB(modif.getNewB1() * dePerUnit);
 

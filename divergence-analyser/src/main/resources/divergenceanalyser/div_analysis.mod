@@ -13,21 +13,6 @@
 # Author : Pierre Arvy 2023
 ###############################################################################
 
-# Modul the penalization of the MINLP
-param is_target_v_units = 0;
-param is_target_v_svc = 0;
-param is_rho_control := 0;
-
-param is_admittance_control := 1;
-param is_xi_control := 1;
-
-param is_phase_shif_control := 0;
-
-param is_g_shunt_1_control := 1;
-param is_g_shunt_2_control := 0;
-param is_b_shunt_1_control := 1;
-param is_b_shunt_2_control := 0;
-
 # Data import and create sets/params
 include "data_importer.mod";
 
