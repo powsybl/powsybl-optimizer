@@ -77,10 +77,10 @@ var G1_penal{(qq,m,n) in BRANCHCC_PENALIZED}    = if is_g_shunt_1_control == 1
 var B1_penal{(qq,m,n) in BRANCHCC_PENALIZED}    = if is_b_shunt_1_control == 1
                                                   then branch_Bor[1,qq,m,n] + sigma6[qq,m,n]
                                                   else branch_Bor[1,qq,m,n];
-var G2_penal{(qq,m,n) in BRANCHCC_PENALIZED}    = if is_g_shunt_2_control == 1 and (qq,m,n) not in BRANCHCC_TRANSFORMER
+var G2_penal{(qq,m,n) in BRANCHCC_PENALIZED}    = if is_g_shunt_2_control == 1 and (qq,m,n) not in BRANCHCC_TRANSFORMER and qq <= max_qq_transformers
                                                   then branch_Gex[1,qq,m,n] + sigma7[qq,m,n]
                                                   else branch_Gex[1,qq,m,n];
-var B2_penal{(qq,m,n) in BRANCHCC_PENALIZED}    = if is_b_shunt_2_control == 1 and (qq,m,n) not in BRANCHCC_TRANSFORMER
+var B2_penal{(qq,m,n) in BRANCHCC_PENALIZED}    = if is_b_shunt_2_control == 1 and (qq,m,n) not in BRANCHCC_TRANSFORMER and qq <= max_qq_transformers
                                                   then branch_Bex[1,qq,m,n] + sigma8[qq,m,n]
                                                   else branch_Bex[1,qq,m,n];
 

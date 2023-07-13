@@ -716,4 +716,5 @@ param abs_mean_branch_Bor := (sum {(qq,m,n) in BRANCHCC_PENALIZED} abs(branch_Bo
 param abs_mean_branch_Gex := (sum {(qq,m,n) in BRANCHCC_PENALIZED} abs(branch_Gex[1,qq,m,n])) / card(BRANCHCC_PENALIZED);
 param abs_mean_branch_Bex := (sum {(qq,m,n) in BRANCHCC_PENALIZED} abs(branch_Bex[1,qq,m,n])) / card(BRANCHCC_PENALIZED);
 
+param max_qq_transformers := (max {(qq,m,n) in BRANCHCC_PENALIZED : branch_ptrRegl[1,qq,m,n] != -1 or branch_ptrDeph[1,qq,m,n] != -1} qq);
 param max_qq_3wt := (max {(qq,m,n) in BRANCHCC_PENALIZED : branch_3wt[1,qq,m,n]!=-1} qq);
