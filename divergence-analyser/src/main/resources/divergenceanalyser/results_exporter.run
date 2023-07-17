@@ -19,82 +19,95 @@
 #                                                                             #
 ##############################################################################
 
-# TODO : Ajouter differenciation entre export MINLP et export NLP
+param threshold_modifs := 1e-6;
 
-param threshold := 1e-6;
-if final_status == "OK" then {
-
-  printf "\n";
-# Sigma values in dbp computation
+# Exportation of branch penalization. New values of parameters, slacks and binary variables
 let fileOut := "da_branch_penal.csv";
-#printf "# Values of sigma penal var after detection opt\n" > (fileOut);
 printf "branch;bus1;bus2;rho;admittance;dephor;angper;g1 (pu);b1 (pu);g2 (pu);b2 (pu);sigma1;sigma2;sigma3;sigma4;sigma5;sigma6;sigma7;sigma8;b_sigma1;b_sigma2;b_sigma3;b_sigma4;b_sigma5;b_sigma6;b_sigma7;b_sigma8;id\n" > (fileOut);
-printf{(qq,m,n) in BRANCHCC_PENALIZED : ((qq,m,n) in BRANCHCC_TRANSFORMER and abs(b_sigma1[qq,m,n]) > threshold) or abs(b_sigma2[qq,m,n]) > threshold 
-                                     or ((qq,m,n) in BRANCHCC_DEPH and abs(b_sigma3[qq,m,n]) > threshold) or abs(b_sigma4[qq,m,n]) > threshold 
-                                     or abs(b_sigma5[qq,m,n]) > threshold or abs(b_sigma6[qq,m,n]) > threshold or abs(b_sigma7[qq,m,n]) > threshold 
-                                     or abs(b_sigma8[qq,m,n]) > threshold} 
+if mip_strategy == 0 then {
+      printf{(qq,m,n) in BRANCHCC_PENALIZED : ((qq,m,n) in BRANCHCC_TRANSFORMER and b_sigma1[qq,m,n] == 1) or b_sigma2[qq,m,n] == 1 
+                                    or ((qq,m,n) in BRANCHCC_DEPH and b_sigma3[qq,m,n] == 1) or b_sigma4[qq,m,n] == 1
+                                    or b_sigma5[qq,m,n] == 1 or b_sigma6[qq,m,n] == 1 or b_sigma7[qq,m,n] == 1 or b_sigma8[qq,m,n] == 1} 
       "%i;%i;%i;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%Q\n",
+      # Identifiers of the branch
       qq, m, n, 
+      # New values of parameters
       rho_penal[qq,m,n], y_penal[qq,m,n], alpha_penal[qq,m,n], Xi_penal[qq,m,n], 
       G1_penal[qq,m,n], B1_penal[qq,m,n], G2_penal[qq,m,n], B2_penal[qq,m,n],
-      
+      # Values of slacks
       if (qq,m,n) in BRANCHCC_TRANSFORMER then sigma1[qq,m,n] else 0,
       sigma2[qq,m,n],
       if (qq,m,n) in BRANCHCC_DEPH then sigma3[qq,m,n] else 0,
       sigma4[qq,m,n],sigma5[qq,m,n],sigma6[qq,m,n],sigma7[qq,m,n],sigma8[qq,m,n],
-      
+      # Values of binary variables (useless here, useful for NLP)
       if (qq,m,n) in BRANCHCC_TRANSFORMER then b_sigma1[qq,m,n] else 0,
       b_sigma2[qq,m,n],
       if (qq,m,n) in BRANCHCC_DEPH then b_sigma3[qq,m,n] else 0,
       b_sigma4[qq,m,n],b_sigma5[qq,m,n],b_sigma6[qq,m,n],b_sigma7[qq,m,n],b_sigma8[qq,m,n],
       branch_id[1,qq,m,n] 
       > (fileOut);
-      close (fileOut);
-      printf "Exportation of branch_penal.csv done.\n";
-
-  # s1 values for all opt problems
-  let fileOut := "da_bus_penal.csv";
-  printf "# Values of s penal var after detection opt\n" > (fileOut);
-  printf "busPV;targetV;V;s1;b_s1;id\n" > (fileOut);
-  printf{n in BUSCC_PV : abs(b_s1[n]) > threshold} "%i;%.5f;%.5f;%.5f;%.5f;%Q\n",
-        n, targetV_busPV[n], V[n], s1[n], b_s1[n], bus_id[1,n]
-        > (fileOut);
-  close (fileOut);
-  printf "Exportation of bus_penal.csv done.\n";
-
-
-  # For future exploitation of results in a refined model !
-  #let fileOut := "values_Vtheta.txt";
-  #printf "# Values of V/theta var after detection opt\n" > (fileOut);
-  #printf "# bus V theta id\n" > (fileOut);
-  #printf{n in BUSCC} "%i %.5f %.5f %Q\n",
-  #      n, V[n], teta[n], bus_id[1,n]
-  #      > (fileOut);
-  #close (fileOut);
-  #printf "Exportation of values_Vtheta.txt done.\n";
-}
-
-# V and theta values for all problems
-let fileOut := "da_V_theta.csv";
-printf "# Values of V/theta var after detection opt\n" > (fileOut);
-printf "bus;V;theta;id\n" > (fileOut);
-printf{n in BUSCC} "%i;%Q;%.5f;%.5f\n",
-      n, bus_id[1,n], V[n], teta[n]
+} else {
+      printf{(qq,m,n) in BRANCHCC_PENALIZED : ((qq,m,n) in BRANCHCC_TRANSFORMER and b_sigma1[qq,m,n] > threshold_modifs) or b_sigma2[qq,m,n] > threshold_modifs 
+                                    or ((qq,m,n) in BRANCHCC_DEPH and b_sigma3[qq,m,n] > threshold_modifs) or b_sigma4[qq,m,n] > threshold_modifs
+                                    or b_sigma5[qq,m,n] > threshold_modifs or b_sigma6[qq,m,n] > threshold_modifs
+                                    or b_sigma7[qq,m,n] > threshold_modifs or b_sigma8[qq,m,n] > threshold_modifs} 
+      "%i;%i;%i;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%Q\n",
+      # Identifiers of the branch
+      qq, m, n, 
+      # New values of parameters
+      rho_penal[qq,m,n], y_penal[qq,m,n], alpha_penal[qq,m,n], Xi_penal[qq,m,n], 
+      G1_penal[qq,m,n], B1_penal[qq,m,n], G2_penal[qq,m,n], B2_penal[qq,m,n],
+      # Values of slacks
+      if (qq,m,n) in BRANCHCC_TRANSFORMER then sigma1[qq,m,n] else 0,
+      sigma2[qq,m,n],
+      if (qq,m,n) in BRANCHCC_DEPH then sigma3[qq,m,n] else 0,
+      sigma4[qq,m,n],sigma5[qq,m,n],sigma6[qq,m,n],sigma7[qq,m,n],sigma8[qq,m,n],
+      # Values of binary variables
+      if (qq,m,n) in BRANCHCC_TRANSFORMER then b_sigma1[qq,m,n] else 0,
+      b_sigma2[qq,m,n],
+      if (qq,m,n) in BRANCHCC_DEPH then b_sigma3[qq,m,n] else 0,
+      b_sigma4[qq,m,n],b_sigma5[qq,m,n],b_sigma6[qq,m,n],b_sigma7[qq,m,n],b_sigma8[qq,m,n],
+      branch_id[1,qq,m,n] 
       > (fileOut);
+}
+close (fileOut);
+printf "Exportation of branch_penal.csv done.\n";
+
+
+# Exportation of branch penalization. New values of parameters, slacks and binary variables
+let fileOut := "da_bus_penal.csv";
+printf "busPV;targetV;V;s1;b_s1;id\n" > (fileOut);
+if mip_strategy == 0 then {
+      printf{n in BUSCC_PV : b_s1[n] == 1} "%i;%.5f;%.5f;%.5f;%.5f;%Q\n",
+            n, targetV_busPV[n], V[n], s1[n], b_s1[n], bus_id[1,n] > (fileOut);
+} else {
+      printf{n in BUSCC_PV : b_s1[n] > threshold_modifs} "%i;%.5f;%.5f;%.5f;%.5f;%Q\n",
+            n, targetV_busPV[n], V[n], s1[n], b_s1[n], bus_id[1,n] > (fileOut);
+}
+close (fileOut);
+printf "Exportation of bus_penal.csv done.\n";
+
+# V and theta values computed for each bus
+let fileOut := "da_V_theta.csv";
+printf "bus;V;theta;id\n" > (fileOut);
+printf{n in BUSCC} "%i;%Q;%.5f;%.5f\n", n, bus_id[1,n], V[n], teta[n] > (fileOut);
 close (fileOut);
 printf "Exportation of V_theta.csv done.\n";
 
+# File which contains all indicators of the run
 let fileOut := "da_indic.txt";
 printf "# Indicators of the run\n" > (fileOut);
 printf "final_status %Q\n", final_status > (fileOut);
-printf "number_of_modifications %i", card({(qq,m,n) in BRANCHCC_PENALIZED : ((qq,m,n) in BRANCHCC_TRANSFORMER and abs(b_sigma1[qq,m,n]) > threshold) or abs(b_sigma2[qq,m,n]) > threshold
-                                     or ((qq,m,n) in BRANCHCC_DEPH and abs(b_sigma3[qq,m,n]) > threshold) or abs(b_sigma4[qq,m,n]) > threshold
-                                     or abs(b_sigma5[qq,m,n]) > threshold or abs(b_sigma6[qq,m,n]) > threshold or abs(b_sigma7[qq,m,n]) > threshold
-                                     or abs(b_sigma8[qq,m,n]) > threshold}) > (fileOut);
+if mip_strategy == 0 then {
+      printf "number_of_modifications %i", card({(qq,m,n) in BRANCHCC_PENALIZED : ((qq,m,n) in BRANCHCC_TRANSFORMER and b_sigma1[qq,m,n] == 1) or b_sigma2[qq,m,n] == 1 
+                              or ((qq,m,n) in BRANCHCC_DEPH and b_sigma3[qq,m,n] == 1) or b_sigma4[qq,m,n] == 1
+                              or b_sigma5[qq,m,n] == 1 or b_sigma6[qq,m,n] == 1 
+                              or b_sigma7[qq,m,n] == 1 or b_sigma8[qq,m,n] == 1}) > (fileOut);
+} else {
+      printf "number_of_modifications %i", card({(qq,m,n) in BRANCHCC_PENALIZED : ((qq,m,n) in BRANCHCC_TRANSFORMER and b_sigma1[qq,m,n] > threshold_modifs) or b_sigma2[qq,m,n] > threshold_modifs 
+            or ((qq,m,n) in BRANCHCC_DEPH and b_sigma3[qq,m,n] > threshold_modifs) or b_sigma4[qq,m,n] > threshold_modifs
+            or b_sigma5[qq,m,n] > threshold_modifs or b_sigma6[qq,m,n] > threshold_modifs 
+            or b_sigma7[qq,m,n] > threshold_modifs or b_sigma8[qq,m,n] > threshold_modifs}) > (fileOut); 
+}
 close(fileOut);
 printf "Exportation of da_indic.txt done.\n";
-
-let fileOut := "status.txt";
-printf "%i", if output_results > 0 then 1 else 0 > (fileOut);
-close (fileOut);
-printf "Exportation of status.txt done.\n";
