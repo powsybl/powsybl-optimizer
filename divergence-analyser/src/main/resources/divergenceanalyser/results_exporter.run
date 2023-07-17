@@ -21,7 +21,7 @@
 
 # TODO : Ajouter differenciation entre export MINLP et export NLP
 
-param threshold := 1e-8;
+param threshold := 1e-6;
 if final_status == "OK" then {
 
   printf "\n";

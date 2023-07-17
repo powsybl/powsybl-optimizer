@@ -44,12 +44,17 @@ param final_status symbolic default "UNKNOWN";
 # Read activation/desactivation of penalization
 model;
 set PENAL_KEYS;
+set SOLVING_OPTIONS_KEYS;
 param PENAL_VALUES{PENAL_KEYS} symbolic;
+param SOLVING_OPTIONS_VALUES{SOLVING_OPTIONS_KEYS} symbolic;
 data;
 param: PENAL_KEYS: PENAL_VALUES := include penal.txt;
+param: SOLVING_OPTIONS_KEYS: SOLVING_OPTIONS_VALUES := include solving_options.txt;
 model;
 display PENAL_VALUES;
+display SOLVING_OPTIONS_VALUES;
 
+# Penalization parameters
 param is_target_v_units integer default 0;
 if "is_target_v_units" in PENAL_KEYS then let is_target_v_units := num(PENAL_VALUES["is_target_v_units"]);
 
@@ -79,6 +84,13 @@ if "is_b_shunt_1_control" in PENAL_KEYS then let is_b_shunt_1_control := num(PEN
 
 param is_b_shunt_2_control integer default 0;
 if "is_b_shunt_2_control" in PENAL_KEYS then let is_b_shunt_2_control := num(PENAL_VALUES["is_b_shunt_2_control"]);
+
+# Solving options for MINLP
+param mip_strategy integer default 0;
+if "is_continuous" in SOLVING_OPTIONS_KEYS then let mip_strategy := num(SOLVING_OPTIONS_VALUES["is_continuous"]);
+
+param max_time_solving integer default 120;
+if "max_time_solving" in SOLVING_OPTIONS_KEYS then let max_time_solving := num(SOLVING_OPTIONS_VALUES["max_time_solving"]);
 
 # Absolute parameter : base 100MVA.
 # Never change this unless you really know what you do
@@ -574,9 +586,9 @@ printf "# DA solve: start (%s)\n\n",ctime();
 let tempstr := ctime();
 
 
-option knitro_options "opttol=1 opttolabs=1e-1 feastol=1 feastolabs=1e-3 maxit=1500 mip_intvar_strategy=0 mip_heuristic_strategy=3 mip_multistart=1 ms_enable=0 mip_maxtime_real=150";
+option knitro_options ("opttol=1 opttolabs=1e-1 feastol=1 feastolabs=1e-3 maxit=1500 mip_heuristic_strategy=3 mip_intvar_strategy=" & mip_strategy & " mip_multistart=1 ms_enable=0 mip_maxtime_real=" & max_time_solving);
 
-# Solve the problem selected
+# Solve the problem chosen
 solve problem_dbp;
 let nb_iter_last := problem_dbp.numiters;
 let nb_iter_total := nb_iter_total + nb_iter_last; 

@@ -47,7 +47,7 @@ public class DivergenceAnalyserResults {
 
                 Line b = network.getLine(modif.getBranchId());
 
-                double vNom2 = b.getTerminal2().getBusView().getBus().getVoltageLevel().getNominalV();
+                double vNom2 = b.getTerminal2().getBusView().getConnectableBus().getVoltageLevel().getNominalV();
                 double dePerUnit = AmplConstants.SB / (vNom2 * vNom2);
 
                 b.setR(Math.cos(Math.PI / 2 - modif.getNewXi()) / (modif.getNewY() / dePerUnit));
@@ -64,7 +64,7 @@ public class DivergenceAnalyserResults {
             } else if (network.getTwoWindingsTransformer(modif.getBranchId()) != null) {
                 TwoWindingsTransformer twt = network.getTwoWindingsTransformer(modif.getBranchId());
 
-                double vNom2 = twt.getTerminal2().getBusView().getBus().getVoltageLevel().getNominalV();
+                double vNom2 = twt.getTerminal2().getBusView().getConnectableBus().getVoltageLevel().getNominalV();
                 double dePerUnit = AmplConstants.SB / (vNom2 * vNom2);
 
                 // TODO : Must change the modifications that are applied when there is a 2wt

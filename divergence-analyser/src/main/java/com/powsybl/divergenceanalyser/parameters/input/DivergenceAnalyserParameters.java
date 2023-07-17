@@ -4,6 +4,7 @@ import java.util.HashMap;
 
 public class DivergenceAnalyserParameters {
 
+    // About penalization
     private boolean targetVUnitsPenal = false;
     private boolean targetVSVCPenal = false;
     private boolean rhoTransformerPenal = false;
@@ -15,11 +16,15 @@ public class DivergenceAnalyserParameters {
     private boolean g2penal = false;
     private boolean b2Penal = false;
 
+    // About MINLP options
+    private boolean isContinuous = false;
+    private int maxTimeSolving = 120;
+
     public DivergenceAnalyserParameters(){
     }
 
-    public DivergenceAnalyserParameters(boolean penalizeEvery){
-        if (penalizeEvery) {
+    public DivergenceAnalyserParameters(boolean penalizeEverything){
+        if (penalizeEverything) {
             this.targetVUnitsPenal = true;
             this.targetVSVCPenal = true;
             this.rhoTransformerPenal = true;
@@ -46,6 +51,13 @@ public class DivergenceAnalyserParameters {
         if (g2penal) penal.put("is_g_shunt_2_control", 1);
         if (b2Penal) penal.put("is_b_shunt_2_control", 1);
         return penal;
+    }
+
+    public HashMap<String, Integer> getSolvingOptions(){
+        HashMap<String, Integer> options = new HashMap<>();
+        if (isContinuous) options.put("is_continuous", 1);
+        options.put("max_time_solving", maxTimeSolving);
+        return options;
     }
 
     public DivergenceAnalyserParameters setTargetVUnitsPenal(boolean targetVUnitsPenal) {
@@ -98,44 +110,15 @@ public class DivergenceAnalyserParameters {
         return this;
     }
 
-
-    public boolean isTargetVUnitsPenal() {
-        return targetVUnitsPenal;
+    public DivergenceAnalyserParameters setIsRelaxed(boolean isRelaxed) {
+        this.isContinuous = isRelaxed;
+        return this;
     }
 
-    public boolean isTargetVSVCPenal() {
-        return targetVSVCPenal;
+    public DivergenceAnalyserParameters setMaxTimeSolving(int maxTimeSolving) {
+        this.maxTimeSolving = maxTimeSolving;
+        return this;
     }
 
-    public boolean isRhoTransformerPenal(){
-        return rhoTransformerPenal;
-    }
 
-    public boolean isAlphaPSTPenal() {
-        return alphaPSTPenal;
-    }
-
-    public boolean isyPenal() {
-        return yPenal;
-    }
-
-    public boolean isXiPenal() {
-        return xiPenal;
-    }
-
-    public boolean isG1Penal() {
-        return g1Penal;
-    }
-
-    public boolean isG2penal() {
-        return g2penal;
-    }
-
-    public boolean isB1Penal() {
-        return b1Penal;
-    }
-
-    public boolean isB2Penal() {
-        return b2Penal;
-    }
 }

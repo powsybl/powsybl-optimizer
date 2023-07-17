@@ -9,13 +9,13 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
-public class PenalizationControl implements AmplInputFile {
-    private static final String fileName = "penal.txt";
+public class SolvingOptions implements AmplInputFile {
+    private static final String fileName = "solving_options.txt";
 
-    HashMap<String, Integer> penalization;
+    HashMap<String, Integer> options;
 
-    public PenalizationControl(HashMap<String, Integer> penalization){
-        this.penalization = penalization;
+    public SolvingOptions(HashMap<String, Integer> options){
+        this.options = options;
     }
 
     @Override
@@ -25,12 +25,10 @@ public class PenalizationControl implements AmplInputFile {
 
     @Override
     public InputStream getParameterFileAsStream(StringToIntMapper<AmplSubset> networkAmplMapper) {
-
         StringBuilder dataBuilder = new StringBuilder();
-        for(String penal : penalization.keySet()){
-            dataBuilder.append(penal).append(" ").append(penalization.get(penal)).append("\n");
+        for(String option : options.keySet()){
+            dataBuilder.append(option).append(" ").append(options.get(option)).append("\n");
         }
         return new ByteArrayInputStream(dataBuilder.toString().getBytes(StandardCharsets.UTF_8));
     }
 }
-
