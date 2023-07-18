@@ -566,10 +566,10 @@ let {n in BUSCC} teta[n] := bus_angl0_corrected[n];
 let PROBLEM_CCOMP := { };
 let PROBLEM_DETECTION_PARAM := {1};
   
-let {n in BUSCC_PV} b_s1[n] := 0;
-let {(qq,m,n) in BRANCHCC_REGL} b_sigma1[qq,m,n] := 0;
+let {n in BUSCC_PV}                  b_s1[n] := 0;
+let {(qq,m,n) in BRANCHCC_REGL}      b_sigma1[qq,m,n] := 0;
 let {(qq,m,n) in BRANCHCC_PENALIZED} b_sigma2[qq,m,n] := 0;
-let {(qq,m,n) in BRANCHCC_DEPH} b_sigma3[qq,m,n] := 0;
+let {(qq,m,n) in BRANCHCC_DEPH}      b_sigma3[qq,m,n] := 0;
 let {(qq,m,n) in BRANCHCC_PENALIZED} b_sigma4[qq,m,n] := 0;
 let {(qq,m,n) in BRANCHCC_PENALIZED} b_sigma5[qq,m,n] := 0;
 let {(qq,m,n) in BRANCHCC_PENALIZED} b_sigma6[qq,m,n] := 0;
@@ -594,11 +594,11 @@ let nb_iter_last := problem_dbp.numiters;
 let nb_iter_total := nb_iter_total + nb_iter_last; 
 
 
-#
 # Analysis of solve_result_num
-#
 
-# <= 103 : feasible
+# 0 : solution satisfies termination conditions for verifying optimality
+# <= 103 : feasible approximate solution was found
+# >= 400 and <= 406 : feasible but Knitro reached pre-defined limit
 # 200 convergence to unfeasible
 # > 200 : failure
 
@@ -635,52 +635,40 @@ printf "######################################################################\n
 let temp1 := max({(qq,m,n) in BRANCHCC} (teta[m]-teta[n]));
 let temp2 := min({(qq,m,n) in BRANCHCC} (teta[m]-teta[n]));
 
-#printf "Branches with max/min delta angles :\n";
-#for {(qq,m,n) in BRANCHCC: (teta[m]-teta[n])>temp1*0.99 or (teta[m]-teta[n])<temp2*0.99} {
-#  printf "%Q, between buses %i and %i :\nR=%.3f X=%.3f delta_teta=%.2f Vm=%.3f teta_m=%.2f Vn=%.3f teta_n=%.2f ",
-#  branch_id[1,qq,m,n],m,n,branch_R_corrected[1,qq,m,n],branch_X_corrected[1,qq,m,n],teta[m]-teta[n],V[m],teta[m],V[n],teta[n];
-#  printf "P1=%.1f Q1=%.1f ",
-#          if (is_penal_on_YKsi == 1) then base100MVA*V[m]*Red_Tran_Act_Dir_YKsi[qq,m,n]
-#          else if (is_penal_on_GB == 1) then base100MVA*V[m]*Red_Tran_Act_Dir_GB[qq,m,n],
-#
-#          if (is_penal_on_YKsi == 1) then base100MVA*V[m]*Red_Tran_Rea_Dir_YKsi[qq,m,n]
-#          else if (is_penal_on_GB == 1) then base100MVA*V[m]*Red_Tran_Rea_Dir_GB[qq,m,n];
-#
-#  printf "P2=%.1f Q2=%.1f ",
-#          if (is_penal_on_YKsi == 1) then base100MVA*V[m]*Red_Tran_Act_Inv_YKsi[qq,m,n]
-#          else if (is_penal_on_GB == 1) then base100MVA*V[m]*Red_Tran_Act_Inv_GB[qq,m,n],
-#
-#          if (is_penal_on_YKsi == 1) then base100MVA*V[m]*Red_Tran_Rea_Inv_YKsi[qq,m,n]
-#          else if (is_penal_on_GB == 1) then base100MVA*V[m]*Red_Tran_Rea_Inv_GB[qq,m,n];
-#          
-#  printf"\n";
-#}
-#
+printf "Branches with max/min delta angles :\n";
+for {(qq,m,n) in BRANCHCC: (teta[m]-teta[n])>temp1*0.99 or (teta[m]-teta[n])<temp2*0.99} {
+    printf "%Q, between buses %i and %i :\nR=%.3f X=%.3f delta_teta=%.2f Vm=%.3f teta_m=%.2f Vn=%.3f teta_n=%.2f ",
+        branch_id[1,qq,m,n],m,n,branch_R[1,qq,m,n],branch_X[1,qq,m,n],teta[m]-teta[n],V[m],teta[m],V[n],teta[n];
+    printf "P1=%.1f Q1=%.1f ", act_power_dir_YXi_penal[qq,m,n], rea_power_dir_YXi_penal[qq,m,n];
+    printf "P2=%.1f Q2=%.1f ", act_power_inv_YXi_penal[qq,m,n], rea_power_inv_YXi_penal[qq,m,n];
+          
+    printf"\n";
+}
+
 display
-  nb_iter_last,
-  nb_iter_total,
-  max({(qq,m,n) in BRANCHCC_PENALIZED} branch_R[1,qq,m,n]),max({(qq,m,n) in BRANCHCC_PENALIZED} branch_X[1,qq,m,n]),
-  max({(qq,m,n) in BRANCHCC} (teta[m]-teta[n])),
-  min({(qq,m,n) in BRANCHCC} (teta[m]-teta[n])),
-  max({n in BUSCC} teta[n]),
-  min({n in BUSCC} teta[n]),
-  min({n in BUSCC}V[n]),max({n in BUSCC}V[n])
-  ;
+    nb_iter_last,
+    nb_iter_total,
+    max({(qq,m,n) in BRANCHCC_PENALIZED} branch_R[1,qq,m,n]),max({(qq,m,n) in BRANCHCC_PENALIZED} branch_X[1,qq,m,n]),
+    max({(qq,m,n) in BRANCHCC} (teta[m]-teta[n])),
+    min({(qq,m,n) in BRANCHCC} (teta[m]-teta[n])),
+    max({n in BUSCC} teta[n]),
+    min({n in BUSCC} teta[n]),
+    min({n in BUSCC}V[n]),max({n in BUSCC}V[n])
+    ;
 
 
 include resume_slacks_printer.run;
-
-###############################################################################
-#                       Writing results and indicators                        #
-###############################################################################
-
-include results_exporter.run;
 
 printf "\n";
 if (card(REGL) == 0) then printf "[INFO] No rtc on the network\n";
 if (card(DEPH) == 0) then printf "[INFO] No ptc on the network\n";
 if (card({(1,qq,m,n) in BRANCH : branch_3wt[1,qq,m,n] != -1}) == 0) then printf "[INFO] No 3wt on the network\n";
 
+###############################################################################
+#                       Writing results and indicators                        #
+###############################################################################
+
+include results_exporter.run;
 display nb_rtc_leg1, nb_rtc_leg2, nb_rtc_leg3, nb_ptc_leg1, nb_ptc_leg2, nb_ptc_leg3;
 
 ###############################################################################

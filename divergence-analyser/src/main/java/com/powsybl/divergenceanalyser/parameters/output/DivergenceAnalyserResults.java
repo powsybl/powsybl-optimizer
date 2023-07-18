@@ -107,5 +107,35 @@ public class DivergenceAnalyserResults {
         applyBranchModifications(network);
     }
 
+    /**
+     * Print indicators and their values.
+     */
+    public void printIndicators(){
+
+        String nameColumn1 = "Indicators";
+        String nameColumn2 = "Values";
+
+        // Calculate the width of columns based on the longest key and value of indicators
+        int column1Width = Math.max(nameColumn1.length(),
+                                    indicators.keySet().stream().mapToInt(String::length).max().orElse(0));
+        int column2Width = Math.max(nameColumn2.length(),
+                                    indicators.values().stream().mapToInt(String::length).max().orElse(0));
+
+        String separator = "═".repeat(column1Width + column2Width + 5);
+
+        // Print header box
+        System.out.println("╔" + separator + "╗");
+        System.out.println("║ " + nameColumn1 + " ".repeat(column1Width - nameColumn1.length()) // Column 1
+                + " ║ " + nameColumn2 + " ".repeat(column2Width - nameColumn2.length())+ " ║"); // Column 2
+        System.out.println("╠" + separator + "╣");
+
+        // Print indicators
+        indicators.forEach((key, value) -> System.out.println("║ " + key + " ".repeat(column1Width - key.length()) // Column 1
+                + " ║ " + " ".repeat(column2Width - value.length()) + value + " ║")); // Column 2
+
+        // Print foot box
+        System.out.println("╚" + separator + "╝");
+    }
+
 }
 
