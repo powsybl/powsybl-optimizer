@@ -44,15 +44,15 @@ param Xi_p_sup := 3.141592;
 
 # Bound inf for G/B parameters
 param G1_p_inf := 0;
-param B1_p_inf := -0.8; # TODO : Improve X bound by looking if there are X negative values in the network. Most of the time, negative values are on the 3wt legs.
+param B1_p_inf := -2; # TODO : Improve X bound by looking if there are X negative values in the network. Most of the time, negative values are on the 3wt legs.
 param G2_p_inf := 0;
-param B2_p_inf := -0.8; # TODO : Improve X bound by looking if there are X negative values in the network. Most of the time, negative values are on the 3wt legs.
+param B2_p_inf := -2; # TODO : Improve X bound by looking if there are X negative values in the network. Most of the time, negative values are on the 3wt legs.
 
 # Upper bound in practice for usual network
 param G1_sup_default := 0.1;
-param B1_sup_default := 1.3;
+param B1_sup_default := 2;
 param G2_sup_default := 0.1;
-param B2_sup_default := 1.3;
+param B2_sup_default := 2;
 
 param G1_p_sup {(qq,m,n) in BRANCHCC_PENALIZED} := if branch_Gor[1,qq,m,n] == 0 then G1_sup_default else min(G1_sup_default, 2 * abs(branch_Gor[1,qq,m,n]));
 param B1_p_sup {(qq,m,n) in BRANCHCC_PENALIZED} := if branch_Bor[1,qq,m,n] == 0 then B1_sup_default else min(B1_sup_default, 2 * abs(branch_Bor[1,qq,m,n]));

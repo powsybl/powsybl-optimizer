@@ -40,53 +40,54 @@ subject to ctr_b_sigma6_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_P
 subject to ctr_b_sigma7_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   if (is_g_shunt_2_control == 0)  then b_sigma7[qq,m,n] = 0;
 subject to ctr_b_sigma8_null_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   if (is_b_shunt_2_control == 0)  then b_sigma8[qq,m,n] = 0;
 
-## Lower bounds of penalized data
-#subject to ctr_s1_units_min_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV_UNITS}:            if (is_target_v_units == 1)     then target_v_penal[n]   >= targetV_p_inf;
-#subject to ctr_s1_svc_min_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV_SVC}:                if (is_target_v_svc == 1)       then target_v_penal[n]   >= targetV_p_inf;
-#subject to ctr_sigma1_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_TRANSFORMER}: if (is_rho_control == 1)        then rho_penal[qq,m,n]   >= rho_p_inf[qq,m,n];
-#subject to ctr_sigma2_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   if (is_admittance_control == 1) then y_penal[qq,m,n]     >= Y_p_inf;
-#subject to ctr_sigma3_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_DEPH}:        if (is_phase_shif_control == 1) then alpha_penal[qq,m,n] >= alpha_p_inf[qq,m,n];
-#subject to ctr_sigma4_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   if (is_xi_control == 1)         then Xi_penal[qq,m,n]    >= Xi_p_inf;
-#subject to ctr_sigma5_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   if (is_g_shunt_1_control == 1)  then G1_penal[qq,m,n]    >= G1_p_inf;
-#subject to ctr_sigma6_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   if (is_b_shunt_1_control == 1)  then B1_penal[qq,m,n]    >= B1_p_inf;
-#subject to ctr_sigma7_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   if (is_g_shunt_2_control == 1)  then G2_penal[qq,m,n]    >= G2_p_inf;
-#subject to ctr_sigma8_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   if (is_b_shunt_2_control == 1)  then B2_penal[qq,m,n]    >= B2_p_inf;
-#
-## Upper bounds of penalized data
-#subject to ctr_s1_units_max_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV_UNITS}:            if (is_target_v_units == 1)     then target_v_penal[n]   <= targetV_p_sup;
-#subject to ctr_s1_svc_max_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV_SVC}:                if (is_target_v_svc == 1)       then target_v_penal[n]   <= targetV_p_sup;
-#subject to ctr_sigma1_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_TRANSFORMER}: if (is_rho_control == 1)        then rho_penal[qq,m,n]   <= rho_p_sup[qq,m,n];
-#subject to ctr_sigma2_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   if (is_admittance_control == 1) then y_penal[qq,m,n]     <= Y_p_sup[qq,m,n];
-#subject to ctr_sigma3_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_DEPH}:        if (is_phase_shif_control == 1) then alpha_penal[qq,m,n] <= alpha_p_sup[qq,m,n];
-#subject to ctr_sigma4_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   if (is_xi_control == 1)         then Xi_penal[qq,m,n]    <= Xi_p_sup;
-#subject to ctr_sigma5_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   if (is_g_shunt_1_control == 1)  then G1_penal[qq,m,n]    <= G1_p_sup[qq,m,n];
-#subject to ctr_sigma6_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   if (is_b_shunt_1_control == 1)  then B1_penal[qq,m,n]    <= B1_p_sup[qq,m,n];
-#subject to ctr_sigma7_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   if (is_g_shunt_2_control == 1)  then G2_penal[qq,m,n]    <= G2_p_sup[qq,m,n];
-#subject to ctr_sigma8_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   if (is_b_shunt_2_control == 1)  then B2_penal[qq,m,n]    <= B2_p_sup[qq,m,n];
 
 # Lower bounds of penalized data
-subject to ctr_s1_units_min_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV_UNITS}:      target_v_penal[n]   >= targetV_p_inf;
-subject to ctr_s1_svc_min_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV_SVC}:                target_v_penal[n]   >= targetV_p_inf;
-subject to ctr_sigma1_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_TRANSFORMER}: rho_penal[qq,m,n]   >= rho_p_inf[qq,m,n];
-subject to ctr_sigma2_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:y_penal[qq,m,n]     >= Y_p_inf;
-subject to ctr_sigma3_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_DEPH}:alpha_penal[qq,m,n] >= alpha_p_inf[qq,m,n];
-subject to ctr_sigma4_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   Xi_penal[qq,m,n]    >= Xi_p_inf;
-subject to ctr_sigma5_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   G1_penal[qq,m,n]    >= G1_p_inf;
-subject to ctr_sigma6_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   B1_penal[qq,m,n]    >= B1_p_inf;
-subject to ctr_sigma7_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   G2_penal[qq,m,n]    >= G2_p_inf;
-subject to ctr_sigma8_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   B2_penal[qq,m,n]    >= B2_p_inf;
+subject to ctr_s1_units_min_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV_UNITS}:              targetV_busPV[n] + s1[n]   >= targetV_p_inf;
+subject to ctr_s1_svc_min_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV_SVC}:                  targetV_busPV[n] + s1[n]   >= targetV_p_inf;
+subject to ctr_sigma1_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_TRANSFORMER}:   branch_Ror[qq,m,n] + sigma1[qq,m,n]   >= rho_p_inf[qq,m,n];
+subject to ctr_sigma2_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:     branch_admi[qq,m,n] + sigma2[qq,m,n]     >= Y_p_inf;
+subject to ctr_sigma3_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_DEPH}:          branch_dephor[qq,m,n] + sigma3[qq,m,n] >= alpha_p_inf[qq,m,n];
+subject to ctr_sigma4_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:     branch_angper[qq,m,n] + sigma4[qq,m,n]    >= Xi_p_inf;
+subject to ctr_sigma5_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:     branch_Gor[1,qq,m,n] + sigma5[qq,m,n]    >= G1_p_inf;
+subject to ctr_sigma6_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:     branch_Bor[1,qq,m,n] + sigma6[qq,m,n]    >= B1_p_inf;
+subject to ctr_sigma7_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:     branch_Gex[1,qq,m,n] + sigma7[qq,m,n]    >= G2_p_inf;
+subject to ctr_sigma8_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:     branch_Bex[1,qq,m,n] + sigma8[qq,m,n]    >= B2_p_inf;
 
 # Upper bounds of penalized data
-subject to ctr_s1_units_max_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV_UNITS}:            target_v_penal[n]   <= targetV_p_sup;
-subject to ctr_s1_svc_max_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV_SVC}:                target_v_penal[n]   <= targetV_p_sup;
-subject to ctr_sigma1_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_TRANSFORMER}: rho_penal[qq,m,n]   <= rho_p_sup[qq,m,n];
-subject to ctr_sigma2_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:y_penal[qq,m,n]     <= Y_p_sup[qq,m,n];
-subject to ctr_sigma3_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_DEPH}:alpha_penal[qq,m,n] <= alpha_p_sup[qq,m,n];
-subject to ctr_sigma4_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   Xi_penal[qq,m,n]    <= Xi_p_sup;
-subject to ctr_sigma5_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   G1_penal[qq,m,n]    <= G1_p_sup[qq,m,n];
-subject to ctr_sigma6_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   B1_penal[qq,m,n]    <= B1_p_sup[qq,m,n];
-subject to ctr_sigma7_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   G2_penal[qq,m,n]    <= G2_p_sup[qq,m,n];
-subject to ctr_sigma8_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   B2_penal[qq,m,n]    <= B2_p_sup[qq,m,n];
+subject to ctr_s1_units_max_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV_UNITS}:              targetV_busPV[n] + s1[n]   <= targetV_p_sup;
+subject to ctr_s1_svc_max_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV_SVC}:                  targetV_busPV[n] + s1[n]   <= targetV_p_sup;
+subject to ctr_sigma1_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_TRANSFORMER}:   branch_Ror[qq,m,n] + sigma1[qq,m,n]   <= rho_p_sup[qq,m,n];
+subject to ctr_sigma2_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:     branch_admi[qq,m,n] + sigma2[qq,m,n]     <= Y_p_sup[qq,m,n];
+subject to ctr_sigma3_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_DEPH}:          branch_dephor[qq,m,n] + sigma3[qq,m,n] <= alpha_p_sup[qq,m,n];
+subject to ctr_sigma4_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:     branch_angper[qq,m,n] + sigma4[qq,m,n]    <= Xi_p_sup;
+subject to ctr_sigma5_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:     branch_Gor[1,qq,m,n] + sigma5[qq,m,n]    <= G1_p_sup[qq,m,n];
+subject to ctr_sigma6_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:     branch_Bor[1,qq,m,n] + sigma6[qq,m,n]    <= B1_p_sup[qq,m,n];
+subject to ctr_sigma7_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:     branch_Gex[1,qq,m,n] + sigma7[qq,m,n]    <= G2_p_sup[qq,m,n];
+subject to ctr_sigma8_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:     branch_Bex[1,qq,m,n] + sigma8[qq,m,n]    <= B2_p_sup[qq,m,n];
+
+## Lower bounds of penalized data
+#subject to ctr_s1_units_min_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV_UNITS}:            target_v_penal[n]   >= targetV_p_inf;
+#subject to ctr_s1_svc_min_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV_SVC}:                target_v_penal[n]   >= targetV_p_inf;
+#subject to ctr_sigma1_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_TRANSFORMER}: rho_penal[qq,m,n]   >= rho_p_inf[qq,m,n];
+#subject to ctr_sigma2_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   y_penal[qq,m,n]     >= Y_p_inf;
+#subject to ctr_sigma3_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_DEPH}:        alpha_penal[qq,m,n] >= alpha_p_inf[qq,m,n];
+#subject to ctr_sigma4_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   Xi_penal[qq,m,n]    >= Xi_p_inf;
+#subject to ctr_sigma5_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   G1_penal[qq,m,n]    >= G1_p_inf;
+#subject to ctr_sigma6_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   B1_penal[qq,m,n]    >= B1_p_inf;
+#subject to ctr_sigma7_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   G2_penal[qq,m,n]    >= G2_p_inf;
+#subject to ctr_sigma8_min_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   B2_penal[qq,m,n]    >= B2_p_inf;
+#
+## Upper bounds of penalized data
+#subject to ctr_s1_units_max_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV_UNITS}:            target_v_penal[n]   <= targetV_p_sup;
+#subject to ctr_s1_svc_max_dbp{PROBLEM_DETECTION_PARAM, n in BUSCC_PV_SVC}:                target_v_penal[n]   <= targetV_p_sup;
+#subject to ctr_sigma1_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_TRANSFORMER}: rho_penal[qq,m,n]   <= rho_p_sup[qq,m,n];
+#subject to ctr_sigma2_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   y_penal[qq,m,n]     <= Y_p_sup[qq,m,n];
+#subject to ctr_sigma3_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_DEPH}:        alpha_penal[qq,m,n] <= alpha_p_sup[qq,m,n];
+#subject to ctr_sigma4_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   Xi_penal[qq,m,n]    <= Xi_p_sup;
+#subject to ctr_sigma5_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   G1_penal[qq,m,n]    <= G1_p_sup[qq,m,n];
+#subject to ctr_sigma6_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   B1_penal[qq,m,n]    <= B1_p_sup[qq,m,n];
+#subject to ctr_sigma7_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   G2_penal[qq,m,n]    <= G2_p_sup[qq,m,n];
+#subject to ctr_sigma8_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   B2_penal[qq,m,n]    <= B2_p_sup[qq,m,n];
 
 # Activation of binary variables if penal var > 0
 subject to ctr_b_s1_pos_dbp{PROBLEM_DETECTION_PARAM, k in BUSCC_PV}:                                s1[k]  <= (targetV_p_sup - targetV_busPV[k] + 0.001) * b_s1[k];
@@ -177,6 +178,22 @@ subject to ctr_balance_Q_dbp{PROBLEM_DETECTION_PARAM,k in BUSCC_PQ}:
   + sum{(l,k) in LCCCONVON} lccconv_Q0[1,l,k] # Fixed values
   = 0;
 
+
+
+#subject to ctr_thetas_diff_np{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_DIFF_THETA_CONST}: 
+#      abs(teta[m] + branch_dephor[qq,m,n] - teta[n]) <= 
+#      if (qq,m,n) in BRANCHCC_TRANSFORMER and abs(branch_Xdeph[qq,m,n]) > 0.05 then
+#      min(1.570796 / 2, abs(1.732 * max(substation_Vnomi[1,bus_substation[1,m]]*abs(branch_patl1[1,qq,m,n]),substation_Vnomi[1,bus_substation[1,n]]*abs(branch_patl2[1,qq,m,n])) * abs(branch_Xdeph[qq,m,n]) 
+#      / 100 / 100 / 0.9))
+#      else if abs(branch_X_mod[qq,m,n]) > 0.05 then 
+#      min(1.570796 / 2, abs(1.732 * max(substation_Vnomi[1,bus_substation[1,m]]*abs(branch_patl1[1,qq,m,n]),substation_Vnomi[1,bus_substation[1,n]]*abs(branch_patl2[1,qq,m,n])) * abs(branch_X_mod[qq,m,n])
+#       / 100 / 100 / 0.9))
+#       else 1.570796 / 2
+#      ;
+#subject to ctr_on_v{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC}:
+#    abs(V[m] - V[n]) <= 0.1;
+
+
 ###########################################
 #                                         #
 #             Objective function          #
@@ -188,9 +205,9 @@ minimize problem_dbp:
   0
   + 1 * sum{n in BUSCC_PV}                    b_s1[n] 
   + 1 * sum{(qq,m,n) in BRANCHCC_TRANSFORMER} b_sigma1[qq,m,n] 
-  + 3 * sum{(qq,m,n) in BRANCHCC_PENALIZED}   b_sigma2[qq,m,n] 
+  + 1.5 * sum{(qq,m,n) in BRANCHCC_PENALIZED}   b_sigma2[qq,m,n] 
   + 1 * sum{(qq,m,n) in BRANCHCC_DEPH}        b_sigma3[qq,m,n] 
-  + 3 * sum{(qq,m,n) in BRANCHCC_PENALIZED}   b_sigma4[qq,m,n] 
+  + 1.5 * sum{(qq,m,n) in BRANCHCC_PENALIZED}   b_sigma4[qq,m,n] 
   + 1 * sum{(qq,m,n) in BRANCHCC_PENALIZED}   b_sigma5[qq,m,n] 
   + 1 * sum{(qq,m,n) in BRANCHCC_PENALIZED}   b_sigma6[qq,m,n] 
   + 1 * sum{(qq,m,n) in BRANCHCC_PENALIZED}   b_sigma7[qq,m,n] 

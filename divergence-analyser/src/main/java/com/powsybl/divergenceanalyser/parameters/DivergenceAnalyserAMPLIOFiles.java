@@ -3,7 +3,7 @@ package com.powsybl.divergenceanalyser.parameters;
 import com.powsybl.divergenceanalyser.parameters.input.DivergenceAnalyserParameters;
 import com.powsybl.divergenceanalyser.parameters.input.SolvingOptions;
 import com.powsybl.divergenceanalyser.parameters.input.PenalizationControl;
-import com.powsybl.divergenceanalyser.parameters.output.BranchModificationsOutput;
+import com.powsybl.divergenceanalyser.parameters.output.BranchPenalisationOutput;
 import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.ampl.executor.AmplOutputFile;
 import com.powsybl.ampl.executor.AmplParameters;
@@ -19,7 +19,7 @@ public class DivergenceAnalyserAMPLIOFiles implements AmplParameters {
     SolvingOptions solvingOptions;
 
     // Output files
-    BranchModificationsOutput branchModificationsOutput;
+    BranchPenalisationOutput branchPenalisationOutput;
 
     boolean debug;
 
@@ -29,7 +29,7 @@ public class DivergenceAnalyserAMPLIOFiles implements AmplParameters {
         this.solvingOptions = new SolvingOptions(params.getSolvingOptions());
 
         // Output file for network modifications
-        this.branchModificationsOutput = new BranchModificationsOutput();
+        this.branchPenalisationOutput = new BranchPenalisationOutput();
 
         this.debug = debug;
     }
@@ -43,7 +43,7 @@ public class DivergenceAnalyserAMPLIOFiles implements AmplParameters {
     public Collection<AmplOutputFile> getOutputParameters(boolean hasConverged) {
         if (hasConverged){
             List<AmplOutputFile> list = new ArrayList<>();
-            list.add(branchModificationsOutput);
+            list.add(branchPenalisationOutput);
             return list;
         } else {
             return List.of();
@@ -55,7 +55,7 @@ public class DivergenceAnalyserAMPLIOFiles implements AmplParameters {
         return debug;
     }
 
-    public BranchModificationsOutput getBranchModificationsOutput() {
-        return branchModificationsOutput;
+    public BranchPenalisationOutput getBranchModificationsOutput() {
+        return branchPenalisationOutput;
     }
 }

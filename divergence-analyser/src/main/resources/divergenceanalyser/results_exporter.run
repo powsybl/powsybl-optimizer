@@ -28,12 +28,18 @@ if mip_strategy == 0 then {
       printf{(qq,m,n) in BRANCHCC_PENALIZED : ((qq,m,n) in BRANCHCC_TRANSFORMER and b_sigma1[qq,m,n] == 1) or b_sigma2[qq,m,n] == 1 
                                     or ((qq,m,n) in BRANCHCC_DEPH and b_sigma3[qq,m,n] == 1) or b_sigma4[qq,m,n] == 1
                                     or b_sigma5[qq,m,n] == 1 or b_sigma6[qq,m,n] == 1 or b_sigma7[qq,m,n] == 1 or b_sigma8[qq,m,n] == 1} 
-      "%i;%i;%i;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%Q\n",
+      "%i;%i;%i;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%s\n",
       # Identifiers of the branch
       qq, m, n, 
       # New values of parameters
-      rho_penal[qq,m,n], y_penal[qq,m,n], alpha_penal[qq,m,n], Xi_penal[qq,m,n], 
-      G1_penal[qq,m,n], B1_penal[qq,m,n], G2_penal[qq,m,n], B2_penal[qq,m,n],
+      if (qq,m,n) in BRANCHCC_TRANSFORMER then branch_Ror[qq,m,n]+sigma1[qq,m,n] else branch_Ror[qq,m,n], 
+      branch_admi[qq,m,n]+sigma2[qq,m,n], 
+      if (qq,m,n) in BRANCHCC_REGL then branch_dephor[qq,m,n]+sigma3[qq,m,n] else branch_dephor[qq,m,n], 
+      branch_angper[qq,m,n]+sigma4[qq,m,n], 
+      branch_Gor[1,qq,m,n]+sigma5[qq,m,n],
+      branch_Bor[1,qq,m,n]+sigma6[qq,m,n], 
+      branch_Gex[1,qq,m,n]+sigma7[qq,m,n], 
+      branch_Bex[1,qq,m,n]+sigma8[qq,m,n],
       # Values of slacks
       if (qq,m,n) in BRANCHCC_TRANSFORMER then sigma1[qq,m,n] else 0,
       sigma2[qq,m,n],
@@ -51,7 +57,7 @@ if mip_strategy == 0 then {
                                     or ((qq,m,n) in BRANCHCC_DEPH and b_sigma3[qq,m,n] > threshold_modifs) or b_sigma4[qq,m,n] > threshold_modifs
                                     or b_sigma5[qq,m,n] > threshold_modifs or b_sigma6[qq,m,n] > threshold_modifs
                                     or b_sigma7[qq,m,n] > threshold_modifs or b_sigma8[qq,m,n] > threshold_modifs} 
-      "%i;%i;%i;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%Q\n",
+      "%i;%i;%i;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%.5f;%s\n",
       # Identifiers of the branch
       qq, m, n, 
       # New values of parameters
@@ -81,7 +87,7 @@ if mip_strategy == 0 then {
       printf{n in BUSCC_PV : b_s1[n] == 1} "%i;%.5f;%.5f;%.5f;%.5f;%Q\n",
             n, targetV_busPV[n], V[n], s1[n], b_s1[n], bus_id[1,n] > (fileOut);
 } else {
-      printf{n in BUSCC_PV : b_s1[n] > threshold_modifs} "%i;%.5f;%.5f;%.5f;%.5f;%Q\n",
+      printf{n in BUSCC_PV : b_s1[n] > threshold_modifs} "%i;%.5f;%.5f;%.5f;%.5f;%s\n",
             n, targetV_busPV[n], V[n], s1[n], b_s1[n], bus_id[1,n] > (fileOut);
 }
 close (fileOut);

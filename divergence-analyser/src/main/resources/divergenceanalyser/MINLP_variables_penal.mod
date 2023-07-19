@@ -50,7 +50,6 @@ var b_sigma6{(qq,m,n) in BRANCHCC_PENALIZED} binary;
 # ... of G2
 var sigma7{(qq,m,n) in BRANCHCC_PENALIZED};
 var b_sigma7{(qq,m,n) in BRANCHCC_PENALIZED} binary;
-
 # ... of B2
 var sigma8{(qq,m,n) in BRANCHCC_PENALIZED};
 var b_sigma8{(qq,m,n) in BRANCHCC_PENALIZED} binary;

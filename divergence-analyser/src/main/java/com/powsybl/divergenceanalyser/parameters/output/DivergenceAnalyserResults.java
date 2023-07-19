@@ -2,10 +2,8 @@ package com.powsybl.divergenceanalyser.parameters.output;
 
 import com.powsybl.divergenceanalyser.parameters.DivergenceAnalyserAMPLIOFiles;
 import com.powsybl.ampl.converter.AmplConstants;
-import com.powsybl.iidm.network.DanglingLine;
-import com.powsybl.iidm.network.Line;
-import com.powsybl.iidm.network.Network;
-import com.powsybl.iidm.network.TwoWindingsTransformer;
+import com.powsybl.divergenceanalyser.parameters.output.modifications.BranchPenalisation;
+import com.powsybl.iidm.network.*;
 
 import java.util.List;
 import java.util.Map;
@@ -14,7 +12,7 @@ import java.util.Objects;
 public class DivergenceAnalyserResults {
     private final boolean status;
 
-    List<BranchModificationsOutput.BranchModification> branchModifications;
+    List<BranchPenalisation> branchPenalisation;
 
     private final Map<String, String> indicators;
 
@@ -27,7 +25,7 @@ public class DivergenceAnalyserResults {
     public DivergenceAnalyserResults(boolean status, DivergenceAnalyserAMPLIOFiles amplIOFiles, Map<String, String> indicators) {
         Objects.requireNonNull(amplIOFiles);
         this.status = Objects.requireNonNull(status);
-        this.branchModifications = amplIOFiles.getBranchModificationsOutput().getModificiations();
+        this.branchPenalisation = amplIOFiles.getBranchModificationsOutput().getPenalisation();
         this.indicators = Map.copyOf(Objects.requireNonNull(indicators));
     }
 
@@ -39,72 +37,133 @@ public class DivergenceAnalyserResults {
         return indicators;
     }
 
-    public void applyBranchModifications(Network network){
+    public void applyBranchPenalisation(Network network){
 
-        for(BranchModificationsOutput.BranchModification modif : branchModifications){
+        for(BranchPenalisation penal : branchPenalisation){
 
-            if (network.getLine(modif.getBranchId()) != null) {
+            if (network.getLine(penal.getBranchId()) != null)
+                applyLinePenalisation(network.getLine(penal.getBranchId()), penal);
 
-                Line b = network.getLine(modif.getBranchId());
+            else if (network.getTieLine(penal.getBranchId()) != null)
+                applyTieLinePenalisation(network.getTieLine(penal.getBranchId()), penal);
 
-                double vNom2 = b.getTerminal2().getBusView().getConnectableBus().getVoltageLevel().getNominalV();
-                double dePerUnit = AmplConstants.SB / (vNom2 * vNom2);
+            else if (network.getTwoWindingsTransformer(penal.getBranchId()) != null)
+                applyTwoWindingsTransformerPenalisation(network.getTwoWindingsTransformer(penal.getBranchId()), penal);
 
-                b.setR(Math.cos(Math.PI / 2 - modif.getNewXi()) / (modif.getNewY() / dePerUnit));
-                b.setX(Math.sin(Math.PI / 2 - modif.getNewXi()) / (modif.getNewY() / dePerUnit));
-                b.setG1(modif.getNewG1() * dePerUnit);
-                b.setB1(modif.getNewB1() * dePerUnit);
-                b.setG2(modif.getNewG2() * dePerUnit);
-                b.setB2(modif.getNewB2() * dePerUnit);
+            else if (network.getThreeWindingsTransformer(penal.getBranchId()) != null)
+                applyThreeWindingsTransformerPenalisation(network.getThreeWindingsTransformer(penal.getBranchId()), penal);
 
-            } else if (network.getTieLine(modif.getBranchId()) != null){
+            else if (network.getDanglingLine(penal.getBranchId()) != null)
+                applyDanglingLinePenalisation(network.getDanglingLine(penal.getBranchId()), penal);
 
-                throw new IllegalAccessError("Modifications of tie lines not implemented yet.");
+            else throw new IllegalStateException("Branch not in the network");
 
-            } else if (network.getTwoWindingsTransformer(modif.getBranchId()) != null) {
-                TwoWindingsTransformer twt = network.getTwoWindingsTransformer(modif.getBranchId());
-
-                double vNom2 = twt.getTerminal2().getBusView().getConnectableBus().getVoltageLevel().getNominalV();
-                double dePerUnit = AmplConstants.SB / (vNom2 * vNom2);
-
-                // TODO : Must change the modifications that are applied when there is a 2wt
-                if (twt.getPhaseTapChanger() != null) {
-                    twt.getPhaseTapChanger().getCurrentStep().setR(Math.cos(Math.PI / 2 - modif.getNewXi()) / (modif.getNewY() / dePerUnit));
-                    twt.getPhaseTapChanger().getCurrentStep().setX(Math.sin(Math.PI / 2 - modif.getNewXi()) / (modif.getNewY() / dePerUnit));
-                }
-
-                if (twt.getRatioTapChanger() != null) {
-                    twt.getRatioTapChanger().getCurrentStep().setR(Math.cos(Math.PI / 2 - modif.getNewXi()) / (modif.getNewY() / dePerUnit));
-                    twt.getRatioTapChanger().getCurrentStep().setX(Math.sin(Math.PI / 2 - modif.getNewXi()) / (modif.getNewY() / dePerUnit));
-                }
-
-                twt.setR(Math.cos(Math.PI / 2 - modif.getNewXi()) / (modif.getNewY() / dePerUnit));
-                twt.setX(Math.sin(Math.PI / 2 - modif.getNewXi()) / (modif.getNewY() / dePerUnit));
-
-                twt.setG(modif.getNewG1() * dePerUnit);
-                twt.setB(modif.getNewB1() * dePerUnit);
-
-            } else if (network.getThreeWindingsTransformer(modif.getBranchId()) != null){
-
-                throw new IllegalAccessError("Modifications of 3wt not implemented yet.");
-
-            } else if (network.getDanglingLine(modif.getBranchId()) != null){
-                DanglingLine dl = network.getDanglingLine(modif.getBranchId());
-
-                double vNom2 = dl.getTerminal().getVoltageLevel().getNominalV();
-                double dePerUnit = AmplConstants.SB / (vNom2 * vNom2);
-
-                dl.setR(Math.cos(Math.PI / 2 - modif.getNewXi()) / (modif.getNewY() / dePerUnit));
-                dl.setX(Math.sin(Math.PI / 2 - modif.getNewXi()) / (modif.getNewY() / dePerUnit));
-                dl.setG(modif.getNewG1() * dePerUnit);
-                dl.setB(modif.getNewB1() * dePerUnit);
-
-            }
         }
     }
 
-    public void applyDivAnalysisResults(Network network){
-        applyBranchModifications(network);
+    public void applyLinePenalisation(Line l, BranchPenalisation penal){
+        double vNom2 = l.getTerminal2().getBusView().getConnectableBus().getVoltageLevel().getNominalV();
+        double dePerUnit = AmplConstants.SB / (vNom2 * vNom2);
+
+        // Update Impedance of the line
+        if (penal.isYPenalised() || penal.isXiPenalised()){
+            double angle = Math.PI / 2 - penal.getXi();
+            double y = penal.getY() / dePerUnit;
+
+            l.setR(Math.cos(angle) / y);
+            l.setX(Math.sin(angle) / y);
+        }
+
+        // Update shunt on left side
+        if (penal.isG1Penalised()) l.setG1(penal.getG1() * dePerUnit);
+        if (penal.isB1Penalised()) l.setB1(penal.getB1() * dePerUnit);
+
+        // Update shunt on right side
+        if (penal.isG2Penalised()) l.setG2(penal.getG2() * dePerUnit);
+        if (penal.isB2Penalised()) l.setB2(penal.getB2() * dePerUnit);
+    }
+
+    // TODO
+    public void applyTieLinePenalisation(TieLine tl, BranchPenalisation penal) {
+        return;
+    }
+
+    public void applyTwoWindingsTransformerPenalisation(TwoWindingsTransformer twt, BranchPenalisation penal) {
+
+        double vNom2 = twt.getTerminal2().getBusView().getConnectableBus().getVoltageLevel().getNominalV();
+        double dePerUnit = AmplConstants.SB / (vNom2 * vNom2);
+
+
+        if (twt.getRatioTapChanger() != null && twt.getPhaseTapChanger() == null) {
+
+            // Update rho value of rtc
+            if (penal.isRhoPenalised()) twt.getRatioTapChanger().getCurrentStep().setRho(penal.getRho());
+
+            // Update impedance of transformer
+            if (penal.isYPenalised() || penal.isXiPenalised()){
+
+                double angle = Math.PI / 2 - penal.getXi();
+                double y = penal.getY() / dePerUnit;
+
+                twt.getRatioTapChanger().getCurrentStep().setR(Math.cos(angle) / y);
+                twt.getRatioTapChanger().getCurrentStep().setX(Math.sin(angle) / y);
+            }
+        } else if (twt.getRatioTapChanger() == null && twt.getPhaseTapChanger() != null){
+
+            // Update transformer value pst
+            if (penal.isRhoPenalised()) twt.getPhaseTapChanger().getCurrentStep().setRho(penal.getRho());
+            if (penal.isAlphaPenalised()) twt.getPhaseTapChanger().getCurrentStep().setAlpha(penal.getAlpha());
+
+            // Update impedance of transformer
+            if (penal.isYPenalised() || penal.isXiPenalised()){
+
+                double angle = Math.PI / 2 - penal.getXi();
+                double y = penal.getY() / dePerUnit;
+
+                twt.getPhaseTapChanger().getCurrentStep().setR(Math.cos(angle) / y);
+                twt.getPhaseTapChanger().getCurrentStep().setX(Math.sin(angle) / y);
+            }
+        }
+
+        // Update impedance of the line
+        if (penal.isYPenalised() || penal.isXiPenalised()){
+
+            double angle = Math.PI / 2 - penal.getXi();
+            double y = penal.getY() / dePerUnit;
+
+            twt.setR(Math.cos(angle) / y);
+            twt.setX(Math.sin(angle) / y);
+        }
+
+        // Update shunt on left side
+        if (penal.isG1Penalised()) twt.setG(penal.getG1() * dePerUnit);
+        if (penal.isB1Penalised()) twt.setB(penal.getB1() * dePerUnit);
+    }
+
+    // TODO
+    public void applyThreeWindingsTransformerPenalisation(ThreeWindingsTransformer t3wt, BranchPenalisation penal) {
+        return;
+    }
+
+    public void applyDanglingLinePenalisation(DanglingLine dl, BranchPenalisation penal) {
+
+        double vNom2 = dl.getTerminal().getVoltageLevel().getNominalV();
+        double dePerUnit = AmplConstants.SB / (vNom2 * vNom2);
+
+        if (penal.isYPenalised() || penal.isXiPenalised()){
+            double angle = Math.PI / 2 - penal.getXi();
+            double y = penal.getY() / dePerUnit;
+
+            dl.setR(Math.cos(angle) / y);
+            dl.setX(Math.sin(angle) / y);
+        }
+
+        if (penal.isG1Penalised()) dl.setG(penal.getG1() * dePerUnit);
+        if (penal.isB1Penalised()) dl.setB(penal.getB1() * dePerUnit);
+    }
+
+    public void applyDivergenceAnalysisPenalisation(Network network){
+        applyBranchPenalisation(network);
     }
 
     /**

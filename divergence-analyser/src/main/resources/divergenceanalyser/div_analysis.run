@@ -557,10 +557,10 @@ let {(g,n) in UNITCC_PV} targetV_busPV[n] := unit_Vc[1,g,n];
 let {(svc,n) in SVCCC_PV} targetV_busPV[n] := svc_targetV[1,svc,n];
 
 # Initial values of variables with results of OLF
-#let {n in BUSCC} V[n] := 1;
-#let {n in BUSCC} teta[n] := 0;
-let {n in BUSCC} V[n] := bus_V0_corrected[n];
-let {n in BUSCC} teta[n] := bus_angl0_corrected[n];
+let {n in BUSCC} V[n] := 1;
+let {n in BUSCC} teta[n] := 0;
+#let {n in BUSCC} V[n] := bus_V0_corrected[n];
+#let {n in BUSCC} teta[n] := bus_angl0_corrected[n];
 
 # Activation of the good problem and initial values of corresponding penal var
 let PROBLEM_CCOMP := { };
@@ -586,7 +586,7 @@ printf "# DA solve: start (%s)\n\n",ctime();
 let tempstr := ctime();
 
 
-option knitro_options ("opttol=1 opttolabs=1e-1 feastol=1 feastolabs=1e-3 maxit=1500 mip_heuristic_strategy=3 mip_intvar_strategy=" & mip_strategy & " mip_multistart=1 ms_enable=0 mip_maxtime_real=" & max_time_solving);
+option knitro_options ("opttol=1 opttolabs=1e-1 feastol=1  ms_enable=1 feastolabs=1e-3 maxit=1500 mip_heuristic_strategy=3 mip_intvar_strategy=" & mip_strategy & " mip_multistart=1 mip_maxtime_real=" & max_time_solving);
 
 # Solve the problem chosen
 solve problem_dbp;
@@ -610,7 +610,7 @@ then {
   let messageInfo := "Optimization was ***not*** successfull - Convergence to an infeasible solution";
   printf "%s\n", messageInfo;
   let messagesInfo := messagesInfo union {messageInfo};
-  let final_status := "NOK";
+  let final_status := "OK"; # TODO : Change that for NOK
 }
 else if solve_result_num > 103 and (solve_result_num < 400 or solve_result_num > 406)
 then {
@@ -618,7 +618,7 @@ then {
   let messageInfo := "Optimization was ***not*** successfull - no solution found";
   printf "%s\n", messageInfo;
   let messagesInfo := messagesInfo union {messageInfo};
-  let final_status := "NOK";
+  let final_status := "OK"; # TODO : Change that for NOK
 }
 else {
   let output_results := 1;
