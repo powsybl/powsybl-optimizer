@@ -24,7 +24,7 @@ public class LinePenalTest {
     LoadFlowParameters loadFlowParameters = new LoadFlowParameters();
 
     @BeforeEach
-    void setUp(){
+    void setUp() {
         network = IeeeCdfNetworkFactory.create14();
 
         loadFlowParameters.setBalanceType(LoadFlowParameters.BalanceType.PROPORTIONAL_TO_GENERATION_REMAINING_MARGIN)
@@ -124,6 +124,5 @@ public class LinePenalTest {
         loadFlowResult = LoadFlow.run(network, loadFlowParameters);
         assertTrue(loadFlowResult.isOk());
     }
-
 
 }

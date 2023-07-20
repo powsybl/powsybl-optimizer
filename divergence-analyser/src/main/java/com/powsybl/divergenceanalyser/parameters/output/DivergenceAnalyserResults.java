@@ -1,6 +1,6 @@
 package com.powsybl.divergenceanalyser.parameters.output;
 
-import com.powsybl.divergenceanalyser.parameters.DivergenceAnalyserAMPLIOFiles;
+import com.powsybl.divergenceanalyser.parameters.DivergenceAnalyserAmplIOFiles;
 import com.powsybl.ampl.converter.AmplConstants;
 import com.powsybl.divergenceanalyser.parameters.output.modifications.BranchPenalisation;
 import com.powsybl.iidm.network.*;
@@ -16,13 +16,12 @@ public class DivergenceAnalyserResults {
 
     private final Map<String, String> indicators;
 
-
     /**
      * @param status      the final status of the Divergence Analysis run.
      * @param amplIOFiles a file interface to fetch output file information.
      * @param indicators  a standard map written by the Divergence Analysis ampl model.
      */
-    public DivergenceAnalyserResults(boolean status, DivergenceAnalyserAMPLIOFiles amplIOFiles, Map<String, String> indicators) {
+    public DivergenceAnalyserResults(boolean status, DivergenceAnalyserAmplIOFiles amplIOFiles, Map<String, String> indicators) {
         Objects.requireNonNull(amplIOFiles);
         this.status = Objects.requireNonNull(status);
         this.branchPenalisation = amplIOFiles.getBranchModificationsOutput().getPenalisation();
@@ -37,36 +36,33 @@ public class DivergenceAnalyserResults {
         return indicators;
     }
 
-    public void applyBranchPenalisation(Network network){
+    public void applyBranchPenalisation(Network network) {
 
-        for(BranchPenalisation penal : branchPenalisation){
+        for (BranchPenalisation penal : branchPenalisation) {
 
-            if (network.getLine(penal.getBranchId()) != null)
+            if (network.getLine(penal.getBranchId()) != null) {
                 applyLinePenalisation(network.getLine(penal.getBranchId()), penal);
-
-            else if (network.getTieLine(penal.getBranchId()) != null)
+            } else if (network.getTieLine(penal.getBranchId()) != null) {
                 applyTieLinePenalisation(network.getTieLine(penal.getBranchId()), penal);
-
-            else if (network.getTwoWindingsTransformer(penal.getBranchId()) != null)
+            } else if (network.getTwoWindingsTransformer(penal.getBranchId()) != null) {
                 applyTwoWindingsTransformerPenalisation(network.getTwoWindingsTransformer(penal.getBranchId()), penal);
-
-            else if (network.getThreeWindingsTransformer(penal.getBranchId()) != null)
+            } else if (network.getThreeWindingsTransformer(penal.getBranchId()) != null) {
                 applyThreeWindingsTransformerPenalisation(network.getThreeWindingsTransformer(penal.getBranchId()), penal);
-
-            else if (network.getDanglingLine(penal.getBranchId()) != null)
+            } else if (network.getDanglingLine(penal.getBranchId()) != null) {
                 applyDanglingLinePenalisation(network.getDanglingLine(penal.getBranchId()), penal);
-
-            else throw new IllegalStateException("Branch not in the network");
+            } else {
+                throw new IllegalStateException("Branch not in the network");
+            }
 
         }
     }
 
-    public void applyLinePenalisation(Line l, BranchPenalisation penal){
+    public void applyLinePenalisation(Line l, BranchPenalisation penal) {
         double vNom2 = l.getTerminal2().getBusView().getConnectableBus().getVoltageLevel().getNominalV();
         double dePerUnit = AmplConstants.SB / (vNom2 * vNom2);
 
         // Update Impedance of the line
-        if (penal.isYPenalised() || penal.isXiPenalised()){
+        if (penal.isYPenalised() || penal.isXiPenalised()) {
             double angle = Math.PI / 2 - penal.getXi();
             double y = penal.getY() / dePerUnit;
 
@@ -75,12 +71,20 @@ public class DivergenceAnalyserResults {
         }
 
         // Update shunt on left side
-        if (penal.isG1Penalised()) l.setG1(penal.getG1() * dePerUnit);
-        if (penal.isB1Penalised()) l.setB1(penal.getB1() * dePerUnit);
+        if (penal.isG1Penalised()) {
+            l.setG1(penal.getG1() * dePerUnit);
+        }
+        if (penal.isB1Penalised()) {
+            l.setB1(penal.getB1() * dePerUnit);
+        }
 
         // Update shunt on right side
-        if (penal.isG2Penalised()) l.setG2(penal.getG2() * dePerUnit);
-        if (penal.isB2Penalised()) l.setB2(penal.getB2() * dePerUnit);
+        if (penal.isG2Penalised()) {
+            l.setG2(penal.getG2() * dePerUnit);
+        }
+        if (penal.isB2Penalised()) {
+            l.setB2(penal.getB2() * dePerUnit);
+        }
     }
 
     // TODO
@@ -93,14 +97,15 @@ public class DivergenceAnalyserResults {
         double vNom2 = twt.getTerminal2().getBusView().getConnectableBus().getVoltageLevel().getNominalV();
         double dePerUnit = AmplConstants.SB / (vNom2 * vNom2);
 
-
         if (twt.getRatioTapChanger() != null && twt.getPhaseTapChanger() == null) {
 
             // Update rho value of rtc
-            if (penal.isRhoPenalised()) twt.getRatioTapChanger().getCurrentStep().setRho(penal.getRho());
+            if (penal.isRhoPenalised()) {
+                twt.getRatioTapChanger().getCurrentStep().setRho(penal.getRho());
+            }
 
             // Update impedance of transformer
-            if (penal.isYPenalised() || penal.isXiPenalised()){
+            if (penal.isYPenalised() || penal.isXiPenalised()) {
 
                 double angle = Math.PI / 2 - penal.getXi();
                 double y = penal.getY() / dePerUnit;
@@ -108,14 +113,18 @@ public class DivergenceAnalyserResults {
                 twt.getRatioTapChanger().getCurrentStep().setR(Math.cos(angle) / y);
                 twt.getRatioTapChanger().getCurrentStep().setX(Math.sin(angle) / y);
             }
-        } else if (twt.getRatioTapChanger() == null && twt.getPhaseTapChanger() != null){
+        } else if (twt.getRatioTapChanger() == null && twt.getPhaseTapChanger() != null) {
 
             // Update transformer value pst
-            if (penal.isRhoPenalised()) twt.getPhaseTapChanger().getCurrentStep().setRho(penal.getRho());
-            if (penal.isAlphaPenalised()) twt.getPhaseTapChanger().getCurrentStep().setAlpha(penal.getAlpha());
+            if (penal.isRhoPenalised()) {
+                twt.getPhaseTapChanger().getCurrentStep().setRho(penal.getRho());
+            }
+            if (penal.isAlphaPenalised()) {
+                twt.getPhaseTapChanger().getCurrentStep().setAlpha(penal.getAlpha());
+            }
 
             // Update impedance of transformer
-            if (penal.isYPenalised() || penal.isXiPenalised()){
+            if (penal.isYPenalised() || penal.isXiPenalised()) {
 
                 double angle = Math.PI / 2 - penal.getXi();
                 double y = penal.getY() / dePerUnit;
@@ -126,7 +135,7 @@ public class DivergenceAnalyserResults {
         }
 
         // Update impedance of the line
-        if (penal.isYPenalised() || penal.isXiPenalised()){
+        if (penal.isYPenalised() || penal.isXiPenalised()) {
 
             double angle = Math.PI / 2 - penal.getXi();
             double y = penal.getY() / dePerUnit;
@@ -136,8 +145,12 @@ public class DivergenceAnalyserResults {
         }
 
         // Update shunt on left side
-        if (penal.isG1Penalised()) twt.setG(penal.getG1() * dePerUnit);
-        if (penal.isB1Penalised()) twt.setB(penal.getB1() * dePerUnit);
+        if (penal.isG1Penalised()) {
+            twt.setG(penal.getG1() * dePerUnit);
+        }
+        if (penal.isB1Penalised()) {
+            twt.setB(penal.getB1() * dePerUnit);
+        }
     }
 
     // TODO
@@ -150,7 +163,7 @@ public class DivergenceAnalyserResults {
         double vNom2 = dl.getTerminal().getVoltageLevel().getNominalV();
         double dePerUnit = AmplConstants.SB / (vNom2 * vNom2);
 
-        if (penal.isYPenalised() || penal.isXiPenalised()){
+        if (penal.isYPenalised() || penal.isXiPenalised()) {
             double angle = Math.PI / 2 - penal.getXi();
             double y = penal.getY() / dePerUnit;
 
@@ -158,18 +171,22 @@ public class DivergenceAnalyserResults {
             dl.setX(Math.sin(angle) / y);
         }
 
-        if (penal.isG1Penalised()) dl.setG(penal.getG1() * dePerUnit);
-        if (penal.isB1Penalised()) dl.setB(penal.getB1() * dePerUnit);
+        if (penal.isG1Penalised()) {
+            dl.setG(penal.getG1() * dePerUnit);
+        }
+        if (penal.isB1Penalised()) {
+            dl.setB(penal.getB1() * dePerUnit);
+        }
     }
 
-    public void applyDivergenceAnalysisPenalisation(Network network){
+    public void applyDivergenceAnalysisPenalisation(Network network) {
         applyBranchPenalisation(network);
     }
 
     /**
      * Print indicators and their values.
      */
-    public void printIndicators(){
+    public void printIndicators() {
 
         String nameColumn1 = "Indicators";
         String nameColumn2 = "Values";
@@ -185,7 +202,7 @@ public class DivergenceAnalyserResults {
         // Print header box
         System.out.println("╔" + separator + "╗");
         System.out.println("║ " + nameColumn1 + " ".repeat(column1Width - nameColumn1.length()) // Column 1
-                + " ║ " + nameColumn2 + " ".repeat(column2Width - nameColumn2.length())+ " ║"); // Column 2
+                + " ║ " + nameColumn2 + " ".repeat(column2Width - nameColumn2.length()) + " ║"); // Column 2
         System.out.println("╠" + separator + "╣");
 
         // Print indicators

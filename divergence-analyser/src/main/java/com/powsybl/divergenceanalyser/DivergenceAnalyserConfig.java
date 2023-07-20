@@ -14,7 +14,7 @@ public class DivergenceAnalyserConfig {
 
     private final boolean debug;
 
-    public DivergenceAnalyserConfig(boolean debug){
+    public DivergenceAnalyserConfig(boolean debug) {
         this.debug = debug;
     }
 
@@ -29,9 +29,8 @@ public class DivergenceAnalyserConfig {
                 .orElse(new DivergenceAnalyserConfig(false));
     }
 
-    public boolean isDebug(){
+    public boolean isDebug() {
         return debug;
     }
-
 
 }

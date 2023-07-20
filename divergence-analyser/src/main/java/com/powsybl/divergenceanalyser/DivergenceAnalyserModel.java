@@ -19,7 +19,7 @@ public class DivergenceAnalyserModel implements AmplModel {
 
     public static final String OUTPUT_FILE_PREFIX = "da";
 
-        public static final OutputFileFormat OUTPUT_FILE_FORMAT = new OutputFileFormat() {
+    public static final OutputFileFormat OUTPUT_FILE_FORMAT = new OutputFileFormat() {
 
             @Override
             public String getTokenSeparator() {
@@ -37,8 +37,8 @@ public class DivergenceAnalyserModel implements AmplModel {
             }
         };
 
-        public static DivergenceAnalyserModel buildModel() {
-            return new DivergenceAnalyserModel(OUTPUT_FILE_PREFIX, "divergenceanalyser",
+    public static DivergenceAnalyserModel buildModel() {
+        return new DivergenceAnalyserModel(OUTPUT_FILE_PREFIX, "divergenceanalyser",
                     List.of("div_analysis.run"),
                     List.of("data_network.dat",
                             "data_importer.mod",
@@ -50,18 +50,18 @@ public class DivergenceAnalyserModel implements AmplModel {
                             "results_exit.run",
                             "results_exporter.run",
                             "resume_slacks_printer.run"));
-        }
+    }
 
-        private static final String NETWORK_DATA_PREFIX = "ampl";
-        private static final String INDICATOR_STATUS_KEY = "final_status";
-        private static final String INDICATOR_STATUS_SUCCESS = "OK";
+    private static final String NETWORK_DATA_PREFIX = "ampl";
+    private static final String INDICATOR_STATUS_KEY = "final_status";
+    private static final String INDICATOR_STATUS_SUCCESS = "OK";
 
-        /**
-         * A list containing the name of the files and their path in the resources
-         */
-        private final List<Pair<String, String>> modelNameAndPath;
-        private final List<String> runFiles;
-        private final String outputFilePrefix;
+    /**
+     * A list containing the name of the files and their path in the resources
+     */
+    private final List<Pair<String, String>> modelNameAndPath;
+    private final List<String> runFiles;
+    private final String outputFilePrefix;
 
         /**
          * Create a ampl Model to be executed
@@ -75,75 +75,75 @@ public class DivergenceAnalyserModel implements AmplModel {
          * @param resourcesFiles   All others files needed by the model (.dat and .mod
          *                         files)
          */
-        DivergenceAnalyserModel(String outputFilePrefix, String resourcesFolder, List<String> runFiles, List<String> resourcesFiles) {
-            this.runFiles = runFiles;
-            this.outputFilePrefix = outputFilePrefix;
-            List<String> modelFiles = new ArrayList<>();
-            modelFiles.addAll(resourcesFiles);
-            modelFiles.addAll(runFiles);
-            this.modelNameAndPath = modelFiles.stream()
-                    .map(file -> Pair.of(file, resourcesFolder + "/" + file))
-                    .collect(Collectors.toList());
-        }
+    DivergenceAnalyserModel(String outputFilePrefix, String resourcesFolder, List<String> runFiles, List<String> resourcesFiles) {
+        this.runFiles = runFiles;
+        this.outputFilePrefix = outputFilePrefix;
+        List<String> modelFiles = new ArrayList<>();
+        modelFiles.addAll(resourcesFiles);
+        modelFiles.addAll(runFiles);
+        this.modelNameAndPath = modelFiles.stream()
+                .map(file -> Pair.of(file, resourcesFolder + "/" + file))
+                .collect(Collectors.toList());
+    }
 
-        /**
-         * @return each pair contains the name, and the InputStream of the file
-         */
-        @Override
-        public List<Pair<String, InputStream>> getModelAsStream() {
-            return modelNameAndPath.stream()
-                    .map(nameAndPath -> {
-                        InputStream resourceAsStream = this.getClass()
-                                .getClassLoader()
-                                .getResourceAsStream(nameAndPath.getRight());
-                        if (resourceAsStream == null) {
-                            throw new MissingResourceException(
-                                    "Missing divergence analyser ampl files : " + nameAndPath.getLeft() + " at " + nameAndPath.getRight(),
-                                    this.getClass().getName(), nameAndPath.getLeft());
-                        }
-                        return Pair.of(nameAndPath.getLeft(), resourceAsStream);
-                    })
-                    .collect(Collectors.toList());
-        }
+    /**
+     * @return each pair contains the name, and the InputStream of the file
+     */
+    @Override
+    public List<Pair<String, InputStream>> getModelAsStream() {
+        return modelNameAndPath.stream()
+                .map(nameAndPath -> {
+                    InputStream resourceAsStream = this.getClass()
+                            .getClassLoader()
+                            .getResourceAsStream(nameAndPath.getRight());
+                    if (resourceAsStream == null) {
+                        throw new MissingResourceException(
+                                "Missing divergence analyser ampl files : " + nameAndPath.getLeft() + " at " + nameAndPath.getRight(),
+                                this.getClass().getName(), nameAndPath.getLeft());
+                    }
+                    return Pair.of(nameAndPath.getLeft(), resourceAsStream);
+                })
+                .collect(Collectors.toList());
+    }
 
-        @Override
-        public List<String> getAmplRunFiles() {
-            return this.runFiles;
-        }
+    @Override
+    public List<String> getAmplRunFiles() {
+        return this.runFiles;
+    }
 
-        @Override
-        public String getOutputFilePrefix() {
-            return this.outputFilePrefix;
-        }
+    @Override
+    public String getOutputFilePrefix() {
+        return this.outputFilePrefix;
+    }
 
-        @Override
-        public AmplNetworkUpdaterFactory getNetworkUpdaterFactory() {
-            return (mapper, network) -> new DefaultAmplNetworkUpdater(mapper);
-        }
+    @Override
+    public AmplNetworkUpdaterFactory getNetworkUpdaterFactory() {
+        return (mapper, network) -> new DefaultAmplNetworkUpdater(mapper);
+    }
 
-        @Override
-        public int getVariant() {
-            return DEFAULT_VARIANT_INDEX;
-        }
+    @Override
+    public int getVariant() {
+        return DEFAULT_VARIANT_INDEX;
+    }
 
-        @Override
-        public String getNetworkDataPrefix() {
-            return NETWORK_DATA_PREFIX;
-        }
+    @Override
+    public String getNetworkDataPrefix() {
+        return NETWORK_DATA_PREFIX;
+    }
 
-        @Override
-        public Collection<AmplReadableElement> getAmplReadableElement() {
-            return List.of();
-        }
+    @Override
+    public Collection<AmplReadableElement> getAmplReadableElement() {
+        return List.of();
+    }
 
-        @Override
-        public boolean checkModelConvergence(Map<String, String> map) {
-            return map.getOrDefault(INDICATOR_STATUS_KEY, "").equals(INDICATOR_STATUS_SUCCESS);
-        }
+    @Override
+    public boolean checkModelConvergence(Map<String, String> map) {
+        return map.getOrDefault(INDICATOR_STATUS_KEY, "").equals(INDICATOR_STATUS_SUCCESS);
+    }
 
-        @Override
-        public OutputFileFormat getOutputFormat() {
-            return OUTPUT_FILE_FORMAT;
-        }
+    @Override
+    public OutputFileFormat getOutputFormat() {
+        return OUTPUT_FILE_FORMAT;
+    }
 
 }

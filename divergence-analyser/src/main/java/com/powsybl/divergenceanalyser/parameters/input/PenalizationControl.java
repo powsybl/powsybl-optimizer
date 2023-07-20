@@ -10,11 +10,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
 public class PenalizationControl implements AmplInputFile {
-    private static final String fileName = "penal.txt";
+    private final String fileName = "penal.txt";
 
     HashMap<String, Integer> penalization;
 
-    public PenalizationControl(HashMap<String, Integer> penalization){
+    public PenalizationControl(HashMap<String, Integer> penalization) {
         this.penalization = penalization;
     }
 
@@ -27,7 +27,7 @@ public class PenalizationControl implements AmplInputFile {
     public InputStream getParameterFileAsStream(StringToIntMapper<AmplSubset> networkAmplMapper) {
 
         StringBuilder dataBuilder = new StringBuilder();
-        for(String penal : penalization.keySet()){
+        for (String penal : penalization.keySet()) {
             dataBuilder.append(penal).append(" ").append(penalization.get(penal)).append("\n");
         }
         return new ByteArrayInputStream(dataBuilder.toString().getBytes(StandardCharsets.UTF_8));

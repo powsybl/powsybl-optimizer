@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class DivergenceAnalyserAMPLIOFiles implements AmplParameters {
+public class DivergenceAnalyserAmplIOFiles implements AmplParameters {
 
     // Input files
     PenalizationControl penalizationControl;
@@ -23,7 +23,7 @@ public class DivergenceAnalyserAMPLIOFiles implements AmplParameters {
 
     boolean debug;
 
-    public DivergenceAnalyserAMPLIOFiles(DivergenceAnalyserParameters params, boolean debug){
+    public DivergenceAnalyserAmplIOFiles(DivergenceAnalyserParameters params, boolean debug) {
         // Input file for activation of variables in ampl minlp
         this.penalizationControl = new PenalizationControl(params.getPenalization());
         this.solvingOptions = new SolvingOptions(params.getSolvingOptions());
@@ -41,7 +41,7 @@ public class DivergenceAnalyserAMPLIOFiles implements AmplParameters {
 
     @Override
     public Collection<AmplOutputFile> getOutputParameters(boolean hasConverged) {
-        if (hasConverged){
+        if (hasConverged) {
             List<AmplOutputFile> list = new ArrayList<>();
             list.add(branchPenalisationOutput);
             return list;

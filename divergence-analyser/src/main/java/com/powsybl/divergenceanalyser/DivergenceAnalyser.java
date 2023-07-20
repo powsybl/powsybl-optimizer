@@ -8,7 +8,10 @@ import com.powsybl.iidm.network.Network;
 
 import java.io.IOException;
 
-public class DivergenceAnalyser {
+public final class DivergenceAnalyser {
+
+    private DivergenceAnalyser() {
+    }
 
     public static DivergenceAnalyserResults getDivergenceAnalysisResults(Network network) throws IOException {
         return getDivergenceAnalysisResults(network, new DivergenceAnalyserParameters());

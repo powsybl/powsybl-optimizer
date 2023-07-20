@@ -25,13 +25,12 @@ public class BranchPenalisationOutput implements AmplOutputFile {
 
     public static final int BIN_RHO_COL = 20;
     public static final int BIN_Y_COL = 21;
-    public static final int BIN_ALPHA_COl = 22;
+    public static final int BIN_ALPHA_COL = 22;
     public static final int BIN_XI_COL = 23;
     public static final int BIN_G1_COL = 24;
     public static final int BIN_B1_COL = 25;
     public static final int BIN_G2_COL = 26;
     public static final int BIN_B2_COL = 27;
-
 
     public static final int EXPECTED_COLS = 28; // Contains ID, new values of parameters, values of slacks/binary var
     private static final String SEP = ";";
@@ -90,7 +89,7 @@ public class BranchPenalisationOutput implements AmplOutputFile {
 
         boolean isRhoPenalised = readDouble(tokens[BIN_RHO_COL - 1]) > 0;
         boolean isYPenalised = readDouble(tokens[BIN_Y_COL - 1]) > 0;
-        boolean isAlphaPenalised = readDouble(tokens[BIN_ALPHA_COl - 1]) > 0;
+        boolean isAlphaPenalised = readDouble(tokens[BIN_ALPHA_COL - 1]) > 0;
         boolean isXiPenalised = readDouble(tokens[BIN_XI_COL - 1]) > 0;
         boolean isG1Penalised = readDouble(tokens[BIN_G1_COL - 1]) > 0;
         boolean isB1Penalised = readDouble(tokens[BIN_B1_COL - 1]) > 0;

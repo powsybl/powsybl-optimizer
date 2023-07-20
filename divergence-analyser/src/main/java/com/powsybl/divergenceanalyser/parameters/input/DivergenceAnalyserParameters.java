@@ -6,7 +6,7 @@ public class DivergenceAnalyserParameters {
 
     // About penalization
     private boolean targetVUnitsPenal = false;
-    private boolean targetVSVCPenal = false;
+    private boolean targetVSvcPenal = false;
     private boolean rhoTransformerPenal = false;
     private boolean alphaPSTPenal = false;
     private boolean yPenal = false;
@@ -20,13 +20,13 @@ public class DivergenceAnalyserParameters {
     private boolean isContinuous = false;
     private int maxTimeSolving = 120;
 
-    public DivergenceAnalyserParameters(){
+    public DivergenceAnalyserParameters() {
     }
 
-    public DivergenceAnalyserParameters(boolean penalizeEverything){
+    public DivergenceAnalyserParameters(boolean penalizeEverything) {
         if (penalizeEverything) {
             this.targetVUnitsPenal = true;
-            this.targetVSVCPenal = true;
+            this.targetVSvcPenal = true;
             this.rhoTransformerPenal = true;
             this.alphaPSTPenal = true;
             this.yPenal = true;
@@ -38,24 +38,46 @@ public class DivergenceAnalyserParameters {
         }
     }
 
-    public HashMap<String, Integer> getPenalization(){
+    public HashMap<String, Integer> getPenalization() {
         HashMap<String, Integer> penal = new HashMap<>();
-        if (targetVUnitsPenal) penal.put("is_target_v_units", 1);
-        if (targetVSVCPenal) penal.put("is_target_v_svc", 1);
-        if (rhoTransformerPenal) penal.put("is_rho_control", 1);
-        if (alphaPSTPenal) penal.put("is_phase_shift_control", 1);
-        if (yPenal) penal.put("is_admittance_control", 1);
-        if (xiPenal) penal.put("is_xi_control", 1);
-        if (g1Penal) penal.put("is_g_shunt_1_control", 1);
-        if (b1Penal) penal.put("is_b_shunt_1_control", 1);
-        if (g2penal) penal.put("is_g_shunt_2_control", 1);
-        if (b2Penal) penal.put("is_b_shunt_2_control", 1);
+        if (targetVUnitsPenal) {
+            penal.put("is_target_v_units", 1);
+        }
+        if (targetVSvcPenal) {
+            penal.put("is_target_v_svc", 1);
+        }
+        if (rhoTransformerPenal) {
+            penal.put("is_rho_control", 1);
+        }
+        if (alphaPSTPenal) {
+            penal.put("is_phase_shift_control", 1);
+        }
+        if (yPenal) {
+            penal.put("is_admittance_control", 1);
+        }
+        if (xiPenal) {
+            penal.put("is_xi_control", 1);
+        }
+        if (g1Penal) {
+            penal.put("is_g_shunt_1_control", 1);
+        }
+        if (b1Penal) {
+            penal.put("is_b_shunt_1_control", 1);
+        }
+        if (g2penal) {
+            penal.put("is_g_shunt_2_control", 1);
+        }
+        if (b2Penal) {
+            penal.put("is_b_shunt_2_control", 1);
+        }
         return penal;
     }
 
-    public HashMap<String, Integer> getSolvingOptions(){
+    public HashMap<String, Integer> getSolvingOptions() {
         HashMap<String, Integer> options = new HashMap<>();
-        if (isContinuous) options.put("is_continuous", 1);
+        if (isContinuous) {
+            options.put("is_continuous", 1);
+        }
         options.put("max_time_solving", maxTimeSolving);
         return options;
     }
@@ -65,12 +87,12 @@ public class DivergenceAnalyserParameters {
         return this;
     }
 
-    public DivergenceAnalyserParameters setTargetVSVCPenal(boolean targetVSVCPenal) {
-        this.targetVSVCPenal = targetVSVCPenal;
+    public DivergenceAnalyserParameters setTargetVSvcPenal(boolean targetVSvcPenal) {
+        this.targetVSvcPenal = targetVSvcPenal;
         return this;
     }
 
-    public DivergenceAnalyserParameters setRhoTransformerPenal(boolean rhoTransformerPenal){
+    public DivergenceAnalyserParameters setRhoTransformerPenal(boolean rhoTransformerPenal) {
         this.rhoTransformerPenal = rhoTransformerPenal;
         return this;
     }
@@ -119,6 +141,5 @@ public class DivergenceAnalyserParameters {
         this.maxTimeSolving = maxTimeSolving;
         return this;
     }
-
 
 }

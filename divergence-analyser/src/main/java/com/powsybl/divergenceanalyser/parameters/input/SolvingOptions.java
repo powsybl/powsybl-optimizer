@@ -10,11 +10,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
 public class SolvingOptions implements AmplInputFile {
-    private static final String fileName = "solving_options.txt";
+    private final String fileName = "solving_options.txt";
 
     HashMap<String, Integer> options;
 
-    public SolvingOptions(HashMap<String, Integer> options){
+    public SolvingOptions(HashMap<String, Integer> options) {
         this.options = options;
     }
 
@@ -26,7 +26,7 @@ public class SolvingOptions implements AmplInputFile {
     @Override
     public InputStream getParameterFileAsStream(StringToIntMapper<AmplSubset> networkAmplMapper) {
         StringBuilder dataBuilder = new StringBuilder();
-        for(String option : options.keySet()){
+        for (String option : options.keySet()) {
             dataBuilder.append(option).append(" ").append(options.get(option)).append("\n");
         }
         return new ByteArrayInputStream(dataBuilder.toString().getBytes(StandardCharsets.UTF_8));
