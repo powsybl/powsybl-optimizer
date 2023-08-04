@@ -14,25 +14,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BranchPenalizationOutput implements AmplOutputFile {
-    public static final int NEW_RHO_COL = 4;
-    public static final int NEW_Y_COL = 5;
-    public static final int NEW_ALPHA_COL = 6;
-    public static final int NEW_XI_COL = 7;
-    public static final int NEW_G1_COL = 8;
-    public static final int NEW_B1_COL = 9;
-    public static final int NEW_G2_COL = 10;
-    public static final int NEW_B2_COL = 11;
 
-    public static final int BIN_RHO_COL = 20;
-    public static final int BIN_Y_COL = 21;
-    public static final int BIN_ALPHA_COL = 22;
-    public static final int BIN_XI_COL = 23;
-    public static final int BIN_G1_COL = 24;
-    public static final int BIN_B1_COL = 25;
-    public static final int BIN_G2_COL = 26;
-    public static final int BIN_B2_COL = 27;
+    // The order of parameters is rho, Y, alpha, Xi, g1, b1, g2, b2
+    public static final int RHO_PLACE = 0;
+    public static final int Y_PLACE = 1;
+    public static final int ALPHA_PLACE = 2;
+    public static final int XI_PLACE = 3;
+    public static final int G1_PLACE = 4;
+    public static final int B1_PLACE = 5;
+    public static final int G2_PLACE = 6;
+    public static final int B2_PLACE = 7;
 
-    public static final int EXPECTED_COLS = 28; // Contains ID, new values of parameters, values of slacks/binary var
+    public static final int NEW_VAL_FIRST_COL = 3;
+    public static final int SLACK_FIRST_COL = 11;
+    public static final int BIN_FIRST_COL = 19;
+
+    public static final int EXPECTED_COLS = 28;
     private static final String SEP = ";";
 
     private final List<BranchPenalization> penalization = new ArrayList<>();
@@ -78,26 +75,37 @@ public class BranchPenalizationOutput implements AmplOutputFile {
 
         String id = amplMapper.getId(AmplSubset.BRANCH, Integer.parseInt(tokens[0]));
 
-        double rho = readDouble(tokens[NEW_RHO_COL - 1]);
-        double y = readDouble(tokens[NEW_Y_COL - 1]);
-        double alpha = readDouble(tokens[NEW_ALPHA_COL - 1]);
-        double xi = readDouble(tokens[NEW_XI_COL - 1]);
-        double g1 = readDouble(tokens[NEW_G1_COL - 1]);
-        double b1 = readDouble(tokens[NEW_B1_COL - 1]);
-        double g2 = readDouble(tokens[NEW_G2_COL - 1]);
-        double b2 = readDouble(tokens[NEW_B2_COL - 1]);
+        double rho = readDouble(tokens[NEW_VAL_FIRST_COL + RHO_PLACE]);
+        double y = readDouble(tokens[NEW_VAL_FIRST_COL + Y_PLACE]);
+        double alpha = readDouble(tokens[NEW_VAL_FIRST_COL + ALPHA_PLACE]);
+        double xi = readDouble(tokens[NEW_VAL_FIRST_COL + XI_PLACE]);
+        double g1 = readDouble(tokens[NEW_VAL_FIRST_COL + G1_PLACE]);
+        double b1 = readDouble(tokens[NEW_VAL_FIRST_COL + B1_PLACE]);
+        double g2 = readDouble(tokens[NEW_VAL_FIRST_COL + G2_PLACE]);
+        double b2 = readDouble(tokens[NEW_VAL_FIRST_COL + B2_PLACE]);
 
-        boolean isRhoPenalised = readDouble(tokens[BIN_RHO_COL - 1]) > 0;
-        boolean isYPenalised = readDouble(tokens[BIN_Y_COL - 1]) > 0;
-        boolean isAlphaPenalised = readDouble(tokens[BIN_ALPHA_COL - 1]) > 0;
-        boolean isXiPenalised = readDouble(tokens[BIN_XI_COL - 1]) > 0;
-        boolean isG1Penalised = readDouble(tokens[BIN_G1_COL - 1]) > 0;
-        boolean isB1Penalised = readDouble(tokens[BIN_B1_COL - 1]) > 0;
-        boolean isG2Penalised = readDouble(tokens[BIN_G2_COL - 1]) > 0;
-        boolean isB2Penalised = readDouble(tokens[BIN_B2_COL - 1]) > 0;
+        double slackRho = readDouble(tokens[SLACK_FIRST_COL + RHO_PLACE]);
+        double slackY = readDouble(tokens[SLACK_FIRST_COL + Y_PLACE]);
+        double slackAlpha = readDouble(tokens[SLACK_FIRST_COL + ALPHA_PLACE]);
+        double slackXi = readDouble(tokens[SLACK_FIRST_COL + XI_PLACE]);
+        double slackG1 = readDouble(tokens[SLACK_FIRST_COL + G1_PLACE]);
+        double slackB1 = readDouble(tokens[SLACK_FIRST_COL + B1_PLACE]);
+        double slackG2 = readDouble(tokens[SLACK_FIRST_COL + G2_PLACE]);
+        double slackB2 = readDouble(tokens[SLACK_FIRST_COL + B2_PLACE]);
+
+        boolean isRhoPenalised = readDouble(tokens[BIN_FIRST_COL + RHO_PLACE]) > 0;
+        boolean isYPenalised = readDouble(tokens[BIN_FIRST_COL + Y_PLACE]) > 0;
+        boolean isAlphaPenalised = readDouble(tokens[BIN_FIRST_COL + ALPHA_PLACE]) > 0;
+        boolean isXiPenalised = readDouble(tokens[BIN_FIRST_COL + XI_PLACE]) > 0;
+        boolean isG1Penalised = readDouble(tokens[BIN_FIRST_COL + G1_PLACE]) > 0;
+        boolean isB1Penalised = readDouble(tokens[BIN_FIRST_COL + B1_PLACE]) > 0;
+        boolean isG2Penalised = readDouble(tokens[BIN_FIRST_COL + G2_PLACE]) > 0;
+        boolean isB2Penalised = readDouble(tokens[BIN_FIRST_COL + B2_PLACE]) > 0;
 
         penalization.add(new BranchPenalization(id, isRhoPenalised, isYPenalised, isAlphaPenalised, isXiPenalised, isG1Penalised,
-                isB1Penalised, isG2Penalised, isB2Penalised, rho, y, alpha, xi, g1, b1, g2, b2));
+                isB1Penalised, isG2Penalised, isB2Penalised,
+                slackRho, slackY, slackAlpha, slackXi, slackG1, slackB1, slackG2, slackB2,
+                rho, y, alpha, xi, g1, b1, g2, b2));
 
     }
 

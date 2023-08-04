@@ -4,11 +4,13 @@ public class BusPenalization {
 
     String busId;
     boolean isTargetVPenalized;
+    double slackTargetV;
     double newTargetV;
 
-    public BusPenalization(String busId, boolean isTargetVPenalized, double newTargetV) {
+    public BusPenalization(String busId, boolean isTargetVPenalized, double slackTargetV, double newTargetV) {
         this.busId = busId;
         this.isTargetVPenalized = isTargetVPenalized;
+        this.slackTargetV = slackTargetV;
         this.newTargetV = newTargetV;
     }
 
@@ -16,7 +18,8 @@ public class BusPenalization {
         System.out.println("For bus " + getBusId() + " : ");
 
         if (isTargetVPenalized()) {
-            System.out.println("New target V = " + getNewTargetV());
+            System.out.println("New target V = " + getNewTargetV()
+                    + " (slack = " + getSlackTargetV() + ")");
         }
     }
 
@@ -26,6 +29,10 @@ public class BusPenalization {
 
     public boolean isTargetVPenalized() {
         return isTargetVPenalized;
+    }
+
+    public double getSlackTargetV() {
+        return slackTargetV;
     }
 
     public double getNewTargetV() {

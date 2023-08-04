@@ -15,9 +15,11 @@ import java.util.List;
 
 public class BusPenalizationOutput implements AmplOutputFile {
 
-    public static final int NEW_TARGET_V_COL = 2;
-    public static final int BIN_TARGET_V_COL = 4;
-    public static final int EXPECTED_COLS = 5; // Contains ID, new values of parameters, values of slacks/binary var
+    public static final int NUM_BUS_COL = 0;
+    public static final int NEW_TARGET_V_COL = 1;
+    public static final int SLACK_TARGET_V_COL = 2;
+    public static final int BIN_TARGET_V_COL = 3;
+    public static final int EXPECTED_COLS = 5;
     private static final String SEP = ";";
 
     private final List<BusPenalization> penalization = new ArrayList<>();
@@ -61,11 +63,12 @@ public class BusPenalizationOutput implements AmplOutputFile {
 
     private void readLine(String[] tokens, StringToIntMapper<AmplSubset> amplMapper) {
 
-        String id = amplMapper.getId(AmplSubset.BUS, Integer.parseInt(tokens[0]));
-        double newTargetV = readDouble(tokens[NEW_TARGET_V_COL - 1]);
-        boolean isTargetVPenalized = readDouble(tokens[BIN_TARGET_V_COL - 1]) > 0;
+        String id = amplMapper.getId(AmplSubset.BUS, Integer.parseInt(tokens[NUM_BUS_COL]));
+        double newTargetV = readDouble(tokens[NEW_TARGET_V_COL]);
+        double slackTargetV = readDouble(tokens[SLACK_TARGET_V_COL]);
+        boolean isTargetVPenalized = readDouble(tokens[BIN_TARGET_V_COL]) > 0;
 
-        penalization.add(new BusPenalization(id, isTargetVPenalized, newTargetV));
+        penalization.add(new BusPenalization(id, isTargetVPenalized, slackTargetV, newTargetV));
     }
 
     private double readDouble(String d) {
