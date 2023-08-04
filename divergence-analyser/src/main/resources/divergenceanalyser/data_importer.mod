@@ -505,6 +505,9 @@ set SHUNTCC := {(1,s,n) in SHUNT: n in BUSCC or shunt_possiblebus[1,s,n] in BUSC
 set BRANCHCC_REGL := {(qq,m,n) in BRANCHCC_PENALIZED diff BRANCHZNULL: branch_ptrRegl[1,qq,m,n] != -1 }; 
 set BRANCHCC_DEPH := {(qq,m,n) in BRANCHCC_PENALIZED diff BRANCHZNULL: branch_ptrDeph[1,qq,m,n] != -1 };
 set BRANCHCC_TRANSFORMER := BRANCHCC_REGL union BRANCHCC_DEPH;
+set BRANCHCC_3WT := {(qq,m,n) in BRANCHCC_PENALIZED : branch_3wt[1,qq,m,n] != -1};
+
+
 set SVCCC   := setof {(1,svc,n) in SVC: n in BUSCC} (svc,n);
 
 #
@@ -534,7 +537,6 @@ set BUSCC_PV_SVC := setof {(svc,n) in SVCCC_PV} n;
 set BUSCC_PV := BUSCC_PV_UNITS union BUSCC_PV_SVC;
 set BUSCC_PQ := BUSCC diff BUSCC_PV;
 
-set BRANCHCC_3WT := setof {(qq,m,n) in BRANCHCC_PENALIZED : branch_3wt[1,qq,m,n] != -1} (qq,m,n);
 set BUSCC_3WT := setof {(qq,m,n) in BRANCHCC : branch_3wt[1,qq,m,n] != -1} n;
 
 param targetV_busPV{n in BUSCC_PV}; # def in divergenceanalysor.run

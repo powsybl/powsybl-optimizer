@@ -8,6 +8,7 @@ import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.ampl.executor.AmplOutputFile;
 import com.powsybl.ampl.executor.AmplParameters;
 import com.powsybl.divergenceanalyser.parameters.output.BusPenalizationOutput;
+import com.powsybl.divergenceanalyser.parameters.output.NetworkIndicatorsOutput;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,6 +23,7 @@ public class DivergenceAnalyserAmplIOFiles implements AmplParameters {
     // Output files
     BusPenalizationOutput busPenalizationOutput;
     BranchPenalizationOutput branchPenalizationOutput;
+    NetworkIndicatorsOutput networkIndicatorsOutput;
 
     boolean debug;
 
@@ -33,6 +35,7 @@ public class DivergenceAnalyserAmplIOFiles implements AmplParameters {
         // Output file for network modifications
         this.busPenalizationOutput = new BusPenalizationOutput();
         this.branchPenalizationOutput = new BranchPenalizationOutput();
+        this.networkIndicatorsOutput = new NetworkIndicatorsOutput();
 
         this.debug = debug;
     }
@@ -48,6 +51,7 @@ public class DivergenceAnalyserAmplIOFiles implements AmplParameters {
             List<AmplOutputFile> list = new ArrayList<>();
             list.add(busPenalizationOutput);
             list.add(branchPenalizationOutput);
+            list.add(networkIndicatorsOutput);
             return list;
         } else {
             return List.of();
@@ -59,11 +63,17 @@ public class DivergenceAnalyserAmplIOFiles implements AmplParameters {
         return debug;
     }
 
+
+    // Getters for output files
     public BusPenalizationOutput getBusPenalizationOutput() {
         return busPenalizationOutput;
     }
 
     public BranchPenalizationOutput getBranchModificationsOutput() {
         return branchPenalizationOutput;
+    }
+
+    public NetworkIndicatorsOutput getNetworkIndicatorsOutput() {
+        return networkIndicatorsOutput;
     }
 }

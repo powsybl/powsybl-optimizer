@@ -14,27 +14,26 @@ public class DivergenceAnalyserResults {
     List<BusPenalization> busPenalization;
     List<BranchPenalization> branchPenalization;
 
-    private final Map<String, String> indicators;
+    private final Map<String, String> networkIndicators;
+    private final Map<String, String> runIndicators;
 
     /**
      * @param status      the final status of the Divergence Analysis run.
      * @param amplIOFiles a file interface to fetch output file information.
-     * @param indicators  a standard map written by the Divergence Analysis ampl model.
+     * @param runIndicators  a standard map written by the Divergence Analysis ampl model.
      */
-    public DivergenceAnalyserResults(boolean status, DivergenceAnalyserAmplIOFiles amplIOFiles, Map<String, String> indicators) {
+    public DivergenceAnalyserResults(boolean status, DivergenceAnalyserAmplIOFiles amplIOFiles, Map<String, String> runIndicators) {
         Objects.requireNonNull(amplIOFiles);
         this.status = status;
         this.busPenalization = amplIOFiles.getBusPenalizationOutput().getPenalisation();
         this.branchPenalization = amplIOFiles.getBranchModificationsOutput().getPenalisation();
-        this.indicators = Map.copyOf(Objects.requireNonNull(indicators));
+
+        this.networkIndicators = amplIOFiles.getNetworkIndicatorsOutput().networkIndicators;
+        this.runIndicators = Map.copyOf(Objects.requireNonNull(runIndicators));
     }
 
     public boolean getStatus() {
         return status;
-    }
-
-    public Map<String, String> getIndicators() {
-        return indicators;
     }
 
     /**
@@ -64,20 +63,15 @@ public class DivergenceAnalyserResults {
         }
     }
 
-
-    /**
-     * Print indicators and their values.
-     */
-    public void printIndicators() {
-
+    public void printIndicators(Map<String, String> indicators){
         String nameColumn1 = "Indicators";
         String nameColumn2 = "Values";
 
         // Calculate the width of columns based on the longest key and value of indicators
         int column1Width = Math.max(nameColumn1.length(),
-                                    indicators.keySet().stream().mapToInt(String::length).max().orElse(0));
+                indicators.keySet().stream().mapToInt(String::length).max().orElse(0));
         int column2Width = Math.max(nameColumn2.length(),
-                                    indicators.values().stream().mapToInt(String::length).max().orElse(0));
+                indicators.values().stream().mapToInt(String::length).max().orElse(0));
 
         String separator = "═".repeat(column1Width + column2Width + 5);
 
@@ -93,6 +87,13 @@ public class DivergenceAnalyserResults {
 
         // Print foot box
         System.out.println("╚" + separator + "╝");
+    }
+
+    public Map<String, String> getRunIndicators() {
+        return runIndicators;
+    }
+    public Map<String, String> getNetworkIndicators() {
+        return networkIndicators;
     }
 
 }
