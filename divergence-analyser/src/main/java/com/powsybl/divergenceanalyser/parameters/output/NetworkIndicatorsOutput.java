@@ -34,15 +34,19 @@ public class NetworkIndicatorsOutput implements AmplOutputFile {
             }
 
             // We must skip the first line of the file
-            for (String line : outputLines.subList(1, outputLines.size())){
+            for (String line : outputLines.subList(1, outputLines.size())) {
                 String[] tokens = line.split(" ");
 
-                if (tokens.length != 2){
+                if (tokens.length != 2) {
                     throw new IOException();
                 }
 
                 networkIndicators.put(tokens[0], tokens[1]);
             }
         }
+    }
+
+    public Map<String, String> getNetworkIndicators() {
+        return networkIndicators;
     }
 }

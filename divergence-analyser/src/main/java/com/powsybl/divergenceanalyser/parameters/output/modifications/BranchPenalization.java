@@ -47,7 +47,7 @@ public class BranchPenalization {
         this.b2Value = b2Value;
     }
 
-    public void print(){
+    public void print() {
         System.out.println("For branch " + getBranchId() + " : ");
 
         if (isRhoPenalised()) {

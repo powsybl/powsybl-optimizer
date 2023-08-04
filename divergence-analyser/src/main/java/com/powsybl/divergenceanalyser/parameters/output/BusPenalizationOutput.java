@@ -20,10 +20,10 @@ public class BusPenalizationOutput implements AmplOutputFile {
     public static final int EXPECTED_COLS = 5; // Contains ID, new values of parameters, values of slacks/binary var
     private static final String SEP = ";";
 
-    private final List<BusPenalization> penalisation = new ArrayList<>();
+    private final List<BusPenalization> penalization = new ArrayList<>();
 
-    public List<BusPenalization> getPenalisation() {
-        return penalisation;
+    public List<BusPenalization> getPenalization() {
+        return penalization;
     }
 
     @Override
@@ -65,7 +65,7 @@ public class BusPenalizationOutput implements AmplOutputFile {
         double newTargetV = readDouble(tokens[NEW_TARGET_V_COL - 1]);
         boolean isTargetVPenalized = readDouble(tokens[BIN_TARGET_V_COL - 1]) > 0;
 
-        penalisation.add(new BusPenalization(id, isTargetVPenalized, newTargetV));
+        penalization.add(new BusPenalization(id, isTargetVPenalized, newTargetV));
     }
 
     private double readDouble(String d) {

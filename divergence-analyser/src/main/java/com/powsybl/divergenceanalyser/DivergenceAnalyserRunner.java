@@ -2,7 +2,6 @@ package com.powsybl.divergenceanalyser;
 
 import com.powsybl.divergenceanalyser.parameters.DivergenceAnalyserAmplIOFiles;
 import com.powsybl.divergenceanalyser.parameters.input.DivergenceAnalyserParameters;
-import com.powsybl.divergenceanalyser.parameters.output.DivergenceAnalyserResults;
 import com.powsybl.ampl.executor.AmplModel;
 import com.powsybl.ampl.executor.AmplModelRunner;
 import com.powsybl.ampl.executor.AmplResults;

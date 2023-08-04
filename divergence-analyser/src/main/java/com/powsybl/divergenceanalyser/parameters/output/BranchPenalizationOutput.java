@@ -35,10 +35,10 @@ public class BranchPenalizationOutput implements AmplOutputFile {
     public static final int EXPECTED_COLS = 28; // Contains ID, new values of parameters, values of slacks/binary var
     private static final String SEP = ";";
 
-    private final List<BranchPenalization> penalisation = new ArrayList<>();
+    private final List<BranchPenalization> penalization = new ArrayList<>();
 
-    public List<BranchPenalization> getPenalisation() {
-        return penalisation;
+    public List<BranchPenalization> getPenalization() {
+        return penalization;
     }
 
     @Override
@@ -96,7 +96,7 @@ public class BranchPenalizationOutput implements AmplOutputFile {
         boolean isG2Penalised = readDouble(tokens[BIN_G2_COL - 1]) > 0;
         boolean isB2Penalised = readDouble(tokens[BIN_B2_COL - 1]) > 0;
 
-        penalisation.add(new BranchPenalization(id, isRhoPenalised, isYPenalised, isAlphaPenalised, isXiPenalised, isG1Penalised,
+        penalization.add(new BranchPenalization(id, isRhoPenalised, isYPenalised, isAlphaPenalised, isXiPenalised, isG1Penalised,
                 isB1Penalised, isG2Penalised, isB2Penalised, rho, y, alpha, xi, g1, b1, g2, b2));
 
     }

@@ -1,4 +1,4 @@
-package com.powsybl.divergenceanalyser.parameters.output;
+package com.powsybl.divergenceanalyser;
 
 import com.powsybl.divergenceanalyser.parameters.DivergenceAnalyserAmplIOFiles;
 import com.powsybl.divergenceanalyser.parameters.output.modifications.BranchPenalization;
@@ -25,10 +25,10 @@ public class DivergenceAnalyserResults {
     public DivergenceAnalyserResults(boolean status, DivergenceAnalyserAmplIOFiles amplIOFiles, Map<String, String> runIndicators) {
         Objects.requireNonNull(amplIOFiles);
         this.status = status;
-        this.busPenalization = amplIOFiles.getBusPenalizationOutput().getPenalisation();
-        this.branchPenalization = amplIOFiles.getBranchModificationsOutput().getPenalisation();
+        this.busPenalization = amplIOFiles.getBusPenalizationOutput().getPenalization();
+        this.branchPenalization = amplIOFiles.getBranchModificationsOutput().getPenalization();
 
-        this.networkIndicators = amplIOFiles.getNetworkIndicatorsOutput().networkIndicators;
+        this.networkIndicators = amplIOFiles.getNetworkIndicatorsOutput().getNetworkIndicators();
         this.runIndicators = Map.copyOf(Objects.requireNonNull(runIndicators));
     }
 
@@ -39,7 +39,7 @@ public class DivergenceAnalyserResults {
     /**
      * Print all penalization.
      */
-    public void printPenalization(){
+    public void printPenalization() {
         printBusPenalization();
         printBranchPenalization();
     }
@@ -47,23 +47,22 @@ public class DivergenceAnalyserResults {
     /**
      * Print penalization on buses.
      */
-    public void printBusPenalization(){
+    public void printBusPenalization() {
         for (BusPenalization penal : busPenalization) {
             penal.print();
         }
     }
 
-
     /**
      * Print penalization on branches.
      */
-    public void printBranchPenalization(){
+    public void printBranchPenalization() {
         for (BranchPenalization penal : branchPenalization) {
             penal.print();
         }
     }
 
-    public void printIndicators(Map<String, String> indicators){
+    public void printIndicators(Map<String, String> indicators) {
         String nameColumn1 = "Indicators";
         String nameColumn2 = "Values";
 
@@ -92,6 +91,7 @@ public class DivergenceAnalyserResults {
     public Map<String, String> getRunIndicators() {
         return runIndicators;
     }
+
     public Map<String, String> getNetworkIndicators() {
         return networkIndicators;
     }

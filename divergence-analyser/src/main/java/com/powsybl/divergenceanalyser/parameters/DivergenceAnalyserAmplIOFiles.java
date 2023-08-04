@@ -63,7 +63,6 @@ public class DivergenceAnalyserAmplIOFiles implements AmplParameters {
         return debug;
     }
 
-
     // Getters for output files
     public BusPenalizationOutput getBusPenalizationOutput() {
         return busPenalizationOutput;

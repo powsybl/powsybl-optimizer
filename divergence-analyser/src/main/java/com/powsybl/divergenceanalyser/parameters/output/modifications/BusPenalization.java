@@ -12,7 +12,7 @@ public class BusPenalization {
         this.newTargetV = newTargetV;
     }
 
-    public void print(){
+    public void print() {
         System.out.println("For bus " + getBusId() + " : ");
 
         if (isTargetVPenalized()) {
