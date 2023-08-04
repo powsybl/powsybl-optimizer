@@ -1,6 +1,6 @@
 package com.powsybl.divergenceanalyser.parameters.output.modifications;
 
-public class BranchPenalisation {
+public class BranchPenalization {
 
     String branchId;
 
@@ -22,7 +22,7 @@ public class BranchPenalisation {
     double g2Value;
     double b2Value;
 
-    public BranchPenalisation(String id, boolean isRhoPenalised, boolean isYPenalised, boolean isAlphaPenalised,
+    public BranchPenalization(String id, boolean isRhoPenalised, boolean isYPenalised, boolean isAlphaPenalised,
                               boolean isXiPenalised, boolean isG1Penalised, boolean isB1Penalised, boolean isG2Penalised,
                               boolean isB2Penalised, double rho, double y, double alpha, double xi, double g1Value,
                               double b1Value, double g2Value, double b2Value) {
@@ -45,6 +45,42 @@ public class BranchPenalisation {
         this.b1Value = b1Value;
         this.g2Value = g2Value;
         this.b2Value = b2Value;
+    }
+
+    public void print(){
+        System.out.println("For branch " + getBranchId() + " : ");
+
+        if (isRhoPenalised()) {
+            System.out.println("New rho value = " + getRho());
+        }
+
+        if (isAlphaPenalised()) {
+            System.out.println("New alpha value = " + getAlpha());
+        }
+
+        if (isYPenalised()) {
+            System.out.println("New Y value = " + getY());
+        }
+
+        if (isXiPenalised()) {
+            System.out.println("New Xi value = " + getXi());
+        }
+
+        if (isG1Penalised()) {
+            System.out.println("New G1 value = " + getG1());
+        }
+
+        if (isB1Penalised()) {
+            System.out.println("New B1 value = " + getB1());
+        }
+
+        if (isG2Penalised()) {
+            System.out.println("New G2 value = " + getG2());
+        }
+
+        if (isB2Penalised()) {
+            System.out.println("New B2 value = " + getB2());
+        }
     }
 
     public String getBranchId() {

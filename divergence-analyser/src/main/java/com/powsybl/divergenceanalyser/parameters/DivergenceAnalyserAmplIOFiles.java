@@ -3,10 +3,11 @@ package com.powsybl.divergenceanalyser.parameters;
 import com.powsybl.divergenceanalyser.parameters.input.DivergenceAnalyserParameters;
 import com.powsybl.divergenceanalyser.parameters.input.SolvingOptions;
 import com.powsybl.divergenceanalyser.parameters.input.PenalizationControl;
-import com.powsybl.divergenceanalyser.parameters.output.BranchPenalisationOutput;
+import com.powsybl.divergenceanalyser.parameters.output.BranchPenalizationOutput;
 import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.ampl.executor.AmplOutputFile;
 import com.powsybl.ampl.executor.AmplParameters;
+import com.powsybl.divergenceanalyser.parameters.output.BusPenalizationOutput;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,7 +20,8 @@ public class DivergenceAnalyserAmplIOFiles implements AmplParameters {
     SolvingOptions solvingOptions;
 
     // Output files
-    BranchPenalisationOutput branchPenalisationOutput;
+    BusPenalizationOutput busPenalizationOutput;
+    BranchPenalizationOutput branchPenalizationOutput;
 
     boolean debug;
 
@@ -29,7 +31,8 @@ public class DivergenceAnalyserAmplIOFiles implements AmplParameters {
         this.solvingOptions = new SolvingOptions(params.getSolvingOptions());
 
         // Output file for network modifications
-        this.branchPenalisationOutput = new BranchPenalisationOutput();
+        this.busPenalizationOutput = new BusPenalizationOutput();
+        this.branchPenalizationOutput = new BranchPenalizationOutput();
 
         this.debug = debug;
     }
@@ -43,7 +46,8 @@ public class DivergenceAnalyserAmplIOFiles implements AmplParameters {
     public Collection<AmplOutputFile> getOutputParameters(boolean hasConverged) {
         if (hasConverged) {
             List<AmplOutputFile> list = new ArrayList<>();
-            list.add(branchPenalisationOutput);
+            list.add(busPenalizationOutput);
+            list.add(branchPenalizationOutput);
             return list;
         } else {
             return List.of();
@@ -55,7 +59,11 @@ public class DivergenceAnalyserAmplIOFiles implements AmplParameters {
         return debug;
     }
 
-    public BranchPenalisationOutput getBranchModificationsOutput() {
-        return branchPenalisationOutput;
+    public BusPenalizationOutput getBusPenalizationOutput() {
+        return busPenalizationOutput;
+    }
+
+    public BranchPenalizationOutput getBranchModificationsOutput() {
+        return branchPenalizationOutput;
     }
 }

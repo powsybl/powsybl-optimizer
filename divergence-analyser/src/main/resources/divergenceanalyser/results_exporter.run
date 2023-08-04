@@ -82,13 +82,13 @@ printf "Exportation of branch_penal.csv done.\n";
 
 # Exportation of branch penalization. New values of parameters, slacks and binary variables
 let fileOut := "da_bus_penal.csv";
-printf "busPV;targetV;V;s1;b_s1;id\n" > (fileOut);
+printf "busPV;targetV;s1;b_s1;id\n" > (fileOut);
 if mip_strategy == 0 then {
-      printf{n in BUSCC_PV : b_s1[n] == 1} "%i;%.5f;%.5f;%.5f;%.5f;%Q\n",
-            n, targetV_busPV[n], V[n], s1[n], b_s1[n], bus_id[1,n] > (fileOut);
+      printf{n in BUSCC_PV : b_s1[n] == 1} "%i;%.5f;%.5f;%.5f;%Q\n",
+            n, targetV_busPV[n], s1[n], b_s1[n], bus_id[1,n] > (fileOut);
 } else {
-      printf{n in BUSCC_PV : b_s1[n] > threshold_modifs} "%i;%.5f;%.5f;%.5f;%.5f;%s\n",
-            n, targetV_busPV[n], V[n], s1[n], b_s1[n], bus_id[1,n] > (fileOut);
+      printf{n in BUSCC_PV : b_s1[n] > threshold_modifs} "%i;%.5f;%.5f;%.5f;%s\n",
+            n, targetV_busPV[n], s1[n], b_s1[n], bus_id[1,n] > (fileOut);
 }
 close (fileOut);
 printf "Exportation of bus_penal.csv done.\n";

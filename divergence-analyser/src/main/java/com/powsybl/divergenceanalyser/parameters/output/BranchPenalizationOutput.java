@@ -4,7 +4,7 @@ import com.powsybl.ampl.converter.AmplConstants;
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.ampl.executor.AmplOutputFile;
 import com.powsybl.commons.util.StringToIntMapper;
-import com.powsybl.divergenceanalyser.parameters.output.modifications.BranchPenalisation;
+import com.powsybl.divergenceanalyser.parameters.output.modifications.BranchPenalization;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -13,7 +13,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BranchPenalisationOutput implements AmplOutputFile {
+public class BranchPenalizationOutput implements AmplOutputFile {
     public static final int NEW_RHO_COL = 4;
     public static final int NEW_Y_COL = 5;
     public static final int NEW_ALPHA_COL = 6;
@@ -35,9 +35,9 @@ public class BranchPenalisationOutput implements AmplOutputFile {
     public static final int EXPECTED_COLS = 28; // Contains ID, new values of parameters, values of slacks/binary var
     private static final String SEP = ";";
 
-    private final List<BranchPenalisation> penalisation = new ArrayList<>();
+    private final List<BranchPenalization> penalisation = new ArrayList<>();
 
-    public List<BranchPenalisation> getPenalisation() {
+    public List<BranchPenalization> getPenalisation() {
         return penalisation;
     }
 
@@ -96,7 +96,7 @@ public class BranchPenalisationOutput implements AmplOutputFile {
         boolean isG2Penalised = readDouble(tokens[BIN_G2_COL - 1]) > 0;
         boolean isB2Penalised = readDouble(tokens[BIN_B2_COL - 1]) > 0;
 
-        penalisation.add(new BranchPenalisation(id, isRhoPenalised, isYPenalised, isAlphaPenalised, isXiPenalised, isG1Penalised,
+        penalisation.add(new BranchPenalization(id, isRhoPenalised, isYPenalised, isAlphaPenalised, isXiPenalised, isG1Penalised,
                 isB1Penalised, isG2Penalised, isB2Penalised, rho, y, alpha, xi, g1, b1, g2, b2));
 
     }
