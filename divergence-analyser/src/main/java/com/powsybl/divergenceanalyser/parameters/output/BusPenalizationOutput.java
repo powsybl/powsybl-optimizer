@@ -32,18 +32,18 @@ public class BusPenalizationOutput implements AmplOutputFile {
     }
 
     @Override
-    public void read(Path path, StringToIntMapper<AmplSubset> amplMapper) {
-        List<String> busModificationsLines;
+    public void read(Path outputPath, StringToIntMapper<AmplSubset> networkAmplMapper) {
+        List<String> outputLines;
 
-        if (Files.isRegularFile(path)) {
+        if (Files.isRegularFile(outputPath)) {
             try {
-                busModificationsLines = Files.readAllLines(path, StandardCharsets.UTF_8);
+                outputLines = Files.readAllLines(outputPath, StandardCharsets.UTF_8);
             } catch (IOException e) {
                 // File reading went wrong
                 return;
             }
 
-            String headers = busModificationsLines.get(0);
+            String headers = outputLines.get(0);
             int readCols = headers.split(SEP).length;
             if (readCols != EXPECTED_COLS) {
                 try {
@@ -52,8 +52,8 @@ public class BusPenalizationOutput implements AmplOutputFile {
                     throw new RuntimeException(e);
                 }
             } else {
-                for (String line : busModificationsLines.subList(1, busModificationsLines.size())) {
-                    readLine(line.split(SEP), amplMapper);
+                for (String line : outputLines.subList(1, outputLines.size())) {
+                    readLine(line.split(SEP), networkAmplMapper);
                 }
             }
         }
