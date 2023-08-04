@@ -37,24 +37,27 @@ param alpha_p_sup {(qq,m,n) in BRANCHCC_DEPH} := if alpha_inf_tct[qq,m,n] < 0 th
 # TODO : Here there is an error, but it works better... Change sigma3_inf_tct by sigma3_sup_tct
 
 # Bound inf for Y/Xi or R/X parameters (depends on model used)
-param Y_p_inf := 0;
-param Xi_p_inf := - 3.141592;
-param Y_p_sup {(qq,m,n) in BRANCHCC_PENALIZED} := max_branch_admi;
-param Xi_p_sup := 3.141592;
+param Y_p_inf {(qq,m,n) in BRANCHCC_PENALIZED} :=  if is_admittance_control == 1 then 0               else branch_admi[qq,m,n];
+param Y_p_sup {(qq,m,n) in BRANCHCC_PENALIZED} :=  if is_admittance_control == 1 then max_branch_admi else branch_admi[qq,m,n];
+param xi_p_inf {(qq,m,n) in BRANCHCC_PENALIZED} := if is_xi_control         == 1 then -3.141592       else branch_angper[qq,m,n];
+param xi_p_sup {(qq,m,n) in BRANCHCC_PENALIZED} := if is_xi_control         == 1 then 3.141592        else branch_angper[qq,m,n];
 
-# Bound inf for G/B parameters
-param G1_p_inf := 0;
-param B1_p_inf := -2; # TODO : Improve X bound by looking if there are X negative values in the network. Most of the time, negative values are on the 3wt legs.
-param G2_p_inf := 0;
-param B2_p_inf := -2; # TODO : Improve X bound by looking if there are X negative values in the network. Most of the time, negative values are on the 3wt legs.
+# Lower/upper knowledge-based bounds for G/B of shunts
+param G_inf_default := 0;
+param G_sup_default := 0.2;
+param B_inf_default := -2;
+param B_sup_default := 2;
 
-# Upper bound in practice for usual network
-param G1_sup_default := 0.1;
-param B1_sup_default := 2;
-param G2_sup_default := 0.1;
-param B2_sup_default := 2;
+# Lower bound for G/B penalizated values
+param G1_p_inf {(qq,m,n) in BRANCHCC_PENALIZED} := if is_g_shunt_1_control == 1 then G_inf_default else branch_Gor[1,qq,m,n];
+param B1_p_inf {(qq,m,n) in BRANCHCC_PENALIZED} := if is_b_shunt_1_control == 1 then B_inf_default else branch_Bor[1,qq,m,n];
+param G2_p_inf {(qq,m,n) in BRANCHCC_PENALIZED} := if is_g_shunt_2_control == 1 then G_inf_default else branch_Gex[1,qq,m,n];
+param B2_p_inf {(qq,m,n) in BRANCHCC_PENALIZED} := if is_b_shunt_2_control == 1 then B_inf_default else branch_Bex[1,qq,m,n];
+# TODO : Improve X/B bound by looking if there are X negative values in the network.
 
-param G1_p_sup {(qq,m,n) in BRANCHCC_PENALIZED} := if branch_Gor[1,qq,m,n] == 0 then G1_sup_default else min(G1_sup_default, 2 * abs(branch_Gor[1,qq,m,n]));
-param B1_p_sup {(qq,m,n) in BRANCHCC_PENALIZED} := if branch_Bor[1,qq,m,n] == 0 then B1_sup_default else min(B1_sup_default, 2 * abs(branch_Bor[1,qq,m,n]));
-param G2_p_sup {(qq,m,n) in BRANCHCC_PENALIZED} := if branch_Gex[1,qq,m,n] == 0 then G2_sup_default else min(G2_sup_default, 2 * abs(branch_Gex[1,qq,m,n]));
-param B2_p_sup {(qq,m,n) in BRANCHCC_PENALIZED} := if branch_Bex[1,qq,m,n] == 0 then B2_sup_default else min(B2_sup_default, 2 * abs(branch_Bex[1,qq,m,n]));
+# Upper bound for G/B penalizated values
+param G1_p_sup {(qq,m,n) in BRANCHCC_PENALIZED} := if is_g_shunt_1_control == 1 then G_sup_default else branch_Gor[1,qq,m,n];
+param B1_p_sup {(qq,m,n) in BRANCHCC_PENALIZED} := if is_b_shunt_1_control == 1 then B_sup_default else branch_Bor[1,qq,m,n];
+param G2_p_sup {(qq,m,n) in BRANCHCC_PENALIZED} := if is_g_shunt_2_control == 1 then G_sup_default else branch_Gex[1,qq,m,n];
+param B2_p_sup {(qq,m,n) in BRANCHCC_PENALIZED} := if is_b_shunt_2_control == 1 then B_sup_default else branch_Bex[1,qq,m,n];
+
