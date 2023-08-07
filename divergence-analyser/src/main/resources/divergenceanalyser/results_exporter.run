@@ -19,9 +19,29 @@
 #                                                                             #
 ##############################################################################
 
+# Threshold to count the number of modifications
 param threshold_modifs := 1e-6;
 
-# Exportation of branch penalization. New values of parameters, slacks and binary variables
+# Computes the total number of modifications
+param total_penal default 0;
+if mip_strategy == 0 then {
+      let total_penal := card({n in BUSCC_PV : b_s1[n] == 1}) + card({(qq,m,n) in BRANCHCC_TRANSFORMER : b_sigma1[qq,m,n] == 1})
+            + card({(qq,m,n) in BRANCHCC_PENALIZED : b_sigma2[qq,m,n] == 1}) + card({(qq,m,n) in BRANCHCC_DEPH : b_sigma3[qq,m,n] == 1})
+            + card({(qq,m,n) in BRANCHCC_PENALIZED : b_sigma5[qq,m,n] == 1}) + card({(qq,m,n) in BRANCHCC_PENALIZED : b_sigma6[qq,m,n] == 1})
+            + card({(qq,m,n) in BRANCHCC_PENALIZED : b_sigma7[qq,m,n] == 1}) + card({(qq,m,n) in BRANCHCC_PENALIZED : b_sigma8[qq,m,n] == 1});
+} else {
+      let total_penal := card({n in BUSCC_PV : b_s1[n] > threshold_modifs}) + card({(qq,m,n) in BRANCHCC_TRANSFORMER : b_sigma1[qq,m,n] > threshold_modifs})
+            + card({(qq,m,n) in BRANCHCC_PENALIZED : b_sigma2[qq,m,n] > threshold_modifs}) + card({(qq,m,n) in BRANCHCC_DEPH : b_sigma3[qq,m,n] > threshold_modifs})
+            + card({(qq,m,n) in BRANCHCC_PENALIZED : b_sigma5[qq,m,n] > threshold_modifs}) + card({(qq,m,n) in BRANCHCC_PENALIZED : b_sigma6[qq,m,n] > threshold_modifs})
+            + card({(qq,m,n) in BRANCHCC_PENALIZED : b_sigma7[qq,m,n] > threshold_modifs}) + card({(qq,m,n) in BRANCHCC_PENALIZED : b_sigma8[qq,m,n] > threshold_modifs});
+}
+
+
+######################
+# Export run results #
+######################
+
+# Export branch penalization (new values of parameters, slacks and binary variables)
 let fileOut := "da_branch_penal.csv";
 printf "branch;bus1;bus2;rho;admittance;dephor;angper;g1 (pu);b1 (pu);g2 (pu);b2 (pu);sigma1;sigma2;sigma3;sigma4;sigma5;sigma6;sigma7;sigma8;b_sigma1;b_sigma2;b_sigma3;b_sigma4;b_sigma5;b_sigma6;b_sigma7;b_sigma8;id\n" > (fileOut);
 if mip_strategy == 0 then {
@@ -61,8 +81,14 @@ if mip_strategy == 0 then {
       # Identifiers of the branch
       qq, m, n, 
       # New values of parameters
-      rho_penal[qq,m,n], y_penal[qq,m,n], alpha_penal[qq,m,n], Xi_penal[qq,m,n], 
-      G1_penal[qq,m,n], B1_penal[qq,m,n], G2_penal[qq,m,n], B2_penal[qq,m,n],
+      if (qq,m,n) in BRANCHCC_TRANSFORMER then branch_Ror[qq,m,n]+sigma1[qq,m,n] else branch_Ror[qq,m,n], 
+      branch_admi[qq,m,n]+sigma2[qq,m,n], 
+      if (qq,m,n) in BRANCHCC_REGL then branch_dephor[qq,m,n]+sigma3[qq,m,n] else branch_dephor[qq,m,n], 
+      branch_angper[qq,m,n]+sigma4[qq,m,n], 
+      branch_Gor[1,qq,m,n]+sigma5[qq,m,n],
+      branch_Bor[1,qq,m,n]+sigma6[qq,m,n], 
+      branch_Gex[1,qq,m,n]+sigma7[qq,m,n], 
+      branch_Bex[1,qq,m,n]+sigma8[qq,m,n],
       # Values of slacks
       if (qq,m,n) in BRANCHCC_TRANSFORMER then sigma1[qq,m,n] else 0,
       sigma2[qq,m,n],
@@ -80,7 +106,7 @@ close (fileOut);
 printf "Exportation of branch_penal.csv done.\n";
 
 
-# Exportation of branch penalization. New values of parameters, slacks and binary variables
+# Export bus penalization (new values of parameters, slacks and binary variables)
 let fileOut := "da_bus_penal.csv";
 printf "busPV;targetV;s1;b_s1;id\n" > (fileOut);
 if mip_strategy == 0 then {
@@ -93,17 +119,44 @@ if mip_strategy == 0 then {
 close (fileOut);
 printf "Exportation of bus_penal.csv done.\n";
 
-# V and theta values computed for each bus
+# Export load flow results (V, theta)
 let fileOut := "da_V_theta.csv";
 printf "bus;V;theta;id\n" > (fileOut);
 printf{n in BUSCC} "%i;%Q;%.5f;%.5f\n", n, bus_id[1,n], V[n], teta[n] > (fileOut);
 close (fileOut);
 printf "Exportation of V_theta.csv done.\n";
 
-# File which contains all indicators of the run
+########################################
+# Export all the indicators of the run #
+########################################
+
+# Export run indicators
 let fileOut := "da_indic.txt";
-printf "# Indicators of DA run\n"                                                                            > (fileOut);
-printf "final_status %Q\n", final_status                                                                     > (fileOut);
+printf "# Run indicators\n" > (fileOut);
+printf "final_status %s\n", final_status                                > (fileOut);
+printf "penalization %s\n", if total_penal > 0 then "YES" else "NO"     > (fileOut);
+printf "da_begin %Q\n", ctime_start                                     > (fileOut);
+printf "da_end %Q\n", ctime()                                           > (fileOut);
+printf "knitro_mode %s\n", if mip_strategy == 0 then "MINLP" else "NLP" > (fileOut);
+close(fileOut);
+printf "Exportation of da_indic.txt done.\n";
+
+# Export network indicators
+let fileOut := "da_network_indic.txt";
+printf "# Network indicators\n" > (fileOut);
+printf "num_main_cc %i\n",  index_main_connex_component > (fileOut);
+printf "num_buses %i\n",    card(BUSCC)                 > (fileOut);
+printf "num_PV_buses %i\n", card(BUSCC_PV)              > (fileOut);
+printf "num_branches %i\n", card(BRANCHCC_PENALIZED)    > (fileOut);
+printf "num_rtc %i\n",      card(BRANCHCC_REGL)         > (fileOut);
+printf "num_pst %i\n",      card(BRANCHCC_DEPH)         > (fileOut);
+printf "num_3wt %i\n",      card(BRANCHCC_3WT) / 3      > (fileOut);
+close(fileOut);
+printf "Exportation of network indicators done.\n";
+
+# Export penalization indicators
+let fileOut := "da_penal_indic.txt";
+printf "# Penalization indicators\n" > (fileOut);
 if mip_strategy == 0 then {
       printf "num_target_v_modif %i\n", card({n in BUSCC_PV : b_s1[n] == 1})                          > (fileOut);
       printf "num_rho_modif %i\n", card({(qq,m,n) in BRANCHCC_TRANSFORMER : b_sigma1[qq,m,n] == 1})   > (fileOut);
@@ -125,17 +178,6 @@ if mip_strategy == 0 then {
       printf "num_g2_modif %i\n", card({(qq,m,n) in BRANCHCC_PENALIZED : b_sigma7[qq,m,n] > threshold_modifs})      > (fileOut);
       printf "num_b2_modif %i\n", card({(qq,m,n) in BRANCHCC_PENALIZED : b_sigma8[qq,m,n] > threshold_modifs})      > (fileOut);
 }
+printf "total_num_penal %i", total_penal > (fileOut);
 close(fileOut);
-printf "Exportation of da_indic.txt done.\n";
-
-# File containing network information
-let fileOut := "da_network_indic.txt";
-printf "# Network indicators \n"                        > (fileOut);
-printf "num_main_cc %i\n",  index_main_connex_component > (fileOut);
-printf "num_buses %i\n",    card(BUSCC)                 > (fileOut);
-printf "num_branches %i\n", card(BRANCHCC_PENALIZED)    > (fileOut);
-printf "num_rtc %i\n",      card(BRANCHCC_REGL)         > (fileOut);
-printf "num_pst %i\n",      card(BRANCHCC_DEPH)         > (fileOut);
-printf "num_3wt %i\n",      card(BRANCHCC_3WT) / 3      > (fileOut);
-close(fileOut);
-printf "Exportation of da_network_indic done.\n";
+printf "Exportation of penalization indicators done.\n";

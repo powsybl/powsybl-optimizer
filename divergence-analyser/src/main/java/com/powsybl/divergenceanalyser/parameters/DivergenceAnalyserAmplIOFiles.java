@@ -9,6 +9,7 @@ import com.powsybl.ampl.executor.AmplOutputFile;
 import com.powsybl.ampl.executor.AmplParameters;
 import com.powsybl.divergenceanalyser.parameters.output.BusPenalizationOutput;
 import com.powsybl.divergenceanalyser.parameters.output.NetworkIndicatorsOutput;
+import com.powsybl.divergenceanalyser.parameters.output.PenalizationIndicatorsOutput;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,6 +25,7 @@ public class DivergenceAnalyserAmplIOFiles implements AmplParameters {
     BusPenalizationOutput busPenalizationOutput;
     BranchPenalizationOutput branchPenalizationOutput;
     NetworkIndicatorsOutput networkIndicatorsOutput;
+    PenalizationIndicatorsOutput penalizationIndicatorsOutput;
 
     boolean debug;
 
@@ -32,10 +34,11 @@ public class DivergenceAnalyserAmplIOFiles implements AmplParameters {
         this.penalizationControl = new PenalizationControl(params.getPenalization());
         this.solvingOptions = new SolvingOptions(params.getSolvingOptions());
 
-        // Output file for network modifications
+        // Output file (indicators, network modifications...)
         this.busPenalizationOutput = new BusPenalizationOutput();
         this.branchPenalizationOutput = new BranchPenalizationOutput();
         this.networkIndicatorsOutput = new NetworkIndicatorsOutput();
+        this.penalizationIndicatorsOutput = new PenalizationIndicatorsOutput();
 
         this.debug = debug;
     }
@@ -47,15 +50,14 @@ public class DivergenceAnalyserAmplIOFiles implements AmplParameters {
 
     @Override
     public Collection<AmplOutputFile> getOutputParameters(boolean hasConverged) {
+        List<AmplOutputFile> list = new ArrayList<>();
+        list.add(networkIndicatorsOutput);
         if (hasConverged) {
-            List<AmplOutputFile> list = new ArrayList<>();
             list.add(busPenalizationOutput);
             list.add(branchPenalizationOutput);
-            list.add(networkIndicatorsOutput);
-            return list;
-        } else {
-            return List.of();
+            list.add(penalizationIndicatorsOutput);
         }
+        return list;
     }
 
     @Override
@@ -74,5 +76,9 @@ public class DivergenceAnalyserAmplIOFiles implements AmplParameters {
 
     public NetworkIndicatorsOutput getNetworkIndicatorsOutput() {
         return networkIndicatorsOutput;
+    }
+
+    public PenalizationIndicatorsOutput getPenalizationIndicatorsOutput() {
+        return penalizationIndicatorsOutput;
     }
 }

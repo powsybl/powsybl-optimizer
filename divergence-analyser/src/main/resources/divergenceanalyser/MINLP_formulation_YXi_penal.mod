@@ -53,27 +53,27 @@ subject to ctr_sigma6_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENA
 subject to ctr_sigma7_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:     branch_Gex[1,qq,m,n] + sigma7[qq,m,n]   <= G2_p_sup[qq,m,n];
 subject to ctr_sigma8_max_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:     branch_Bex[1,qq,m,n] + sigma8[qq,m,n]   <= B2_p_sup[qq,m,n];
 
-        # Activation of binary variables if penal var > 0
-        subject to ctr_b_s1_pos_dbp{PROBLEM_DETECTION_PARAM, k in BUSCC_PV}:                                s1[k]  <= (targetV_p_sup - targetV_busPV[k] + 0.001) * b_s1[k];
-        subject to ctr_b_sigma1_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_TRANSFORMER}: sigma1[qq,m,n] <= (rho_p_sup[qq,m,n] - branch_Ror[qq,m,n] + 0.001) * b_sigma1[qq,m,n];
-        subject to ctr_b_sigma2_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   sigma2[qq,m,n] <= (Y_p_sup[qq,m,n] - branch_admi[qq,m,n] + 0.001) * b_sigma2[qq,m,n];
-        subject to ctr_b_sigma3_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_DEPH}:        sigma3[qq,m,n] <= (alpha_p_sup[qq,m,n] - branch_dephor[qq,m,n] + 0.001) * b_sigma3[qq,m,n];
-        subject to ctr_b_sigma4_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   sigma4[qq,m,n] <= (xi_p_sup[qq,m,n] - branch_angper[qq,m,n] + 0.001) * b_sigma4[qq,m,n];
-        subject to ctr_b_sigma5_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   sigma5[qq,m,n] <= (G1_p_sup[qq,m,n] - branch_Gor[1,qq,m,n] + 0.001) * b_sigma5[qq,m,n];
-        subject to ctr_b_sigma6_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   sigma6[qq,m,n] <= (B1_p_sup[qq,m,n] - branch_Bor[1,qq,m,n] + 0.001) * b_sigma6[qq,m,n];
-        subject to ctr_b_sigma7_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   sigma7[qq,m,n] <= (G2_p_sup[qq,m,n] - branch_Gex[1,qq,m,n] + 0.001) * b_sigma7[qq,m,n];
-        subject to ctr_b_sigma8_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   sigma8[qq,m,n] <= (B2_p_sup[qq,m,n] - branch_Bex[1,qq,m,n] + 0.001) * b_sigma8[qq,m,n];
+# Activation of binary variables if penal var > 0
+subject to ctr_b_s1_pos_dbp{PROBLEM_DETECTION_PARAM, k in BUSCC_PV}:                                s1[k]  <= (targetV_p_sup - targetV_busPV[k] + 0.001) * b_s1[k];
+subject to ctr_b_sigma1_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_TRANSFORMER}: sigma1[qq,m,n] <= (rho_p_sup[qq,m,n] - branch_Ror[qq,m,n] + 0.001) * b_sigma1[qq,m,n];
+subject to ctr_b_sigma2_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   sigma2[qq,m,n] <= (Y_p_sup[qq,m,n] - branch_admi[qq,m,n] + 0.001) * b_sigma2[qq,m,n];
+subject to ctr_b_sigma3_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_DEPH}:        sigma3[qq,m,n] <= (alpha_p_sup[qq,m,n] - branch_dephor[qq,m,n] + 0.001) * b_sigma3[qq,m,n];
+subject to ctr_b_sigma4_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   sigma4[qq,m,n] <= (xi_p_sup[qq,m,n] - branch_angper[qq,m,n] + 0.001) * b_sigma4[qq,m,n];
+subject to ctr_b_sigma5_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   sigma5[qq,m,n] <= (G1_p_sup[qq,m,n] - branch_Gor[1,qq,m,n] + 0.001) * b_sigma5[qq,m,n];
+subject to ctr_b_sigma6_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   sigma6[qq,m,n] <= (B1_p_sup[qq,m,n] - branch_Bor[1,qq,m,n] + 0.001) * b_sigma6[qq,m,n];
+subject to ctr_b_sigma7_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   sigma7[qq,m,n] <= (G2_p_sup[qq,m,n] - branch_Gex[1,qq,m,n] + 0.001) * b_sigma7[qq,m,n];
+subject to ctr_b_sigma8_pos_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   sigma8[qq,m,n] <= (B2_p_sup[qq,m,n] - branch_Bex[1,qq,m,n] + 0.001) * b_sigma8[qq,m,n];
 
-        # Activation of binary variables if penal var < 0
-        subject to ctr_b_s1_neg_dbp{PROBLEM_DETECTION_PARAM, k in BUSCC_PV}:                                 s1[k] >= (targetV_p_inf - 0.001 - targetV_busPV[k]) * b_s1[k];
-        subject to ctr_b_sigma1_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_TRANSFORMER}: sigma1[qq,m,n] >= (rho_p_inf[qq,m,n] - branch_Ror[qq,m,n] - 0.001) * b_sigma1[qq,m,n];
-        subject to ctr_b_sigma2_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   sigma2[qq,m,n] >= (Y_p_inf[qq,m,n] - branch_admi[qq,m,n]- 0.001) * b_sigma2[qq,m,n];
-        subject to ctr_b_sigma3_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_DEPH}:        sigma3[qq,m,n] >= (alpha_p_inf[qq,m,n] - branch_dephor[qq,m,n]- 0.001) * b_sigma3[qq,m,n];
-        subject to ctr_b_sigma4_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   sigma4[qq,m,n] >= (xi_p_inf[qq,m,n] - branch_angper[qq,m,n]- 0.001) * b_sigma4[qq,m,n];
-        subject to ctr_b_sigma5_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   sigma5[qq,m,n] >= (G1_p_inf[qq,m,n] - branch_Gor[1,qq,m,n]- 0.001) * b_sigma5[qq,m,n];
-        subject to ctr_b_sigma6_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   sigma6[qq,m,n] >= (B1_p_inf[qq,m,n] - branch_Bor[1,qq,m,n]- 0.001) * b_sigma6[qq,m,n];
-        subject to ctr_b_sigma7_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   sigma7[qq,m,n] >= (G2_p_inf[qq,m,n] - branch_Gex[1,qq,m,n]- 0.001) * b_sigma7[qq,m,n];
-        subject to ctr_b_sigma8_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   sigma8[qq,m,n] >= (B2_p_inf[qq,m,n] - branch_Bex[1,qq,m,n]- 0.001) * b_sigma8[qq,m,n];
+# Activation of binary variables if penal var < 0
+subject to ctr_b_s1_neg_dbp{PROBLEM_DETECTION_PARAM, k in BUSCC_PV}:                                 s1[k] >= (targetV_p_inf - 0.001 - targetV_busPV[k]) * b_s1[k];
+subject to ctr_b_sigma1_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_TRANSFORMER}: sigma1[qq,m,n] >= (rho_p_inf[qq,m,n] - branch_Ror[qq,m,n] - 0.001) * b_sigma1[qq,m,n];
+subject to ctr_b_sigma2_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   sigma2[qq,m,n] >= (Y_p_inf[qq,m,n] - branch_admi[qq,m,n]- 0.001) * b_sigma2[qq,m,n];
+subject to ctr_b_sigma3_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_DEPH}:        sigma3[qq,m,n] >= (alpha_p_inf[qq,m,n] - branch_dephor[qq,m,n]- 0.001) * b_sigma3[qq,m,n];
+subject to ctr_b_sigma4_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   sigma4[qq,m,n] >= (xi_p_inf[qq,m,n] - branch_angper[qq,m,n]- 0.001) * b_sigma4[qq,m,n];
+subject to ctr_b_sigma5_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   sigma5[qq,m,n] >= (G1_p_inf[qq,m,n] - branch_Gor[1,qq,m,n]- 0.001) * b_sigma5[qq,m,n];
+subject to ctr_b_sigma6_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   sigma6[qq,m,n] >= (B1_p_inf[qq,m,n] - branch_Bor[1,qq,m,n]- 0.001) * b_sigma6[qq,m,n];
+subject to ctr_b_sigma7_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   sigma7[qq,m,n] >= (G2_p_inf[qq,m,n] - branch_Gex[1,qq,m,n]- 0.001) * b_sigma7[qq,m,n];
+subject to ctr_b_sigma8_neg_dbp{PROBLEM_DETECTION_PARAM, (qq,m,n) in BRANCHCC_PENALIZED}:   sigma8[qq,m,n] >= (B2_p_inf[qq,m,n] - branch_Bex[1,qq,m,n]- 0.001) * b_sigma8[qq,m,n];
 
 #####################################
 #                                   #

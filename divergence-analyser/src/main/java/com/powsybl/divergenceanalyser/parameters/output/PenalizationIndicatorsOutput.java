@@ -12,13 +12,13 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NetworkIndicatorsOutput implements AmplOutputFile {
+public class PenalizationIndicatorsOutput implements AmplOutputFile {
 
-    List<Pair<String, String>> networkIndicators = new ArrayList<>();
+    List<Pair<String, String>> penalizationIndicators = new ArrayList<>();
 
     @Override
     public String getFileName() {
-        return "da_network_indic.txt";
+        return "da_penal_indic.txt";
     }
 
     @Override
@@ -41,12 +41,13 @@ public class NetworkIndicatorsOutput implements AmplOutputFile {
                     throw new IOException();
                 }
 
-                networkIndicators.add(Pair.of(tokens[0], tokens[1]));
+                penalizationIndicators.add(Pair.of(tokens[0], tokens[1]));
             }
         }
     }
 
-    public List<Pair<String, String>> getNetworkIndicators() {
-        return networkIndicators;
+    public List<Pair<String, String>> getPenalizationIndicators() {
+        return penalizationIndicators;
     }
+
 }
