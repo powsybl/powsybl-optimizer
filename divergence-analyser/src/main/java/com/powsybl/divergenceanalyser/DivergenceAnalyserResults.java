@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2022,2023 RTE (http://www.rte-france.com), Coreso and TSCNet Services
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package com.powsybl.divergenceanalyser;
 
 import com.powsybl.divergenceanalyser.parameters.DivergenceAnalyserAmplIOFiles;
@@ -10,6 +16,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * @author Pierre ARVY <pierre.arvy@artelys.com>
+ */
 public class DivergenceAnalyserResults {
     private final boolean status;
 
@@ -35,7 +44,7 @@ public class DivergenceAnalyserResults {
 
         Objects.requireNonNull(runIndicators);
         this.runIndicators = new ArrayList<>();
-        for(Map.Entry<String, String> entry : runIndicators.entrySet()) {
+        for (Map.Entry<String, String> entry : runIndicators.entrySet()) {
             this.runIndicators.add(Pair.of(entry.getKey(), entry.getValue()));
         }
         this.penalizationIndicators = amplIOFiles.getPenalizationIndicatorsOutput().getPenalizationIndicators();
@@ -85,7 +94,7 @@ public class DivergenceAnalyserResults {
      * Print the given indicators in a beautiful box.
      * @param indicators the list of indicator to print.
      */
-    public void printIndicator(List<Pair<String, String>> indicators){
+    public void printIndicator(List<Pair<String, String>> indicators) {
         String nameColumn1 = "Indicators";
         String nameColumn2 = "Values";
 
@@ -127,5 +136,12 @@ public class DivergenceAnalyserResults {
         return penalizationIndicators;
     }
 
+    public List<BusPenalization> getBusPenalization() {
+        return busPenalization;
+    }
+
+    public List<BranchPenalization> getBranchPenalization() {
+        return branchPenalization;
+    }
 }
 

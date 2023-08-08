@@ -1,17 +1,25 @@
+/**
+ * Copyright (c) 2022,2023 RTE (http://www.rte-france.com), Coreso and TSCNet Services
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package com.powsybl.divergenceanalyser.parameters.input;
 
 import java.util.HashMap;
 
+/**
+ * @author Pierre ARVY <pierre.arvy@artelys.com>
+ */
 public class DivergenceAnalyserParameters {
 
     // About penalization
-    private final boolean DEFAULT_PENAL_ACTIVATION = false;
+    public static final boolean DEFAULT_PENAL_ACTIVATION = false;
     HashMap<String, Integer> penalizationOptions = new HashMap<>();
 
-
     // About MINLP options
-    private final int DEFAULT_SOLVING_MODE = 0;
-    private final int DEFAULT_MAX_TIME_SOLVING = 120;
+    public static final int DEFAULT_SOLVING_MODE = 0;
+    public static final int DEFAULT_MAX_TIME_SOLVING = 120;
     HashMap<String, Integer> solvingOptions = new HashMap<>();
 
     public DivergenceAnalyserParameters() {
@@ -177,8 +185,8 @@ public class DivergenceAnalyserParameters {
      * @param solvingMode the solving mode of the solver used for the divergence analysis.
      * @return the object on which the method is applied.
      */
-    public DivergenceAnalyserParameters setSolvingMode(int solvingMode){
-        if (0 <= solvingMode && solvingMode <= 2){
+    public DivergenceAnalyserParameters setSolvingMode(int solvingMode) {
+        if (0 <= solvingMode && solvingMode <= 2) {
             solvingOptions.put("solving_mode", solvingMode);
         } else {
             throw new IllegalArgumentException();
@@ -191,7 +199,7 @@ public class DivergenceAnalyserParameters {
      * Put solving mode to 2
      * @return the object on which the method is applied.
      */
-    public DivergenceAnalyserParameters setMPECResolution(){
+    public DivergenceAnalyserParameters setResolutionMPEC() {
         return setSolvingMode(2);
     }
 
@@ -199,7 +207,7 @@ public class DivergenceAnalyserParameters {
      * Put solving mode to 1.
      * @return the object on which the method is applied.
      */
-    public DivergenceAnalyserParameters setRelaxResolution() {
+    public DivergenceAnalyserParameters setResolutionNlp() {
         return setSolvingMode(1);
     }
 
@@ -207,7 +215,7 @@ public class DivergenceAnalyserParameters {
      * Put solving mode to 0.
      * @return the object on which the method is applied.
      */
-    public DivergenceAnalyserParameters setMINLPResolution() {
+    public DivergenceAnalyserParameters setResolutionMinlp() {
         return setSolvingMode(0);
     }
 
