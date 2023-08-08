@@ -31,7 +31,7 @@ public class DivergenceAnalyserAmplIOFiles implements AmplParameters {
 
     public DivergenceAnalyserAmplIOFiles(DivergenceAnalyserParameters params, boolean debug) {
         // Input file for activation of variables in ampl minlp
-        this.penalizationControl = new PenalizationControl(params.getPenalization());
+        this.penalizationControl = new PenalizationControl(params.getPenalizationOptions());
         this.solvingOptions = new SolvingOptions(params.getSolvingOptions());
 
         // Output file (indicators, network modifications...)

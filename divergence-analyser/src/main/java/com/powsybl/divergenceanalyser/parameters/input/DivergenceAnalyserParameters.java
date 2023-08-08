@@ -5,140 +5,223 @@ import java.util.HashMap;
 public class DivergenceAnalyserParameters {
 
     // About penalization
-    private boolean targetVUnitsPenal = false;
-    private boolean targetVSvcPenal = false;
-    private boolean rhoTransformerPenal = false;
-    private boolean alphaPSTPenal = false;
-    private boolean yPenal = false;
-    private boolean xiPenal = false;
-    private boolean g1Penal = false;
-    private boolean b1Penal = false;
-    private boolean g2penal = false;
-    private boolean b2Penal = false;
+    private final boolean DEFAULT_PENAL_ACTIVATION = false;
+    HashMap<String, Integer> penalizationOptions = new HashMap<>();
+
 
     // About MINLP options
-    private boolean isContinuous = false;
-    private int maxTimeSolving = 120;
+    private final int DEFAULT_SOLVING_MODE = 0;
+    private final int DEFAULT_MAX_TIME_SOLVING = 120;
+    HashMap<String, Integer> solvingOptions = new HashMap<>();
 
     public DivergenceAnalyserParameters() {
+        setAllPenalization(DEFAULT_PENAL_ACTIVATION);
+        setSolvingMode(DEFAULT_SOLVING_MODE);
+        setMaxTimeSolving(DEFAULT_MAX_TIME_SOLVING);
     }
 
-    public DivergenceAnalyserParameters(boolean penalizeEverything) {
-        if (penalizeEverything) {
-            this.targetVUnitsPenal = true;
-            this.targetVSvcPenal = true;
-            this.rhoTransformerPenal = true;
-            this.alphaPSTPenal = true;
-            this.yPenal = true;
-            this.xiPenal = true;
-            this.g1Penal = true;
-            this.g2penal = true;
-            this.b1Penal = true;
-            this.b2Penal = true;
-        }
+    public void setAllPenalization(boolean isActivated) {
+        setTargetVUnitsPenal(isActivated);
+        setTargetVSvcPenal(isActivated);
+        setYPenal(isActivated);
+        setXiPenal(isActivated);
+        setRhoTransformerPenal(isActivated);
+        setAlphaPSTPenal(isActivated);
+        setG1Penal(isActivated);
+        setG2Penal(isActivated);
+        setB1Penal(isActivated);
+        setB2Penal(isActivated);
     }
 
-    public HashMap<String, Integer> getPenalization() {
-        HashMap<String, Integer> penal = new HashMap<>();
-        if (targetVUnitsPenal) {
-            penal.put("is_target_v_units", 1);
-        }
-        if (targetVSvcPenal) {
-            penal.put("is_target_v_svc", 1);
-        }
-        if (rhoTransformerPenal) {
-            penal.put("is_rho_control", 1);
-        }
-        if (alphaPSTPenal) {
-            penal.put("is_phase_shift_control", 1);
-        }
-        if (yPenal) {
-            penal.put("is_admittance_control", 1);
-        }
-        if (xiPenal) {
-            penal.put("is_xi_control", 1);
-        }
-        if (g1Penal) {
-            penal.put("is_g_shunt_1_control", 1);
-        }
-        if (b1Penal) {
-            penal.put("is_b_shunt_1_control", 1);
-        }
-        if (g2penal) {
-            penal.put("is_g_shunt_2_control", 1);
-        }
-        if (b2Penal) {
-            penal.put("is_b_shunt_2_control", 1);
-        }
-        return penal;
+    public HashMap<String, Integer> getPenalizationOptions() {
+        return penalizationOptions;
     }
 
     public HashMap<String, Integer> getSolvingOptions() {
-        HashMap<String, Integer> options = new HashMap<>();
-        if (isContinuous) {
-            options.put("is_continuous", 1);
+        return solvingOptions;
+    }
+
+    /**
+     * @param isActivated boolean to activate/inactive penalization of units target V.
+     * @return the object on which the method is applied.
+     */
+    public DivergenceAnalyserParameters setTargetVUnitsPenal(boolean isActivated) {
+        if (isActivated) {
+            penalizationOptions.put("target_v_units", 1);
+        } else {
+            penalizationOptions.put("target_v_units", 0);
         }
-        options.put("max_time_solving", maxTimeSolving);
-        return options;
-    }
 
-    public DivergenceAnalyserParameters setTargetVUnitsPenal(boolean targetVUnitsPenal) {
-        this.targetVUnitsPenal = targetVUnitsPenal;
         return this;
     }
 
-    public DivergenceAnalyserParameters setTargetVSvcPenal(boolean targetVSvcPenal) {
-        this.targetVSvcPenal = targetVSvcPenal;
+    /**
+     * @param isActivated boolean to activate/inactive of penalization svc target V.
+     * @return the object on which the method is applied.
+     */
+    public DivergenceAnalyserParameters setTargetVSvcPenal(boolean isActivated) {
+        if (isActivated) {
+            penalizationOptions.put("target_v_svc", 1);
+        } else {
+            penalizationOptions.put("target_v_svc", 0);
+        }
+
         return this;
     }
 
-    public DivergenceAnalyserParameters setRhoTransformerPenal(boolean rhoTransformerPenal) {
-        this.rhoTransformerPenal = rhoTransformerPenal;
+    /**
+     * @param isActivated boolean to activate/inactive penalization of transformer ratio.
+     * @return the object on which the method is applied.
+     */
+    public DivergenceAnalyserParameters setRhoTransformerPenal(boolean isActivated) {
+        if (isActivated) {
+            penalizationOptions.put("rho_transformer", 1);
+        } else {
+            penalizationOptions.put("rho_transformer", 0);
+        }
         return this;
     }
 
-    public DivergenceAnalyserParameters setAlphaPSTPenal(boolean alphaPSTPenal) {
-        this.alphaPSTPenal = alphaPSTPenal;
+    /**
+     * @param isActivated boolean to activate/inactive penalization of phase shifts.
+     * @return the object on which the method is applied.
+     */
+    public DivergenceAnalyserParameters setAlphaPSTPenal(boolean isActivated) {
+        if (isActivated) {
+            penalizationOptions.put("phase_shift", 1);
+        } else {
+            penalizationOptions.put("phase_shift", 0);
+        }
         return this;
     }
 
-    public DivergenceAnalyserParameters setYPenal(boolean yPenal) {
-        this.yPenal = yPenal;
+    /**
+     * @param isActivated boolean to activate/inactive penalization of admittance.
+     * @return the object on which the method is applied.
+     */
+    public DivergenceAnalyserParameters setYPenal(boolean isActivated) {
+        if (isActivated) {
+            penalizationOptions.put("admittance", 1);
+        } else {
+            penalizationOptions.put("admittance", 0);
+        }
         return this;
     }
 
-    public DivergenceAnalyserParameters setXiPenal(boolean xiPenal) {
-        this.xiPenal = xiPenal;
+    /**
+     * @param isActivated boolean to activate/inactive penalization of xi.
+     * @return the object on which the method is applied.
+     */
+    public DivergenceAnalyserParameters setXiPenal(boolean isActivated) {
+        if (isActivated) {
+            penalizationOptions.put("xi", 1);
+        } else {
+            penalizationOptions.put("xi", 0);
+        }
         return this;
     }
 
-    public DivergenceAnalyserParameters setG1Penal(boolean g1Penal) {
-        this.g1Penal = g1Penal;
+    /**
+     * @param isActivated boolean to activate/inactive penalization of shunt 1 conductance.
+     * @return the object on which the method is applied.
+     */
+    public DivergenceAnalyserParameters setG1Penal(boolean isActivated) {
+        if (isActivated) {
+            penalizationOptions.put("g_shunt_1", 1);
+        } else {
+            penalizationOptions.put("g_shunt_1", 0);
+        }
         return this;
     }
 
-    public DivergenceAnalyserParameters setG2penal(boolean g2penal) {
-        this.g2penal = g2penal;
+    /**
+     * @param isActivated boolean to activate/inactive penalization of shunt 2 conductance.
+     * @return the object on which the method is applied.
+     */
+    public DivergenceAnalyserParameters setG2Penal(boolean isActivated) {
+        if (isActivated) {
+            penalizationOptions.put("g_shunt_2", 1);
+        } else {
+            penalizationOptions.put("g_shunt_2", 0);
+        }
         return this;
     }
 
-    public DivergenceAnalyserParameters setB1Penal(boolean b1Penal) {
-        this.b1Penal = b1Penal;
+    /**
+     * @param isActivated boolean to activate/inactive penalization of shunt 1 susceptance.
+     * @return the object on which the method is applied.
+     */
+    public DivergenceAnalyserParameters setB1Penal(boolean isActivated) {
+        if (isActivated) {
+            penalizationOptions.put("b_shunt_1", 1);
+        } else {
+            penalizationOptions.put("b_shunt_1", 0);
+        }
         return this;
     }
 
-    public DivergenceAnalyserParameters setB2Penal(boolean b2Penal) {
-        this.b2Penal = b2Penal;
+    /**
+     * @param isActivated boolean to activate/inactive penalization of shunt 2 susceptance.
+     * @return the object on which the method is applied.
+     */
+    public DivergenceAnalyserParameters setB2Penal(boolean isActivated) {
+        if (isActivated) {
+            penalizationOptions.put("b_shunt_2", 1);
+        } else {
+            penalizationOptions.put("b_shunt_2", 0);
+        }
         return this;
     }
 
-    public DivergenceAnalyserParameters setIsRelaxed(boolean isRelaxed) {
-        this.isContinuous = isRelaxed;
+    /**
+     * @param solvingMode the solving mode of the solver used for the divergence analysis.
+     * @return the object on which the method is applied.
+     */
+    public DivergenceAnalyserParameters setSolvingMode(int solvingMode){
+        if (0 <= solvingMode && solvingMode <= 2){
+            solvingOptions.put("solving_mode", solvingMode);
+        } else {
+            throw new IllegalArgumentException();
+        }
+
         return this;
     }
 
+    /**
+     * Put solving mode to 2
+     * @return the object on which the method is applied.
+     */
+    public DivergenceAnalyserParameters setMPECResolution(){
+        return setSolvingMode(2);
+    }
+
+    /**
+     * Put solving mode to 1.
+     * @return the object on which the method is applied.
+     */
+    public DivergenceAnalyserParameters setRelaxResolution() {
+        return setSolvingMode(1);
+    }
+
+    /**
+     * Put solving mode to 0.
+     * @return the object on which the method is applied.
+     */
+    public DivergenceAnalyserParameters setMINLPResolution() {
+        return setSolvingMode(0);
+    }
+
+    /**
+     * @param maxTimeSolving the maximum time the solver will run.
+     * @return the object on which the method is applied.
+     */
     public DivergenceAnalyserParameters setMaxTimeSolving(int maxTimeSolving) {
-        this.maxTimeSolving = maxTimeSolving;
+        if (maxTimeSolving > 0) {
+            solvingOptions.put("max_time_solving", maxTimeSolving);
+        } else {
+            throw new IllegalArgumentException();
+        }
+
         return this;
     }
 
