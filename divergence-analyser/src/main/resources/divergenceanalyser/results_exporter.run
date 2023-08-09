@@ -54,7 +54,7 @@ if mip_strategy == 0 then {
       # New values of parameters
       if (qq,m,n) in BRANCHCC_TRANSFORMER then branch_Ror[qq,m,n]+sigma1[qq,m,n] else branch_Ror[qq,m,n], 
       branch_admi[qq,m,n]+sigma2[qq,m,n], 
-      if (qq,m,n) in BRANCHCC_REGL then branch_dephor[qq,m,n]+sigma3[qq,m,n] else branch_dephor[qq,m,n], 
+      if (qq,m,n) in BRANCHCC_DEPH then branch_dephor[qq,m,n]+sigma3[qq,m,n] else branch_dephor[qq,m,n], 
       branch_angper[qq,m,n]+sigma4[qq,m,n], 
       branch_Gor[1,qq,m,n]+sigma5[qq,m,n],
       branch_Bor[1,qq,m,n]+sigma6[qq,m,n], 
@@ -83,7 +83,7 @@ if mip_strategy == 0 then {
       # New values of parameters
       if (qq,m,n) in BRANCHCC_TRANSFORMER then branch_Ror[qq,m,n]+sigma1[qq,m,n] else branch_Ror[qq,m,n], 
       branch_admi[qq,m,n]+sigma2[qq,m,n], 
-      if (qq,m,n) in BRANCHCC_REGL then branch_dephor[qq,m,n]+sigma3[qq,m,n] else branch_dephor[qq,m,n], 
+      if (qq,m,n) in BRANCHCC_DEPH then branch_dephor[qq,m,n]+sigma3[qq,m,n] else branch_dephor[qq,m,n], 
       branch_angper[qq,m,n]+sigma4[qq,m,n], 
       branch_Gor[1,qq,m,n]+sigma5[qq,m,n],
       branch_Bor[1,qq,m,n]+sigma6[qq,m,n], 
