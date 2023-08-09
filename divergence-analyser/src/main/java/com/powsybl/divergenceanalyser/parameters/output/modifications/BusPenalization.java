@@ -6,6 +6,8 @@
  */
 package com.powsybl.divergenceanalyser.parameters.output.modifications;
 
+import com.powsybl.iidm.network.Network;
+
 /**
  * @author Pierre ARVY <pierre.arvy@artelys.com>
  */
@@ -23,12 +25,24 @@ public class BusPenalization {
         this.newTargetV = newTargetV;
     }
 
-    public void print() {
+    public void printPu() {
         System.out.println("For bus " + getBusId() + " : ");
-
         if (isTargetVPenalized()) {
-            System.out.println("New target V = " + getNewTargetV()
-                    + " (slack = " + getSlackTargetV() + ")");
+            System.out.println("\tTarget V modification : ");
+            System.out.println("\t\tNew Value = " + getNewTargetV() + " p.u. / Old value = "
+                    + (getNewTargetV() + getSlackTargetV()) + " p.u. (difference = " + getSlackTargetV() + " p.u.)");
+        }
+    }
+
+    public void printSi(Network network) {
+        double nomV = network.getBusView().getBus(getBusId()).getVoltageLevel().getNominalV();
+
+        System.out.println("For bus " + getBusId() + " : ");
+        if (isTargetVPenalized()) {
+            System.out.println("\tTarget V modification : ");
+            double targetV = getNewTargetV() * nomV;
+            System.out.println("\t\tNew value = " + targetV + " kV / Old value = "
+                    + (targetV + getSlackTargetV() * nomV) + " kV (difference = " + targetV + " kV)");
         }
     }
 

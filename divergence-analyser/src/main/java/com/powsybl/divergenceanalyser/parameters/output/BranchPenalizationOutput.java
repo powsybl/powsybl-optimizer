@@ -36,7 +36,6 @@ public class BranchPenalizationOutput implements AmplOutputFile {
 
     public static final int NEW_VAL_FIRST_COL = 3;
     public static final int SLACK_FIRST_COL = 11;
-    public static final int BIN_FIRST_COL = 19;
 
     public static final int EXPECTED_COLS = 28;
     private static final String SEP = ";";
@@ -102,19 +101,9 @@ public class BranchPenalizationOutput implements AmplOutputFile {
         double slackG2 = readDouble(tokens[SLACK_FIRST_COL + G2_PLACE]);
         double slackB2 = readDouble(tokens[SLACK_FIRST_COL + B2_PLACE]);
 
-        boolean isRhoPenalised = readDouble(tokens[BIN_FIRST_COL + RHO_PLACE]) > 0;
-        boolean isYPenalised = readDouble(tokens[BIN_FIRST_COL + Y_PLACE]) > 0;
-        boolean isAlphaPenalised = readDouble(tokens[BIN_FIRST_COL + ALPHA_PLACE]) > 0;
-        boolean isXiPenalised = readDouble(tokens[BIN_FIRST_COL + XI_PLACE]) > 0;
-        boolean isG1Penalised = readDouble(tokens[BIN_FIRST_COL + G1_PLACE]) > 0;
-        boolean isB1Penalised = readDouble(tokens[BIN_FIRST_COL + B1_PLACE]) > 0;
-        boolean isG2Penalised = readDouble(tokens[BIN_FIRST_COL + G2_PLACE]) > 0;
-        boolean isB2Penalised = readDouble(tokens[BIN_FIRST_COL + B2_PLACE]) > 0;
-
-        penalization.add(new BranchPenalization(id, isRhoPenalised, isYPenalised, isAlphaPenalised, isXiPenalised, isG1Penalised,
-                isB1Penalised, isG2Penalised, isB2Penalised,
-                slackRho, slackY, slackAlpha, slackXi, slackG1, slackB1, slackG2, slackB2,
-                rho, y, alpha, xi, g1, b1, g2, b2));
+        penalization.add(
+                new BranchPenalization(id, slackRho, slackY, slackAlpha, slackXi, slackG1, slackB1, slackG2, slackB2, // Slacks
+                rho, y, alpha, xi, g1, b1, g2, b2)); // New values
 
     }
 

@@ -9,6 +9,7 @@ package com.powsybl.divergenceanalyser;
 import com.powsybl.divergenceanalyser.parameters.DivergenceAnalyserAmplIOFiles;
 import com.powsybl.divergenceanalyser.parameters.output.modifications.BranchPenalization;
 import com.powsybl.divergenceanalyser.parameters.output.modifications.BusPenalization;
+import com.powsybl.iidm.network.Network;
 import org.jgrapht.alg.util.Pair;
 
 import java.util.ArrayList;
@@ -56,33 +57,62 @@ public class DivergenceAnalyserResults {
     }
 
     /**
-     * Print all penalization.
+     * Print all penalization in p.u.
      */
-    public void printPenalization() {
-        printBusPenalization();
-        printBranchPenalization();
+    public void printPenalizationPu() {
+        printBusPenalizationPu();
+        printBranchPenalizationPu();
     }
 
     /**
-     * Print penalization on buses.
+     * Print buses penalization in p.u.
      */
-    public void printBusPenalization() {
+    public void printBusPenalizationPu() {
         for (BusPenalization penal : busPenalization) {
-            penal.print();
+            penal.printPu();
         }
     }
 
     /**
-     * Print penalization on branches.
+     * Print branches penalization in p.u.
      */
-    public void printBranchPenalization() {
+    public void printBranchPenalizationPu() {
         for (BranchPenalization penal : branchPenalization) {
-            penal.print();
+            penal.printPu();
         }
     }
 
     /**
-     * Print all the indicators of the run.
+     * Print all penalization with SI units.
+     * @param network the network in which are the buses/branches penalized.
+     */
+    public void printPenalizationSi(Network network) {
+        printBusPenalizationSi(network);
+        printBranchPenalizationSi(network);
+    }
+
+    /**
+     * Print buses penalization with SI units.
+     * @param network the network in which are the buses penalized.
+     */
+    public void printBusPenalizationSi(Network network) {
+        for (BusPenalization penal : busPenalization) {
+            penal.printSi(network);
+        }
+    }
+
+    /**
+     * Print branches penalization with SI units.
+     * @param network the network in which are the branches penalized.
+     */
+    public void printBranchPenalizationSi(Network network) {
+        for (BranchPenalization penal : branchPenalization) {
+            penal.printSi(network);
+        }
+    }
+
+    /**
+     * Print all the indicators of the divergence analysis.
      */
     public void printIndicators() {
         printIndicator(runIndicators);
@@ -123,6 +153,9 @@ public class DivergenceAnalyserResults {
         // Print foot box
         System.out.println("╚" + separator + "╝");
     }
+
+
+    // Getters
 
     public List<Pair<String, String>> getRunIndicators() {
         return runIndicators;
