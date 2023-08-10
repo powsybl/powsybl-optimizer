@@ -12,3 +12,7 @@ org.eclipse.core.resources.prefs
 org.eclipse.jdt.core.prefs
 org.eclipse.m2e.core.prefs
 org.eclipse.jdt.groovy.core.prefs
+
+# AMPL computation result files
+**/AMPL_runner_*.err
+**/AMPL_runner_*.out
