@@ -14,20 +14,18 @@ import com.powsybl.iidm.network.Network;
 public class BusPenalization {
 
     String busId;
-    boolean isTargetVPenalized;
     double slackTargetV;
     double newTargetV;
 
-    public BusPenalization(String busId, boolean isTargetVPenalized, double slackTargetV, double newTargetV) {
+    public BusPenalization(String busId, double slackTargetV, double newTargetV) {
         this.busId = busId;
-        this.isTargetVPenalized = isTargetVPenalized;
         this.slackTargetV = slackTargetV;
         this.newTargetV = newTargetV;
     }
 
     public void printPu() {
         System.out.println("For bus " + getBusId() + " : ");
-        if (isTargetVPenalized()) {
+        if (Math.abs(getSlackTargetV()) > 0) {
             System.out.println("\tTarget V modification : ");
             System.out.println("\t\tNew Value = " + getNewTargetV() + " p.u. / Old value = "
                     + (getNewTargetV() + getSlackTargetV()) + " p.u. (difference = " + getSlackTargetV() + " p.u.)");
@@ -38,7 +36,7 @@ public class BusPenalization {
         double nomV = network.getBusView().getBus(getBusId()).getVoltageLevel().getNominalV();
 
         System.out.println("For bus " + getBusId() + " : ");
-        if (isTargetVPenalized()) {
+        if (Math.abs(getSlackTargetV()) > 0) {
             System.out.println("\tTarget V modification : ");
             double targetV = getNewTargetV() * nomV;
             System.out.println("\t\tNew value = " + targetV + " kV / Old value = "
@@ -48,10 +46,6 @@ public class BusPenalization {
 
     public String getBusId() {
         return busId;
-    }
-
-    public boolean isTargetVPenalized() {
-        return isTargetVPenalized;
     }
 
     public double getSlackTargetV() {
