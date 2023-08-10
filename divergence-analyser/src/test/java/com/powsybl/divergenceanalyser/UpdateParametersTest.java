@@ -16,10 +16,13 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Pierre ARVY <pierre.arvy@artelys.com>
  */
-public class DivergenceAnalysisParametersTest {
+public class UpdateParametersTest {
 
+    /**
+     * Verify the update of the solving options.
+     */
     @Test
-    void testSolvingOptions() {
+    void testSolvingOptionsUpdate() {
         DivergenceAnalyserParameters parameters = new DivergenceAnalyserParameters();
         HashMap<String, Integer> solvingOptions = parameters.getSolvingOptions();
 
@@ -27,7 +30,7 @@ public class DivergenceAnalysisParametersTest {
         assertEquals(solvingOptions.get("max_time_solving"), 120);
         assertEquals(solvingOptions.get("solving_mode"), 0);
 
-        // Verify the update of solving mode
+        // Verify the update of solving_mode param
         parameters.setResolutionNlp();
         assertEquals(solvingOptions.get("solving_mode"), 1);
 
@@ -40,21 +43,20 @@ public class DivergenceAnalysisParametersTest {
         assertThrows(IllegalArgumentException.class, () -> parameters.setSolvingMode(4));
         assertThrows(IllegalArgumentException.class, () -> parameters.setSolvingMode(-1));
 
-        // Verify the update of max time solving
+        // Verify the update of max_time_solving param
         parameters.setMaxTimeSolving(68);
         assertEquals(solvingOptions.get("max_time_solving"), 68);
 
         assertThrows(IllegalArgumentException.class, () -> parameters.setMaxTimeSolving(0));
         assertThrows(IllegalArgumentException.class, () -> parameters.setMaxTimeSolving(-5));
-
     }
+
 
     /**
      * Verify a penalization is removed if user asks it.
      */
     @Test
-    void removePenalizationToParameters() {
-
+    void testRemovePenalizationOptions() {
         DivergenceAnalyserParameters parameters = new DivergenceAnalyserParameters();
         HashMap<String, Integer> penalization = parameters.getPenalizationOptions();
 
@@ -100,8 +102,7 @@ public class DivergenceAnalysisParametersTest {
      * Verify a penalization is added if user asks it.
      */
     @Test
-    void addPenalizationToParameters() {
-
+    void testAddPenalizationOptions() {
         DivergenceAnalyserParameters parameters = new DivergenceAnalyserParameters();
         HashMap<String, Integer> penalization = parameters.getPenalizationOptions();
 

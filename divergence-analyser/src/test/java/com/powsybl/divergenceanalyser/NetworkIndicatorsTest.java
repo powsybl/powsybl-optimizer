@@ -66,7 +66,7 @@ public class NetworkIndicatorsTest {
     }
 
     @Test
-    void networkWith3wtInfo() throws IOException {
+    void testSmallNetworkWith3wt() throws IOException {
         Network network = VoltageControlNetworkFactory.createNetworkWithT3wt();
         areNetworkIndicatorsCorrect(network, 0, 5, 1, 4, 1, 0, 1);
     }

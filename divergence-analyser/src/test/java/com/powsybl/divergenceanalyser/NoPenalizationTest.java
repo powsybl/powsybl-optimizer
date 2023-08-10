@@ -91,7 +91,7 @@ public class NoPenalizationTest {
      * Test that divergence analysis does converge without penalty for consistent handmade network with 3wt.
      */
     @Test
-    void testNetworkWith3wt() throws IOException {
+    void testSmallNetworkWith3wt() throws IOException {
         Network network = VoltageControlNetworkFactory.createNetworkWithT3wt();
         noUselessPenalizationDivergenceAnalysis(network);
     }

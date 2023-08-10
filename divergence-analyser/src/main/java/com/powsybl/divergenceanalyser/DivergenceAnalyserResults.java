@@ -154,7 +154,6 @@ public class DivergenceAnalyserResults {
         System.out.println("╚" + separator + "╝");
     }
 
-
     // Getters
 
     public List<Pair<String, String>> getRunIndicators() {

@@ -289,7 +289,6 @@ public class BranchPenalization {
         }
     }
 
-
     public String getBranchId() {
         return branchId;
     }
