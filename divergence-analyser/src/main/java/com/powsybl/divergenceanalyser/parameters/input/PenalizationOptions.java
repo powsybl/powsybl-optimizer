@@ -18,12 +18,12 @@ import java.util.HashMap;
 /**
  * @author Pierre ARVY <pierre.arvy@artelys.com>
  */
-public class PenalizationControl implements AmplInputFile {
-    private final String fileName = "penal.txt";
+public class PenalizationOptions implements AmplInputFile {
+    private final String fileName = "penal_options.txt";
 
     HashMap<String, Integer> penalization;
 
-    public PenalizationControl(HashMap<String, Integer> penalization) {
+    public PenalizationOptions(HashMap<String, Integer> penalization) {
         this.penalization = penalization;
     }
 

@@ -8,7 +8,7 @@ package com.powsybl.divergenceanalyser.parameters;
 
 import com.powsybl.divergenceanalyser.parameters.input.DivergenceAnalyserParameters;
 import com.powsybl.divergenceanalyser.parameters.input.SolvingOptions;
-import com.powsybl.divergenceanalyser.parameters.input.PenalizationControl;
+import com.powsybl.divergenceanalyser.parameters.input.PenalizationOptions;
 import com.powsybl.divergenceanalyser.parameters.output.BranchPenalizationOutput;
 import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.ampl.executor.AmplOutputFile;
@@ -27,7 +27,7 @@ import java.util.List;
 public class DivergenceAnalyserAmplIOFiles implements AmplParameters {
 
     // Input files
-    PenalizationControl penalizationControl;
+    PenalizationOptions penalizationOptions;
     SolvingOptions solvingOptions;
 
     // Output files
@@ -40,7 +40,7 @@ public class DivergenceAnalyserAmplIOFiles implements AmplParameters {
 
     public DivergenceAnalyserAmplIOFiles(DivergenceAnalyserParameters params, boolean debug) {
         // Input file for activation of variables in ampl minlp
-        this.penalizationControl = new PenalizationControl(params.getPenalizationOptions());
+        this.penalizationOptions = new PenalizationOptions(params.getPenalizationOptions());
         this.solvingOptions = new SolvingOptions(params.getSolvingOptions());
 
         // Output file (indicators, network modifications...)
@@ -54,7 +54,7 @@ public class DivergenceAnalyserAmplIOFiles implements AmplParameters {
 
     @Override
     public Collection<AmplInputFile> getInputParameters() {
-        return List.of(penalizationControl, solvingOptions);
+        return List.of(penalizationOptions, solvingOptions);
     }
 
     @Override

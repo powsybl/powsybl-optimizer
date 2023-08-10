@@ -48,7 +48,7 @@ set SOLVING_OPTIONS_KEYS;
 param PENAL_VALUES{PENAL_KEYS} symbolic;
 param SOLVING_OPTIONS_VALUES{SOLVING_OPTIONS_KEYS} symbolic;
 data;
-param: PENAL_KEYS: PENAL_VALUES := include penal.txt;
+param: PENAL_KEYS: PENAL_VALUES := include penal_options.txt;
 param: SOLVING_OPTIONS_KEYS: SOLVING_OPTIONS_VALUES := include solving_options.txt;
 model;
 display PENAL_VALUES;
