@@ -1,4 +1,4 @@
-# Powsybl-optimizer / divergence-analyser module
+# Divergence Analyser
 
 ## Overview
 
@@ -9,7 +9,7 @@ due to such inconsistencies.
 
 The tool relies on an AMPL-implemented Mixed Integer Non-Linear Program (MINLP), which is solved using the Knitro solver.
 This MINLP applies penalties to power network parameters by solving corresponding load flow equations.
-It provides users with the calculated penalties and indicators, facilitating the identification of these inconsistencies.
+It provides users with the calculated penalties and indicators, facilitating the identification of the inconsistencies in power network parameters.
 
 The capabilities and limitations of the tool are outlined in the document [INCOMING].
 
@@ -21,7 +21,7 @@ For this project, you must have [AMPL](https://ampl.com/) installed.
 AMPL is a proprietary tool that works as an optimization modelling language, and it can be interfaced with many solvers.
 AMPL is sold by many companies, including Artelys, and you can find keys [here](https://www.artelys.com/solvers/ampl/).
 
-Then, you must add in your `src/test/resources/com/powsybl/config/test/config.yml` file, an ampl section like this:
+Then, you must add in your `~/.itools/config.yml` an ampl section like this:
 ```yaml
 ampl:
   # Change to the ampl folder path that contains the ampl executable
@@ -59,7 +59,7 @@ be subjected to penalties, thereby guiding the search for inconsistencies.
 Refer to the next section for further details. **The default setting has no penalization active**, 
 and invoking the method ```setAllPenalization(true)``` enables the penalization of all network parameters.
 
-Once the results are obtained, you can print the computed penalties (expressed in per unit 
+Once the results are obtained, the user can print the computed penalties (expressed in per unit 
 or international units) and run indicators, using the following code:
 
  ```java

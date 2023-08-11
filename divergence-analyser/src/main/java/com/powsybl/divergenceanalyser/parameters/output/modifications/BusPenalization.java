@@ -38,9 +38,10 @@ public class BusPenalization {
         System.out.println("For bus " + getBusId() + " : ");
         if (Math.abs(getSlackTargetV()) > 0) {
             System.out.println("\tTarget V modification : ");
-            double targetV = getNewTargetV() * nomV;
-            System.out.println("\t\tNew value = " + targetV + " kV / Old value = "
-                    + (targetV + getSlackTargetV() * nomV) + " kV (difference = " + targetV + " kV)");
+            double newTargetVSi = getNewTargetV() * nomV;
+            double oldTargetVSi = (getNewTargetV() - getSlackTargetV()) * nomV;
+            System.out.println("\t\tNew value = " + newTargetVSi + " kV / Old value = "
+                    + oldTargetVSi + " kV (difference = " + Math.abs(newTargetVSi - oldTargetVSi) + " kV)");
         }
     }
 
