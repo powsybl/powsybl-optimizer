@@ -21,13 +21,14 @@ For this project, you must have [AMPL](https://ampl.com/) installed.
 AMPL is a proprietary tool that works as an optimization modelling language, and it can be interfaced with many solvers.
 AMPL is sold by many companies, including Artelys, and you can find keys [here](https://www.artelys.com/solvers/ampl/).
 
-Then, you must add in your `~/.itools/config.yml` an ampl section like this:
+Then, you must add in your `~/.itools/config.yml`, where `~` is your local home directory (where your personal files and settings are stored), an ampl section like this:
 ```yaml
 ampl:
   # Change to the ampl folder path that contains the ampl executable
   homeDir: /home/user/ampl
 ```
 
+For Windows users, be careful not to include any spaces in the specified path.
 ### Knitro
 
 From the AMPL code of the divergence analysis, the Knitro solver is called. Knitro is an optimization solver specialized in solving nonlinear problems.
