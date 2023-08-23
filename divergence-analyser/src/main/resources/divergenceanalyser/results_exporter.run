@@ -137,6 +137,7 @@ printf "final_status %s\n", final_status                                > (fileO
 printf "penalization %s\n", if total_penal > 0 then "YES" else "NO"     > (fileOut);
 printf "da_begin %Q\n", ctime_start                                     > (fileOut);
 printf "da_end %Q\n", ctime()                                           > (fileOut);
+printf "total_solve_time %.5f\n", _total_solve_time                       > (fileOut);
 printf "knitro_mode %s\n", if mip_strategy == 0 then "MINLP" else "NLP" > (fileOut);
 close(fileOut);
 printf "Exportation of da_indic.txt done.\n";
