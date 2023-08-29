@@ -200,8 +200,8 @@ public class OpenReacParameters {
                 lowLimit = Double.NaN;
                 LOGGER.warn("Voltage level '{}' has an unsupported limit [0, NaN], fix to [NaN, NaN]", vl.getId());
             }
-            if ((Double.isNaN(highLimit) && !Double.isNaN(lowLimit)) || (Double.isNaN(lowLimit) && !Double.isNaN(
-                highLimit))) {
+            // xor operator, exactly one limit must be NaN
+            if (Double.isNaN(highLimit) ^ Double.isNaN(lowLimit)) {
                 throw new PowsyblException(
                     "Voltage level '" + vl.getId() + "' has only one voltage limit defined (min:" + lowLimit +
                         ", max:" + highLimit + "). Please define none or both.");
