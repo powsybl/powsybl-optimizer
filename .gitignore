@@ -16,3 +16,6 @@ org.eclipse.jdt.groovy.core.prefs
 # AMPL computation result files
 **/AMPL_runner_*.err
 **/AMPL_runner_*.out
+
+# Python
+__pycache__/
