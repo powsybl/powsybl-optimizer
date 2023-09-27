@@ -557,7 +557,7 @@ for {(qq,m,n) in BRANCHCC_REGL} {
       and substation_Vnomi[1,bus_substation[1,n]] > ignore_voltage_bounds
       then let tempo := 1;
     let messageInfo := sprintf (
-    "ERROR INFEASIBLE transformer %Q %Q(%ikV)->%Q(%ikV) cstratio=%.3f ratio_min=%.3f ratio_max=%.3f : Vmin1=%.3f * ratio_min > Vmax2=%.3f",
+    "WARNING MAY HAVE FOUND INFEASIBLE transformer %Q %Q(%ikV)->%Q(%ikV) cstratio=%.3f ratio_min=%.3f ratio_max=%.3f : Vmin1=%.3f * ratio_min > Vmax2=%.3f",
     branch_id[1,qq,m,n],
     substation_id[1,bus_substation[1,m]],substation_Vnomi[1,bus_substation[1,m]],
     substation_id[1,bus_substation[1,n]],substation_Vnomi[1,bus_substation[1,n]],
@@ -573,7 +573,7 @@ for {(qq,m,n) in BRANCHCC_REGL} {
       and substation_Vnomi[1,bus_substation[1,n]] > ignore_voltage_bounds
       then let tempo := 1;
     let messageInfo := sprintf (
-    "ERROR INFEASIBLE transformer %Q %Q(%ikV)->%Q(%ikV) cstratio=%.3f ratio_min=%.3f ratio_max=%.3f : Vmax1=%.3f * ratio_max < Vmin2=%.3f",
+    "WARNING MAY HAVE FOUND INFEASIBLE transformer %Q %Q(%ikV)->%Q(%ikV) cstratio=%.3f ratio_min=%.3f ratio_max=%.3f : Vmax1=%.3f * ratio_max < Vmin2=%.3f",
     branch_id[1,qq,m,n],
     substation_id[1,bus_substation[1,m]],substation_Vnomi[1,bus_substation[1,m]],
     substation_id[1,bus_substation[1,n]],substation_Vnomi[1,bus_substation[1,n]],
@@ -593,7 +593,7 @@ for {(qq,m,n) in BRANCHCC_REGL_FIX} {
       and substation_Vnomi[1,bus_substation[1,n]] > ignore_voltage_bounds
       then let tempo := 1;
     let messageInfo := sprintf (
-    "ERROR INFEASIBLE transformer %Q %Q(%ikV)->%Q(%ikV) cstratio=%.3f fixed_ratio=%.3f : Vmin1=%.3f * ratio > Vmax2=%.3f",
+    "WARNING MAY HAVE FOUND INFEASIBLE transformer %Q %Q(%ikV)->%Q(%ikV) cstratio=%.3f fixed_ratio=%.3f : Vmin1=%.3f * ratio > Vmax2=%.3f",
     branch_id[1,qq,m,n],
     substation_id[1,bus_substation[1,m]],substation_Vnomi[1,bus_substation[1,m]],
     substation_id[1,bus_substation[1,n]],substation_Vnomi[1,bus_substation[1,n]],
@@ -609,7 +609,7 @@ for {(qq,m,n) in BRANCHCC_REGL_FIX} {
       and substation_Vnomi[1,bus_substation[1,n]] > ignore_voltage_bounds
       then let tempo := 1;
     let messageInfo := sprintf (
-    "ERROR INFEASIBLE transformer %Q %Q(%ikV)->%Q(%ikV) cstratio=%.3f fixed_ratio=%.3f : Vmax1=%.3f * ratio < Vmin2=%.3f",
+    "WARNING MAY HAVE FOUND INFEASIBLE transformer %Q %Q(%ikV)->%Q(%ikV) cstratio=%.3f fixed_ratio=%.3f : Vmax1=%.3f * ratio < Vmin2=%.3f",
     branch_id[1,qq,m,n],
     substation_id[1,bus_substation[1,m]],substation_Vnomi[1,bus_substation[1,m]],
     substation_id[1,bus_substation[1,n]],substation_Vnomi[1,bus_substation[1,n]],
@@ -621,9 +621,9 @@ for {(qq,m,n) in BRANCHCC_REGL_FIX} {
   }
 }
 if tempo > 0.5 then {
-  let errorMessage := "ERROR INFEASIBLE some voltages bounds and not feasible with transformers ratios";
-  let final_status := "NOK";
-  include reactiveopfexit.run;
+  let errorMessage := "WARNING MAY HAVE FOUND INCONSISTENCIES between some voltage bounds and transformer ratios";
+  # let final_status := "NOK";
+  # include reactiveopfexit.run;
 }
 
 
