@@ -26,22 +26,13 @@ import java.util.*;
 public class OpenReacParameters {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OpenReacParameters.class);
-
     private static final String OBJECTIVE_DISTANCE_KEY = "ratio_voltage_target";
-
     private final Map<String, VoltageLimitOverride> specificVoltageLimits = new HashMap<>();
     private final List<String> variableShuntCompensators = new ArrayList<>();
     private final List<String> constantQGenerators = new ArrayList<>();
     private final List<String> variableTwoWindingsTransformers = new ArrayList<>();
     private final List<OpenReacAlgoParam> algorithmParams = new ArrayList<>();
     private OpenReacOptimisationObjective objective = OpenReacOptimisationObjective.MIN_GENERATION;
-
-    /**
-     * Must be used with {@link OpenReacOptimisationObjective}
-     * to define the voltage between low and high voltage limits, which OpenReac should converge to.
-     * Zero percent means that it should converge to low voltage limits. 100 percents means that it should
-     * converge to high voltage limits.
-     */
     private Double objectiveDistance;
 
     /**
@@ -115,6 +106,13 @@ public class OpenReacParameters {
         return this;
     }
 
+    /**
+     * Must be used with {@link OpenReacOptimisationObjective#BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT}
+     * to define the voltage between low and high voltage limits, which OpenReac should converge to.
+     * <p>
+     * A 0% objective means the model will target lower voltage limit.
+     * A 100% objective means the model will target upper voltage limit.
+     */
     public Double getObjectiveDistance() {
         return objectiveDistance;
     }
