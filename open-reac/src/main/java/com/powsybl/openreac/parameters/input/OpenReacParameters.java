@@ -180,40 +180,98 @@ public class OpenReacParameters {
                 throw new InvalidParametersException("Two windings transfromer " + transformerId + " not found in the network.");
             }
         }
+
+        // Check integrity of voltage overrides
+        boolean inconsistentOverride = false;
         for (String voltageLevelId : getSpecificVoltageLimits().keySet()) {
             VoltageLevel voltageLevel = network.getVoltageLevel(voltageLevelId);
-            VoltageLimitOverride override = getSpecificVoltageLimits().get(voltageLevelId);
+
+            // Check existence of voltage level on which is applied voltage limit override
             if (voltageLevel == null) {
-                throw new InvalidParametersException("Voltage level " + voltageLevelId + " not found in the network.");
+                LOGGER.warn("Voltage level " + voltageLevelId + " not found in the network.");
+                inconsistentOverride = true;
+
             } else {
+                // if low voltage override is relative, check new low voltage limit is > 0
+                VoltageLimitOverride override = getSpecificVoltageLimits().get(voltageLevelId);
                 if (override.getLowLimitKind() == VoltageLimitOverride.OverrideKind.RELATIVE &&
                         voltageLevel.getNominalV() + override.getLowLimitOverride() < 0) {
-                    throw new InvalidParametersException("Voltage level " + voltageLevelId + " relative override leads to negative low voltage limit.");
+                    LOGGER.warn("Voltage level " + voltageLevelId + " relative override leads to negative low voltage limit.");
+                    inconsistentOverride = true;
                 }
+                // if low voltage override is absolute, check new low voltage limit is > 0
                 if (override.getLowLimitKind() == VoltageLimitOverride.OverrideKind.ABSOLUTE &&
                         override.getLowLimitOverride() < 0) {
-                    throw new InvalidParametersException("Voltage level " + voltageLevelId + " absolute override leads to negative low voltage limit.");
+                    LOGGER.warn("Voltage level " + voltageLevelId + " absolute override leads to negative low voltage limit.");
+                    inconsistentOverride = true;
                 }
+                // if low/high voltage overrides are absolute, check new low limit is < new high limit
                 if (override.getLowLimitKind() == VoltageLimitOverride.OverrideKind.ABSOLUTE &&
-                        override.getHighLimitKind() == VoltageLimitOverride.OverrideKind.ABSOLUTE
-                        && override.getLowLimitOverride() > override.getHighLimitOverride()) {
-                    throw new InvalidParametersException("Voltage level " + voltageLevelId + " override leads to low voltage limit > high voltage limit.");
+                        override.getHighLimitKind() == VoltageLimitOverride.OverrideKind.ABSOLUTE &&
+                        override.getLowLimitOverride() > override.getHighLimitOverride()) {
+                    LOGGER.warn("Voltage level " + voltageLevelId + " override leads to low voltage limit > high voltage limit.");
+                    inconsistentOverride = true;
+                }
+            }
+
+        }
+
+        if (inconsistentOverride) {
+            throw new InvalidParametersException("At least one voltage limit override is inconsistent.");
+        }
+
+        // Check integrity of low/high voltage limits, taking into account voltage limit overrides
+        boolean limitUndefined = false;
+        for (VoltageLevel vl : network.getVoltageLevels()){
+            double lowLimit = vl.getLowVoltageLimit();
+            double highLimit = vl.getHighVoltageLimit();
+
+            if (lowLimit <= 0 || Double.isNaN(lowLimit)) {
+
+                // Check if voltage override exists
+                if (getSpecificVoltageLimits().containsKey(vl.getId())) {
+                    VoltageLimitOverride override = getSpecificVoltageLimits().get(vl.getId());
+
+                    // Relative override on undefined low voltage limit is incorrect
+                    if (override.getLowLimitKind() == VoltageLimitOverride.OverrideKind.RELATIVE) {
+                        LOGGER.warn("Relative voltage override impossible on undefined low voltage limit for voltage level '"
+                                + vl.getId() + "'.");
+                        limitUndefined = true;
+                    }
+
+                // If no voltage override, low voltage limit is undefined or incorrect
+                } else {
+                    LOGGER.warn("Voltage level '" + vl.getId() + "' has no low voltage limit defined. " +
+                            "Please add one or use a voltage limit override.");
+                    limitUndefined = true;
+                }
+            }
+
+            // If high voltage limit is undefined, check if voltage override exists
+            if (Double.isNaN(highLimit)) {
+
+                // Check if voltage override exists
+                if (getSpecificVoltageLimits().containsKey(vl.getId())) {
+                    VoltageLimitOverride override = getSpecificVoltageLimits().get(vl.getId());
+
+                    // Relative override on undefined high voltage limit is incorrect
+                    if (override.getHighLimitKind() == VoltageLimitOverride.OverrideKind.RELATIVE) {
+                        LOGGER.warn("Relative voltage override impossible on undefined high voltage limit for voltage level '"
+                                + vl.getId() + "'.");
+                        limitUndefined = true;
+                    }
+
+                    // If no voltage override, high voltage limit is undefined
+                } else {
+                    LOGGER.warn("Voltage level '" + vl.getId() + "' has no high voltage limit defined. " +
+                            "Please add one or use a voltage limit override.");
+                    limitUndefined = true;
                 }
             }
         }
-        for (VoltageLevel vl : network.getVoltageLevels()) {
-            double lowLimit = vl.getLowVoltageLimit();
-            double highLimit = vl.getHighVoltageLimit();
-            if (lowLimit == 0 && Double.isNaN(highLimit)) {
-                lowLimit = Double.NaN;
-                LOGGER.warn("Voltage level '{}' has an unsupported limit [0, NaN], fix to [NaN, NaN]", vl.getId());
-            }
-            // xor operator, exactly one limit must be NaN
-            if (Double.isNaN(highLimit) ^ Double.isNaN(lowLimit)) {
-                throw new PowsyblException(
-                    "Voltage level '" + vl.getId() + "' has only one voltage limit defined (min:" + lowLimit +
-                        ", max:" + highLimit + "). Please define none or both.");
-            }
+
+        if (limitUndefined) {
+            throw new InvalidParametersException("At least one voltage level has an undefined or incorrect voltage limit.");
         }
 
         if (objective.equals(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT) && objectiveDistance == null) {

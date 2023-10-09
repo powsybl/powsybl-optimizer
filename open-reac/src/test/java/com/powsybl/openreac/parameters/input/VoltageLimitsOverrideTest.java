@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2023, RTE (http://www.rte-france.com)
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package com.powsybl.openreac.parameters.input;
 
 import org.junit.jupiter.api.Test;
@@ -35,9 +41,17 @@ public class VoltageLimitsOverrideTest {
 
         // if no override value specified, invalid voltage limit override
         builder.withLowLimitKind(VoltageLimitOverride.OverrideKind.RELATIVE);
+        builder.withHighLimitKind(VoltageLimitOverride.OverrideKind.ABSOLUTE);
         assertThrows(IllegalStateException.class, builder::build);
 
-        builder.withHighLimitKind(VoltageLimitOverride.OverrideKind.ABSOLUTE);
+        // if low override value is undefined, invalid voltage limit override
+        builder.withLowLimitOverride(5)
+                .withHighLimitOverride(Double.NaN);
+        assertThrows(IllegalStateException.class, builder::build);
+
+        // if high override value is undefined, invalid voltage limit override
+        builder.withLowLimitOverride(Double.NaN)
+                .withHighLimitOverride(5);
         assertThrows(IllegalStateException.class, builder::build);
     }
 

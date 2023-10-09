@@ -101,10 +101,10 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
             String voltageLevelId = entry.getKey();
             VoltageLimitOverride limits = entry.getValue();
 
-            if (!Double.isNaN(limits.getLowLimitOverride()) || !Double.isNaN(limits.getHighLimitOverride())) {
+            if (!Double.isNaN(limits.getLowLimitOverride()) && !Double.isNaN(limits.getHighLimitOverride())) {
                 int amplId = stringToIntMapper.getInt(AmplSubset.VOLTAGE_LEVEL, voltageLevelId);
-                double newLowVoltageLimit = Double.isNaN(limits.getLowLimitOverride()) ? AmplConstants.INVALID_FLOAT_VALUE : limits.getLowLimitOverride();
-                double newHighVoltageLimit = Double.isNaN(limits.getHighLimitOverride()) ? AmplConstants.INVALID_FLOAT_VALUE : limits.getHighLimitOverride();
+                double newLowVoltageLimit = limits.getLowLimitOverride();
+                double newHighVoltageLimit = limits.getHighLimitOverride();
 
                 String[] tokens = {Integer.toString(amplId), Double.toString(newLowVoltageLimit), Double.toString(newHighVoltageLimit), AmplIOUtils.addQuotes(voltageLevelId)};
                 dataBuilder.append(String.join(" ", tokens));
