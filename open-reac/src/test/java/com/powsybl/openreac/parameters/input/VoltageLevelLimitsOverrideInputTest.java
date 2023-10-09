@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class VoltageLevelLimitsOverrideInputTest {
 
     @Test
-    void testRelativeOverrideOnUndefinedLimit() {
+    void testRelativeVoltageOverrideOnUndefinedLimit() {
         Network network = EurostagTutorialExample1Factory.create();
         VoltageLevel vlLoad = network.getVoltageLevel("VLLOAD");
 
@@ -61,7 +61,7 @@ class VoltageLevelLimitsOverrideInputTest {
     }
 
     @Test
-    void testRelativeOverride() throws IOException {
+    void testValidRelativeVoltageOverride() throws IOException {
         Network network = EurostagTutorialExample1Factory.create();
 
         // verify relative override can be applied on both defined low/high limits
@@ -88,7 +88,7 @@ class VoltageLevelLimitsOverrideInputTest {
     }
 
     @Test
-    void testAbsoluteOverride() throws IOException {
+    void testValidAbsoluteVoltageOverride() throws IOException {
         Network network = EurostagTutorialExample1Factory.create();
 
         // change high voltage limits to undefined values
@@ -113,6 +113,24 @@ class VoltageLevelLimitsOverrideInputTest {
                     "1 0.8333333333333334 1.0833333333333333 'VLGEN'") + System.lineSeparator() + System.lineSeparator();
             assertEquals(ref, data);
         }
+    }
+
+    @Test
+    void testInvalidAbsoluteVoltageOverride() {
+        Network network = EurostagTutorialExample1Factory.create();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
+        VoltageLevel vl = network.getVoltageLevel("VLGEN");
+
+        // Define absolute voltage limit override for "VLGEN" voltage level, with low limit > high limit
+        OpenReacParameters params = new OpenReacParameters();
+        params.addSpecificVoltageLimits(Map.of(vl.getId(),
+                new VoltageLimitOverrideBuilder().withLowLimitKind(VoltageLimitOverride.OverrideKind.ABSOLUTE)
+                        .withHighLimitKind(VoltageLimitOverride.OverrideKind.ABSOLUTE)
+                        .withLowLimitOverride(26)
+                        .withHighLimitOverride(20)
+                        .build()));
+
+        assertThrows(InvalidParametersException.class, () -> params.checkIntegrity(network));
     }
 
     @Test
@@ -181,5 +199,16 @@ class VoltageLevelLimitsOverrideInputTest {
                         .withHighLimitOverride(0)
                         .build()));
         assertThrows(InvalidParametersException.class, () -> params3.checkIntegrity(network));
+    }
+
+    void setDefaultVoltageLimits(Network network) {
+        for (VoltageLevel vl : network.getVoltageLevels()) {
+            if (vl.getLowVoltageLimit() <= 0 || Double.isNaN(vl.getLowVoltageLimit())) {
+                vl.setLowVoltageLimit(0.8 * vl.getNominalV());
+            }
+            if (Double.isNaN(vl.getHighVoltageLimit())) {
+                vl.setHighVoltageLimit(1.2 * vl.getNominalV());
+            }
+        }
     }
 }
