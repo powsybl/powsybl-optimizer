@@ -62,7 +62,7 @@ class ItoolsTest {
         assertEquals(List.of("2-winding-transfo"), loadedParams.getVariableTwoWindingsTransformers(), "Parsing of OpenReac parameters is wrong.");
         assertEquals(List.of("constant-q-gen"), loadedParams.getConstantQGenerators(), "Parsing of OpenReac parameters is wrong.");
         assertEquals(List.of("var-shunt", "var-shunt-2"), loadedParams.getVariableShuntCompensators(), "Parsing of OpenReac parameters is wrong.");
-        assertEquals(Map.of("voltageLevelId", new VoltageLimitOverride(-5, 5)),
+        assertEquals(Map.of("voltageLevelId", new VoltageLimitOverride(VoltageLimitOverride.OverrideKind.RELATIVE, VoltageLimitOverride.OverrideKind.RELATIVE, -5, 5)),
                 loadedParams.getSpecificVoltageLimits(),
                 "Parsing of OpenReac parameters is wrong.");
         assertEquals(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE, loadedParams.getObjective(), "Parsing of OpenReac parameters is wrong.");

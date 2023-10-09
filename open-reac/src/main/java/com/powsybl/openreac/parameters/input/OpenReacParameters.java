@@ -186,10 +186,18 @@ public class OpenReacParameters {
             if (voltageLevel == null) {
                 throw new InvalidParametersException("Voltage level " + voltageLevelId + " not found in the network.");
             } else {
-                if (voltageLevel.getNominalV()
-                        + override.getDeltaLowVoltageLimit()
-                        < 0) {
-                    throw new InvalidParametersException("Voltage level " + voltageLevelId + " override leads to negative lower voltage level.");
+                if (override.getLowLimitKind() == VoltageLimitOverride.OverrideKind.RELATIVE &&
+                        voltageLevel.getNominalV() + override.getLowLimitOverride() < 0) {
+                    throw new InvalidParametersException("Voltage level " + voltageLevelId + " relative override leads to negative low voltage limit.");
+                }
+                if (override.getLowLimitKind() == VoltageLimitOverride.OverrideKind.ABSOLUTE &&
+                        override.getLowLimitOverride() < 0) {
+                    throw new InvalidParametersException("Voltage level " + voltageLevelId + " absolute override leads to negative low voltage limit.");
+                }
+                if (override.getLowLimitKind() == VoltageLimitOverride.OverrideKind.ABSOLUTE &&
+                        override.getHighLimitKind() == VoltageLimitOverride.OverrideKind.ABSOLUTE
+                        && override.getLowLimitOverride() > override.getHighLimitOverride()) {
+                    throw new InvalidParametersException("Voltage level " + voltageLevelId + " override leads to low voltage limit > high voltage limit.");
                 }
             }
         }

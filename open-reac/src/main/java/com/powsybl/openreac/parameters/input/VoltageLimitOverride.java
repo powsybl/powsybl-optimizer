@@ -12,23 +12,42 @@ import java.util.Objects;
  * Class to store an override of a voltage level voltage limits.
  *
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ * @author Pierre Arvy <pierre.arvy at artelys.com>
  */
 public class VoltageLimitOverride {
 
-    private final double deltaLowVoltageLimit;
-    private final double deltaHighVoltageLimit;
-
-    public double getDeltaLowVoltageLimit() {
-        return deltaLowVoltageLimit;
+    public enum OverrideKind {
+        ABSOLUTE, RELATIVE;
     }
 
-    public double getDeltaHighVoltageLimit() {
-        return deltaHighVoltageLimit;
+    private final OverrideKind lowLimitKind;
+    private final OverrideKind highLimitKind;
+
+    private final double lowLimitOverride;
+    private final double highLimitOverride;
+
+    public double getLowLimitOverride() {
+        return lowLimitOverride;
     }
 
-    public VoltageLimitOverride(double deltaLowVoltageLimit, double deltaHighVoltageLimit) {
-        this.deltaLowVoltageLimit = deltaLowVoltageLimit;
-        this.deltaHighVoltageLimit = deltaHighVoltageLimit;
+    public double getHighLimitOverride() {
+        return highLimitOverride;
+    }
+
+    public OverrideKind getLowLimitKind() {
+        return lowLimitKind;
+    }
+
+    public OverrideKind getHighLimitKind() {
+        return highLimitKind;
+    }
+
+    public VoltageLimitOverride(OverrideKind lowLimitKind, OverrideKind highLimitKind,
+                                double lowLimitOverride, double highLimitOverride) {
+        this.lowLimitKind = lowLimitKind;
+        this.highLimitKind = highLimitKind;
+        this.lowLimitOverride = lowLimitOverride;
+        this.highLimitOverride = highLimitOverride;
     }
 
     @Override
@@ -40,12 +59,14 @@ public class VoltageLimitOverride {
             return false;
         }
         VoltageLimitOverride that = (VoltageLimitOverride) o;
-        return Double.compare(that.deltaLowVoltageLimit, deltaLowVoltageLimit) == 0
-                && Double.compare(that.deltaHighVoltageLimit, deltaHighVoltageLimit) == 0;
+        return that.lowLimitKind == lowLimitKind
+                && Double.compare(that.lowLimitOverride, lowLimitOverride) == 0
+                && that.highLimitKind == highLimitKind
+                && Double.compare(that.highLimitOverride, highLimitOverride) == 0;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(deltaLowVoltageLimit, deltaHighVoltageLimit);
+        return Objects.hash(lowLimitKind, lowLimitOverride, highLimitKind, highLimitOverride);
     }
 }

@@ -165,7 +165,9 @@ public class OpenReacTool implements Tool {
                 String voltageId = node.get("id").asText();
                 double lowerPercent = node.get("lower").asDouble();
                 double upperPercent = node.get("upper").asDouble();
-                openReacParameters.addSpecificVoltageLimits(Map.of(voltageId, new VoltageLimitOverride(lowerPercent, upperPercent)));
+                openReacParameters.addSpecificVoltageLimits(Map.of(voltageId,
+                        new VoltageLimitOverride(VoltageLimitOverride.OverrideKind.RELATIVE, VoltageLimitOverride.OverrideKind.RELATIVE,
+                                lowerPercent, upperPercent)));
             });
         }
         boolean objectiveSet = false;

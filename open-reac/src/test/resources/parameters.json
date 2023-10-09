@@ -2,12 +2,16 @@
   "version" : "1.0",
   "specificVoltageLimits" : {
     "bar" : {
-      "deltaLowVoltageLimit" : -1.2,
-      "deltaHighVoltageLimit" : 2.3
+      "lowLimitKind" : "ABSOLUTE",
+      "highLimitKind" : "ABSOLUTE",
+      "lowLimitOverride" : 20.0,
+      "highLimitOverride" : 26.0
     },
     "foo" : {
-      "deltaLowVoltageLimit" : -1.0,
-      "deltaHighVoltageLimit" : 2.0
+      "lowLimitKind" : "RELATIVE",
+      "highLimitKind" : "RELATIVE",
+      "lowLimitOverride" : -1.0,
+      "highLimitOverride" : 2.0
     }
   },
   "constantQGenerators" : [ "g1", "g2" ],

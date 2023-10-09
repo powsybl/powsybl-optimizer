@@ -26,23 +26,34 @@ public class VoltageLimitOverrideDeserializer extends StdDeserializer<VoltageLim
 
     @Override
     public VoltageLimitOverride deserialize(JsonParser parser, DeserializationContext deserializationContext) throws IOException {
-        double deltaLowVoltageLimit = 0;
-        double deltaHighVoltageLimit = 0;
+        VoltageLimitOverride.OverrideKind lowLimitKind = null;
+        VoltageLimitOverride.OverrideKind highLimitKind = null;
+        double lowLimitOverride = 0;
+        double highLimitOverride = 0;
 
         while (parser.nextToken() != JsonToken.END_OBJECT) {
             switch (parser.getCurrentName()) {
-                case "deltaLowVoltageLimit":
+                case "lowLimitKind":
                     parser.nextToken();
-                    deltaLowVoltageLimit = parser.readValueAs(Double.class);
+                    lowLimitKind = parser.readValueAs(VoltageLimitOverride.OverrideKind.class);
                     break;
-                case "deltaHighVoltageLimit":
+                case "highLimitKind":
                     parser.nextToken();
-                    deltaHighVoltageLimit = parser.readValueAs(Double.class);
+                    highLimitKind = parser.readValueAs(VoltageLimitOverride.OverrideKind.class);
+                    break;
+                case "lowLimitOverride":
+                    parser.nextToken();
+                    lowLimitOverride = parser.readValueAs(Double.class);
+                    break;
+                case "highLimitOverride":
+                    parser.nextToken();
+                    highLimitOverride = parser.readValueAs(Double.class);
                     break;
                 default:
                     throw new IllegalStateException("Unexpected field: " + parser.getCurrentName());
             }
         }
-        return new VoltageLimitOverride(deltaLowVoltageLimit, deltaHighVoltageLimit);
+        return new VoltageLimitOverride(lowLimitKind, highLimitKind,
+                lowLimitOverride, highLimitOverride);
     }
 }

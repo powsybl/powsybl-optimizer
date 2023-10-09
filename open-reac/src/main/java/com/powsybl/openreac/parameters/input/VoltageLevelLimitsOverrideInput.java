@@ -43,14 +43,46 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
         for (Map.Entry<String, VoltageLimitOverride> entry : voltageLimitsOverride.entrySet()) {
             String voltageLevelId = entry.getKey();
             VoltageLimitOverride limits = entry.getValue();
+
             double previousLowVoltageLimit = network.getVoltageLevel(voltageLevelId).getLowVoltageLimit();
             double previousHighVoltageLimit = network.getVoltageLevel(voltageLevelId).getHighVoltageLimit();
-            // If one of the limit is not defined, we ignore the override
-            if (!Double.isNaN(previousLowVoltageLimit) && !Double.isNaN(previousHighVoltageLimit)) {
-                double nominalV = network.getVoltageLevel(voltageLevelId).getNominalV();
-                normalizedVoltageLimitsOverride.put(voltageLevelId, new VoltageLimitOverride((previousLowVoltageLimit + limits.getDeltaLowVoltageLimit()) / nominalV,
-                        (previousHighVoltageLimit + limits.getDeltaHighVoltageLimit()) / nominalV));
+            double nominalV = network.getVoltageLevel(voltageLevelId).getNominalV();
+
+            VoltageLimitOverrideBuilder builder = new VoltageLimitOverrideBuilder()
+                    .withLowLimitKind(limits.getLowLimitKind())
+                    .withHighLimitKind(limits.getHighLimitKind());
+
+            // compute low normalized override
+            if (limits.getLowLimitKind() == VoltageLimitOverride.OverrideKind.ABSOLUTE) {
+                builder.withLowLimitOverride(limits.getLowLimitOverride() / nominalV);
+            } else if (limits.getLowLimitKind() == VoltageLimitOverride.OverrideKind.RELATIVE) {
+                // if override is relative, must check that previous limit of voltage level is defined
+                if (!Double.isNaN(previousLowVoltageLimit)) {
+                    builder.withLowLimitOverride((previousLowVoltageLimit + limits.getLowLimitOverride()) / nominalV);
+                } else {
+                    throw new IllegalArgumentException("Relative override must be done on valid low voltage limit");
+                }
+            // if no kind given, then no low voltage limit override
+            } else {
+                builder.withLowLimitOverride(previousLowVoltageLimit / nominalV);
             }
+
+            // compute high normalized override
+            if (limits.getHighLimitKind() == VoltageLimitOverride.OverrideKind.ABSOLUTE) {
+                builder.withHighLimitOverride(limits.getHighLimitOverride() / nominalV);
+            } else if (limits.getHighLimitKind() == VoltageLimitOverride.OverrideKind.RELATIVE) {
+                // if override is relative, must check that previous limit of voltage level is defined
+                if (!Double.isNaN(previousHighVoltageLimit)) {
+                    builder.withHighLimitOverride((previousHighVoltageLimit + limits.getHighLimitOverride()) / nominalV);
+                } else {
+                    throw new IllegalArgumentException("Relative override must be done on valid high voltage limit");
+                }
+            // if no kind given, then no high voltage limit override
+            } else {
+                builder.withHighLimitOverride(previousHighVoltageLimit / nominalV);
+            }
+
+            normalizedVoltageLimitsOverride.put(voltageLevelId, builder.build());
         }
     }
 
@@ -64,18 +96,22 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
         StringBuilder dataBuilder = new StringBuilder();
         dataBuilder.append("#num minV (pu) maxV (pu) id");
         dataBuilder.append(System.lineSeparator());
+
         for (Map.Entry<String, VoltageLimitOverride> entry : normalizedVoltageLimitsOverride.entrySet()) {
             String voltageLevelId = entry.getKey();
             VoltageLimitOverride limits = entry.getValue();
-            if (!Double.isNaN(limits.getDeltaHighVoltageLimit()) || !Double.isNaN(limits.getDeltaLowVoltageLimit())) {
+
+            if (!Double.isNaN(limits.getLowLimitOverride()) || !Double.isNaN(limits.getHighLimitOverride())) {
                 int amplId = stringToIntMapper.getInt(AmplSubset.VOLTAGE_LEVEL, voltageLevelId);
-                double newHighVoltageLimit = Double.isNaN(limits.getDeltaHighVoltageLimit()) ? AmplConstants.INVALID_FLOAT_VALUE : limits.getDeltaHighVoltageLimit();
-                double newLowVoltageLimit = Double.isNaN(limits.getDeltaLowVoltageLimit()) ? AmplConstants.INVALID_FLOAT_VALUE : limits.getDeltaLowVoltageLimit();
+                double newLowVoltageLimit = Double.isNaN(limits.getLowLimitOverride()) ? AmplConstants.INVALID_FLOAT_VALUE : limits.getLowLimitOverride();
+                double newHighVoltageLimit = Double.isNaN(limits.getHighLimitOverride()) ? AmplConstants.INVALID_FLOAT_VALUE : limits.getHighLimitOverride();
+
                 String[] tokens = {Integer.toString(amplId), Double.toString(newLowVoltageLimit), Double.toString(newHighVoltageLimit), AmplIOUtils.addQuotes(voltageLevelId)};
                 dataBuilder.append(String.join(" ", tokens));
                 dataBuilder.append(System.lineSeparator());
             }
         }
+
         //add new line at the end of the file !
         dataBuilder.append(System.lineSeparator());
         return new ByteArrayInputStream(dataBuilder.toString().getBytes(StandardCharsets.UTF_8));
