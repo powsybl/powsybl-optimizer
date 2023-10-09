@@ -32,6 +32,7 @@ class VoltageLevelLimitsOverrideInputTest {
     @Test
     void testRelativeVoltageOverrideOnUndefinedLimit() {
         Network network = EurostagTutorialExample1Factory.create();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         VoltageLevel vlLoad = network.getVoltageLevel("VLLOAD");
 
         // if relative override is intended on undefined low voltage limit, throws exception
@@ -63,6 +64,7 @@ class VoltageLevelLimitsOverrideInputTest {
     @Test
     void testValidRelativeVoltageOverride() throws IOException {
         Network network = EurostagTutorialExample1Factory.create();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
 
         // verify relative override can be applied on both defined low/high limits
         VoltageLevel vlGen = network.getVoltageLevel("VLGEN");
@@ -90,6 +92,7 @@ class VoltageLevelLimitsOverrideInputTest {
     @Test
     void testValidAbsoluteVoltageOverride() throws IOException {
         Network network = EurostagTutorialExample1Factory.create();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
 
         // change high voltage limits to undefined values
         VoltageLevel vlgen = network.getVoltageLevel("VLGEN");
@@ -136,6 +139,8 @@ class VoltageLevelLimitsOverrideInputTest {
     @Test
     void testUndefinedVoltageLevelLimits() {
         Network network = IeeeCdfNetworkFactory.create118();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
+
         VoltageLevel vl = network.getVoltageLevels().iterator().next();
         OpenReacParameters params = new OpenReacParameters();
 
@@ -158,9 +163,11 @@ class VoltageLevelLimitsOverrideInputTest {
     @Test
     void testNegativeLowVoltageValueOverride() {
         Network network = IeeeCdfNetworkFactory.create118();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
+
         VoltageLevel vl = network.getVoltageLevels().iterator().next();
-        vl.setLowVoltageLimit(400);
         vl.setHighVoltageLimit(480);
+        vl.setLowVoltageLimit(400);
 
         // if low relative voltage override leads to negative voltage limit, throws exception
         OpenReacParameters params = new OpenReacParameters();
@@ -188,6 +195,7 @@ class VoltageLevelLimitsOverrideInputTest {
     @Test
     void testInvalidVoltageLevelOverride() {
         Network network = IeeeCdfNetworkFactory.create118();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
 
         // if voltage level (on which is applied override) is not in the network, throws exception
         OpenReacParameters params3 = new OpenReacParameters();
