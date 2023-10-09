@@ -116,7 +116,7 @@ class VoltageLevelLimitsOverrideInputTest {
     }
 
     @Test
-    void testUnsupportedNetwork() {
+    void testUndefinedVoltageLevelLimits() {
         Network network = IeeeCdfNetworkFactory.create118();
         VoltageLevel vl = network.getVoltageLevels().iterator().next();
         OpenReacParameters params = new OpenReacParameters();
@@ -126,14 +126,19 @@ class VoltageLevelLimitsOverrideInputTest {
         vl.setHighVoltageLimit(480);
         assertThrows(PowsyblException.class, () -> params.checkIntegrity(network));
 
-        // if only high voltage limit of one voltage level is undefined, invalid OpenReacParameters
+        // if only high voltage limit is undefined, invalid OpenReacParameters
         vl.setLowVoltageLimit(480);
+        vl.setHighVoltageLimit(Double.NaN);
+        assertThrows(PowsyblException.class, () -> params.checkIntegrity(network));
+
+        // if both low/high voltage limits are undefined, invalid OpenReacParameters
+        vl.setLowVoltageLimit(Double.NaN);
         vl.setHighVoltageLimit(Double.NaN);
         assertThrows(PowsyblException.class, () -> params.checkIntegrity(network));
     }
 
     @Test
-    void testNegativeLowOverride() {
+    void testNegativeLowVoltageValueOverride() {
         Network network = IeeeCdfNetworkFactory.create118();
         VoltageLevel vl = network.getVoltageLevels().iterator().next();
         vl.setLowVoltageLimit(400);

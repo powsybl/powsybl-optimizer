@@ -21,7 +21,7 @@ public class VoltageLimitOverrideBuilder {
         if (lowLimitOverride == 0 && highLimitOverride == 0) {
             throw new IllegalStateException("For a valid voltage limit override, at least one value must be provided.");
         }
-        if (Double.isNaN(lowLimitOverride) || Double.isNaN(highLimitOverride)){
+        if (Double.isNaN(lowLimitOverride) || Double.isNaN(highLimitOverride)) {
             throw new IllegalStateException("For a valid voltage limit override, no undefined value must be provided.");
         }
         return new VoltageLimitOverride(lowLimitKind, highLimitKind, lowLimitOverride, highLimitOverride);

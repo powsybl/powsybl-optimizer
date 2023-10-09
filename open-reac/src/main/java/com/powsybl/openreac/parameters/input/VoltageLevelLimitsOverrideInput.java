@@ -6,7 +6,6 @@
  */
 package com.powsybl.openreac.parameters.input;
 
-import com.powsybl.ampl.converter.AmplConstants;
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.commons.util.StringToIntMapper;

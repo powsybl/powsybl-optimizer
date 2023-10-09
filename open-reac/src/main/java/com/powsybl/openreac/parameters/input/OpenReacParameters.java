@@ -6,7 +6,6 @@
  */
 package com.powsybl.openreac.parameters.input;
 
-import com.powsybl.commons.PowsyblException;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
@@ -222,7 +221,7 @@ public class OpenReacParameters {
 
         // Check integrity of low/high voltage limits, taking into account voltage limit overrides
         boolean limitUndefined = false;
-        for (VoltageLevel vl : network.getVoltageLevels()){
+        for (VoltageLevel vl : network.getVoltageLevels()) {
             double lowLimit = vl.getLowVoltageLimit();
             double highLimit = vl.getHighVoltageLimit();
 
