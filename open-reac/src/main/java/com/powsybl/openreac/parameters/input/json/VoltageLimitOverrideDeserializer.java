@@ -26,34 +26,28 @@ public class VoltageLimitOverrideDeserializer extends StdDeserializer<VoltageLim
 
     @Override
     public VoltageLimitOverride deserialize(JsonParser parser, DeserializationContext deserializationContext) throws IOException {
-        VoltageLimitOverride.OverrideKind lowLimitKind = null;
-        VoltageLimitOverride.OverrideKind highLimitKind = null;
-        double lowLimitOverride = 0;
-        double highLimitOverride = 0;
+        VoltageLimitOverride.OverrideSide side = null;
+        boolean isRelative = false;
+        double overrideValue = 0;
 
         while (parser.nextToken() != JsonToken.END_OBJECT) {
             switch (parser.getCurrentName()) {
-                case "lowLimitKind":
+                case "overrideSide":
                     parser.nextToken();
-                    lowLimitKind = parser.readValueAs(VoltageLimitOverride.OverrideKind.class);
+                    side = parser.readValueAs(VoltageLimitOverride.OverrideSide.class);
                     break;
-                case "highLimitKind":
+                case "isRelative":
                     parser.nextToken();
-                    highLimitKind = parser.readValueAs(VoltageLimitOverride.OverrideKind.class);
+                    isRelative = parser.readValueAs(boolean.class);
                     break;
-                case "lowLimitOverride":
+                case "overrideValue":
                     parser.nextToken();
-                    lowLimitOverride = parser.readValueAs(Double.class);
-                    break;
-                case "highLimitOverride":
-                    parser.nextToken();
-                    highLimitOverride = parser.readValueAs(Double.class);
+                    overrideValue = parser.readValueAs(Double.class);
                     break;
                 default:
                     throw new IllegalStateException("Unexpected field: " + parser.getCurrentName());
             }
         }
-        return new VoltageLimitOverride(lowLimitKind, highLimitKind,
-                lowLimitOverride, highLimitOverride);
+        return new VoltageLimitOverride(side, isRelative, overrideValue);
     }
 }

@@ -1,19 +1,34 @@
 {
   "version" : "1.0",
-  "specificVoltageLimits" : {
-    "bar" : {
-      "lowLimitKind" : "ABSOLUTE",
-      "highLimitKind" : "ABSOLUTE",
-      "lowLimitOverride" : 20.0,
-      "highLimitOverride" : 26.0
-    },
-    "foo" : {
-      "lowLimitKind" : "RELATIVE",
-      "highLimitKind" : "RELATIVE",
-      "lowLimitOverride" : -1.0,
-      "highLimitOverride" : 2.0
+  "specificVoltageLimits" : [ {
+    "first" : "foo",
+    "second" : {
+      "overrideSide" : "LOW",
+      "isRelative" : true,
+      "overrideValue" : -1.0
     }
-  },
+  }, {
+    "first" : "foo",
+    "second" : {
+      "overrideSide" : "HIGH",
+      "isRelative" : true,
+      "overrideValue" : 2.0
+    }
+  }, {
+    "first" : "bar",
+    "second" : {
+      "overrideSide" : "LOW",
+      "isRelative" : false,
+      "overrideValue" : 20.0
+    }
+  }, {
+    "first" : "bar",
+    "second" : {
+      "overrideSide" : "HIGH",
+      "isRelative" : false,
+      "overrideValue" : 26.0
+    }
+  } ],
   "constantQGenerators" : [ "g1", "g2" ],
   "variableTwoWindingsTransformers" : [ "tr1" ],
   "variableShuntCompensators" : [ "sc1", "sc2" ],

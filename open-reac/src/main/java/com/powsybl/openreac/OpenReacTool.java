@@ -29,6 +29,7 @@ import com.powsybl.tools.ToolRunningContext;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
+import org.jgrapht.alg.util.Pair;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -165,9 +166,11 @@ public class OpenReacTool implements Tool {
                 String voltageId = node.get("id").asText();
                 double lowerPercent = node.get("lower").asDouble();
                 double upperPercent = node.get("upper").asDouble();
-                openReacParameters.addSpecificVoltageLimits(Map.of(voltageId,
-                        new VoltageLimitOverride(VoltageLimitOverride.OverrideKind.RELATIVE, VoltageLimitOverride.OverrideKind.RELATIVE,
-                                lowerPercent, upperPercent)));
+
+                List<Pair<String, VoltageLimitOverride>> voltageLimitOverrides = new ArrayList<>();
+                voltageLimitOverrides.add(new Pair<>(voltageId, new VoltageLimitOverride(VoltageLimitOverride.OverrideSide.LOW, true, lowerPercent)));
+                voltageLimitOverrides.add(new Pair<>(voltageId, new VoltageLimitOverride(VoltageLimitOverride.OverrideSide.HIGH, true, upperPercent)));
+                openReacParameters.addSpecificVoltageLimits(voltageLimitOverrides);
             });
         }
         boolean objectiveSet = false;

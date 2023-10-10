@@ -6,6 +6,7 @@
  */
 package com.powsybl.openreac.parameters.input;
 
+import com.powsybl.openreac.exceptions.InvalidParametersException;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -13,57 +14,59 @@ import static org.junit.jupiter.api.Assertions.*;
 public class VoltageLimitsOverrideTest {
 
     @Test
-    void validVoltageLimitOverrideBuilderTest() {
-        VoltageLimitOverrideBuilder builder = new VoltageLimitOverrideBuilder();
-        VoltageLimitOverride vlo;
-
-        // if one side of override specified, valid voltage limit override
-        builder.withLowLimitKind(VoltageLimitOverride.OverrideKind.RELATIVE)
-                .withLowLimitOverride(-1);
-        vlo = builder.build();
-        assertEquals(vlo.getLowLimitKind(), VoltageLimitOverride.OverrideKind.RELATIVE);
-        assertEquals(vlo.getLowLimitOverride(), -1);
-
-        // if two sides of override specified, valid voltage limit override
-        builder.withHighLimitKind(VoltageLimitOverride.OverrideKind.ABSOLUTE)
-                .withHighLimitOverride(410);
-        vlo = builder.build();
-        assertEquals(vlo.getHighLimitKind(), VoltageLimitOverride.OverrideKind.ABSOLUTE);
-        assertEquals(vlo.getHighLimitOverride(), 410);
+    void testToStringOverrideSide() {
+        VoltageLimitOverride.OverrideSide os = VoltageLimitOverride.OverrideSide.HIGH;
+        assertEquals(os.toString(), "HIGH");
+        os = VoltageLimitOverride.OverrideSide.LOW;
+        assertEquals(os.toString(), "LOW");
     }
 
     @Test
-    void invalidVoltageLimitOverrideBuilderTest() {
-        VoltageLimitOverrideBuilder builder = new VoltageLimitOverrideBuilder();
+    void invalidVoltageLimitOverride() {
+        // Verify it is impossible to create voltage limit override with NaN value...
+        assertThrows(InvalidParametersException.class,
+                () -> new VoltageLimitOverride(VoltageLimitOverride.OverrideSide.HIGH, true, Double.NaN));
+        assertThrows(InvalidParametersException.class,
+                () -> new VoltageLimitOverride(VoltageLimitOverride.OverrideSide.HIGH, false, Double.NaN));
+        assertThrows(InvalidParametersException.class,
+                () -> new VoltageLimitOverride(VoltageLimitOverride.OverrideSide.LOW, true, Double.NaN));
+        assertThrows(InvalidParametersException.class,
+                () -> new VoltageLimitOverride(VoltageLimitOverride.OverrideSide.LOW, false, Double.NaN));
 
-        // if no override kind specified, invalid voltage limit override
-        assertThrows(IllegalStateException.class, builder::build);
+        // Verify it is impossible to create absolute voltage limit override with negative value
+        assertThrows(InvalidParametersException.class,
+                () -> new VoltageLimitOverride(VoltageLimitOverride.OverrideSide.HIGH, false, -1));
+        assertThrows(InvalidParametersException.class,
+                () -> new VoltageLimitOverride(VoltageLimitOverride.OverrideSide.LOW, false, -1));
+    }
 
-        // if no override value specified, invalid voltage limit override
-        builder.withLowLimitKind(VoltageLimitOverride.OverrideKind.RELATIVE);
-        builder.withHighLimitKind(VoltageLimitOverride.OverrideKind.ABSOLUTE);
-        assertThrows(IllegalStateException.class, builder::build);
+    @Test
+    void validVoltageLimitOverride() {
+        VoltageLimitOverride vlo = new VoltageLimitOverride(VoltageLimitOverride.OverrideSide.HIGH, true, -4);
+        assertEquals(vlo.getSide(), VoltageLimitOverride.OverrideSide.HIGH);
+        assertTrue(vlo.isRelative());
+        assertEquals(vlo.getLimitOverride(), -4);
 
-        // if low override value is undefined, invalid voltage limit override
-        builder.withLowLimitOverride(5)
-                .withHighLimitOverride(Double.NaN);
-        assertThrows(IllegalStateException.class, builder::build);
-
-        // if high override value is undefined, invalid voltage limit override
-        builder.withLowLimitOverride(Double.NaN)
-                .withHighLimitOverride(5);
-        assertThrows(IllegalStateException.class, builder::build);
+        VoltageLimitOverride vlo2 = new VoltageLimitOverride(VoltageLimitOverride.OverrideSide.LOW, false, 400);
+        assertEquals(vlo2.getSide(), VoltageLimitOverride.OverrideSide.LOW);
+        assertFalse(vlo2.isRelative());
+        assertEquals(vlo2.getLimitOverride(), 400);
     }
 
     @Test
     void equalsVoltageLimitOverride() {
-        VoltageLimitOverrideBuilder builder = new VoltageLimitOverrideBuilder().withLowLimitKind(VoltageLimitOverride.OverrideKind.RELATIVE)
-                .withLowLimitOverride(5)
-                .withHighLimitKind(VoltageLimitOverride.OverrideKind.ABSOLUTE)
-                .withHighLimitOverride(410);
+        VoltageLimitOverride vlo1 = new VoltageLimitOverride(VoltageLimitOverride.OverrideSide.HIGH, true, 5);
+        VoltageLimitOverride vlo2 = new VoltageLimitOverride(VoltageLimitOverride.OverrideSide.HIGH, true, 5);
+        assertEquals(vlo1, vlo2);
 
-        assertEquals(builder.build(), builder.build());
-        assertNotEquals(builder.build(), builder.withHighLimitKind(VoltageLimitOverride.OverrideKind.RELATIVE).build());
+        VoltageLimitOverride vlo3 = new VoltageLimitOverride(VoltageLimitOverride.OverrideSide.LOW, true, 5);
+        assertNotEquals(vlo1, vlo3);
+
+        VoltageLimitOverride vlo4 = new VoltageLimitOverride(VoltageLimitOverride.OverrideSide.HIGH, false, 5);
+        assertNotEquals(vlo1, vlo4);
+
+        VoltageLimitOverride vlo5 = new VoltageLimitOverride(VoltageLimitOverride.OverrideSide.HIGH, true, 6);
+        assertNotEquals(vlo1, vlo5);
     }
 
 }
