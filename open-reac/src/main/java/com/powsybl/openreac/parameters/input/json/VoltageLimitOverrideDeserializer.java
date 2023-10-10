@@ -26,21 +26,26 @@ public class VoltageLimitOverrideDeserializer extends StdDeserializer<VoltageLim
 
     @Override
     public VoltageLimitOverride deserialize(JsonParser parser, DeserializationContext deserializationContext) throws IOException {
-        VoltageLimitOverride.OverrideSide side = null;
-        boolean isRelative = false;
+        String voltageLevelId = null;
+        VoltageLimitOverride.VoltageLimitType type = null;
+        boolean isRelative = true;
         double overrideValue = 0;
 
         while (parser.nextToken() != JsonToken.END_OBJECT) {
             switch (parser.getCurrentName()) {
-                case "overrideSide":
+                case "voltageLevelId":
                     parser.nextToken();
-                    side = parser.readValueAs(VoltageLimitOverride.OverrideSide.class);
+                    voltageLevelId = parser.readValueAs(String.class);
+                    break;
+                case "voltageLimitType":
+                    parser.nextToken();
+                    type = parser.readValueAs(VoltageLimitOverride.VoltageLimitType.class);
                     break;
                 case "isRelative":
                     parser.nextToken();
                     isRelative = parser.readValueAs(boolean.class);
                     break;
-                case "overrideValue":
+                case "value":
                     parser.nextToken();
                     overrideValue = parser.readValueAs(Double.class);
                     break;
@@ -48,6 +53,6 @@ public class VoltageLimitOverrideDeserializer extends StdDeserializer<VoltageLim
                     throw new IllegalStateException("Unexpected field: " + parser.getCurrentName());
             }
         }
-        return new VoltageLimitOverride(side, isRelative, overrideValue);
+        return new VoltageLimitOverride(voltageLevelId, type, isRelative, overrideValue);
     }
 }

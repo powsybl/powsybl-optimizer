@@ -15,13 +15,12 @@ import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
-import org.jgrapht.alg.util.Pair;
 
 import java.io.IOException;
 import java.util.List;
 
 /**
- * @author Hugo Marcellin <hugo.marcelin at rte-france.com>
+ * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
 
 public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacParameters> {
@@ -43,7 +42,7 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                     break;
                 case "specificVoltageLimits":
                     parser.nextToken();
-                    parameters.addSpecificVoltageLimits(parser.readValueAs(new TypeReference<List<Pair<String, VoltageLimitOverride>>>() { }));
+                    parameters.addSpecificVoltageLimits(parser.readValueAs(new TypeReference<List<VoltageLimitOverride>>() { }));
                     break;
                 case "variableShuntCompensators":
                     parser.nextToken();

@@ -29,7 +29,6 @@ import com.powsybl.tools.ToolRunningContext;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
-import org.jgrapht.alg.util.Pair;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -164,12 +163,12 @@ public class OpenReacTool implements Tool {
             ArrayNode array = (ArrayNode) jsonNode.get(VOLTAGE_OVERRIDE_LIST);
             array.forEach(node -> {
                 String voltageId = node.get("id").asText();
-                double lowerPercent = node.get("lower").asDouble();
-                double upperPercent = node.get("upper").asDouble();
+                double lower = node.get("lower").asDouble();
+                double upper = node.get("upper").asDouble();
 
-                List<Pair<String, VoltageLimitOverride>> voltageLimitOverrides = new ArrayList<>();
-                voltageLimitOverrides.add(new Pair<>(voltageId, new VoltageLimitOverride(VoltageLimitOverride.OverrideSide.LOW, true, lowerPercent)));
-                voltageLimitOverrides.add(new Pair<>(voltageId, new VoltageLimitOverride(VoltageLimitOverride.OverrideSide.HIGH, true, upperPercent)));
+                List<VoltageLimitOverride> voltageLimitOverrides = new ArrayList<>();
+                voltageLimitOverrides.add(new VoltageLimitOverride(voltageId, VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, true, lower));
+                voltageLimitOverrides.add(new VoltageLimitOverride(voltageId, VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, true, upper));
                 openReacParameters.addSpecificVoltageLimits(voltageLimitOverrides);
             });
         }

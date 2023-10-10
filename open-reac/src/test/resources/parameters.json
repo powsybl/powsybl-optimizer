@@ -1,33 +1,25 @@
 {
   "version" : "1.0",
   "specificVoltageLimits" : [ {
-    "first" : "foo",
-    "second" : {
-      "overrideSide" : "LOW",
-      "isRelative" : true,
-      "overrideValue" : -1.0
-    }
+    "voltageLevelId" : "foo",
+    "voltageLimitType" : "LOW_VOLTAGE_LIMIT",
+    "isRelative" : true,
+    "value" : -1.0
   }, {
-    "first" : "foo",
-    "second" : {
-      "overrideSide" : "HIGH",
-      "isRelative" : true,
-      "overrideValue" : 2.0
-    }
+    "voltageLevelId" : "foo",
+    "voltageLimitType" : "HIGH_VOLTAGE_LIMIT",
+    "isRelative" : true,
+    "value" : 2.0
   }, {
-    "first" : "bar",
-    "second" : {
-      "overrideSide" : "LOW",
-      "isRelative" : false,
-      "overrideValue" : 20.0
-    }
+    "voltageLevelId" : "bar",
+    "voltageLimitType" : "LOW_VOLTAGE_LIMIT",
+    "isRelative" : false,
+    "value" : 20.0
   }, {
-    "first" : "bar",
-    "second" : {
-      "overrideSide" : "HIGH",
-      "isRelative" : false,
-      "overrideValue" : 26.0
-    }
+    "voltageLevelId" : "bar",
+    "voltageLimitType" : "HIGH_VOLTAGE_LIMIT",
+    "isRelative" : false,
+    "value" : 26.0
   } ],
   "constantQGenerators" : [ "g1", "g2" ],
   "variableTwoWindingsTransformers" : [ "tr1" ],

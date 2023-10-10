@@ -27,25 +27,24 @@ import java.util.Objects;
 public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
 
     private static final String FILENAME = "ampl_network_substations_override.txt";
+
     private final Map<String, Pair<Double, Double>> normalizedVoltageLimitsOverride;
 
-    public VoltageLevelLimitsOverrideInput(List<Pair<String, VoltageLimitOverride>> voltageLimitsOverride, Network network) {
-        Objects.requireNonNull(voltageLimitsOverride);
+    public VoltageLevelLimitsOverrideInput(List<VoltageLimitOverride> voltageLimitsOverrides, Network network) {
+        Objects.requireNonNull(voltageLimitsOverrides);
         Objects.requireNonNull(network);
         this.normalizedVoltageLimitsOverride = new HashMap<>();
-        transformToNormalizedVoltage(voltageLimitsOverride, network);
+        transformToNormalizedVoltage(voltageLimitsOverrides, network);
     }
 
     /**
      * voltageLimitsOverride contains absolute voltage limits.
      * This function compute limits in pair-unit quantities.
      */
-    private void transformToNormalizedVoltage(List<Pair<String, VoltageLimitOverride>> voltageLimitsOverride, Network network) {
-        for (Pair<String, VoltageLimitOverride> pair : voltageLimitsOverride) {
-            String voltageLevelId = pair.getFirst();
-            VoltageLimitOverride override = pair.getSecond();
-
+    private void transformToNormalizedVoltage(List<VoltageLimitOverride> voltageLimitsOverrides, Network network) {
+        for (VoltageLimitOverride voltageLimitOverride : voltageLimitsOverrides) {
             // get previous voltage limit values
+            String voltageLevelId = voltageLimitOverride.getVoltageLevelId();
             double nominalV = network.getVoltageLevel(voltageLevelId).getNominalV();
             double previousNormalizedLowVoltageLimit = network.getVoltageLevel(voltageLevelId).getLowVoltageLimit() / nominalV;
             double previousNormalizedHighVoltageLimit = network.getVoltageLevel(voltageLevelId).getHighVoltageLimit() / nominalV;
@@ -53,27 +52,15 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
             // get or create voltage limit override of the voltage level
             Pair<Double, Double> newLimits = normalizedVoltageLimitsOverride.containsKey(voltageLevelId) ? normalizedVoltageLimitsOverride.get(voltageLevelId)
                     : new Pair<>(previousNormalizedLowVoltageLimit, previousNormalizedHighVoltageLimit);
-
-            // if override is low ...
-            if (override.getSide() == VoltageLimitOverride.OverrideSide.LOW) {
-                // ... and relative, add relative override
-                if (override.isRelative()) {
-                    newLimits.setFirst(newLimits.getFirst() + override.getLimitOverride() / nominalV);
-                // ... and absolute, replace by absolute override
-                } else {
-                    newLimits.setFirst(override.getLimitOverride() / nominalV);
-                }
-            // if override is high ...
+            if (voltageLimitOverride.getVoltageLimitType() == VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT) {
+                double value = (voltageLimitOverride.isRelative() ? newLimits.getFirst() : 0.0) + voltageLimitOverride.getLimit() / nominalV;
+                newLimits.setFirst(value);
+            } else if (voltageLimitOverride.getVoltageLimitType() == VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT) {
+                double value = (voltageLimitOverride.isRelative() ? newLimits.getSecond() : 0.0) + voltageLimitOverride.getLimit() / nominalV;
+                newLimits.setSecond(value);
             } else {
-                // ... and relative, add relative override
-                if (override.isRelative()) {
-                    newLimits.setSecond(newLimits.getSecond() + override.getLimitOverride() / nominalV);
-                // ... and absolute, replace by absolute override
-                } else {
-                    newLimits.setSecond(override.getLimitOverride() / nominalV);
-                }
+                throw new UnsupportedOperationException("Unsupported voltage limit type: " + voltageLimitOverride.getVoltageLimitType());
             }
-
             normalizedVoltageLimitsOverride.put(voltageLevelId, newLimits);
         }
     }
@@ -101,7 +88,7 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
             }
         }
 
-        //add new line at the end of the file !
+        //add new line at the end of the file
         dataBuilder.append(System.lineSeparator());
         return new ByteArrayInputStream(dataBuilder.toString().getBytes(StandardCharsets.UTF_8));
     }

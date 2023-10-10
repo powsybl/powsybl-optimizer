@@ -16,7 +16,6 @@ import com.powsybl.tools.ToolRunningContext;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.ParseException;
-import org.jgrapht.alg.util.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -65,11 +64,13 @@ class ItoolsTest {
         assertEquals(List.of("var-shunt", "var-shunt-2"), loadedParams.getVariableShuntCompensators(), "Parsing of OpenReac parameters is wrong.");
 
         // List of voltage limit overrides
-        List<Pair<String, VoltageLimitOverride>> vloList = new ArrayList<>();
-        vloList.add(new Pair<>("voltageLevelId", new VoltageLimitOverride(VoltageLimitOverride.OverrideSide.LOW, true, -5)));
-        vloList.add(new Pair<>("voltageLevelId", new VoltageLimitOverride(VoltageLimitOverride.OverrideSide.HIGH, true, 5)));
+        List<VoltageLimitOverride> vloList = new ArrayList<>();
+        vloList.add(new VoltageLimitOverride("voltageLevelId", VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, true, -5));
+        vloList.add(new VoltageLimitOverride("voltageLevelId", VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, true, 5));
 
-        assertEquals(vloList, loadedParams.getSpecificVoltageLimits(), "Parsing of OpenReac parameters is wrong.");
+        for (int i = 0; i < vloList.size(); i++) {
+            assertTrue(vloList.get(i).equals(loadedParams.getSpecificVoltageLimits().get(i)));
+        }
         assertEquals(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE, loadedParams.getObjective(), "Parsing of OpenReac parameters is wrong.");
     }
 
