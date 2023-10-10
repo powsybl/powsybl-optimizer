@@ -69,7 +69,7 @@ class ItoolsTest {
         vloList.add(new VoltageLimitOverride("voltageLevelId", VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, true, 5));
 
         for (int i = 0; i < vloList.size(); i++) {
-            assertTrue(vloList.get(i).equals(loadedParams.getSpecificVoltageLimits().get(i)));
+            assertEquals(vloList.get(i), loadedParams.getSpecificVoltageLimits().get(i));
         }
         assertEquals(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE, loadedParams.getObjective(), "Parsing of OpenReac parameters is wrong.");
     }

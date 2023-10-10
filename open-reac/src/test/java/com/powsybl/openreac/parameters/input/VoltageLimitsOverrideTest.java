@@ -11,14 +11,14 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class VoltageLimitsOverrideTest {
+class VoltageLimitsOverrideTest {
 
     @Test
     void testToStringOverrideType() {
         VoltageLimitOverride.VoltageLimitType os = VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT;
-        assertEquals(os.toString(), "HIGH_VOLTAGE_LIMIT");
+        assertEquals("HIGH_VOLTAGE_LIMIT", os.toString());
         os = VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT;
-        assertEquals(os.toString(), "LOW_VOLTAGE_LIMIT");
+        assertEquals("LOW_VOLTAGE_LIMIT", os.toString());
     }
 
     @Test
@@ -43,14 +43,14 @@ public class VoltageLimitsOverrideTest {
     @Test
     void validVoltageLimitOverride() {
         VoltageLimitOverride vlo = new VoltageLimitOverride("vl", VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, true, -4);
-        assertEquals(vlo.getVoltageLimitType(), VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT);
+        assertEquals(VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, vlo.getVoltageLimitType());
         assertTrue(vlo.isRelative());
-        assertEquals(vlo.getLimit(), -4);
+        assertEquals(-4, vlo.getLimit());
 
         VoltageLimitOverride vlo2 = new VoltageLimitOverride("vl", VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, false, 400);
-        assertEquals(vlo2.getVoltageLimitType(), VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT);
+        assertEquals(VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, vlo2.getVoltageLimitType());
         assertFalse(vlo2.isRelative());
-        assertEquals(vlo2.getLimit(), 400);
+        assertEquals(400, vlo2.getLimit());
     }
 
     @Test
@@ -68,5 +68,4 @@ public class VoltageLimitsOverrideTest {
         VoltageLimitOverride vlo5 = new VoltageLimitOverride("vl", VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, true, 6);
         assertNotEquals(vlo1, vlo5);
     }
-
 }
