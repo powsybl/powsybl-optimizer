@@ -215,7 +215,7 @@ public class OpenReacParameters {
             if (Double.isNaN(lowLimit)) {
                 List<VoltageLimitOverride> overrides = getSpecificVoltageLimits(vl.getId(), VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT);
                 if (overrides.size() != 1) {
-                    LOGGER.warn("Voltage level has no low voltage limit defined. Please add one or use a voltage limit override.", vl.getId());
+                    LOGGER.warn("Voltage level {} has no low voltage limit defined. Please add one or use a voltage limit override.", vl.getId());
                     integrityVoltageLevelLimits = false;
                 } else if (overrides.get(0).isRelative()) { // we have one and just one
                     LOGGER.warn("Relative voltage override impossible on undefined low voltage limit for voltage level {}.", vl.getId());
