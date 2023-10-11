@@ -10,7 +10,6 @@ import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.iidm.network.Network;
-import com.powsybl.openreac.parameters.AmplIOUtils;
 import org.jgrapht.alg.util.Pair;
 
 import java.io.ByteArrayInputStream;
@@ -82,7 +81,7 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
 
             if (!Double.isNaN(limits.getFirst()) || !Double.isNaN(limits.getSecond())) {
                 int amplId = stringToIntMapper.getInt(AmplSubset.VOLTAGE_LEVEL, voltageLevelId);
-                String[] tokens = {Integer.toString(amplId), Double.toString(limits.getFirst()), Double.toString(limits.getSecond()), AmplIOUtils.addQuotes(voltageLevelId)};
+                String[] tokens = {Integer.toString(amplId), Double.toString(limits.getFirst()), Double.toString(limits.getSecond()), "\"" + voltageLevelId + "\""};
                 dataBuilder.append(String.join(" ", tokens));
                 dataBuilder.append(System.lineSeparator());
             }

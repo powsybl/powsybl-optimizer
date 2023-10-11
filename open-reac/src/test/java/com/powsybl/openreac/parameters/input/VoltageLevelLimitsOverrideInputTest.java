@@ -49,7 +49,7 @@ class VoltageLevelLimitsOverrideInputTest {
         try (var is = input.getParameterFileAsStream(mapper)) {
             String data = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
             String ref = String.join(System.lineSeparator(), "#num minV (pu) maxV (pu) id",
-                    "1 0.7916666666666667 1.1666666666666665 'VLGEN'") + System.lineSeparator() + System.lineSeparator();
+                    "1 0.7916666666666667 1.1666666666666665 \"VLGEN\"") + System.lineSeparator() + System.lineSeparator();
             assertEquals(ref, data);
         }
     }
@@ -73,9 +73,29 @@ class VoltageLevelLimitsOverrideInputTest {
         try (var is = input.getParameterFileAsStream(mapper)) {
             String data = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
             String ref = String.join(System.lineSeparator(), "#num minV (pu) maxV (pu) id",
-                    "1 0.8333333333333334 1.0833333333333333 'VLGEN'") + System.lineSeparator() + System.lineSeparator();
+                    "1 0.8333333333333334 1.0833333333333333 \"VLGEN\"") + System.lineSeparator() + System.lineSeparator();
             assertEquals(ref, data);
         }
+    }
+
+    @Test
+    void testNullVoltageLimitWithoutOverride() {
+        Network network = IeeeCdfNetworkFactory.create118();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
+
+        VoltageLevel vl = network.getVoltageLevels().iterator().next();
+        OpenReacParameters params = new OpenReacParameters();
+
+        // if one low voltage limit is <= 0 and there is no voltage limit override, invalid OpenReacParameters
+        vl.setLowVoltageLimit(0);
+        assertThrows(PowsyblException.class, () -> params.checkIntegrity(network));
+
+        // if one low voltage limit is <= 0 and the voltage limit override is not enough, invalid OpenReacParameters
+        List<VoltageLimitOverride> overrides = new ArrayList<>();
+        overrides.add(new VoltageLimitOverride(vl.getId(), VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT,
+                true, 0));
+        params.addSpecificVoltageLimits(overrides);
+        assertThrows(PowsyblException.class, () -> params.checkIntegrity(network));
     }
 
     @Test
