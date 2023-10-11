@@ -205,6 +205,10 @@ public class OpenReacParameters {
 
     }
 
+    /**
+     * @param network the network on which voltage levels are verified.
+     * @return true if the voltage level limits are correct taking into account voltage limit overrides, false otherwise.
+     */
     boolean checkVoltageLevelLimits(Network network) {
         boolean integrityVoltageLevelLimits = true;
 
@@ -238,7 +242,7 @@ public class OpenReacParameters {
 
     /**
      * @param network the network on which are applied voltage limit overrides.
-     * @return true if the integrity of voltage limit overrides is verifies, false otherwise.
+     * @return true if the integrity of voltage limit overrides is verified, false otherwise.
      */
     boolean checkVoltageLimitOverrides(Network network) {
         // Check integrity of voltage overrides
@@ -251,21 +255,22 @@ public class OpenReacParameters {
             if (voltageLevel == null) {
                 LOGGER.warn("Voltage level {} not found in the network.", voltageLevelId);
                 integrityVoltageLimitOverrides = false;
-            } else {
-                if (voltageLimitOverride.isRelative()) {
-                    double value = voltageLimitOverride.getVoltageLimitType() == VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT ?
-                            voltageLevel.getLowVoltageLimit() : voltageLevel.getHighVoltageLimit(); // FIXME?
-                    if (Double.isNaN(value)) {
-                        LOGGER.warn("Voltage level {} has undefined {}, relative voltage limit override is impossible.",
-                                voltageLevelId, voltageLimitOverride.getVoltageLimitType());
-                        integrityVoltageLimitOverrides = false;
-                    }
-                    if (voltageLimitOverride.getVoltageLimitType() == VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT
-                            && voltageLimitOverride.getLimit() + voltageLevel.getLowVoltageLimit() < 0) {
-                        // ... verify low voltage limit override does not lead to negative limit value
-                        LOGGER.warn("Voltage level {} low relative override leads to a negative low voltage limit.", voltageLevelId);
-                        integrityVoltageLimitOverrides = false;
-                    }
+                continue;
+            }
+
+            if (voltageLimitOverride.isRelative()) {
+                double value = voltageLimitOverride.getVoltageLimitType() == VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT ?
+                        voltageLevel.getLowVoltageLimit() : voltageLevel.getHighVoltageLimit(); // FIXME?
+                if (Double.isNaN(value)) {
+                    LOGGER.warn("Voltage level {} has undefined {}, relative voltage limit override is impossible.",
+                            voltageLevelId, voltageLimitOverride.getVoltageLimitType());
+                    integrityVoltageLimitOverrides = false;
+                }
+                if (voltageLimitOverride.getVoltageLimitType() == VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT
+                        && voltageLimitOverride.getLimit() + voltageLevel.getLowVoltageLimit() < 0) {
+                    // ... verify low voltage limit override does not lead to negative limit value
+                    LOGGER.warn("Voltage level {} low relative override leads to a negative low voltage limit.", voltageLevelId);
+                    integrityVoltageLimitOverrides = false;
                 }
             }
         }
