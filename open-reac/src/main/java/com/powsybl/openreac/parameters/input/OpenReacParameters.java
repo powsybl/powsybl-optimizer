@@ -41,12 +41,6 @@ public class OpenReacParameters {
 
     private OpenReacOptimisationObjective objective = OpenReacOptimisationObjective.MIN_GENERATION;
 
-    /*
-     * Must be used with {@link OpenReacOptimisationObjective#BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT}
-     * to define the voltage between low and high voltage limits, which OpenReac should converge to.
-     * Zero percent means that it should converge to low voltage limits. 100 percents means that it should
-     * converge to high voltage limits.
-     */
     private Double objectiveDistance;
 
     /**
@@ -120,13 +114,21 @@ public class OpenReacParameters {
         return this;
     }
 
+    /**
+     * Must be used with {@link OpenReacOptimisationObjective#BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT}
+     * to define the voltage between low and high voltage limits, which OpenReac should converge to.
+     * <p>
+     * A 0% objective means the model will target lower voltage limit.
+     * A 100% objective means the model will target upper voltage limit.
+     */
     public Double getObjectiveDistance() {
         return objectiveDistance;
     }
 
     /**
-     * A 0% objective means the model will target lower voltage limit.
+     * Must be used with {@link OpenReacOptimisationObjective#BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT}
      * <p>
+     * A 0% objective means the model will target lower voltage limit.
      * A 100% objective means the model will target upper voltage limit.
      * @param objectiveDistance is in %
      */
@@ -167,7 +169,7 @@ public class OpenReacParameters {
      * Do some checks on the parameters given, such as provided IDs must correspond to the given network element
      *
      * @param network Network on which ID are going to be infered
-     * @throws InvalidParametersException
+     * @throws InvalidParametersException if the parameters contain some incoherences.
      */
     public void checkIntegrity(Network network) throws InvalidParametersException {
         for (String shuntId : getVariableShuntCompensators()) {
