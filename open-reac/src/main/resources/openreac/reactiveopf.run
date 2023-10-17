@@ -217,9 +217,9 @@ param: PARAM_ALGO_KEYS: PARAM_ALGO_VALUES := include param_algo.txt;
 model;
 display PARAM_ALGO_VALUES;
 
-# Define log level of the run 
-set LOG_LEVELS ordered = {"ERROR", "WARNING", "INFO", "DEBUG", "TRACE"}; # different values of log levels
-param log_level symbolic default "INFO";
+# Choice log level of the run 
+set LOG_LEVELS ordered = {"ERROR", "WARNING", "INFO", "DEBUG", "TRACE"}; # different values of log level
+param log_level symbolic default "INFO"; # default value of the log level
 if "log_level" in PARAM_ALGO_KEYS then let log_level := PARAM_ALGO_VALUES["log_level"];
 check log_level in LOG_LEVELS; 
 param log_index := ord0(log_level, LOG_LEVELS); 
@@ -230,7 +230,7 @@ set LOG_DEBUG   := if log_index >= 4 then{1} else {};
 set LOG_INFO    := if log_index >= 3 then{1} else {};
 set LOG_WARNING := if log_index >= 2 then{1} else {};
 set LOG_ERROR   := if log_index >= 1 then{1} else {};
-printf{LOG_INFO} "Parameter: log level = %s\n", log_level;
+printf "Parameter: log level = %s\n", log_level;
 
 # Absolute parameter : base 100MVA.
 # Never change this unless you really know what you do
@@ -427,14 +427,14 @@ if ( tempo == 0 ) then
 # Connexity checks and computation of connex components
 #
 ###############################################################################
-printf{LOG_TRACE} "\n*** Connexity computation\n";
+printf{LOG_INFO} "\n*** Connexity computation\n";
 let PROBLEM_CCOMP := {1};
 let PROBLEM_DCOPF := { };
 let PROBLEM_ACOPF := { };
 option presolve 0;
 #option knitro_options "outlev=0"; # TODO : put conditionnal value here
 let tempstr := ctime();
-printf{LOG_TRACE} "# CCcomp solve: start (%s)\n\n",tempstr;
+printf{LOG_DEBUG} "# CCcomp solve: start (%s)\n\n",tempstr;
 #
 solve cccomputation_objective;
 #
@@ -447,7 +447,7 @@ then {
   let final_status := "NOK";
   include reactiveopfexit.run;
 }
-printf{LOG_TRACE} "# CCcomp solve: end   (%s -> %s)\n\n",tempstr,ctime();
+printf{LOG_DEBUG} "# CCcomp solve: end   (%s -> %s)\n\n",tempstr,ctime();
 option presolve 10;
 
 #
@@ -519,18 +519,18 @@ for {(t,n) in BUS: substation_Vnomi[1,bus_substation[1,n]] < epsilon_nominal_vol
 # Voltage bounds
 let temp1 := min{(t,s) in SUBSTATIONS: substation_Vmin[t,s] > 0} substation_Vmin[t,s];
 for {(t,s) in SUBSTATIONS: substation_Vmin[t,s] > 0 and substation_Vmin[t,s] <= temp1*1.01}
-  printf{LOG_WARNING} "Substations %Q with lowest  voltage lower bound Vnom=%ikV Vmin=%.3fpu\n",substation_id[t,s],substation_Vnomi[t,s],substation_Vmin[t,s];
+  printf{LOG_INFO} "Substations %Q with lowest  voltage lower bound Vnom=%ikV Vmin=%.3fpu\n",substation_id[t,s],substation_Vnomi[t,s],substation_Vmin[t,s];
 let temp1 := max{(t,s) in SUBSTATIONS: substation_Vmax[t,s] > 0} substation_Vmax[t,s];
 for {(t,s) in SUBSTATIONS: substation_Vmax[t,s] > 0 and substation_Vmax[t,s] >= temp1*0.99}
-  printf{LOG_WARNING} "Substations %Q with highest voltage upper bound Vnom=%ikV Vmax=%.3fpu\n",substation_id[t,s],substation_Vnomi[t,s],substation_Vmax[t,s];
-printf{LOG_WARNING} "If voltage lower bounds are missing or too small, they are set to %.3fpu\n",minimal_voltage_lower_bound;
-printf{LOG_WARNING} "If voltage upper bounds are missing or too high,  they are set to %.3fpu\n",maximal_voltage_upper_bound;
+  printf{LOG_INFO} "Substations %Q with highest voltage upper bound Vnom=%ikV Vmax=%.3fpu\n",substation_id[t,s],substation_Vnomi[t,s],substation_Vmax[t,s];
+printf{LOG_INFO} "If voltage lower bounds are missing or too small, they are set to %.3fpu\n",minimal_voltage_lower_bound;
+printf{LOG_INFO} "If voltage upper bounds are missing or too high,  they are set to %.3fpu\n",maximal_voltage_upper_bound;
 let temp1 := card({n in BUSCC: substation_Vnomi[1,bus_substation[1,n]] <= ignore_voltage_bounds});
 if temp1 > 0 then
 printf{LOG_WARNING} "Voltage bounds for substations with nominal voltage <= %ikV are set to [%.3fpu;%.3fpu] (%i busses)\n",
   ignore_voltage_bounds,minimal_voltage_lower_bound,maximal_voltage_upper_bound,temp1;
-printf{LOG_WARNING} "Maximal diameter of voltage interval: %.3f\n",max({(t,s) in SUBSTATIONS}(voltage_upper_bound[t,s] - voltage_lower_bound[t,s]));
-printf{LOG_WARNING} "Minimal diameter of voltage interval: %.3f\n",min({(t,s) in SUBSTATIONS}(voltage_upper_bound[t,s] - voltage_lower_bound[t,s]));
+printf{LOG_INFO} "Maximal diameter of voltage interval: %.3f\n",max({(t,s) in SUBSTATIONS}(voltage_upper_bound[t,s] - voltage_lower_bound[t,s]));
+printf{LOG_INFO} "Minimal diameter of voltage interval: %.3f\n",min({(t,s) in SUBSTATIONS}(voltage_upper_bound[t,s] - voltage_lower_bound[t,s]));
 
 #
 # Consistency of transformers ratios
@@ -555,7 +555,7 @@ for {(qq,m,n) in BRANCHCC_REGL: qq in PARAM_TRANSFORMERS_RATIO_VARIABLE
 for {(qq,m,n) in BRANCHCC_REGL: regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]] <= temp1 * 1.01
   or regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]] >= temp2 * 0.99 }
 {
-  printf{LOG_WARNING} "Transformer %Q ratio_min=%.3f ratio_max=%.3f\n",
+  printf{LOG_INFO} "Transformer %Q ratio_min=%.3f ratio_max=%.3f\n",
   branch_id[1,qq,m,n],
   regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]],
   regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]]
@@ -851,7 +851,7 @@ printf{LOG_INFO} "Balance    (P-C-H)/C: %.2f %%\n\n", (temp2-temp1-temp3)/temp1*
 # Analysis of phases computed by DC OPF
 let teta_max := max({n in BUSCC} teta_dc[n].val) + 3; # radians
 let teta_min := min({n in BUSCC} teta_dc[n].val) - 3; # radians
-display teta_max,teta_min,max({n in BUSCC} teta_dc[n]),min({n in BUSCC} teta_dc[n]),
+if log_index >= 3 then display teta_max,teta_min,max({n in BUSCC} teta_dc[n]),min({n in BUSCC} teta_dc[n]),
   max({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[n])),min({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[n]));
 
 let temp1 := max({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[n]));
@@ -984,7 +984,7 @@ printf{LOG_DEBUG} "#############################################################
 # Displays after solving
 #
 
-display
+if log_index >= 3 then display
   nb_iter_last,nb_iter_total,
   max({(qq,m,n) in BRANCHCC} branch_R[1,qq,m,n]),max({(qq,m,n) in BRANCHCC} branch_X[1,qq,m,n]),
   teta_max, max({n in BUSCC} teta[n]), max({n in BUSCC} teta_dc[n]),
@@ -1000,9 +1000,9 @@ let temp2 := min({(qq,m,n) in BRANCHCC} (teta[m]-teta[n]));
 for {(qq,m,n) in BRANCHCC: (teta[m]-teta[n])>temp1*0.99 or (teta[m]-teta[n])<temp2*0.99} {
   printf{LOG_INFO} "%Q R=%.3f X=%.3f delta=%.2f Vm=%.3f %.2f Vn=%.3f %.2f ",
   branch_id[1,qq,m,n],branch_R[1,qq,m,n],branch_X[1,qq,m,n],teta[m]-teta[n],V[m],teta[m],V[n],teta[n];
-  if m in BUSCC_SLACK then printf "sQm %.2f %.2f ",
+  if m in BUSCC_SLACK then printf{LOG_INFO} "sQm %.2f %.2f ",
     max(slack1_balance_Q[m]-slack2_balance_Q[m],0),max(slack2_balance_Q[m]-slack1_balance_Q[m],0);
-  if n in BUSCC_SLACK then printf "sQn %.2f %.2f ",
+  if n in BUSCC_SLACK then printf{LOG_INFO} "sQn %.2f %.2f ",
     max(slack1_balance_Q[n]-slack2_balance_Q[n],0),max(slack2_balance_Q[n]-slack1_balance_Q[n],0);
   printf{LOG_INFO} "P1=%.1f Q1=%.1f ",base100MVA*V[m]*Red_Tran_Act_Dir[qq,m,n],base100MVA*V[m]*Red_Tran_Rea_Dir[qq,m,n];
   printf{LOG_INFO} "P2=%.1f Q2=%.1f ",base100MVA*V[m]*Red_Tran_Act_Inv[qq,m,n],base100MVA*V[m]*Red_Tran_Rea_Inv[qq,m,n];
@@ -1020,7 +1020,7 @@ then {
     card({n in BUSCC_SLACK: slack2_balance_Q[n]+slack1_balance_Q[n]>Pnull});
   if output_results > 0 then
     for {n in BUSCC_SLACK: slack1_balance_Q[n]+slack2_balance_Q[n] > Pnull}
-      printf{LOG_INFO} "Bus %Q in substation %Q (%ikV) has non zero reactive slacks %.1f %.1f, Vmin=%.3f Vopt=%.3f Vmax=%.3f \n",
+      printf{LOG_WARNING} "Bus %Q in substation %Q (%ikV) has non zero reactive slacks %.1f %.1f, Vmin=%.3f Vopt=%.3f Vmax=%.3f \n",
         bus_id[1,n],substation_id[1,bus_substation[1,n]],substation_Vnomi[1,bus_substation[1,n]],
         slack1_balance_Q[n],slack2_balance_Q[n],
         voltage_lower_bound[1,bus_substation[1,n]],V[n],voltage_upper_bound[1,bus_substation[1,n]];
