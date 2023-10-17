@@ -11,11 +11,15 @@ import com.powsybl.ampl.converter.AmplReadableElement;
 import com.powsybl.ampl.converter.DefaultAmplNetworkUpdater;
 import com.powsybl.ampl.converter.OutputFileFormat;
 import com.powsybl.ampl.executor.AmplModel;
+import com.powsybl.commons.config.PlatformConfig;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -28,6 +32,8 @@ import static com.powsybl.ampl.converter.AmplConstants.DEFAULT_VARIANT_INDEX;
  * It allows to get the list of InputStream of the ampl model resources.
  */
 public class OpenReacModel implements AmplModel {
+
+    public static final String DEFAULT_RESOURCES_FOLDER = "openreac";
 
     public static final String OUTPUT_FILE_PREFIX = "reactiveopf_results";
 
@@ -50,7 +56,15 @@ public class OpenReacModel implements AmplModel {
     };
 
     public static OpenReacModel buildModel() {
-        return new OpenReacModel(OUTPUT_FILE_PREFIX, "openreac",
+        String amplFilesFolder = DEFAULT_RESOURCES_FOLDER;
+
+        // If ampl resources directory is specified in config file, use this path
+        PlatformConfig pc = PlatformConfig.defaultConfig();
+        if (!pc.getOptionalModuleConfig("ampl-resources-local").equals(Optional.empty())) {
+            amplFilesFolder = pc.getOptionalModuleConfig("ampl-resources-local").orElseThrow().getStringProperty("dir");
+        }
+
+        return new OpenReacModel(OUTPUT_FILE_PREFIX, amplFilesFolder,
                 List.of("reactiveopf.run"),
                 List.of("reactiveopf.mod", "reactiveopf.dat", "reactiveopfoutput.run", "reactiveopfexit.run"));
     }
@@ -96,15 +110,20 @@ public class OpenReacModel implements AmplModel {
     public List<Pair<String, InputStream>> getModelAsStream() {
         return modelNameAndPath.stream()
                 .map(nameAndPath -> {
-                    InputStream resourceAsStream = this.getClass()
-                                                       .getClassLoader()
-                                                       .getResourceAsStream(nameAndPath.getRight());
-                    if (resourceAsStream == null) {
+                    InputStream is;
+                    try {
+                        if (nameAndPath.getRight().split("/")[0].equals(DEFAULT_RESOURCES_FOLDER)) {
+                            is = getClass().getClassLoader().getResourceAsStream(nameAndPath.getRight());
+                        } else {
+                            is = Files.newInputStream(Paths.get(nameAndPath.getRight()));
+                        }
+                    } catch (IOException e) {
                         throw new MissingResourceException(
                                 "Missing OpenReac ampl files : " + nameAndPath.getLeft() + " at " + nameAndPath.getRight(),
                                 this.getClass().getName(), nameAndPath.getLeft());
                     }
-                    return Pair.of(nameAndPath.getLeft(), resourceAsStream);
+
+                    return Pair.of(nameAndPath.getLeft(), is);
                 })
                 .collect(Collectors.toList());
     }
