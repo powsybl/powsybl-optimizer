@@ -279,10 +279,10 @@ public class OpenReacParameters {
                             voltageLevelId, voltageLimitOverride.getVoltageLimitType());
                     integrityVoltageLimitOverrides = false;
                 }
-                if (voltageLimitOverride.getVoltageLimitType() == VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT
-                        && voltageLimitOverride.getLimit() + voltageLevel.getLowVoltageLimit() < 0) {
-                    // ... verify low voltage limit override does not lead to negative limit value
-                    LOGGER.warn("Voltage level {} low relative override leads to a negative low voltage limit.", voltageLevelId);
+                // verify voltage limit override does not lead to negative limit value
+                if (value + voltageLimitOverride.getLimit() < 0) {
+                    LOGGER.warn("Voltage level {} relative override leads to a negative {}.",
+                            voltageLevelId, voltageLimitOverride.getVoltageLimitType());
                     integrityVoltageLimitOverrides = false;
                 }
             }

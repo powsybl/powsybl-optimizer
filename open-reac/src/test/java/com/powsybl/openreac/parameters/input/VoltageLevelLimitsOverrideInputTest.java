@@ -123,7 +123,7 @@ class VoltageLevelLimitsOverrideInputTest {
     }
 
     @Test
-    void testVoltageOverrideWithNegativeLowVoltageValue() {
+    void testVoltageOverrideWithNegativeVoltageLimit() {
         Network network = IeeeCdfNetworkFactory.create118();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
 
@@ -137,6 +137,13 @@ class VoltageLevelLimitsOverrideInputTest {
         voltageLimitsOverride.add(new VoltageLimitOverride(vl.getId(), VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, true, -410));
         params.addSpecificVoltageLimits(voltageLimitsOverride);
         assertThrows(InvalidParametersException.class, () -> params.checkIntegrity(network));
+
+        // if high relative voltage override leads to negative voltage limit, throws exception
+        OpenReacParameters params2 = new OpenReacParameters();
+        List<VoltageLimitOverride> voltageLimitsOverride2 = new ArrayList<>();
+        voltageLimitsOverride2.add(new VoltageLimitOverride(vl.getId(), VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, true, -490));
+        params2.addSpecificVoltageLimits(voltageLimitsOverride2);
+        assertThrows(InvalidParametersException.class, () -> params2.checkIntegrity(network));
     }
 
     @Test
