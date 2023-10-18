@@ -195,7 +195,8 @@ public class OpenReacParameters {
         }
 
         // Check integrity of low/high voltage limits, taking into account voltage limit overrides
-        boolean integrityVoltageLevelLimits = checkVoltageLevelLimits(network);
+        boolean integrityVoltageLevelLimits = checkLowVoltageLevelLimits(network);
+        integrityVoltageLevelLimits &= checkHighVoltageLevelLimits(network);
         if (!integrityVoltageLevelLimits) {
             throw new InvalidParametersException("At least one voltage level has an undefined or incorrect voltage limit.");
         }
@@ -209,14 +210,14 @@ public class OpenReacParameters {
 
     /**
      * @param network the network on which voltage levels are verified.
-     * @return true if the voltage level limits are correct taking into account voltage limit overrides, false otherwise.
+     * @return true if the low voltage level limits are correct taking into account low voltage limit overrides,
+     * false otherwise.
      */
-    boolean checkVoltageLevelLimits(Network network) {
+    boolean checkLowVoltageLevelLimits(Network network) {
         boolean integrityVoltageLevelLimits = true;
 
         for (VoltageLevel vl : network.getVoltageLevels()) {
             double lowLimit = vl.getLowVoltageLimit();
-            double highLimit = vl.getHighVoltageLimit();
 
             if (lowLimit <= 0) {
                 List<VoltageLimitOverride> overrides = getSpecificVoltageLimits(vl.getId(), VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT);
@@ -235,6 +236,21 @@ public class OpenReacParameters {
                     integrityVoltageLevelLimits = false;
                 }
             }
+        }
+        return integrityVoltageLevelLimits;
+    }
+
+    /**
+     * @param network the network on which voltage levels are verified.
+     * @return true if the high voltage level limits are correct taking into account high voltage limit overrides,
+     * false otherwise.
+     */
+    boolean checkHighVoltageLevelLimits(Network network) {
+        boolean integrityVoltageLevelLimits = true;
+
+        for (VoltageLevel vl : network.getVoltageLevels()) {
+            double highLimit = vl.getHighVoltageLimit();
+
             if (Double.isNaN(highLimit)) {
                 List<VoltageLimitOverride> overrides = getSpecificVoltageLimits(vl.getId(), VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT);
                 if (overrides.size() != 1) {
@@ -269,7 +285,7 @@ public class OpenReacParameters {
 
             if (voltageLimitOverride.isRelative()) {
                 double value = voltageLimitOverride.getVoltageLimitType() == VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT ?
-                        voltageLevel.getLowVoltageLimit() : voltageLevel.getHighVoltageLimit(); // FIXME?
+                        voltageLevel.getLowVoltageLimit() : voltageLevel.getHighVoltageLimit();
                 if (Double.isNaN(value)) {
                     LOGGER.warn("Voltage level {} has undefined {}, relative voltage limit override is impossible.",
                             voltageLevelId, voltageLimitOverride.getVoltageLimitType());
