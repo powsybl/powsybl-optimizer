@@ -10,6 +10,7 @@ import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.openreac.exceptions.InvalidParametersException;
 import org.jgrapht.alg.util.Pair;
 
 import java.io.ByteArrayInputStream;
@@ -59,6 +60,10 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
                 newLimits.setSecond(value);
             } else {
                 throw new UnsupportedOperationException("Unsupported voltage limit type: " + voltageLimitOverride.getVoltageLimitType());
+            }
+
+            if (newLimits.getFirst() > newLimits.getSecond()) {
+                throw new InvalidParametersException("Override on voltage level " + voltageLevelId + " leads to low voltage limit > high voltage limit.");
             }
             normalizedVoltageLimitsOverride.put(voltageLevelId, newLimits);
         }

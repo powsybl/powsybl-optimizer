@@ -223,12 +223,8 @@ public class OpenReacParameters {
                 if (overrides.size() != 1) {
                     LOGGER.warn("Voltage level {} has a negative or null low voltage limit. Please change it or use a voltage limit override.", vl.getId());
                     integrityVoltageLevelLimits = false;
-                } else if (overrides.get(0).isRelative() && overrides.get(0).getLimit() + lowLimit <= 0) {
-                    LOGGER.warn("Voltage level {} has a negative low voltage limit, even taking into account voltage limit override.", vl.getId());
-                    integrityVoltageLevelLimits = false;
                 }
             }
-
             if (Double.isNaN(lowLimit)) {
                 List<VoltageLimitOverride> overrides = getSpecificVoltageLimits(vl.getId(), VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT);
                 if (overrides.size() != 1) {
@@ -280,8 +276,8 @@ public class OpenReacParameters {
                     integrityVoltageLimitOverrides = false;
                 }
                 // verify voltage limit override does not lead to negative limit value
-                if (value + voltageLimitOverride.getLimit() < 0) {
-                    LOGGER.warn("Voltage level {} relative override leads to a negative {}.",
+                if (value + voltageLimitOverride.getLimit() <= 0) {
+                    LOGGER.warn("Voltage level {} relative override leads to a negative or null {}.",
                             voltageLevelId, voltageLimitOverride.getVoltageLimitType());
                     integrityVoltageLimitOverrides = false;
                 }
