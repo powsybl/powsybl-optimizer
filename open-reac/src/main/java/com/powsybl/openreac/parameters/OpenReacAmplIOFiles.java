@@ -25,7 +25,7 @@ import java.util.List;
  * <p>
  * The user of OpenReac should not see this class directly. One should use {@link OpenReacParameters} for inputs
  * and {@link OpenReacResult} for outputs.
- * However, when adding new inputs (outputs) to OpenReac, one must add {@link AmplOutputFile} (@link AmplInputFile)
+ * However, when adding new inputs (outputs) to OpenReac, one must add {@link AmplInputFile} ({@link AmplOutputFile})
  * here through {@link OpenReacAmplIOFiles#getInputParameters} ({@link OpenReacAmplIOFiles#getOutputParameters})
  *
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
