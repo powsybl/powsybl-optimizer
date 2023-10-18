@@ -52,7 +52,10 @@ public class VoltageLimitOverride {
         return voltageLevelId;
     }
 
-    public VoltageLimitOverride(String voltageLevelId, VoltageLimitType type, boolean isRelative, double limit) {
+    public VoltageLimitOverride(String voltageLevelId, VoltageLimitType type, Boolean isRelative, double limit) {
+        if (isRelative == null) {
+            throw new InvalidParametersException("The kind of voltage limit override must be specified.");
+        }
         if (Double.isNaN(limit)) {
             throw new InvalidParametersException("The voltage limit override must be defined.");
         }

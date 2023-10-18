@@ -28,7 +28,7 @@ public class VoltageLimitOverrideDeserializer extends StdDeserializer<VoltageLim
     public VoltageLimitOverride deserialize(JsonParser parser, DeserializationContext deserializationContext) throws IOException {
         String voltageLevelId = null;
         VoltageLimitOverride.VoltageLimitType type = null;
-        boolean isRelative = true;
+        Boolean isRelative = null;
         double overrideValue = 0;
 
         while (parser.nextToken() != JsonToken.END_OBJECT) {
@@ -43,7 +43,7 @@ public class VoltageLimitOverrideDeserializer extends StdDeserializer<VoltageLim
                     break;
                 case "isRelative":
                     parser.nextToken();
-                    isRelative = parser.readValueAs(boolean.class);
+                    isRelative = parser.readValueAs(Boolean.class);
                     break;
                 case "value":
                     parser.nextToken();

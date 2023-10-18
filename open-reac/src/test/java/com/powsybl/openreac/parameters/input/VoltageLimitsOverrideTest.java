@@ -38,6 +38,12 @@ class VoltageLimitsOverrideTest {
                 () -> new VoltageLimitOverride("vl", VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, false, -1));
         assertThrows(InvalidParametersException.class,
                 () -> new VoltageLimitOverride("vl", VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, false, -1));
+
+        // Verify it is impossible to create voltage limit override with undefined override type
+        assertThrows(InvalidParametersException.class,
+                () -> new VoltageLimitOverride("vl", VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, null, 2));
+        assertThrows(InvalidParametersException.class,
+                () -> new VoltageLimitOverride("vl", VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, null, -5));
     }
 
     @Test
