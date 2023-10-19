@@ -13,9 +13,8 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
 import org.jgrapht.alg.util.Pair;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,10 +74,9 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
     }
 
     @Override
-    public InputStream getParameterFileAsStream(StringToIntMapper<AmplSubset> stringToIntMapper) {
-        StringBuilder dataBuilder = new StringBuilder();
-        dataBuilder.append("#num minV (pu) maxV (pu) id");
-        dataBuilder.append(System.lineSeparator());
+    public void write(BufferedWriter writer, StringToIntMapper<AmplSubset> stringToIntMapper) throws IOException {
+        writer.write("#num minV (pu) maxV (pu) id");
+        writer.newLine();
 
         for (Map.Entry<String, Pair<Double, Double>> entry : normalizedVoltageLimitsOverride.entrySet()) {
             String voltageLevelId = entry.getKey();
@@ -87,13 +85,13 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
             if (!Double.isNaN(limits.getFirst()) || !Double.isNaN(limits.getSecond())) {
                 int amplId = stringToIntMapper.getInt(AmplSubset.VOLTAGE_LEVEL, voltageLevelId);
                 String[] tokens = {Integer.toString(amplId), Double.toString(limits.getFirst()), Double.toString(limits.getSecond()), "\"" + voltageLevelId + "\""};
-                dataBuilder.append(String.join(" ", tokens));
-                dataBuilder.append(System.lineSeparator());
+                writer.write(String.join(" ", tokens));
+                writer.newLine();
             }
         }
 
         //add new line at the end of the file
-        dataBuilder.append(System.lineSeparator());
-        return new ByteArrayInputStream(dataBuilder.toString().getBytes(StandardCharsets.UTF_8));
+        writer.newLine();
+        writer.flush();
     }
 }

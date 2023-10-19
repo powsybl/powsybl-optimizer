@@ -10,7 +10,8 @@ import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.ampl.executor.AmplOutputFile;
 import com.powsybl.commons.util.StringToIntMapper;
 
-import java.nio.file.Path;
+import java.io.BufferedReader;
+import java.io.IOException;
 
 /**
  * Interface for output ampl files, which changes the behavior of errors during file reading.
@@ -31,7 +32,7 @@ public interface NoThrowAmplOutput extends AmplOutputFile {
      * </ul>
      */
     @Override
-    void read(Path path, StringToIntMapper<AmplSubset> stringToIntMapper);
+    void read(BufferedReader var1, StringToIntMapper<AmplSubset> var2) throws IOException;
 
     /**
      * @return True if the output reading went bad. WARNING, object might have undefined behavior.

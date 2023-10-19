@@ -12,10 +12,8 @@ import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.openreac.exceptions.IncompatibleModelException;
 import com.powsybl.openreac.parameters.AmplIOUtils;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -65,28 +63,25 @@ public class ReactiveSlackOutput extends AbstractNoThrowOutput {
     }
 
     @Override
-    public void read(Path path, StringToIntMapper<AmplSubset> amplMapper) {
-        List<String> reactiveSlackLines;
-        // if the file is missing, we know there is no reactive slack.
-        if (Files.isRegularFile(path)) {
-            try {
-                reactiveSlackLines = Files.readAllLines(path, StandardCharsets.UTF_8);
-            } catch (IOException e) {
-                // File reading went wrong
-                triggerErrorState();
-                return;
-            }
-            String headers = reactiveSlackLines.get(0);
-            int readCols = headers.split(SEP).length;
-            if (readCols != EXPECTED_COLS) {
-                triggerErrorState();
-                throw new IncompatibleModelException("Error reading " + getFileName() + ", wrong number of columns. Expected: " + EXPECTED_COLS + ", found:" + readCols);
-            } else {
-                for (String line : reactiveSlackLines.subList(1, reactiveSlackLines.size())) {
-                    readLine(line.split(SEP));
-                }
+    public void read(BufferedReader reader, StringToIntMapper<AmplSubset> stringToIntMapper) throws IOException {
+        String headers = reader.readLine();
+        int readCols = headers.split(SEP).length;
+        if (readCols != EXPECTED_COLS) {
+            triggerErrorState();
+            throw new IncompatibleModelException("Error reading " + getFileName() + ", wrong number of columns. Expected: " + EXPECTED_COLS + ", found:" + readCols);
+        } else {
+            String line = reader.readLine();
+            while (line != null) {
+                readLine(line.split(SEP));
+                line = reader.readLine();
             }
         }
+    }
+
+    @Override
+    public boolean throwOnMissingFile() {
+        // if the file is missing, we know there is no reactive slack.
+        return false;
     }
 
     private void readLine(String[] tokens) {
