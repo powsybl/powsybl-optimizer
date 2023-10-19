@@ -22,8 +22,8 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -62,9 +62,15 @@ class ItoolsTest {
         assertEquals(List.of("2-winding-transfo"), loadedParams.getVariableTwoWindingsTransformers(), "Parsing of OpenReac parameters is wrong.");
         assertEquals(List.of("constant-q-gen"), loadedParams.getConstantQGenerators(), "Parsing of OpenReac parameters is wrong.");
         assertEquals(List.of("var-shunt", "var-shunt-2"), loadedParams.getVariableShuntCompensators(), "Parsing of OpenReac parameters is wrong.");
-        assertEquals(Map.of("voltageLevelId", new VoltageLimitOverride(-5, 5)),
-                loadedParams.getSpecificVoltageLimits(),
-                "Parsing of OpenReac parameters is wrong.");
+
+        // List of voltage limit overrides
+        List<VoltageLimitOverride> vloList = new ArrayList<>();
+        vloList.add(new VoltageLimitOverride("voltageLevelId", VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, true, -5));
+        vloList.add(new VoltageLimitOverride("voltageLevelId", VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, true, 5));
+
+        for (int i = 0; i < vloList.size(); i++) {
+            assertEquals(vloList.get(i), loadedParams.getSpecificVoltageLimits().get(i));
+        }
         assertEquals(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE, loadedParams.getObjective(), "Parsing of OpenReac parameters is wrong.");
     }
 

@@ -14,11 +14,11 @@ import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
@@ -30,7 +30,15 @@ class OpenReacJsonModuleTest {
         ObjectMapper objectMapper = JsonUtil.createObjectMapper()
                 .registerModule(new OpenReactJsonModule());
         OpenReacParameters parameters = new OpenReacParameters();
-        parameters.addSpecificVoltageLimits(Map.of("foo", new VoltageLimitOverride(-1, 2), "bar", new VoltageLimitOverride(-1.2, 2.3)));
+
+        // List of voltage limit overrides
+        List<VoltageLimitOverride> vloList1 = new ArrayList<>();
+        vloList1.add(new VoltageLimitOverride("foo", VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, true, -1));
+        vloList1.add(new VoltageLimitOverride("foo", VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, true, 2));
+        vloList1.add(new VoltageLimitOverride("bar", VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, false, 20));
+        vloList1.add(new VoltageLimitOverride("bar", VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, false, 26));
+
+        parameters.addSpecificVoltageLimits(vloList1);
         parameters.addConstantQGenerators(List.of("g1", "g2"));
         parameters.addVariableTwoWindingsTransformers(List.of("tr1"));
         parameters.addVariableShuntCompensators(List.of("sc1", "sc2"));
@@ -39,8 +47,16 @@ class OpenReacJsonModuleTest {
         parameters.setObjectiveDistance(5);
         String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(parameters);
         ComparisonUtils.compareTxt(Objects.requireNonNull(getClass().getResourceAsStream("/parameters.json")), json);
+
         OpenReacParameters parameters2 = objectMapper.readValue(json, OpenReacParameters.class);
-        assertEquals(Map.of("foo", new VoltageLimitOverride(-1, 2), "bar", new VoltageLimitOverride(-1.2, 2.3)), parameters2.getSpecificVoltageLimits());
+        // List of voltage limit overrides
+        List<VoltageLimitOverride> vloList2 = new ArrayList<>();
+        vloList2.add(new VoltageLimitOverride("foo", VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, true, -1));
+        vloList2.add(new VoltageLimitOverride("foo", VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, true, 2));
+        vloList2.add(new VoltageLimitOverride("bar", VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, false, 20));
+        vloList2.add(new VoltageLimitOverride("bar", VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, false, 26));
+
+        assertEquals(vloList2, parameters2.getSpecificVoltageLimits());
         assertEquals(List.of("g1", "g2"), parameters2.getConstantQGenerators());
         assertEquals(List.of("tr1"), parameters2.getVariableTwoWindingsTransformers());
         assertEquals(2, parameters2.getAlgorithmParams().size());

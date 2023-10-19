@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.powsybl.openreac.exceptions.InvalidParametersException;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 
 import java.io.IOException;
@@ -26,23 +27,35 @@ public class VoltageLimitOverrideDeserializer extends StdDeserializer<VoltageLim
 
     @Override
     public VoltageLimitOverride deserialize(JsonParser parser, DeserializationContext deserializationContext) throws IOException {
-        double deltaLowVoltageLimit = 0;
-        double deltaHighVoltageLimit = 0;
+        String voltageLevelId = null;
+        VoltageLimitOverride.VoltageLimitType type = null;
+        Boolean isRelative = null;
+        double overrideValue = Double.NaN;
 
         while (parser.nextToken() != JsonToken.END_OBJECT) {
             switch (parser.getCurrentName()) {
-                case "deltaLowVoltageLimit":
+                case "voltageLevelId" -> {
                     parser.nextToken();
-                    deltaLowVoltageLimit = parser.readValueAs(Double.class);
-                    break;
-                case "deltaHighVoltageLimit":
+                    voltageLevelId = parser.readValueAs(String.class);
+                }
+                case "voltageLimitType" -> {
                     parser.nextToken();
-                    deltaHighVoltageLimit = parser.readValueAs(Double.class);
-                    break;
-                default:
-                    throw new IllegalStateException("Unexpected field: " + parser.getCurrentName());
+                    type = parser.readValueAs(VoltageLimitOverride.VoltageLimitType.class);
+                }
+                case "isRelative" -> {
+                    parser.nextToken();
+                    isRelative = parser.readValueAs(Boolean.class);
+                }
+                case "value" -> {
+                    parser.nextToken();
+                    overrideValue = parser.readValueAs(Double.class);
+                }
+                default -> throw new IllegalStateException("Unexpected field: " + parser.getCurrentName());
             }
         }
-        return new VoltageLimitOverride(deltaLowVoltageLimit, deltaHighVoltageLimit);
+        if (isRelative == null) {
+            throw new InvalidParametersException("A relative or absolute voltage limit override must be specified.");
+        }
+        return new VoltageLimitOverride(voltageLevelId, type, isRelative, overrideValue);
     }
 }
