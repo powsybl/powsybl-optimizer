@@ -451,10 +451,7 @@ for{n in BUS2 diff BUSCC}
 printf "Nb of busses in AC+DC CC: %i\n",card(BUS2);
 printf "Nb of busses in CC %Q: %i\n",bus_id[1,null_phase_bus],card(BUSCC);
 printf "Nb of busses in other CCs: %Q\n",card(BUS2)-card(BUSCC);
-
 printf "\n";
-
-
 
 ###############################################################################
 # A few information
@@ -548,7 +545,7 @@ for {(qq,m,n) in BRANCHCC_REGL: regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]] <= te
 }
 # Looking for unconsistencies
 let tempo := 0; # If non zero, major inconsistency detected
-for {(qq,m,n) in BRANCHCC_REGL: substation_Vnomi[1,bus_substation[1,m]] > 30 and substation_Vnomi[1,bus_substation[1,n]] > 30} {
+for {(qq,m,n) in BRANCHCC_REGL: substation_Vnomi[1,bus_substation[1,m]] > 30 and substation_Vnomi[1,bus_substation[1,n]] > 30 and 1=0} {
   let temp1 := regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]];
   let temp2 := regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]];
   if voltage_lower_bound[1,bus_substation[1,m]]*temp1*branch_cstratio[1,qq,m,n] > voltage_upper_bound[1,bus_substation[1,n]]
@@ -585,7 +582,7 @@ for {(qq,m,n) in BRANCHCC_REGL: substation_Vnomi[1,bus_substation[1,m]] > 30 and
   }
 }
 # Consistency for transformers with fixed ratio
-for {(qq,m,n) in BRANCHCC_REGL_FIX: substation_Vnomi[1,bus_substation[1,m]] > 30 and substation_Vnomi[1,bus_substation[1,n]] > 30} {
+for {(qq,m,n) in BRANCHCC_REGL_FIX: substation_Vnomi[1,bus_substation[1,m]] > 30 and substation_Vnomi[1,bus_substation[1,n]] > 30  and 1=0} {
   let temp1 := tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]];
   if voltage_lower_bound[1,bus_substation[1,m]]*temp1*branch_cstratio[1,qq,m,n] > voltage_upper_bound[1,bus_substation[1,n]]
   then {
