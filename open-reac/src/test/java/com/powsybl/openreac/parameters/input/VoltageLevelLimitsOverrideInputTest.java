@@ -6,7 +6,6 @@
  */
 package com.powsybl.openreac.parameters.input;
 
-import com.google.common.io.ByteStreams;
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.ampl.converter.AmplUtil;
 import com.powsybl.commons.PowsyblException;
@@ -18,12 +17,15 @@ import com.powsybl.iidm.network.test.EurostagTutorialExample1Factory;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
 import org.junit.jupiter.api.Test;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
@@ -46,8 +48,10 @@ class VoltageLevelLimitsOverrideInputTest {
 
         VoltageLevelLimitsOverrideInput input = new VoltageLevelLimitsOverrideInput(voltageLimitsOverride, network);
         StringToIntMapper<AmplSubset> mapper = AmplUtil.createMapper(network);
-        try (var is = input.getParameterFileAsStream(mapper)) {
-            String data = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
+        try (Writer w = new StringWriter();
+             BufferedWriter writer = new BufferedWriter(w)) {
+            input.write(writer, mapper);
+            String data = w.toString();
             String ref = String.join(System.lineSeparator(), "#num minV (pu) maxV (pu) id",
                     "1 0.7916666666666667 1.1666666666666665 \"VLGEN\"") + System.lineSeparator() + System.lineSeparator();
             assertEquals(ref, data);
@@ -70,8 +74,11 @@ class VoltageLevelLimitsOverrideInputTest {
 
         VoltageLevelLimitsOverrideInput input = new VoltageLevelLimitsOverrideInput(voltageLimitsOverride, network);
         StringToIntMapper<AmplSubset> mapper = AmplUtil.createMapper(network);
-        try (var is = input.getParameterFileAsStream(mapper)) {
-            String data = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
+
+        try (Writer w = new StringWriter();
+             BufferedWriter writer = new BufferedWriter(w)) {
+            input.write(writer, mapper);
+            String data = w.toString();
             String ref = String.join(System.lineSeparator(), "#num minV (pu) maxV (pu) id",
                     "1 0.8333333333333334 1.0833333333333333 \"VLGEN\"") + System.lineSeparator() + System.lineSeparator();
             assertEquals(ref, data);
