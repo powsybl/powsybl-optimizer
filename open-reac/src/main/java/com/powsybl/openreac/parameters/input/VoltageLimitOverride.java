@@ -52,17 +52,14 @@ public class VoltageLimitOverride {
         return voltageLevelId;
     }
 
-    public VoltageLimitOverride(String voltageLevelId, VoltageLimitType type, Boolean isRelative, double limit) {
-        if (isRelative == null) {
-            throw new InvalidParametersException("The kind of voltage limit override must be specified.");
-        }
+    public VoltageLimitOverride(String voltageLevelId, VoltageLimitType type, boolean isRelative, double limit) {
         if (Double.isNaN(limit)) {
             throw new InvalidParametersException("The voltage limit override must be defined.");
         }
         if (limit <= 0 && Boolean.FALSE.equals(isRelative)) {
             throw new InvalidParametersException("The voltage limit override is in absolute value: must be positive.");
         }
-        this.voltageLevelId = voltageLevelId;
+        this.voltageLevelId = Objects.requireNonNull(voltageLevelId);
         this.type = Objects.requireNonNull(type);
         this.isRelative = isRelative;
         this.limit = limit;

@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.powsybl.openreac.exceptions.InvalidParametersException;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 
 import java.io.IOException;
@@ -29,29 +30,31 @@ public class VoltageLimitOverrideDeserializer extends StdDeserializer<VoltageLim
         String voltageLevelId = null;
         VoltageLimitOverride.VoltageLimitType type = null;
         Boolean isRelative = null;
-        double overrideValue = 0;
+        double overrideValue = Double.NaN;
 
         while (parser.nextToken() != JsonToken.END_OBJECT) {
             switch (parser.getCurrentName()) {
-                case "voltageLevelId":
+                case "voltageLevelId" -> {
                     parser.nextToken();
                     voltageLevelId = parser.readValueAs(String.class);
-                    break;
-                case "voltageLimitType":
+                }
+                case "voltageLimitType" -> {
                     parser.nextToken();
                     type = parser.readValueAs(VoltageLimitOverride.VoltageLimitType.class);
-                    break;
-                case "isRelative":
+                }
+                case "isRelative" -> {
                     parser.nextToken();
                     isRelative = parser.readValueAs(Boolean.class);
-                    break;
-                case "value":
+                }
+                case "value" -> {
                     parser.nextToken();
                     overrideValue = parser.readValueAs(Double.class);
-                    break;
-                default:
-                    throw new IllegalStateException("Unexpected field: " + parser.getCurrentName());
+                }
+                default -> throw new IllegalStateException("Unexpected field: " + parser.getCurrentName());
             }
+        }
+        if (isRelative == null) {
+            throw new InvalidParametersException("A relative or absolute voltage limit override must be specified.");
         }
         return new VoltageLimitOverride(voltageLevelId, type, isRelative, overrideValue);
     }
