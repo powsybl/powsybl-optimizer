@@ -6,29 +6,63 @@
  */
 package com.powsybl.openreac.parameters.input;
 
+import com.powsybl.openreac.exceptions.InvalidParametersException;
+
 import java.util.Objects;
 
 /**
  * Class to store an override of a voltage level voltage limits.
  *
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ * @author Pierre Arvy <pierre.arvy at artelys.com>
  */
 public class VoltageLimitOverride {
 
-    private final double deltaLowVoltageLimit;
-    private final double deltaHighVoltageLimit;
+    public enum VoltageLimitType {
+        HIGH_VOLTAGE_LIMIT,
+        LOW_VOLTAGE_LIMIT;
 
-    public double getDeltaLowVoltageLimit() {
-        return deltaLowVoltageLimit;
+        @Override
+        public String toString() {
+            return this == HIGH_VOLTAGE_LIMIT ? "HIGH_VOLTAGE_LIMIT" : "LOW_VOLTAGE_LIMIT";
+        }
     }
 
-    public double getDeltaHighVoltageLimit() {
-        return deltaHighVoltageLimit;
+    private final VoltageLimitType type; // indicates if the override is done on low or on high voltage limit
+
+    private final boolean isRelative; // if true, override is relative. if false, override is absolute
+
+    private final double limit; // value of the limit override
+
+    private final String voltageLevelId;
+
+    public VoltageLimitType getVoltageLimitType() {
+        return type;
     }
 
-    public VoltageLimitOverride(double deltaLowVoltageLimit, double deltaHighVoltageLimit) {
-        this.deltaLowVoltageLimit = deltaLowVoltageLimit;
-        this.deltaHighVoltageLimit = deltaHighVoltageLimit;
+    public boolean isRelative() {
+        return isRelative;
+    }
+
+    public double getLimit() {
+        return limit;
+    }
+
+    public String getVoltageLevelId() {
+        return voltageLevelId;
+    }
+
+    public VoltageLimitOverride(String voltageLevelId, VoltageLimitType type, boolean isRelative, double limit) {
+        if (Double.isNaN(limit)) {
+            throw new InvalidParametersException("The voltage limit override must be defined.");
+        }
+        if (limit <= 0 && Boolean.FALSE.equals(isRelative)) {
+            throw new InvalidParametersException("The voltage limit override is in absolute value: must be positive.");
+        }
+        this.voltageLevelId = Objects.requireNonNull(voltageLevelId);
+        this.type = Objects.requireNonNull(type);
+        this.isRelative = isRelative;
+        this.limit = limit;
     }
 
     @Override
@@ -40,12 +74,14 @@ public class VoltageLimitOverride {
             return false;
         }
         VoltageLimitOverride that = (VoltageLimitOverride) o;
-        return Double.compare(that.deltaLowVoltageLimit, deltaLowVoltageLimit) == 0
-                && Double.compare(that.deltaHighVoltageLimit, deltaHighVoltageLimit) == 0;
+        return that.voltageLevelId.equals(voltageLevelId)
+                && that.type.equals(type)
+                && that.isRelative == isRelative
+                && Double.compare(that.limit, limit) == 0;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(deltaLowVoltageLimit, deltaHighVoltageLimit);
+        return Objects.hash(voltageLevelId, type, isRelative, limit);
     }
 }
