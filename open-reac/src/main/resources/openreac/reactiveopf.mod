@@ -72,8 +72,8 @@ param substation_new_checkId {BOUND_OVERRIDES} symbolic;
 
 # Consistency checks
 check {(t,s) in SUBSTATIONS: s in BOUND_OVERRIDES}: substation_id[t,s] == substation_new_checkId[s];
-check {(t,s) in SUBSTATIONS: s in BOUND_OVERRIDES}: substation_new_Vmin[s] > 0;
-check {(t,s) in SUBSTATIONS: s in BOUND_OVERRIDES}: substation_new_Vmax[s] > 0;
+check {(t,s) in SUBSTATIONS: s in BOUND_OVERRIDES}: substation_new_Vmin[s] >= 0;
+check {(t,s) in SUBSTATIONS: s in BOUND_OVERRIDES}: substation_new_Vmax[s] >= 0;
 check {(t,s) in SUBSTATIONS: s in BOUND_OVERRIDES}: substation_new_Vmin[s] < substation_new_Vmax[s];
 
 
