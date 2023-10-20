@@ -90,9 +90,9 @@ param voltage_lower_bound{(t,s) in SUBSTATIONS} :=
       );
 
 param voltage_upper_bound{(t,s) in SUBSTATIONS} :=
-  if s in BOUND_OVERRIDES then substation_new_Vmax[s] else
-  if substation_Vmax[t,s] <= voltage_lower_bound[t,s]
-  then maximal_voltage_upper_bound
+  if s in BOUND_OVERRIDES and substation_new_Vmax[s] <= voltage_lower_bound[t,s] then maximal_voltage_upper_bound
+  else if s in BOUND_OVERRIDES then min(maximal_voltage_upper_bound,substation_new_Vmax[s])
+  else if substation_Vmax[t,s] <= voltage_lower_bound[t,s] then maximal_voltage_upper_bound
   else min(maximal_voltage_upper_bound,substation_Vmax[t,s]);
 
 check {(t,s) in SUBSTATIONS}: voltage_lower_bound[t,s] < voltage_upper_bound[t,s];
