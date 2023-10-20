@@ -71,7 +71,7 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
             if (newLimits.getFirst() < 0.5) {
                 LOGGER.warn("Voltage level {} has a low voltage limit lower than 0.5 PU ({} PU)", voltageLevelId, newLimits.getFirst());
             }
-            if (newLimits.getSecond() < 1.5) {
+            if (newLimits.getSecond() > 1.5) {
                 LOGGER.warn("Voltage level {} has a high voltage limit greater than 1.5 PU ({} PU)", voltageLevelId, newLimits.getSecond());
             }
             normalizedVoltageLimitsOverride.put(voltageLevelId, newLimits);
