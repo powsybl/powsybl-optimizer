@@ -12,6 +12,8 @@ import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
 import org.jgrapht.alg.util.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -28,6 +30,8 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
     private static final String FILENAME = "ampl_network_substations_override.txt";
 
     private final Map<String, Pair<Double, Double>> normalizedVoltageLimitsOverride;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(VoltageLevelLimitsOverrideInput.class);
 
     public VoltageLevelLimitsOverrideInput(List<VoltageLimitOverride> voltageLimitsOverrides, Network network) {
         Objects.requireNonNull(voltageLimitsOverrides);
@@ -61,8 +65,14 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
                 throw new UnsupportedOperationException("Unsupported voltage limit type: " + voltageLimitOverride.getVoltageLimitType());
             }
 
-            if (newLimits.getFirst() > newLimits.getSecond()) {
-                throw new InvalidParametersException("Override on voltage level " + voltageLevelId + " leads to low voltage limit > high voltage limit.");
+            if (newLimits.getFirst() >= newLimits.getSecond()) {
+                throw new InvalidParametersException("Override on voltage level " + voltageLevelId + " leads to low voltage limit >= high voltage limit.");
+            }
+            if (newLimits.getFirst() < 0.5) {
+                LOGGER.warn("Voltage level {} has a low voltage limit lower than 0.5 PU ({} PU)", voltageLevelId, newLimits.getFirst());
+            }
+            if (newLimits.getSecond() > 1.5) {
+                LOGGER.warn("Voltage level {} has a high voltage limit greater than 1.5 PU ({} PU)", voltageLevelId, newLimits.getSecond());
             }
             normalizedVoltageLimitsOverride.put(voltageLevelId, newLimits);
         }

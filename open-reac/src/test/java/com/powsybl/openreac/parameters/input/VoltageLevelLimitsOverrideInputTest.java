@@ -24,8 +24,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
@@ -86,16 +85,16 @@ class VoltageLevelLimitsOverrideInputTest {
     }
 
     @Test
-    void testNullVoltageLimitWithoutOverride() {
+    void testZeroVoltageLimit() {
         Network network = IeeeCdfNetworkFactory.create118();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
 
         VoltageLevel vl = network.getVoltageLevels().iterator().next();
         OpenReacParameters params = new OpenReacParameters();
 
-        // if one low voltage limit is <= 0 and there is no voltage limit override, invalid OpenReacParameters
+        // if one low voltage limit is < 0 and there is no voltage limit override, invalid OpenReacParameters
         vl.setLowVoltageLimit(0);
-        assertThrows(PowsyblException.class, () -> params.checkIntegrity(network));
+        assertDoesNotThrow(() -> params.checkIntegrity(network));
     }
 
     @Test
@@ -143,7 +142,7 @@ class VoltageLevelLimitsOverrideInputTest {
         voltageLimitsOverride.clear();
         voltageLimitsOverride.add(new VoltageLimitOverride(vl.getId(), VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, true, -400));
         params.addSpecificVoltageLimits(voltageLimitsOverride);
-        assertThrows(InvalidParametersException.class, () -> params.checkIntegrity(network));
+        assertDoesNotThrow(() -> params.checkIntegrity(network)); // zero value
 
         // if high relative voltage override leads to negative voltage limit, throws exception
         OpenReacParameters params2 = new OpenReacParameters();
@@ -157,7 +156,7 @@ class VoltageLevelLimitsOverrideInputTest {
         voltageLimitsOverride2.clear();
         voltageLimitsOverride2.add(new VoltageLimitOverride(vl.getId(), VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, true, -480));
         params2.addSpecificVoltageLimits(voltageLimitsOverride2);
-        assertThrows(InvalidParametersException.class, () -> params2.checkIntegrity(network));
+        assertDoesNotThrow(() -> params2.checkIntegrity(network)); // zero value
     }
 
     @Test

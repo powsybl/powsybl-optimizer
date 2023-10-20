@@ -56,7 +56,7 @@ public class VoltageLimitOverride {
         if (Double.isNaN(limit)) {
             throw new InvalidParametersException("The voltage limit override must be defined.");
         }
-        if (limit <= 0 && Boolean.FALSE.equals(isRelative)) {
+        if (limit < 0 && Boolean.FALSE.equals(isRelative)) {
             throw new InvalidParametersException("The voltage limit override is in absolute value: must be positive.");
         }
         this.voltageLevelId = Objects.requireNonNull(voltageLevelId);
