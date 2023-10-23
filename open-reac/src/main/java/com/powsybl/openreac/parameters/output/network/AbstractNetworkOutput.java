@@ -12,9 +12,8 @@ import com.powsybl.iidm.modification.NetworkModification;
 import com.powsybl.openreac.OpenReacModel;
 import com.powsybl.openreac.parameters.output.AbstractNoThrowOutput;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
@@ -43,24 +42,22 @@ public abstract class AbstractNetworkOutput<T extends NetworkModification> exten
     }
 
     @Override
-    public void read(Path path, StringToIntMapper<AmplSubset> stringToIntMapper) {
-        List<String> lines = null;
-        try {
-            lines = Files.readAllLines(path);
-        } catch (IOException e) {
-            triggerErrorState();
-        }
-        if (lines != null) {
-            for (String line : lines) {
-                if (!COMMENTED_LINE_TEST.test(line)) {
-                    String[] tokens = line.split(OpenReacModel.OUTPUT_FILE_FORMAT.getTokenSeparator());
-                    modifications.add(doReadLine(tokens, stringToIntMapper));
-                }
+    public void read(BufferedReader bufferedReader, StringToIntMapper<AmplSubset> stringToIntMapper) throws IOException {
+        bufferedReader.lines().forEach(line -> {
+            if (!COMMENTED_LINE_TEST.test(line)) {
+                String[] tokens = line.split(OpenReacModel.OUTPUT_FILE_FORMAT.getTokenSeparator());
+                modifications.add(doReadLine(tokens, stringToIntMapper));
             }
-        }
+        });
     }
 
     protected abstract T doReadLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper);
+
+    @Override
+    public boolean throwOnMissingFile() {
+        triggerErrorState();
+        return false;
+    }
 
     public List<T> getModifications() {
         return modifications;

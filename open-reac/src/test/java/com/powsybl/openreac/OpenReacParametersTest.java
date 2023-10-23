@@ -7,10 +7,7 @@
 package com.powsybl.openreac;
 
 import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
-import com.powsybl.iidm.network.Generator;
-import com.powsybl.iidm.network.Network;
-import com.powsybl.iidm.network.ShuntCompensator;
-import com.powsybl.iidm.network.TwoWindingsTransformer;
+import com.powsybl.iidm.network.*;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
@@ -29,6 +26,7 @@ public class OpenReacParametersTest {
     @Test
     public void testObjectiveIntegrityChecks() {
         Network network = IeeeCdfNetworkFactory.create118();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         OpenReacParameters parameters = new OpenReacParameters();
 
         assertEquals(parameters.getObjective(), OpenReacOptimisationObjective.MIN_GENERATION);
@@ -44,6 +42,7 @@ public class OpenReacParametersTest {
     @Test
     public void testParametersIntegrityChecks() {
         Network network = IeeeCdfNetworkFactory.create118();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         String wrongId = "An id not in 118 cdf network.";
         OpenReacParameters parameters = new OpenReacParameters();
 
@@ -86,6 +85,17 @@ public class OpenReacParametersTest {
         parameters.addConstantQGenerators(List.of(wrongId));
         assertNull(network.getGenerator(wrongId), "Please change wrong ID so it does not match any element in the network.");
         assertThrows(InvalidParametersException.class, () -> lambdaParamsGenerators.checkIntegrity(network), "An Generator ID not present in the network should throw to the user.");
+    }
+
+    void setDefaultVoltageLimits(Network network) {
+        for (VoltageLevel vl : network.getVoltageLevels()) {
+            if (vl.getLowVoltageLimit() <= 0 || Double.isNaN(vl.getLowVoltageLimit())) {
+                vl.setLowVoltageLimit(0.8 * vl.getNominalV());
+            }
+            if (Double.isNaN(vl.getHighVoltageLimit())) {
+                vl.setHighVoltageLimit(1.2 * vl.getNominalV());
+            }
+        }
     }
 
 }

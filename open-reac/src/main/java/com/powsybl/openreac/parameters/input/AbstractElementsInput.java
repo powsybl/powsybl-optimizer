@@ -11,9 +11,8 @@ import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.openreac.parameters.AmplIOUtils;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -28,18 +27,17 @@ public abstract class AbstractElementsInput implements AmplInputFile {
     }
 
     @Override
-    public InputStream getParameterFileAsStream(StringToIntMapper<AmplSubset> stringToIntMapper) {
-        StringBuilder dataBuilder = new StringBuilder();
-        dataBuilder.append("#amplId powsyblId\n");
+    public void write(BufferedWriter writer, StringToIntMapper<AmplSubset> stringToIntMapper) throws IOException {
+        writer.write("#amplId powsyblId\n");
         for (String elementID : elementIds) {
             int amplId = stringToIntMapper.getInt(getElementAmplSubset(), elementID);
             String[] tokens = {Integer.toString(amplId), AmplIOUtils.addQuotes(elementID)};
-            dataBuilder.append(String.join(" ", tokens));
-            dataBuilder.append(System.lineSeparator());
+            writer.write(String.join(" ", tokens));
+            writer.newLine();
         }
         //add new line at the end of the file !
-        dataBuilder.append("\n");
-        return new ByteArrayInputStream(dataBuilder.toString().getBytes(StandardCharsets.UTF_8));
+        writer.newLine();
+        writer.flush();
     }
 
     abstract AmplSubset getElementAmplSubset();
