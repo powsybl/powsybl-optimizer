@@ -155,15 +155,15 @@ close (fileOut);
 }
 
 # Useful during tests to create list of transformers
-if 0 then
-printf {(qq,m,n) in BRANCHCC_REGL:
-  substation_Vnomi[1,bus_substation[1,m]]>21 and substation_Vnomi[1,bus_substation[1,m]]<300 and
-  substation_Vnomi[1,bus_substation[1,n]]>21 and substation_Vnomi[1,bus_substation[1,n]]<300 and
-  (substation_Vnomi[1,bus_substation[1,m]]>120 or substation_Vnomi[1,bus_substation[1,n]]>120) and
-  (substation_Vnomi[1,bus_substation[1,m]]<120 or substation_Vnomi[1,bus_substation[1,n]]<120)
-} "1 %i %i %i %Q\n",qq,m,n,branch_id[1,qq,m,n] > param_transformers.txtt;
-
-
+if 0 then {
+  for{(qq,m,n) in BRANCHCC_REGL:
+    substation_Vnomi[1,bus_substation[1,m]]>21 and substation_Vnomi[1,bus_substation[1,m]]<300 and
+    substation_Vnomi[1,bus_substation[1,n]]>21 and substation_Vnomi[1,bus_substation[1,n]]<300 and
+    (substation_Vnomi[1,bus_substation[1,m]]>120 or substation_Vnomi[1,bus_substation[1,n]]>120) and
+    (substation_Vnomi[1,bus_substation[1,m]]<120 or substation_Vnomi[1,bus_substation[1,n]]<120)}{ 
+      printf{LOG_DEBUG} "1 %i %i %i %Q\n",qq,m,n,branch_id[1,qq,m,n] > param_transformers.txtt;
+  }
+}
 
 ###############################################################################
 #
