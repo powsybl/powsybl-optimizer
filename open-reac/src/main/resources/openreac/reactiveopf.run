@@ -485,9 +485,10 @@ option presolve 10;
 # Definition of BUSCC below was the purpose of this optimization
 ###############################################################################
 
-let BUSCC := {n in BUS2: teta_ccomputation[n].val <= 0.01};
+printf{LOG_INFO} "\n######################################################################\n";
+printf{LOG_INFO} "** CCcomp results\n";
 
-printf{LOG_INFO} "\n** CCcomp results\n";
+let BUSCC := {n in BUS2: teta_ccomputation[n].val <= 0.01};
 for{n in BUS2 diff BUSCC}
   printf{LOG_WARNING} "Bus %Q in substation %Q (Vnomi=%.2fkV, country=%Q) is out of main AC CC\n",
     bus_id[1,n], substation_id[1,bus_substation[1,n]],
@@ -539,7 +540,7 @@ printf{LOG_INFO} "Balance    (P-C-H)/C: %.2f %%    (global_initial_losses_ratio=
 # Branches with low current limits (but keep in mind they are not used; this is just for information)
 let temp1 := min{(qq,m,n) in BRANCHCC} Fmax[qq,m,n];
 for {(qq,m,n) in BRANCHCC : Fmax[qq,m,n] <= temp1 * 1.5}
-  printf{LOG_WARNING} "Branch %Q Fmax=%.2fMW is small ; Vnom1=%ikV Vnom2=%ikV patl1=%iA patl2=%iA (Fmax not used, this is just for information)\n",
+  printf{LOG_INFO} "Branch %Q Fmax=%.2fMW is small ; Vnom1=%ikV Vnom2=%ikV patl1=%iA patl2=%iA (Fmax not used, this is just for information)\n",
     branch_id[1,qq,m,n],Fmax[qq,m,n],substation_Vnomi[1,bus_substation[1,m]],substation_Vnomi[1,bus_substation[1,n]],branch_patl1[1,qq,m,n],branch_patl1[1,qq,m,n];
 
 # Abnormally low nominal voltages
@@ -677,8 +678,7 @@ if tempo > 0.5 then {
 ###############################################################################
 # Correction of units' P and Q domains
 ###############################################################################
-printf "\n";
-param print_units := 0; # 0 or 1 for detailed prints of corrections
+printf{LOG_WARNING} "\nWARNING Correction of P/Q units domains:\n";
 for {(g,n) in UNITON} {
 
   if abs(unit_Pmax[1,g,n]) >= PQmax then {
@@ -703,29 +703,25 @@ for {(g,n) in UNITON} {
 
   if abs(unit_qp[1,g,n]) >= PQmax then {
     let corrected_unit_qp[g,n] := -defaultQmaxPmaxRatio * corrected_unit_Pmax[g,n];
-    if print_units then
-    printf{LOG_WARNING} "%Q for %Q is %Q -> corrected to %Q\n","unit_qp",unit_id[1,g,n],unit_qp[1,g,n],corrected_unit_qp[g,n];
+    printf{LOG_DEBUG} "%Q for %Q is %Q -> corrected to %Q\n","unit_qp",unit_id[1,g,n],unit_qp[1,g,n],corrected_unit_qp[g,n];
   }
   else let corrected_unit_qp[g,n] := unit_qp[1,g,n];
 
   if abs(unit_qP[1,g,n]) >= PQmax then {
     let corrected_unit_qP[g,n] := -defaultQmaxPmaxRatio * corrected_unit_Pmax[g,n];
-    if print_units then
-    printf{LOG_WARNING} "%Q for %Q is %Q -> corrected to %Q\n","unit_qP",unit_id[1,g,n],unit_qP[1,g,n],corrected_unit_qP[g,n];
+    printf{LOG_DEBUG} "%Q for %Q is %Q -> corrected to %Q\n","unit_qP",unit_id[1,g,n],unit_qP[1,g,n],corrected_unit_qP[g,n];
   }
   else let corrected_unit_qP[g,n] := unit_qP[1,g,n];
 
   if abs(unit_Qp[1,g,n]) >= PQmax then {
     let corrected_unit_Qp[g,n] := defaultQmaxPmaxRatio * corrected_unit_Pmax[g,n];
-    if print_units then
-    printf{LOG_WARNING} "%Q for %Q is %Q -> corrected to %Q\n","unit_Qp",unit_id[1,g,n],unit_Qp[1,g,n],corrected_unit_Qp[g,n];
+    printf{LOG_DEBUG} "%Q for %Q is %Q -> corrected to %Q\n","unit_Qp",unit_id[1,g,n],unit_Qp[1,g,n],corrected_unit_Qp[g,n];
   }
   else let corrected_unit_Qp[g,n] := unit_Qp[1,g,n];
 
   if abs(unit_QP[1,g,n]) >= PQmax then {
     let corrected_unit_QP[g,n] := defaultQmaxPmaxRatio * corrected_unit_Pmax[g,n];
-    if print_units then
-    printf{LOG_WARNING} "%Q for %Q is %Q -> corrected to %Q\n","unit_QP",unit_id[1,g,n],unit_QP[1,g,n],corrected_unit_QP[g,n];
+    printf{LOG_DEBUG} "%Q for %Q is %Q -> corrected to %Q\n","unit_QP",unit_id[1,g,n],unit_QP[1,g,n],corrected_unit_QP[g,n];
   }
   else let corrected_unit_QP[g,n] := unit_QP[1,g,n];
 
@@ -748,8 +744,7 @@ for {(g,n) in UNITON} {
     and abs(corrected_unit_QP[g,n]-corrected_unit_qp[g,n]) <= minimalQPrange
   then {
     let tempo := 0.25*(corrected_unit_qP[g,n]+corrected_unit_QP[g,n]+corrected_unit_qp[g,n]+corrected_unit_Qp[g,n]);
-    if print_units then
-      printf{LOG_WARNING} "Unit %Q has reactive diagram too small -> we set qp=qP=Qp=QP=%Q (Pc=%Q)\n",
+    printf{LOG_DEBUG} "Unit %Q has reactive diagram too small -> we set qp=qP=Qp=QP=%Q (Pc=%Q)\n",
       unit_id[1,g,n],tempo,unit_Pc[1,g,n];
     let corrected_unit_qP[g,n] := tempo;
     let corrected_unit_QP[g,n] := tempo;
@@ -770,7 +765,7 @@ for {(g,n) in UNITON} {
     unit_id[1,g,n],corrected_unit_Qmin[g,n],corrected_unit_Qmax[g,n];
 }
 
-printf "\n";
+printf{LOG_INFO} "\nFew information on P/Q units domains:\n";
 printf{LOG_INFO} "Raw extremal values: %Q <= %Q <= %Q\n",min({(g,n) in UNITON} unit_Pmin[1,g,n]),"unit_Pmin",max({(g,n) in UNITON} unit_Pmin[1,g,n]);
 printf{LOG_INFO} "Active generation:   %Q <= %Q <= %Q\n",min({(g,n) in UNITON} unit_Pc[1,g,n]),  "unit_Pc",  max({(g,n) in UNITON} unit_Pc[1,g,n]);
 printf{LOG_INFO} "Raw extremal values: %Q <= %Q <= %Q\n",min({(g,n) in UNITON} unit_Pmax[1,g,n]),"unit_Pmax",max({(g,n) in UNITON} unit_Pmax[1,g,n]);
@@ -863,7 +858,8 @@ then {
 # Displays after solving
 ###############################################################################
 
-printf{LOG_INFO} "\n** DCopf results\n";
+printf{LOG_INFO} "\n######################################################################\n";
+printf{LOG_INFO} "** DCopf results\n";
 printf{LOG_INFO} "OK all slack variables for DCOPF are null\n";
 let dcopf_status := "OK";
 
@@ -1041,7 +1037,8 @@ else {
 # Displays after solving
 ###############################################################################
 
-printf{LOG_INFO} "\n** ACopf results\n";
+printf{LOG_INFO} "\n######################################################################\n";
+printf{LOG_INFO} "** ACopf results\n";
 if 1 in LOG_INFO then display
   nb_iter_last,nb_iter_total,
   max({(qq,m,n) in BRANCHCC} branch_R[1,qq,m,n]),max({(qq,m,n) in BRANCHCC} branch_X[1,qq,m,n]),
@@ -1080,6 +1077,7 @@ then {
     card({n in BUSCC_SLACK: slack2_balance_Q[n]+slack1_balance_Q[n]>Pnull});
 
   if output_results > 0 then
+    if card({n in BUSCC_SLACK: slack1_balance_Q[n]+slack2_balance_Q[n] > Pnull}) > 0 then printf{LOG_WARNING} "WARNING buses with non zero reactive slack :\n";
     for {n in BUSCC_SLACK: slack1_balance_Q[n]+slack2_balance_Q[n] > Pnull}
       printf{LOG_WARNING} "Bus %Q in substation %Q (%ikV) has non zero reactive slacks %.1f %.1f, Vmin=%.3f Vopt=%.3f Vmax=%.3f \n",
         bus_id[1,n],substation_id[1,bus_substation[1,n]],substation_Vnomi[1,bus_substation[1,n]],
