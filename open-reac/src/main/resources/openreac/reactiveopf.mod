@@ -13,11 +13,11 @@
 ###############################################################################
 
 
-
 ###############################################################################
 # Substations
 ###############################################################################
 #ampl_network_substations.txt
+
 # [variant, substation]
 # The 1st column "variant" may also be used to define time step, in case this
 # PowSyBl format is used for multi-timestep OPF. This is why the letter for
@@ -65,6 +65,7 @@ check maximal_voltage_upper_bound > minimal_voltage_lower_bound;
 # Overrides for voltage bounds of substations
 ###############################################################################
 #ampl_network_substations_override.txt
+
 set BOUND_OVERRIDES dimen 1 default {};
 param substation_new_Vmin    {BOUND_OVERRIDES};
 param substation_new_Vmax    {BOUND_OVERRIDES};
@@ -103,6 +104,7 @@ check {(t,s) in SUBSTATIONS}: voltage_lower_bound[t,s] < voltage_upper_bound[t,s
 # Buses
 ###############################################################################
 # ampl_network_buses.txt
+
 set BUS dimen 2 ; # [variant, bus]
 param bus_substation{BUS} integer;
 param bus_CC        {BUS} integer; # num of connex component. Computation only in CC number 0 (=main connex component)
@@ -257,6 +259,7 @@ check {(t,svc,n) in SVC}: (t,svc_substation[t,svc,n]) in SUBSTATIONS;
 # Batteries
 ###############################################################################
 # ampl_network_batteries.txt
+
 set BATTERY dimen 3; # [variant, battery, bus]
 param battery_possiblebus{BATTERY} integer;
 param battery_substation {BATTERY} integer;
@@ -440,7 +443,6 @@ check {(t,cs,n) in VSCCONV}: vscconv_qP[t,cs,n]   <= vscconv_QP[t,cs,n];
 # LCC converter station data
 ###############################################################################
 # ampl_network_lcc_converter_stations.txt
-#"variant" "num" "bus" "con. bus" "substation" "lossFactor (%PDC)" "powerFactor" "fault" "curative" "id" "description" "P (MW)" "Q (MVar)"
 
 set LCCCONV dimen 3; # [variant, num, bus]
 param lccconv_possiblebus {LCCCONV} integer;
@@ -624,7 +626,6 @@ set LCCCONVON := setof{(t,l,n) in LCCCONV:
   } (l,n);
 
 
-
 ###############################################################################
 # Corrected values for reactances
 ###############################################################################
@@ -648,14 +649,12 @@ param corrected_unit_Qmin{UNITON} default defaultQmin;
 param corrected_unit_Qmax{UNITON} default defaultQmax;
 
 
-
 ###############################################################################
 # Maximum flows on branches
 ###############################################################################
 param Fmax{(qq,m,n) in BRANCHCC} :=
   1.732 * 0.001
   * max(substation_Vnomi[1,bus_substation[1,m]]*abs(branch_patl1[1,qq,m,n]),substation_Vnomi[1,bus_substation[1,n]]*abs(branch_patl2[1,qq,m,n]));
-
 
 
 ###############################################################################
@@ -703,328 +702,25 @@ param branch_dephor {(qq,m,n) in BRANCHCC} =
 param branch_dephex {(qq,m,n) in BRANCHCC} = 0; # In IIDM, everything is in bus1 so dephase at bus2 is always 0
 
 
-
-
 ###############################################################################
-#
-# List of all optimization problems which wil be solved successively
-#
+# Optimization problems which will be solved successively
 ###############################################################################
-# Variables are defined without reference to a particular optimization problem
-# Constraints are to be defined with
-set PROBLEM_CCOMP default {1};
-set PROBLEM_DCOPF default { };
-set PROBLEM_ACOPF default { };
-# After solving DCOPF, switch to ACOPF this way:
-#let PROBLEM_CCOMP := { }; # Desactivation of CCOMP
-#let PROBLEM_DCOPF := { }; # Desactivation of DCOPF
-#let PROBLEM_ACOPF := {1}; # Activation of ACOPF
 
-
-
-###############################################################################
-#
-# Variables and contraints for connexity computation
-#
-###############################################################################
 # Even if set BUS2 is only with busses in connex component (CC) number '0', for an OPF we
 # have to do connexity computation using only AC branches, ie in only one single synchronous area.
 # Indeed, HVDC branches may connect 2 synchronous areas; one might consider in that case that de grid is connex
 # In our case we have to consider only buses which are connected to reference bus with AC branches
-var teta_ccomputation{BUS2} >=0, <=1;
-subject to ctr_null_phase_bus_cccomputation{PROBLEM_CCOMP}: teta_ccomputation[null_phase_bus] = 0;
-subject to ctr_flow_cccomputation{PROBLEM_CCOMP, (qq,m,n) in BRANCH2}: teta_ccomputation[m]-teta_ccomputation[n]=0;
-maximize cccomputation_objective: sum{n in BUS2} teta_ccomputation[n];
-# All busses AC-connected to null_phase_bus will have '0' as optimal value, other will have '1'
+include "ccomputation.mod";
 
+# bounds used in following opf
+param teta_min default -10; # roughly -3*pi
+param teta_max default  10; # roughly 3*pi
 
-
-###############################################################################
-#
-# Variables and contraints for DCOPF
-#
-###############################################################################
 # Why doing a DCOPF before ACOPF?
 # 1/ if DCOPF fails, how to hope that ACOPF is feasible? -> DCOPF may be seen as an unformal consistency check on data
 # 2/ phases computed in DCOPF will be used as initial point for ACOPF
 # Some of the variables and constraints defined for DCOPF will be used also for ACOPF
+include "dcopf.mod";
 
-# Phase of voltage
-param teta_min default -10; # roughly 3*pi
-param teta_max default  10; # roughly 3*pi
-var teta_dc{n in BUSCC} <= teta_max, >= teta_min;
-subject to ctr_null_phase_bus_dc{PROBLEM_DCOPF}: teta_dc[null_phase_bus] = 0;
-
-# Variable flow is the flow from bus 1 to bus 2
-var activeflow{BRANCHCC};
-subject to ctr_activeflow{PROBLEM_DCOPF, (qq,m,n) in BRANCHCC}:
-  activeflow[qq,m,n] = base100MVA * (teta_dc[m]-teta_dc[n]) / branch_X_mod[qq,m,n];#* branch_X_mod[qq,m,n] / (branch_X_mod[qq,m,n]**2+branch_R[1,qq,m,n]**2);
-
-# Generation for DCOPF
-var P_dcopf{(g,n) in UNITON}; # >= unit_Pmin[1,g,n], <= unit_Pmax[1,g,n];
-
-# Slack variable for each bus
-# >=0 if too much generation in bus, <=0 if missing generation
-var balance_pos{BUSCC} >= 0;
-var balance_neg{BUSCC} >= 0;
-
-# Balance at each bus
-subject to ctr_balance{PROBLEM_DCOPF, n in BUSCC}:
-  - sum{(g,n) in UNITON} P_dcopf[g,n]
-  - sum{(b,n) in BATTERYCC} battery_p0[1,b,n]
-  + sum{(c,n) in LOADCC} load_PFix[1,c,n]
-  + sum{(qq,n,m) in BRANCHCC} activeflow[qq,n,m] # active power flow outgoing on branch qq at bus n
-  - sum{(qq,m,n) in BRANCHCC} activeflow[qq,m,n] # active power flow entering in bus n on branch qq
-  + sum{(vscconv,n) in VSCCONVON} vscconv_P0[1,vscconv,n]
-  + sum{(l,n) in LCCCONVON} lccconv_P0[1,l,n]
-  =
-  balance_pos[n] - balance_neg[n];
-
-
-#
-# objective function and penalties
-#
-param penalty_gen     := 1;
-param penalty_balance := 1000;
-
-minimize problem_dcopf_objective:
-    penalty_gen     * sum{(g,n) in UNITON} ((P_dcopf[g,n]-unit_Pc[1,g,n])/max(0.01*abs(unit_Pc[1,g,n]),1))**2
-  + penalty_balance * sum{n in BUSCC} ( balance_pos[n] + balance_neg[n] )
-  ;
-
-
-
-###############################################################################
-#
-# Variables and contraints for ACOPF
-#
-###############################################################################
 # Notice that some variables and constraints for DCOPF are also used for ACOPF
-
-
-#
-# Phase and modulus of voltage
-#
-# Complex voltage = V*exp(i*teta). (with i**2=-1)
-
-# Phase of voltage
-var teta{BUSCC} <= teta_max, >= teta_min;
-subject to ctr_null_phase_bus{PROBLEM_ACOPF}: teta[null_phase_bus] = 0;
-
-# Modulus of voltage
-var V{n in BUSCC}
-  <=
-  if substation_Vnomi[1,bus_substation[1,n]] <= ignore_voltage_bounds then 2-epsilon_min_voltage else
-  voltage_upper_bound[1,bus_substation[1,n]],
-  >=
-  if substation_Vnomi[1,bus_substation[1,n]] <= ignore_voltage_bounds then epsilon_min_voltage else
-  voltage_lower_bound[1,bus_substation[1,n]];
-
-
-#
-# Generation
-#
-# General idea: generation is an input data, but as voltage may vary, generation may vary a little.
-# Variations of generation is totally controlled by unique scalar variable alpha
-# Before and after optimization, there is no waranty that P is within
-# its "bounds" [corrected_unit_Pmin;corrected_unit_Pmax]
-#
-
-# Active generation
-var alpha <=1, >=-1; # If alpha==1 then all units are at Pmax
-var P_bounded{(g,n) in UNITON} <= max(unit_Pc[1,g,n],corrected_unit_Pmax[g,n]), >= min(unit_Pc[1,g,n],corrected_unit_Pmin[g,n]);
-# If coeff_alpha == 1 then all P are defined by the single variable alpha
-# If coeff_alpha == 0 then all P are free within their respective bounds
-# todo faire des tests avec les valeurs de coeff_alpha
-var P{(g,n) in UNITON} =
-  if   ( unit_Pc[1,g,n] < (corrected_unit_Pmax[g,n] - Pnull) and unit_Pc[1,g,n] > Pnull )
-  then (     coeff_alpha   * ( unit_Pc[1,g,n] + alpha*(corrected_unit_Pmax[g,n]- unit_Pc[1,g,n]) )
-         + (1-coeff_alpha) *   P_bounded[g,n] )
-  else unit_Pc[1,g,n] ;
-
-
-#
-# Reactive generation
-#
-# todo: add trapeze or hexagone constraints for reactive power
-var Q{(g,n) in UNITON} <= corrected_unit_Qmax[g,n], >= corrected_unit_Qmin[g,n];
-
-
-#
-# Variable shunts
-#
-var shunt_var{(shunt,n) in SHUNT_VAR}
-  >= min{(1,shunt,k) in SHUNT} shunt_valmin[1,shunt,k],
-  <= max{(1,shunt,k) in SHUNT} shunt_valmax[1,shunt,k];
-
-
-#
-# SVC reactive generation
-#
-var svc_qvar{(svc,n) in SVCON} >= svc_bmin[1,svc,n], <= svc_bmax[1,svc,n];
-
-
-#
-# VSCCONV reactive generation
-#
-var vscconv_qvar{(v,n) in VSCCONVON}
-  >= min(vscconv_qP[1,v,n],vscconv_qp0[1,v,n],vscconv_qp[1,v,n]),
-  <= max(vscconv_QP[1,v,n],vscconv_Qp0[1,v,n],vscconv_Qp[1,v,n]);
-# todo: add trapeze or hexagone constraints for reactive power
-
-
-#
-# Ratios of transformers
-#
-var branch_Ror_var{(qq,m,n) in BRANCHCC_REGL_VAR}
-  >= regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]],
-  <= regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]];
-
-#
-# Flows
-#
-
-var Red_Tran_Act_Dir{(qq,m,n) in BRANCHCC } =
-    V[n] * branch_admi[qq,m,n] * sin(teta[m]-teta[n]+branch_dephor[qq,m,n]-branch_angper[qq,m,n])
-    * (if (qq,m,n) in BRANCHCC_REGL_VAR then branch_Ror_var[qq,m,n]*branch_cstratio[1,qq,m,n] else branch_Ror[qq,m,n])
-  + V[m] * (branch_admi[qq,m,n]*sin(branch_angper[qq,m,n])+branch_Gor[1,qq,m,n])
-    * (if (qq,m,n) in BRANCHCC_REGL_VAR then branch_Ror_var[qq,m,n]*branch_cstratio[1,qq,m,n] else branch_Ror[qq,m,n])**2
-  ;
-
-var Red_Tran_Rea_Dir{(qq,m,n) in BRANCHCC } =
-  - V[n] * branch_admi[qq,m,n] * cos(teta[m]-teta[n]+branch_dephor[qq,m,n]-branch_angper[qq,m,n])
-    * (if (qq,m,n) in BRANCHCC_REGL_VAR then branch_Ror_var[qq,m,n]*branch_cstratio[1,qq,m,n] else branch_Ror[qq,m,n])
-  + V[m] * (branch_admi[qq,m,n]*cos(branch_angper[qq,m,n])-branch_Bor[1,qq,m,n])
-    * (if (qq,m,n) in BRANCHCC_REGL_VAR then branch_Ror_var[qq,m,n]*branch_cstratio[1,qq,m,n] else branch_Ror[qq,m,n])^2
-  ;
-
-var Red_Tran_Act_Inv{(qq,m,n) in BRANCHCC } =
-    V[m] * branch_admi[qq,m,n] * sin(teta[n]-teta[m]-branch_dephor[qq,m,n]-branch_angper[qq,m,n])
-    * (if (qq,m,n) in BRANCHCC_REGL_VAR then branch_Ror_var[qq,m,n]*branch_cstratio[1,qq,m,n] else branch_Ror[qq,m,n])
-  + V[n] * (branch_admi[qq,m,n]*sin(branch_angper[qq,m,n])+branch_Gex[1,qq,m,n])
-  ;
-
-var Red_Tran_Rea_Inv{(qq,m,n) in BRANCHCC } =
-  - V[m] * branch_admi[qq,m,n] * cos(teta[n]-teta[m]-branch_dephor[qq,m,n]-branch_angper[qq,m,n])
-    * (if (qq,m,n) in BRANCHCC_REGL_VAR then branch_Ror_var[qq,m,n]*branch_cstratio[1,qq,m,n] else branch_Ror[qq,m,n])
-  + V[n] * (branch_admi[qq,m,n]*cos(branch_angper[qq,m,n])-branch_Bex[1,qq,m,n])
-  ;
-
-
-#
-# Active Balance
-#
-
-subject to ctr_balance_P{PROBLEM_ACOPF,k in BUSCC}:
-  # Flows
-    sum{(qq,k,n) in BRANCHCC} base100MVA * V[k] * Red_Tran_Act_Dir[qq,k,n]
-  + sum{(qq,m,k) in BRANCHCC} base100MVA * V[k] * Red_Tran_Act_Inv[qq,m,k]
-  # Generating units
-  - sum{(g,k) in UNITON} P[g,k]
-  # Batteries
-  - sum{(b,k) in BATTERYCC} battery_p0[1,b,k]
-  # Loads
-  + sum{(c,k) in LOADCC} load_PFix[1,c,k]     # Fixed value
-  # VSC converters
-  + sum{(v,k) in VSCCONVON} vscconv_P0[1,v,k] # Fixed value
-  # LCC converters
-  + sum{(l,k) in LCCCONVON} lccconv_P0[1,l,k] # Fixed value
-  = 0; # No slack variables for active power. If data are really too bad, may not converge.
-
-
-#
-# Reactive Balance
-#
-
-# Reactive balance slack variables only if there is a load or a shunt connected
-# If there is a unit, or SVC, or VSC, they already have reactive power generation, so no need to add slack variables
-set BUSCC_SLACK :=  {n in BUSCC:
-  (
-  card{(g,n) in UNITON: (g,n) not in UNIT_FIXQ}==0
-  and card{(svc,n) in SVCON}==0
-  and card{(vscconv,n) in VSCCONVON}==0
-  )
-  } ;
-var slack1_balance_Q{BUSCC_SLACK} >=0, <= 500; # 500 Mvar is already HUGE
-var slack2_balance_Q{BUSCC_SLACK} >=0, <= 500;
-#subject to ctr_compl_slack_Q{PROBLEM_ACOPF,k in BUSCC_SLACK}: slack1_balance_Q[k] >= 0 complements slack2_balance_Q[k] >= 0;
-
-subject to ctr_balance_Q{PROBLEM_ACOPF,k in BUSCC}:
-  # Flows
-    sum{(qq,k,n) in BRANCHCC} base100MVA * V[k] * Red_Tran_Rea_Dir[qq,k,n]
-  + sum{(qq,m,k) in BRANCHCC} base100MVA * V[k] * Red_Tran_Rea_Inv[qq,m,k]
-  # Generating units
-  - sum{(g,k) in UNITON: (g,k) not in UNIT_FIXQ } Q[g,k]
-  - sum{(g,k) in UNIT_FIXQ} unit_Qc[1,g,k]
-  # Batteries
-  - sum{(b,k) in BATTERYCC} battery_q0[1,b,k]
-  # Loads
-  + sum{(c,k) in LOADCC} load_QFix[1,c,k]
-  # Shunts
-  - sum{(shunt,k) in SHUNT_FIX} base100MVA * shunt_valnom[1,shunt,k] * V[k]^2
-  - sum{(shunt,k) in SHUNT_VAR} base100MVA * shunt_var[shunt,k] * V[k]^2
-  # SVC
-  - sum{(svc,k) in SVCON} base100MVA * svc_qvar[svc,k] * V[k]^2
-  # VSC converters
-  - sum{(v,k) in VSCCONVON} vscconv_qvar[v,k]
-  # LCC converters
-  + sum{(l,k) in LCCCONVON} lccconv_Q0[1,l,k] # Fixed value
-  # Slack variables
-  + if k in BUSCC_SLACK then
-  (- slack1_balance_Q[k]  # Homogeneous to a generation of reactive power (condensator)
-   + slack2_balance_Q[k]) # homogeneous to a reactive load (self)
-  = 0;
-
-
-#
-# Definitions for objective function
-#
-
-# Voltage target : ratio between Vmin and Vmax
-var target_voltage_ratio = sum{n in BUSCC: substation_Vnomi[1,bus_substation[1,n]] > ignore_voltage_bounds}
-  ( V[n] - (1-ratio_voltage_target)*voltage_lower_bound[1,bus_substation[1,n]] + ratio_voltage_target*voltage_upper_bound[1,bus_substation[1,n]] )**2;
-
-# Voltage target : value V0 in input data
-var target_voltage_data = sum{n in BUSVV} (V[n] - bus_V0[1,n])**2;
-
-
-#
-# Objective function and penalties
-#
-param penalty_invest_rea_pos := 10;
-param penalty_invest_rea_neg := 10;
-param penalty_units_reactive := 0.1;
-param penalty_transfo_ratio  := 0.1;
-
-param penalty_active_power_high := 1;
-param penalty_active_power_low  := 0.01;
-
-param penalty_voltage_target_high := 1;
-param penalty_voltage_target_low  := 0.01;
-
-minimize problem_acopf_objective:
-  sum{n in BUSCC_SLACK} (
-      penalty_invest_rea_pos * slack1_balance_Q[n]
-    + penalty_invest_rea_neg * slack2_balance_Q[n]
-    )
-
-  # coeff_alpha == 1 : minimize sum of generation, all generating units vary with 1 unique variable alpha
-  # coeff_alpha == 0 : minimize sum of squared difference between target and value
-  + (if objective_choice==1 or objective_choice==2 then penalty_active_power_low else penalty_active_power_high)
-  * sum{(g,n) in UNITON} (coeff_alpha * P[g,n] + (1-coeff_alpha)*( (P[g,n]-unit_Pc[1,g,n])/max(1,abs(unit_Pc[1,g,n])) )**2 )
-
-  # Voltage for busses, ratio between Vmin and Vmax
-  + (if objective_choice==1 then penalty_voltage_target_high else penalty_voltage_target_low)
-  * target_voltage_ratio
-
-  # Voltage target : value V0 in input data
-  + (if objective_choice==2 then penalty_voltage_target_high else penalty_voltage_target_low)
-  * target_voltage_data
-
-  # Reactive power of units
-  + penalty_units_reactive * sum{(g,n) in UNITON} (Q[g,n]/max(1,abs(corrected_unit_Qmin[g,n]),abs(corrected_unit_Qmax[g,n])))**2
-
-  # Ratio of transformers
-  + penalty_transfo_ratio * sum{(qq,m,n) in BRANCHCC_REGL_VAR} (branch_Ror[qq,m,n]-branch_Ror_var[qq,m,n])**2
-  ;
-  #
+include "acopf.mod";
