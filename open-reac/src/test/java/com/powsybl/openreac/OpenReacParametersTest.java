@@ -10,7 +10,9 @@ import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
 import com.powsybl.iidm.network.*;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
+import com.powsybl.openreac.parameters.input.algo.OpenReacAmplLogLevel;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
+import com.powsybl.openreac.parameters.input.algo.OpenReacSolverLogLevel;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -37,6 +39,35 @@ public class OpenReacParametersTest {
         assertThrows(InvalidParametersException.class, () -> parameters.checkIntegrity(network), "BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT without ratio voltage set should throw");
         parameters.setObjectiveDistance(1);
         assertDoesNotThrow(() -> parameters.checkIntegrity(network), "Default configuration with BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT and ratio voltage set should not throw");
+    }
+
+    @Test
+    public void testAmplLogLevelIntegrity() {
+        OpenReacParameters parameters = new OpenReacParameters();
+
+        assertThrows(NullPointerException.class, () -> parameters.setLogLevelAmpl(null), "Can't set null ampl log level.");
+
+        parameters.setLogLevelAmpl(OpenReacAmplLogLevel.DEBUG);
+        assertEquals("DEBUG", parameters.getLogLevelAmpl().toParam().getValue());
+        parameters.setLogLevelAmpl(OpenReacAmplLogLevel.INFO);
+        assertEquals("INFO", parameters.getLogLevelAmpl().toParam().getValue());
+        parameters.setLogLevelAmpl(OpenReacAmplLogLevel.WARNING);
+        assertEquals("WARNING", parameters.getLogLevelAmpl().toParam().getValue());
+        parameters.setLogLevelAmpl(OpenReacAmplLogLevel.ERROR);
+        assertEquals("ERROR", parameters.getLogLevelAmpl().toParam().getValue());
+    }
+
+    @Test
+    public void testSolverLogLevelIntegrity() {
+        OpenReacParameters parameters = new OpenReacParameters();
+
+        assertThrows(NullPointerException.class, () -> parameters.setLogLevelSolver(null), "Can't set null solver log level.");
+        parameters.setLogLevelSolver(OpenReacSolverLogLevel.NOTHING);
+        assertEquals("0", parameters.getLogLevelSolver().toParam().getValue());
+        parameters.setLogLevelSolver(OpenReacSolverLogLevel.ONLY_RESULTS);
+        assertEquals("1", parameters.getLogLevelSolver().toParam().getValue());
+        parameters.setLogLevelSolver(OpenReacSolverLogLevel.EVERYTHING);
+        assertEquals("2", parameters.getLogLevelSolver().toParam().getValue());
     }
 
     @Test
