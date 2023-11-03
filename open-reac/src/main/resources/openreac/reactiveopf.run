@@ -292,19 +292,25 @@ printf{LOG_INFO} "Parameter: for consistency checks of minimum nominal voltages 
 check epsilon_nominal_voltage > 0;
 
 # Minimum consistency value for voltage in PU
-# This value has to be >0 and <1
-param epsilon_min_voltage default 0.5;
-if "epsilon_min_voltage" in PARAM_ALGO_KEYS then let epsilon_min_voltage := num(PARAM_ALGO_VALUES["epsilon_min_voltage"]);
-printf{LOG_INFO} "Parameter: for consistency checks of voltage bounds eps<=Vmin<Vmax<=2-eps, epsilon_min_voltage:= %Q pu\n",epsilon_min_voltage;
-check epsilon_min_voltage > 0 and epsilon_min_voltage < 1;
+# This value should be < 1
+param consistent_min_voltage default 0.5;
+if "consistent_min_voltage" in PARAM_ALGO_KEYS then let consistent_min_voltage := num(PARAM_ALGO_VALUES["consistent_min_voltage"]);
+printf{LOG_INFO} "Parameter: for consistency of voltage bounds, consistent_min_voltage:= %Q pu\n",consistent_min_voltage;
+check consistent_min_voltage > 0;
+
+# Maximum consistency value for voltage in PU
+param consistent_max_voltage default 1.5;
+if "consistent_max_voltage" in PARAM_ALGO_KEYS then let consistent_max_voltage := num(PARAM_ALGO_VALUES["consistent_max_voltage"]);
+printf{LOG_INFO} "Parameter: for consistency of voltage bounds, consistent_max_voltage:= %Q pu\n",consistent_max_voltage;
+check consistent_max_voltage > consistent_min_voltage;
 
 # Ignore voltage bounds for buses with nominal voltage lower than this parameter
 # For all busses with nominal voltage lower than ignore_voltage_bounds, voltage bonds will be ignored
-# and replaced by [epsilon_min_voltage ; 2 - epsilon_min_voltage]
+# and replaced by [consistent_min_voltage ; consistent_max_voltage]
 param ignore_voltage_bounds default 0;
 if "ignore_voltage_bounds" in PARAM_ALGO_KEYS then let ignore_voltage_bounds := num(PARAM_ALGO_VALUES["ignore_voltage_bounds"]);
 if ignore_voltage_bounds >= epsilon_nominal_voltage
-then printf{LOG_INFO} "Parameter: for all busses with nominal voltage <= ignore_voltage_bounds=%.1f, voltage bounds are ignored and replaced by [%.3f;%.3f]\n",ignore_voltage_bounds,epsilon_min_voltage,2-epsilon_min_voltage;
+then printf{LOG_INFO} "Parameter: for all busses with nominal voltage <= ignore_voltage_bounds=%.1f, voltage bounds are ignored and replaced by [%.3f;%.3f]\n",ignore_voltage_bounds,consistent_min_voltage,consistent_max_voltage;
 check ignore_voltage_bounds >= 0;
 
 # Consistency maximal value for P and Q
