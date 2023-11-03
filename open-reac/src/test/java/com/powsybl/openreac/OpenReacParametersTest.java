@@ -10,6 +10,7 @@ import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
 import com.powsybl.iidm.network.*;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
+import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAmplLogLevel;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 import com.powsybl.openreac.parameters.input.algo.OpenReacSolverLogLevel;
@@ -68,6 +69,25 @@ public class OpenReacParametersTest {
         assertEquals("1", parameters.getLogLevelSolver().toParam().getValue());
         parameters.setLogLevelSolver(OpenReacSolverLogLevel.EVERYTHING);
         assertEquals("2", parameters.getLogLevelSolver().toParam().getValue());
+    }
+
+    @Test
+    void testAlgorithmParams() {
+        OpenReacParameters parameters = new OpenReacParameters();
+        parameters.addAlgorithmParam("param", "value");
+        parameters.setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE);
+        parameters.setObjectiveDistance(0.4);
+        parameters.setLogLevelAmpl(OpenReacAmplLogLevel.DEBUG);
+        parameters.setLogLevelSolver(OpenReacSolverLogLevel.NOTHING);
+        List<OpenReacAlgoParam> algoParams = parameters.getAllAlgorithmParams();
+
+        assertEquals(5, algoParams.size());
+        assertEquals("value", algoParams.get(0).getValue());
+        assertEquals("2", algoParams.get(1).getValue());
+        assertEquals("0.004", algoParams.get(2).getValue());
+        assertEquals("DEBUG", algoParams.get(3).getValue());
+        assertEquals("0", algoParams.get(4).getValue());
+
     }
 
     @Test
