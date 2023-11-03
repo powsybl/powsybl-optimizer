@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class OpenReacParametersTest {
 
     @Test
-    public void testObjectiveIntegrityChecks() {
+    void testObjectiveIntegrityChecks() {
         Network network = IeeeCdfNetworkFactory.create118();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         OpenReacParameters parameters = new OpenReacParameters();
@@ -42,7 +42,7 @@ public class OpenReacParametersTest {
     }
 
     @Test
-    public void testAmplLogLevelIntegrity() {
+    void testAmplLogLevelIntegrity() {
         OpenReacParameters parameters = new OpenReacParameters();
 
         assertThrows(NullPointerException.class, () -> parameters.setLogLevelAmpl(null), "Can't set null ampl log level.");
@@ -58,7 +58,7 @@ public class OpenReacParametersTest {
     }
 
     @Test
-    public void testSolverLogLevelIntegrity() {
+    void testSolverLogLevelIntegrity() {
         OpenReacParameters parameters = new OpenReacParameters();
 
         assertThrows(NullPointerException.class, () -> parameters.setLogLevelSolver(null), "Can't set null solver log level.");
@@ -71,7 +71,7 @@ public class OpenReacParametersTest {
     }
 
     @Test
-    public void testParametersIntegrityChecks() {
+    void testParametersIntegrityChecks() {
         Network network = IeeeCdfNetworkFactory.create118();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         String wrongId = "An id not in 118 cdf network.";
