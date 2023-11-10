@@ -171,12 +171,12 @@ if 0 then {
 #
 ###############################################################################
 if final_status == "OK"
-and card({n in BUSCC_SLACK: slack1_balance_Q[n]>Pnull or slack2_balance_Q[n]>Pnull}) > 0
+and card({n in BUSCC: slack1_balance_Q[n]>Pnull or slack2_balance_Q[n]>Pnull}) > 0
 then {
 
 let fileOut := "reactiveopf_results_reactive_slacks.csv";
 printf "#variant;bus;slack_condensator(Mvar);slack_self(Mvar);id;substation;\n" > (fileOut);
-printf{n in BUSCC_SLACK: slack1_balance_Q[n]>Pnull or slack2_balance_Q[n]>Pnull}
+printf{n in BUSCC: slack1_balance_Q[n]>Pnull or slack2_balance_Q[n]>Pnull}
   "%i;%i;%.2f;%.2f;%Q;%Q;\n",
   1,n,
   if slack1_balance_Q[n]>Pnull then slack1_balance_Q[n] else 0,
@@ -254,8 +254,7 @@ printf "%s %i\n","nb_bus_in_ACDC_CC",card(BUS2) > (fileOut);
 printf "%s %i\n","nb_bus_in_AC_CC",card(BUSCC) > (fileOut);
 printf "%s %i\n","nb_bus_in_ACDC_but_out_AC_CC",card(BUS2 diff BUSCC) > (fileOut);
 printf "%s %i\n","nb_bus_with_voltage_value",card(BUSVV) > (fileOut);
-printf "%s %i\n","nb_bus_with_reactive_slacks",card(BUSCC_SLACK) > (fileOut);
-printf "%s %i\n","nb_bus_without_reactive_slacks",card(BUSCC diff BUSCC_SLACK) > (fileOut);
+printf "%s %i\n","nb_bus_with_reactive_slacks",card(BUSCC) > (fileOut);
 printf "%s %i\n","nb_branch_in_data_file",card(BRANCH) > (fileOut);
 printf "%s %i\n","nb_branch_in_AC_CC",card(BRANCHCC) > (fileOut);
 printf "%s %i\n","nb_branch_with_nonsmall_impedance",card(BRANCHCC diff BRANCHZNULL) > (fileOut);
@@ -297,11 +296,11 @@ printf "min_delta_teta_dc %2f\n",min({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[
 printf "min_delta_teta_ac %2f\n",min({(qq,m,n) in BRANCHCC} (teta[m]-teta[n])) > (fileOut);
 
 printf "\n" > (fileOut);
-printf "%s %i\n","nb_reactive_slacks",card({n in BUSCC_SLACK: slack1_balance_Q[n]>Pnull or slack2_balance_Q[n]>Pnull}) > (fileOut);
-printf "%s %i\n","nb_slacks_condensator",card({n in BUSCC_SLACK: slack1_balance_Q[n]>Pnull}) > (fileOut);
-printf "%s %.1f\n","sum_slacks_condensator",sum{n in BUSCC_SLACK} slack1_balance_Q[n] > (fileOut);
-printf "%s %i\n","nb_slacks_self",card({n in BUSCC_SLACK: slack2_balance_Q[n]>Pnull}) > (fileOut);
-printf "%s %.1f\n","sum_slacks_self",sum{n in BUSCC_SLACK} slack2_balance_Q[n] > (fileOut);
+printf "%s %i\n","nb_reactive_slacks",card({n in BUSCC: slack1_balance_Q[n]>Pnull or slack2_balance_Q[n]>Pnull}) > (fileOut);
+printf "%s %i\n","nb_slacks_condensator",card({n in BUSCC: slack1_balance_Q[n]>Pnull}) > (fileOut);
+printf "%s %.1f\n","sum_slacks_condensator",sum{n in BUSCC} slack1_balance_Q[n] > (fileOut);
+printf "%s %i\n","nb_slacks_self",card({n in BUSCC: slack2_balance_Q[n]>Pnull}) > (fileOut);
+printf "%s %.1f\n","sum_slacks_self",sum{n in BUSCC} slack2_balance_Q[n] > (fileOut);
 
 # All messages added in messages container
 if card(messagesInfo) > 0 then {

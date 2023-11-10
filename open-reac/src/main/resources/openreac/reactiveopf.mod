@@ -936,18 +936,10 @@ subject to ctr_balance_P{PROBLEM_ACOPF,k in BUSCC}:
 # Reactive Balance
 #
 
-# Reactive balance slack variables only if there is a load or a shunt connected
-# If there is a unit, or SVC, or VSC, they already have reactive power generation, so no need to add slack variables
-set BUSCC_SLACK :=  {n in BUSCC:
-  (
-  card{(g,n) in UNITON: (g,n) not in UNIT_FIXQ}==0
-  and card{(svc,n) in SVCON}==0
-  and card{(vscconv,n) in VSCCONVON}==0
-  )
-  } ;
-var slack1_balance_Q{BUSCC_SLACK} >=0, <= 500; # 500 Mvar is already HUGE
-var slack2_balance_Q{BUSCC_SLACK} >=0, <= 500;
-#subject to ctr_compl_slack_Q{PROBLEM_ACOPF,k in BUSCC_SLACK}: slack1_balance_Q[k] >= 0 complements slack2_balance_Q[k] >= 0;
+# Reactive balance slack variables at every node 
+var slack1_balance_Q{BUSCC} >=0;
+var slack2_balance_Q{BUSCC} >=0;
+#subject to ctr_compl_slack_Q{PROBLEM_ACOPF,k in BUSCC}: slack1_balance_Q[k] >= 0 complements slack2_balance_Q[k] >= 0;
 
 subject to ctr_balance_Q{PROBLEM_ACOPF,k in BUSCC}:
   # Flows
@@ -970,7 +962,7 @@ subject to ctr_balance_Q{PROBLEM_ACOPF,k in BUSCC}:
   # LCC converters
   + sum{(l,k) in LCCCONVON} lccconv_Q0[1,l,k] # Fixed value
   # Slack variables
-  + if k in BUSCC_SLACK then
+  + if k in BUSCC then
   (- slack1_balance_Q[k]  # Homogeneous to a generation of reactive power (condensator)
    + slack2_balance_Q[k]) # homogeneous to a reactive load (self)
   = 0;
@@ -1003,7 +995,7 @@ param penalty_voltage_target_high := 1;
 param penalty_voltage_target_low  := 0.01;
 
 minimize problem_acopf_objective:
-  sum{n in BUSCC_SLACK} (
+  sum{n in BUSCC} (
       penalty_invest_rea_pos * slack1_balance_Q[n]
     + penalty_invest_rea_neg * slack2_balance_Q[n]
     )
