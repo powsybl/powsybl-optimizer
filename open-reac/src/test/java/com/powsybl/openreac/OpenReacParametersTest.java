@@ -43,23 +43,23 @@ public class OpenReacParametersTest {
     @Test
     void testMinMaxVoltageLimitIntegrityChecks() {
         OpenReacParameters parameters = new OpenReacParameters();
-        assertNull(parameters.getMinVoltageLimitConsistency());
-        assertNull(parameters.getMaxVoltageLimitConsistency());
+        assertNull(parameters.getMinPlausibleLowVoltageLimit());
+        assertNull(parameters.getMaxPlausibleHighVoltageLimit());
 
-        // Consistency of min voltage limit (>= 0)
-        assertThrows(InvalidParametersException.class, () -> parameters.setMinVoltageLimitConsistency(-0.25));
-        parameters.setMinVoltageLimitConsistency(0.8);
-        assertEquals(0.8, parameters.getMinVoltageLimitConsistency());
+        // Consistency of min plausible low voltage limit (>= 0)
+        assertThrows(InvalidParametersException.class, () -> parameters.setMinPlausibleLowVoltageLimit(-0.25));
+        parameters.setMinPlausibleLowVoltageLimit(0.8);
+        assertEquals(0.8, parameters.getMinPlausibleLowVoltageLimit());
 
-        // Consistency of high voltage limit (> 0)
-        assertThrows(InvalidParametersException.class, () -> parameters.setMaxVoltageLimitConsistency(-0.15));
-        assertThrows(InvalidParametersException.class, () -> parameters.setMaxVoltageLimitConsistency(0));
-        parameters.setMaxVoltageLimitConsistency(0.75);
-        assertEquals(0.75, parameters.getMaxVoltageLimitConsistency());
+        // Consistency of max plausible high voltage limit (> 0)
+        assertThrows(InvalidParametersException.class, () -> parameters.setMaxPlausibleHighVoltageLimit(-0.15));
+        assertThrows(InvalidParametersException.class, () -> parameters.setMaxPlausibleHighVoltageLimit(0));
+        parameters.setMaxPlausibleHighVoltageLimit(0.75);
+        assertEquals(0.75, parameters.getMaxPlausibleHighVoltageLimit());
 
         // Check min < max
         assertFalse(parameters.checkAlgorithmParametersIntegrity());
-        parameters.setMaxVoltageLimitConsistency(1.2);
+        parameters.setMaxPlausibleHighVoltageLimit(1.2);
         assertTrue(parameters.checkAlgorithmParametersIntegrity());
     }
 
@@ -69,8 +69,8 @@ public class OpenReacParametersTest {
         parameters.addAlgorithmParam("myParam", "myValue");
         parameters.setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE);
         parameters.setObjectiveDistance(0.4);
-        parameters.setMinVoltageLimitConsistency(0.8);
-        parameters.setMaxVoltageLimitConsistency(1.2);
+        parameters.setMinPlausibleLowVoltageLimit(0.8);
+        parameters.setMaxPlausibleHighVoltageLimit(1.2);
         List<OpenReacAlgoParam> algoParams = parameters.getAllAlgorithmParams();
 
         assertEquals(5, algoParams.size());

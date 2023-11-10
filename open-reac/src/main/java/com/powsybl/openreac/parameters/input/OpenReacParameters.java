@@ -45,13 +45,13 @@ public class OpenReacParameters {
 
     private Double objectiveDistance;
 
-    private static final String MIN_VOLTAGE_LIMIT_CONSISTENCY_KEY = "consistent_min_voltage";
+    private static final String MIN_PLAUSIBLE_LOW_VOLTAGE_LIMIT_KEY = "consistent_min_voltage";
 
-    private Double minVoltageLimitConsistency; // in pu
+    private Double minPlausibleLowVoltageLimit; // in pu
 
-    private static final String MAX_VOLTAGE_LIMIT_CONSISTENCY_KEY = "consistent_max_voltage";
+    private static final String MAX_PLAUSIBLE_HIGH_VOLTAGE_LIMIT_KEY = "consistent_max_voltage";
 
-    private Double maxVoltageLimitConsistency; // in pu
+    private Double maxPlausibleHighVoltageLimit; // in pu
 
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.
@@ -148,32 +148,32 @@ public class OpenReacParameters {
     }
 
     /**
-     * @return the minimal voltage limit consistency value in p.u.
+     * @return the minimal plausible value for low voltage limits in p.u.
      */
-    public Double getMinVoltageLimitConsistency() {
-        return minVoltageLimitConsistency;
+    public Double getMinPlausibleLowVoltageLimit() {
+        return minPlausibleLowVoltageLimit;
     }
 
-    public OpenReacParameters setMinVoltageLimitConsistency(double minVoltageLimitConsistency) {
-        if (minVoltageLimitConsistency < 0) {
-            throw new InvalidParametersException("Minimal voltage limit must be >= 0 to be consistent.");
+    public OpenReacParameters setMinPlausibleLowVoltageLimit(double minPlausibleLowVoltageLimit) {
+        if (minPlausibleLowVoltageLimit < 0) {
+            throw new InvalidParametersException("Min plausible low voltage limit must be >= 0 to be consistent.");
         }
-        this.minVoltageLimitConsistency = minVoltageLimitConsistency;
+        this.minPlausibleLowVoltageLimit = minPlausibleLowVoltageLimit;
         return this;
     }
 
     /**
-     * @return the maximal voltage limit consistency value in p.u.
+     * @return the maximal plausible value for high voltage limits in p.u.
      */
-    public Double getMaxVoltageLimitConsistency() {
-        return maxVoltageLimitConsistency;
+    public Double getMaxPlausibleHighVoltageLimit() {
+        return maxPlausibleHighVoltageLimit;
     }
 
-    public OpenReacParameters setMaxVoltageLimitConsistency(double maxVoltageLimitConsistency) {
-        if (maxVoltageLimitConsistency <= 0) {
-            throw new InvalidParametersException("Maximal voltage limit must be > 0 to be consistent.");
+    public OpenReacParameters setMaxPlausibleHighVoltageLimit(double maxPlausibleHighVoltageLimit) {
+        if (maxPlausibleHighVoltageLimit <= 0) {
+            throw new InvalidParametersException("Max plausible high voltage limit must be > 0 to be consistent.");
         }
-        this.maxVoltageLimitConsistency = maxVoltageLimitConsistency;
+        this.maxPlausibleHighVoltageLimit = maxPlausibleHighVoltageLimit;
         return this;
     }
 
@@ -202,11 +202,11 @@ public class OpenReacParameters {
         if (objectiveDistance != null) {
             allAlgoParams.add(new OpenReacAlgoParamImpl(OBJECTIVE_DISTANCE_KEY, Double.toString(objectiveDistance / 100)));
         }
-        if (minVoltageLimitConsistency != null) {
-            allAlgoParams.add(new OpenReacAlgoParamImpl(MIN_VOLTAGE_LIMIT_CONSISTENCY_KEY, Double.toString(minVoltageLimitConsistency)));
+        if (minPlausibleLowVoltageLimit != null) {
+            allAlgoParams.add(new OpenReacAlgoParamImpl(MIN_PLAUSIBLE_LOW_VOLTAGE_LIMIT_KEY, Double.toString(minPlausibleLowVoltageLimit)));
         }
-        if (maxVoltageLimitConsistency != null) {
-            allAlgoParams.add(new OpenReacAlgoParamImpl(MAX_VOLTAGE_LIMIT_CONSISTENCY_KEY, Double.toString(maxVoltageLimitConsistency)));
+        if (maxPlausibleHighVoltageLimit != null) {
+            allAlgoParams.add(new OpenReacAlgoParamImpl(MAX_PLAUSIBLE_HIGH_VOLTAGE_LIMIT_KEY, Double.toString(maxPlausibleHighVoltageLimit)));
         }
         return allAlgoParams;
     }
@@ -265,10 +265,10 @@ public class OpenReacParameters {
             integrityAlgorithmParameters = false;
         }
 
-        // Check integrity of min/max voltage limit consistency
-        if (minVoltageLimitConsistency != null && maxVoltageLimitConsistency != null
-                && minVoltageLimitConsistency > maxVoltageLimitConsistency) {
-            LOGGER.warn("Minimal consistent voltage limit must be lower than the maximum consistent voltage limit.");
+        // Check integrity of min/max plausible voltage limits
+        if (minPlausibleLowVoltageLimit != null && maxPlausibleHighVoltageLimit != null
+                && minPlausibleLowVoltageLimit > maxPlausibleHighVoltageLimit) {
+            LOGGER.warn("Min plausible low voltage limit must be lower than max plausible high voltage limit.");
             integrityAlgorithmParameters = false;
         }
 

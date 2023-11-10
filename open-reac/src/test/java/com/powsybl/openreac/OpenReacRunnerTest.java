@@ -86,7 +86,7 @@ class OpenReacRunnerTest {
             OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), parameters,
                     new OpenReacConfig(true), computationManager);
             Path execFolder = getAmplExecPath();
-            assertEqualsToRef(execFolder.resolve("param_algo.txt"), "/openreac-input/default.txt");
+            assertEqualsToRef(execFolder.resolve("param_algo.txt"), "/openreac-input-algo-parameters/default.txt");
         }
     }
 
@@ -95,8 +95,8 @@ class OpenReacRunnerTest {
         Network network = IeeeCdfNetworkFactory.create118();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         OpenReacParameters parameters = new OpenReacParameters()
-                .setMinVoltageLimitConsistency(0.7888)
-                .setMaxVoltageLimitConsistency(1.3455);
+                .setMinPlausibleLowVoltageLimit(0.7888)
+                .setMaxPlausibleHighVoltageLimit(1.3455);
 
         LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
                 List.of("empty_case/reactiveopf_results_indic.txt"));
@@ -105,7 +105,7 @@ class OpenReacRunnerTest {
             OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), parameters,
                     new OpenReacConfig(true), computationManager);
             Path execFolder = getAmplExecPath();
-            assertEqualsToRef(execFolder.resolve("param_algo.txt"), "/openreac-input/consistent_voltage_limits.txt");
+            assertEqualsToRef(execFolder.resolve("param_algo.txt"), "/openreac-input-algo-parameters/minmax_plausible_voltage_limits.txt");
         }
 
     }
