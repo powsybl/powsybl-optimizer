@@ -91,7 +91,7 @@ class OpenReacRunnerTest {
     }
 
     @Test
-    void testConsistentVoltageLimitsParamAlgoExport() throws IOException {
+    void testMinMaxPlausibleVoltageLimitsParamAlgoExport() throws IOException {
         Network network = IeeeCdfNetworkFactory.create118();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         OpenReacParameters parameters = new OpenReacParameters()
