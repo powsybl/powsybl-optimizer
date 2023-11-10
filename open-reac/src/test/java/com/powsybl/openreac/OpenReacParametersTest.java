@@ -80,9 +80,9 @@ public class OpenReacParametersTest {
         assertEquals("2", algoParams.get(1).getValue());
         assertEquals("ratio_voltage_target", algoParams.get(2).getName());
         assertEquals("0.004", algoParams.get(2).getValue());
-        assertEquals("consistent_min_voltage", algoParams.get(3).getName());
+        assertEquals("min_plausible_low_voltage_limit", algoParams.get(3).getName());
         assertEquals("0.8", algoParams.get(3).getValue());
-        assertEquals("consistent_max_voltage", algoParams.get(4).getName());
+        assertEquals("max_plausible_high_voltage_limit", algoParams.get(4).getName());
         assertEquals("1.2", algoParams.get(4).getValue());
     }
 

@@ -291,26 +291,26 @@ if "epsilon_nominal_voltage" in PARAM_ALGO_KEYS then let epsilon_nominal_voltage
 printf{LOG_INFO} "Parameter: for consistency checks of minimum nominal voltages epsilon_nominal_voltage:= %Q kV\n",epsilon_nominal_voltage;
 check epsilon_nominal_voltage > 0;
 
-# Minimum consistency value for voltage in PU
+# Minimum plausible value for voltage low limits in PU
 # This value should be < 1
-param consistent_min_voltage default 0.5;
-if "consistent_min_voltage" in PARAM_ALGO_KEYS then let consistent_min_voltage := num(PARAM_ALGO_VALUES["consistent_min_voltage"]);
-printf{LOG_INFO} "Parameter: for consistency of voltage bounds, consistent_min_voltage:= %Q pu\n",consistent_min_voltage;
-check consistent_min_voltage > 0;
+param min_plausible_low_voltage_limit default 0.5;
+if "min_plausible_low_voltage_limit" in PARAM_ALGO_KEYS then let min_plausible_low_voltage_limit := num(PARAM_ALGO_VALUES["min_plausible_low_voltage_limit"]);
+printf{LOG_INFO} "Parameter: for consistency of voltage bounds, min_plausible_low_voltage_limit:= %Q pu\n",min_plausible_low_voltage_limit;
+check min_plausible_low_voltage_limit > 0;
 
-# Maximum consistency value for voltage in PU
-param consistent_max_voltage default 1.5;
-if "consistent_max_voltage" in PARAM_ALGO_KEYS then let consistent_max_voltage := num(PARAM_ALGO_VALUES["consistent_max_voltage"]);
-printf{LOG_INFO} "Parameter: for consistency of voltage bounds, consistent_max_voltage:= %Q pu\n",consistent_max_voltage;
-check consistent_max_voltage > consistent_min_voltage;
+# Maximum plausible value for voltage high limits in PU
+param max_plausible_high_voltage_limit default 1.5;
+if "max_plausible_high_voltage_limit" in PARAM_ALGO_KEYS then let max_plausible_high_voltage_limit := num(PARAM_ALGO_VALUES["max_plausible_high_voltage_limit"]);
+printf{LOG_INFO} "Parameter: for consistency of voltage bounds, max_plausible_high_voltage_limit:= %Q pu\n",max_plausible_high_voltage_limit;
+check max_plausible_high_voltage_limit > min_plausible_low_voltage_limit;
 
 # Ignore voltage bounds for buses with nominal voltage lower than this parameter
 # For all busses with nominal voltage lower than ignore_voltage_bounds, voltage bonds will be ignored
-# and replaced by [consistent_min_voltage ; consistent_max_voltage]
+# and replaced by [min_plausible_low_voltage_limit ; max_plausible_high_voltage_limit]
 param ignore_voltage_bounds default 0;
 if "ignore_voltage_bounds" in PARAM_ALGO_KEYS then let ignore_voltage_bounds := num(PARAM_ALGO_VALUES["ignore_voltage_bounds"]);
 if ignore_voltage_bounds >= epsilon_nominal_voltage
-then printf{LOG_INFO} "Parameter: for all busses with nominal voltage <= ignore_voltage_bounds=%.1f, voltage bounds are ignored and replaced by [%.3f;%.3f]\n",ignore_voltage_bounds,consistent_min_voltage,consistent_max_voltage;
+then printf{LOG_INFO} "Parameter: for all busses with nominal voltage <= ignore_voltage_bounds=%.1f, voltage bounds are ignored and replaced by [%.3f;%.3f]\n",ignore_voltage_bounds,min_plausible_low_voltage_limit,max_plausible_high_voltage_limit;
 check ignore_voltage_bounds >= 0;
 
 # Consistency maximal value for P and Q

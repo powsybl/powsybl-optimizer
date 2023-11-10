@@ -45,11 +45,11 @@ public class OpenReacParameters {
 
     private Double objectiveDistance;
 
-    private static final String MIN_PLAUSIBLE_LOW_VOLTAGE_LIMIT_KEY = "consistent_min_voltage";
+    private static final String MIN_PLAUSIBLE_LOW_VOLTAGE_LIMIT_KEY = "min_plausible_low_voltage_limit";
 
     private Double minPlausibleLowVoltageLimit; // in pu
 
-    private static final String MAX_PLAUSIBLE_HIGH_VOLTAGE_LIMIT_KEY = "consistent_max_voltage";
+    private static final String MAX_PLAUSIBLE_HIGH_VOLTAGE_LIMIT_KEY = "max_plausible_high_voltage_limit";
 
     private Double maxPlausibleHighVoltageLimit; // in pu
 
