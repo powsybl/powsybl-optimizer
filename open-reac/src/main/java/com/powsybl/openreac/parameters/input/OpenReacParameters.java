@@ -27,8 +27,6 @@ public class OpenReacParameters {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OpenReacParameters.class);
 
-    private static final String OBJECTIVE_DISTANCE_KEY = "ratio_voltage_target";
-
     private final List<VoltageLimitOverride> specificVoltageLimits = new ArrayList<>();
 
     private final List<String> variableShuntCompensators = new ArrayList<>();
@@ -39,9 +37,21 @@ public class OpenReacParameters {
 
     private final List<OpenReacAlgoParam> algorithmParams = new ArrayList<>();
 
+    // Algo parameters
+
     private OpenReacOptimisationObjective objective = OpenReacOptimisationObjective.MIN_GENERATION;
 
+    private static final String OBJECTIVE_DISTANCE_KEY = "ratio_voltage_target";
+
     private Double objectiveDistance;
+
+    private static final String MIN_VOLTAGE_LIMIT_CONSISTENCY_KEY = "consistent_min_voltage";
+
+    private Double minVoltageLimitConsistency; // in pu
+
+    private static final String MAX_VOLTAGE_LIMIT_CONSISTENCY_KEY = "consistent_max_voltage";
+
+    private Double maxVoltageLimitConsistency; // in pu
 
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.
@@ -137,6 +147,36 @@ public class OpenReacParameters {
         return this;
     }
 
+    /**
+     * @return the minimal voltage limit consistency value in p.u.
+     */
+    public Double getMinVoltageLimitConsistency() {
+        return minVoltageLimitConsistency;
+    }
+
+    public OpenReacParameters setMinVoltageLimitConsistency(double minVoltageLimitConsistency) {
+        if (minVoltageLimitConsistency < 0) {
+            throw new InvalidParametersException("Minimal voltage limit must be >= 0 to be consistent.");
+        }
+        this.minVoltageLimitConsistency = minVoltageLimitConsistency;
+        return this;
+    }
+
+    /**
+     * @return the maximal voltage limit consistency value in p.u.
+     */
+    public Double getMaxVoltageLimitConsistency() {
+        return maxVoltageLimitConsistency;
+    }
+
+    public OpenReacParameters setMaxVoltageLimitConsistency(double maxVoltageLimitConsistency) {
+        if (maxVoltageLimitConsistency <= 0) {
+            throw new InvalidParametersException("Maximal voltage limit must be > 0 to be consistent.");
+        }
+        this.maxVoltageLimitConsistency = maxVoltageLimitConsistency;
+        return this;
+    }
+
     public List<String> getVariableShuntCompensators() {
         return variableShuntCompensators;
     }
@@ -154,13 +194,19 @@ public class OpenReacParameters {
     }
 
     public List<OpenReacAlgoParam> getAllAlgorithmParams() {
-        ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>(algorithmParams.size() + 2);
+        ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>(algorithmParams.size() + 4);
         allAlgoParams.addAll(algorithmParams);
         if (objective != null) {
             allAlgoParams.add(objective.toParam());
         }
         if (objectiveDistance != null) {
             allAlgoParams.add(new OpenReacAlgoParamImpl(OBJECTIVE_DISTANCE_KEY, Double.toString(objectiveDistance / 100)));
+        }
+        if (minVoltageLimitConsistency != null) {
+            allAlgoParams.add(new OpenReacAlgoParamImpl(MIN_VOLTAGE_LIMIT_CONSISTENCY_KEY, Double.toString(minVoltageLimitConsistency)));
+        }
+        if (maxVoltageLimitConsistency != null) {
+            allAlgoParams.add(new OpenReacAlgoParamImpl(MAX_VOLTAGE_LIMIT_CONSISTENCY_KEY, Double.toString(maxVoltageLimitConsistency)));
         }
         return allAlgoParams;
     }
@@ -201,11 +247,32 @@ public class OpenReacParameters {
             throw new InvalidParametersException("At least one voltage level has an undefined or incorrect voltage limit.");
         }
 
+        boolean integrityAlgorithmParameters = checkAlgorithmParametersIntegrity();
+        if (!integrityAlgorithmParameters) {
+            throw new InvalidParametersException("At least one algorithm parameter is inconsistent.");
+        }
+    }
+
+    /**
+     * @return true if the algorithm parameters are consistent, false otherwise.
+     */
+    public boolean checkAlgorithmParametersIntegrity() {
+        boolean integrityAlgorithmParameters = true;
+
+        // Check integrity of objective function
         if (objective.equals(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT) && objectiveDistance == null) {
-            throw new InvalidParametersException("In using " + OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT +
-                    " as objective, a distance in percent between low and high voltage limits is expected.");
+            LOGGER.warn("In using {} as objective, a distance in percent between low and high voltage limits is expected.", OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT);
+            integrityAlgorithmParameters = false;
         }
 
+        // Check integrity of min/max voltage limit consistency
+        if (minVoltageLimitConsistency != null && maxVoltageLimitConsistency != null
+                && minVoltageLimitConsistency > maxVoltageLimitConsistency) {
+            LOGGER.warn("Minimal consistent voltage limit must be lower than the maximum consistent voltage limit.");
+            integrityAlgorithmParameters = false;
+        }
+
+        return integrityAlgorithmParameters;
     }
 
     /**

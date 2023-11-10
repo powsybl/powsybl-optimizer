@@ -10,6 +10,7 @@ import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
 import com.powsybl.iidm.network.*;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
+import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 import org.junit.jupiter.api.Test;
 
@@ -37,6 +38,52 @@ public class OpenReacParametersTest {
         assertThrows(InvalidParametersException.class, () -> parameters.checkIntegrity(network), "BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT without ratio voltage set should throw");
         parameters.setObjectiveDistance(1);
         assertDoesNotThrow(() -> parameters.checkIntegrity(network), "Default configuration with BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT and ratio voltage set should not throw");
+    }
+
+    @Test
+    public void testMinMaxVoltageLimitIntegrityChecks() {
+        OpenReacParameters parameters = new OpenReacParameters();
+        assertNull(parameters.getMinVoltageLimitConsistency());
+        assertNull(parameters.getMaxVoltageLimitConsistency());
+
+        // Consistency of min voltage limit (>= 0)
+        assertThrows(InvalidParametersException.class, () -> parameters.setMinVoltageLimitConsistency(-0.25));
+        parameters.setMinVoltageLimitConsistency(0.8);
+        assertEquals(0.8, parameters.getMinVoltageLimitConsistency());
+
+        // Consistency of high voltage limit (> 0)
+        assertThrows(InvalidParametersException.class, () -> parameters.setMaxVoltageLimitConsistency(-0.15));
+        assertThrows(InvalidParametersException.class, () -> parameters.setMaxVoltageLimitConsistency(0));
+        parameters.setMaxVoltageLimitConsistency(0.75);
+        assertEquals(0.75, parameters.getMaxVoltageLimitConsistency());
+
+        // Check min < max
+        assertFalse(parameters.checkAlgorithmParametersIntegrity());
+        parameters.setMaxVoltageLimitConsistency(1.2);
+        assertTrue(parameters.checkAlgorithmParametersIntegrity());
+    }
+
+    @Test
+    void testAlgorithmParams() {
+        OpenReacParameters parameters = new OpenReacParameters();
+        parameters.addAlgorithmParam("myParam", "myValue");
+        parameters.setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE);
+        parameters.setObjectiveDistance(0.4);
+        parameters.setMinVoltageLimitConsistency(0.8);
+        parameters.setMaxVoltageLimitConsistency(1.2);
+        List<OpenReacAlgoParam> algoParams = parameters.getAllAlgorithmParams();
+
+        assertEquals(5, algoParams.size());
+        assertEquals("myParam", algoParams.get(0).getName());
+        assertEquals("myValue", algoParams.get(0).getValue());
+        assertEquals("objective_choice", algoParams.get(1).getName());
+        assertEquals("2", algoParams.get(1).getValue());
+        assertEquals("ratio_voltage_target", algoParams.get(2).getName());
+        assertEquals("0.004", algoParams.get(2).getValue());
+        assertEquals("consistent_min_voltage", algoParams.get(3).getName());
+        assertEquals("0.8", algoParams.get(3).getValue());
+        assertEquals("consistent_max_voltage", algoParams.get(4).getName());
+        assertEquals("1.2", algoParams.get(4).getValue());
     }
 
     @Test
