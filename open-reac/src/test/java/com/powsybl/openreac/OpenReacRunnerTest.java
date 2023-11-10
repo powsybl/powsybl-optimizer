@@ -20,7 +20,9 @@ import com.powsybl.loadflow.LoadFlowResult;
 import com.powsybl.openreac.network.HvdcNetworkFactory;
 import com.powsybl.openreac.network.VoltageControlNetworkFactory;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
+import com.powsybl.openreac.parameters.input.algo.OpenReacAmplLogLevel;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
+import com.powsybl.openreac.parameters.input.algo.OpenReacSolverLogLevel;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.OpenReacStatus;
 import org.junit.jupiter.api.AfterEach;
@@ -71,6 +73,26 @@ class OpenReacRunnerTest {
             execFolder = walk.limit(2).collect(Collectors.toList()).get(1);
         }
         return execFolder;
+    }
+
+    @Test
+    void testLogLevelsParamAlgoExport() throws IOException {
+        Network network = IeeeCdfNetworkFactory.create118();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
+        OpenReacParameters parameters = new OpenReacParameters()
+                .setLogLevelAmpl(OpenReacAmplLogLevel.DEBUG)
+                .setLogLevelSolver(OpenReacSolverLogLevel.ONLY_RESULTS);
+
+        LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
+                List.of("empty_case/reactiveopf_results_indic.txt"));
+        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
+                localCommandExecutor, ForkJoinPool.commonPool())) {
+            OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), parameters,
+                    new OpenReacConfig(true), computationManager);
+            Path execFolder = getAmplExecPath();
+            assertEqualsToRef(execFolder.resolve("param_algo.txt"), "/openreac-input-algo-parameters/log_levels.txt");
+        }
+
     }
 
     @Test

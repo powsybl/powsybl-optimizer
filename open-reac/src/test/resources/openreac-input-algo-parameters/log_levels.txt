@@ -1,0 +1,4 @@
+objective_choice 0
+log_level_ampl DEBUG
+log_level_knitro 1
+
