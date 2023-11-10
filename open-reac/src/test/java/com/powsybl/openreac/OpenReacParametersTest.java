@@ -41,7 +41,7 @@ public class OpenReacParametersTest {
     }
 
     @Test
-    public void testMinMaxVoltageLimitIntegrityChecks() {
+    void testMinMaxVoltageLimitIntegrityChecks() {
         OpenReacParameters parameters = new OpenReacParameters();
         assertNull(parameters.getMinVoltageLimitConsistency());
         assertNull(parameters.getMaxVoltageLimitConsistency());
@@ -61,6 +61,8 @@ public class OpenReacParametersTest {
         assertFalse(parameters.checkAlgorithmParametersIntegrity());
         parameters.setMaxVoltageLimitConsistency(1.2);
         assertTrue(parameters.checkAlgorithmParametersIntegrity());
+
+        parameters.
     }
 
     @Test
