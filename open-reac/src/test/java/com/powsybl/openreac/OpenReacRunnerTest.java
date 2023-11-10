@@ -74,6 +74,43 @@ class OpenReacRunnerTest {
     }
 
     @Test
+    void testDefaultParamAlgoExport() throws IOException {
+        Network network = IeeeCdfNetworkFactory.create118();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
+        OpenReacParameters parameters = new OpenReacParameters();
+
+        LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
+                List.of("empty_case/reactiveopf_results_indic.txt"));
+        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
+                localCommandExecutor, ForkJoinPool.commonPool())) {
+            OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), parameters,
+                    new OpenReacConfig(true), computationManager);
+            Path execFolder = getAmplExecPath();
+            assertEqualsToRef(execFolder.resolve("param_algo.txt"), "/openreac-input/default.txt");
+        }
+    }
+
+    @Test
+    void testConsistentVoltageLimitsParamAlgoExport() throws IOException {
+        Network network = IeeeCdfNetworkFactory.create118();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
+        OpenReacParameters parameters = new OpenReacParameters()
+                .setMinVoltageLimitConsistency(0.7888)
+                .setMaxVoltageLimitConsistency(1.3455);
+
+        LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
+                List.of("empty_case/reactiveopf_results_indic.txt"));
+        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
+                localCommandExecutor, ForkJoinPool.commonPool())) {
+            OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), parameters,
+                    new OpenReacConfig(true), computationManager);
+            Path execFolder = getAmplExecPath();
+            assertEqualsToRef(execFolder.resolve("param_algo.txt"), "/openreac-input/consistent_voltage_limits.txt");
+        }
+
+    }
+
+    @Test
     void testInputFile() throws IOException {
         Network network = IeeeCdfNetworkFactory.create118();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
