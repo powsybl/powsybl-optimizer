@@ -61,8 +61,6 @@ public class OpenReacParametersTest {
         assertFalse(parameters.checkAlgorithmParametersIntegrity());
         parameters.setMaxVoltageLimitConsistency(1.2);
         assertTrue(parameters.checkAlgorithmParametersIntegrity());
-
-        parameters.
     }
 
     @Test
