@@ -11,6 +11,7 @@ import com.powsybl.iidm.network.*;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
+import com.powsybl.openreac.parameters.input.algo.OpenReacSlackRepartition;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -40,6 +41,20 @@ public class OpenReacParametersTest {
     }
 
     @Test
+    void testSlackRepartitionIntegrity() {
+        OpenReacParameters parameters = new OpenReacParameters();
+
+        assertEquals(OpenReacSlackRepartition.LOAD_BUSES, parameters.getSlackRepartition()); // default value
+        assertThrows(NullPointerException.class, () -> parameters.setSlackRepartition(null), "Can't set null ampl log level.");
+        parameters.setSlackRepartition(OpenReacSlackRepartition.EMPTY_BUSES);
+        assertEquals("0", parameters.getSlackRepartition().toParam().getValue());
+        parameters.setSlackRepartition(OpenReacSlackRepartition.LOAD_BUSES);
+        assertEquals("1", parameters.getSlackRepartition().toParam().getValue());
+        parameters.setSlackRepartition(OpenReacSlackRepartition.EVERYWHERE);
+        assertEquals("2", parameters.getSlackRepartition().toParam().getValue());
+    }
+
+    @Test
     public void testParametersIntegrityChecks() {
         Network network = IeeeCdfNetworkFactory.create118();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
@@ -50,7 +65,7 @@ public class OpenReacParametersTest {
         assertEquals(0, parameters.getSpecificVoltageLimits().size(), "SpecificVoltageLimits should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getConstantQGenerators().size(), "ConstantQGenerators should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getVariableShuntCompensators().size(), "VariableShuntCompensators should be empty when using default OpenReacParameter constructor.");
-        assertEquals(1, parameters.getAllAlgorithmParams().size());
+        assertEquals(2, parameters.getAllAlgorithmParams().size());
 
         // adding an objective, to have a valid OpenReacParameter object
         parameters.setObjective(OpenReacOptimisationObjective.MIN_GENERATION);

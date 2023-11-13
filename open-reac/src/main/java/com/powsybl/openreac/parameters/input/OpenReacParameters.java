@@ -12,6 +12,7 @@ import com.powsybl.openreac.exceptions.InvalidParametersException;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParamImpl;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
+import com.powsybl.openreac.parameters.input.algo.OpenReacSlackRepartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +43,8 @@ public class OpenReacParameters {
     private OpenReacOptimisationObjective objective = OpenReacOptimisationObjective.MIN_GENERATION;
 
     private Double objectiveDistance;
+
+    private OpenReacSlackRepartition slackRepartition = OpenReacSlackRepartition.LOAD_BUSES;
 
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.
@@ -137,6 +140,15 @@ public class OpenReacParameters {
         return this;
     }
 
+    public OpenReacSlackRepartition getSlackRepartition() {
+        return slackRepartition;
+    }
+
+    public OpenReacParameters setSlackRepartition(OpenReacSlackRepartition slackRepartition) {
+        this.slackRepartition = Objects.requireNonNull(slackRepartition);
+        return this;
+    }
+
     public List<String> getVariableShuntCompensators() {
         return variableShuntCompensators;
     }
@@ -154,13 +166,16 @@ public class OpenReacParameters {
     }
 
     public List<OpenReacAlgoParam> getAllAlgorithmParams() {
-        ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>(algorithmParams.size() + 2);
+        ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>(algorithmParams.size() + 3);
         allAlgoParams.addAll(algorithmParams);
         if (objective != null) {
             allAlgoParams.add(objective.toParam());
         }
         if (objectiveDistance != null) {
             allAlgoParams.add(new OpenReacAlgoParamImpl(OBJECTIVE_DISTANCE_KEY, Double.toString(objectiveDistance / 100)));
+        }
+        if (slackRepartition != null) {
+            allAlgoParams.add(slackRepartition.toParam());
         }
         return allAlgoParams;
     }

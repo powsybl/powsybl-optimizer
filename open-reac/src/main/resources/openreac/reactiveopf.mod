@@ -937,9 +937,11 @@ subject to ctr_balance_P{PROBLEM_ACOPF,k in BUSCC}:
 #
 
 # Reactive balance slack variables at every node 
-var slack1_balance_Q{BUSCC} >=0;
-var slack2_balance_Q{BUSCC} >=0;
-#subject to ctr_compl_slack_Q{PROBLEM_ACOPF,k in BUSCC}: slack1_balance_Q[k] >= 0 complements slack2_balance_Q[k] >= 0;
+set BUSCC_SLACK := (BUSCC diff if slack_repartition <= 1 then {n in BUSCC: (card{(g,n) in UNITON: (g,n) not in UNIT_FIXQ}>0 or card{(svc,n) in SVCON}>0 or card{(vscconv,n) in VSCCONVON}>0)} else {})
+                          diff if slack_repartition == 0 then {n in BUSCC: (card{(c,n) in LOADCC}>0 or card{(shunt,n) in SHUNT_VAR}>0)} else {};
+var slack1_balance_Q{BUSCC_SLACK} >=0;
+var slack2_balance_Q{BUSCC_SLACK} >=0;
+#subject to ctr_compl_slack_Q{PROBLEM_ACOPF,k in BUSCC_SLACK}: slack1_balance_Q[k] >= 0 complements slack2_balance_Q[k] >= 0;
 
 subject to ctr_balance_Q{PROBLEM_ACOPF,k in BUSCC}:
   # Flows
@@ -962,7 +964,7 @@ subject to ctr_balance_Q{PROBLEM_ACOPF,k in BUSCC}:
   # LCC converters
   + sum{(l,k) in LCCCONVON} lccconv_Q0[1,l,k] # Fixed value
   # Slack variables
-  + if k in BUSCC then
+  + if k in BUSCC_SLACK then
   (- slack1_balance_Q[k]  # Homogeneous to a generation of reactive power (condensator)
    + slack2_balance_Q[k]) # homogeneous to a reactive load (self)
   = 0;
@@ -995,7 +997,7 @@ param penalty_voltage_target_high := 1;
 param penalty_voltage_target_low  := 0.01;
 
 minimize problem_acopf_objective:
-  sum{n in BUSCC} (
+  sum{n in BUSCC_SLACK} (
       penalty_invest_rea_pos * slack1_balance_Q[n]
     + penalty_invest_rea_neg * slack2_balance_Q[n]
     )
