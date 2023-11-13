@@ -53,6 +53,28 @@ public class OpenReacParameters {
 
     private Double maxPlausibleHighVoltageLimit; // in pu
 
+    private static final String ALPHA_COEFFICIENT_KEY = "coeff_alpha";
+
+    private Double alphaCoefficient; // in [0;1]. If 1, minimizes sum of generation. If 0, minimizes sum of differences between target and value
+
+    private static final String ZERO_POWER_THRESHOLD_KEY = "Pnull";
+
+    private Double zeroPowerThreshold; // in MW, for detecting zero value for power
+
+    private static final String ZERO_IMPEDANCE_KEY = "Znull";
+
+    private Double zeroImpedance; // in p.u., for detecting null impedance branches
+
+    private static final String LOW_IGNORED_NOMINAL_VOLTAGE_KEY = "epsilon_nominal_voltage";
+
+    private Double lowIgnoredNominalVoltage; // in kV, to ignore buses with Vnom lower than this value
+
+    private static final String LOW_IGNORED_VOLTAGE_BOUNDS_KEY = "ignore_voltage_bounds";
+
+    private Double lowIgnoredVoltageBounds; // in kV, to ignore voltage bounds of buses with Vnom lower than this value
+
+
+
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.
      * <p>
