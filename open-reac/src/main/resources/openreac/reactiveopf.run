@@ -307,13 +307,13 @@ if ignore_voltage_bounds >= epsilon_nominal_voltage
 then printf{LOG_INFO} "Parameter: for all busses with nominal voltage <= ignore_voltage_bounds=%.1f, voltage bounds are ignored and replaced by [%.3f;%.3f]\n",ignore_voltage_bounds,epsilon_min_voltage,2-epsilon_min_voltage;
 check ignore_voltage_bounds >= 0;
 
-param slack_repartition integer default 1;
-if "slack_repartition" in PARAM_ALGO_KEYS then let slack_repartition := num(PARAM_ALGO_VALUES["slack_repartition"]);
-printf{LOG_INFO} "Parameter: choice for reactive slacks repartition in ACOPF := %Q (%s)\n", slack_repartition,
-  if slack_repartition == 2 then "all the nodes"
-  else if slack_repartition == 1 then "nodes without generator, svc or vsc"
-  else if slack_repartition == 0 then "nodes without any equipment";
-check slack_repartition in {0, 1, 2};
+param reactive_slacks_repartition integer default 1;
+if "reactive_slacks_repartition" in PARAM_ALGO_KEYS then let reactive_slacks_repartition := num(PARAM_ALGO_VALUES["reactive_slacks_repartition"]);
+printf{LOG_INFO} "Parameter: choice for reactive slacks repartition in ACOPF := %Q (%s)\n", reactive_slacks_repartition,
+  if reactive_slacks_repartition == 2 then "all the nodes"
+  else if reactive_slacks_repartition == 1 then "nodes without generator, svc or vsc"
+  else if reactive_slacks_repartition == 0 then "nodes without any equipment";
+check reactive_slacks_repartition in {0, 1, 2};
 
 # Consistency maximal value for P and Q
 # Any Pmax Pmin Qmax Qmin of generating unit with abolute value larger than PQmax is discarded
@@ -675,7 +675,7 @@ for {(qq,m,n) in BRANCHCC_REGL_FIX: substation_Vnomi[1,bus_substation[1,m]] > 30
     let messagesInfo := messagesInfo union {messageInfo};
   }
 }
-if tempo > 0.5 then {
+if tempo > 1.5 then {
   let errorMessage := "ERROR INFEASIBLE some voltages bounds and not feasible with transformers ratios";
   let final_status := "NOK";
   include reactiveopfexit.run;

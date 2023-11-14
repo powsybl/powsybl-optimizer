@@ -1,4 +1,4 @@
 objective_choice 1
 ratio_voltage_target 0.7
-slack_repartition 1
+reactive_slacks_repartition 1
 

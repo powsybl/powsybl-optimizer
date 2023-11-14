@@ -9,21 +9,21 @@ package com.powsybl.openreac.parameters.input.algo;
 /**
  * @author Pierre Arvy <pierre.arvy at artelys.com>
  */
-public enum OpenReacSlackRepartition {
+public enum OpenReacReactiveSlacksRepartition {
     EMPTY_BUSES(0),
 
     LOAD_BUSES(1),
 
-    EVERYWHERE(2);
+    ALL_BUSES(2);
 
-    private static final String SLACK_REPARTITION_KEY = "slack_repartition";
+    private static final String SLACK_REPARTITION_KEY = "reactive_slacks_repartition";
 
     private final int amplKey;
 
     /**
      * @param amplKey value used in param_algo.txt to define the slacks repartition.
      */
-    OpenReacSlackRepartition(int amplKey) {
+    OpenReacReactiveSlacksRepartition(int amplKey) {
         this.amplKey = amplKey;
     }
 
