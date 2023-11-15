@@ -55,23 +55,23 @@ public class OpenReacParameters {
 
     private static final String ALPHA_COEFFICIENT_KEY = "coeff_alpha";
 
-    private Double alphaCoefficient; // in [0;1]. If 1, minimizes sum of generation. If 0, minimizes sum of differences between target and value
+    private Double alphaCoefficient = 1.; // in [0;1]
 
     private static final String ZERO_POWER_THRESHOLD_KEY = "Pnull";
 
-    private Double zeroPowerThreshold; // in MW, for detecting zero value for power
+    private Double zeroPowerThreshold = 0.01; // in MW, for detecting zero value for power
 
-    private static final String ZERO_IMPEDANCE_KEY = "Znull";
+    private static final String ZERO_IMPEDANCE_THRESHOLD_KEY = "Znull";
 
-    private Double zeroImpedance; // in p.u., for detecting null impedance branches
+    private Double zeroImpedanceThreshold = 1e-4; // in p.u., for detecting null impedance branches
 
-    private static final String LOW_IGNORED_NOMINAL_VOLTAGE_KEY = "epsilon_nominal_voltage";
+    private static final String NOMINAL_THRESHOLD_IGNORED_BUS_KEY = "epsilon_nominal_voltage";
 
-    private Double lowIgnoredNominalVoltage; // in kV, to ignore buses with Vnom lower than this value
+    private Double nominalThresholdIgnoredBuses = 1.; // in kV, to ignore buses with Vnom lower than this value
 
-    private static final String LOW_IGNORED_VOLTAGE_BOUNDS_KEY = "ignore_voltage_bounds";
+    private static final String NOMINAL_THRESHOLD_IGNORED_VOLTAGE_BOUNDS_KEY = "ignore_voltage_bounds";
 
-    private Double lowIgnoredVoltageBounds; // in kV, to ignore voltage bounds of buses with Vnom lower than this value
+    private Double nominalThresholdIgnoredVoltageBounds = 0.; // in kV, to ignore voltage bounds of buses with Vnom lower than this value
 
 
 
@@ -165,6 +165,9 @@ public class OpenReacParameters {
      * @param objectiveDistance is in %
      */
     public OpenReacParameters setObjectiveDistance(double objectiveDistance) {
+        if (Double.isNaN(objectiveDistance) || objectiveDistance > 1 || objectiveDistance < 0) {
+            throw new IllegalArgumentException("Objective distance must be defined and >= 0 and <= 1 to be consistent");
+        }
         this.objectiveDistance = objectiveDistance;
         return this;
     }
@@ -177,8 +180,8 @@ public class OpenReacParameters {
     }
 
     public OpenReacParameters setMinPlausibleLowVoltageLimit(double minPlausibleLowVoltageLimit) {
-        if (minPlausibleLowVoltageLimit < 0) {
-            throw new InvalidParametersException("Min plausible low voltage limit must be >= 0 to be consistent.");
+        if (Double.isNaN(minPlausibleLowVoltageLimit) || minPlausibleLowVoltageLimit < 0) {
+            throw new InvalidParametersException("Min plausible low voltage limit must be defined and >= 0 to be consistent.");
         }
         this.minPlausibleLowVoltageLimit = minPlausibleLowVoltageLimit;
         return this;
@@ -192,10 +195,70 @@ public class OpenReacParameters {
     }
 
     public OpenReacParameters setMaxPlausibleHighVoltageLimit(double maxPlausibleHighVoltageLimit) {
-        if (maxPlausibleHighVoltageLimit <= 0) {
-            throw new InvalidParametersException("Max plausible high voltage limit must be > 0 to be consistent.");
+        if (Double.isNaN(maxPlausibleHighVoltageLimit) || maxPlausibleHighVoltageLimit <= 0) {
+            throw new InvalidParametersException("Max plausible high voltage limit must be defined and > 0 to be consistent.");
         }
         this.maxPlausibleHighVoltageLimit = maxPlausibleHighVoltageLimit;
+        return this;
+    }
+
+    public Double getAlphaCoefficient() {
+        return alphaCoefficient;
+    }
+
+    public OpenReacParameters setAlphaCoefficient(Double alphaCoefficient) {
+        if (Double.isNaN(alphaCoefficient) || alphaCoefficient < 0 || alphaCoefficient > 1) {
+            throw new InvalidParametersException("Coefficient alpha parameter must be defined and between 0 and 1 to be consistent.");
+        }
+        this.alphaCoefficient = alphaCoefficient;
+        return this;
+    }
+
+    public Double getZeroPowerThreshold() {
+        return zeroPowerThreshold;
+    }
+
+    public OpenReacParameters setZeroPowerThreshold(Double zeroPowerThreshold) {
+        if (Double.isNaN(zeroPowerThreshold) || zeroPowerThreshold < 0) {
+            throw new InvalidParametersException("Zero power threshold must be defined and >= 0 to be consistent.");
+        }
+        this.zeroPowerThreshold = zeroPowerThreshold;
+        return this;
+    }
+
+    public Double getZeroImpedanceThreshold() {
+        return zeroImpedanceThreshold;
+    }
+
+    public OpenReacParameters setZeroImpedanceThreshold(Double zeroImpedanceThreshold) {
+        if (Double.isNaN(zeroImpedanceThreshold) || zeroImpedanceThreshold < 0) {
+            throw new InvalidParametersException("Zero impedance threshold must be defined and >= 0 to be consistent.");
+        }
+        this.zeroImpedanceThreshold = zeroImpedanceThreshold;
+        return this;
+    }
+
+    public Double getNominalThresholdIgnoredBuses() {
+        return nominalThresholdIgnoredBuses;
+    }
+
+    public OpenReacParameters setNominalThresholdIgnoredBuses(Double nominalThresholdIgnoredBuses) {
+        if (Double.isNaN(nominalThresholdIgnoredBuses) || nominalThresholdIgnoredBuses < 0) {
+            throw new InvalidParametersException("Nominal threshold for ignored buses must be defined and >= 0 to be consistent.");
+        }
+        this.nominalThresholdIgnoredBuses = nominalThresholdIgnoredBuses;
+        return this;
+    }
+
+    public Double getNominalThresholdIgnoredVoltageBounds() {
+        return nominalThresholdIgnoredVoltageBounds;
+    }
+
+    public OpenReacParameters setNominalThresholdIgnoredVoltageBounds(Double nominalThresholdIgnoredVoltageBounds) {
+        if (Double.isNaN(nominalThresholdIgnoredVoltageBounds) || nominalThresholdIgnoredVoltageBounds < 0) {
+            throw new InvalidParametersException("Nominal threshold for ignored voltage bounds must be defined and >= 0 to be consistent");
+        }
+        this.nominalThresholdIgnoredVoltageBounds = nominalThresholdIgnoredVoltageBounds;
         return this;
     }
 
@@ -216,7 +279,7 @@ public class OpenReacParameters {
     }
 
     public List<OpenReacAlgoParam> getAllAlgorithmParams() {
-        ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>(algorithmParams.size() + 4);
+        ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>(algorithmParams.size() + 9);
         allAlgoParams.addAll(algorithmParams);
         if (objective != null) {
             allAlgoParams.add(objective.toParam());
@@ -229,6 +292,21 @@ public class OpenReacParameters {
         }
         if (maxPlausibleHighVoltageLimit != null) {
             allAlgoParams.add(new OpenReacAlgoParamImpl(MAX_PLAUSIBLE_HIGH_VOLTAGE_LIMIT_KEY, Double.toString(maxPlausibleHighVoltageLimit)));
+        }
+        if (alphaCoefficient != null) {
+            allAlgoParams.add(new OpenReacAlgoParamImpl(ALPHA_COEFFICIENT_KEY, Double.toString(alphaCoefficient)));
+        }
+        if (zeroPowerThreshold != null) {
+            allAlgoParams.add(new OpenReacAlgoParamImpl(ZERO_POWER_THRESHOLD_KEY, Double.toString(zeroPowerThreshold)));
+        }
+        if (zeroImpedanceThreshold != null) {
+            allAlgoParams.add(new OpenReacAlgoParamImpl(ZERO_IMPEDANCE_THRESHOLD_KEY, Double.toString(zeroImpedanceThreshold)));
+        }
+        if (nominalThresholdIgnoredBuses != null) {
+            allAlgoParams.add(new OpenReacAlgoParamImpl(NOMINAL_THRESHOLD_IGNORED_BUS_KEY, Double.toString(nominalThresholdIgnoredBuses)));
+        }
+        if (nominalThresholdIgnoredVoltageBounds != null) {
+            allAlgoParams.add(new OpenReacAlgoParamImpl(NOMINAL_THRESHOLD_IGNORED_VOLTAGE_BOUNDS_KEY, Double.toString(nominalThresholdIgnoredVoltageBounds)));
         }
         return allAlgoParams;
     }
@@ -292,6 +370,10 @@ public class OpenReacParameters {
                 && minPlausibleLowVoltageLimit > maxPlausibleHighVoltageLimit) {
             LOGGER.warn("Min plausible low voltage limit must be lower than max plausible high voltage limit.");
             integrityAlgorithmParameters = false;
+        }
+
+        if (nominalThresholdIgnoredBuses > nominalThresholdIgnoredVoltageBounds) {
+            LOGGER.warn("Some buses with ignored voltage bounds will be ignored in calculations.");
         }
 
         return integrityAlgorithmParameters;
