@@ -71,6 +71,26 @@ public class OpenReacParameters {
 
     private Double nominalThresholdIgnoredVoltageBounds = 0.; // in kV, to ignore voltage bounds of buses with Vnom lower than this value
 
+    private static final String PQ_MAX_KEY = "PQmax";
+
+    private Double PQMax = 9000.; // MW
+
+    private static final String DEFAULT_PMAX_KEY = "defaultPmax";
+
+    private Double defaultPMax = 1000.; // MW
+
+    private static final String DEFAULT_PMIN_KEY = "defaultPmin";
+
+    private Double defaultPMin = 0.; // MW
+
+    private static final String DEFAULT_QMAX_PMAX_RATIO_KEY = "defaultQmaxPmaxRatio";
+
+    private Double defaultQmaxPmaxRatio = 0.3;
+
+    private static final String DEFAULT_MINIMAL_Q_P_RANGE_KEY = "minimalQPrange";
+
+    private Double defaultMinimalQPRange = 1.;
+
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.
      * <p>
