@@ -34,11 +34,16 @@ public class OpenReacParametersSerializer extends StdSerializer<OpenReacParamete
         serializerProvider.defaultSerializeField("constantQGenerators", openReacParameters.getConstantQGenerators(), jsonGenerator);
         serializerProvider.defaultSerializeField("variableTwoWindingsTransformers", openReacParameters.getVariableTwoWindingsTransformers(), jsonGenerator);
         serializerProvider.defaultSerializeField("variableShuntCompensators", openReacParameters.getVariableShuntCompensators(), jsonGenerator);
-        serializerProvider.defaultSerializeField("algorithmParams", openReacParameters.getAlgorithmParams(), jsonGenerator);
         serializerProvider.defaultSerializeField("objective", openReacParameters.getObjective().name(), jsonGenerator);
-        if (openReacParameters.getObjectiveDistance() != null) {
-            serializerProvider.defaultSerializeField("objectiveDistance", openReacParameters.getObjectiveDistance(), jsonGenerator);
-        }
+        serializerProvider.defaultSerializeField("objectiveDistance", openReacParameters.getObjectiveDistance(), jsonGenerator);
+        serializerProvider.defaultSerializeField("minPlausibleLowVoltageLimit", openReacParameters.getMinPlausibleLowVoltageLimit(), jsonGenerator);
+        serializerProvider.defaultSerializeField("maxPlausibleHighVoltageLimit", openReacParameters.getMaxPlausibleHighVoltageLimit(), jsonGenerator);
+        serializerProvider.defaultSerializeField("alphaCoefficient", openReacParameters.getAlphaCoefficient(), jsonGenerator);
+        serializerProvider.defaultSerializeField("zeroPowerThreshold", openReacParameters.getZeroPowerThreshold(), jsonGenerator);
+        serializerProvider.defaultSerializeField("zeroImpedanceThreshold", openReacParameters.getZeroImpedanceThreshold(), jsonGenerator);
+        serializerProvider.defaultSerializeField("nominalThresholdIgnoredBuses", openReacParameters.getNominalThresholdIgnoredBuses(), jsonGenerator);
+        serializerProvider.defaultSerializeField("nominalThresholdIgnoredVoltageBounds", openReacParameters.getNominalThresholdIgnoredVoltageBounds(), jsonGenerator);
+
         jsonGenerator.writeEndObject();
     }
 }

@@ -11,6 +11,7 @@ import com.powsybl.commons.json.JsonUtil;
 import com.powsybl.commons.test.ComparisonUtils;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
+import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -38,13 +39,20 @@ class OpenReacJsonModuleTest {
         vloList1.add(new VoltageLimitOverride("bar", VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, false, 20));
         vloList1.add(new VoltageLimitOverride("bar", VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, false, 26));
 
+        // modify open reac parameters
         parameters.addSpecificVoltageLimits(vloList1);
         parameters.addConstantQGenerators(List.of("g1", "g2"));
         parameters.addVariableTwoWindingsTransformers(List.of("tr1"));
         parameters.addVariableShuntCompensators(List.of("sc1", "sc2"));
-        parameters.addAlgorithmParam("p1", "v1");
-        parameters.addAlgorithmParam("p2", "v2");
-        parameters.setObjectiveDistance(5);
+        parameters.setObjectiveDistance(0.6665);
+        parameters.setMinPlausibleLowVoltageLimit(0.712);
+        parameters.setMaxPlausibleHighVoltageLimit(1.2222);
+        parameters.setAlphaCoefficient(0.56);
+        parameters.setZeroPowerThreshold(0.5);
+        parameters.setZeroImpedanceThreshold(1e-5);
+        parameters.setNominalThresholdIgnoredBuses(10.);
+        parameters.setNominalThresholdIgnoredVoltageBounds(5.);
+
         String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(parameters);
         ComparisonUtils.compareTxt(Objects.requireNonNull(getClass().getResourceAsStream("/parameters.json")), json);
 
@@ -59,11 +67,15 @@ class OpenReacJsonModuleTest {
         assertEquals(vloList2, parameters2.getSpecificVoltageLimits());
         assertEquals(List.of("g1", "g2"), parameters2.getConstantQGenerators());
         assertEquals(List.of("tr1"), parameters2.getVariableTwoWindingsTransformers());
-        assertEquals(2, parameters2.getAlgorithmParams().size());
-        assertEquals("p1", parameters2.getAlgorithmParams().get(0).getName());
-        assertEquals("v1", parameters2.getAlgorithmParams().get(0).getValue());
-        assertEquals("p2", parameters2.getAlgorithmParams().get(1).getName());
-        assertEquals("v2", parameters2.getAlgorithmParams().get(1).getValue());
-        assertEquals(5, parameters2.getObjectiveDistance());
+        assertEquals(List.of("sc1", "sc2"), parameters2.getVariableShuntCompensators());
+        assertEquals(OpenReacOptimisationObjective.MIN_GENERATION, parameters2.getObjective());
+        assertEquals(0.6665, parameters2.getObjectiveDistance());
+        assertEquals(0.712, parameters2.getMinPlausibleLowVoltageLimit());
+        assertEquals(1.2222, parameters2.getMaxPlausibleHighVoltageLimit());
+        assertEquals(0.56, parameters2.getAlphaCoefficient());
+        assertEquals(0.5, parameters2.getZeroPowerThreshold());
+        assertEquals(1e-5, parameters2.getZeroImpedanceThreshold());
+        assertEquals(10., parameters2.getNominalThresholdIgnoredBuses());
+        assertEquals(5., parameters2.getNominalThresholdIgnoredVoltageBounds());
     }
 }

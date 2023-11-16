@@ -24,13 +24,13 @@
   "constantQGenerators" : [ "g1", "g2" ],
   "variableTwoWindingsTransformers" : [ "tr1" ],
   "variableShuntCompensators" : [ "sc1", "sc2" ],
-  "algorithmParams" : [ {
-    "name" : "p1",
-    "value" : "v1"
-  }, {
-    "name" : "p2",
-    "value" : "v2"
-  } ],
   "objective" : "MIN_GENERATION",
-  "objectiveDistance" : 5.0
+  "objectiveDistance" : 0.6665,
+  "minPlausibleLowVoltageLimit" : 0.712,
+  "maxPlausibleHighVoltageLimit" : 1.2222,
+  "alphaCoefficient" : 0.56,
+  "zeroPowerThreshold" : 0.5,
+  "zeroImpedanceThreshold" : 1.0E-5,
+  "nominalThresholdIgnoredBuses" : 10.0,
+  "nominalThresholdIgnoredVoltageBounds" : 5.0
 }

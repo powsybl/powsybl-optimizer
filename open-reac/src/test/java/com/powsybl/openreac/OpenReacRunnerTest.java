@@ -91,12 +91,19 @@ class OpenReacRunnerTest {
     }
 
     @Test
-    void testMinMaxPlausibleVoltageLimitsParamAlgoExport() throws IOException {
+    void testParamAlgoExport() throws IOException {
         Network network = IeeeCdfNetworkFactory.create118();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         OpenReacParameters parameters = new OpenReacParameters()
+                .setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE)
+                .setObjectiveDistance(0.69)
                 .setMinPlausibleLowVoltageLimit(0.7888)
-                .setMaxPlausibleHighVoltageLimit(1.3455);
+                .setMaxPlausibleHighVoltageLimit(1.3455)
+                .setAlphaCoefficient(0.88)
+                .setZeroPowerThreshold(0.45)
+                .setZeroImpedanceThreshold(1e-5)
+                .setNominalThresholdIgnoredBuses(2.)
+                .setNominalThresholdIgnoredVoltageBounds(0.75);
 
         LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
                 List.of("empty_case/reactiveopf_results_indic.txt"));
@@ -105,7 +112,7 @@ class OpenReacRunnerTest {
             OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), parameters,
                     new OpenReacConfig(true), computationManager);
             Path execFolder = getAmplExecPath();
-            assertEqualsToRef(execFolder.resolve("param_algo.txt"), "/openreac-input-algo-parameters/minmax_plausible_voltage_limits.txt");
+            assertEqualsToRef(execFolder.resolve("param_algo.txt"), "/openreac-input-algo-parameters/modified_param_algo.txt");
         }
 
     }
@@ -116,7 +123,7 @@ class OpenReacRunnerTest {
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         OpenReacParameters parameters = new OpenReacParameters().setObjective(
                 OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT)
-            .setObjectiveDistance(70)
+            .setObjectiveDistance(0.70)
             .addVariableTwoWindingsTransformers(network.getTwoWindingsTransformerStream()
                 .limit(1)
                 .map(TwoWindingsTransformer::getId)

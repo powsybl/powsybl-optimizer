@@ -10,7 +10,6 @@ import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
 import com.powsybl.iidm.network.*;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
-import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 import org.junit.jupiter.api.Test;
 
@@ -28,28 +27,38 @@ public class OpenReacParametersTest {
     public void testObjectiveIntegrityChecks() {
         Network network = IeeeCdfNetworkFactory.create118();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
-        OpenReacParameters parameters = new OpenReacParameters();
 
-        assertEquals(parameters.getObjective(), OpenReacOptimisationObjective.MIN_GENERATION);
-        assertThrows(NullPointerException.class, () -> parameters.setObjective(null), "We can't unset objective function.");
-        parameters.setObjective(OpenReacOptimisationObjective.MIN_GENERATION);
-        assertDoesNotThrow(() -> parameters.checkIntegrity(network), "Default configuration with only objective should be ok.");
+        // Objective choice
+        OpenReacParameters parameters = new OpenReacParameters();
+        assertEquals(OpenReacOptimisationObjective.MIN_GENERATION, parameters.getObjective());
         parameters.setObjective(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT);
-        assertThrows(InvalidParametersException.class, () -> parameters.checkIntegrity(network), "BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT without ratio voltage set should throw");
-        parameters.setObjectiveDistance(1);
-        assertDoesNotThrow(() -> parameters.checkIntegrity(network), "Default configuration with BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT and ratio voltage set should not throw");
+        assertEquals(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT, parameters.getObjective());
+        parameters.setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE);
+        assertEquals(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE, parameters.getObjective());
+        assertThrows(NullPointerException.class, () -> parameters.setObjective(null), "We can't unset objective function.");
+
+        // Objective distance for BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT objective
+        assertEquals(0.5, parameters.getObjectiveDistance()); // default value
+        parameters.setObjectiveDistance(0.); // min value
+        assertEquals(0., parameters.getObjectiveDistance());
+        parameters.setObjectiveDistance(1.); // max value
+        assertEquals(1., parameters.getObjectiveDistance());
+        assertThrows(IllegalArgumentException.class, () -> parameters.setObjectiveDistance(-2.));
+        assertThrows(IllegalArgumentException.class, () -> parameters.setObjectiveDistance(1.2));
+        assertThrows(IllegalArgumentException.class, () -> parameters.setObjectiveDistance(Double.NaN), "Objective distance must be defined.");
+
+        assertDoesNotThrow(() -> parameters.checkIntegrity(network));
+        parameters.setObjectiveDistance(0.15);
     }
 
     @Test
     void testMinMaxVoltageLimitIntegrityChecks() {
         OpenReacParameters parameters = new OpenReacParameters();
-        assertNull(parameters.getMinPlausibleLowVoltageLimit());
-        assertNull(parameters.getMaxPlausibleHighVoltageLimit());
 
         // Consistency of min plausible low voltage limit (>= 0)
         assertThrows(InvalidParametersException.class, () -> parameters.setMinPlausibleLowVoltageLimit(-0.25));
-        parameters.setMinPlausibleLowVoltageLimit(0.8);
-        assertEquals(0.8, parameters.getMinPlausibleLowVoltageLimit());
+        parameters.setMinPlausibleLowVoltageLimit(0.8211);
+        assertEquals(0.8211, parameters.getMinPlausibleLowVoltageLimit());
 
         // Consistency of max plausible high voltage limit (> 0)
         assertThrows(InvalidParametersException.class, () -> parameters.setMaxPlausibleHighVoltageLimit(-0.15));
@@ -64,29 +73,6 @@ public class OpenReacParametersTest {
     }
 
     @Test
-    void testAlgorithmParams() {
-        OpenReacParameters parameters = new OpenReacParameters();
-        parameters.addAlgorithmParam("myParam", "myValue");
-        parameters.setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE);
-        parameters.setObjectiveDistance(0.4);
-        parameters.setMinPlausibleLowVoltageLimit(0.8);
-        parameters.setMaxPlausibleHighVoltageLimit(1.2);
-        List<OpenReacAlgoParam> algoParams = parameters.getAllAlgorithmParams();
-
-        assertEquals(5, algoParams.size());
-        assertEquals("myParam", algoParams.get(0).getName());
-        assertEquals("myValue", algoParams.get(0).getValue());
-        assertEquals("objective_choice", algoParams.get(1).getName());
-        assertEquals("2", algoParams.get(1).getValue());
-        assertEquals("ratio_voltage_target", algoParams.get(2).getName());
-        assertEquals("0.004", algoParams.get(2).getValue());
-        assertEquals("min_plausible_low_voltage_limit", algoParams.get(3).getName());
-        assertEquals("0.8", algoParams.get(3).getValue());
-        assertEquals("max_plausible_high_voltage_limit", algoParams.get(4).getName());
-        assertEquals("1.2", algoParams.get(4).getValue());
-    }
-
-    @Test
     public void testParametersIntegrityChecks() {
         Network network = IeeeCdfNetworkFactory.create118();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
@@ -97,7 +83,7 @@ public class OpenReacParametersTest {
         assertEquals(0, parameters.getSpecificVoltageLimits().size(), "SpecificVoltageLimits should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getConstantQGenerators().size(), "ConstantQGenerators should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getVariableShuntCompensators().size(), "VariableShuntCompensators should be empty when using default OpenReacParameter constructor.");
-        assertEquals(1, parameters.getAllAlgorithmParams().size());
+        assertEquals(9, parameters.getAllAlgorithmParams().size());
 
         // adding an objective, to have a valid OpenReacParameter object
         parameters.setObjective(OpenReacOptimisationObjective.MIN_GENERATION);

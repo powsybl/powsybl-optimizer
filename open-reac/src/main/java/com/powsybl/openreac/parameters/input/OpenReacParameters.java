@@ -35,23 +35,21 @@ public class OpenReacParameters {
 
     private final List<String> variableTwoWindingsTransformers = new ArrayList<>();
 
-    private final List<OpenReacAlgoParam> algorithmParams = new ArrayList<>();
-
     // Algo parameters
 
     private OpenReacOptimisationObjective objective = OpenReacOptimisationObjective.MIN_GENERATION;
 
     private static final String OBJECTIVE_DISTANCE_KEY = "ratio_voltage_target";
 
-    private Double objectiveDistance;
+    private Double objectiveDistance = 0.5;
 
     private static final String MIN_PLAUSIBLE_LOW_VOLTAGE_LIMIT_KEY = "min_plausible_low_voltage_limit";
 
-    private Double minPlausibleLowVoltageLimit; // in pu
+    private Double minPlausibleLowVoltageLimit = 0.5; // in pu
 
     private static final String MAX_PLAUSIBLE_HIGH_VOLTAGE_LIMIT_KEY = "max_plausible_high_voltage_limit";
 
-    private Double maxPlausibleHighVoltageLimit; // in pu
+    private Double maxPlausibleHighVoltageLimit = 1.5; // in pu
 
     private static final String ALPHA_COEFFICIENT_KEY = "coeff_alpha";
 
@@ -73,8 +71,6 @@ public class OpenReacParameters {
 
     private Double nominalThresholdIgnoredVoltageBounds = 0.; // in kV, to ignore voltage bounds of buses with Vnom lower than this value
 
-
-
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.
      * <p>
@@ -86,6 +82,10 @@ public class OpenReacParameters {
         return this;
     }
 
+    public List<VoltageLimitOverride> getSpecificVoltageLimits() {
+        return specificVoltageLimits;
+    }
+
     /**
      * A list of shunt compensators, which susceptance will be considered as variable by the optimizer.
      * The optimizer computes a continuous value that is rounded when results are stored in {@link com.powsybl.openreac.parameters.output.OpenReacResult}.
@@ -93,6 +93,10 @@ public class OpenReacParameters {
     public OpenReacParameters addVariableShuntCompensators(List<String> shuntsIds) {
         this.variableShuntCompensators.addAll(shuntsIds);
         return this;
+    }
+
+    public List<String> getVariableShuntCompensators() {
+        return variableShuntCompensators;
     }
 
     /**
@@ -103,6 +107,10 @@ public class OpenReacParameters {
         return this;
     }
 
+    public List<String> getConstantQGenerators() {
+        return constantQGenerators;
+    }
+
     /**
      * A list of two windings transformers, which ratio will be considered as variable by the optimizer.
      */
@@ -111,24 +119,8 @@ public class OpenReacParameters {
         return this;
     }
 
-    /**
-     * Add a parameter to the optimization engine
-     */
-    public OpenReacParameters addAlgorithmParam(List<OpenReacAlgoParam> algorithmParams) {
-        this.algorithmParams.addAll(algorithmParams);
-        return this;
-    }
-
-    /**
-     * Add a parameter to the optimization engine
-     */
-    public OpenReacParameters addAlgorithmParam(String name, String value) {
-        algorithmParams.add(new OpenReacAlgoParamImpl(name, value));
-        return this;
-    }
-
-    public List<OpenReacAlgoParam> getAlgorithmParams() {
-        return algorithmParams;
+    public List<String> getVariableTwoWindingsTransformers() {
+        return variableTwoWindingsTransformers;
     }
 
     /**
@@ -262,52 +254,17 @@ public class OpenReacParameters {
         return this;
     }
 
-    public List<String> getVariableShuntCompensators() {
-        return variableShuntCompensators;
-    }
-
-    public List<VoltageLimitOverride> getSpecificVoltageLimits() {
-        return specificVoltageLimits;
-    }
-
-    public List<String> getConstantQGenerators() {
-        return constantQGenerators;
-    }
-
-    public List<String> getVariableTwoWindingsTransformers() {
-        return variableTwoWindingsTransformers;
-    }
-
     public List<OpenReacAlgoParam> getAllAlgorithmParams() {
-        ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>(algorithmParams.size() + 9);
-        allAlgoParams.addAll(algorithmParams);
-        if (objective != null) {
-            allAlgoParams.add(objective.toParam());
-        }
-        if (objectiveDistance != null) {
-            allAlgoParams.add(new OpenReacAlgoParamImpl(OBJECTIVE_DISTANCE_KEY, Double.toString(objectiveDistance / 100)));
-        }
-        if (minPlausibleLowVoltageLimit != null) {
-            allAlgoParams.add(new OpenReacAlgoParamImpl(MIN_PLAUSIBLE_LOW_VOLTAGE_LIMIT_KEY, Double.toString(minPlausibleLowVoltageLimit)));
-        }
-        if (maxPlausibleHighVoltageLimit != null) {
-            allAlgoParams.add(new OpenReacAlgoParamImpl(MAX_PLAUSIBLE_HIGH_VOLTAGE_LIMIT_KEY, Double.toString(maxPlausibleHighVoltageLimit)));
-        }
-        if (alphaCoefficient != null) {
-            allAlgoParams.add(new OpenReacAlgoParamImpl(ALPHA_COEFFICIENT_KEY, Double.toString(alphaCoefficient)));
-        }
-        if (zeroPowerThreshold != null) {
-            allAlgoParams.add(new OpenReacAlgoParamImpl(ZERO_POWER_THRESHOLD_KEY, Double.toString(zeroPowerThreshold)));
-        }
-        if (zeroImpedanceThreshold != null) {
-            allAlgoParams.add(new OpenReacAlgoParamImpl(ZERO_IMPEDANCE_THRESHOLD_KEY, Double.toString(zeroImpedanceThreshold)));
-        }
-        if (nominalThresholdIgnoredBuses != null) {
-            allAlgoParams.add(new OpenReacAlgoParamImpl(NOMINAL_THRESHOLD_IGNORED_BUS_KEY, Double.toString(nominalThresholdIgnoredBuses)));
-        }
-        if (nominalThresholdIgnoredVoltageBounds != null) {
-            allAlgoParams.add(new OpenReacAlgoParamImpl(NOMINAL_THRESHOLD_IGNORED_VOLTAGE_BOUNDS_KEY, Double.toString(nominalThresholdIgnoredVoltageBounds)));
-        }
+        ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>();
+        allAlgoParams.add(objective.toParam());
+        allAlgoParams.add(new OpenReacAlgoParamImpl(OBJECTIVE_DISTANCE_KEY, Double.toString(objectiveDistance)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(MIN_PLAUSIBLE_LOW_VOLTAGE_LIMIT_KEY, Double.toString(minPlausibleLowVoltageLimit)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(MAX_PLAUSIBLE_HIGH_VOLTAGE_LIMIT_KEY, Double.toString(maxPlausibleHighVoltageLimit)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(ALPHA_COEFFICIENT_KEY, Double.toString(alphaCoefficient)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(ZERO_POWER_THRESHOLD_KEY, Double.toString(zeroPowerThreshold)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(ZERO_IMPEDANCE_THRESHOLD_KEY, Double.toString(zeroImpedanceThreshold)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(NOMINAL_THRESHOLD_IGNORED_BUS_KEY, Double.toString(nominalThresholdIgnoredBuses)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(NOMINAL_THRESHOLD_IGNORED_VOLTAGE_BOUNDS_KEY, Double.toString(nominalThresholdIgnoredVoltageBounds)));
         return allAlgoParams;
     }
 
@@ -358,12 +315,6 @@ public class OpenReacParameters {
      */
     public boolean checkAlgorithmParametersIntegrity() {
         boolean integrityAlgorithmParameters = true;
-
-        // Check integrity of objective function
-        if (objective.equals(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT) && objectiveDistance == null) {
-            LOGGER.warn("In using {} as objective, a distance in percent between low and high voltage limits is expected.", OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT);
-            integrityAlgorithmParameters = false;
-        }
 
         // Check integrity of min/max plausible voltage limits
         if (minPlausibleLowVoltageLimit != null && maxPlausibleHighVoltageLimit != null

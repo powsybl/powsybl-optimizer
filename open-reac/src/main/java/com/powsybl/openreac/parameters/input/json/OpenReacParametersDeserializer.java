@@ -13,7 +13,6 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
-import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 
 import java.io.IOException;
@@ -56,10 +55,6 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                     parser.nextToken();
                     parameters.addVariableTwoWindingsTransformers(parser.readValueAs(new TypeReference<List<String>>() { }));
                     break;
-                case "algorithmParams":
-                    parser.nextToken();
-                    parameters.addAlgorithmParam(parser.readValueAs(new TypeReference<List<OpenReacAlgoParam>>() { }));
-                    break;
                 case "objective":
                     parser.nextToken();
                     parameters.setObjective(OpenReacOptimisationObjective.valueOf(parser.getText()));
@@ -67,6 +62,34 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                 case "objectiveDistance":
                     parser.nextToken();
                     parameters.setObjectiveDistance(parser.getValueAsDouble());
+                    break;
+                case "minPlausibleLowVoltageLimit":
+                    parser.nextToken();
+                    parameters.setMinPlausibleLowVoltageLimit(parser.getValueAsDouble());
+                    break;
+                case "maxPlausibleHighVoltageLimit":
+                    parser.nextToken();
+                    parameters.setMaxPlausibleHighVoltageLimit(parser.getValueAsDouble());
+                    break;
+                case "alphaCoefficient":
+                    parser.nextToken();
+                    parameters.setAlphaCoefficient(parser.getValueAsDouble());
+                    break;
+                case "zeroPowerThreshold":
+                    parser.nextToken();
+                    parameters.setZeroPowerThreshold(parser.getValueAsDouble());
+                    break;
+                case "zeroImpedanceThreshold":
+                    parser.nextToken();
+                    parameters.setZeroImpedanceThreshold(parser.getValueAsDouble());
+                    break;
+                case "nominalThresholdIgnoredBuses":
+                    parser.nextToken();
+                    parameters.setNominalThresholdIgnoredBuses(parser.getValueAsDouble());
+                    break;
+                case "nominalThresholdIgnoredVoltageBounds":
+                    parser.nextToken();
+                    parameters.setNominalThresholdIgnoredVoltageBounds(parser.getValueAsDouble());
                     break;
                 default:
                     throw new IllegalStateException("Unexpected field: " + parser.getCurrentName());
