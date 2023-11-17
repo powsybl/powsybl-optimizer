@@ -13,7 +13,6 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
-import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 
 import java.io.IOException;
@@ -55,10 +54,6 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                 case "variableTwoWindingsTransformers":
                     parser.nextToken();
                     parameters.addVariableTwoWindingsTransformers(parser.readValueAs(new TypeReference<List<String>>() { }));
-                    break;
-                case "algorithmParams":
-                    parser.nextToken();
-                    parameters.addAlgorithmParam(parser.readValueAs(new TypeReference<List<OpenReacAlgoParam>>() { }));
                     break;
                 case "objective":
                     parser.nextToken();
