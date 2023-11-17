@@ -25,13 +25,9 @@ import static org.junit.jupiter.api.Assertions.*;
 public class OpenReacParametersTest {
 
     @Test
-    public void testObjectiveIntegrity() {
-        Network network = IeeeCdfNetworkFactory.create118();
-        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
-
+    void testObjectiveIntegrity() {
         // Objective choice
         OpenReacParameters parameters = new OpenReacParameters();
-        assertEquals(OpenReacOptimisationObjective.MIN_GENERATION, parameters.getObjective());
         parameters.setObjective(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT);
         assertEquals(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT, parameters.getObjective());
         parameters.setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE);
@@ -39,7 +35,6 @@ public class OpenReacParametersTest {
         assertThrows(NullPointerException.class, () -> parameters.setObjective(null), "Can't unset objective function.");
 
         // Objective distance for BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT objective
-        assertEquals(0.5, parameters.getObjectiveDistance()); // default value
         parameters.setObjectiveDistance(0.); // min value
         assertEquals(0., parameters.getObjectiveDistance());
         parameters.setObjectiveDistance(1.); // max value
@@ -53,13 +48,9 @@ public class OpenReacParametersTest {
 
     @Test
     void testMinMaxVoltageLimitIntegrity() {
-        Network network = IeeeCdfNetworkFactory.create118();
-        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
-
         OpenReacParameters parameters = new OpenReacParameters();
 
         // Consistency of min plausible low voltage limit (>= 0)
-        assertEquals(0.5, parameters.getMinPlausibleLowVoltageLimit()); // default value
         parameters.setMinPlausibleLowVoltageLimit(0.);
         assertEquals(0., parameters.getMinPlausibleLowVoltageLimit()); // min value
         parameters.setMinPlausibleLowVoltageLimit(0.8211);
@@ -68,7 +59,6 @@ public class OpenReacParametersTest {
         assertThrows(InvalidParametersException.class, () -> parameters.setMinPlausibleLowVoltageLimit(Double.NaN), "minPlausibleLowVoltageLimit must be defined.");
 
         // Consistency of max plausible high voltage limit (> 0)
-        assertEquals(1.5, parameters.getMaxPlausibleHighVoltageLimit()); // default value
         parameters.setMaxPlausibleHighVoltageLimit(0.75);
         assertEquals(0.75, parameters.getMaxPlausibleHighVoltageLimit());
         assertThrows(InvalidParametersException.class, () -> parameters.setMaxPlausibleHighVoltageLimit(-0.15), "maxPlausibleHighVoltageLimit must be > 0.");
@@ -83,11 +73,7 @@ public class OpenReacParametersTest {
 
     @Test
     void testAlphaCoefficientIntegrity() {
-        Network network = IeeeCdfNetworkFactory.create118();
-        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
-
         OpenReacParameters parameters = new OpenReacParameters();
-        assertEquals(1., parameters.getAlphaCoefficient()); // default/max value
         parameters.setAlphaCoefficient(0.); // min value
         assertEquals(0., parameters.getAlphaCoefficient());
         parameters.setAlphaCoefficient(0.445556);
@@ -101,11 +87,7 @@ public class OpenReacParametersTest {
 
     @Test
     void testZeroPowerThresholdIntegrity() {
-        Network network = IeeeCdfNetworkFactory.create118();
-        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
-
         OpenReacParameters parameters = new OpenReacParameters();
-        assertEquals(0.01, parameters.getZeroPowerThreshold()); // default value
         parameters.setZeroPowerThreshold(0.);
         assertEquals(0., parameters.getZeroPowerThreshold()); // min value
         parameters.setZeroPowerThreshold(2.365);
@@ -118,11 +100,7 @@ public class OpenReacParametersTest {
 
     @Test
     void testZeroImpedanceThresholdIntegrity() {
-        Network network = IeeeCdfNetworkFactory.create118();
-        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
-
         OpenReacParameters parameters = new OpenReacParameters();
-        assertEquals(1e-4, parameters.getZeroImpedanceThreshold()); // default value
         parameters.setZeroImpedanceThreshold(0.);
         assertEquals(0., parameters.getZeroImpedanceThreshold()); // min value
         parameters.setZeroImpedanceThreshold(1e-5);
@@ -134,11 +112,7 @@ public class OpenReacParametersTest {
 
     @Test
     void testNominalThresholdsIntegrity() {
-        Network network = IeeeCdfNetworkFactory.create118();
-        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
-
         OpenReacParameters parameters = new OpenReacParameters();
-        assertEquals(1., parameters.getNominalThresholdIgnoredBuses()); // default value
         parameters.setNominalThresholdIgnoredBuses(0.); // min value
         assertEquals(0., parameters.getNominalThresholdIgnoredBuses());
         parameters.setNominalThresholdIgnoredBuses(45.);
@@ -146,7 +120,6 @@ public class OpenReacParametersTest {
         assertThrows(InvalidParametersException.class, () -> parameters.setNominalThresholdIgnoredBuses(-1.2), "nominalThresholdIgnoredBuses must be > 0.");
         assertThrows(InvalidParametersException.class, () -> parameters.setNominalThresholdIgnoredBuses(Double.NaN), "nominalThresholdIgnoredBuses must be defined.");
 
-        assertEquals(0., parameters.getNominalThresholdIgnoredVoltageBounds()); // default/min value
         parameters.setNominalThresholdIgnoredVoltageBounds(200.);
         assertEquals(200., parameters.getNominalThresholdIgnoredVoltageBounds());
         assertThrows(InvalidParametersException.class, () -> parameters.setNominalThresholdIgnoredVoltageBounds(-1.2), "nominalThresholdIgnoredVoltageBounds must be > 0.");
@@ -156,7 +129,79 @@ public class OpenReacParametersTest {
     }
 
     @Test
-    public void testParametersIntegrityChecks() {
+    void testPMinMaxIntegrity() {
+        OpenReacParameters parameters = new OpenReacParameters();
+        parameters.setPQMax(5775.);
+        assertEquals(5775., parameters.getPQMax());
+        assertThrows(InvalidParametersException.class, () -> parameters.setPQMax(0.), "pQmax  must be > 0."); // min value
+        assertThrows(InvalidParametersException.class, () -> parameters.setPQMax(-2.1), "pQmax must be > 0.");
+        assertThrows(InvalidParametersException.class, () -> parameters.setPQMax(Double.NaN));
+
+        parameters.setDefaultPMin(1500.);
+        assertEquals(1500., parameters.getDefaultPMin());
+        assertThrows(InvalidParametersException.class, () -> parameters.setDefaultPMin(-100.), "defaultPmin must be >= 0");
+        assertThrows(InvalidParametersException.class, () -> parameters.setDefaultPMin(Double.NaN));
+
+        parameters.setDefaultPMax(1250.);
+        assertEquals(1250., parameters.getDefaultPMax());
+        assertThrows(InvalidParametersException.class, () -> parameters.setDefaultPMax(0.), "defaultPmax must be > 0.");
+        assertThrows(InvalidParametersException.class, () -> parameters.setDefaultPMax(-100.), "defaultPmax must be > 0.");
+        assertThrows(InvalidParametersException.class, () -> parameters.setDefaultPMax(Double.NaN));
+
+        assertFalse(parameters.checkAlgorithmParametersIntegrity()); // case defaultPmin > defaultPmax
+        parameters.setDefaultPMax(10000.);
+        assertFalse(parameters.checkAlgorithmParametersIntegrity()); // case defaultPmax > pQmax
+        parameters.setDefaultPMin(50.).setDefaultPMax(1000.);
+        assertTrue(parameters.checkAlgorithmParametersIntegrity());
+    }
+
+    @Test
+    void testDefaultQmaxPmaxRatioIntegrity() {
+        OpenReacParameters parameters = new OpenReacParameters();
+        parameters.setDefaultQmaxPmaxRatio(0.778);
+        assertEquals(0.778, parameters.getDefaultQmaxPmaxRatio());
+        assertThrows(InvalidParametersException.class, () -> parameters.setDefaultQmaxPmaxRatio(0.), "defaultQmaxPmaxRatio must be > 0");
+        assertThrows(InvalidParametersException.class, () -> parameters.setDefaultQmaxPmaxRatio(-0.3), "defaultQmaxPmaxRatio must be > 0.");
+        assertThrows(InvalidParametersException.class, () -> parameters.setDefaultQmaxPmaxRatio(Double.NaN), "defaultQmaxPmaxRatio must be defined.");
+
+        parameters.setDefaultQmaxPmaxRatio(500.);
+        assertFalse(parameters.checkAlgorithmParametersIntegrity());
+    }
+
+    @Test
+    void testDefault() {
+        OpenReacParameters parameters = new OpenReacParameters();
+        parameters.setDefaultMinimalQPRange(10.);
+        assertEquals(10., parameters.getDefaultMinimalQPRange());
+        parameters.setDefaultMinimalQPRange(0.);
+        assertEquals(0., parameters.getDefaultMinimalQPRange());
+
+        assertThrows(InvalidParametersException.class, () -> parameters.setDefaultMinimalQPRange(-1.5));
+        assertThrows(InvalidParametersException.class, () -> parameters.setDefaultMinimalQPRange(Double.NaN));
+    }
+
+    @Test
+    void testDefaultValuesIntegrity() {
+        OpenReacParameters parameters = new OpenReacParameters();
+        assertEquals(OpenReacOptimisationObjective.MIN_GENERATION, parameters.getObjective());
+        assertEquals(0.5, parameters.getObjectiveDistance());
+        assertEquals(0.5, parameters.getMinPlausibleLowVoltageLimit());
+        assertEquals(1.5, parameters.getMaxPlausibleHighVoltageLimit());
+        assertEquals(1., parameters.getAlphaCoefficient());
+        assertEquals(0.01, parameters.getZeroPowerThreshold());
+        assertEquals(1e-4, parameters.getZeroImpedanceThreshold());
+        assertEquals(1., parameters.getNominalThresholdIgnoredBuses());
+        assertEquals(0., parameters.getNominalThresholdIgnoredVoltageBounds());
+        assertEquals(9000., parameters.getPQMax());
+        assertEquals(0, parameters.getDefaultPMin());
+        assertEquals(1000., parameters.getDefaultPMax());
+        assertEquals(0.3, parameters.getDefaultQmaxPmaxRatio());
+        assertEquals(1., parameters.getDefaultMinimalQPRange());
+        assertTrue(parameters.checkAlgorithmParametersIntegrity());
+    }
+
+    @Test
+    void testParametersIntegrityChecks() {
         Network network = IeeeCdfNetworkFactory.create118();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         String wrongId = "An id not in 118 cdf network.";

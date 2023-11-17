@@ -415,7 +415,7 @@ public class OpenReacParameters {
             integrityAlgorithmParameters = false;
         }
 
-        if (defaultPMin > pQMax || defaultPMax > pQMax) {
+        if (defaultPMax > pQMax) {
             LOGGER.warn("Default P min = {} and default P max = {} must be lower than PQmax value = {} to be consistent.",
                     defaultPMin, defaultPMax, pQMax);
             integrityAlgorithmParameters = false;
