@@ -35,8 +35,6 @@ public class OpenReacParameters {
 
     private final List<String> variableTwoWindingsTransformers = new ArrayList<>();
 
-    private final List<OpenReacAlgoParam> algorithmParams = new ArrayList<>();
-
     private OpenReacOptimisationObjective objective = OpenReacOptimisationObjective.MIN_GENERATION;
 
     private Double objectiveDistance;
@@ -166,24 +164,19 @@ public class OpenReacParameters {
     }
 
     public List<OpenReacAlgoParam> getAllAlgorithmParams() {
-        ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>(this.algorithmParams.size() + 4);
-        allAlgoParams.addAll(this.algorithmParams);
+        ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>();
         if (this.objective != null) {
             allAlgoParams.add(this.objective.toParam());
         }
-
         if (this.objectiveDistance != null) {
             allAlgoParams.add(new OpenReacAlgoParamImpl(OBJECTIVE_DISTANCE_KEY, Double.toString(this.objectiveDistance / 100.0)));
         }
-
         if (this.logLevelAmpl != null) {
             allAlgoParams.add(this.logLevelAmpl.toParam());
         }
-
         if (this.logLevelSolver != null) {
             allAlgoParams.add(this.logLevelSolver.toParam());
         }
-
         return allAlgoParams;
     }
 

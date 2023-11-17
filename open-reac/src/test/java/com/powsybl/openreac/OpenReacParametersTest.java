@@ -74,19 +74,17 @@ public class OpenReacParametersTest {
     @Test
     void testAlgorithmParams() {
         OpenReacParameters parameters = new OpenReacParameters();
-        parameters.addAlgorithmParam("param", "value");
         parameters.setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE);
         parameters.setObjectiveDistance(0.4);
         parameters.setLogLevelAmpl(OpenReacAmplLogLevel.DEBUG);
         parameters.setLogLevelSolver(OpenReacSolverLogLevel.NOTHING);
         List<OpenReacAlgoParam> algoParams = parameters.getAllAlgorithmParams();
 
-        assertEquals(5, algoParams.size());
-        assertEquals("value", algoParams.get(0).getValue());
-        assertEquals("2", algoParams.get(1).getValue());
-        assertEquals("0.004", algoParams.get(2).getValue());
-        assertEquals("DEBUG", algoParams.get(3).getValue());
-        assertEquals("0", algoParams.get(4).getValue());
+        assertEquals(4, algoParams.size());
+        assertEquals("2", algoParams.get(0).getValue());
+        assertEquals("0.004", algoParams.get(1).getValue());
+        assertEquals("DEBUG", algoParams.get(2).getValue());
+        assertEquals("0", algoParams.get(3).getValue());
 
     }
 
