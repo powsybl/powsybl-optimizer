@@ -71,9 +71,9 @@ public class OpenReacParameters {
 
     private Double nominalThresholdIgnoredVoltageBounds = 0.; // in kV, to ignore voltage bounds of buses with Vnom lower than this value
 
-    private static final String PQ_MAX_KEY = "PQmax";
+    private static final String PQMAX_KEY = "PQmax";
 
-    private Double PQMax = 9000.; // MW
+    private Double pQMax = 9000.; // MW
 
     private static final String DEFAULT_PMAX_KEY = "defaultPmax";
 
@@ -87,7 +87,7 @@ public class OpenReacParameters {
 
     private Double defaultQmaxPmaxRatio = 0.3;
 
-    private static final String DEFAULT_MINIMAL_Q_P_RANGE_KEY = "minimalQPrange";
+    private static final String DEFAULT_MINIMAL_QP_RANGE_KEY = "minimalQPrange";
 
     private Double defaultMinimalQPRange = 1.;
 
@@ -274,6 +274,67 @@ public class OpenReacParameters {
         return this;
     }
 
+    public Double getPQMax() {
+        return pQMax;
+    }
+
+    public OpenReacParameters setPQMax(Double pQMax) {
+        if (Double.isNaN(pQMax) || pQMax <= 0) {
+            throw new InvalidParametersException("Maximal consistency value for P and Q must be defined and > 0 to be consistent");
+        }
+        this.pQMax = pQMax;
+        return this;
+    }
+
+    public Double getDefaultPMax() {
+        return defaultPMax;
+    }
+
+    public OpenReacParameters setDefaultPMax(Double defaultPMax) {
+        if (Double.isNaN(defaultPMax) || defaultPMax <= 0) {
+            throw new InvalidParametersException("Default P max value must be defined and > 0 to be consistent.");
+        }
+        this.defaultPMax = defaultPMax;
+        return this;
+    }
+
+    public Double getDefaultPMin() {
+        return defaultPMin;
+    }
+
+    public OpenReacParameters setDefaultPMin(Double defaultPMin) {
+        if (Double.isNaN(defaultPMin) || defaultPMin < 0) {
+            throw new InvalidParametersException("Default P min value must be defined and >= 0 to be consistent.");
+        }
+        this.defaultPMin = defaultPMin;
+        return this;
+    }
+
+    public Double getDefaultQmaxPmaxRatio() {
+        return defaultQmaxPmaxRatio;
+    }
+
+    public OpenReacParameters setDefaultQmaxPmaxRatio(Double defaultQmaxPmaxRatio) {
+        // Qmin/Qmax are computed with this value in OpenReac, can not be zero
+        if (Double.isNaN(defaultQmaxPmaxRatio) || defaultQmaxPmaxRatio <= 0) {
+            throw new InvalidParametersException("Default Qmax and Pmax ratio must be defined and > 0 to be consistent.");
+        }
+        this.defaultQmaxPmaxRatio = defaultQmaxPmaxRatio;
+        return this;
+    }
+
+    public Double getDefaultMinimalQPRange() {
+        return defaultMinimalQPRange;
+    }
+
+    public OpenReacParameters setDefaultMinimalQPRange(Double defaultMinimalQPRange) {
+        if (Double.isNaN(defaultMinimalQPRange) || defaultMinimalQPRange < 0) {
+            throw new InvalidParametersException("Default minimal QP range must be defined and >= 0 to be consistent.");
+        }
+        this.defaultMinimalQPRange = defaultMinimalQPRange;
+        return this;
+    }
+
     public List<OpenReacAlgoParam> getAllAlgorithmParams() {
         ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>();
         allAlgoParams.add(objective.toParam());
@@ -285,6 +346,11 @@ public class OpenReacParameters {
         allAlgoParams.add(new OpenReacAlgoParamImpl(ZERO_IMPEDANCE_THRESHOLD_KEY, Double.toString(zeroImpedanceThreshold)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(NOMINAL_THRESHOLD_IGNORED_BUS_KEY, Double.toString(nominalThresholdIgnoredBuses)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(NOMINAL_THRESHOLD_IGNORED_VOLTAGE_BOUNDS_KEY, Double.toString(nominalThresholdIgnoredVoltageBounds)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(PQMAX_KEY, Double.toString(pQMax)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(DEFAULT_PMIN_KEY, Double.toString(defaultPMin)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(DEFAULT_PMAX_KEY, Double.toString(defaultPMax)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(DEFAULT_QMAX_PMAX_RATIO_KEY, Double.toString(defaultQmaxPmaxRatio)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(DEFAULT_MINIMAL_QP_RANGE_KEY, Double.toString(defaultMinimalQPRange)));
         return allAlgoParams;
     }
 
@@ -337,9 +403,27 @@ public class OpenReacParameters {
         boolean integrityAlgorithmParameters = true;
 
         // Check integrity of min/max plausible voltage limits
-        if (minPlausibleLowVoltageLimit != null && maxPlausibleHighVoltageLimit != null
-                && minPlausibleLowVoltageLimit > maxPlausibleHighVoltageLimit) {
-            LOGGER.warn("Min plausible low voltage limit must be lower than max plausible high voltage limit.");
+        if (minPlausibleLowVoltageLimit > maxPlausibleHighVoltageLimit) {
+            LOGGER.warn("Min plausible low voltage limit = {} must be lower than max plausible high voltage limit = {} to be consistent.",
+                    minPlausibleLowVoltageLimit, maxPlausibleHighVoltageLimit);
+            integrityAlgorithmParameters = false;
+        }
+
+        if (defaultPMin > defaultPMax) {
+            LOGGER.warn("Default P min = {} must be lower than default P max = {} to be consistent.",
+                    defaultPMin, defaultPMax);
+            integrityAlgorithmParameters = false;
+        }
+
+        if (defaultPMin > pQMax || defaultPMax > pQMax) {
+            LOGGER.warn("Default P min = {} and default P max = {} must be lower than PQmax value = {} to be consistent.",
+                    defaultPMin, defaultPMax, pQMax);
+            integrityAlgorithmParameters = false;
+        }
+
+        if (defaultPMax * defaultQmaxPmaxRatio > pQMax) {
+            LOGGER.warn("Default Q max value = {} value must be lower than PQmax value to be consistent.",
+                    defaultPMax * defaultQmaxPmaxRatio);
             integrityAlgorithmParameters = false;
         }
 

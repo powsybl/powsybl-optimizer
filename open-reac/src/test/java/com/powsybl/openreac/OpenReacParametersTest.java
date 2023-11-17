@@ -166,7 +166,7 @@ public class OpenReacParametersTest {
         assertEquals(0, parameters.getSpecificVoltageLimits().size(), "SpecificVoltageLimits should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getConstantQGenerators().size(), "ConstantQGenerators should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getVariableShuntCompensators().size(), "VariableShuntCompensators should be empty when using default OpenReacParameter constructor.");
-        assertEquals(9, parameters.getAllAlgorithmParams().size());
+        assertEquals(14, parameters.getAllAlgorithmParams().size());
 
         // adding an objective, to have a valid OpenReacParameter object
         parameters.setObjective(OpenReacOptimisationObjective.MIN_GENERATION);

@@ -103,7 +103,12 @@ class OpenReacRunnerTest {
                 .setZeroPowerThreshold(0.45)
                 .setZeroImpedanceThreshold(1e-5)
                 .setNominalThresholdIgnoredBuses(2.)
-                .setNominalThresholdIgnoredVoltageBounds(0.75);
+                .setNominalThresholdIgnoredVoltageBounds(0.75)
+                .setPQMax(3987.76)
+                .setDefaultPMin(12.32)
+                .setDefaultPMax(1452.66)
+                .setDefaultQmaxPmaxRatio(0.24)
+                .setDefaultMinimalQPRange(2.);
 
         LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
                 List.of("empty_case/reactiveopf_results_indic.txt"));

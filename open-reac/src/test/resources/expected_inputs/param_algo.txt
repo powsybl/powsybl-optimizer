@@ -7,4 +7,9 @@ Pnull 0.01
 Znull 1.0E-4
 epsilon_nominal_voltage 1.0
 ignore_voltage_bounds 0.0
+PQmax 9000.0
+defaultPmin 0.0
+defaultPmax 1000.0
+defaultQmaxPmaxRatio 0.3
+minimalQPrange 1.0
 

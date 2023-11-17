@@ -43,6 +43,11 @@ public class OpenReacParametersSerializer extends StdSerializer<OpenReacParamete
         serializerProvider.defaultSerializeField("zeroImpedanceThreshold", openReacParameters.getZeroImpedanceThreshold(), jsonGenerator);
         serializerProvider.defaultSerializeField("nominalThresholdIgnoredBuses", openReacParameters.getNominalThresholdIgnoredBuses(), jsonGenerator);
         serializerProvider.defaultSerializeField("nominalThresholdIgnoredVoltageBounds", openReacParameters.getNominalThresholdIgnoredVoltageBounds(), jsonGenerator);
+        serializerProvider.defaultSerializeField("pQmax", openReacParameters.getPQMax(), jsonGenerator);
+        serializerProvider.defaultSerializeField("defaultPMin", openReacParameters.getDefaultPMin(), jsonGenerator);
+        serializerProvider.defaultSerializeField("defaultPMax", openReacParameters.getDefaultPMax(), jsonGenerator);
+        serializerProvider.defaultSerializeField("defaultQmaxPmaxRatio", openReacParameters.getDefaultQmaxPmaxRatio(), jsonGenerator);
+        serializerProvider.defaultSerializeField("defaultMinimalQPRange", openReacParameters.getDefaultMinimalQPRange(), jsonGenerator);
 
         jsonGenerator.writeEndObject();
     }

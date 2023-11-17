@@ -52,6 +52,11 @@ class OpenReacJsonModuleTest {
         parameters.setZeroImpedanceThreshold(1e-5);
         parameters.setNominalThresholdIgnoredBuses(10.);
         parameters.setNominalThresholdIgnoredVoltageBounds(5.);
+        parameters.setPQMax(8555.3);
+        parameters.setDefaultPMin(99.2);
+        parameters.setDefaultPMax(1144.);
+        parameters.setDefaultQmaxPmaxRatio(0.4);
+        parameters.setDefaultMinimalQPRange(1.1);
 
         String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(parameters);
         ComparisonUtils.compareTxt(Objects.requireNonNull(getClass().getResourceAsStream("/parameters.json")), json);
@@ -77,5 +82,10 @@ class OpenReacJsonModuleTest {
         assertEquals(1e-5, parameters2.getZeroImpedanceThreshold());
         assertEquals(10., parameters2.getNominalThresholdIgnoredBuses());
         assertEquals(5., parameters2.getNominalThresholdIgnoredVoltageBounds());
+        assertEquals(8555.3, parameters2.getPQMax());
+        assertEquals(99.2, parameters2.getDefaultPMin());
+        assertEquals(1144., parameters2.getDefaultPMax());
+        assertEquals(0.4, parameters2.getDefaultQmaxPmaxRatio());
+        assertEquals(1.1, parameters2.getDefaultMinimalQPRange());
     }
 }

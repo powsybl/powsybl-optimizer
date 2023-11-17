@@ -32,5 +32,10 @@
   "zeroPowerThreshold" : 0.5,
   "zeroImpedanceThreshold" : 1.0E-5,
   "nominalThresholdIgnoredBuses" : 10.0,
-  "nominalThresholdIgnoredVoltageBounds" : 5.0
+  "nominalThresholdIgnoredVoltageBounds" : 5.0,
+  "pQmax" : 8555.3,
+  "defaultPMin" : 99.2,
+  "defaultPMax" : 1144.0,
+  "defaultQmaxPmaxRatio" : 0.4,
+  "defaultMinimalQPRange" : 1.1
 }
