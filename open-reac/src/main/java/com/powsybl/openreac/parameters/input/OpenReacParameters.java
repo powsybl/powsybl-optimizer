@@ -39,9 +39,9 @@ public class OpenReacParameters {
 
     private Double objectiveDistance;
 
-    private OpenReacAmplLogLevel logLevelAmpl;
+    private OpenReacAmplLogLevel logLevelAmpl = OpenReacAmplLogLevel.INFO;
 
-    private OpenReacSolverLogLevel logLevelSolver;
+    private OpenReacSolverLogLevel logLevelSolver = OpenReacSolverLogLevel.EVERYTHING;
 
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.

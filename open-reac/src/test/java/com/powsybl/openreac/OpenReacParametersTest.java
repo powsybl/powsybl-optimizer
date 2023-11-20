@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class OpenReacParametersTest {
 
     @Test
-    void testObjectiveIntegrityChecks() {
+    void testObjectiveIntegrity() {
         Network network = IeeeCdfNetworkFactory.create118();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         OpenReacParameters parameters = new OpenReacParameters();
@@ -46,29 +46,28 @@ public class OpenReacParametersTest {
     void testAmplLogLevelIntegrity() {
         OpenReacParameters parameters = new OpenReacParameters();
 
-        assertThrows(NullPointerException.class, () -> parameters.setLogLevelAmpl(null), "Can't set null ampl log level.");
-
+        assertEquals("INFO", parameters.getLogLevelAmpl().toParam().getValue()); // default value
         parameters.setLogLevelAmpl(OpenReacAmplLogLevel.DEBUG);
         assertEquals("DEBUG", parameters.getLogLevelAmpl().toParam().getValue());
-        parameters.setLogLevelAmpl(OpenReacAmplLogLevel.INFO);
-        assertEquals("INFO", parameters.getLogLevelAmpl().toParam().getValue());
         parameters.setLogLevelAmpl(OpenReacAmplLogLevel.WARNING);
         assertEquals("WARNING", parameters.getLogLevelAmpl().toParam().getValue());
         parameters.setLogLevelAmpl(OpenReacAmplLogLevel.ERROR);
         assertEquals("ERROR", parameters.getLogLevelAmpl().toParam().getValue());
+
+        assertThrows(NullPointerException.class, () -> parameters.setLogLevelAmpl(null), "Can't set null ampl log level.");
     }
 
     @Test
     void testSolverLogLevelIntegrity() {
         OpenReacParameters parameters = new OpenReacParameters();
 
-        assertThrows(NullPointerException.class, () -> parameters.setLogLevelSolver(null), "Can't set null solver log level.");
+        assertEquals("2", parameters.getLogLevelSolver().toParam().getValue()); // default value
         parameters.setLogLevelSolver(OpenReacSolverLogLevel.NOTHING);
         assertEquals("0", parameters.getLogLevelSolver().toParam().getValue());
         parameters.setLogLevelSolver(OpenReacSolverLogLevel.ONLY_RESULTS);
         assertEquals("1", parameters.getLogLevelSolver().toParam().getValue());
-        parameters.setLogLevelSolver(OpenReacSolverLogLevel.EVERYTHING);
-        assertEquals("2", parameters.getLogLevelSolver().toParam().getValue());
+
+        assertThrows(NullPointerException.class, () -> parameters.setLogLevelSolver(null), "Can't set null solver log level.");
     }
 
     @Test
@@ -99,7 +98,7 @@ public class OpenReacParametersTest {
         assertEquals(0, parameters.getSpecificVoltageLimits().size(), "SpecificVoltageLimits should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getConstantQGenerators().size(), "ConstantQGenerators should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getVariableShuntCompensators().size(), "VariableShuntCompensators should be empty when using default OpenReacParameter constructor.");
-        assertEquals(1, parameters.getAllAlgorithmParams().size());
+        assertEquals(3, parameters.getAllAlgorithmParams().size());
 
         // adding an objective, to have a valid OpenReacParameter object
         parameters.setObjective(OpenReacOptimisationObjective.MIN_GENERATION);
