@@ -169,7 +169,7 @@ public class OpenReacParametersTest {
     }
 
     @Test
-    void testDefault() {
+    void testDefaultMinimalQPRangeIntegrity() {
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.setDefaultMinimalQPRange(10.);
         assertEquals(10., parameters.getDefaultMinimalQPRange());
