@@ -231,6 +231,8 @@ if length($SHELL) > 0 then {
 printf "%s %Q\n","directory",_cd > (fileOut);
 
 printf "\n" > (fileOut);
+printf "%s %s\n","log_level_ampl",log_level_ampl > (fileOut);
+printf "%s %i\n","log_level_knitro",log_level_knitro > (fileOut);
 printf "%s %i\n","objective_choice",objective_choice > (fileOut);
 printf "%s %f\n","ratio_voltage_target",ratio_voltage_target > (fileOut);
 printf "%s %f\n","coeff_alpha",coeff_alpha > (fileOut);

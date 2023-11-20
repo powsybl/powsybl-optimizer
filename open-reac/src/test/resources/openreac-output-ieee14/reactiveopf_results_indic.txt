@@ -1,19 +1,21 @@
 final_status OK
 dcopf_status OK
 
-ctime_start 'Wed Jun 21 09:45:21 2023'
+ctime_start 'Mon Nov 20 11:23:41 2023'
 last_solve_result_num 0
-nb_iter_last 7
-nb_iter_total 7
-_ampl_elapsed_time 0.046000
+nb_iter_last 10
+nb_iter_total 10
+_ampl_elapsed_time 0.031000
 _total_solve_time 0.046875
 total_time 0
 
 operatingSystem windows
 OS 'Windows_NT'
-COMPUTERNAME 'ARTELYS-PC158'
-directory 'C:\Users\ARTELY~1\AppData\Local\Temp\ampl_8333906440246745744'
+COMPUTERNAME 'ARTELYS-PC253'
+directory 'C:\Users\user\AppData\Local\Temp\ampl_11343543280416774067'
 
+log_level_ampl INFO
+log_level_knitro 2
 objective_choice 0
 ratio_voltage_target 0.500000
 coeff_alpha 1.000000
@@ -67,18 +69,18 @@ sum_batteries_pmax 0.0
 sum_batteries_pmin 0.0
 
 max_teta_dc 0.19
-max_teta_ac 0.17
+max_teta_ac 0.16
 teta_max 3.19
 min_teta_dc -0.12
-min_teta_ac -0.11
+min_teta_ac -0.14
 teta_min -3.12
 max_delta_teta_dc 0.159330
-max_delta_teta_ac 0.140548
+max_delta_teta_ac 0.143750
 min_delta_teta_dc -0.041368
-min_delta_teta_ac -0.041532
+min_delta_teta_ac -0.050823
 
-nb_reactive_slacks 0
+nb_reactive_slacks 1
 nb_slacks_condensator 0
 sum_slacks_condensator 0.0
-nb_slacks_self 0
-sum_slacks_self 0.0
+nb_slacks_self 1
+sum_slacks_self 33.1

@@ -1,19 +1,21 @@
 final_status OK
 dcopf_status OK
 
-ctime_start 'Wed Jun 21 17:42:21 2023'
+ctime_start 'Mon Nov 20 11:36:20 2023'
 last_solve_result_num 0
-nb_iter_last 5
-nb_iter_total 5
-_ampl_elapsed_time 0.094000
+nb_iter_last 6
+nb_iter_total 6
+_ampl_elapsed_time 0.063000
 _total_solve_time 0.031250
 total_time 0
 
 operatingSystem windows
 OS 'Windows_NT'
-COMPUTERNAME 'ARTELYS-PC158'
-directory 'C:\Users\ARTELY~1\AppData\Local\Temp\ampl_17711751475726199361'
+COMPUTERNAME 'ARTELYS-PC253'
+directory 'C:\Users\user\AppData\Local\Temp\ampl_4904072695767487335'
 
+log_level_ampl INFO
+log_level_knitro 2
 objective_choice 0
 ratio_voltage_target 0.500000
 coeff_alpha 1.000000

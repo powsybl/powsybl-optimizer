@@ -1,2 +1,0 @@
-#Phase tap changers (two-windings-transformer-control/InitialState)
-#"variant" "num" "tap" "table" "fault" "curative" "id"
