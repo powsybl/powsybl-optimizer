@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
+import com.powsybl.openreac.parameters.input.algo.OpenReacBusesWithReactiveSlack;
 
 import java.io.IOException;
 
@@ -34,11 +35,14 @@ public class OpenReacParametersSerializer extends StdSerializer<OpenReacParamete
         serializerProvider.defaultSerializeField("constantQGenerators", openReacParameters.getConstantQGenerators(), jsonGenerator);
         serializerProvider.defaultSerializeField("variableTwoWindingsTransformers", openReacParameters.getVariableTwoWindingsTransformers(), jsonGenerator);
         serializerProvider.defaultSerializeField("variableShuntCompensators", openReacParameters.getVariableShuntCompensators(), jsonGenerator);
+        if (openReacParameters.getBusesWithReactiveSlack() == OpenReacBusesWithReactiveSlack.CONFIGURED) {
+            serializerProvider.defaultSerializeField("configuredBusesWithReactiveSlack", openReacParameters.getConfiguredBusesWithReactiveSlacks(), jsonGenerator);
+        }
         serializerProvider.defaultSerializeField("objective", openReacParameters.getObjective().name(), jsonGenerator);
         if (openReacParameters.getObjectiveDistance() != null) {
             serializerProvider.defaultSerializeField("objectiveDistance", openReacParameters.getObjectiveDistance(), jsonGenerator);
         }
-        serializerProvider.defaultSerializeField("busesWithReactiveSlacks", openReacParameters.getBusesWithReactiveSlacks().name(), jsonGenerator);
+        serializerProvider.defaultSerializeField("busesWithReactiveSlack", openReacParameters.getBusesWithReactiveSlack().name(), jsonGenerator);
         jsonGenerator.writeEndObject();
     }
 }

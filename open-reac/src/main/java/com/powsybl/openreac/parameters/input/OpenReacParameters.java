@@ -12,7 +12,7 @@ import com.powsybl.openreac.exceptions.InvalidParametersException;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParamImpl;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
-import com.powsybl.openreac.parameters.input.algo.OpenReacBusesWithReactiveSlacks;
+import com.powsybl.openreac.parameters.input.algo.OpenReacBusesWithReactiveSlack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,13 +38,15 @@ public class OpenReacParameters {
 
     private final List<String> variableTwoWindingsTransformers = new ArrayList<>();
 
+    private List<String> configuredBusesWithReactiveSlack = new ArrayList<>();
+
     private final List<OpenReacAlgoParam> algorithmParams = new ArrayList<>();
 
     private OpenReacOptimisationObjective objective = OpenReacOptimisationObjective.MIN_GENERATION;
 
     private Double objectiveDistance;
 
-    private OpenReacBusesWithReactiveSlacks busesWithReactiveSlacks = OpenReacBusesWithReactiveSlacks.NO_GENERATION;
+    private OpenReacBusesWithReactiveSlack busesWithReactiveSlack = OpenReacBusesWithReactiveSlack.NO_GENERATION;
 
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.
@@ -79,6 +81,11 @@ public class OpenReacParameters {
      */
     public OpenReacParameters addVariableTwoWindingsTransformers(List<String> transformerIds) {
         this.variableTwoWindingsTransformers.addAll(transformerIds);
+        return this;
+    }
+
+    public OpenReacParameters addConfiguredBusesWithReactiveSlack(List<String> busesIds) {
+        this.configuredBusesWithReactiveSlack.addAll(busesIds);
         return this;
     }
 
@@ -120,12 +127,12 @@ public class OpenReacParameters {
         return this;
     }
 
-    public OpenReacBusesWithReactiveSlacks getBusesWithReactiveSlacks() {
-        return busesWithReactiveSlacks;
+    public OpenReacBusesWithReactiveSlack getBusesWithReactiveSlack() {
+        return busesWithReactiveSlack;
     }
 
-    public OpenReacParameters setBusesWithReactiveSlacks(OpenReacBusesWithReactiveSlacks busesWithReactiveSlacks) {
-        this.busesWithReactiveSlacks = Objects.requireNonNull(busesWithReactiveSlacks);
+    public OpenReacParameters setBusesWithReactiveSlack(OpenReacBusesWithReactiveSlack busesWithReactiveSlack) {
+        this.busesWithReactiveSlack = Objects.requireNonNull(busesWithReactiveSlack);
         return this;
     }
 
@@ -145,6 +152,10 @@ public class OpenReacParameters {
         return variableTwoWindingsTransformers;
     }
 
+    public List<String> getConfiguredBusesWithReactiveSlacks() {
+        return configuredBusesWithReactiveSlack;
+    }
+
     public List<OpenReacAlgoParam> getAllAlgorithmParams() {
         ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>(algorithmParams.size() + 3);
         allAlgoParams.addAll(algorithmParams);
@@ -154,8 +165,8 @@ public class OpenReacParameters {
         if (objectiveDistance != null) {
             allAlgoParams.add(new OpenReacAlgoParamImpl(OBJECTIVE_DISTANCE_KEY, Double.toString(objectiveDistance / 100)));
         }
-        if (busesWithReactiveSlacks != null) {
-            allAlgoParams.add(busesWithReactiveSlacks.toParam());
+        if (busesWithReactiveSlack != null) {
+            allAlgoParams.add(busesWithReactiveSlack.toParam());
         }
         return allAlgoParams;
     }
@@ -180,6 +191,11 @@ public class OpenReacParameters {
         for (String transformerId : getVariableTwoWindingsTransformers()) {
             if (network.getTwoWindingsTransformer(transformerId) == null) {
                 throw new InvalidParametersException("Two windings transformer " + transformerId + " not found in the network.");
+            }
+        }
+        for (String busId : getConfiguredBusesWithReactiveSlacks()) {
+            if (network.getBusView().getBus(busId) == null) {
+                throw new InvalidParametersException("Bus " + busId + " not found in the network.");
             }
         }
 

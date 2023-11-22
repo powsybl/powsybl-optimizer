@@ -38,6 +38,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
     private final AlgorithmInput algorithmParams;
     private final ReactiveSlackOutput reactiveSlackOutput;
     private final VoltageLevelLimitsOverrideInput voltageLimitsOverride;
+    private final ConfiguredBusesWithReactiveSlack configuredBusesWithReactiveSlack;
     private final NetworkModifications networkModifications;
     private final boolean debug;
 
@@ -48,6 +49,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
         this.variableTwoWindingsTransformers = new VariableTwoWindingsTransformers(params.getVariableTwoWindingsTransformers());
         this.algorithmParams = new AlgorithmInput(params.getAllAlgorithmParams());
         this.voltageLimitsOverride = new VoltageLevelLimitsOverrideInput(params.getSpecificVoltageLimits(), network);
+        this.configuredBusesWithReactiveSlack = new ConfiguredBusesWithReactiveSlack(params.getConfiguredBusesWithReactiveSlacks());
 
         //outputs
         this.reactiveSlackOutput = new ReactiveSlackOutput();
@@ -67,7 +69,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
     @Override
     public Collection<AmplInputFile> getInputParameters() {
         return List.of(constantQGenerators, variableShuntCompensators, variableTwoWindingsTransformers,
-                algorithmParams, voltageLimitsOverride);
+                algorithmParams, voltageLimitsOverride, configuredBusesWithReactiveSlack);
     }
 
     @Override
