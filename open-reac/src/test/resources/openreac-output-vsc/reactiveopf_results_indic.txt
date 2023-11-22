@@ -1,18 +1,18 @@
 final_status OK
 dcopf_status OK
 
-ctime_start 'Wed Jun 21 17:41:35 2023'
+ctime_start 'Wed Nov 22 17:19:30 2023'
 last_solve_result_num 0
 nb_iter_last 6
 nb_iter_total 6
-_ampl_elapsed_time 0.093000
-_total_solve_time 0.046875
+_ampl_elapsed_time 0.108000
+_total_solve_time 0.062500
 total_time 0
 
 operatingSystem windows
 OS 'Windows_NT'
-COMPUTERNAME 'ARTELYS-PC158'
-directory 'C:\Users\ARTELY~1\AppData\Local\Temp\ampl_615174380178292172'
+COMPUTERNAME 'ARTELYS-PC253'
+directory 'C:\Users\parvy\AppData\Local\Temp\ampl_1732464635858187038'
 
 objective_choice 0
 ratio_voltage_target 0.500000
@@ -22,6 +22,7 @@ Znull 0.000100
 epsilon_nominal_voltage 1.000000
 epsilon_min_voltage 0.500000
 ignore_voltage_bounds 0.000000
+buses_with_reactive_slacks 1
 PQmax 9000.000000
 defaultPmax 1000.000000
 defaultPmin 0.000000
