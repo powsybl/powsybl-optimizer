@@ -12,7 +12,7 @@ import com.powsybl.openreac.exceptions.InvalidParametersException;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParamImpl;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
-import com.powsybl.openreac.parameters.input.algo.OpenReacBusesWithReactiveSlack;
+import com.powsybl.openreac.parameters.input.algo.OpenReacBusesWithReactiveSlackConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +38,7 @@ public class OpenReacParameters {
 
     private final List<String> variableTwoWindingsTransformers = new ArrayList<>();
 
-    private List<String> configuredBusesWithReactiveSlack = new ArrayList<>();
+    private List<String> busesWithReactiveSlack = new ArrayList<>();
 
     private final List<OpenReacAlgoParam> algorithmParams = new ArrayList<>();
 
@@ -46,7 +46,7 @@ public class OpenReacParameters {
 
     private Double objectiveDistance;
 
-    private OpenReacBusesWithReactiveSlack busesWithReactiveSlack = OpenReacBusesWithReactiveSlack.NO_GENERATION;
+    private OpenReacBusesWithReactiveSlackConfig busesWithReactiveSlackConfig = OpenReacBusesWithReactiveSlackConfig.NO_GENERATION;
 
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.
@@ -84,8 +84,8 @@ public class OpenReacParameters {
         return this;
     }
 
-    public OpenReacParameters addConfiguredBusesWithReactiveSlack(List<String> busesIds) {
-        this.configuredBusesWithReactiveSlack.addAll(busesIds);
+    public OpenReacParameters addBusesWithReactiveSlack(List<String> busesIds) {
+        this.busesWithReactiveSlack.addAll(busesIds);
         return this;
     }
 
@@ -127,12 +127,12 @@ public class OpenReacParameters {
         return this;
     }
 
-    public OpenReacBusesWithReactiveSlack getBusesWithReactiveSlack() {
-        return busesWithReactiveSlack;
+    public OpenReacBusesWithReactiveSlackConfig getBusesWithReactiveSlackConfig() {
+        return busesWithReactiveSlackConfig;
     }
 
-    public OpenReacParameters setBusesWithReactiveSlack(OpenReacBusesWithReactiveSlack busesWithReactiveSlack) {
-        this.busesWithReactiveSlack = Objects.requireNonNull(busesWithReactiveSlack);
+    public OpenReacParameters setBusesWithReactiveSlackConfig(OpenReacBusesWithReactiveSlackConfig busesWithReactiveSlackConfig) {
+        this.busesWithReactiveSlackConfig = Objects.requireNonNull(busesWithReactiveSlackConfig);
         return this;
     }
 
@@ -153,7 +153,7 @@ public class OpenReacParameters {
     }
 
     public List<String> getConfiguredBusesWithReactiveSlacks() {
-        return configuredBusesWithReactiveSlack;
+        return busesWithReactiveSlack;
     }
 
     public List<OpenReacAlgoParam> getAllAlgorithmParams() {
@@ -165,8 +165,8 @@ public class OpenReacParameters {
         if (objectiveDistance != null) {
             allAlgoParams.add(new OpenReacAlgoParamImpl(OBJECTIVE_DISTANCE_KEY, Double.toString(objectiveDistance / 100)));
         }
-        if (busesWithReactiveSlack != null) {
-            allAlgoParams.add(busesWithReactiveSlack.toParam());
+        if (busesWithReactiveSlackConfig != null) {
+            allAlgoParams.add(busesWithReactiveSlackConfig.toParam());
         }
         return allAlgoParams;
     }

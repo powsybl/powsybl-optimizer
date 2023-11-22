@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
-import com.powsybl.openreac.parameters.input.algo.OpenReacBusesWithReactiveSlack;
+import com.powsybl.openreac.parameters.input.algo.OpenReacBusesWithReactiveSlackConfig;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 
 import java.io.IOException;
@@ -56,9 +56,9 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                     parser.nextToken();
                     parameters.addVariableTwoWindingsTransformers(parser.readValueAs(new TypeReference<List<String>>() { }));
                     break;
-                case "configuredBusesWithReactiveSlack":
+                case "busesWithReactiveSlack":
                     parser.nextToken();
-                    parameters.addConfiguredBusesWithReactiveSlack(parser.readValueAs(new TypeReference<List<String>>() { }));
+                    parameters.addBusesWithReactiveSlack(parser.readValueAs(new TypeReference<List<String>>() { }));
                     break;
                 case "objective":
                     parser.nextToken();
@@ -68,9 +68,9 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                     parser.nextToken();
                     parameters.setObjectiveDistance(parser.getValueAsDouble());
                     break;
-                case "busesWithReactiveSlack":
+                case "busesWithReactiveSlackConfig":
                     parser.nextToken();
-                    parameters.setBusesWithReactiveSlack(OpenReacBusesWithReactiveSlack.valueOf(parser.getText()));
+                    parameters.setBusesWithReactiveSlackConfig(OpenReacBusesWithReactiveSlackConfig.valueOf(parser.getText()));
                     break;
                 default:
                     throw new IllegalStateException("Unexpected field: " + parser.getCurrentName());

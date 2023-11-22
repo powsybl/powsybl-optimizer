@@ -24,8 +24,8 @@
   "constantQGenerators" : [ "g1", "g2" ],
   "variableTwoWindingsTransformers" : [ "tr1" ],
   "variableShuntCompensators" : [ "sc1", "sc2" ],
-  "configuredBusesWithReactiveSlack" : [ "bus1", "bus2" ],
+  "busesWithReactiveSlack" : [ "bus1", "bus2" ],
   "objective" : "MIN_GENERATION",
   "objectiveDistance" : 5.0,
-  "busesWithReactiveSlack" : "CONFIGURED"
+  "busesWithReactiveSlackConfig" : "SPECIFIED"
 }

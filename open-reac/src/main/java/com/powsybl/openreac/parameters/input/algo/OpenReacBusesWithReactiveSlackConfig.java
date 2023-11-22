@@ -9,8 +9,8 @@ package com.powsybl.openreac.parameters.input.algo;
 /**
  * @author Pierre Arvy <pierre.arvy at artelys.com>
  */
-public enum OpenReacBusesWithReactiveSlack {
-    CONFIGURED(0),
+public enum OpenReacBusesWithReactiveSlackConfig {
+    SPECIFIED(0),
     NO_GENERATION(1),
 
     ALL(2);
@@ -22,7 +22,7 @@ public enum OpenReacBusesWithReactiveSlack {
     /**
      * @param amplKey value used in param_algo.txt to define the slacks repartition.
      */
-    OpenReacBusesWithReactiveSlack(int amplKey) {
+    OpenReacBusesWithReactiveSlackConfig(int amplKey) {
         this.amplKey = amplKey;
     }
 
