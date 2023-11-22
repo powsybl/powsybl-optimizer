@@ -15,7 +15,7 @@ public enum OpenReacBusesWithReactiveSlack {
 
     ALL(2);
 
-    private static final String BUSES_REACTIVE_SLACKS_KEY = "reactive_slacks_repartition";
+    private static final String BUSES_REACTIVE_SLACKS_KEY = "buses_with_reactive_slacks";
 
     private final int amplKey;
 

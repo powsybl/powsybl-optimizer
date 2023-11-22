@@ -77,13 +77,17 @@ param: BRANCH: branch_3wt branch_subor branch_subex branch_R branch_X branch_Gor
 param: BOUND_OVERRIDES: substation_new_Vmin, substation_new_Vmax, substation_new_checkId := include ampl_network_substations_override.txt;
 
 # param_shunts.txt
-#"variant" "num" "bus" "id"
+#"amplId" "powsyblId"
 param: PARAM_SHUNT: param_shunt_id := include param_shunts.txt;
 
 # param_generators_reactive.txt
-#"variant" "num" "bus" "id"
+#"amplId" "powsyblId"
 param: PARAM_UNIT_FIXQ: param_unit_fixq_id := include param_generators_reactive.txt;
 
 # param_transformers.txt
-#"variant" "num" "bus1" "bus2" "id"
+#"amplId" "powsyblId"
 param: PARAM_TRANSFORMERS_RATIO_VARIABLE: param_transformers_ratio_variable_id := include param_transformers.txt;
+
+# param_buses_with_reactive_slack.txt
+#"amplId" "powsyblId"
+param: PARAM_BUSES_WITH_REACTIVE_SLACK: param_buses_with_reactive_slack_id := include param_buses_with_reactive_slack.txt;

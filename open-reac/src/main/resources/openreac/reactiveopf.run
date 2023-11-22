@@ -181,18 +181,20 @@ if length($SHELL) > 0 then {
 # initialized to empty sets or tables; so the minimum we need is empty file.
 # Maybe this is not the best way to manage optional parameter files...
 if operatingSystem == "linux" then {
-  shell "if [ ! -f param_algo.txt ];                then touch param_algo.txt ;fi";
-  shell "if [ ! -f param_shunts.txt ];              then touch param_shunts.txt ;fi";
-  shell "if [ ! -f param_generators_reactive.txt ]; then touch param_generators_reactive.txt ;fi";
-  shell "if [ ! -f param_transformers.txt ];        then touch param_transformers.txt ;fi";
+  shell "if [ ! -f param_algo.txt ];                        then touch param_algo.txt ;fi";
+  shell "if [ ! -f param_shunts.txt ];                      then touch param_shunts.txt ;fi";
+  shell "if [ ! -f param_generators_reactive.txt ];         then touch param_generators_reactive.txt ;fi";
+  shell "if [ ! -f param_transformers.txt ];                then touch param_transformers.txt ;fi";
+  shell "if [ ! -f param_buses_with_reactive_slack.txt ];   then touch param_buses_with_reactive_slack.txt ;fi";
   shell "if [ ! -f ampl_network_substations_override.txt ]; then touch ampl_network_substations_override.txt ;fi";
   shell "chmod a+rX . * 2>/dev/null";
 }
 if operatingSystem == "windows" then {
-  shell "if not exist param_algo.txt                echo #empty > param_algo.txt";
-  shell "if not exist param_shunts.txt              echo #empty > param_shunts.txt";
-  shell "if not exist param_generators_reactive.txt echo #empty > param_generators_reactive.txt";
-  shell "if not exist param_transformers.txt        echo #empty > param_transformers.txt";
+  shell "if not exist param_algo.txt                        echo #empty > param_algo.txt";
+  shell "if not exist param_shunts.txt                      echo #empty > param_shunts.txt";
+  shell "if not exist param_generators_reactive.txt         echo #empty > param_generators_reactive.txt";
+  shell "if not exist param_transformers.txt                echo #empty > param_transformers.txt";
+  shell "if not exist param_buses_with_reactive_slack.txt   echo #empty > param_buses_with_reactive_slack.txt";
   shell "if not exist ampl_network_substations_override.txt echo #empty > ampl_network_substations_override.txt";
 }
 # If operating system is not linux nor windows, then these optional files are
@@ -307,12 +309,13 @@ if ignore_voltage_bounds >= epsilon_nominal_voltage
 then printf{LOG_INFO} "Parameter: for all busses with nominal voltage <= ignore_voltage_bounds=%.1f, voltage bounds are ignored and replaced by [%.3f;%.3f]\n",ignore_voltage_bounds,epsilon_min_voltage,2-epsilon_min_voltage;
 check ignore_voltage_bounds >= 0;
 
-param reactive_slacks_repartition integer default 1;
-if "reactive_slacks_repartition" in PARAM_ALGO_KEYS then let reactive_slacks_repartition := num(PARAM_ALGO_VALUES["reactive_slacks_repartition"]);
-printf{LOG_INFO} "Parameter: choice for reactive slacks repartition in ACOPF := %Q (%s)\n", reactive_slacks_repartition,
-  if reactive_slacks_repartition == 2 then "every bus"
-  else if reactive_slacks_repartition == 1 then "buses without generation (no generator, svc or vsc)";
-check reactive_slacks_repartition in {1, 2};
+param buses_with_reactive_slacks integer default 1;
+if "buses_with_reactive_slacks" in PARAM_ALGO_KEYS then let buses_with_reactive_slacks := num(PARAM_ALGO_VALUES["buses_with_reactive_slacks"]);
+printf{LOG_INFO} "Parameter: choice for buses with reactive slacks in ACOPF := %Q (%s)\n", buses_with_reactive_slacks,
+  if buses_with_reactive_slacks == 2 then "every bus in connex component."
+  else if buses_with_reactive_slacks == 1 then "buses without generation (no generator, svc or vsc)"
+  else if buses_with_reactive_slacks == 0 then "buses given as parameters in param_buses_with_reactive_slack.txt";
+check buses_with_reactive_slacks in {0, 1, 2};
 
 # Consistency maximal value for P and Q
 # Any Pmax Pmin Qmax Qmin of generating unit with abolute value larger than PQmax is discarded
