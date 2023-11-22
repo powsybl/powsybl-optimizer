@@ -24,13 +24,6 @@
   "constantQGenerators" : [ "g1", "g2" ],
   "variableTwoWindingsTransformers" : [ "tr1" ],
   "variableShuntCompensators" : [ "sc1", "sc2" ],
-  "algorithmParams" : [ {
-    "name" : "p1",
-    "value" : "v1"
-  }, {
-    "name" : "p2",
-    "value" : "v2"
-  } ],
   "objective" : "MIN_GENERATION",
   "objectiveDistance" : 5.0
 }
