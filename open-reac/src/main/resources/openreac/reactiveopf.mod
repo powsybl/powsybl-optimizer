@@ -937,8 +937,7 @@ subject to ctr_balance_P{PROBLEM_ACOPF,k in BUSCC}:
 #
 
 # Reactive balance slack variables at every node 
-set BUSCC_SLACK := (BUSCC diff if reactive_slacks_repartition <= 1 then {n in BUSCC: (card{(g,n) in UNITON: (g,n) not in UNIT_FIXQ}>0 or card{(svc,n) in SVCON}>0 or card{(vscconv,n) in VSCCONVON}>0)} else {})
-                          diff if reactive_slacks_repartition == 0 then {n in BUSCC: (card{(c,n) in LOADCC}>0 or card{(shunt,n) in SHUNT_VAR}>0)} else {};
+set BUSCC_SLACK := (BUSCC diff if reactive_slacks_repartition <= 1 then {n in BUSCC: (card{(g,n) in UNITON: (g,n) not in UNIT_FIXQ}>0 or card{(svc,n) in SVCON}>0 or card{(vscconv,n) in VSCCONVON}>0)} else {});
 var slack1_balance_Q{BUSCC_SLACK} >=0;
 var slack2_balance_Q{BUSCC_SLACK} >=0;
 #subject to ctr_compl_slack_Q{PROBLEM_ACOPF,k in BUSCC_SLACK}: slack1_balance_Q[k] >= 0 complements slack2_balance_Q[k] >= 0;
