@@ -76,7 +76,7 @@ class OpenReacRunnerTest {
 
     @Test
     void testInputFile() throws IOException {
-        Network network = IeeeCdfNetworkFactory.create118();
+        Network network = IeeeCdfNetworkFactory.create57();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
 
         OpenReacParameters parameters = new OpenReacParameters().setObjective(
@@ -111,6 +111,7 @@ class OpenReacRunnerTest {
 
     @Test
     public void testOutputFileParsing() throws IOException {
+        // TODO : change the following network and adapt rest of the test
         Network network = IeeeCdfNetworkFactory.create118();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         // To parse correctly data from output files, there must be an ID in the Ampl mapper
@@ -152,10 +153,11 @@ class OpenReacRunnerTest {
 
         LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
             List.of("mock_outputs/reactiveopf_results_generators.csv",
-                "mock_outputs/reactiveopf_results_indic.txt", "mock_outputs/reactiveopf_results_rtc.csv",
-                "mock_outputs/reactiveopf_results_shunts.csv",
-                "mock_outputs/reactiveopf_results_static_var_compensators.csv",
-                "mock_outputs/reactiveopf_results_vsc_converter_stations.csv"));
+                        "mock_outputs/reactiveopf_results_indic.txt",
+                        "mock_outputs/reactiveopf_results_rtc.csv",
+                        "mock_outputs/reactiveopf_results_shunts.csv",
+                        "mock_outputs/reactiveopf_results_static_var_compensators.csv",
+                        "mock_outputs/reactiveopf_results_vsc_converter_stations.csv"));
         try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
             localCommandExecutor, ForkJoinPool.commonPool())) {
             OpenReacResult openReacResult = OpenReacRunner.run(network,
@@ -182,9 +184,9 @@ class OpenReacRunnerTest {
                 subFolder + "/reactiveopf_results_static_var_compensators.csv",
                 subFolder + "/reactiveopf_results_vsc_converter_stations.csv"));
 //         To really run open reac, use the commentede line below. Be sure that open-reac/src/test/resources/com/powsybl/config/test/config.yml contains your ampl path
-         try (ComputationManager computationManager = new LocalComputationManager()) {
-//        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
-//            localCommandExecutor, ForkJoinPool.commonPool())) {
+//         try (ComputationManager computationManager = new LocalComputationManager()) {
+        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
+            localCommandExecutor, ForkJoinPool.commonPool())) {
             OpenReacResult openReacResult = OpenReacRunner.run(network,
                 network.getVariantManager().getWorkingVariantId(), parameters, new OpenReacConfig(true),
                 computationManager);
@@ -246,12 +248,9 @@ class OpenReacRunnerTest {
 
     @Test
     public void testRealNetwork() throws IOException {
-        // Network {CC0 SC0}: 53 generators have an inconsistent target voltage and have been discarded from voltage control
-        Network network = IeeeCdfNetworkFactory.create118();
+        Network network = IeeeCdfNetworkFactory.create57();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         OpenReacParameters parameters = new OpenReacParameters();
-//        LoadFlowResult loadFlowResult = LoadFlow.run(network);
-//        assertTrue(loadFlowResult.isOk());
         testAllModifAndLoadFlow(network, "openreac-output-real-network", parameters);
     }
 
