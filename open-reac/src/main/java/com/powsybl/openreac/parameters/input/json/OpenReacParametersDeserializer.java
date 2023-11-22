@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
-import com.powsybl.openreac.parameters.input.algo.OpenReacBusesReactiveSlacks;
+import com.powsybl.openreac.parameters.input.algo.OpenReacBusesWithReactiveSlacks;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 
 import java.io.IOException;
@@ -66,7 +66,7 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                     break;
                 case "busesWithReactiveSlacks":
                     parser.nextToken();
-                    parameters.setBusesWithReactiveSlacks(OpenReacBusesReactiveSlacks.valueOf(parser.getText()));
+                    parameters.setBusesWithReactiveSlacks(OpenReacBusesWithReactiveSlacks.valueOf(parser.getText()));
                     break;
                 default:
                     throw new IllegalStateException("Unexpected field: " + parser.getCurrentName());

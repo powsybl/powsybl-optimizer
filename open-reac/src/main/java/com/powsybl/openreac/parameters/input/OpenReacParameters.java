@@ -12,7 +12,7 @@ import com.powsybl.openreac.exceptions.InvalidParametersException;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParamImpl;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
-import com.powsybl.openreac.parameters.input.algo.OpenReacBusesReactiveSlacks;
+import com.powsybl.openreac.parameters.input.algo.OpenReacBusesWithReactiveSlacks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +44,7 @@ public class OpenReacParameters {
 
     private Double objectiveDistance;
 
-    private OpenReacBusesReactiveSlacks busesWithReactiveSlacks = OpenReacBusesReactiveSlacks.NO_GENERATION;
+    private OpenReacBusesWithReactiveSlacks busesWithReactiveSlacks = OpenReacBusesWithReactiveSlacks.NO_GENERATION;
 
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.
@@ -120,11 +120,11 @@ public class OpenReacParameters {
         return this;
     }
 
-    public OpenReacBusesReactiveSlacks getBusesWithReactiveSlacks() {
+    public OpenReacBusesWithReactiveSlacks getBusesWithReactiveSlacks() {
         return busesWithReactiveSlacks;
     }
 
-    public OpenReacParameters setBusesWithReactiveSlacks(OpenReacBusesReactiveSlacks busesWithReactiveSlacks) {
+    public OpenReacParameters setBusesWithReactiveSlacks(OpenReacBusesWithReactiveSlacks busesWithReactiveSlacks) {
         this.busesWithReactiveSlacks = Objects.requireNonNull(busesWithReactiveSlacks);
         return this;
     }

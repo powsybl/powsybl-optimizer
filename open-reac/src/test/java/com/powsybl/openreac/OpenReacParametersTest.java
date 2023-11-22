@@ -11,7 +11,7 @@ import com.powsybl.iidm.network.*;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
-import com.powsybl.openreac.parameters.input.algo.OpenReacBusesReactiveSlacks;
+import com.powsybl.openreac.parameters.input.algo.OpenReacBusesWithReactiveSlacks;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -44,11 +44,11 @@ public class OpenReacParametersTest {
     void testReactiveSlacksRepartitionIntegrity() {
         OpenReacParameters parameters = new OpenReacParameters();
 
-        assertEquals(OpenReacBusesReactiveSlacks.NO_GENERATION, parameters.getBusesWithReactiveSlacks()); // default value
+        assertEquals(OpenReacBusesWithReactiveSlacks.NO_GENERATION, parameters.getBusesWithReactiveSlacks()); // default value
         assertThrows(NullPointerException.class, () -> parameters.setBusesWithReactiveSlacks(null), "Can't set null ampl log level.");
-        parameters.setBusesWithReactiveSlacks(OpenReacBusesReactiveSlacks.NO_GENERATION);
+        parameters.setBusesWithReactiveSlacks(OpenReacBusesWithReactiveSlacks.NO_GENERATION);
         assertEquals("1", parameters.getBusesWithReactiveSlacks().toParam().getValue());
-        parameters.setBusesWithReactiveSlacks(OpenReacBusesReactiveSlacks.ALL);
+        parameters.setBusesWithReactiveSlacks(OpenReacBusesWithReactiveSlacks.ALL);
         assertEquals("2", parameters.getBusesWithReactiveSlacks().toParam().getValue());
     }
 

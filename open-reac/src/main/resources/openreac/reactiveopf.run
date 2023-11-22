@@ -674,7 +674,7 @@ for {(qq,m,n) in BRANCHCC_REGL_FIX: substation_Vnomi[1,bus_substation[1,m]] > 30
     let messagesInfo := messagesInfo union {messageInfo};
   }
 }
-if tempo > 1.5 then {
+if tempo > 0.5 then {
   let errorMessage := "ERROR INFEASIBLE some voltages bounds and not feasible with transformers ratios";
   let final_status := "NOK";
   include reactiveopfexit.run;
