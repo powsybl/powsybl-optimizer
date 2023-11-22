@@ -11,6 +11,7 @@ import com.powsybl.commons.json.JsonUtil;
 import com.powsybl.commons.test.ComparisonUtils;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
+import com.powsybl.openreac.parameters.input.algo.OpenReacBusesReactiveSlacks;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -43,6 +44,7 @@ class OpenReacJsonModuleTest {
         parameters.addVariableTwoWindingsTransformers(List.of("tr1"));
         parameters.addVariableShuntCompensators(List.of("sc1", "sc2"));
         parameters.setObjectiveDistance(5);
+        parameters.setBusesWithReactiveSlacks(OpenReacBusesReactiveSlacks.ALL);
         String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(parameters);
         ComparisonUtils.compareTxt(Objects.requireNonNull(getClass().getResourceAsStream("/parameters.json")), json);
 
@@ -58,5 +60,6 @@ class OpenReacJsonModuleTest {
         assertEquals(List.of("g1", "g2"), parameters2.getConstantQGenerators());
         assertEquals(List.of("tr1"), parameters2.getVariableTwoWindingsTransformers());
         assertEquals(5, parameters2.getObjectiveDistance());
+        assertEquals(OpenReacBusesReactiveSlacks.ALL, parameters2.getBusesWithReactiveSlacks());
     }
 }

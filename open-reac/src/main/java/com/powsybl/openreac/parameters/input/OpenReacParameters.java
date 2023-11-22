@@ -12,7 +12,7 @@ import com.powsybl.openreac.exceptions.InvalidParametersException;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParamImpl;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
-import com.powsybl.openreac.parameters.input.algo.OpenReacReactiveSlacksRepartition;
+import com.powsybl.openreac.parameters.input.algo.OpenReacBusesReactiveSlacks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +44,7 @@ public class OpenReacParameters {
 
     private Double objectiveDistance;
 
-    private OpenReacReactiveSlacksRepartition reactiveSlacksRepartition = OpenReacReactiveSlacksRepartition.LOAD_BUSES;
+    private OpenReacBusesReactiveSlacks busesWithReactiveSlacks = OpenReacBusesReactiveSlacks.NO_GENERATION;
 
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.
@@ -120,12 +120,12 @@ public class OpenReacParameters {
         return this;
     }
 
-    public OpenReacReactiveSlacksRepartition getReactiveSlacksRepartition() {
-        return reactiveSlacksRepartition;
+    public OpenReacBusesReactiveSlacks getBusesWithReactiveSlacks() {
+        return busesWithReactiveSlacks;
     }
 
-    public OpenReacParameters setReactiveSlacksRepartition(OpenReacReactiveSlacksRepartition reactiveSlacksRepartition) {
-        this.reactiveSlacksRepartition = Objects.requireNonNull(reactiveSlacksRepartition);
+    public OpenReacParameters setBusesWithReactiveSlacks(OpenReacBusesReactiveSlacks busesWithReactiveSlacks) {
+        this.busesWithReactiveSlacks = Objects.requireNonNull(busesWithReactiveSlacks);
         return this;
     }
 
@@ -154,8 +154,8 @@ public class OpenReacParameters {
         if (objectiveDistance != null) {
             allAlgoParams.add(new OpenReacAlgoParamImpl(OBJECTIVE_DISTANCE_KEY, Double.toString(objectiveDistance / 100)));
         }
-        if (reactiveSlacksRepartition != null) {
-            allAlgoParams.add(reactiveSlacksRepartition.toParam());
+        if (busesWithReactiveSlacks != null) {
+            allAlgoParams.add(busesWithReactiveSlacks.toParam());
         }
         return allAlgoParams;
     }

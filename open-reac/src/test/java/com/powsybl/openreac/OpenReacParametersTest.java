@@ -11,7 +11,7 @@ import com.powsybl.iidm.network.*;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
-import com.powsybl.openreac.parameters.input.algo.OpenReacReactiveSlacksRepartition;
+import com.powsybl.openreac.parameters.input.algo.OpenReacBusesReactiveSlacks;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -44,14 +44,12 @@ public class OpenReacParametersTest {
     void testReactiveSlacksRepartitionIntegrity() {
         OpenReacParameters parameters = new OpenReacParameters();
 
-        assertEquals(OpenReacReactiveSlacksRepartition.LOAD_BUSES, parameters.getReactiveSlacksRepartition()); // default value
-        assertThrows(NullPointerException.class, () -> parameters.setReactiveSlacksRepartition(null), "Can't set null ampl log level.");
-        parameters.setReactiveSlacksRepartition(OpenReacReactiveSlacksRepartition.EMPTY_BUSES);
-        assertEquals("0", parameters.getReactiveSlacksRepartition().toParam().getValue());
-        parameters.setReactiveSlacksRepartition(OpenReacReactiveSlacksRepartition.LOAD_BUSES);
-        assertEquals("1", parameters.getReactiveSlacksRepartition().toParam().getValue());
-        parameters.setReactiveSlacksRepartition(OpenReacReactiveSlacksRepartition.ALL_BUSES);
-        assertEquals("2", parameters.getReactiveSlacksRepartition().toParam().getValue());
+        assertEquals(OpenReacBusesReactiveSlacks.NO_GENERATION, parameters.getBusesWithReactiveSlacks()); // default value
+        assertThrows(NullPointerException.class, () -> parameters.setBusesWithReactiveSlacks(null), "Can't set null ampl log level.");
+        parameters.setBusesWithReactiveSlacks(OpenReacBusesReactiveSlacks.NO_GENERATION);
+        assertEquals("1", parameters.getBusesWithReactiveSlacks().toParam().getValue());
+        parameters.setBusesWithReactiveSlacks(OpenReacBusesReactiveSlacks.ALL);
+        assertEquals("2", parameters.getBusesWithReactiveSlacks().toParam().getValue());
     }
 
     @Test

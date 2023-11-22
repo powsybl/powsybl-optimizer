@@ -25,5 +25,6 @@
   "variableTwoWindingsTransformers" : [ "tr1" ],
   "variableShuntCompensators" : [ "sc1", "sc2" ],
   "objective" : "MIN_GENERATION",
-  "objectiveDistance" : 5.0
+  "objectiveDistance" : 5.0,
+  "busesWithReactiveSlacks" : "ALL"
 }

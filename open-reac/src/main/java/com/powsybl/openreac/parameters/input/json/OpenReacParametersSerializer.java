@@ -38,6 +38,7 @@ public class OpenReacParametersSerializer extends StdSerializer<OpenReacParamete
         if (openReacParameters.getObjectiveDistance() != null) {
             serializerProvider.defaultSerializeField("objectiveDistance", openReacParameters.getObjectiveDistance(), jsonGenerator);
         }
+        serializerProvider.defaultSerializeField("busesWithReactiveSlacks", openReacParameters.getBusesWithReactiveSlacks().name(), jsonGenerator);
         jsonGenerator.writeEndObject();
     }
 }
