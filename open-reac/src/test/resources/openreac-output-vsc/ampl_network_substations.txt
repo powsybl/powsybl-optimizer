@@ -1,8 +1,0 @@
-#Substations (test/InitialState)
-#"variant" "num" "unused1" "unused2" "nomV (KV)" "minV (pu)" "maxV (pu)" "fault" "curative" "country" "id" "description"
-1 1 "" 0 1.00000 -99999.0 -99999.0 0 0 "FR" "b1_vl" "b1_vl"
-1 2 "" 0 1.00000 -99999.0 -99999.0 0 0 "FR" "b2_vl" "b2_vl"
-1 3 "" 0 1.00000 -99999.0 -99999.0 0 0 "FR" "b3_vl" "b3_vl"
-1 4 "" 0 1.00000 -99999.0 -99999.0 0 0 "FR" "b4_vl" "b4_vl"
-1 5 "" 0 1.00000 -99999.0 -99999.0 0 0 "FR" "b5_vl" "b5_vl"
-1 6 "" 0 1.00000 -99999.0 -99999.0 0 0 "FR" "b6_vl" "b6_vl"

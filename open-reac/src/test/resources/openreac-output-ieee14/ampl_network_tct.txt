@@ -1,2 +1,0 @@
-#Tap changer table (ieee14cdf/InitialState)
-#"variant" "num" "tap" "var ratio" "x (pu)" "angle (rad)" "fault" "curative"

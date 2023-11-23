@@ -11,7 +11,10 @@ import com.powsybl.iidm.network.*;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
+import com.powsybl.openreac.parameters.input.algo.OpenReacAmplLogLevel;
+import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
+import com.powsybl.openreac.parameters.input.algo.OpenReacSolverLogLevel;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -26,7 +29,7 @@ public class OpenReacParametersTest {
 
     @Test
     void testObjectiveIntegrity() {
-        Network network = IeeeCdfNetworkFactory.create118();
+        Network network = IeeeCdfNetworkFactory.create57();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         OpenReacParameters parameters = new OpenReacParameters();
 
@@ -41,6 +44,53 @@ public class OpenReacParametersTest {
     }
 
     @Test
+    void testAmplLogLevelIntegrity() {
+        OpenReacParameters parameters = new OpenReacParameters();
+
+        assertEquals("INFO", parameters.getLogLevelAmpl().toParam().getValue()); // default value
+        parameters.setLogLevelAmpl(OpenReacAmplLogLevel.DEBUG);
+        assertEquals("DEBUG", parameters.getLogLevelAmpl().toParam().getValue());
+        parameters.setLogLevelAmpl(OpenReacAmplLogLevel.WARNING);
+        assertEquals("WARNING", parameters.getLogLevelAmpl().toParam().getValue());
+        parameters.setLogLevelAmpl(OpenReacAmplLogLevel.ERROR);
+        assertEquals("ERROR", parameters.getLogLevelAmpl().toParam().getValue());
+
+        assertThrows(NullPointerException.class, () -> parameters.setLogLevelAmpl(null), "Can't set null ampl log level.");
+    }
+
+    @Test
+    void testSolverLogLevelIntegrity() {
+        OpenReacParameters parameters = new OpenReacParameters();
+
+        assertEquals("2", parameters.getLogLevelSolver().toParam().getValue()); // default value
+        parameters.setLogLevelSolver(OpenReacSolverLogLevel.NOTHING);
+        assertEquals("0", parameters.getLogLevelSolver().toParam().getValue());
+        parameters.setLogLevelSolver(OpenReacSolverLogLevel.ONLY_RESULTS);
+        assertEquals("1", parameters.getLogLevelSolver().toParam().getValue());
+
+        assertThrows(NullPointerException.class, () -> parameters.setLogLevelSolver(null), "Can't set null solver log level.");
+    }
+
+    @Test
+    void testAlgorithmParams() {
+        OpenReacParameters parameters = new OpenReacParameters();
+        parameters.setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE);
+        parameters.setObjectiveDistance(0.4);
+        parameters.setLogLevelAmpl(OpenReacAmplLogLevel.DEBUG);
+        parameters.setLogLevelSolver(OpenReacSolverLogLevel.NOTHING);
+        List<OpenReacAlgoParam> algoParams = parameters.getAllAlgorithmParams();
+
+        assertEquals(4, algoParams.size());
+        assertEquals("2", algoParams.get(0).getValue());
+        assertEquals("0.004", algoParams.get(1).getValue());
+        assertEquals("DEBUG", algoParams.get(2).getValue());
+        assertEquals("0", algoParams.get(3).getValue());
+
+    }
+
+    @Test
+    void testParametersIntegrityChecks() {
+        Network network = IeeeCdfNetworkFactory.create57();
     void testMinMaxVoltageLimitIntegrity() {
         OpenReacParameters parameters = new OpenReacParameters();
 

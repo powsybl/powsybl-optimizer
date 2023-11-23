@@ -1,6 +1,0 @@
-#amplId powsyblId
-1 'g1'
-2 'g2'
-4 'g5'
-3 'g6'
-

@@ -9,9 +9,7 @@ package com.powsybl.openreac.parameters.input;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
-import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
-import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParamImpl;
-import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
+import com.powsybl.openreac.parameters.input.algo.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +42,10 @@ public class OpenReacParameters {
     private static final String OBJECTIVE_DISTANCE_KEY = "ratio_voltage_target";
 
     private Double objectiveDistance;
+
+    private OpenReacAmplLogLevel logLevelAmpl = OpenReacAmplLogLevel.INFO;
+
+    private OpenReacSolverLogLevel logLevelSolver = OpenReacSolverLogLevel.EVERYTHING;
 
     private static final String MIN_PLAUSIBLE_LOW_VOLTAGE_LIMIT_KEY = "min_plausible_low_voltage_limit";
 
@@ -128,6 +130,36 @@ public class OpenReacParameters {
     }
 
     /**
+     * @return log level of ampl printings.
+     */
+    public OpenReacAmplLogLevel getLogLevelAmpl() {
+        return this.logLevelAmpl;
+    }
+
+    /**
+     * @param logLevelAmpl the log level of ampl printings.
+     */
+    public OpenReacParameters setLogLevelAmpl(OpenReacAmplLogLevel logLevelAmpl) {
+        this.logLevelAmpl = Objects.requireNonNull(logLevelAmpl);
+        return this;
+    }
+
+    /**
+     * @return log level of solver printings.
+     */
+    public OpenReacSolverLogLevel getLogLevelSolver() {
+        return this.logLevelSolver;
+    }
+
+    /**
+     * @param logLevelSolver the log level of solver printings.
+     */
+    public OpenReacParameters setLogLevelSolver(OpenReacSolverLogLevel logLevelSolver) {
+        this.logLevelSolver = Objects.requireNonNull(logLevelSolver);
+        return this;
+    }
+
+    /**
      * @return the minimal plausible value for low voltage limits in p.u.
      */
     public Double getMinPlausibleLowVoltageLimit() {
@@ -174,13 +206,16 @@ public class OpenReacParameters {
     }
 
     public List<OpenReacAlgoParam> getAllAlgorithmParams() {
-        ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>(algorithmParams.size() + 4);
+        ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>(algorithmParams.size() + 5);
         allAlgoParams.addAll(algorithmParams);
         if (objective != null) {
             allAlgoParams.add(objective.toParam());
         }
-        if (objectiveDistance != null) {
-            allAlgoParams.add(new OpenReacAlgoParamImpl(OBJECTIVE_DISTANCE_KEY, Double.toString(objectiveDistance / 100)));
+        if (this.logLevelAmpl != null) {
+            allAlgoParams.add(this.logLevelAmpl.toParam());
+        }
+        if (this.logLevelSolver != null) {
+            allAlgoParams.add(this.logLevelSolver.toParam());
         }
         if (minPlausibleLowVoltageLimit != null) {
             allAlgoParams.add(new OpenReacAlgoParamImpl(MIN_PLAUSIBLE_LOW_VOLTAGE_LIMIT_KEY, Double.toString(minPlausibleLowVoltageLimit)));
