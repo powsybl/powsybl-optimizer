@@ -90,26 +90,6 @@ public class OpenReacParameters {
     }
 
     /**
-     * Add a parameter to the optimization engine
-     */
-    public OpenReacParameters addAlgorithmParam(List<OpenReacAlgoParam> algorithmParams) {
-        this.algorithmParams.addAll(algorithmParams);
-        return this;
-    }
-
-    /**
-     * Add a parameter to the optimization engine
-     */
-    public OpenReacParameters addAlgorithmParam(String name, String value) {
-        algorithmParams.add(new OpenReacAlgoParamImpl(name, value));
-        return this;
-    }
-
-    public List<OpenReacAlgoParam> getAlgorithmParams() {
-        return algorithmParams;
-    }
-
-    /**
      * The definition of the objective function for the optimization.
      */
     public OpenReacOptimisationObjective getObjective() {
