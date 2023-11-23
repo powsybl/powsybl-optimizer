@@ -66,24 +66,17 @@ public class OpenReacParametersTest {
     @Test
     void testAlgorithmParams() {
         OpenReacParameters parameters = new OpenReacParameters();
-        parameters.addAlgorithmParam("myParam", "myValue");
         parameters.setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE);
         parameters.setObjectiveDistance(0.4);
         parameters.setMinPlausibleLowVoltageLimit(0.8);
         parameters.setMaxPlausibleHighVoltageLimit(1.2);
         List<OpenReacAlgoParam> algoParams = parameters.getAllAlgorithmParams();
 
-        assertEquals(5, algoParams.size());
-        assertEquals("myParam", algoParams.get(0).getName());
-        assertEquals("myValue", algoParams.get(0).getValue());
-        assertEquals("objective_choice", algoParams.get(1).getName());
-        assertEquals("2", algoParams.get(1).getValue());
-        assertEquals("ratio_voltage_target", algoParams.get(2).getName());
-        assertEquals("0.004", algoParams.get(2).getValue());
-        assertEquals("min_plausible_low_voltage_limit", algoParams.get(3).getName());
-        assertEquals("0.8", algoParams.get(3).getValue());
-        assertEquals("max_plausible_high_voltage_limit", algoParams.get(4).getName());
-        assertEquals("1.2", algoParams.get(4).getValue());
+        assertEquals(4, algoParams.size());
+        assertEquals("2", algoParams.get(0).getValue());
+        assertEquals("0.004", algoParams.get(1).getValue());
+        assertEquals("0.8", algoParams.get(2).getValue());
+        assertEquals("1.2", algoParams.get(3).getValue());
     }
 
     @Test

@@ -43,6 +43,8 @@ class OpenReacJsonModuleTest {
         parameters.addVariableTwoWindingsTransformers(List.of("tr1"));
         parameters.addVariableShuntCompensators(List.of("sc1", "sc2"));
         parameters.setObjectiveDistance(5);
+        parameters.setMinPlausibleLowVoltageLimit(0.755);
+        parameters.setMaxPlausibleHighVoltageLimit(1.236);
         String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(parameters);
         ComparisonUtils.compareTxt(Objects.requireNonNull(getClass().getResourceAsStream("/parameters.json")), json);
 
@@ -58,5 +60,7 @@ class OpenReacJsonModuleTest {
         assertEquals(List.of("g1", "g2"), parameters2.getConstantQGenerators());
         assertEquals(List.of("tr1"), parameters2.getVariableTwoWindingsTransformers());
         assertEquals(5, parameters2.getObjectiveDistance());
+        assertEquals(0.755, parameters2.getMinPlausibleLowVoltageLimit());
+        assertEquals(1.236, parameters2.getMaxPlausibleHighVoltageLimit());
     }
 }
