@@ -47,11 +47,11 @@ public class OpenReacParametersTest {
         assertEquals(OpenReacBusesWithReactiveSlackConfig.NO_GENERATION, parameters.getBusesWithReactiveSlackConfig()); // default value
         assertThrows(NullPointerException.class, () -> parameters.setBusesWithReactiveSlackConfig(null), "Can't set null ampl log level.");
         parameters.setBusesWithReactiveSlackConfig(OpenReacBusesWithReactiveSlackConfig.SPECIFIED);
-        assertEquals("0", parameters.getBusesWithReactiveSlackConfig().toParam().getValue());
+        assertEquals("SPECIFIED", parameters.getBusesWithReactiveSlackConfig().toParam().getValue());
         parameters.setBusesWithReactiveSlackConfig(OpenReacBusesWithReactiveSlackConfig.NO_GENERATION);
-        assertEquals("1", parameters.getBusesWithReactiveSlackConfig().toParam().getValue());
+        assertEquals("NO_GENERATION", parameters.getBusesWithReactiveSlackConfig().toParam().getValue());
         parameters.setBusesWithReactiveSlackConfig(OpenReacBusesWithReactiveSlackConfig.ALL);
-        assertEquals("2", parameters.getBusesWithReactiveSlackConfig().toParam().getValue());
+        assertEquals("ALL", parameters.getBusesWithReactiveSlackConfig().toParam().getValue());
     }
 
     @Test

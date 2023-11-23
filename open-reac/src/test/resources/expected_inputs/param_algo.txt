@@ -1,4 +1,4 @@
 objective_choice 1
 ratio_voltage_target 0.7
-buses_with_reactive_slacks 0
+buses_with_reactive_slacks SPECIFIED
 

@@ -309,13 +309,13 @@ if ignore_voltage_bounds >= epsilon_nominal_voltage
 then printf{LOG_INFO} "Parameter: for all busses with nominal voltage <= ignore_voltage_bounds=%.1f, voltage bounds are ignored and replaced by [%.3f;%.3f]\n",ignore_voltage_bounds,epsilon_min_voltage,2-epsilon_min_voltage;
 check ignore_voltage_bounds >= 0;
 
-param buses_with_reactive_slacks integer default 1;
-if "buses_with_reactive_slacks" in PARAM_ALGO_KEYS then let buses_with_reactive_slacks := num(PARAM_ALGO_VALUES["buses_with_reactive_slacks"]);
+param buses_with_reactive_slacks symbolic default "NO_GENERATION";
+if "buses_with_reactive_slacks" in PARAM_ALGO_KEYS then let buses_with_reactive_slacks := PARAM_ALGO_VALUES["buses_with_reactive_slacks"];
 printf{LOG_INFO} "Parameter: choice for buses with reactive slacks in ACOPF := %Q (%s)\n", buses_with_reactive_slacks,
-  if buses_with_reactive_slacks == 2 then "every bus in connex component."
-  else if buses_with_reactive_slacks == 1 then "buses without generation (no generator, svc or vsc)"
-  else if buses_with_reactive_slacks == 0 then "buses given as parameters in param_buses_with_reactive_slack.txt";
-check buses_with_reactive_slacks in {0, 1, 2};
+  if buses_with_reactive_slacks == "ALL" then "every bus in connex component."
+  else if buses_with_reactive_slacks == "NO_GENERATION" then "buses without generation (no generator, svc or vsc)"
+  else if buses_with_reactive_slacks == "SPECIFIED" then "buses given as parameters in param_buses_with_reactive_slack.txt";
+check buses_with_reactive_slacks in {"SPECIFIED", "NO_GENERATION", "ALL"};
 
 # Consistency maximal value for P and Q
 # Any Pmax Pmin Qmax Qmin of generating unit with abolute value larger than PQmax is discarded

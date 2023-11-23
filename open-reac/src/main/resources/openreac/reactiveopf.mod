@@ -530,7 +530,7 @@ check {(t,qq,m,n) in BRANCH: qq in PARAM_TRANSFORMERS_RATIO_VARIABLE}: branch_id
 # Buses with reactive slacks
 ###############################################################################
 # param_buses_with_reactive_slack.txt
-# If buses_with_reactive_slacks == 0 then only buses listed in this file will have reactive slacks attached in ACOPF
+# If buses_with_reactive_slacks == "SPECIFIED" then only buses listed in this file will have reactive slacks attached in ACOPF
 #"num" "id"
 set PARAM_BUSES_WITH_REACTIVE_SLACK  dimen 1 default {};
 param param_buses_with_reactive_slack_id{PARAM_BUSES_WITH_REACTIVE_SLACK} symbolic;
@@ -947,9 +947,9 @@ subject to ctr_balance_P{PROBLEM_ACOPF,k in BUSCC}:
 #
 
 # Reactive balance slack variables at every node 
-set BUSCC_SLACK := if buses_with_reactive_slacks == 2 then BUSCC
-                    else if buses_with_reactive_slacks == 1 then {n in BUSCC: (card{(g,n) in UNITON: (g,n) not in UNIT_FIXQ}==0 and card{(svc,n) in SVCON}==0 and card{(vscconv,n) in VSCCONVON}==0)}
-                    else BUSCC inter PARAM_BUSES_WITH_REACTIVE_SLACK; # buses given as parameter but in connex component
+set BUSCC_SLACK := if buses_with_reactive_slacks == "ALL" then BUSCC
+                    else if buses_with_reactive_slacks == "NO_GENERATION" then {n in BUSCC: (card{(g,n) in UNITON: (g,n) not in UNIT_FIXQ}==0 and card{(svc,n) in SVCON}==0 and card{(vscconv,n) in VSCCONVON}==0)}
+                    else BUSCC inter PARAM_BUSES_WITH_REACTIVE_SLACK; # if = "SPECIFIED", buses given as parameter but in connex component
 var slack1_balance_Q{BUSCC_SLACK} >=0;
 var slack2_balance_Q{BUSCC_SLACK} >=0;
 #subject to ctr_compl_slack_Q{PROBLEM_ACOPF,k in BUSCC_SLACK}: slack1_balance_Q[k] >= 0 complements slack2_balance_Q[k] >= 0;
