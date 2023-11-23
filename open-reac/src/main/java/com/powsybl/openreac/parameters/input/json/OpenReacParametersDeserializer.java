@@ -85,6 +85,7 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                     throw new IllegalStateException("Unexpected field: " + parser.getCurrentName());
             }
         }
+
         return parameters;
     }
 

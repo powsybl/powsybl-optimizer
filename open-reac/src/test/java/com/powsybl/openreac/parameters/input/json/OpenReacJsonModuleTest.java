@@ -44,7 +44,7 @@ class OpenReacJsonModuleTest {
         parameters.addConstantQGenerators(List.of("g1", "g2"));
         parameters.addVariableTwoWindingsTransformers(List.of("tr1"));
         parameters.addVariableShuntCompensators(List.of("sc1", "sc2"));
-        parameters.setObjectiveDistance(5);
+        parameters.setObjectiveDistance(0.05);
         parameters.setLogLevelAmpl(OpenReacAmplLogLevel.WARNING);
         parameters.setLogLevelSolver(OpenReacSolverLogLevel.NOTHING);
         parameters.setMinPlausibleLowVoltageLimit(0.755);
@@ -63,7 +63,7 @@ class OpenReacJsonModuleTest {
         assertEquals(vloList2, parameters2.getSpecificVoltageLimits());
         assertEquals(List.of("g1", "g2"), parameters2.getConstantQGenerators());
         assertEquals(List.of("tr1"), parameters2.getVariableTwoWindingsTransformers());
-        assertEquals(5, parameters2.getObjectiveDistance());
+        assertEquals(0.05, parameters2.getObjectiveDistance());
         assertEquals(OpenReacAmplLogLevel.WARNING, parameters2.getLogLevelAmpl());
         assertEquals(OpenReacSolverLogLevel.NOTHING, parameters2.getLogLevelSolver());
         assertEquals(0.755, parameters2.getMinPlausibleLowVoltageLimit());

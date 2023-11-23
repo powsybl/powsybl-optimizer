@@ -33,19 +33,17 @@ public class OpenReacParameters {
 
     private final List<String> variableTwoWindingsTransformers = new ArrayList<>();
 
-    private final List<OpenReacAlgoParam> algorithmParams = new ArrayList<>();
-
     // Algo parameters
 
     private OpenReacOptimisationObjective objective = OpenReacOptimisationObjective.MIN_GENERATION;
 
-    private static final String OBJECTIVE_DISTANCE_KEY = "ratio_voltage_target";
-
-    private Double objectiveDistance;
-
     private OpenReacAmplLogLevel logLevelAmpl = OpenReacAmplLogLevel.INFO;
 
     private OpenReacSolverLogLevel logLevelSolver = OpenReacSolverLogLevel.EVERYTHING;
+
+    private static final String OBJECTIVE_DISTANCE_KEY = "ratio_voltage_target";
+
+    private Double objectiveDistance = 0.5; // between 0 and 100
 
     private static final String MIN_PLAUSIBLE_LOW_VOLTAGE_LIMIT_KEY = "min_plausible_low_voltage_limit";
 
@@ -125,6 +123,9 @@ public class OpenReacParameters {
      * @param objectiveDistance is in %
      */
     public OpenReacParameters setObjectiveDistance(double objectiveDistance) {
+        if (Double.isNaN(objectiveDistance) || objectiveDistance > 1 || objectiveDistance < 0) {
+            throw new IllegalArgumentException("Objective distance must be defined and >= 0 and <= 1 to be consistent");
+        }
         this.objectiveDistance = objectiveDistance;
         return this;
     }
@@ -206,23 +207,13 @@ public class OpenReacParameters {
     }
 
     public List<OpenReacAlgoParam> getAllAlgorithmParams() {
-        ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>(algorithmParams.size() + 5);
-        allAlgoParams.addAll(algorithmParams);
-        if (objective != null) {
-            allAlgoParams.add(objective.toParam());
-        }
-        if (this.logLevelAmpl != null) {
-            allAlgoParams.add(this.logLevelAmpl.toParam());
-        }
-        if (this.logLevelSolver != null) {
-            allAlgoParams.add(this.logLevelSolver.toParam());
-        }
-        if (minPlausibleLowVoltageLimit != null) {
-            allAlgoParams.add(new OpenReacAlgoParamImpl(MIN_PLAUSIBLE_LOW_VOLTAGE_LIMIT_KEY, Double.toString(minPlausibleLowVoltageLimit)));
-        }
-        if (maxPlausibleHighVoltageLimit != null) {
-            allAlgoParams.add(new OpenReacAlgoParamImpl(MAX_PLAUSIBLE_HIGH_VOLTAGE_LIMIT_KEY, Double.toString(maxPlausibleHighVoltageLimit)));
-        }
+        ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>();
+        allAlgoParams.add(objective.toParam());
+        allAlgoParams.add(new OpenReacAlgoParamImpl(OBJECTIVE_DISTANCE_KEY, Double.toString(objectiveDistance)));
+        allAlgoParams.add(this.logLevelAmpl.toParam());
+        allAlgoParams.add(this.logLevelSolver.toParam());
+        allAlgoParams.add(new OpenReacAlgoParamImpl(MIN_PLAUSIBLE_LOW_VOLTAGE_LIMIT_KEY, Double.toString(minPlausibleLowVoltageLimit)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(MAX_PLAUSIBLE_HIGH_VOLTAGE_LIMIT_KEY, Double.toString(maxPlausibleHighVoltageLimit)));
         return allAlgoParams;
     }
 
@@ -281,8 +272,7 @@ public class OpenReacParameters {
         }
 
         // Check integrity of min/max plausible voltage limits
-        if (minPlausibleLowVoltageLimit != null && maxPlausibleHighVoltageLimit != null
-                && minPlausibleLowVoltageLimit > maxPlausibleHighVoltageLimit) {
+        if (minPlausibleLowVoltageLimit > maxPlausibleHighVoltageLimit) {
             LOGGER.warn("Min plausible low voltage limit must be lower than max plausible high voltage limit.");
             integrityAlgorithmParameters = false;
         }

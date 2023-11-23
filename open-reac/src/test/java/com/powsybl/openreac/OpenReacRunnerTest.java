@@ -98,45 +98,9 @@ class OpenReacRunnerTest {
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         OpenReacParameters parameters = new OpenReacParameters()
                 .setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE)
-                .setObjectiveDistance(69)
+                .setObjectiveDistance(0.69)
                 .setLogLevelAmpl(OpenReacAmplLogLevel.WARNING)
-                .setLogLevelSolver(OpenReacSolverLogLevel.ONLY_RESULTS);
-
-        LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
-                List.of("empty_case/reactiveopf_results_indic.txt"));
-        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
-                localCommandExecutor, ForkJoinPool.commonPool())) {
-            OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), parameters,
-                    new OpenReacConfig(true), computationManager);
-            Path execFolder = getAmplExecPath();
-            assertEqualsToRef(execFolder.resolve("param_algo.txt"), "/openreac-input-algo-parameters/modified_param_algo.txt");
-        }
-    }
-
-    @Test
-    void testDefaultParamAlgoExport() throws IOException {
-        Network network = IeeeCdfNetworkFactory.create118();
-        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
-        OpenReacParameters parameters = new OpenReacParameters();
-
-        LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
-                List.of("empty_case/reactiveopf_results_indic.txt"));
-        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
-                localCommandExecutor, ForkJoinPool.commonPool())) {
-            OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), parameters,
-                    new OpenReacConfig(true), computationManager);
-            Path execFolder = getAmplExecPath();
-            assertEqualsToRef(execFolder.resolve("param_algo.txt"), "/openreac-input-algo-parameters/default.txt");
-        }
-    }
-
-    @Test
-    void testParamAlgoExport() throws IOException {
-        Network network = IeeeCdfNetworkFactory.create118();
-        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
-        OpenReacParameters parameters = new OpenReacParameters()
-                .setObjective(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT)
-                .setObjectiveDistance(26)
+                .setLogLevelSolver(OpenReacSolverLogLevel.ONLY_RESULTS)
                 .setMinPlausibleLowVoltageLimit(0.7888)
                 .setMaxPlausibleHighVoltageLimit(1.3455);
 
@@ -149,7 +113,6 @@ class OpenReacRunnerTest {
             Path execFolder = getAmplExecPath();
             assertEqualsToRef(execFolder.resolve("param_algo.txt"), "/openreac-input-algo-parameters/modified_param_algo.txt");
         }
-
     }
 
     @Test
@@ -158,7 +121,7 @@ class OpenReacRunnerTest {
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         OpenReacParameters parameters = new OpenReacParameters().setObjective(
                 OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT)
-            .setObjectiveDistance(70)
+            .setObjectiveDistance(0.7)
             .addVariableTwoWindingsTransformers(network.getTwoWindingsTransformerStream()
                 .limit(1)
                 .map(TwoWindingsTransformer::getId)
