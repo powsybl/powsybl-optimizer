@@ -313,3 +313,4 @@ if card(messagesInfo) > 0 then {
     let temp1:=temp1+1;
   }
 }
+close (fileOut);
