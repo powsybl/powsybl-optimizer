@@ -135,8 +135,8 @@ public class OpenReacParameters {
     }
 
     public OpenReacParameters setMinPlausibleLowVoltageLimit(double minPlausibleLowVoltageLimit) {
-        if (minPlausibleLowVoltageLimit < 0) {
-            throw new InvalidParametersException("Min plausible low voltage limit must be >= 0 to be consistent.");
+        if (minPlausibleLowVoltageLimit < 0 || Double.isNaN(minPlausibleLowVoltageLimit)) {
+            throw new InvalidParametersException("Min plausible low voltage limit must be >= 0 and defined to be consistent.");
         }
         this.minPlausibleLowVoltageLimit = minPlausibleLowVoltageLimit;
         return this;
@@ -150,8 +150,8 @@ public class OpenReacParameters {
     }
 
     public OpenReacParameters setMaxPlausibleHighVoltageLimit(double maxPlausibleHighVoltageLimit) {
-        if (maxPlausibleHighVoltageLimit <= 0) {
-            throw new InvalidParametersException("Max plausible high voltage limit must be > 0 to be consistent.");
+        if (maxPlausibleHighVoltageLimit <= 0 || Double.isNaN(maxPlausibleHighVoltageLimit)) {
+            throw new InvalidParametersException("Max plausible high voltage limit must be > 0 and defined to be consistent.");
         }
         this.maxPlausibleHighVoltageLimit = maxPlausibleHighVoltageLimit;
         return this;

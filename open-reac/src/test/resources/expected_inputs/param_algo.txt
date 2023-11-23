@@ -1,3 +1,5 @@
 objective_choice 1
 ratio_voltage_target 0.7
+min_plausible_low_voltage_limit 0.5
+max_plausible_high_voltage_limit 1.5
 

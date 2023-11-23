@@ -49,6 +49,7 @@ public class OpenReacParametersTest {
         parameters.setMinPlausibleLowVoltageLimit(0.8);
         assertEquals(0.8, parameters.getMinPlausibleLowVoltageLimit());
         assertThrows(InvalidParametersException.class, () -> parameters.setMinPlausibleLowVoltageLimit(-0.25));
+        assertThrows(InvalidParametersException.class, () -> parameters.setMinPlausibleLowVoltageLimit(Double.NaN));
 
         // Consistency of max plausible high voltage limit (> 0)
         assertEquals(1.5, parameters.getMaxPlausibleHighVoltageLimit()); // default value
@@ -56,6 +57,7 @@ public class OpenReacParametersTest {
         assertEquals(0.75, parameters.getMaxPlausibleHighVoltageLimit());
         assertThrows(InvalidParametersException.class, () -> parameters.setMaxPlausibleHighVoltageLimit(-0.15));
         assertThrows(InvalidParametersException.class, () -> parameters.setMaxPlausibleHighVoltageLimit(0));
+        assertThrows(InvalidParametersException.class, () -> parameters.setMaxPlausibleHighVoltageLimit(Double.NaN));
 
         // Check min < max
         assertFalse(parameters.checkAlgorithmParametersIntegrity());
@@ -90,7 +92,7 @@ public class OpenReacParametersTest {
         assertEquals(0, parameters.getSpecificVoltageLimits().size(), "SpecificVoltageLimits should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getConstantQGenerators().size(), "ConstantQGenerators should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getVariableShuntCompensators().size(), "VariableShuntCompensators should be empty when using default OpenReacParameter constructor.");
-        assertEquals(1, parameters.getAllAlgorithmParams().size());
+        assertEquals(3, parameters.getAllAlgorithmParams().size());
 
         // adding an objective, to have a valid OpenReacParameter object
         parameters.setObjective(OpenReacOptimisationObjective.MIN_GENERATION);
