@@ -47,11 +47,11 @@ public class OpenReacParameters {
 
     private static final String MIN_PLAUSIBLE_LOW_VOLTAGE_LIMIT_KEY = "min_plausible_low_voltage_limit";
 
-    private Double minPlausibleLowVoltageLimit; // in pu
+    private Double minPlausibleLowVoltageLimit = 0.5; // in pu
 
     private static final String MAX_PLAUSIBLE_HIGH_VOLTAGE_LIMIT_KEY = "max_plausible_high_voltage_limit";
 
-    private Double maxPlausibleHighVoltageLimit; // in pu
+    private Double maxPlausibleHighVoltageLimit = 1.5; // in pu
 
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.

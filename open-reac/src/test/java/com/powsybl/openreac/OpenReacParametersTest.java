@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class OpenReacParametersTest {
 
     @Test
-    public void testObjectiveIntegrityChecks() {
+    void testObjectiveIntegrity() {
         Network network = IeeeCdfNetworkFactory.create118();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         OpenReacParameters parameters = new OpenReacParameters();
@@ -41,21 +41,21 @@ public class OpenReacParametersTest {
     }
 
     @Test
-    void testMinMaxVoltageLimitIntegrityChecks() {
+    void testMinMaxVoltageLimitIntegrity() {
         OpenReacParameters parameters = new OpenReacParameters();
-        assertNull(parameters.getMinPlausibleLowVoltageLimit());
-        assertNull(parameters.getMaxPlausibleHighVoltageLimit());
 
         // Consistency of min plausible low voltage limit (>= 0)
-        assertThrows(InvalidParametersException.class, () -> parameters.setMinPlausibleLowVoltageLimit(-0.25));
+        assertEquals(0.5, parameters.getMinPlausibleLowVoltageLimit()); // default value
         parameters.setMinPlausibleLowVoltageLimit(0.8);
         assertEquals(0.8, parameters.getMinPlausibleLowVoltageLimit());
+        assertThrows(InvalidParametersException.class, () -> parameters.setMinPlausibleLowVoltageLimit(-0.25));
 
         // Consistency of max plausible high voltage limit (> 0)
-        assertThrows(InvalidParametersException.class, () -> parameters.setMaxPlausibleHighVoltageLimit(-0.15));
-        assertThrows(InvalidParametersException.class, () -> parameters.setMaxPlausibleHighVoltageLimit(0));
+        assertEquals(1.5, parameters.getMaxPlausibleHighVoltageLimit()); // default value
         parameters.setMaxPlausibleHighVoltageLimit(0.75);
         assertEquals(0.75, parameters.getMaxPlausibleHighVoltageLimit());
+        assertThrows(InvalidParametersException.class, () -> parameters.setMaxPlausibleHighVoltageLimit(-0.15));
+        assertThrows(InvalidParametersException.class, () -> parameters.setMaxPlausibleHighVoltageLimit(0));
 
         // Check min < max
         assertFalse(parameters.checkAlgorithmParametersIntegrity());
@@ -80,7 +80,7 @@ public class OpenReacParametersTest {
     }
 
     @Test
-    public void testParametersIntegrityChecks() {
+    public void testParametersIntegrity() {
         Network network = IeeeCdfNetworkFactory.create118();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         String wrongId = "An id not in 118 cdf network.";

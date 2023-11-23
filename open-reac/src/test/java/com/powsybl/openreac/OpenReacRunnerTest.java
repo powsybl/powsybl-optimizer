@@ -91,10 +91,12 @@ class OpenReacRunnerTest {
     }
 
     @Test
-    void testMinMaxPlausibleVoltageLimitsParamAlgoExport() throws IOException {
+    void testParamAlgoExport() throws IOException {
         Network network = IeeeCdfNetworkFactory.create118();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         OpenReacParameters parameters = new OpenReacParameters()
+                .setObjective(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT)
+                .setObjectiveDistance(26)
                 .setMinPlausibleLowVoltageLimit(0.7888)
                 .setMaxPlausibleHighVoltageLimit(1.3455);
 
@@ -105,7 +107,7 @@ class OpenReacRunnerTest {
             OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), parameters,
                     new OpenReacConfig(true), computationManager);
             Path execFolder = getAmplExecPath();
-            assertEqualsToRef(execFolder.resolve("param_algo.txt"), "/openreac-input-algo-parameters/minmax_plausible_voltage_limits.txt");
+            assertEqualsToRef(execFolder.resolve("param_algo.txt"), "/openreac-input-algo-parameters/modified_param_algo.txt");
         }
 
     }
