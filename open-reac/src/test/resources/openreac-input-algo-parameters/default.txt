@@ -1,5 +1,4 @@
 objective_choice 0
-ratio_voltage_target 0.5
 log_level_ampl INFO
 log_level_knitro 2
 min_plausible_low_voltage_limit 0.5

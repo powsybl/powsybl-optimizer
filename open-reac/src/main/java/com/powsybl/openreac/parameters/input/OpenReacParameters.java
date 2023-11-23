@@ -43,15 +43,15 @@ public class OpenReacParameters {
 
     private static final String OBJECTIVE_DISTANCE_KEY = "ratio_voltage_target";
 
-    private Double objectiveDistance = 0.5; // between 0 and 100
+    private Double objectiveDistance; // between 0 and 100
 
     private static final String MIN_PLAUSIBLE_LOW_VOLTAGE_LIMIT_KEY = "min_plausible_low_voltage_limit";
 
-    private Double minPlausibleLowVoltageLimit = 0.5; // in pu
+    private double minPlausibleLowVoltageLimit = 0.5; // in pu
 
     private static final String MAX_PLAUSIBLE_HIGH_VOLTAGE_LIMIT_KEY = "max_plausible_high_voltage_limit";
 
-    private Double maxPlausibleHighVoltageLimit = 1.5; // in pu
+    private double maxPlausibleHighVoltageLimit = 1.5; // in pu
 
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.
@@ -123,8 +123,8 @@ public class OpenReacParameters {
      * @param objectiveDistance is in %
      */
     public OpenReacParameters setObjectiveDistance(double objectiveDistance) {
-        if (Double.isNaN(objectiveDistance) || objectiveDistance > 1 || objectiveDistance < 0) {
-            throw new IllegalArgumentException("Objective distance must be defined and >= 0 and <= 1 to be consistent");
+        if (Double.isNaN(objectiveDistance) || objectiveDistance > 100 || objectiveDistance < 0) {
+            throw new IllegalArgumentException("Objective distance must be defined and >= 0 and <= 100 to be consistent");
         }
         this.objectiveDistance = objectiveDistance;
         return this;
@@ -163,7 +163,7 @@ public class OpenReacParameters {
     /**
      * @return the minimal plausible value for low voltage limits in p.u.
      */
-    public Double getMinPlausibleLowVoltageLimit() {
+    public double getMinPlausibleLowVoltageLimit() {
         return minPlausibleLowVoltageLimit;
     }
 
@@ -178,7 +178,7 @@ public class OpenReacParameters {
     /**
      * @return the maximal plausible value for high voltage limits in p.u.
      */
-    public Double getMaxPlausibleHighVoltageLimit() {
+    public double getMaxPlausibleHighVoltageLimit() {
         return maxPlausibleHighVoltageLimit;
     }
 
@@ -209,7 +209,9 @@ public class OpenReacParameters {
     public List<OpenReacAlgoParam> getAllAlgorithmParams() {
         ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>();
         allAlgoParams.add(objective.toParam());
-        allAlgoParams.add(new OpenReacAlgoParamImpl(OBJECTIVE_DISTANCE_KEY, Double.toString(objectiveDistance)));
+        if (objectiveDistance != null) {
+            allAlgoParams.add(new OpenReacAlgoParamImpl(OBJECTIVE_DISTANCE_KEY, Double.toString(objectiveDistance / 100)));
+        }
         allAlgoParams.add(this.logLevelAmpl.toParam());
         allAlgoParams.add(this.logLevelSolver.toParam());
         allAlgoParams.add(new OpenReacAlgoParamImpl(MIN_PLAUSIBLE_LOW_VOLTAGE_LIMIT_KEY, Double.toString(minPlausibleLowVoltageLimit)));

@@ -25,7 +25,7 @@
   "variableTwoWindingsTransformers" : [ "tr1" ],
   "variableShuntCompensators" : [ "sc1", "sc2" ],
   "objective" : "MIN_GENERATION",
-  "objectiveDistance" : 0.05,
+  "objectiveDistance" : 5.0,
   "logLevelAmpl" : "WARNING",
   "logLevelSolver" : "NOTHING",
   "minPlausibleLowVoltageLimit" : 0.755,

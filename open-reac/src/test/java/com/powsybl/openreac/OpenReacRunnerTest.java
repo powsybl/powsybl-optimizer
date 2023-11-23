@@ -98,7 +98,7 @@ class OpenReacRunnerTest {
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         OpenReacParameters parameters = new OpenReacParameters()
                 .setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE)
-                .setObjectiveDistance(0.69)
+                .setObjectiveDistance(69)
                 .setLogLevelAmpl(OpenReacAmplLogLevel.WARNING)
                 .setLogLevelSolver(OpenReacSolverLogLevel.ONLY_RESULTS)
                 .setMinPlausibleLowVoltageLimit(0.7888)
@@ -121,7 +121,7 @@ class OpenReacRunnerTest {
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         OpenReacParameters parameters = new OpenReacParameters().setObjective(
                 OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT)
-            .setObjectiveDistance(0.7)
+            .setObjectiveDistance(70)
             .addVariableTwoWindingsTransformers(network.getTwoWindingsTransformerStream()
                 .limit(1)
                 .map(TwoWindingsTransformer::getId)

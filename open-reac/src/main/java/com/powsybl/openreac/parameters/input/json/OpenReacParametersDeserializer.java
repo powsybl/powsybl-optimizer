@@ -75,11 +75,11 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                     break;
                 case "minPlausibleLowVoltageLimit":
                     parser.nextToken();
-                    parameters.setMinPlausibleLowVoltageLimit(parser.getValueAsDouble());
+                    parameters.setMinPlausibleLowVoltageLimit(parser.readValueAs(Double.class));
                     break;
                 case "maxPlausibleHighVoltageLimit":
                     parser.nextToken();
-                    parameters.setMaxPlausibleHighVoltageLimit(parser.getValueAsDouble());
+                    parameters.setMaxPlausibleHighVoltageLimit(parser.readValueAs(Double.class));
                     break;
                 default:
                     throw new IllegalStateException("Unexpected field: " + parser.getCurrentName());

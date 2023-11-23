@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Nicolas PIERRE <nicolas.pierre at artelys.com>
+ * @author Pierre ARVY <pierre.arvy at artelys.com>
  */
 public class OpenReacParametersTest {
 
@@ -37,12 +38,12 @@ public class OpenReacParametersTest {
         assertThrows(NullPointerException.class, () -> parameters.setObjective(null), "Can't unset objective function.");
 
         // Objective distance for BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT objective
-        parameters.setObjectiveDistance(0.); // min value
-        assertEquals(0., parameters.getObjectiveDistance());
-        parameters.setObjectiveDistance(1.); // max value
-        assertEquals(1., parameters.getObjectiveDistance());
-        assertThrows(IllegalArgumentException.class, () -> parameters.setObjectiveDistance(-2.), "Objective distance must be >= 0");
-        assertThrows(IllegalArgumentException.class, () -> parameters.setObjectiveDistance(1.02), "Objective distance must be <= 1");
+        parameters.setObjectiveDistance(0); // min value
+        assertEquals(0, parameters.getObjectiveDistance());
+        parameters.setObjectiveDistance(100); // max value
+        assertEquals(100, parameters.getObjectiveDistance());
+        assertThrows(IllegalArgumentException.class, () -> parameters.setObjectiveDistance(-0.15), "Objective distance must be >= 0");
+        assertThrows(IllegalArgumentException.class, () -> parameters.setObjectiveDistance(100.02), "Objective distance must be <= 1");
         assertThrows(IllegalArgumentException.class, () -> parameters.setObjectiveDistance(Double.NaN), "Objective distance must be defined.");
 
         assertTrue(parameters.checkAlgorithmParametersIntegrity());
@@ -105,7 +106,7 @@ public class OpenReacParametersTest {
     void testAlgorithmParams() {
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE);
-        parameters.setObjectiveDistance(0.4);
+        parameters.setObjectiveDistance(40);
         parameters.setLogLevelAmpl(OpenReacAmplLogLevel.DEBUG);
         parameters.setLogLevelSolver(OpenReacSolverLogLevel.NOTHING);
         parameters.setMinPlausibleLowVoltageLimit(0.8);
@@ -132,7 +133,7 @@ public class OpenReacParametersTest {
         assertEquals(0, parameters.getSpecificVoltageLimits().size(), "SpecificVoltageLimits should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getConstantQGenerators().size(), "ConstantQGenerators should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getVariableShuntCompensators().size(), "VariableShuntCompensators should be empty when using default OpenReacParameter constructor.");
-        assertEquals(6, parameters.getAllAlgorithmParams().size());
+        assertEquals(5, parameters.getAllAlgorithmParams().size());
 
         // adding an objective, to have a valid OpenReacParameter object
         parameters.setObjective(OpenReacOptimisationObjective.MIN_GENERATION);
