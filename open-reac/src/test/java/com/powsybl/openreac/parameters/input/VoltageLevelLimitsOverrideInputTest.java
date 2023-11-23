@@ -86,7 +86,7 @@ class VoltageLevelLimitsOverrideInputTest {
 
     @Test
     void testZeroVoltageLimit() {
-        Network network = IeeeCdfNetworkFactory.create118();
+        Network network = IeeeCdfNetworkFactory.create57();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
 
         VoltageLevel vl = network.getVoltageLevels().iterator().next();
@@ -99,7 +99,7 @@ class VoltageLevelLimitsOverrideInputTest {
 
     @Test
     void testUndefinedVoltageLimitsWithoutOverride() {
-        Network network = IeeeCdfNetworkFactory.create118();
+        Network network = IeeeCdfNetworkFactory.create57();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
 
         VoltageLevel vl = network.getVoltageLevels().iterator().next();
@@ -123,7 +123,7 @@ class VoltageLevelLimitsOverrideInputTest {
 
     @Test
     void testVoltageOverrideWithNegativeVoltageLimit() {
-        Network network = IeeeCdfNetworkFactory.create118();
+        Network network = IeeeCdfNetworkFactory.create57();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
 
         VoltageLevel vl = network.getVoltageLevels().iterator().next();
@@ -161,7 +161,7 @@ class VoltageLevelLimitsOverrideInputTest {
 
     @Test
     void testVoltageOverrideWithLowLimitGreaterHighLimit() {
-        Network network = IeeeCdfNetworkFactory.create118();
+        Network network = IeeeCdfNetworkFactory.create57();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
 
         VoltageLevel vl = network.getVoltageLevels().iterator().next();
@@ -186,7 +186,7 @@ class VoltageLevelLimitsOverrideInputTest {
 
     @Test
     void testVoltageOverrideOnInvalidVoltageLevel() {
-        Network network = IeeeCdfNetworkFactory.create118();
+        Network network = IeeeCdfNetworkFactory.create57();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
 
         // if voltage level (on which is applied override) is not in the network, throws exception

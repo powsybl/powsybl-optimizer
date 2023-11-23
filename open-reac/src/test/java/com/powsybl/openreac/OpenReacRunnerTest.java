@@ -20,7 +20,9 @@ import com.powsybl.loadflow.LoadFlowResult;
 import com.powsybl.openreac.network.HvdcNetworkFactory;
 import com.powsybl.openreac.network.VoltageControlNetworkFactory;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
+import com.powsybl.openreac.parameters.input.algo.OpenReacAmplLogLevel;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
+import com.powsybl.openreac.parameters.input.algo.OpenReacSolverLogLevel;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.OpenReacStatus;
 import org.junit.jupiter.api.AfterEach;
@@ -74,8 +76,46 @@ class OpenReacRunnerTest {
     }
 
     @Test
+    void testDefaultParamAlgoExport() throws IOException {
+        Network network = IeeeCdfNetworkFactory.create57();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
+        OpenReacParameters parameters = new OpenReacParameters();
+
+        LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
+                List.of("empty_case/reactiveopf_results_indic.txt"));
+        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
+                localCommandExecutor, ForkJoinPool.commonPool())) {
+            OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), parameters,
+                    new OpenReacConfig(true), computationManager);
+            Path execFolder = getAmplExecPath();
+            assertEqualsToRef(execFolder.resolve("param_algo.txt"), "/openreac-input-algo-parameters/default.txt");
+        }
+    }
+
+    @Test
+    void testParamAlgoExport() throws IOException {
+        Network network = IeeeCdfNetworkFactory.create57();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
+        OpenReacParameters parameters = new OpenReacParameters()
+                .setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE)
+                .setObjectiveDistance(69)
+                .setLogLevelAmpl(OpenReacAmplLogLevel.WARNING)
+                .setLogLevelSolver(OpenReacSolverLogLevel.ONLY_RESULTS);
+
+        LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
+                List.of("empty_case/reactiveopf_results_indic.txt"));
+        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
+                localCommandExecutor, ForkJoinPool.commonPool())) {
+            OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), parameters,
+                    new OpenReacConfig(true), computationManager);
+            Path execFolder = getAmplExecPath();
+            assertEqualsToRef(execFolder.resolve("param_algo.txt"), "/openreac-input-algo-parameters/modified_param_algo.txt");
+        }
+    }
+
+    @Test
     void testInputFile() throws IOException {
-        Network network = IeeeCdfNetworkFactory.create118();
+        Network network = IeeeCdfNetworkFactory.create57();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         OpenReacParameters parameters = new OpenReacParameters().setObjective(
                 OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT)
@@ -106,7 +146,7 @@ class OpenReacRunnerTest {
 
     @Test
     public void testOutputFileParsing() throws IOException {
-        Network network = IeeeCdfNetworkFactory.create118();
+        Network network = IeeeCdfNetworkFactory.create57();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         // To parse correctly data from output files, there must be an ID in the Ampl mapper
         // For this we add dummy elements to the network,
@@ -147,7 +187,8 @@ class OpenReacRunnerTest {
 
         LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
             List.of("mock_outputs/reactiveopf_results_generators.csv",
-                "mock_outputs/reactiveopf_results_indic.txt", "mock_outputs/reactiveopf_results_rtc.csv",
+                "mock_outputs/reactiveopf_results_indic.txt",
+                "mock_outputs/reactiveopf_results_rtc.csv",
                 "mock_outputs/reactiveopf_results_shunts.csv",
                 "mock_outputs/reactiveopf_results_static_var_compensators.csv",
                 "mock_outputs/reactiveopf_results_vsc_converter_stations.csv"));
@@ -162,8 +203,8 @@ class OpenReacRunnerTest {
             assertEquals(2, openReacResult.getTapPositionModifications().size());
             assertEquals(1, openReacResult.getSvcModifications().size());
             assertEquals(1, openReacResult.getVscModifications().size());
-            assertEquals(54, openReacResult.getGeneratorModifications().size());
-            assertEquals(78, openReacResult.getIndicators().size());
+            assertEquals(7, openReacResult.getGeneratorModifications().size());
+            assertEquals(80, openReacResult.getIndicators().size());
             assertTrue(openReacResult.getReactiveSlacks().isEmpty());
         }
     }
@@ -241,8 +282,7 @@ class OpenReacRunnerTest {
 
     @Test
     public void testRealNetwork() throws IOException {
-        // Network {CC0 SC0}: 53 generators have an inconsistent target voltage and have been discarded from voltage control
-        Network network = IeeeCdfNetworkFactory.create118();
+        Network network = IeeeCdfNetworkFactory.create57();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         OpenReacParameters parameters = new OpenReacParameters();
         testAllModifAndLoadFlow(network, "openreac-output-real-network", parameters);
@@ -332,10 +372,10 @@ class OpenReacRunnerTest {
     void setDefaultVoltageLimits(Network network) {
         for (VoltageLevel vl : network.getVoltageLevels()) {
             if (vl.getLowVoltageLimit() <= 0 || Double.isNaN(vl.getLowVoltageLimit())) {
-                vl.setLowVoltageLimit(0.8 * vl.getNominalV());
+                vl.setLowVoltageLimit(0.5 * vl.getNominalV());
             }
             if (Double.isNaN(vl.getHighVoltageLimit())) {
-                vl.setHighVoltageLimit(1.2 * vl.getNominalV());
+                vl.setHighVoltageLimit(1.5 * vl.getNominalV());
             }
         }
     }

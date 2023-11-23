@@ -9,9 +9,7 @@ package com.powsybl.openreac.parameters.input;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
-import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
-import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParamImpl;
-import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
+import com.powsybl.openreac.parameters.input.algo.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,11 +35,13 @@ public class OpenReacParameters {
 
     private final List<String> variableTwoWindingsTransformers = new ArrayList<>();
 
-    private final List<OpenReacAlgoParam> algorithmParams = new ArrayList<>();
-
     private OpenReacOptimisationObjective objective = OpenReacOptimisationObjective.MIN_GENERATION;
 
     private Double objectiveDistance;
+
+    private OpenReacAmplLogLevel logLevelAmpl = OpenReacAmplLogLevel.INFO;
+
+    private OpenReacSolverLogLevel logLevelSolver = OpenReacSolverLogLevel.EVERYTHING;
 
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.
@@ -117,6 +117,36 @@ public class OpenReacParameters {
         return this;
     }
 
+    /**
+     * @return log level of ampl printings.
+     */
+    public OpenReacAmplLogLevel getLogLevelAmpl() {
+        return this.logLevelAmpl;
+    }
+
+    /**
+     * @param logLevelAmpl the log level of ampl printings.
+     */
+    public OpenReacParameters setLogLevelAmpl(OpenReacAmplLogLevel logLevelAmpl) {
+        this.logLevelAmpl = Objects.requireNonNull(logLevelAmpl);
+        return this;
+    }
+
+    /**
+     * @return log level of solver printings.
+     */
+    public OpenReacSolverLogLevel getLogLevelSolver() {
+        return this.logLevelSolver;
+    }
+
+    /**
+     * @param logLevelSolver the log level of solver printings.
+     */
+    public OpenReacParameters setLogLevelSolver(OpenReacSolverLogLevel logLevelSolver) {
+        this.logLevelSolver = Objects.requireNonNull(logLevelSolver);
+        return this;
+    }
+
     public List<String> getVariableShuntCompensators() {
         return variableShuntCompensators;
     }
@@ -134,13 +164,18 @@ public class OpenReacParameters {
     }
 
     public List<OpenReacAlgoParam> getAllAlgorithmParams() {
-        ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>(algorithmParams.size() + 2);
-        allAlgoParams.addAll(algorithmParams);
-        if (objective != null) {
-            allAlgoParams.add(objective.toParam());
+        ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>();
+        if (this.objective != null) {
+            allAlgoParams.add(this.objective.toParam());
         }
-        if (objectiveDistance != null) {
-            allAlgoParams.add(new OpenReacAlgoParamImpl(OBJECTIVE_DISTANCE_KEY, Double.toString(objectiveDistance / 100)));
+        if (this.objectiveDistance != null) {
+            allAlgoParams.add(new OpenReacAlgoParamImpl(OBJECTIVE_DISTANCE_KEY, Double.toString(this.objectiveDistance / 100.0)));
+        }
+        if (this.logLevelAmpl != null) {
+            allAlgoParams.add(this.logLevelAmpl.toParam());
+        }
+        if (this.logLevelSolver != null) {
+            allAlgoParams.add(this.logLevelSolver.toParam());
         }
         return allAlgoParams;
     }

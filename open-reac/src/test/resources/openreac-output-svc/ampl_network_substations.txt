@@ -1,4 +1,0 @@
-#Substations (svc/InitialState)
-#"variant" "num" "unused1" "unused2" "nomV (KV)" "minV (pu)" "maxV (pu)" "fault" "curative" "country" "id" "description"
-1 1 "" 0 400.000 -99999.0 1.05000 0 0 "" "vl1" "vl1"
-1 2 "" 0 400.000 -99999.0 1.05000 0 0 "" "vl2" "vl2"

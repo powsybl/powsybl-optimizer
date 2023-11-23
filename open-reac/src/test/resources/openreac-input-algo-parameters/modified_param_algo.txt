@@ -1,0 +1,5 @@
+objective_choice 2
+ratio_voltage_target 0.69
+log_level_ampl WARNING
+log_level_knitro 1
+

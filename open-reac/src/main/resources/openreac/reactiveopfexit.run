@@ -50,6 +50,8 @@ printf "%s %Q\n","directory",_cd > (fileOut);
 
 # Algorithmic parameters
 printf "\n" > (fileOut);
+printf "%s %s\n","log_level_ampl",log_level_ampl > (fileOut);
+printf "%s %i\n","log_level_knitro",log_level_knitro > (fileOut);
 printf "%s %f\n","Pnull",Pnull > (fileOut);
 printf "%s %f\n","Znull",Znull > (fileOut);
 printf "%s %f\n","epsilon_nominal_voltage",epsilon_nominal_voltage > (fileOut);

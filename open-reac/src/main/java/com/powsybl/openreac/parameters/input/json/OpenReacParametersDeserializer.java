@@ -13,7 +13,9 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
+import com.powsybl.openreac.parameters.input.algo.OpenReacAmplLogLevel;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
+import com.powsybl.openreac.parameters.input.algo.OpenReacSolverLogLevel;
 
 import java.io.IOException;
 import java.util.List;
@@ -62,6 +64,14 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                 case "objectiveDistance":
                     parser.nextToken();
                     parameters.setObjectiveDistance(parser.getValueAsDouble());
+                    break;
+                case "logLevelAmpl":
+                    parser.nextToken();
+                    parameters.setLogLevelAmpl(OpenReacAmplLogLevel.valueOf(parser.getText()));
+                    break;
+                case "logLevelSolver":
+                    parser.nextToken();
+                    parameters.setLogLevelSolver(OpenReacSolverLogLevel.valueOf(parser.getText()));
                     break;
                 default:
                     throw new IllegalStateException("Unexpected field: " + parser.getCurrentName());

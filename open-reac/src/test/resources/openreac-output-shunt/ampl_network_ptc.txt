@@ -1,2 +1,0 @@
-#Phase tap changers (svc/InitialState)
-#"variant" "num" "tap" "table" "fault" "curative" "id"
