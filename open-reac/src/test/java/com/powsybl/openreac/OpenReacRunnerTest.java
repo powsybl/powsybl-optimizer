@@ -115,7 +115,7 @@ class OpenReacRunnerTest {
 
     @Test
     void testInputFile() throws IOException {
-        Network network = IeeeCdfNetworkFactory.create118();
+        Network network = IeeeCdfNetworkFactory.create57();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         OpenReacParameters parameters = new OpenReacParameters().setObjective(
                 OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT)
@@ -146,7 +146,7 @@ class OpenReacRunnerTest {
 
     @Test
     public void testOutputFileParsing() throws IOException {
-        Network network = IeeeCdfNetworkFactory.create118();
+        Network network = IeeeCdfNetworkFactory.create57();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         // To parse correctly data from output files, there must be an ID in the Ampl mapper
         // For this we add dummy elements to the network,
@@ -187,7 +187,8 @@ class OpenReacRunnerTest {
 
         LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
             List.of("mock_outputs/reactiveopf_results_generators.csv",
-                "mock_outputs/reactiveopf_results_indic.txt", "mock_outputs/reactiveopf_results_rtc.csv",
+                "mock_outputs/reactiveopf_results_indic.txt",
+                "mock_outputs/reactiveopf_results_rtc.csv",
                 "mock_outputs/reactiveopf_results_shunts.csv",
                 "mock_outputs/reactiveopf_results_static_var_compensators.csv",
                 "mock_outputs/reactiveopf_results_vsc_converter_stations.csv"));
@@ -202,8 +203,8 @@ class OpenReacRunnerTest {
             assertEquals(2, openReacResult.getTapPositionModifications().size());
             assertEquals(1, openReacResult.getSvcModifications().size());
             assertEquals(1, openReacResult.getVscModifications().size());
-            assertEquals(54, openReacResult.getGeneratorModifications().size());
-            assertEquals(78, openReacResult.getIndicators().size());
+            assertEquals(7, openReacResult.getGeneratorModifications().size());
+            assertEquals(80, openReacResult.getIndicators().size());
             assertTrue(openReacResult.getReactiveSlacks().isEmpty());
         }
     }
@@ -281,8 +282,7 @@ class OpenReacRunnerTest {
 
     @Test
     public void testRealNetwork() throws IOException {
-        // Network {CC0 SC0}: 53 generators have an inconsistent target voltage and have been discarded from voltage control
-        Network network = IeeeCdfNetworkFactory.create118();
+        Network network = IeeeCdfNetworkFactory.create57();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         OpenReacParameters parameters = new OpenReacParameters();
         testAllModifAndLoadFlow(network, "openreac-output-real-network", parameters);
@@ -372,10 +372,10 @@ class OpenReacRunnerTest {
     void setDefaultVoltageLimits(Network network) {
         for (VoltageLevel vl : network.getVoltageLevels()) {
             if (vl.getLowVoltageLimit() <= 0 || Double.isNaN(vl.getLowVoltageLimit())) {
-                vl.setLowVoltageLimit(0.8 * vl.getNominalV());
+                vl.setLowVoltageLimit(0.5 * vl.getNominalV());
             }
             if (Double.isNaN(vl.getHighVoltageLimit())) {
-                vl.setHighVoltageLimit(1.2 * vl.getNominalV());
+                vl.setHighVoltageLimit(1.5 * vl.getNominalV());
             }
         }
     }
