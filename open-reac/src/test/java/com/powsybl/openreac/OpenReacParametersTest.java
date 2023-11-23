@@ -122,7 +122,7 @@ public class OpenReacParametersTest {
     }
 
     @Test
-    public void testParametersIntegrity() {
+    void testParametersIntegrity() {
         Network network = IeeeCdfNetworkFactory.create57();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         String wrongId = "An id not in 118 cdf network.";
