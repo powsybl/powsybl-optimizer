@@ -77,7 +77,7 @@ class OpenReacRunnerTest {
 
     @Test
     void testDefaultParamAlgoExport() throws IOException {
-        Network network = IeeeCdfNetworkFactory.create118();
+        Network network = IeeeCdfNetworkFactory.create57();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         OpenReacParameters parameters = new OpenReacParameters();
 
@@ -94,7 +94,7 @@ class OpenReacRunnerTest {
 
     @Test
     void testParamAlgoExport() throws IOException {
-        Network network = IeeeCdfNetworkFactory.create118();
+        Network network = IeeeCdfNetworkFactory.create57();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         OpenReacParameters parameters = new OpenReacParameters()
                 .setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE)
