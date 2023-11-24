@@ -34,7 +34,7 @@ public class OpenReacParameters {
 
     private final List<String> variableTwoWindingsTransformers = new ArrayList<>();
 
-    private List<String> busesWithReactiveSlack = new ArrayList<>();
+    private final List<String> busesWithReactiveSlack = new ArrayList<>();
 
     // Algo parameters
 

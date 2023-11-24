@@ -35,7 +35,6 @@ public class OpenReacParametersSerializer extends StdSerializer<OpenReacParamete
         serializerProvider.defaultSerializeField("constantQGenerators", openReacParameters.getConstantQGenerators(), jsonGenerator);
         serializerProvider.defaultSerializeField("variableTwoWindingsTransformers", openReacParameters.getVariableTwoWindingsTransformers(), jsonGenerator);
         serializerProvider.defaultSerializeField("variableShuntCompensators", openReacParameters.getVariableShuntCompensators(), jsonGenerator);
-        // Export configured buses only if
         if (openReacParameters.getBusesWithReactiveSlackConfig() == OpenReacBusesWithReactiveSlackConfig.SPECIFIED) {
             serializerProvider.defaultSerializeField("busesWithReactiveSlack", openReacParameters.getConfiguredBusesWithReactiveSlacks(), jsonGenerator);
         }
