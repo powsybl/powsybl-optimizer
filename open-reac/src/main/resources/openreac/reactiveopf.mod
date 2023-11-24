@@ -949,7 +949,7 @@ subject to ctr_balance_P{PROBLEM_ACOPF,k in BUSCC}:
 # Reactive Balance
 #
 
-# Reactive balance slack variables at every node 
+# Reactive balance slack variables at specified nodes
 set BUSCC_SLACK := if buses_with_reactive_slacks == "ALL" then BUSCC
                     else if buses_with_reactive_slacks == "NO_GENERATION" then {n in BUSCC: (card{(g,n) in UNITON: (g,n) not in UNIT_FIXQ}==0 and card{(svc,n) in SVCON}==0 and card{(vscconv,n) in VSCCONVON}==0)}
                     else BUSCC inter PARAM_BUSES_WITH_REACTIVE_SLACK; # if = "SPECIFIED", buses given as parameter but in connex component
