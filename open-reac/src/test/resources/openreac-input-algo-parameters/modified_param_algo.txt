@@ -4,4 +4,5 @@ log_level_ampl WARNING
 log_level_knitro 1
 min_plausible_low_voltage_limit 0.7888
 max_plausible_high_voltage_limit 1.3455
+buses_with_reactive_slacks ALL
 

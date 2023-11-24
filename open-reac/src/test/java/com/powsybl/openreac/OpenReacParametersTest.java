@@ -124,23 +124,25 @@ public class OpenReacParametersTest {
         parameters.setLogLevelSolver(OpenReacSolverLogLevel.NOTHING);
         parameters.setMinPlausibleLowVoltageLimit(0.8);
         parameters.setMaxPlausibleHighVoltageLimit(1.2);
-        List<OpenReacAlgoParam> algoParams = parameters.getAllAlgorithmParams();
+        parameters.setBusesWithReactiveSlackConfig(OpenReacBusesWithReactiveSlackConfig.ALL);
 
-        assertEquals(6, algoParams.size());
+        List<OpenReacAlgoParam> algoParams = parameters.getAllAlgorithmParams();
+        assertEquals(7, algoParams.size());
         assertEquals("2", algoParams.get(0).getValue());
         assertEquals("0.4", algoParams.get(1).getValue());
         assertEquals("DEBUG", algoParams.get(2).getValue());
         assertEquals("0", algoParams.get(3).getValue());
         assertEquals("0.8", algoParams.get(4).getValue());
         assertEquals("1.2", algoParams.get(5).getValue());
+        assertEquals("ALL", algoParams.get(6).getValue());
     }
 
     @Test
-    void testReactiveSlacksRepartitionIntegrity() {
+    void testBusesWithReactiveSlackConfigIntegrity() {
         OpenReacParameters parameters = new OpenReacParameters();
 
         assertEquals(OpenReacBusesWithReactiveSlackConfig.NO_GENERATION, parameters.getBusesWithReactiveSlackConfig()); // default value
-        assertThrows(NullPointerException.class, () -> parameters.setBusesWithReactiveSlackConfig(null), "Can't set null ampl log level.");
+        assertThrows(NullPointerException.class, () -> parameters.setBusesWithReactiveSlackConfig(null));
         parameters.setBusesWithReactiveSlackConfig(OpenReacBusesWithReactiveSlackConfig.SPECIFIED);
         assertEquals("SPECIFIED", parameters.getBusesWithReactiveSlackConfig().toParam().getValue());
         parameters.setBusesWithReactiveSlackConfig(OpenReacBusesWithReactiveSlackConfig.NO_GENERATION);
@@ -162,7 +164,7 @@ public class OpenReacParametersTest {
         assertEquals(0, parameters.getConstantQGenerators().size(), "ConstantQGenerators should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getVariableShuntCompensators().size(), "VariableShuntCompensators should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getConfiguredBusesWithReactiveSlacks().size(), "ConfiguredBusesWithReactiveSlack should be empty when using default OpenREacParameter constructor.");
-        assertEquals(5, parameters.getAllAlgorithmParams().size());
+        assertEquals(6, parameters.getAllAlgorithmParams().size());
 
         // testing TwoWindingsTransformer
         parameters.addVariableTwoWindingsTransformers(network.getTwoWindingsTransformerStream().map(TwoWindingsTransformer::getId).collect(Collectors.toList()));
@@ -192,7 +194,6 @@ public class OpenReacParametersTest {
         assertNull(network.getGenerator(wrongId), "Please change wrong ID so it does not match any element in the network.");
         InvalidParametersException e3 = assertThrows(InvalidParametersException.class, () -> lambdaParamsGenerators.checkIntegrity(network));
         assertEquals("Generator " + wrongId + " not found in the network.", e3.getMessage());
-        assertThrows(InvalidParametersException.class, () -> lambdaParamsGenerators.checkIntegrity(network), "An Generator ID not present in the network should throw to the user.");
 
         // testing Buses
         parameters = new OpenReacParameters();
@@ -201,7 +202,8 @@ public class OpenReacParametersTest {
         assertDoesNotThrow(() -> lambdaParamsBuses.checkIntegrity(network), "Adding Buses network IDs should not throw.");
         parameters.addBusesWithReactiveSlack(List.of(wrongId));
         assertNull(network.getBusView().getBus(wrongId), "Please change wrong ID so it does not match any any element in the network.");
-        assertThrows(InvalidParametersException.class, () -> lambdaParamsBuses.checkIntegrity(network), "A Bus ID not present in the network should throw to the user.");
+        InvalidParametersException e4 = assertThrows(InvalidParametersException.class, () -> lambdaParamsBuses.checkIntegrity(network));
+        assertEquals("Bus " + wrongId + " not found in the network.", e4.getMessage());
     }
 
     void setDefaultVoltageLimits(Network network) {

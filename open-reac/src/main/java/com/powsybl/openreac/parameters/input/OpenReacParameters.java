@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
  * This class stores all inputs parameters specific to the OpenReac optimizer.
  *
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ * @author Pierre Arvy <pierre.arvy at artelys.com>
  */
 public class OpenReacParameters {
 
@@ -35,7 +36,6 @@ public class OpenReacParameters {
 
     private List<String> busesWithReactiveSlack = new ArrayList<>();
 
-    private final List<OpenReacAlgoParam> algorithmParams = new ArrayList<>();
     // Algo parameters
 
     private OpenReacOptimisationObjective objective = OpenReacOptimisationObjective.MIN_GENERATION;
@@ -239,9 +239,7 @@ public class OpenReacParameters {
         allAlgoParams.add(this.logLevelSolver.toParam());
         allAlgoParams.add(new OpenReacAlgoParamImpl(MIN_PLAUSIBLE_LOW_VOLTAGE_LIMIT_KEY, Double.toString(minPlausibleLowVoltageLimit)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(MAX_PLAUSIBLE_HIGH_VOLTAGE_LIMIT_KEY, Double.toString(maxPlausibleHighVoltageLimit)));
-        if (busesWithReactiveSlackConfig != null) {
-            allAlgoParams.add(busesWithReactiveSlackConfig.toParam());
-        }
+        allAlgoParams.add(busesWithReactiveSlackConfig.toParam());
         return allAlgoParams;
     }
 
