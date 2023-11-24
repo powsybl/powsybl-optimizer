@@ -94,6 +94,9 @@ public class OpenReacParameters {
         return this;
     }
 
+    /**
+     * A list of buses, to which reactive slacks variable will be attached by the optimizer.
+     */
     public OpenReacParameters addConfiguredReactiveSlackBuses(List<String> busesIds) {
         this.configuredReactiveSlackBuses.addAll(busesIds);
         return this;
@@ -200,6 +203,10 @@ public class OpenReacParameters {
         return this;
     }
 
+    /**
+     * @return the mode used to select which buses will have reactive slack variables attached in the optimization.
+     * If mode is CONFIGURED, the buses in configuredReactiveSlackBuses are used.
+     */
     public ReactiveSlackBusesMode getReactiveSlackBusesMode() {
         return reactiveSlackBusesMode;
     }
