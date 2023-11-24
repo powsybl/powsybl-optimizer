@@ -35,16 +35,19 @@ public class OpenReacParametersTest {
         assertEquals(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT, parameters.getObjective());
         parameters.setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE);
         assertEquals(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE, parameters.getObjective());
-        assertThrows(NullPointerException.class, () -> parameters.setObjective(null), "Can't unset objective function.");
+        assertThrows(NullPointerException.class, () -> parameters.setObjective(null));
 
         // Objective distance for BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT objective
         parameters.setObjectiveDistance(0); // min value
         assertEquals(0, parameters.getObjectiveDistance());
         parameters.setObjectiveDistance(100); // max value
         assertEquals(100, parameters.getObjectiveDistance());
-        assertThrows(IllegalArgumentException.class, () -> parameters.setObjectiveDistance(-0.15), "Objective distance must be >= 0");
-        assertThrows(IllegalArgumentException.class, () -> parameters.setObjectiveDistance(100.02), "Objective distance must be <= 1");
-        assertThrows(IllegalArgumentException.class, () -> parameters.setObjectiveDistance(Double.NaN), "Objective distance must be defined.");
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> parameters.setObjectiveDistance(-0.15));
+        assertEquals("Objective distance must be defined and >= 0 and <= 100 to be consistent", e.getMessage());
+        IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class, () -> parameters.setObjectiveDistance(100.02));
+        assertEquals("Objective distance must be defined and >= 0 and <= 100 to be consistent", e2.getMessage());
+        IllegalArgumentException e3 = assertThrows(IllegalArgumentException.class, () -> parameters.setObjectiveDistance(Double.NaN));
+        assertEquals("Objective distance must be defined and >= 0 and <= 100 to be consistent", e3.getMessage());
 
         assertTrue(parameters.checkAlgorithmParametersIntegrity());
     }
