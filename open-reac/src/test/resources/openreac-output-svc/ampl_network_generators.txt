@@ -1,3 +1,0 @@
-#Generators (svc/InitialState)
-#"variant" "num" "bus" "con. bus" "substation" "minP (MW)" "maxP (MW)" "minQmaxP (MVar)" "minQ0 (MVar)" "minQminP (MVar)" "maxQmaxP (MVar)" "maxQ0 (MVar)" "maxQminP (MVar)" "v regul." "targetV (pu)" "targetP (MW)" "targetQ (MVar)" "fault" "curative" "id" "description" "P (MW)" "Q (MVar)"
-1 1 1 1 1 0.00000 150.000 -1.79769e+308 -1.79769e+308 -1.79769e+308 1.79769e+308 1.79769e+308 1.79769e+308 true 0.975000 101.366 -99999.0 0 0 "g1" "g1" -99999.0 -99999.0

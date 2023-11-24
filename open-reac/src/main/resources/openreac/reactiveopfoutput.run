@@ -231,13 +231,16 @@ if length($SHELL) > 0 then {
 printf "%s %Q\n","directory",_cd > (fileOut);
 
 printf "\n" > (fileOut);
+printf "%s %s\n","log_level_ampl",log_level_ampl > (fileOut);
+printf "%s %i\n","log_level_knitro",log_level_knitro > (fileOut);
 printf "%s %i\n","objective_choice",objective_choice > (fileOut);
 printf "%s %f\n","ratio_voltage_target",ratio_voltage_target > (fileOut);
 printf "%s %f\n","coeff_alpha",coeff_alpha > (fileOut);
 printf "%s %f\n","Pnull",Pnull > (fileOut);
 printf "%s %f\n","Znull",Znull > (fileOut);
 printf "%s %f\n","epsilon_nominal_voltage",epsilon_nominal_voltage > (fileOut);
-printf "%s %f\n","epsilon_min_voltage",epsilon_min_voltage > (fileOut);
+printf "%s %f\n","min_plausible_low_voltage_limit",min_plausible_low_voltage_limit > (fileOut);
+printf "%s %f\n","max_plausible_high_voltage_limit",max_plausible_high_voltage_limit > (fileOut);
 printf "%s %f\n","ignore_voltage_bounds",ignore_voltage_bounds > (fileOut);
 printf "%s %f\n","PQmax",PQmax > (fileOut);
 printf "%s %f\n","defaultPmax",defaultPmax > (fileOut);
@@ -311,3 +314,4 @@ if card(messagesInfo) > 0 then {
     let temp1:=temp1+1;
   }
 }
+close (fileOut);

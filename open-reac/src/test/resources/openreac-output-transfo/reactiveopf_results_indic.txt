@@ -1,26 +1,29 @@
 final_status OK
 dcopf_status OK
 
-ctime_start 'Wed Jun 21 17:42:59 2023'
+ctime_start 'Thu Nov 23 14:57:46 2023'
 last_solve_result_num 0
-nb_iter_last 6
-nb_iter_total 6
-_ampl_elapsed_time 0.094000
-_total_solve_time 0.046875
+nb_iter_last 4
+nb_iter_total 4
+_ampl_elapsed_time 0.093000
+_total_solve_time 0.031250
 total_time 0
 
 operatingSystem windows
 OS 'Windows_NT'
-COMPUTERNAME 'ARTELYS-PC158'
-directory 'C:\Users\ARTELY~1\AppData\Local\Temp\ampl_8811420276417720419'
+COMPUTERNAME 'ARTELYS-PC253'
+directory 'C:\Users\parvy\AppData\Local\Temp\ampl_1042775858349572355'
 
+log_level_ampl INFO
+log_level_knitro 2
 objective_choice 0
 ratio_voltage_target 0.500000
 coeff_alpha 1.000000
 Pnull 0.010000
 Znull 0.000100
 epsilon_nominal_voltage 1.000000
-epsilon_min_voltage 0.500000
+min_plausible_low_voltage_limit 0.500000
+max_plausible_high_voltage_limit 1.500000
 ignore_voltage_bounds 0.000000
 PQmax 9000.000000
 defaultPmax 1000.000000
@@ -70,12 +73,12 @@ max_teta_dc 0.01
 max_teta_ac 0.01
 teta_max 3.01
 min_teta_dc -0.05
-min_teta_ac -0.05
+min_teta_ac -0.08
 teta_min -3.05
 max_delta_teta_dc 0.045914
-max_delta_teta_ac 0.051656
+max_delta_teta_ac 0.081648
 min_delta_teta_dc 0.009298
-min_delta_teta_ac 0.012822
+min_delta_teta_ac 0.014293
 
 nb_reactive_slacks 0
 nb_slacks_condensator 0

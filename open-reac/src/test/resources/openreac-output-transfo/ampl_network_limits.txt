@@ -1,2 +1,0 @@
-#Temporary current limits (two-windings-transformer-control/InitialState)
-#"variant" "num" "branch" "side" "limit (A)" "accept. duration (s)" "fault" "curative"
