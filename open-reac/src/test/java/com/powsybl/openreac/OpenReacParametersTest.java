@@ -64,7 +64,7 @@ public class OpenReacParametersTest {
         parameters.setLogLevelAmpl(OpenReacAmplLogLevel.ERROR);
         assertEquals("ERROR", parameters.getLogLevelAmpl().toParam().getValue());
 
-        assertThrows(NullPointerException.class, () -> parameters.setLogLevelAmpl(null), "Can't set null ampl log level.");
+        assertThrows(NullPointerException.class, () -> parameters.setLogLevelAmpl(null));
     }
 
     @Test
@@ -77,30 +77,39 @@ public class OpenReacParametersTest {
         parameters.setLogLevelSolver(OpenReacSolverLogLevel.ONLY_RESULTS);
         assertEquals("1", parameters.getLogLevelSolver().toParam().getValue());
 
-        assertThrows(NullPointerException.class, () -> parameters.setLogLevelSolver(null), "Can't set null solver log level.");
+        assertThrows(NullPointerException.class, () -> parameters.setLogLevelSolver(null));
     }
 
     @Test
     void testMinMaxVoltageLimitIntegrity() {
+        Network network = IeeeCdfNetworkFactory.create14();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         OpenReacParameters parameters = new OpenReacParameters();
 
         // Consistency of min plausible low voltage limit (>= 0)
         assertEquals(0.5, parameters.getMinPlausibleLowVoltageLimit()); // default value
         parameters.setMinPlausibleLowVoltageLimit(0.8);
         assertEquals(0.8, parameters.getMinPlausibleLowVoltageLimit());
-        assertThrows(InvalidParametersException.class, () -> parameters.setMinPlausibleLowVoltageLimit(-0.25));
-        assertThrows(InvalidParametersException.class, () -> parameters.setMinPlausibleLowVoltageLimit(Double.NaN));
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> parameters.setMinPlausibleLowVoltageLimit(-0.25));
+        assertEquals("Min plausible low voltage limit must be >= 0 and defined to be consistent.", e.getMessage());
+        IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class, () -> parameters.setMinPlausibleLowVoltageLimit(Double.NaN));
+        assertEquals("Min plausible low voltage limit must be >= 0 and defined to be consistent.", e2.getMessage());
 
         // Consistency of max plausible high voltage limit (> 0)
         assertEquals(1.5, parameters.getMaxPlausibleHighVoltageLimit()); // default value
         parameters.setMaxPlausibleHighVoltageLimit(0.75);
         assertEquals(0.75, parameters.getMaxPlausibleHighVoltageLimit());
-        assertThrows(InvalidParametersException.class, () -> parameters.setMaxPlausibleHighVoltageLimit(-0.15));
-        assertThrows(InvalidParametersException.class, () -> parameters.setMaxPlausibleHighVoltageLimit(0));
-        assertThrows(InvalidParametersException.class, () -> parameters.setMaxPlausibleHighVoltageLimit(Double.NaN));
+        IllegalArgumentException e3 = assertThrows(IllegalArgumentException.class, () -> parameters.setMaxPlausibleHighVoltageLimit(-0.15));
+        assertEquals("Max plausible high voltage limit must be > 0 and defined to be consistent.", e3.getMessage());
+        IllegalArgumentException e4 = assertThrows(IllegalArgumentException.class, () -> parameters.setMaxPlausibleHighVoltageLimit(0));
+        assertEquals("Max plausible high voltage limit must be > 0 and defined to be consistent.", e4.getMessage());
+        IllegalArgumentException e5 = assertThrows(IllegalArgumentException.class, () -> parameters.setMaxPlausibleHighVoltageLimit(Double.NaN));
+        assertEquals("Max plausible high voltage limit must be > 0 and defined to be consistent.", e5.getMessage());
 
         // Check min < max
         assertFalse(parameters.checkAlgorithmParametersIntegrity());
+        InvalidParametersException e6 = assertThrows(InvalidParametersException.class, () -> parameters.checkIntegrity(network));
+        assertEquals("At least one algorithm parameter is inconsistent.", e6.getMessage());
         parameters.setMaxPlausibleHighVoltageLimit(1.2);
         assertTrue(parameters.checkAlgorithmParametersIntegrity());
     }
@@ -146,7 +155,8 @@ public class OpenReacParametersTest {
         assertDoesNotThrow(() -> lambdaParams.checkIntegrity(network), "Adding TwoWindingsTransformer network IDs should not throw.");
         parameters.addVariableTwoWindingsTransformers(List.of(wrongId));
         assertNull(network.getTwoWindingsTransformer(wrongId), "Please change wrong ID so it does not match any element in the network.");
-        assertThrows(InvalidParametersException.class, () -> lambdaParams.checkIntegrity(network), "An ID TwoWindingsTransformer not present in the network should throw to the user.");
+        InvalidParametersException e = assertThrows(InvalidParametersException.class, () -> lambdaParams.checkIntegrity(network));
+        assertEquals("Two windings transformer " + wrongId + " not found in the network.", e.getMessage());
 
         // Reseting parameters
         parameters = new OpenReacParameters();
@@ -158,7 +168,8 @@ public class OpenReacParametersTest {
         assertDoesNotThrow(() -> lambdaParamsShunts.checkIntegrity(network), "Adding ShuntCompensator network IDs should not throw.");
         parameters.addVariableShuntCompensators(List.of(wrongId));
         assertNull(network.getShuntCompensator(wrongId), "Please change wrong ID so it does not match any element in the network.");
-        assertThrows(InvalidParametersException.class, () -> lambdaParamsShunts.checkIntegrity(network), "An ShuntCompensator ID not present in the network should throw to the user.");
+        InvalidParametersException e2 = assertThrows(InvalidParametersException.class, () -> lambdaParamsShunts.checkIntegrity(network));
+        assertEquals("Shunt " + wrongId + " not found in the network.", e2.getMessage());
 
         // Reseting parameters
         parameters = new OpenReacParameters();
@@ -170,7 +181,8 @@ public class OpenReacParametersTest {
         assertDoesNotThrow(() -> lambdaParamsGenerators.checkIntegrity(network), "Adding Generator network IDs should not throw.");
         parameters.addConstantQGenerators(List.of(wrongId));
         assertNull(network.getGenerator(wrongId), "Please change wrong ID so it does not match any element in the network.");
-        assertThrows(InvalidParametersException.class, () -> lambdaParamsGenerators.checkIntegrity(network), "An Generator ID not present in the network should throw to the user.");
+        InvalidParametersException e3 = assertThrows(InvalidParametersException.class, () -> lambdaParamsGenerators.checkIntegrity(network));
+        assertEquals("Generator " + wrongId + " not found in the network.", e3.getMessage());
     }
 
     void setDefaultVoltageLimits(Network network) {
