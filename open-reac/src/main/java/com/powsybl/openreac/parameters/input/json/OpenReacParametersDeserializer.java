@@ -14,7 +14,7 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAmplLogLevel;
-import com.powsybl.openreac.parameters.input.algo.OpenReacBusesWithReactiveSlackConfig;
+import com.powsybl.openreac.parameters.input.algo.ReactiveSlackBusesMode;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 import com.powsybl.openreac.parameters.input.algo.OpenReacSolverLogLevel;
 
@@ -58,9 +58,9 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                     parser.nextToken();
                     parameters.addVariableTwoWindingsTransformers(parser.readValueAs(new TypeReference<List<String>>() { }));
                     break;
-                case "busesWithReactiveSlack":
+                case "configuredReactiveSlackBuses":
                     parser.nextToken();
-                    parameters.addBusesWithReactiveSlack(parser.readValueAs(new TypeReference<List<String>>() { }));
+                    parameters.addConfiguredReactiveSlackBuses(parser.readValueAs(new TypeReference<List<String>>() { }));
                     break;
                 case "objective":
                     parser.nextToken();
@@ -86,9 +86,9 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                     parser.nextToken();
                     parameters.setMaxPlausibleHighVoltageLimit(parser.readValueAs(Double.class));
                     break;
-                case "busesWithReactiveSlackConfig":
+                case "reactiveSlackBusesMode":
                     parser.nextToken();
-                    parameters.setBusesWithReactiveSlackConfig(OpenReacBusesWithReactiveSlackConfig.valueOf(parser.getText()));
+                    parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.valueOf(parser.getText()));
                     break;
                 default:
                     throw new IllegalStateException("Unexpected field: " + parser.getCurrentName());

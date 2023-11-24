@@ -21,7 +21,7 @@ import com.powsybl.openreac.network.HvdcNetworkFactory;
 import com.powsybl.openreac.network.VoltageControlNetworkFactory;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAmplLogLevel;
-import com.powsybl.openreac.parameters.input.algo.OpenReacBusesWithReactiveSlackConfig;
+import com.powsybl.openreac.parameters.input.algo.ReactiveSlackBusesMode;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 import com.powsybl.openreac.parameters.input.algo.OpenReacSolverLogLevel;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
@@ -104,7 +104,7 @@ class OpenReacRunnerTest {
                 .setLogLevelSolver(OpenReacSolverLogLevel.ONLY_RESULTS)
                 .setMinPlausibleLowVoltageLimit(0.7888)
                 .setMaxPlausibleHighVoltageLimit(1.3455)
-                .setBusesWithReactiveSlackConfig(OpenReacBusesWithReactiveSlackConfig.ALL);
+                .setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL);
 
         LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
                 List.of("empty_case/reactiveopf_results_indic.txt"));
@@ -125,7 +125,7 @@ class OpenReacRunnerTest {
         OpenReacParameters parameters = new OpenReacParameters().setObjective(
                 OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT)
             .setObjectiveDistance(70)
-            .setBusesWithReactiveSlackConfig(OpenReacBusesWithReactiveSlackConfig.SPECIFIED)
+            .setReactiveSlackBusesMode(ReactiveSlackBusesMode.CONFIGURED)
             .addVariableTwoWindingsTransformers(network.getTwoWindingsTransformerStream()
                 .limit(1)
                 .map(TwoWindingsTransformer::getId)
@@ -134,7 +134,7 @@ class OpenReacRunnerTest {
                 network.getGeneratorStream().limit(1).map(Generator::getId).collect(Collectors.toList()))
             .addVariableShuntCompensators(
                 network.getShuntCompensatorStream().limit(1).map(ShuntCompensator::getId).collect(Collectors.toList()))
-            .addBusesWithReactiveSlack(
+            .addConfiguredReactiveSlackBuses(
                 network.getBusView().getBusStream().limit(1).map(Bus::getId).collect(Collectors.toList()));
 
         LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(

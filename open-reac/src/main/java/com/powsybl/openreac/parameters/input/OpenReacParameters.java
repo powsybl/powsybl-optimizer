@@ -34,7 +34,7 @@ public class OpenReacParameters {
 
     private final List<String> variableTwoWindingsTransformers = new ArrayList<>();
 
-    private final List<String> busesWithReactiveSlack = new ArrayList<>();
+    private final List<String> configuredReactiveSlackBuses = new ArrayList<>();
 
     // Algo parameters
 
@@ -56,7 +56,7 @@ public class OpenReacParameters {
 
     private double maxPlausibleHighVoltageLimit = 1.5; // in pu
 
-    private OpenReacBusesWithReactiveSlackConfig busesWithReactiveSlackConfig = OpenReacBusesWithReactiveSlackConfig.NO_GENERATION;
+    private ReactiveSlackBusesMode reactiveSlackBusesMode = ReactiveSlackBusesMode.NO_GENERATION;
 
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.
@@ -94,8 +94,8 @@ public class OpenReacParameters {
         return this;
     }
 
-    public OpenReacParameters addBusesWithReactiveSlack(List<String> busesIds) {
-        this.busesWithReactiveSlack.addAll(busesIds);
+    public OpenReacParameters addConfiguredReactiveSlackBuses(List<String> busesIds) {
+        this.configuredReactiveSlackBuses.addAll(busesIds);
         return this;
     }
 
@@ -200,12 +200,12 @@ public class OpenReacParameters {
         return this;
     }
 
-    public OpenReacBusesWithReactiveSlackConfig getBusesWithReactiveSlackConfig() {
-        return busesWithReactiveSlackConfig;
+    public ReactiveSlackBusesMode getReactiveSlackBusesMode() {
+        return reactiveSlackBusesMode;
     }
 
-    public OpenReacParameters setBusesWithReactiveSlackConfig(OpenReacBusesWithReactiveSlackConfig busesWithReactiveSlackConfig) {
-        this.busesWithReactiveSlackConfig = Objects.requireNonNull(busesWithReactiveSlackConfig);
+    public OpenReacParameters setReactiveSlackBusesMode(ReactiveSlackBusesMode reactiveSlackBusesMode) {
+        this.reactiveSlackBusesMode = Objects.requireNonNull(reactiveSlackBusesMode);
         return this;
     }
 
@@ -225,8 +225,8 @@ public class OpenReacParameters {
         return variableTwoWindingsTransformers;
     }
 
-    public List<String> getConfiguredBusesWithReactiveSlacks() {
-        return busesWithReactiveSlack;
+    public List<String> getConfiguredReactiveSlackBuses() {
+        return configuredReactiveSlackBuses;
     }
 
     public List<OpenReacAlgoParam> getAllAlgorithmParams() {
@@ -239,7 +239,7 @@ public class OpenReacParameters {
         allAlgoParams.add(this.logLevelSolver.toParam());
         allAlgoParams.add(new OpenReacAlgoParamImpl(MIN_PLAUSIBLE_LOW_VOLTAGE_LIMIT_KEY, Double.toString(minPlausibleLowVoltageLimit)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(MAX_PLAUSIBLE_HIGH_VOLTAGE_LIMIT_KEY, Double.toString(maxPlausibleHighVoltageLimit)));
-        allAlgoParams.add(busesWithReactiveSlackConfig.toParam());
+        allAlgoParams.add(reactiveSlackBusesMode.toParam());
         return allAlgoParams;
     }
 
@@ -265,7 +265,7 @@ public class OpenReacParameters {
                 throw new InvalidParametersException("Two windings transformer " + transformerId + " not found in the network.");
             }
         }
-        for (String busId : getConfiguredBusesWithReactiveSlacks()) {
+        for (String busId : getConfiguredReactiveSlackBuses()) {
             if (network.getBusView().getBus(busId) == null) {
                 throw new InvalidParametersException("Bus " + busId + " not found in the network.");
             }

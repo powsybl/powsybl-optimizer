@@ -14,7 +14,7 @@ import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAmplLogLevel;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 import com.powsybl.openreac.parameters.input.algo.OpenReacSolverLogLevel;
-import com.powsybl.openreac.parameters.input.algo.OpenReacBusesWithReactiveSlackConfig;
+import com.powsybl.openreac.parameters.input.algo.ReactiveSlackBusesMode;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -124,7 +124,7 @@ public class OpenReacParametersTest {
         parameters.setLogLevelSolver(OpenReacSolverLogLevel.NOTHING);
         parameters.setMinPlausibleLowVoltageLimit(0.8);
         parameters.setMaxPlausibleHighVoltageLimit(1.2);
-        parameters.setBusesWithReactiveSlackConfig(OpenReacBusesWithReactiveSlackConfig.ALL);
+        parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL);
 
         List<OpenReacAlgoParam> algoParams = parameters.getAllAlgorithmParams();
         assertEquals(7, algoParams.size());
@@ -141,14 +141,14 @@ public class OpenReacParametersTest {
     void testBusesWithReactiveSlackConfigIntegrity() {
         OpenReacParameters parameters = new OpenReacParameters();
 
-        assertEquals(OpenReacBusesWithReactiveSlackConfig.NO_GENERATION, parameters.getBusesWithReactiveSlackConfig()); // default value
-        assertThrows(NullPointerException.class, () -> parameters.setBusesWithReactiveSlackConfig(null));
-        parameters.setBusesWithReactiveSlackConfig(OpenReacBusesWithReactiveSlackConfig.SPECIFIED);
-        assertEquals("SPECIFIED", parameters.getBusesWithReactiveSlackConfig().toParam().getValue());
-        parameters.setBusesWithReactiveSlackConfig(OpenReacBusesWithReactiveSlackConfig.NO_GENERATION);
-        assertEquals("NO_GENERATION", parameters.getBusesWithReactiveSlackConfig().toParam().getValue());
-        parameters.setBusesWithReactiveSlackConfig(OpenReacBusesWithReactiveSlackConfig.ALL);
-        assertEquals("ALL", parameters.getBusesWithReactiveSlackConfig().toParam().getValue());
+        assertEquals(ReactiveSlackBusesMode.NO_GENERATION, parameters.getReactiveSlackBusesMode()); // default value
+        assertThrows(NullPointerException.class, () -> parameters.setReactiveSlackBusesMode(null));
+        parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.CONFIGURED);
+        assertEquals("CONFIGURED", parameters.getReactiveSlackBusesMode().toParam().getValue());
+        parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.NO_GENERATION);
+        assertEquals("NO_GENERATION", parameters.getReactiveSlackBusesMode().toParam().getValue());
+        parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL);
+        assertEquals("ALL", parameters.getReactiveSlackBusesMode().toParam().getValue());
     }
 
     @Test
@@ -159,7 +159,7 @@ public class OpenReacParametersTest {
         assertEquals(0, parameters.getSpecificVoltageLimits().size(), "SpecificVoltageLimits should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getConstantQGenerators().size(), "ConstantQGenerators should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getVariableShuntCompensators().size(), "VariableShuntCompensators should be empty when using default OpenReacParameter constructor.");
-        assertEquals(0, parameters.getConfiguredBusesWithReactiveSlacks().size(), "ConfiguredBusesWithReactiveSlack should be empty when using default OpenREacParameter constructor.");
+        assertEquals(0, parameters.getConfiguredReactiveSlackBuses().size(), "ConfiguredReactiveSlackBuses should be empty when using default OpenREacParameter constructor.");
         assertEquals(6, parameters.getAllAlgorithmParams().size());
     }
 
@@ -207,9 +207,9 @@ public class OpenReacParametersTest {
 
     void testBusesWithReactiveSlacksParametersIntegrity(Network network, String wrongId) {
         OpenReacParameters parameters = new OpenReacParameters();
-        parameters.addBusesWithReactiveSlack(network.getBusView().getBusStream().map(Bus::getId).collect(Collectors.toList()));
+        parameters.addConfiguredReactiveSlackBuses(network.getBusView().getBusStream().map(Bus::getId).collect(Collectors.toList()));
         assertDoesNotThrow(() -> parameters.checkIntegrity(network), "Adding Buses network IDs should not throw.");
-        parameters.addBusesWithReactiveSlack(List.of(wrongId));
+        parameters.addConfiguredReactiveSlackBuses(List.of(wrongId));
         assertNull(network.getBusView().getBus(wrongId), "Please change wrong ID so it does not match any any element in the network.");
         InvalidParametersException e = assertThrows(InvalidParametersException.class, () -> parameters.checkIntegrity(network));
         assertEquals("Bus " + wrongId + " not found in the network.", e.getMessage());

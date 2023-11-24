@@ -9,25 +9,24 @@ package com.powsybl.openreac.parameters.input.algo;
 /**
  * @author Pierre Arvy <pierre.arvy at artelys.com>
  */
-public enum OpenReacBusesWithReactiveSlackConfig {
-    SPECIFIED("SPECIFIED"),
+public enum ReactiveSlackBusesMode {
+    CONFIGURED("CONFIGURED"),
     NO_GENERATION("NO_GENERATION"),
-
     ALL("ALL");
 
-    private static final String BUSES_REACTIVE_SLACKS_KEY = "buses_with_reactive_slacks";
+    private static final String REACTIVE_SLACK_BUSES_KEY = "buses_with_reactive_slacks";
 
     private final String amplKey;
 
     /**
      * @param amplKey value used in param_algo.txt to define the slacks repartition.
      */
-    OpenReacBusesWithReactiveSlackConfig(String amplKey) {
+    ReactiveSlackBusesMode(String amplKey) {
         this.amplKey = amplKey;
     }
 
     public OpenReacAlgoParam toParam() {
-        return new OpenReacAlgoParamImpl(BUSES_REACTIVE_SLACKS_KEY, amplKey);
+        return new OpenReacAlgoParamImpl(REACTIVE_SLACK_BUSES_KEY, amplKey);
     }
 
 }

@@ -13,7 +13,7 @@ import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAmplLogLevel;
 import com.powsybl.openreac.parameters.input.algo.OpenReacSolverLogLevel;
-import com.powsybl.openreac.parameters.input.algo.OpenReacBusesWithReactiveSlackConfig;
+import com.powsybl.openreac.parameters.input.algo.ReactiveSlackBusesMode;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -50,8 +50,8 @@ class OpenReacJsonModuleTest {
         parameters.setLogLevelSolver(OpenReacSolverLogLevel.NOTHING);
         parameters.setMinPlausibleLowVoltageLimit(0.755);
         parameters.setMaxPlausibleHighVoltageLimit(1.236);
-        parameters.setBusesWithReactiveSlackConfig(OpenReacBusesWithReactiveSlackConfig.SPECIFIED);
-        parameters.addBusesWithReactiveSlack(List.of("bus1", "bus2"));
+        parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.CONFIGURED);
+        parameters.addConfiguredReactiveSlackBuses(List.of("bus1", "bus2"));
         String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(parameters);
         ComparisonUtils.compareTxt(Objects.requireNonNull(getClass().getResourceAsStream("/parameters.json")), json);
 
@@ -71,7 +71,7 @@ class OpenReacJsonModuleTest {
         assertEquals(OpenReacSolverLogLevel.NOTHING, parameters2.getLogLevelSolver());
         assertEquals(0.755, parameters2.getMinPlausibleLowVoltageLimit());
         assertEquals(1.236, parameters2.getMaxPlausibleHighVoltageLimit());
-        assertEquals(OpenReacBusesWithReactiveSlackConfig.SPECIFIED, parameters2.getBusesWithReactiveSlackConfig());
-        assertEquals(List.of("bus1", "bus2"), parameters2.getConfiguredBusesWithReactiveSlacks());
+        assertEquals(ReactiveSlackBusesMode.CONFIGURED, parameters2.getReactiveSlackBusesMode());
+        assertEquals(List.of("bus1", "bus2"), parameters2.getConfiguredReactiveSlackBuses());
     }
 }
