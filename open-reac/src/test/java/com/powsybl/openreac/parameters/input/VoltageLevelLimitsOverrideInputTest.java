@@ -86,7 +86,7 @@ class VoltageLevelLimitsOverrideInputTest {
 
     @Test
     void testZeroVoltageLimit() {
-        Network network = IeeeCdfNetworkFactory.create118();
+        Network network = IeeeCdfNetworkFactory.create57();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
 
         VoltageLevel vl = network.getVoltageLevels().iterator().next();
@@ -99,7 +99,7 @@ class VoltageLevelLimitsOverrideInputTest {
 
     @Test
     void testUndefinedVoltageLimitsWithoutOverride() {
-        Network network = IeeeCdfNetworkFactory.create118();
+        Network network = IeeeCdfNetworkFactory.create57();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
 
         VoltageLevel vl = network.getVoltageLevels().iterator().next();
@@ -108,22 +108,25 @@ class VoltageLevelLimitsOverrideInputTest {
         // if one low voltage limit is undefined, invalid OpenReacParameters
         vl.setLowVoltageLimit(Double.NaN);
         vl.setHighVoltageLimit(480);
-        assertThrows(PowsyblException.class, () -> params.checkIntegrity(network));
+        PowsyblException e = assertThrows(PowsyblException.class, () -> params.checkIntegrity(network));
+        assertEquals("At least one voltage level has an undefined or incorrect voltage limit.", e.getMessage());
 
         // if one high voltage limit is undefined, invalid OpenReacParameters
         vl.setLowVoltageLimit(480);
         vl.setHighVoltageLimit(Double.NaN);
-        assertThrows(PowsyblException.class, () -> params.checkIntegrity(network));
+        PowsyblException e2 = assertThrows(PowsyblException.class, () -> params.checkIntegrity(network));
+        assertEquals("At least one voltage level has an undefined or incorrect voltage limit.", e2.getMessage());
 
         // if both low/high voltage limit are undefined, invalid OpenReacParameters
         vl.setLowVoltageLimit(Double.NaN);
         vl.setHighVoltageLimit(Double.NaN);
-        assertThrows(PowsyblException.class, () -> params.checkIntegrity(network));
+        PowsyblException e3 = assertThrows(PowsyblException.class, () -> params.checkIntegrity(network));
+        assertEquals("At least one voltage level has an undefined or incorrect voltage limit.", e3.getMessage());
     }
 
     @Test
     void testVoltageOverrideWithNegativeVoltageLimit() {
-        Network network = IeeeCdfNetworkFactory.create118();
+        Network network = IeeeCdfNetworkFactory.create57();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
 
         VoltageLevel vl = network.getVoltageLevels().iterator().next();
@@ -135,9 +138,9 @@ class VoltageLevelLimitsOverrideInputTest {
         List<VoltageLimitOverride> voltageLimitsOverride = new ArrayList<>();
         voltageLimitsOverride.add(new VoltageLimitOverride(vl.getId(), VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, true, -410));
         params.addSpecificVoltageLimits(voltageLimitsOverride);
-        assertThrows(InvalidParametersException.class, () -> params.checkIntegrity(network));
+        InvalidParametersException e = assertThrows(InvalidParametersException.class, () -> params.checkIntegrity(network));
+        assertEquals("At least one voltage limit override is inconsistent.", e.getMessage());
 
-        // if low relative voltage override leads to null voltage limit, throws exception
         params.getSpecificVoltageLimits().clear();
         voltageLimitsOverride.clear();
         voltageLimitsOverride.add(new VoltageLimitOverride(vl.getId(), VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, true, -400));
@@ -149,9 +152,9 @@ class VoltageLevelLimitsOverrideInputTest {
         List<VoltageLimitOverride> voltageLimitsOverride2 = new ArrayList<>();
         voltageLimitsOverride2.add(new VoltageLimitOverride(vl.getId(), VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, true, -490));
         params2.addSpecificVoltageLimits(voltageLimitsOverride2);
-        assertThrows(InvalidParametersException.class, () -> params2.checkIntegrity(network));
+        InvalidParametersException e2 = assertThrows(InvalidParametersException.class, () -> params2.checkIntegrity(network));
+        assertEquals("At least one voltage limit override is inconsistent.", e2.getMessage());
 
-        // if high relative voltage override leads to null voltage limit, throws exception
         params2.getSpecificVoltageLimits().clear();
         voltageLimitsOverride2.clear();
         voltageLimitsOverride2.add(new VoltageLimitOverride(vl.getId(), VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, true, -480));
@@ -161,7 +164,7 @@ class VoltageLevelLimitsOverrideInputTest {
 
     @Test
     void testVoltageOverrideWithLowLimitGreaterHighLimit() {
-        Network network = IeeeCdfNetworkFactory.create118();
+        Network network = IeeeCdfNetworkFactory.create57();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
 
         VoltageLevel vl = network.getVoltageLevels().iterator().next();
@@ -179,14 +182,17 @@ class VoltageLevelLimitsOverrideInputTest {
         voltageLimitsOverride3.add(new VoltageLimitOverride(vl.getId(), VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, false, 390));
 
         // if after relative override, low limit > high limit, wrong parameters
-        assertThrows(InvalidParametersException.class, () -> new VoltageLevelLimitsOverrideInput(voltageLimitsOverride, network));
-        assertThrows(InvalidParametersException.class, () -> new VoltageLevelLimitsOverrideInput(voltageLimitsOverride2, network));
-        assertThrows(InvalidParametersException.class, () -> new VoltageLevelLimitsOverrideInput(voltageLimitsOverride3, network));
+        InvalidParametersException e = assertThrows(InvalidParametersException.class, () -> new VoltageLevelLimitsOverrideInput(voltageLimitsOverride, network));
+        assertEquals("Override on voltage level " + vl.getId() + " leads to low voltage limit >= high voltage limit.", e.getMessage());
+        InvalidParametersException e2 = assertThrows(InvalidParametersException.class, () -> new VoltageLevelLimitsOverrideInput(voltageLimitsOverride2, network));
+        assertEquals("Override on voltage level " + vl.getId() + " leads to low voltage limit >= high voltage limit.", e2.getMessage());
+        InvalidParametersException e3 = assertThrows(InvalidParametersException.class, () -> new VoltageLevelLimitsOverrideInput(voltageLimitsOverride3, network));
+        assertEquals("Override on voltage level " + vl.getId() + " leads to low voltage limit >= high voltage limit.", e3.getMessage());
     }
 
     @Test
     void testVoltageOverrideOnInvalidVoltageLevel() {
-        Network network = IeeeCdfNetworkFactory.create118();
+        Network network = IeeeCdfNetworkFactory.create57();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
 
         // if voltage level (on which is applied override) is not in the network, throws exception
@@ -194,7 +200,8 @@ class VoltageLevelLimitsOverrideInputTest {
         List<VoltageLimitOverride> voltageLimitsOverride = new ArrayList<>();
         voltageLimitsOverride.add(new VoltageLimitOverride("UNKNOWN_ID", VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, true, 1));
         params3.addSpecificVoltageLimits(voltageLimitsOverride);
-        assertThrows(InvalidParametersException.class, () -> params3.checkIntegrity(network));
+        InvalidParametersException e = assertThrows(InvalidParametersException.class, () -> params3.checkIntegrity(network));
+        assertEquals("At least one voltage limit override is inconsistent.", e.getMessage());
     }
 
     void setDefaultVoltageLimits(Network network) {

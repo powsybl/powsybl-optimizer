@@ -24,20 +24,26 @@ class VoltageLimitsOverrideTest {
     @Test
     void invalidVoltageLimitOverride() {
         // Verify it is impossible to create voltage limit override with NaN value...
-        assertThrows(InvalidParametersException.class,
+        InvalidParametersException e = assertThrows(InvalidParametersException.class,
                 () -> new VoltageLimitOverride("vl", VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, true, Double.NaN));
-        assertThrows(InvalidParametersException.class,
+        assertEquals("The voltage limit override must be defined.", e.getMessage());
+        e = assertThrows(InvalidParametersException.class,
                 () -> new VoltageLimitOverride("vl", VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, false, Double.NaN));
-        assertThrows(InvalidParametersException.class,
+        assertEquals("The voltage limit override must be defined.", e.getMessage());
+        e = assertThrows(InvalidParametersException.class,
                 () -> new VoltageLimitOverride("vl", VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, true, Double.NaN));
-        assertThrows(InvalidParametersException.class,
+        assertEquals("The voltage limit override must be defined.", e.getMessage());
+        e = assertThrows(InvalidParametersException.class,
                 () -> new VoltageLimitOverride("vl", VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, false, Double.NaN));
+        assertEquals("The voltage limit override must be defined.", e.getMessage());
 
         // Verify it is impossible to create absolute voltage limit override with negative value
-        assertThrows(InvalidParametersException.class,
+        InvalidParametersException e2 = assertThrows(InvalidParametersException.class,
                 () -> new VoltageLimitOverride("vl", VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, false, -1));
-        assertThrows(InvalidParametersException.class,
+        assertEquals("The voltage limit override is in absolute value: must be positive.", e2.getMessage());
+        e2 = assertThrows(InvalidParametersException.class,
                 () -> new VoltageLimitOverride("vl", VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, false, -1));
+        assertEquals("The voltage limit override is in absolute value: must be positive.", e2.getMessage());
     }
 
     @Test

@@ -9,10 +9,7 @@ package com.powsybl.openreac.parameters.input;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
-import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
-import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParamImpl;
-import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
-import com.powsybl.openreac.parameters.input.algo.OpenReacBusesWithReactiveSlackConfig;
+import com.powsybl.openreac.parameters.input.algo.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,8 +25,6 @@ public class OpenReacParameters {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OpenReacParameters.class);
 
-    private static final String OBJECTIVE_DISTANCE_KEY = "ratio_voltage_target";
-
     private final List<VoltageLimitOverride> specificVoltageLimits = new ArrayList<>();
 
     private final List<String> variableShuntCompensators = new ArrayList<>();
@@ -41,10 +36,25 @@ public class OpenReacParameters {
     private List<String> busesWithReactiveSlack = new ArrayList<>();
 
     private final List<OpenReacAlgoParam> algorithmParams = new ArrayList<>();
+    // Algo parameters
 
     private OpenReacOptimisationObjective objective = OpenReacOptimisationObjective.MIN_GENERATION;
 
-    private Double objectiveDistance;
+    private OpenReacAmplLogLevel logLevelAmpl = OpenReacAmplLogLevel.INFO;
+
+    private OpenReacSolverLogLevel logLevelSolver = OpenReacSolverLogLevel.EVERYTHING;
+
+    private static final String OBJECTIVE_DISTANCE_KEY = "ratio_voltage_target";
+
+    private Double objectiveDistance; // between 0 and 100
+
+    private static final String MIN_PLAUSIBLE_LOW_VOLTAGE_LIMIT_KEY = "min_plausible_low_voltage_limit";
+
+    private double minPlausibleLowVoltageLimit = 0.5; // in pu
+
+    private static final String MAX_PLAUSIBLE_HIGH_VOLTAGE_LIMIT_KEY = "max_plausible_high_voltage_limit";
+
+    private double maxPlausibleHighVoltageLimit = 1.5; // in pu
 
     private OpenReacBusesWithReactiveSlackConfig busesWithReactiveSlackConfig = OpenReacBusesWithReactiveSlackConfig.NO_GENERATION;
 
@@ -123,7 +133,70 @@ public class OpenReacParameters {
      * @param objectiveDistance is in %
      */
     public OpenReacParameters setObjectiveDistance(double objectiveDistance) {
+        if (Double.isNaN(objectiveDistance) || objectiveDistance > 100 || objectiveDistance < 0) {
+            throw new IllegalArgumentException("Objective distance must be defined and >= 0 and <= 100 to be consistent");
+        }
         this.objectiveDistance = objectiveDistance;
+        return this;
+    }
+
+    /**
+     * @return log level of ampl printings.
+     */
+    public OpenReacAmplLogLevel getLogLevelAmpl() {
+        return this.logLevelAmpl;
+    }
+
+    /**
+     * @param logLevelAmpl the log level of ampl printings.
+     */
+    public OpenReacParameters setLogLevelAmpl(OpenReacAmplLogLevel logLevelAmpl) {
+        this.logLevelAmpl = Objects.requireNonNull(logLevelAmpl);
+        return this;
+    }
+
+    /**
+     * @return log level of solver printings.
+     */
+    public OpenReacSolverLogLevel getLogLevelSolver() {
+        return this.logLevelSolver;
+    }
+
+    /**
+     * @param logLevelSolver the log level of solver printings.
+     */
+    public OpenReacParameters setLogLevelSolver(OpenReacSolverLogLevel logLevelSolver) {
+        this.logLevelSolver = Objects.requireNonNull(logLevelSolver);
+        return this;
+    }
+
+    /**
+     * @return the minimal plausible value for low voltage limits in p.u.
+     */
+    public double getMinPlausibleLowVoltageLimit() {
+        return minPlausibleLowVoltageLimit;
+    }
+
+    public OpenReacParameters setMinPlausibleLowVoltageLimit(double minPlausibleLowVoltageLimit) {
+        if (minPlausibleLowVoltageLimit < 0 || Double.isNaN(minPlausibleLowVoltageLimit)) {
+            throw new IllegalArgumentException("Min plausible low voltage limit must be >= 0 and defined to be consistent.");
+        }
+        this.minPlausibleLowVoltageLimit = minPlausibleLowVoltageLimit;
+        return this;
+    }
+
+    /**
+     * @return the maximal plausible value for high voltage limits in p.u.
+     */
+    public double getMaxPlausibleHighVoltageLimit() {
+        return maxPlausibleHighVoltageLimit;
+    }
+
+    public OpenReacParameters setMaxPlausibleHighVoltageLimit(double maxPlausibleHighVoltageLimit) {
+        if (maxPlausibleHighVoltageLimit <= 0 || Double.isNaN(maxPlausibleHighVoltageLimit)) {
+            throw new IllegalArgumentException("Max plausible high voltage limit must be > 0 and defined to be consistent.");
+        }
+        this.maxPlausibleHighVoltageLimit = maxPlausibleHighVoltageLimit;
         return this;
     }
 
@@ -157,14 +230,15 @@ public class OpenReacParameters {
     }
 
     public List<OpenReacAlgoParam> getAllAlgorithmParams() {
-        ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>(algorithmParams.size() + 3);
-        allAlgoParams.addAll(algorithmParams);
-        if (objective != null) {
-            allAlgoParams.add(objective.toParam());
-        }
+        ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>();
+        allAlgoParams.add(objective.toParam());
         if (objectiveDistance != null) {
             allAlgoParams.add(new OpenReacAlgoParamImpl(OBJECTIVE_DISTANCE_KEY, Double.toString(objectiveDistance / 100)));
         }
+        allAlgoParams.add(this.logLevelAmpl.toParam());
+        allAlgoParams.add(this.logLevelSolver.toParam());
+        allAlgoParams.add(new OpenReacAlgoParamImpl(MIN_PLAUSIBLE_LOW_VOLTAGE_LIMIT_KEY, Double.toString(minPlausibleLowVoltageLimit)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(MAX_PLAUSIBLE_HIGH_VOLTAGE_LIMIT_KEY, Double.toString(maxPlausibleHighVoltageLimit)));
         if (busesWithReactiveSlackConfig != null) {
             allAlgoParams.add(busesWithReactiveSlackConfig.toParam());
         }
@@ -212,11 +286,31 @@ public class OpenReacParameters {
             throw new InvalidParametersException("At least one voltage level has an undefined or incorrect voltage limit.");
         }
 
+        boolean integrityAlgorithmParameters = checkAlgorithmParametersIntegrity();
+        if (!integrityAlgorithmParameters) {
+            throw new InvalidParametersException("At least one algorithm parameter is inconsistent.");
+        }
+    }
+
+    /**
+     * @return true if the algorithm parameters are consistent, false otherwise.
+     */
+    public boolean checkAlgorithmParametersIntegrity() {
+        boolean integrityAlgorithmParameters = true;
+
+        // Check integrity of objective function
         if (objective.equals(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT) && objectiveDistance == null) {
-            throw new InvalidParametersException("In using " + OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT +
-                    " as objective, a distance in percent between low and high voltage limits is expected.");
+            LOGGER.warn("In using {} as objective, a distance in percent between low and high voltage limits is expected.", OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT);
+            integrityAlgorithmParameters = false;
         }
 
+        // Check integrity of min/max plausible voltage limits
+        if (minPlausibleLowVoltageLimit > maxPlausibleHighVoltageLimit) {
+            LOGGER.warn("Min plausible low voltage limit must be lower than max plausible high voltage limit.");
+            integrityAlgorithmParameters = false;
+        }
+
+        return integrityAlgorithmParameters;
     }
 
     /**

@@ -43,6 +43,10 @@ public class OpenReacParametersSerializer extends StdSerializer<OpenReacParamete
         if (openReacParameters.getObjectiveDistance() != null) {
             serializerProvider.defaultSerializeField("objectiveDistance", openReacParameters.getObjectiveDistance(), jsonGenerator);
         }
+        serializerProvider.defaultSerializeField("logLevelAmpl", openReacParameters.getLogLevelAmpl(), jsonGenerator);
+        serializerProvider.defaultSerializeField("logLevelSolver", openReacParameters.getLogLevelSolver(), jsonGenerator);
+        serializerProvider.defaultSerializeField("minPlausibleLowVoltageLimit", openReacParameters.getMinPlausibleLowVoltageLimit(), jsonGenerator);
+        serializerProvider.defaultSerializeField("maxPlausibleHighVoltageLimit", openReacParameters.getMaxPlausibleHighVoltageLimit(), jsonGenerator);
         serializerProvider.defaultSerializeField("busesWithReactiveSlackConfig", openReacParameters.getBusesWithReactiveSlackConfig().name(), jsonGenerator);
         jsonGenerator.writeEndObject();
     }

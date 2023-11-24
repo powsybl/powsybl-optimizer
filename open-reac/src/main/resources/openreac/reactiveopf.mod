@@ -42,20 +42,20 @@ check 1 in TIME;
 check card({(t,s) in SUBSTATIONS: substation_Vnomi[t,s] >= epsilon_nominal_voltage}) > 1;
 
 # Voltage bounds
-check{(t,s) in SUBSTATIONS: substation_Vmin[t,s] >= epsilon_min_voltage and substation_Vmax[t,s] >= epsilon_min_voltage}:
-  substation_Vmin[t,s] < substation_Vmax[t,s];
-# Parameter below will be used to force voltage to be in interval [epsilon;2-epsilon].
-# Typical value is 0.5 although academics would use 0.9 or 0.95
-check epsilon_min_voltage > 0 and epsilon_min_voltage < 1;
-# Bounds below will be used for substations without bounds or with bad bounds (eg 0.01pu or 20pu are bad values)
+check{(t,s) in SUBSTATIONS: substation_Vmin[t,s] >= min_plausible_low_voltage_limit and substation_Vmax[t,s] >= min_plausible_low_voltage_limit}:
+substation_Vmin[t,s] < substation_Vmax[t,s];
+
+# Parameters min_plausible_low_voltage_limit and max_plausible_high_voltage_limit are used to force voltage to be in interval [min_plausible_low_voltage_limit;max_plausible_high_voltage_limit].
+# Default value is [0.5;1.5] although academics would use low limit equals to 0.9 or 0.95
+# Bounds below will be used for substations without bounds or with bad bounds
 param minimal_voltage_lower_bound :=
-  if card({(t,s) in SUBSTATIONS: substation_Vmin[t,s] > 0}) > 0
-  then max(epsilon_min_voltage,min{(t,s) in SUBSTATIONS: substation_Vmin[t,s] > 0} substation_Vmin[t,s])
-  else epsilon_min_voltage;
+if card({(t,s) in SUBSTATIONS: substation_Vmin[t,s] > 0}) > 0
+then max(min_plausible_low_voltage_limit,min{(t,s) in SUBSTATIONS: substation_Vmin[t,s] > 0} substation_Vmin[t,s])
+else min_plausible_low_voltage_limit;
 param maximal_voltage_upper_bound :=
-  if card({(t,s) in SUBSTATIONS: substation_Vmin[t,s] > 0}) > 0
-  then min(2-epsilon_min_voltage,max{(t,s) in SUBSTATIONS: substation_Vmax[t,s] > 0} substation_Vmax[t,s])
-  else 2-epsilon_min_voltage;
+if card({(t,s) in SUBSTATIONS: substation_Vmin[t,s] > 0}) > 0
+then min(max_plausible_high_voltage_limit,max{(t,s) in SUBSTATIONS: substation_Vmax[t,s] > 0} substation_Vmax[t,s])
+else max_plausible_high_voltage_limit;
 check minimal_voltage_lower_bound > 0;
 check maximal_voltage_upper_bound > minimal_voltage_lower_bound;
 
@@ -83,6 +83,9 @@ check {(t,s) in SUBSTATIONS: s in BOUND_OVERRIDES}: substation_new_Vmin[s] < sub
 ###############################################################################
 # Negative value for substation_Vmin or substation_Vmax means that the value is undefined
 # In that case, minimal_voltage_lower_bound or maximal_voltage_upper_bound is used instead
+
+# Note that low and high override are taken into account only if
+# substation_new_Vmin > minimal_voltage_lower_bound and substation_new_Vmax < maximal_voltage_upper_bound
 
 param voltage_lower_bound{(t,s) in SUBSTATIONS} :=
   max( minimal_voltage_lower_bound,
@@ -556,7 +559,7 @@ set UNITCC    := setof {(1,g,n) in UNIT    : n in BUSCC} (g,n);
 set BATTERYCC := setof {(1,b,n) in BATTERY : n in BUSCC} (b,n);
 
 # Busses with valid voltage value
-set BUSVV := {n in BUSCC : bus_V0[1,n] >= epsilon_min_voltage};
+set BUSVV := {n in BUSCC : bus_V0[1,n] >= min_plausible_low_voltage_limit};
 
 # Units up and generating:
 # Warning: units with Ptarget=0 are considered as out of order
@@ -824,10 +827,10 @@ subject to ctr_null_phase_bus{PROBLEM_ACOPF}: teta[null_phase_bus] = 0;
 # Modulus of voltage
 var V{n in BUSCC}
   <=
-  if substation_Vnomi[1,bus_substation[1,n]] <= ignore_voltage_bounds then 2-epsilon_min_voltage else
+  if substation_Vnomi[1,bus_substation[1,n]] <= ignore_voltage_bounds then max_plausible_high_voltage_limit else
   voltage_upper_bound[1,bus_substation[1,n]],
   >=
-  if substation_Vnomi[1,bus_substation[1,n]] <= ignore_voltage_bounds then epsilon_min_voltage else
+  if substation_Vnomi[1,bus_substation[1,n]] <= ignore_voltage_bounds then min_plausible_low_voltage_limit else
   voltage_lower_bound[1,bus_substation[1,n]];
 
 

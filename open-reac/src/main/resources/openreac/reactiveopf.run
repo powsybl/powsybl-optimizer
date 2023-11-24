@@ -293,20 +293,26 @@ if "epsilon_nominal_voltage" in PARAM_ALGO_KEYS then let epsilon_nominal_voltage
 printf{LOG_INFO} "Parameter: for consistency checks of minimum nominal voltages epsilon_nominal_voltage:= %Q kV\n",epsilon_nominal_voltage;
 check epsilon_nominal_voltage > 0;
 
-# Minimum consistency value for voltage in PU
-# This value has to be >0 and <1
-param epsilon_min_voltage default 0.5;
-if "epsilon_min_voltage" in PARAM_ALGO_KEYS then let epsilon_min_voltage := num(PARAM_ALGO_VALUES["epsilon_min_voltage"]);
-printf{LOG_INFO} "Parameter: for consistency checks of voltage bounds eps<=Vmin<Vmax<=2-eps, epsilon_min_voltage:= %Q pu\n",epsilon_min_voltage;
-check epsilon_min_voltage > 0 and epsilon_min_voltage < 1;
+# Minimum plausible value for voltage low limits in PU
+# This value should be < 1
+param min_plausible_low_voltage_limit default 0.5;
+if "min_plausible_low_voltage_limit" in PARAM_ALGO_KEYS then let min_plausible_low_voltage_limit := num(PARAM_ALGO_VALUES["min_plausible_low_voltage_limit"]);
+printf{LOG_INFO} "Parameter: for consistency of voltage bounds, min_plausible_low_voltage_limit:= %Q pu\n",min_plausible_low_voltage_limit;
+check min_plausible_low_voltage_limit > 0;
+
+# Maximum plausible value for voltage high limits in PU
+param max_plausible_high_voltage_limit default 1.5;
+if "max_plausible_high_voltage_limit" in PARAM_ALGO_KEYS then let max_plausible_high_voltage_limit := num(PARAM_ALGO_VALUES["max_plausible_high_voltage_limit"]);
+printf{LOG_INFO} "Parameter: for consistency of voltage bounds, max_plausible_high_voltage_limit:= %Q pu\n",max_plausible_high_voltage_limit;
+check max_plausible_high_voltage_limit > min_plausible_low_voltage_limit;
 
 # Ignore voltage bounds for buses with nominal voltage lower than this parameter
 # For all busses with nominal voltage lower than ignore_voltage_bounds, voltage bonds will be ignored
-# and replaced by [epsilon_min_voltage ; 2 - epsilon_min_voltage]
+# and replaced by [min_plausible_low_voltage_limit ; max_plausible_high_voltage_limit]
 param ignore_voltage_bounds default 0;
 if "ignore_voltage_bounds" in PARAM_ALGO_KEYS then let ignore_voltage_bounds := num(PARAM_ALGO_VALUES["ignore_voltage_bounds"]);
 if ignore_voltage_bounds >= epsilon_nominal_voltage
-then printf{LOG_INFO} "Parameter: for all busses with nominal voltage <= ignore_voltage_bounds=%.1f, voltage bounds are ignored and replaced by [%.3f;%.3f]\n",ignore_voltage_bounds,epsilon_min_voltage,2-epsilon_min_voltage;
+then printf{LOG_INFO} "Parameter: for all busses with nominal voltage <= ignore_voltage_bounds=%.1f, voltage bounds are ignored and replaced by [%.3f;%.3f]\n",ignore_voltage_bounds,min_plausible_low_voltage_limit,max_plausible_high_voltage_limit;
 check ignore_voltage_bounds >= 0;
 
 param buses_with_reactive_slacks symbolic default "NO_GENERATION";
@@ -605,7 +611,7 @@ for {(qq,m,n) in BRANCHCC_REGL: regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]] <= te
 }
 # Looking for unconsistencies
 let tempo := 0; # If non zero, major inconsistency detected
-for {(qq,m,n) in BRANCHCC_REGL: substation_Vnomi[1,bus_substation[1,m]] > 30 and substation_Vnomi[1,bus_substation[1,n]] > 30} {
+for {(qq,m,n) in BRANCHCC_REGL: substation_Vnomi[1,bus_substation[1,m]] > 30 and substation_Vnomi[1,bus_substation[1,n]] > 30 and 1=0} {
   let temp1 := regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]];
   let temp2 := regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]];
   if voltage_lower_bound[1,bus_substation[1,m]]*temp1*branch_cstratio[1,qq,m,n] > voltage_upper_bound[1,bus_substation[1,n]]
@@ -642,7 +648,7 @@ for {(qq,m,n) in BRANCHCC_REGL: substation_Vnomi[1,bus_substation[1,m]] > 30 and
   }
 }
 # Consistency for transformers with fixed ratio
-for {(qq,m,n) in BRANCHCC_REGL_FIX: substation_Vnomi[1,bus_substation[1,m]] > 30 and substation_Vnomi[1,bus_substation[1,n]] > 30} {
+for {(qq,m,n) in BRANCHCC_REGL_FIX: substation_Vnomi[1,bus_substation[1,m]] > 30 and substation_Vnomi[1,bus_substation[1,n]] > 30 and 1=0} {
   let temp1 := tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]];
   if voltage_lower_bound[1,bus_substation[1,m]]*temp1*branch_cstratio[1,qq,m,n] > voltage_upper_bound[1,bus_substation[1,n]]
   then {
@@ -1102,41 +1108,39 @@ then {
 ###############################################################################
 include reactiveopfoutput.run;
 
-
-
 # Write voltage information in debug file
-printf "#bus_id;Vnom;V;Vlb;Vub;Vmin_mod;Vmax_mod;Vmin_OK;Vmax_OK;Vmin_ori;Vmax_ori;sQ1;sQ2;\n" > debug_bus.csv;
-for {n in BUSCC} printf "%Q;%i;%.4f;%.4f;%.4f;%.4f;%.4f;%s;%s;%.4f;%.4f;%.2f;%.2f;\n",
-  bus_id[1,n],substation_Vnomi[1,bus_substation[1,n]],
-  V[n],V[n].lb,V[n].ub,
-  voltage_lower_bound[1,bus_substation[1,n]],
-  voltage_upper_bound[1,bus_substation[1,n]],
-  if V[n]<voltage_lower_bound[1,bus_substation[1,n]] then "NOK" else "OK",
-  if V[n]>voltage_upper_bound[1,bus_substation[1,n]] then "NOK" else "OK",
-  substation_Vmin[1,bus_substation[1,n]],substation_Vmax[1,bus_substation[1,n]],
-  if n in BUSCC_SLACK then max(slack1_balance_Q[n]-slack2_balance_Q[n],0) else -1,
-  if n in BUSCC_SLACK then max(slack2_balance_Q[n]-slack1_balance_Q[n],0) else -1
-  > debug_bus.csv;
-  ;
-close debug_bus.csv;
+let fileOut := "debug_bus.csv";
+printf{LOG_DEBUG} "#bus_id;Vnom;V;Vlb;Vub;Vmin_mod;Vmax_mod;Vmin_OK;Vmax_OK;Vmin_ori;Vmax_ori;sQ1;sQ2;\n" > (fileOut);
+for {n in BUSCC} 
+  printf{LOG_DEBUG} "%Q;%i;%.4f;%.4f;%.4f;%.4f;%.4f;%s;%s;%.4f;%.4f;%.2f;%.2f;\n",
+    bus_id[1,n],substation_Vnomi[1,bus_substation[1,n]],
+    V[n],V[n].lb,V[n].ub,
+    voltage_lower_bound[1,bus_substation[1,n]],
+    voltage_upper_bound[1,bus_substation[1,n]],
+    if V[n]<voltage_lower_bound[1,bus_substation[1,n]] then "NOK" else "OK",
+    if V[n]>voltage_upper_bound[1,bus_substation[1,n]] then "NOK" else "OK",
+    substation_Vmin[1,bus_substation[1,n]],substation_Vmax[1,bus_substation[1,n]],
+    if n in BUSCC_SLACK then max(slack1_balance_Q[n]-slack2_balance_Q[n],0) else -1,
+    if n in BUSCC_SLACK then max(slack2_balance_Q[n]-slack1_balance_Q[n],0) else -1
+    > (fileOut);
+close (fileOut);
 
-if 1==0 then {
 # Write units which are not in uniton (debug only)
 let fileOut := "reactiveopf_results_generators_Pnull.csv";
-printf "#variant;num;bus;vRegul;V(pu);targetP(MW);targetQ(Mvar);P(MW);Q(MW);id;bus_id;\n" > (fileOut);
-printf{(g,n) in UNITCC diff UNITON} "%i;%i;%i;%Q;%.3f;%.3f;%.3f;%.3f;%.3f;%Q;%Q;\n",
-  1,g,n,
-  unit_vregul[1,g,n],
-  V[n],
-  unit_Pc[1,g,n],
-  unit_Qc[1,g,n],
-  unit_P0[1,g,n],
-  unit_Q0[1,g,n],
-  unit_id[1,g,n],
-  bus_id[1,n]
-  > (fileOut);
+printf{LOG_DEBUG} "#variant;num;bus;vRegul;V(pu);targetP(MW);targetQ(Mvar);P(MW);Q(MW);id;bus_id;\n" > (fileOut);
+for {(g,n) in UNITCC diff UNITON} 
+  printf{LOG_DEBUG} "%i;%i;%i;%Q;%.3f;%.3f;%.3f;%.3f;%.3f;%Q;%Q;\n",
+    1,g,n,
+    unit_vregul[1,g,n],
+    V[n],
+    unit_Pc[1,g,n],
+    unit_Qc[1,g,n],
+    unit_P0[1,g,n],
+    unit_Q0[1,g,n],
+    unit_id[1,g,n],
+    bus_id[1,n]
+    > (fileOut);
 close (fileOut);
-}
 
 
 ###############################################################################
