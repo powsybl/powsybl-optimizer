@@ -100,7 +100,9 @@ class OpenReacRunnerTest {
                 .setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE)
                 .setObjectiveDistance(69)
                 .setLogLevelAmpl(OpenReacAmplLogLevel.WARNING)
-                .setLogLevelSolver(OpenReacSolverLogLevel.ONLY_RESULTS);
+                .setLogLevelSolver(OpenReacSolverLogLevel.ONLY_RESULTS)
+                .setMinPlausibleLowVoltageLimit(0.7888)
+                .setMaxPlausibleHighVoltageLimit(1.3455);
 
         LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
                 List.of("empty_case/reactiveopf_results_indic.txt"));
@@ -204,7 +206,7 @@ class OpenReacRunnerTest {
             assertEquals(1, openReacResult.getSvcModifications().size());
             assertEquals(1, openReacResult.getVscModifications().size());
             assertEquals(7, openReacResult.getGeneratorModifications().size());
-            assertEquals(80, openReacResult.getIndicators().size());
+            assertEquals(81, openReacResult.getIndicators().size());
             assertTrue(openReacResult.getReactiveSlacks().isEmpty());
         }
     }

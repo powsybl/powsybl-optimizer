@@ -27,5 +27,7 @@
   "objective" : "MIN_GENERATION",
   "objectiveDistance" : 5.0,
   "logLevelAmpl" : "WARNING",
-  "logLevelSolver" : "NOTHING"
+  "logLevelSolver" : "NOTHING",
+  "minPlausibleLowVoltageLimit" : 0.755,
+  "maxPlausibleHighVoltageLimit" : 1.236
 }

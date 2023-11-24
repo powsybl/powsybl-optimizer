@@ -47,6 +47,8 @@ class OpenReacJsonModuleTest {
         parameters.setObjectiveDistance(5);
         parameters.setLogLevelAmpl(OpenReacAmplLogLevel.WARNING);
         parameters.setLogLevelSolver(OpenReacSolverLogLevel.NOTHING);
+        parameters.setMinPlausibleLowVoltageLimit(0.755);
+        parameters.setMaxPlausibleHighVoltageLimit(1.236);
         String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(parameters);
         ComparisonUtils.compareTxt(Objects.requireNonNull(getClass().getResourceAsStream("/parameters.json")), json);
 
@@ -64,5 +66,7 @@ class OpenReacJsonModuleTest {
         assertEquals(5, parameters2.getObjectiveDistance());
         assertEquals(OpenReacAmplLogLevel.WARNING, parameters2.getLogLevelAmpl());
         assertEquals(OpenReacSolverLogLevel.NOTHING, parameters2.getLogLevelSolver());
+        assertEquals(0.755, parameters2.getMinPlausibleLowVoltageLimit());
+        assertEquals(1.236, parameters2.getMaxPlausibleHighVoltageLimit());
     }
 }
