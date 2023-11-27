@@ -529,6 +529,16 @@ param param_transformers_ratio_variable_id{PARAM_TRANSFORMERS_RATIO_VARIABLE} sy
 check {(t,qq,m,n) in BRANCH: qq in PARAM_TRANSFORMERS_RATIO_VARIABLE}: branch_id[t,qq,m,n] == param_transformers_ratio_variable_id[qq];
 
 
+###############################################################################
+# Buses with reactive slacks
+###############################################################################
+# param_buses_with_reactive_slack.txt
+# If buses_with_reactive_slacks == "CONFIGURED" then only buses listed in this file will have reactive slacks attached in ACOPF
+#"num" "id"
+set PARAM_BUSES_WITH_REACTIVE_SLACK  dimen 1 default {};
+param param_buses_with_reactive_slack_id{PARAM_BUSES_WITH_REACTIVE_SLACK} symbolic;
+check {(t,n) in BUS: n in PARAM_BUSES_WITH_REACTIVE_SLACK}: bus_id[t,n] == param_buses_with_reactive_slack_id[n];
+
 
 ###############################################################################
 # Additional sets for equipments which are really working
@@ -939,17 +949,12 @@ subject to ctr_balance_P{PROBLEM_ACOPF,k in BUSCC}:
 # Reactive Balance
 #
 
-# Reactive balance slack variables only if there is a load or a shunt connected
-# If there is a unit, or SVC, or VSC, they already have reactive power generation, so no need to add slack variables
-set BUSCC_SLACK :=  {n in BUSCC:
-  (
-  card{(g,n) in UNITON: (g,n) not in UNIT_FIXQ}==0
-  and card{(svc,n) in SVCON}==0
-  and card{(vscconv,n) in VSCCONVON}==0
-  )
-  } ;
-var slack1_balance_Q{BUSCC_SLACK} >=0, <= 500; # 500 Mvar is already HUGE
-var slack2_balance_Q{BUSCC_SLACK} >=0, <= 500;
+# Reactive balance slack variables at configured nodes
+set BUSCC_SLACK := if buses_with_reactive_slacks == "ALL" then BUSCC
+                    else if buses_with_reactive_slacks == "NO_GENERATION" then {n in BUSCC: (card{(g,n) in UNITON: (g,n) not in UNIT_FIXQ}==0 and card{(svc,n) in SVCON}==0 and card{(vscconv,n) in VSCCONVON}==0)}
+                    else BUSCC inter PARAM_BUSES_WITH_REACTIVE_SLACK; # if = "CONFIGURED", buses given as parameter but in connex component
+var slack1_balance_Q{BUSCC_SLACK} >=0;
+var slack2_balance_Q{BUSCC_SLACK} >=0;
 #subject to ctr_compl_slack_Q{PROBLEM_ACOPF,k in BUSCC_SLACK}: slack1_balance_Q[k] >= 0 complements slack2_balance_Q[k] >= 0;
 
 subject to ctr_balance_Q{PROBLEM_ACOPF,k in BUSCC}:

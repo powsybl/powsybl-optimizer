@@ -28,7 +28,7 @@ public abstract class AbstractElementsInput implements AmplInputFile {
 
     @Override
     public void write(BufferedWriter writer, StringToIntMapper<AmplSubset> stringToIntMapper) throws IOException {
-        writer.write("#amplId powsyblId\n");
+        writer.write("#num id\n");
         for (String elementID : elementIds) {
             int amplId = stringToIntMapper.getInt(getElementAmplSubset(), elementID);
             String[] tokens = {Integer.toString(amplId), AmplIOUtils.addQuotes(elementID)};
