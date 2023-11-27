@@ -1,18 +1,18 @@
 final_status OK
 dcopf_status OK
 
-ctime_start 'Thu Nov 23 14:53:50 2023'
+ctime_start 'Fri Nov 24 11:59:34 2023'
 last_solve_result_num 0
-nb_iter_last 7
-nb_iter_total 7
-_ampl_elapsed_time 0.095000
+nb_iter_last 6
+nb_iter_total 6
+_ampl_elapsed_time 0.125000
 _total_solve_time 0.031250
 total_time 0
 
 operatingSystem windows
 OS 'Windows_NT'
 COMPUTERNAME 'ARTELYS-PC253'
-directory 'C:\Users\parvy\AppData\Local\Temp\ampl_5579556502931529884'
+directory 'C:\Users\parvy\AppData\Local\Temp\ampl_12583331805904096086'
 
 log_level_ampl INFO
 log_level_knitro 2
@@ -25,6 +25,7 @@ epsilon_nominal_voltage 1.000000
 min_plausible_low_voltage_limit 0.500000
 max_plausible_high_voltage_limit 1.500000
 ignore_voltage_bounds 0.000000
+buses_with_reactive_slacks NO_GENERATION
 PQmax 9000.000000
 defaultPmax 1000.000000
 defaultPmin 0.000000
@@ -76,9 +77,9 @@ min_teta_dc -0.12
 min_teta_ac -0.11
 teta_min -3.12
 max_delta_teta_dc 0.159330
-max_delta_teta_ac 0.140548
+max_delta_teta_ac 0.140571
 min_delta_teta_dc -0.041368
-min_delta_teta_ac -0.041532
+min_delta_teta_ac -0.041534
 
 nb_reactive_slacks 0
 nb_slacks_condensator 0

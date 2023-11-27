@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
  * This class stores all inputs parameters specific to the OpenReac optimizer.
  *
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ * @author Pierre Arvy <pierre.arvy at artelys.com>
  */
 public class OpenReacParameters {
 
@@ -32,6 +33,8 @@ public class OpenReacParameters {
     private final List<String> constantQGenerators = new ArrayList<>();
 
     private final List<String> variableTwoWindingsTransformers = new ArrayList<>();
+
+    private final List<String> configuredReactiveSlackBuses = new ArrayList<>();
 
     // Algo parameters
 
@@ -52,6 +55,8 @@ public class OpenReacParameters {
     private static final String MAX_PLAUSIBLE_HIGH_VOLTAGE_LIMIT_KEY = "max_plausible_high_voltage_limit";
 
     private double maxPlausibleHighVoltageLimit = 1.5; // in pu
+
+    private ReactiveSlackBusesMode reactiveSlackBusesMode = ReactiveSlackBusesMode.NO_GENERATION;
 
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.
@@ -86,6 +91,14 @@ public class OpenReacParameters {
      */
     public OpenReacParameters addVariableTwoWindingsTransformers(List<String> transformerIds) {
         this.variableTwoWindingsTransformers.addAll(transformerIds);
+        return this;
+    }
+
+    /**
+     * A list of buses, to which reactive slacks variable will be attached by the optimizer.
+     */
+    public OpenReacParameters addConfiguredReactiveSlackBuses(List<String> busesIds) {
+        this.configuredReactiveSlackBuses.addAll(busesIds);
         return this;
     }
 
@@ -190,6 +203,19 @@ public class OpenReacParameters {
         return this;
     }
 
+    /**
+     * @return the mode used to select which buses will have reactive slack variables attached in the optimization.
+     * If mode is CONFIGURED, the buses in configuredReactiveSlackBuses are used.
+     */
+    public ReactiveSlackBusesMode getReactiveSlackBusesMode() {
+        return reactiveSlackBusesMode;
+    }
+
+    public OpenReacParameters setReactiveSlackBusesMode(ReactiveSlackBusesMode reactiveSlackBusesMode) {
+        this.reactiveSlackBusesMode = Objects.requireNonNull(reactiveSlackBusesMode);
+        return this;
+    }
+
     public List<String> getVariableShuntCompensators() {
         return variableShuntCompensators;
     }
@@ -206,6 +232,10 @@ public class OpenReacParameters {
         return variableTwoWindingsTransformers;
     }
 
+    public List<String> getConfiguredReactiveSlackBuses() {
+        return configuredReactiveSlackBuses;
+    }
+
     public List<OpenReacAlgoParam> getAllAlgorithmParams() {
         ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>();
         allAlgoParams.add(objective.toParam());
@@ -216,6 +246,7 @@ public class OpenReacParameters {
         allAlgoParams.add(this.logLevelSolver.toParam());
         allAlgoParams.add(new OpenReacAlgoParamImpl(MIN_PLAUSIBLE_LOW_VOLTAGE_LIMIT_KEY, Double.toString(minPlausibleLowVoltageLimit)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(MAX_PLAUSIBLE_HIGH_VOLTAGE_LIMIT_KEY, Double.toString(maxPlausibleHighVoltageLimit)));
+        allAlgoParams.add(reactiveSlackBusesMode.toParam());
         return allAlgoParams;
     }
 
@@ -239,6 +270,11 @@ public class OpenReacParameters {
         for (String transformerId : getVariableTwoWindingsTransformers()) {
             if (network.getTwoWindingsTransformer(transformerId) == null) {
                 throw new InvalidParametersException("Two windings transformer " + transformerId + " not found in the network.");
+            }
+        }
+        for (String busId : getConfiguredReactiveSlackBuses()) {
+            if (network.getBusView().getBus(busId) == null) {
+                throw new InvalidParametersException("Bus " + busId + " not found in the network.");
             }
         }
 

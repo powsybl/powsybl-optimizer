@@ -14,6 +14,7 @@ import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAmplLogLevel;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 import com.powsybl.openreac.parameters.input.algo.OpenReacSolverLogLevel;
+import com.powsybl.openreac.parameters.input.algo.ReactiveSlackBusesMode;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -123,66 +124,95 @@ public class OpenReacParametersTest {
         parameters.setLogLevelSolver(OpenReacSolverLogLevel.NOTHING);
         parameters.setMinPlausibleLowVoltageLimit(0.8);
         parameters.setMaxPlausibleHighVoltageLimit(1.2);
-        List<OpenReacAlgoParam> algoParams = parameters.getAllAlgorithmParams();
+        parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL);
 
-        assertEquals(6, algoParams.size());
+        List<OpenReacAlgoParam> algoParams = parameters.getAllAlgorithmParams();
+        assertEquals(7, algoParams.size());
         assertEquals("2", algoParams.get(0).getValue());
         assertEquals("0.4", algoParams.get(1).getValue());
         assertEquals("DEBUG", algoParams.get(2).getValue());
         assertEquals("0", algoParams.get(3).getValue());
         assertEquals("0.8", algoParams.get(4).getValue());
         assertEquals("1.2", algoParams.get(5).getValue());
+        assertEquals("ALL", algoParams.get(6).getValue());
     }
 
     @Test
-    void testParametersIntegrity() {
-        Network network = IeeeCdfNetworkFactory.create57();
-        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
-        String wrongId = "An id not in 118 cdf network.";
+    void testBusesWithReactiveSlackConfigIntegrity() {
         OpenReacParameters parameters = new OpenReacParameters();
 
+        assertEquals(ReactiveSlackBusesMode.NO_GENERATION, parameters.getReactiveSlackBusesMode()); // default value
+        assertThrows(NullPointerException.class, () -> parameters.setReactiveSlackBusesMode(null));
+        parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.CONFIGURED);
+        assertEquals("CONFIGURED", parameters.getReactiveSlackBusesMode().toParam().getValue());
+        parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.NO_GENERATION);
+        assertEquals("NO_GENERATION", parameters.getReactiveSlackBusesMode().toParam().getValue());
+        parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL);
+        assertEquals("ALL", parameters.getReactiveSlackBusesMode().toParam().getValue());
+    }
+
+    @Test
+    void testDefaultListsOfParametersIntegrity() {
+        // testing default lists of parameters
+        OpenReacParameters parameters = new OpenReacParameters();
         assertEquals(0, parameters.getVariableTwoWindingsTransformers().size(), "VariableTwoWindingsTransformers should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getSpecificVoltageLimits().size(), "SpecificVoltageLimits should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getConstantQGenerators().size(), "ConstantQGenerators should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getVariableShuntCompensators().size(), "VariableShuntCompensators should be empty when using default OpenReacParameter constructor.");
-        assertEquals(5, parameters.getAllAlgorithmParams().size());
+        assertEquals(0, parameters.getConfiguredReactiveSlackBuses().size(), "ConfiguredReactiveSlackBuses should be empty when using default OpenREacParameter constructor.");
+        assertEquals(6, parameters.getAllAlgorithmParams().size());
+    }
 
-        // adding an objective, to have a valid OpenReacParameter object
-        parameters.setObjective(OpenReacOptimisationObjective.MIN_GENERATION);
-        // testing TwoWindingsTransformer
+    @Test
+    void testListsOfParametersIntegrity() {
+        Network network = IeeeCdfNetworkFactory.create57();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
+        String wrongId = "An id not in 57 cdf network.";
+
+        testTwoWindingsTransformersParametersIntegrity(network, wrongId);
+        testShuntCompensatorParametersIntegrity(network, wrongId);
+        testConstantQGeneratorsParametersIntegrity(network, wrongId);
+        testBusesWithReactiveSlacksParametersIntegrity(network, wrongId);
+    }
+
+    void testTwoWindingsTransformersParametersIntegrity(Network network, String wrongId) {
+        OpenReacParameters parameters = new OpenReacParameters();
         parameters.addVariableTwoWindingsTransformers(network.getTwoWindingsTransformerStream().map(TwoWindingsTransformer::getId).collect(Collectors.toList()));
-        OpenReacParameters lambdaParams = parameters; // for the lambdas to compile
-        assertDoesNotThrow(() -> lambdaParams.checkIntegrity(network), "Adding TwoWindingsTransformer network IDs should not throw.");
+        assertDoesNotThrow(() -> parameters.checkIntegrity(network), "Adding TwoWindingsTransformer network IDs should not throw.");
         parameters.addVariableTwoWindingsTransformers(List.of(wrongId));
         assertNull(network.getTwoWindingsTransformer(wrongId), "Please change wrong ID so it does not match any element in the network.");
-        InvalidParametersException e = assertThrows(InvalidParametersException.class, () -> lambdaParams.checkIntegrity(network));
+        InvalidParametersException e = assertThrows(InvalidParametersException.class, () -> parameters.checkIntegrity(network));
         assertEquals("Two windings transformer " + wrongId + " not found in the network.", e.getMessage());
+    }
 
-        // Reseting parameters
-        parameters = new OpenReacParameters();
-        parameters.setObjective(OpenReacOptimisationObjective.MIN_GENERATION);
-
-        // testing ShuntCompensator
+    void testShuntCompensatorParametersIntegrity(Network network, String wrongId) {
+        OpenReacParameters parameters = new OpenReacParameters();
         parameters.addVariableShuntCompensators(network.getShuntCompensatorStream().map(ShuntCompensator::getId).collect(Collectors.toList()));
-        OpenReacParameters lambdaParamsShunts = parameters; // for the lambdas to compile
-        assertDoesNotThrow(() -> lambdaParamsShunts.checkIntegrity(network), "Adding ShuntCompensator network IDs should not throw.");
+        assertDoesNotThrow(() -> parameters.checkIntegrity(network), "Adding ShuntCompensator network IDs should not throw.");
         parameters.addVariableShuntCompensators(List.of(wrongId));
         assertNull(network.getShuntCompensator(wrongId), "Please change wrong ID so it does not match any element in the network.");
-        InvalidParametersException e2 = assertThrows(InvalidParametersException.class, () -> lambdaParamsShunts.checkIntegrity(network));
-        assertEquals("Shunt " + wrongId + " not found in the network.", e2.getMessage());
+        InvalidParametersException e = assertThrows(InvalidParametersException.class, () -> parameters.checkIntegrity(network));
+        assertEquals("Shunt " + wrongId + " not found in the network.", e.getMessage());
+    }
 
-        // Reseting parameters
-        parameters = new OpenReacParameters();
-        parameters.setObjective(OpenReacOptimisationObjective.MIN_GENERATION);
-
-        // testing Generator
+    void testConstantQGeneratorsParametersIntegrity(Network network, String wrongId) {
+        OpenReacParameters parameters = new OpenReacParameters();
         parameters.addConstantQGenerators(network.getGeneratorStream().map(Generator::getId).collect(Collectors.toList()));
-        OpenReacParameters lambdaParamsGenerators = parameters; // for the lambdas to compile
-        assertDoesNotThrow(() -> lambdaParamsGenerators.checkIntegrity(network), "Adding Generator network IDs should not throw.");
+        assertDoesNotThrow(() -> parameters.checkIntegrity(network), "Adding Generator network IDs should not throw.");
         parameters.addConstantQGenerators(List.of(wrongId));
         assertNull(network.getGenerator(wrongId), "Please change wrong ID so it does not match any element in the network.");
-        InvalidParametersException e3 = assertThrows(InvalidParametersException.class, () -> lambdaParamsGenerators.checkIntegrity(network));
-        assertEquals("Generator " + wrongId + " not found in the network.", e3.getMessage());
+        InvalidParametersException e = assertThrows(InvalidParametersException.class, () -> parameters.checkIntegrity(network));
+        assertEquals("Generator " + wrongId + " not found in the network.", e.getMessage());
+    }
+
+    void testBusesWithReactiveSlacksParametersIntegrity(Network network, String wrongId) {
+        OpenReacParameters parameters = new OpenReacParameters();
+        parameters.addConfiguredReactiveSlackBuses(network.getBusView().getBusStream().map(Bus::getId).collect(Collectors.toList()));
+        assertDoesNotThrow(() -> parameters.checkIntegrity(network), "Adding Buses network IDs should not throw.");
+        parameters.addConfiguredReactiveSlackBuses(List.of(wrongId));
+        assertNull(network.getBusView().getBus(wrongId), "Please change wrong ID so it does not match any any element in the network.");
+        InvalidParametersException e = assertThrows(InvalidParametersException.class, () -> parameters.checkIntegrity(network));
+        assertEquals("Bus " + wrongId + " not found in the network.", e.getMessage());
     }
 
     void setDefaultVoltageLimits(Network network) {
