@@ -60,43 +60,43 @@ public class OpenReacParameters {
 
     private static final String ALPHA_COEFFICIENT_KEY = "coeff_alpha";
 
-    private Double alphaCoefficient = 1.; // in [0;1]
+    private double alphaCoefficient = 1.; // in [0;1]
 
     private static final String ZERO_POWER_THRESHOLD_KEY = "Pnull";
 
-    private Double zeroPowerThreshold = 0.01; // in MW, for detecting zero value for power
+    private double zeroPowerThreshold = 0.01; // in MW, for detecting zero value for power
 
     private static final String ZERO_IMPEDANCE_THRESHOLD_KEY = "Znull";
 
-    private Double zeroImpedanceThreshold = 1e-4; // in p.u., for detecting null impedance branches
+    private double zeroImpedanceThreshold = 1e-4; // in p.u., for detecting null impedance branches
 
     private static final String NOMINAL_THRESHOLD_IGNORED_BUS_KEY = "epsilon_nominal_voltage";
 
-    private Double nominalThresholdIgnoredBuses = 1.; // in kV, to ignore buses with Vnom lower than this value
+    private double nominalThresholdIgnoredBuses = 1.; // in kV, to ignore buses with Vnom lower than this value
 
     private static final String NOMINAL_THRESHOLD_IGNORED_VOLTAGE_BOUNDS_KEY = "ignore_voltage_bounds";
 
-    private Double nominalThresholdIgnoredVoltageBounds = 0.; // in kV, to ignore voltage bounds of buses with Vnom lower than this value
+    private double nominalThresholdIgnoredVoltageBounds = 0.; // in kV, to ignore voltage bounds of buses with Vnom lower than this value
 
     private static final String PQMAX_KEY = "PQmax";
 
-    private Double pQMax = 9000.; // MW
+    private double pQMax = 9000.; // MW
 
     private static final String DEFAULT_PMAX_KEY = "defaultPmax";
 
-    private Double defaultPMax = 1000.; // MW
+    private double defaultPMax = 1000.; // MW
 
     private static final String DEFAULT_PMIN_KEY = "defaultPmin";
 
-    private Double defaultPMin = 0.; // MW
+    private double defaultPMin = 0.; // MW
 
     private static final String DEFAULT_QMAX_PMAX_RATIO_KEY = "defaultQmaxPmaxRatio";
 
-    private Double defaultQmaxPmaxRatio = 0.3;
+    private double defaultQmaxPmaxRatio = 0.3;
 
     private static final String DEFAULT_MINIMAL_QP_RANGE_KEY = "minimalQPrange";
 
-    private Double defaultMinimalQPRange = 1.;
+    private double defaultMinimalQPRange = 1.;
 
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.
@@ -202,6 +202,7 @@ public class OpenReacParameters {
         this.objectiveDistance = objectiveDistance;
         return this;
     }
+
     /**
      * @return log level of ampl printings.
      */
@@ -275,11 +276,11 @@ public class OpenReacParameters {
         return this;
     }
 
-    public Double getAlphaCoefficient() {
+    public double getAlphaCoefficient() {
         return alphaCoefficient;
     }
 
-    public OpenReacParameters setAlphaCoefficient(Double alphaCoefficient) {
+    public OpenReacParameters setAlphaCoefficient(double alphaCoefficient) {
         if (Double.isNaN(alphaCoefficient) || alphaCoefficient < 0 || alphaCoefficient > 1) {
             throw new InvalidParametersException("Coefficient alpha parameter must be defined and between 0 and 1 to be consistent.");
         }
@@ -287,11 +288,11 @@ public class OpenReacParameters {
         return this;
     }
 
-    public Double getZeroPowerThreshold() {
+    public double getZeroPowerThreshold() {
         return zeroPowerThreshold;
     }
 
-    public OpenReacParameters setZeroPowerThreshold(Double zeroPowerThreshold) {
+    public OpenReacParameters setZeroPowerThreshold(double zeroPowerThreshold) {
         if (Double.isNaN(zeroPowerThreshold) || zeroPowerThreshold < 0) {
             throw new InvalidParametersException("Zero power threshold must be defined and >= 0 to be consistent.");
         }
@@ -299,11 +300,11 @@ public class OpenReacParameters {
         return this;
     }
 
-    public Double getZeroImpedanceThreshold() {
+    public double getZeroImpedanceThreshold() {
         return zeroImpedanceThreshold;
     }
 
-    public OpenReacParameters setZeroImpedanceThreshold(Double zeroImpedanceThreshold) {
+    public OpenReacParameters setZeroImpedanceThreshold(double zeroImpedanceThreshold) {
         if (Double.isNaN(zeroImpedanceThreshold) || zeroImpedanceThreshold < 0) {
             throw new InvalidParametersException("Zero impedance threshold must be defined and >= 0 to be consistent.");
         }
@@ -311,11 +312,11 @@ public class OpenReacParameters {
         return this;
     }
 
-    public Double getNominalThresholdIgnoredBuses() {
+    public double getNominalThresholdIgnoredBuses() {
         return nominalThresholdIgnoredBuses;
     }
 
-    public OpenReacParameters setNominalThresholdIgnoredBuses(Double nominalThresholdIgnoredBuses) {
+    public OpenReacParameters setNominalThresholdIgnoredBuses(double nominalThresholdIgnoredBuses) {
         if (Double.isNaN(nominalThresholdIgnoredBuses) || nominalThresholdIgnoredBuses < 0) {
             throw new InvalidParametersException("Nominal threshold for ignored buses must be defined and >= 0 to be consistent.");
         }
@@ -323,11 +324,11 @@ public class OpenReacParameters {
         return this;
     }
 
-    public Double getNominalThresholdIgnoredVoltageBounds() {
+    public double getNominalThresholdIgnoredVoltageBounds() {
         return nominalThresholdIgnoredVoltageBounds;
     }
 
-    public OpenReacParameters setNominalThresholdIgnoredVoltageBounds(Double nominalThresholdIgnoredVoltageBounds) {
+    public OpenReacParameters setNominalThresholdIgnoredVoltageBounds(double nominalThresholdIgnoredVoltageBounds) {
         if (Double.isNaN(nominalThresholdIgnoredVoltageBounds) || nominalThresholdIgnoredVoltageBounds < 0) {
             throw new InvalidParametersException("Nominal threshold for ignored voltage bounds must be defined and >= 0 to be consistent");
         }
@@ -335,11 +336,11 @@ public class OpenReacParameters {
         return this;
     }
 
-    public Double getPQMax() {
+    public double getPQMax() {
         return pQMax;
     }
 
-    public OpenReacParameters setPQMax(Double pQMax) {
+    public OpenReacParameters setPQMax(double pQMax) {
         if (Double.isNaN(pQMax) || pQMax <= 0) {
             throw new InvalidParametersException("Maximal consistency value for P and Q must be defined and > 0 to be consistent");
         }
@@ -347,11 +348,11 @@ public class OpenReacParameters {
         return this;
     }
 
-    public Double getDefaultPMax() {
+    public double getDefaultPMax() {
         return defaultPMax;
     }
 
-    public OpenReacParameters setDefaultPMax(Double defaultPMax) {
+    public OpenReacParameters setDefaultPMax(double defaultPMax) {
         if (Double.isNaN(defaultPMax) || defaultPMax <= 0) {
             throw new InvalidParametersException("Default P max value must be defined and > 0 to be consistent.");
         }
@@ -359,11 +360,11 @@ public class OpenReacParameters {
         return this;
     }
 
-    public Double getDefaultPMin() {
+    public double getDefaultPMin() {
         return defaultPMin;
     }
 
-    public OpenReacParameters setDefaultPMin(Double defaultPMin) {
+    public OpenReacParameters setDefaultPMin(double defaultPMin) {
         if (Double.isNaN(defaultPMin) || defaultPMin < 0) {
             throw new InvalidParametersException("Default P min value must be defined and >= 0 to be consistent.");
         }
@@ -371,11 +372,11 @@ public class OpenReacParameters {
         return this;
     }
 
-    public Double getDefaultQmaxPmaxRatio() {
+    public double getDefaultQmaxPmaxRatio() {
         return defaultQmaxPmaxRatio;
     }
 
-    public OpenReacParameters setDefaultQmaxPmaxRatio(Double defaultQmaxPmaxRatio) {
+    public OpenReacParameters setDefaultQmaxPmaxRatio(double defaultQmaxPmaxRatio) {
         // Qmin/Qmax are computed with this value in OpenReac, can not be zero
         if (Double.isNaN(defaultQmaxPmaxRatio) || defaultQmaxPmaxRatio <= 0) {
             throw new InvalidParametersException("Default Qmax and Pmax ratio must be defined and > 0 to be consistent.");
@@ -384,11 +385,11 @@ public class OpenReacParameters {
         return this;
     }
 
-    public Double getDefaultMinimalQPRange() {
+    public double getDefaultMinimalQPRange() {
         return defaultMinimalQPRange;
     }
 
-    public OpenReacParameters setDefaultMinimalQPRange(Double defaultMinimalQPRange) {
+    public OpenReacParameters setDefaultMinimalQPRange(double defaultMinimalQPRange) {
         if (Double.isNaN(defaultMinimalQPRange) || defaultMinimalQPRange < 0) {
             throw new InvalidParametersException("Default minimal QP range must be defined and >= 0 to be consistent.");
         }
