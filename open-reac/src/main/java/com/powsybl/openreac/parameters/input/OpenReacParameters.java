@@ -9,9 +9,7 @@ package com.powsybl.openreac.parameters.input;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
-import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
-import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParamImpl;
-import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
+import com.powsybl.openreac.parameters.input.algo.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,6 +20,7 @@ import java.util.stream.Collectors;
  * This class stores all inputs parameters specific to the OpenReac optimizer.
  *
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ * @author Pierre Arvy <pierre.arvy at artelys.com>
  */
 public class OpenReacParameters {
 
@@ -35,21 +34,29 @@ public class OpenReacParameters {
 
     private final List<String> variableTwoWindingsTransformers = new ArrayList<>();
 
+    private final List<String> configuredReactiveSlackBuses = new ArrayList<>();
+
     // Algo parameters
 
     private OpenReacOptimisationObjective objective = OpenReacOptimisationObjective.MIN_GENERATION;
 
+    private OpenReacAmplLogLevel logLevelAmpl = OpenReacAmplLogLevel.INFO;
+
+    private OpenReacSolverLogLevel logLevelSolver = OpenReacSolverLogLevel.EVERYTHING;
+
     private static final String OBJECTIVE_DISTANCE_KEY = "ratio_voltage_target";
 
-    private Double objectiveDistance = 0.5;
+    private Double objectiveDistance; // between 0 and 100
 
     private static final String MIN_PLAUSIBLE_LOW_VOLTAGE_LIMIT_KEY = "min_plausible_low_voltage_limit";
 
-    private Double minPlausibleLowVoltageLimit = 0.5; // in pu
+    private double minPlausibleLowVoltageLimit = 0.5; // in pu
 
     private static final String MAX_PLAUSIBLE_HIGH_VOLTAGE_LIMIT_KEY = "max_plausible_high_voltage_limit";
 
-    private Double maxPlausibleHighVoltageLimit = 1.5; // in pu
+    private double maxPlausibleHighVoltageLimit = 1.5; // in pu
+
+    private ReactiveSlackBusesMode reactiveSlackBusesMode = ReactiveSlackBusesMode.NO_GENERATION;
 
     private static final String ALPHA_COEFFICIENT_KEY = "coeff_alpha";
 
@@ -144,6 +151,18 @@ public class OpenReacParameters {
     }
 
     /**
+     * A list of buses, to which reactive slacks variable will be attached by the optimizer.
+     */
+    public OpenReacParameters addConfiguredReactiveSlackBuses(List<String> busesIds) {
+        this.configuredReactiveSlackBuses.addAll(busesIds);
+        return this;
+    }
+
+    public List<String> getConfiguredReactiveSlackBuses() {
+        return configuredReactiveSlackBuses;
+    }
+
+    /**
      * The definition of the objective function for the optimization.
      */
     public OpenReacOptimisationObjective getObjective() {
@@ -177,23 +196,52 @@ public class OpenReacParameters {
      * @param objectiveDistance is in %
      */
     public OpenReacParameters setObjectiveDistance(double objectiveDistance) {
-        if (Double.isNaN(objectiveDistance) || objectiveDistance > 1 || objectiveDistance < 0) {
-            throw new IllegalArgumentException("Objective distance must be defined and >= 0 and <= 1 to be consistent");
+        if (Double.isNaN(objectiveDistance) || objectiveDistance > 100 || objectiveDistance < 0) {
+            throw new IllegalArgumentException("Objective distance must be defined and >= 0 and <= 100 to be consistent");
         }
         this.objectiveDistance = objectiveDistance;
+        return this;
+    }
+    /**
+     * @return log level of ampl printings.
+     */
+    public OpenReacAmplLogLevel getLogLevelAmpl() {
+        return this.logLevelAmpl;
+    }
+
+    /**
+     * @param logLevelAmpl the log level of ampl printings.
+     */
+    public OpenReacParameters setLogLevelAmpl(OpenReacAmplLogLevel logLevelAmpl) {
+        this.logLevelAmpl = Objects.requireNonNull(logLevelAmpl);
+        return this;
+    }
+
+    /**
+     * @return log level of solver printings.
+     */
+    public OpenReacSolverLogLevel getLogLevelSolver() {
+        return this.logLevelSolver;
+    }
+
+    /**
+     * @param logLevelSolver the log level of solver printings.
+     */
+    public OpenReacParameters setLogLevelSolver(OpenReacSolverLogLevel logLevelSolver) {
+        this.logLevelSolver = Objects.requireNonNull(logLevelSolver);
         return this;
     }
 
     /**
      * @return the minimal plausible value for low voltage limits in p.u.
      */
-    public Double getMinPlausibleLowVoltageLimit() {
+    public double getMinPlausibleLowVoltageLimit() {
         return minPlausibleLowVoltageLimit;
     }
 
     public OpenReacParameters setMinPlausibleLowVoltageLimit(double minPlausibleLowVoltageLimit) {
-        if (Double.isNaN(minPlausibleLowVoltageLimit) || minPlausibleLowVoltageLimit < 0) {
-            throw new InvalidParametersException("Min plausible low voltage limit must be defined and >= 0 to be consistent.");
+        if (minPlausibleLowVoltageLimit < 0 || Double.isNaN(minPlausibleLowVoltageLimit)) {
+            throw new IllegalArgumentException("Min plausible low voltage limit must be >= 0 and defined to be consistent.");
         }
         this.minPlausibleLowVoltageLimit = minPlausibleLowVoltageLimit;
         return this;
@@ -202,15 +250,28 @@ public class OpenReacParameters {
     /**
      * @return the maximal plausible value for high voltage limits in p.u.
      */
-    public Double getMaxPlausibleHighVoltageLimit() {
+    public double getMaxPlausibleHighVoltageLimit() {
         return maxPlausibleHighVoltageLimit;
     }
 
     public OpenReacParameters setMaxPlausibleHighVoltageLimit(double maxPlausibleHighVoltageLimit) {
-        if (Double.isNaN(maxPlausibleHighVoltageLimit) || maxPlausibleHighVoltageLimit <= 0) {
-            throw new InvalidParametersException("Max plausible high voltage limit must be defined and > 0 to be consistent.");
+        if (maxPlausibleHighVoltageLimit <= 0 || Double.isNaN(maxPlausibleHighVoltageLimit)) {
+            throw new IllegalArgumentException("Max plausible high voltage limit must be > 0 and defined to be consistent.");
         }
         this.maxPlausibleHighVoltageLimit = maxPlausibleHighVoltageLimit;
+        return this;
+    }
+
+    /**
+     * @return the mode used to select which buses will have reactive slack variables attached in the optimization.
+     * If mode is CONFIGURED, the buses in configuredReactiveSlackBuses are used.
+     */
+    public ReactiveSlackBusesMode getReactiveSlackBusesMode() {
+        return reactiveSlackBusesMode;
+    }
+
+    public OpenReacParameters setReactiveSlackBusesMode(ReactiveSlackBusesMode reactiveSlackBusesMode) {
+        this.reactiveSlackBusesMode = Objects.requireNonNull(reactiveSlackBusesMode);
         return this;
     }
 
@@ -338,9 +399,14 @@ public class OpenReacParameters {
     public List<OpenReacAlgoParam> getAllAlgorithmParams() {
         ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>();
         allAlgoParams.add(objective.toParam());
-        allAlgoParams.add(new OpenReacAlgoParamImpl(OBJECTIVE_DISTANCE_KEY, Double.toString(objectiveDistance)));
+        if (objectiveDistance != null) {
+            allAlgoParams.add(new OpenReacAlgoParamImpl(OBJECTIVE_DISTANCE_KEY, Double.toString(objectiveDistance / 100)));
+        }
+        allAlgoParams.add(this.logLevelAmpl.toParam());
+        allAlgoParams.add(this.logLevelSolver.toParam());
         allAlgoParams.add(new OpenReacAlgoParamImpl(MIN_PLAUSIBLE_LOW_VOLTAGE_LIMIT_KEY, Double.toString(minPlausibleLowVoltageLimit)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(MAX_PLAUSIBLE_HIGH_VOLTAGE_LIMIT_KEY, Double.toString(maxPlausibleHighVoltageLimit)));
+        allAlgoParams.add(reactiveSlackBusesMode.toParam());
         allAlgoParams.add(new OpenReacAlgoParamImpl(ALPHA_COEFFICIENT_KEY, Double.toString(alphaCoefficient)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(ZERO_POWER_THRESHOLD_KEY, Double.toString(zeroPowerThreshold)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(ZERO_IMPEDANCE_THRESHOLD_KEY, Double.toString(zeroImpedanceThreshold)));
@@ -376,6 +442,11 @@ public class OpenReacParameters {
                 throw new InvalidParametersException("Two windings transformer " + transformerId + " not found in the network.");
             }
         }
+        for (String busId : getConfiguredReactiveSlackBuses()) {
+            if (network.getBusView().getBus(busId) == null) {
+                throw new InvalidParametersException("Bus " + busId + " not found in the network.");
+            }
+        }
 
         // Check integrity of voltage overrides
         boolean integrityVoltageLimitOverrides = checkVoltageLimitOverrides(network);
@@ -394,6 +465,7 @@ public class OpenReacParameters {
         if (!integrityAlgorithmParameters) {
             throw new InvalidParametersException("At least one algorithm parameter is inconsistent.");
         }
+
     }
 
     /**
@@ -402,10 +474,15 @@ public class OpenReacParameters {
     public boolean checkAlgorithmParametersIntegrity() {
         boolean integrityAlgorithmParameters = true;
 
+        // Check integrity of objective function
+        if (objective.equals(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT) && objectiveDistance == null) {
+            LOGGER.warn("In using {} as objective, a distance in percent between low and high voltage limits is expected.", OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT);
+            integrityAlgorithmParameters = false;
+        }
+
         // Check integrity of min/max plausible voltage limits
         if (minPlausibleLowVoltageLimit > maxPlausibleHighVoltageLimit) {
-            LOGGER.warn("Min plausible low voltage limit = {} must be lower than max plausible high voltage limit = {} to be consistent.",
-                    minPlausibleLowVoltageLimit, maxPlausibleHighVoltageLimit);
+            LOGGER.warn("Min plausible low voltage limit must be lower than max plausible high voltage limit.");
             integrityAlgorithmParameters = false;
         }
 
