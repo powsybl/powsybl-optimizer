@@ -282,7 +282,7 @@ public class OpenReacParameters {
 
     public OpenReacParameters setAlphaCoefficient(double alphaCoefficient) {
         if (Double.isNaN(alphaCoefficient) || alphaCoefficient < 0 || alphaCoefficient > 1) {
-            throw new InvalidParametersException("Coefficient alpha parameter must be defined and between 0 and 1 to be consistent.");
+            throw new IllegalArgumentException("Coefficient alpha parameter must be defined and between 0 and 1 to be consistent.");
         }
         this.alphaCoefficient = alphaCoefficient;
         return this;
@@ -294,7 +294,7 @@ public class OpenReacParameters {
 
     public OpenReacParameters setZeroPowerThreshold(double zeroPowerThreshold) {
         if (Double.isNaN(zeroPowerThreshold) || zeroPowerThreshold < 0) {
-            throw new InvalidParametersException("Zero power threshold must be defined and >= 0 to be consistent.");
+            throw new IllegalArgumentException("Zero power threshold must be defined and >= 0 to be consistent.");
         }
         this.zeroPowerThreshold = zeroPowerThreshold;
         return this;
@@ -306,7 +306,7 @@ public class OpenReacParameters {
 
     public OpenReacParameters setZeroImpedanceThreshold(double zeroImpedanceThreshold) {
         if (Double.isNaN(zeroImpedanceThreshold) || zeroImpedanceThreshold < 0) {
-            throw new InvalidParametersException("Zero impedance threshold must be defined and >= 0 to be consistent.");
+            throw new IllegalArgumentException("Zero impedance threshold must be defined and >= 0 to be consistent.");
         }
         this.zeroImpedanceThreshold = zeroImpedanceThreshold;
         return this;
@@ -318,7 +318,7 @@ public class OpenReacParameters {
 
     public OpenReacParameters setNominalThresholdIgnoredBuses(double nominalThresholdIgnoredBuses) {
         if (Double.isNaN(nominalThresholdIgnoredBuses) || nominalThresholdIgnoredBuses < 0) {
-            throw new InvalidParametersException("Nominal threshold for ignored buses must be defined and >= 0 to be consistent.");
+            throw new IllegalArgumentException("Nominal threshold for ignored buses must be defined and >= 0 to be consistent.");
         }
         this.nominalThresholdIgnoredBuses = nominalThresholdIgnoredBuses;
         return this;
@@ -330,7 +330,7 @@ public class OpenReacParameters {
 
     public OpenReacParameters setNominalThresholdIgnoredVoltageBounds(double nominalThresholdIgnoredVoltageBounds) {
         if (Double.isNaN(nominalThresholdIgnoredVoltageBounds) || nominalThresholdIgnoredVoltageBounds < 0) {
-            throw new InvalidParametersException("Nominal threshold for ignored voltage bounds must be defined and >= 0 to be consistent");
+            throw new IllegalArgumentException("Nominal threshold for ignored voltage bounds must be defined and >= 0 to be consistent");
         }
         this.nominalThresholdIgnoredVoltageBounds = nominalThresholdIgnoredVoltageBounds;
         return this;
@@ -342,7 +342,7 @@ public class OpenReacParameters {
 
     public OpenReacParameters setPQMax(double pQMax) {
         if (Double.isNaN(pQMax) || pQMax <= 0) {
-            throw new InvalidParametersException("Maximal consistency value for P and Q must be defined and > 0 to be consistent");
+            throw new IllegalArgumentException("Maximal consistency value for P and Q must be defined and > 0 to be consistent");
         }
         this.pQMax = pQMax;
         return this;
@@ -354,7 +354,7 @@ public class OpenReacParameters {
 
     public OpenReacParameters setDefaultPMax(double defaultPMax) {
         if (Double.isNaN(defaultPMax) || defaultPMax <= 0) {
-            throw new InvalidParametersException("Default P max value must be defined and > 0 to be consistent.");
+            throw new IllegalArgumentException("Default P max value must be defined and > 0 to be consistent.");
         }
         this.defaultPMax = defaultPMax;
         return this;
@@ -366,7 +366,7 @@ public class OpenReacParameters {
 
     public OpenReacParameters setDefaultPMin(double defaultPMin) {
         if (Double.isNaN(defaultPMin) || defaultPMin < 0) {
-            throw new InvalidParametersException("Default P min value must be defined and >= 0 to be consistent.");
+            throw new IllegalArgumentException("Default P min value must be defined and >= 0 to be consistent.");
         }
         this.defaultPMin = defaultPMin;
         return this;
@@ -379,7 +379,7 @@ public class OpenReacParameters {
     public OpenReacParameters setDefaultQmaxPmaxRatio(double defaultQmaxPmaxRatio) {
         // Qmin/Qmax are computed with this value in OpenReac, can not be zero
         if (Double.isNaN(defaultQmaxPmaxRatio) || defaultQmaxPmaxRatio <= 0) {
-            throw new InvalidParametersException("Default Qmax and Pmax ratio must be defined and > 0 to be consistent.");
+            throw new IllegalArgumentException("Default Qmax and Pmax ratio must be defined and > 0 to be consistent.");
         }
         this.defaultQmaxPmaxRatio = defaultQmaxPmaxRatio;
         return this;
@@ -391,7 +391,7 @@ public class OpenReacParameters {
 
     public OpenReacParameters setDefaultMinimalQPRange(double defaultMinimalQPRange) {
         if (Double.isNaN(defaultMinimalQPRange) || defaultMinimalQPRange < 0) {
-            throw new InvalidParametersException("Default minimal QP range must be defined and >= 0 to be consistent.");
+            throw new IllegalArgumentException("Default minimal QP range must be defined and >= 0 to be consistent.");
         }
         this.defaultMinimalQPRange = defaultMinimalQPRange;
         return this;
