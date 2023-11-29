@@ -46,6 +46,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  * @author Nicolas PIERRE <nicolas.pierre at artelys.com>
+ * @author Pierre ARVY <pierre.arvy at artelys.com>
  */
 class OpenReacRunnerTest {
     protected FileSystem fileSystem;
@@ -94,7 +95,7 @@ class OpenReacRunnerTest {
     }
 
     @Test
-    void testParamAlgoExport() throws IOException {
+    void testModifiedParamAlgoExport() throws IOException {
         Network network = IeeeCdfNetworkFactory.create57();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         OpenReacParameters parameters = new OpenReacParameters()
