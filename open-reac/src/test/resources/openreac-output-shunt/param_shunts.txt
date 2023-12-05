@@ -1,3 +1,0 @@
-#amplId powsyblId
-1 'SHUNT'
-

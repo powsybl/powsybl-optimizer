@@ -6,17 +6,19 @@
  */
 package com.powsybl.openreac.parameters.input;
 
-import com.powsybl.ampl.converter.AmplConstants;
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.iidm.network.Network;
-import com.powsybl.openreac.parameters.AmplIOUtils;
+import com.powsybl.openreac.exceptions.InvalidParametersException;
+import org.jgrapht.alg.util.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -26,31 +28,53 @@ import java.util.Objects;
 public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
 
     private static final String FILENAME = "ampl_network_substations_override.txt";
-    private final Map<String, VoltageLimitOverride> normalizedVoltageLimitsOverride;
 
-    public VoltageLevelLimitsOverrideInput(Map<String, VoltageLimitOverride> voltageLimitsOverride, Network network) {
-        Objects.requireNonNull(voltageLimitsOverride);
+    private final Map<String, Pair<Double, Double>> normalizedVoltageLimitsOverride;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(VoltageLevelLimitsOverrideInput.class);
+
+    public VoltageLevelLimitsOverrideInput(List<VoltageLimitOverride> voltageLimitsOverrides, Network network) {
+        Objects.requireNonNull(voltageLimitsOverrides);
         Objects.requireNonNull(network);
         this.normalizedVoltageLimitsOverride = new HashMap<>();
-        transformToNormalizedVoltage(voltageLimitsOverride, network);
+        transformToNormalizedVoltage(voltageLimitsOverrides, network);
     }
 
     /**
      * voltageLimitsOverride contains absolute voltage limits.
      * This function compute limits in pair-unit quantities.
      */
-    private void transformToNormalizedVoltage(Map<String, VoltageLimitOverride> voltageLimitsOverride, Network network) {
-        for (Map.Entry<String, VoltageLimitOverride> entry : voltageLimitsOverride.entrySet()) {
-            String voltageLevelId = entry.getKey();
-            VoltageLimitOverride limits = entry.getValue();
-            double previousLowVoltageLimit = network.getVoltageLevel(voltageLevelId).getLowVoltageLimit();
-            double previousHighVoltageLimit = network.getVoltageLevel(voltageLevelId).getHighVoltageLimit();
-            // If one of the limit is not defined, we ignore the override
-            if (!Double.isNaN(previousLowVoltageLimit) && !Double.isNaN(previousHighVoltageLimit)) {
-                double nominalV = network.getVoltageLevel(voltageLevelId).getNominalV();
-                normalizedVoltageLimitsOverride.put(voltageLevelId, new VoltageLimitOverride((previousLowVoltageLimit + limits.getDeltaLowVoltageLimit()) / nominalV,
-                        (previousHighVoltageLimit + limits.getDeltaHighVoltageLimit()) / nominalV));
+    private void transformToNormalizedVoltage(List<VoltageLimitOverride> voltageLimitsOverrides, Network network) {
+        for (VoltageLimitOverride voltageLimitOverride : voltageLimitsOverrides) {
+            // get previous voltage limit values
+            String voltageLevelId = voltageLimitOverride.getVoltageLevelId();
+            double nominalV = network.getVoltageLevel(voltageLevelId).getNominalV();
+            double previousNormalizedLowVoltageLimit = network.getVoltageLevel(voltageLevelId).getLowVoltageLimit() / nominalV;
+            double previousNormalizedHighVoltageLimit = network.getVoltageLevel(voltageLevelId).getHighVoltageLimit() / nominalV;
+
+            // get or create voltage limit override of the voltage level
+            Pair<Double, Double> newLimits = normalizedVoltageLimitsOverride.containsKey(voltageLevelId) ? normalizedVoltageLimitsOverride.get(voltageLevelId)
+                    : new Pair<>(previousNormalizedLowVoltageLimit, previousNormalizedHighVoltageLimit);
+            if (voltageLimitOverride.getVoltageLimitType() == VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT) {
+                double value = (voltageLimitOverride.isRelative() ? newLimits.getFirst() : 0.0) + voltageLimitOverride.getLimit() / nominalV;
+                newLimits.setFirst(value);
+            } else if (voltageLimitOverride.getVoltageLimitType() == VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT) {
+                double value = (voltageLimitOverride.isRelative() ? newLimits.getSecond() : 0.0) + voltageLimitOverride.getLimit() / nominalV;
+                newLimits.setSecond(value);
+            } else {
+                throw new UnsupportedOperationException("Unsupported voltage limit type: " + voltageLimitOverride.getVoltageLimitType());
             }
+
+            if (newLimits.getFirst() >= newLimits.getSecond()) {
+                throw new InvalidParametersException("Override on voltage level " + voltageLevelId + " leads to low voltage limit >= high voltage limit.");
+            }
+            if (newLimits.getFirst() < 0.5) {
+                LOGGER.warn("Voltage level {} has a low voltage limit lower than 0.5 PU ({} PU)", voltageLevelId, newLimits.getFirst());
+            }
+            if (newLimits.getSecond() > 1.5) {
+                LOGGER.warn("Voltage level {} has a high voltage limit greater than 1.5 PU ({} PU)", voltageLevelId, newLimits.getSecond());
+            }
+            normalizedVoltageLimitsOverride.put(voltageLevelId, newLimits);
         }
     }
 
@@ -60,24 +84,24 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
     }
 
     @Override
-    public InputStream getParameterFileAsStream(StringToIntMapper<AmplSubset> stringToIntMapper) {
-        StringBuilder dataBuilder = new StringBuilder();
-        dataBuilder.append("#num minV (pu) maxV (pu) id");
-        dataBuilder.append(System.lineSeparator());
-        for (Map.Entry<String, VoltageLimitOverride> entry : normalizedVoltageLimitsOverride.entrySet()) {
+    public void write(BufferedWriter writer, StringToIntMapper<AmplSubset> stringToIntMapper) throws IOException {
+        writer.write("#num minV (pu) maxV (pu) id");
+        writer.newLine();
+
+        for (Map.Entry<String, Pair<Double, Double>> entry : normalizedVoltageLimitsOverride.entrySet()) {
             String voltageLevelId = entry.getKey();
-            VoltageLimitOverride limits = entry.getValue();
-            if (!Double.isNaN(limits.getDeltaHighVoltageLimit()) || !Double.isNaN(limits.getDeltaLowVoltageLimit())) {
+            Pair<Double, Double> limits = entry.getValue();
+
+            if (!Double.isNaN(limits.getFirst()) || !Double.isNaN(limits.getSecond())) {
                 int amplId = stringToIntMapper.getInt(AmplSubset.VOLTAGE_LEVEL, voltageLevelId);
-                double newHighVoltageLimit = Double.isNaN(limits.getDeltaHighVoltageLimit()) ? AmplConstants.INVALID_FLOAT_VALUE : limits.getDeltaHighVoltageLimit();
-                double newLowVoltageLimit = Double.isNaN(limits.getDeltaLowVoltageLimit()) ? AmplConstants.INVALID_FLOAT_VALUE : limits.getDeltaLowVoltageLimit();
-                String[] tokens = {Integer.toString(amplId), Double.toString(newLowVoltageLimit), Double.toString(newHighVoltageLimit), AmplIOUtils.addQuotes(voltageLevelId)};
-                dataBuilder.append(String.join(" ", tokens));
-                dataBuilder.append(System.lineSeparator());
+                String[] tokens = {Integer.toString(amplId), Double.toString(limits.getFirst()), Double.toString(limits.getSecond()), "\"" + voltageLevelId + "\""};
+                writer.write(String.join(" ", tokens));
+                writer.newLine();
             }
         }
-        //add new line at the end of the file !
-        dataBuilder.append(System.lineSeparator());
-        return new ByteArrayInputStream(dataBuilder.toString().getBytes(StandardCharsets.UTF_8));
+
+        //add new line at the end of the file
+        writer.newLine();
+        writer.flush();
     }
 }

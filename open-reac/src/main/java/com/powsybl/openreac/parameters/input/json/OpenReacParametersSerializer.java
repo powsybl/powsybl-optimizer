@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
+import com.powsybl.openreac.parameters.input.algo.ReactiveSlackBusesMode;
 
 import java.io.IOException;
 
@@ -34,11 +35,18 @@ public class OpenReacParametersSerializer extends StdSerializer<OpenReacParamete
         serializerProvider.defaultSerializeField("constantQGenerators", openReacParameters.getConstantQGenerators(), jsonGenerator);
         serializerProvider.defaultSerializeField("variableTwoWindingsTransformers", openReacParameters.getVariableTwoWindingsTransformers(), jsonGenerator);
         serializerProvider.defaultSerializeField("variableShuntCompensators", openReacParameters.getVariableShuntCompensators(), jsonGenerator);
-        serializerProvider.defaultSerializeField("algorithmParams", openReacParameters.getAlgorithmParams(), jsonGenerator);
+        if (openReacParameters.getReactiveSlackBusesMode() == ReactiveSlackBusesMode.CONFIGURED) {
+            serializerProvider.defaultSerializeField("configuredReactiveSlackBuses", openReacParameters.getConfiguredReactiveSlackBuses(), jsonGenerator);
+        }
         serializerProvider.defaultSerializeField("objective", openReacParameters.getObjective().name(), jsonGenerator);
         if (openReacParameters.getObjectiveDistance() != null) {
             serializerProvider.defaultSerializeField("objectiveDistance", openReacParameters.getObjectiveDistance(), jsonGenerator);
         }
+        serializerProvider.defaultSerializeField("logLevelAmpl", openReacParameters.getLogLevelAmpl(), jsonGenerator);
+        serializerProvider.defaultSerializeField("logLevelSolver", openReacParameters.getLogLevelSolver(), jsonGenerator);
+        serializerProvider.defaultSerializeField("minPlausibleLowVoltageLimit", openReacParameters.getMinPlausibleLowVoltageLimit(), jsonGenerator);
+        serializerProvider.defaultSerializeField("maxPlausibleHighVoltageLimit", openReacParameters.getMaxPlausibleHighVoltageLimit(), jsonGenerator);
+        serializerProvider.defaultSerializeField("reactiveSlackBusesMode", openReacParameters.getReactiveSlackBusesMode().name(), jsonGenerator);
         jsonGenerator.writeEndObject();
     }
 }

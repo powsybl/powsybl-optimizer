@@ -155,15 +155,15 @@ close (fileOut);
 }
 
 # Useful during tests to create list of transformers
-if 0 then
-printf {(qq,m,n) in BRANCHCC_REGL:
-  substation_Vnomi[1,bus_substation[1,m]]>21 and substation_Vnomi[1,bus_substation[1,m]]<300 and
-  substation_Vnomi[1,bus_substation[1,n]]>21 and substation_Vnomi[1,bus_substation[1,n]]<300 and
-  (substation_Vnomi[1,bus_substation[1,m]]>120 or substation_Vnomi[1,bus_substation[1,n]]>120) and
-  (substation_Vnomi[1,bus_substation[1,m]]<120 or substation_Vnomi[1,bus_substation[1,n]]<120)
-} "1 %i %i %i %Q\n",qq,m,n,branch_id[1,qq,m,n] > param_transformers.txtt;
-
-
+if 0 then {
+  for{(qq,m,n) in BRANCHCC_REGL:
+    substation_Vnomi[1,bus_substation[1,m]]>21 and substation_Vnomi[1,bus_substation[1,m]]<300 and
+    substation_Vnomi[1,bus_substation[1,n]]>21 and substation_Vnomi[1,bus_substation[1,n]]<300 and
+    (substation_Vnomi[1,bus_substation[1,m]]>120 or substation_Vnomi[1,bus_substation[1,n]]>120) and
+    (substation_Vnomi[1,bus_substation[1,m]]<120 or substation_Vnomi[1,bus_substation[1,n]]<120)}{ 
+      printf{LOG_DEBUG} "1 %i %i %i %Q\n",qq,m,n,branch_id[1,qq,m,n] > param_transformers.txtt;
+  }
+}
 
 ###############################################################################
 #
@@ -231,14 +231,18 @@ if length($SHELL) > 0 then {
 printf "%s %Q\n","directory",_cd > (fileOut);
 
 printf "\n" > (fileOut);
+printf "%s %s\n","log_level_ampl",log_level_ampl > (fileOut);
+printf "%s %i\n","log_level_knitro",log_level_knitro > (fileOut);
 printf "%s %i\n","objective_choice",objective_choice > (fileOut);
 printf "%s %f\n","ratio_voltage_target",ratio_voltage_target > (fileOut);
 printf "%s %f\n","coeff_alpha",coeff_alpha > (fileOut);
 printf "%s %f\n","Pnull",Pnull > (fileOut);
 printf "%s %f\n","Znull",Znull > (fileOut);
 printf "%s %f\n","epsilon_nominal_voltage",epsilon_nominal_voltage > (fileOut);
-printf "%s %f\n","epsilon_min_voltage",epsilon_min_voltage > (fileOut);
+printf "%s %f\n","min_plausible_low_voltage_limit",min_plausible_low_voltage_limit > (fileOut);
+printf "%s %f\n","max_plausible_high_voltage_limit",max_plausible_high_voltage_limit > (fileOut);
 printf "%s %f\n","ignore_voltage_bounds",ignore_voltage_bounds > (fileOut);
+printf "%s %s\n","buses_with_reactive_slacks",buses_with_reactive_slacks > (fileOut);
 printf "%s %f\n","PQmax",PQmax > (fileOut);
 printf "%s %f\n","defaultPmax",defaultPmax > (fileOut);
 printf "%s %f\n","defaultPmin",defaultPmin > (fileOut);
@@ -311,3 +315,4 @@ if card(messagesInfo) > 0 then {
     let temp1:=temp1+1;
   }
 }
+close (fileOut);

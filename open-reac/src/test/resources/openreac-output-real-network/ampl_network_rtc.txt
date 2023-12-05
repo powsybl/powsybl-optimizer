@@ -1,2 +1,0 @@
-#Ratio tap changers (ieee118cdf/InitialState)
-#"variant" "num" "tap" "table" "onLoad" "fault" "curative" "id"

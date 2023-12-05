@@ -13,15 +13,16 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
-import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
+import com.powsybl.openreac.parameters.input.algo.OpenReacAmplLogLevel;
+import com.powsybl.openreac.parameters.input.algo.ReactiveSlackBusesMode;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
+import com.powsybl.openreac.parameters.input.algo.OpenReacSolverLogLevel;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 
 /**
- * @author Hugo Marcellin <hugo.marcelin at rte-france.com>
+ * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  */
 
 public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacParameters> {
@@ -43,7 +44,7 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                     break;
                 case "specificVoltageLimits":
                     parser.nextToken();
-                    parameters.addSpecificVoltageLimits(parser.readValueAs(new TypeReference<HashMap<String, VoltageLimitOverride>>() { }));
+                    parameters.addSpecificVoltageLimits(parser.readValueAs(new TypeReference<List<VoltageLimitOverride>>() { }));
                     break;
                 case "variableShuntCompensators":
                     parser.nextToken();
@@ -57,9 +58,9 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                     parser.nextToken();
                     parameters.addVariableTwoWindingsTransformers(parser.readValueAs(new TypeReference<List<String>>() { }));
                     break;
-                case "algorithmParams":
+                case "configuredReactiveSlackBuses":
                     parser.nextToken();
-                    parameters.addAlgorithmParam(parser.readValueAs(new TypeReference<List<OpenReacAlgoParam>>() { }));
+                    parameters.addConfiguredReactiveSlackBuses(parser.readValueAs(new TypeReference<List<String>>() { }));
                     break;
                 case "objective":
                     parser.nextToken();
@@ -68,6 +69,26 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                 case "objectiveDistance":
                     parser.nextToken();
                     parameters.setObjectiveDistance(parser.getValueAsDouble());
+                    break;
+                case "logLevelAmpl":
+                    parser.nextToken();
+                    parameters.setLogLevelAmpl(OpenReacAmplLogLevel.valueOf(parser.getText()));
+                    break;
+                case "logLevelSolver":
+                    parser.nextToken();
+                    parameters.setLogLevelSolver(OpenReacSolverLogLevel.valueOf(parser.getText()));
+                    break;
+                case "minPlausibleLowVoltageLimit":
+                    parser.nextToken();
+                    parameters.setMinPlausibleLowVoltageLimit(parser.readValueAs(Double.class));
+                    break;
+                case "maxPlausibleHighVoltageLimit":
+                    parser.nextToken();
+                    parameters.setMaxPlausibleHighVoltageLimit(parser.readValueAs(Double.class));
+                    break;
+                case "reactiveSlackBusesMode":
+                    parser.nextToken();
+                    parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.valueOf(parser.getText()));
                     break;
                 default:
                     throw new IllegalStateException("Unexpected field: " + parser.getCurrentName());
