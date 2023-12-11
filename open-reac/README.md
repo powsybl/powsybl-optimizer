@@ -9,6 +9,19 @@ for network planning or in operation as well.
 
 ## Getting started
 
+### AMPL
+For this project, you must have [AMPL](https://ampl.com/) installed.
+AMPL is a proprietary tool that works as an optimization modelling language. It can be interfaced with many solvers.
+
+AMPL is sold by many companies including Artelys, you can find keys [here](https://www.artelys.com/solvers/ampl/).
+
+You must add in your `~/.itools/config.yml` an ampl section like this:
+```yaml
+ampl:
+  # Change to the ampl folder path that contains the ampl executable
+  homeDir: /home/user/ampl
+```
+
 ### Knitro
 
 To run this model, in addition of AMPL you'll need Knitro. Knitro is a
@@ -54,16 +67,14 @@ The code of the reactive OPF is divided into several files,
 each serving a specific function:
 - `reactiveopf.dat` defines the network data files imported (files with
   *ampl_* prefix), and the files used to configure the run (files with *param_* prefix).
-Refer to section 3 for more information.
-- `reactiveopf.mod` defines the sets, parameters and optimization problems (CC, DCOPF, ACOPF). 
-Refer to section 4,5, and 6 for more information.
-- `reactiveopfoutput.mod` exports result files if
-  the solving of optimization problems converges. 
-Refer to section 7.1 for more information.
-- `reactiveopfexit.run` contains the code executed when the AMPL run fails. 
-Refer to section 7.2 for more information.
+  Refer to section [3](#3-input).
+- `reactiveopf.mod` defines the sets, parameters and optimization problems (CC, DCOPF, ACOPF) solved in `reactiveopf.run`. 
+  Refer to section [5](#5-reference-bus--main-connex-component) and [6](#6-optimal-power-flow-problems).
+- `reactiveopfoutput.mod` exports result files if the execution of `reactiveopf.run` is successful. 
+  Refer to section [7.1](#72-in-case-of-convergence).
+- `reactiveopfexit.run` contains the code executed when the problem is inconsistent. 
+  Refer to section [7.2](#71-in-case-of-inconsistency).
 - `reactiveopf.run` executes the AMPL process of OpenReac, calling the previous scripts.
-
 
 ### 3 Input
 
@@ -71,15 +82,17 @@ Refer to section 7.2 for more information.
 
 Files with the prefix `ampl_` contain the
 data and the parameters of the network on which the reactive OPF is executed.
-These files are obtained by using this [AMPL export](https://github.com/powsybl/powsybl-core/tree/main/ampl-converter).
+These files are obtained by using the
+[AMPL export of PowSyBl](https://github.com/powsybl/powsybl-core/blob/main/ampl-converter/src/main/java/com/powsybl/ampl/converter/AmplNetworkWriter.java).
 
 #### 3.2 Configuration of the run
 
-L'utilisateur peut également configurer certains éléments du run, à l'aide de l'interface
-Java prévue à cet effet (see X). 
+L'utilisateur peut configurer certains éléments du run, à l'aide de l'interface
+Java prévue à cet effet (see [OpenReacParameters](src/main/java/com/powsybl/openreac/parameters/input/OpenReacParameters.java) 
+java class).
 
-Il peut notamment configurer certains paramètres/seuils utilisés dans l'exécution, à 
-l'aide du fichier `param_algo.txt`. On compte:
+Il peut notamment configurer certains paramètres et seuils utilisés dans les pré-traitements et modélisations de l'OPF. 
+Ces paramètres sont spécifiés dans le fichier d'import `param_algo.txt` :
 - `log_level_ampl`, le paramètre définissant le niveau d'affichage des prints AMPL. La valeur spécifiée 
 par l'utilisateur doit être "DEBUG", "INFO", "WARNING" ou "ERROR". Ce paramètre vaut "INFO" par défaut.
 - `log_level_knitro`, le paramètre définissant le niveau d'affichage des prints Knitro. La valeur spécifiée
@@ -89,8 +102,9 @@ par l'utilisateur doit être 0,1 ou 2, comme spécifié dans la documentation AM
   - Si la valeur spécifiée est 1, la minimization de l'écart entre la valeur de tension et la target X des bus est privilégiée.
   - Si la valeur spécifiée est 2, la minimization de l'écart entre la valeur de tension et la target X des bus est privilégiée.
 - `ratio_voltage_target`, le paramètre utilisé pour calculer la target des bus si le paramètre `objective_choice`
-a une valeur de 1. Ce paramètre vaut 0.5 par défaut, et doit être compris entre 0 et 1.
-- `coeff_alpha`, le paramètre utilisée dans la fonction objectif de l'ACOPF pour plus ou moins 
+vaut 1. Il doit être compris entre 0 et 1, pour orienter la target des bus entre les limites inférieures et supérieures
+des voltage levels auxquels les bus sont rattachés. Par défaut, ce paramètre vaut 0.5 (donc la target est entre ces deux limites).
+- `coeff_alpha`, le paramètre utilisé dans la fonction objectif de l'ACOPF pour plus ou moins 
 privilégier la minimization de la génération de puissance active des générateurs 
 (`coeff_alpha`=1) ou des écarts entre les puissances actives calculées par l'ACOPF et 
 la target value (`coeff_alpha`=0). Ce paramètre vaut 1 par défaut, et doit être compris 
@@ -103,10 +117,10 @@ Ce paramètre vaut 1e-4 (pu) par défaut, et doit être compris entre 0 et 0.1 s
 nominal des bus du réseau. Les bus ayant une tension nominale inférieure à ce paramètre seront ignorés.
 Ce paramètre vaut 1 (kV) par défaut, et doit être supérieur à 0 strictement.
 - `min_plausible_low_voltage_limit` le paramètre utilisé comme borne de consistence pour les tensions
-minimales des différents voltage levels (voir section X). Ce paramètre vaut 0.5 par défaut, et doit
+minimales des différents voltage levels (voir section X). Par défaut, ce paramètre vaut 0.5 (p.u.), et il doit
 être supérieur à 0 strictement.
 - `max_plausible_high_voltage_limit` le paramètre utilisé comme borne de consistence pour les tensions
-maximales des différents voltage levels (voir section X). Ce paramètre vaut 1.5 par défaut, et doit
+maximales des différents voltage levels (voir section X). Par défaut, ce paramètre vaut 1.5 (p.u.), et il doit
 être supérieur à `min_plausible_low_voltage_limit` strictement.
 - `ignore_voltage_bounds` le paramètre utilisé comme seuil de consistances pour prendre en considération
 les bornes inférieures et supérieures en tension des bus. Les bus ayant une tension nominale inférieure à 
@@ -115,175 +129,224 @@ ce paramètre auront leurs bornes remplacées par [`min_plausible_low_voltage_li
 de l'ACOPF. Ces paramètres peut prendre les valeurs suivantes:
   - "ALL", pour indiquer que tous les bus ont des reactive slack variables attached.
   - "NO_GENERATION" pour indiquer que tous les bus ne produisant pas de réactif auront des reactive slacks variables attached.
-  - "CONFIGURED" pour indiquer 
+  - "CONFIGURED" pour indiquer que seuls les bus spécifiés dans le fichier `param_buses_with_` auront des reactive slacks variables attached.
+- `PQmax` le seuil de puissance active et réactive maximale utilisé dans la correction des 
+limites des générateurs (voir section X). Par défaut, ce paramètre vaut 9000 (MW).
+- `defaultPmax` le seuil utilisé pour corriger la puissance active maximale produite par les 
+générateurs (voir section X). Par défaut, ce paramètre vaut 1000 (MW).
+- `defaultPmin` le seuil utilisé pour corriger la puissance active minimale produite par les
+générateurs (voir section X). Par défaut, ce paramètre vaut 0 (MW).
+- `defaultQmaxPmaxRatio` le paramètre utilisé pour calculer `defaultQmin` et `defaultQmax`, 
+les seuils utilisés pour corriger les puissances réactives minimale et maximale 
+produites par les générateurs (voir section X). Par défaut, ce paramètre vaut 0.3 (MVar/MW), 
+et les seuils sont calculés comme suit :
+  - `defaultQmin` = - `defaultPmin` x `defaultQmaxPmaxRatio`
+  - `defaultQmax` =   `defaultPmax` x `defaultQmaxPmaxRatio`
+- `minimalQPrange` le seuil utilisé pour fixer les puissances actives (resp. réactives) des
+générateurs ayant des limites de puissances actives (resp. réactives Q) trop proches. Par défaut,
+ce paramètre vaut 1 (MW ou Mvar).
 
+En plus des éléments précédents, l'utilisateur peut spécifier une partie des éléments qui seront 
+variables ou fixes dans la résolution de l'ACOPF (see section X). Cela se fait à l'aide des 
+fichiers suivants :
 
-Ces éléments sont dans les fichiers ayant comme prefix
-`param_`, et on compte :
-
-- `param_transformers.txt`, defining which ratio tap changers have a variable ratio.
-  By default, no ratio is variable.
-
+- `param_transformers.txt`, defining which ratio tap changers have a variable transformation ratio.
+  By default, no ratio is variable in the network.
   Format : 2 columns #"num" "id"
 
 
 - `param_shunts.txt`, defining which shunts have a variable susceptance value and which can be modified/connected.
-  By default, all susceptance shunts are constant, fixed to the values defined in `ampl_network_shunts.txt`.
+  By default, all susceptance shunts are constant, fixed to the values `b (pu)` defined in `ampl_network_shunts.txt`.
   Among the variable shunts, if one is not connected (`bus=-1`)
   but parameter `bus_possible` is well defined, then this shunt may be connected by the OPF.
-
   Format : 2 columns #"num" "id"
 
 
-- `param_generators_reactive.txt`, defining which generators have a constant reactive power value
-  (defined by `unit_Qc` in `ampl_network_generators.txt`) in the OPFs. This value is used even if it
+- `param_generators_reactive.txt`, defining which generators have a constant reactive power value, fixed 
+  to the values `targetQ (MVar)` defined in `ampl_network_generators.txt`. This value is used even if it
   falls out of bounds (`Qmin`/`Qmax`). However, if it is
-  not consistent (> `PQmax`), then reactive power becomes a variable. 
+  not consistent (> `PQmax`, defined in `param_algo.txt`), then the reactive power becomes a variable. 
   By default, the reactive power of all generating units are variable.
   User is invited to note that it is also possible to fix reactive power by setting the minimum and maximum reactive
   power bounds to same value in `ampl_network_generators.txt`.
-
   Format : 2 columns #"num" "id"
 
 
 - `param_buses_with_reactive_slack.txt`, defining which buses will have reactive slacks attached
-  in the solving of the ACOPF, if `buses_with_reactive_slacks="CONFIGURED"`.
-  
+  in the solving of the ACOPF, if the parameter `buses_with_reactive_slacks` equals "CONFIGURED"`.
   Format : 2 columns #"num" "id"
 
+#### 3.3 Voltage limits overrides
+
+
+In addition to the elements specified in section [3.2](#32-configuration-of-the-run), the user may choose to override
+some voltage limits of specified voltage levels. 
+These values must be defined in the file ampl_network_substations_override.txt and
+are employed to establish the voltage limits of the voltage levels, as specified in section
+[4.1](#41-voltage-level-limits-computation). 
+Format : 4 columns #"num" "minV (pu)" "maxV (pu)" "id"
 
 ### 4 Checks and special handling
 
-#### 4.X Voltage level limits
+Before solving the optimization problems described in [6](#6-optimal-power-flow-problems), 
+the following special handling procedures are executed to ensure the consistency 
+of the values used in the solving. 
+These specific treatments use values specified by the user (see [3.2](#32-configuration-of-the-run)).
 
-#### 4.X Computation of reference bus
+#### 4.1 Voltage level limits computation
+
+In order to ensure consistent voltage level limits in the optimization of the ACOPF (see [6.2](#62-alternative-current-optimal-power-flow)),
+the consistency thresholds  `minimal_voltage_lower_bound` and `maximal_voltage_upper_bound` are employed. They are initialized as follows:
+- `minimal_voltage_lower_bound` is set equal to the maximum value between the configurable threshold `min_plausible_low_voltage_limit` (see [3.2](#32-configuration-of-the-run))
+and the minimum voltage limit across the entire network (considering all voltage levels).
+- `maximal_voltage_upper_bound` is set equal to the minimum value between the configurable threshold `max_plausible_high_voltage_limit` (see [3.2](#32-configuration-of-the-run))
+and the maximum voltage limit across the entire network (considering all voltage levels).
+
+As a result, the lower voltage bound chosen is equal to the maximum value between
+`minimal_voltage_lower_bound`
+and the specified `minV (pu)` value in `ampl_network_substations.txt`. 
+If an override value is specified by the user (see [3.3](#33-voltage-limits-overrides)), it replaces `minV (pu)`.
+
+The upper voltage bound chosen is equal to the minimum value between `maximal_voltage_upper_bound`
+and the specified `maxV (pu)` value in `ampl_network_substations.txt`.
+If an override value is specified by the user (see [3.3](#33-voltage-limits-overrides)) and it is higher than
+the previously calculated lower voltage bound, then the override value replaces `maxV (pu)`.
 
 #### 4.X Transformer consistency
 
 #### 4.X P/Q units' domain
 
-### 4 Reference bus and main connex component
+### 5 Reference bus & main connex component
 
-
-A _reference bus_ (`null_phase_bus` AMPL parameter) is determined to enforce the zero-phase constraint of the OPFs. 
+A _reference bus_ (`null_phase_bus` parameter) is determined to enforce the zero-phase constraint of the OPFs. 
 This reference bus corresponds to the bus in the network with the most AC branches connected,
-among those belonging to the main connected component (`bus_CC = 0`). 
+among those belonging to the main connected component (`bus_CC` equals 0). 
 If multiple buses have the same maximum cardinality, the one with the highest `num` is selected.
-If no bus is found meeting these criteria, the first bus defined in the file `ampl_network_buses.txt` is chosen.
+If no bus is found meeting these criteria, the first bus defined in the file `ampl_network_buses.txt` is chosen
+as reference bus.
 
 The DCOPF and ACOPF are executed on buses connected to the reference bus by AC branches.
 Then, buses connected to the reference bus by HVDC lines are excluded in OPF computation.
-These buses are determined by solving the `PROBLEM_CCOMP` optimization problem.
-After the optimization, buses connected by AC branches are determined by verifying
-that the associated variable `teta_ccomputation` is set to 0.
+These buses are determined by solving the `PROBLEM_CCOMP` optimization problem 
+defined in `reactiveopf.mod`. After the optimization, buses connected by AC branches 
+are determined by verifying that the associated variable `teta_ccomputation` is set to 0.
 
-### 5 Optimal Power Flows
+### 6 Optimal power flow problems
 
-#### 5.1 Direct Current Optimal Power Flow
+Deux OPFs sont résolus de manière successive. D'abord un Direct Current Optimal Power Flow (DCOPF), 
+décrit en section [6.1](#61-direct-current-optimal-power-flow)
+puis un Alternative Current Optimal Power Flow (ACOPF), décrit en section [6.2](#62-alternative-current-optimal-power-flow). This is done for 
+two main reasons:
+- If the DCOPF resolution fails (see [6.1](#61-direct-current-optimal-power-flow)), it provides a strong indication that the ACOPF resolution will also fail.
+  The DCOPF serves as a formal consistency check on the data.
+- The phases computed during the DCOPF resolution will be used as initial points for the ACOPF resolution.
 
-Before solving the reactive ACOPF, a DCOPF is solved for two main reasons:
-- If the DCOPF resolution fails, it provides a strong indication that the ACOPF resolution will also fail. 
-Therefore, the DCOPF serves as a formal consistency check on the data.
-- The phases computed during the DCOPF resolution 
-will be used as initial points for the ACOPF resolution.
+#### 6.1 Direct current optimal power flow
 
 The DCOPF involves the following constraints:
-- `ctr_null_phase_bus_dc`, which sets the phase of the reference bus to 0.
-- `ctr_activeflow`, which defines the active power flowing through the network's branches.
+- `ctr_null_phase_bus_dc`, which sets the phase of the reference (refer to [5](#5-reference-bus--main-connex-component)) to 0.
+- `ctr_activeflow`, which defines the active power flowing through the branches of the network.
 - `ctr_balance`, which enforces the active power balance at each network node.
-This balance takes into account the active powers generated/consumed 
-by various devices connected to the nodes. 
-Within this balance, the following elements are considered as variables:
-    - The active power generated by the generating units (`UNITON` set).
-    - The slack variables `balance_pos` and `balance_neg`, which represent 
+This balance takes into account the active power produced by generators and batteries, as well as the power consumed
+by loads, VSC stations and LCC stations connected to each bus (in addition to what enters and exits the bus).
+Within this balance, the following are variables:
+    - The active power `P_dcopf` generated by the generating units.
+    - The slack variables `balance_pos` and `balance_neg` (both positive), which represent 
   the excess or shortfall of active power produced at each node.
 
 And the objective function `problem_dcopf_objective`, which minimizes the following summations:
 - The sum of squared deviations between the calculated 
-active power generation for each generator and its target active power (`unit_Pc` parameter).
+active power generation for each generator and its 
+target active power (`targetP (MW)` defined in `ampl_network_generators.txt`).
 This sum is normalized by the target active power, 
 which helps homogenize the deviations among different generators.
-- The sum of the variables `balance_pos` and `balance_neg`, penalized by a high coefficient.
+- The sum of the variables `balance_pos` and `balance_neg`, penalized by a high coefficient (`penalty_balance`).
 The goal is to drive these variables towards 0, ensuring an active power balance at each node.
 
-#### 5.2 Alternative Current Optimal Power Flow
+The resolution of this DCOPF is considered as successful if the solver identifies a feasible solution without reaching
+a pre-defined limit, and if the sum of all balance variables (`balance_pos` and `balance_neg`) does not exceed the configurable threshold `Pnull` 
+(see section [3.2](#32-configuration-of-the-run)). In cases where these conditions are not met, 
+the solving is considered unsuccessful.
 
-After solving the DCOPF, the calculated phases are used 
-to initialize the phases in the reactive ACOPF.
+#### 6.2 Alternative current optimal power flow
 
-This OPF depends on specific user-selected parameters, 
-including the OPF objective function (see Section 1.2)
-and the equipment with variable or fixed values (see Section 1.2).
+This ACOPF relies on specific parameters selected by the user, 
+as thresholds and equipment of the power network which will be treated as variable or fixed (refer to [3.2](#32-configuration-of-the-run)).
+LThe voltage variables utilized in the ACOPF are initialized as follows:
+- The phase angles are set equal to those calculated by solving the DCOPF.
+- The voltages of buses without reactive slacks (and with nominal voltage greater than `min_plausible_low_voltage_limit`)
+are set equal to the specified `v (pu)` values in `ampl_network_buses.txt`.
+- The voltages of buses with reactive slacks are initialized to the midpoint of the voltage level limits to which they are connected.
 
-The reactive ACOPF involves the following constraints :
-- `ctr_null_phase_bus`, which sets the phase of the reference bus to 0.
-- `ctr_balance_P`, which enforces the active power balance at each node of the network. 
-It takes into account the active powers generated/consumed by various devices connected
-to the nodes.
-- `ctr_balance_Q` enforces the reactive power balance at each node of the network. 
-It considers the reactive powers generated/consumed by various devices connected to the nodes. 
+The ACOPF involves the following constraints :
+- `ctr_null_phase_bus`, which sets the phase of the reference bus (refer to [5](#5-reference-bus--main-connex-component)) to 0.
+- `ctr_balance_P`, which enforces the active power balance at each node of the network.
+  This balance takes into account the active power produced by generators and batteries, as well as the power consumed
+  by loads, VSC stations and LCC stations connected to each bus (in addition to what enters and exits the bus).
+Within this balance, the active power produced by units and the flows on the branches are considered as variables.
+- `ctr_balance_Q` enforces the reactive power balance at each node of the network.
+  This balance takes into account the reactive power produced by generators, batteries, shunts, static var compensators, VSC stations, 
+as well as the power consumed by loads and LCC stations connected to each bus (in addition to what enters and exits the bus).
 Within this balance, the following elements are considered as variables:
-  - The transformation ratios of transformers defined as variables by the user (`BRANCHCC_REGL_VAR` set).
-  - The reactive power generated by the generating units defined as variables by the user 
-(`UNITON diff UNIT_FIXQ` set).
-  - The susceptance of shunts defined as variables by the user (`SHUNT_VAR` set).
-  - The reactive power generated by SVCs (`SVCON` set, containing SVCs with `svc_vregul = true`).
-  - The reactive power generated by VSCs (`VSCCONVON` set).
+  - The flows on the branches (tensions, phases and transformation ratios of transformers defined as variables by the user).
+  - The reactive power generated by the units defined as variables.
+  - The susceptance of shunts defined as variables by the user.
+  - The reactive power generated by SVCs (only the one with `svc_vregul` value equals to `true` in `ampl_network_static_var_compensators.txt`).
+  - The reactive power generated by VSC stations (all consistent ones defined in `ampl_network_vsc_converter_stations.txt`).
   - The slack variables `slack1_balance_Q` and `slack2_balance_Q`,
-which represent the excess or shortfall of active power produced at each node. 
-This applies to nodes with a load or a shunt but no unit, 
-SVC, or VSC (where the reactive power is already defined).
+which represent the excess or shortfall of active power produced at the buses chosen by the user.
 
-And the objective function `problem_acopf_objective` which minimizes the following sums 
-(with certain coefficients that determine their relative importance):
-  - The sum of `slack1_balance_Q` and `slack2_balance_Q` variables, penalized by a high coefficient. 
+And the objective function `problem_acopf_objective` which minimizes the following sums:
+  - The sum of `slack1_balance_Q` and `slack2_balance_Q` variables, penalized by a very high coefficient (`penalty_invest_rea_pos`). 
 The objective is to drive these variables towards 0, ensuring a balance in reactive power at each node.
-  - The sum of squared barycenter between the active power generated by each generator and 
-the difference between this active power and the generator's target P.
+  - The sum of squared barycenter between the two values.
+The first is the active power produced by each generator. The second is 
+the difference between this power and the unit's target P (`unit_Pc` parameter), divided by this target.
 This sum is penalized with a significant coefficient only when `objective_choice = 0`.
-This barycenter depends on the `coeff_alpha` weight, which can be chosen by the user. 
+This barycenter depends on the configurable parameter `coeff_alpha`. 
 The closer this coefficient is to 1, the more important the first term of the barycenter, 
 thus emphasizing the minimization of generated active power. 
 A coefficient closer to 1 increases the deviation between this active power and the generator's target P 
-(`unit_Pc` parameter).
+(`targetP (MW)` defined in `ampl_network_generators.txt`).
   - The sum of squared deviations between the calculated voltage values at each node and a 
 barycenter between the lower and upper voltage limits of the associated voltage level.
 This sum is penalized with a significant coefficient only when `objective_choice = 1`.
-This barycenter depends on the `ratio_voltage_target` weight,
-which can be chosen by the user.
-  - The sum of squared deviations between the calculated voltage values and their initial values at each node.
-    This sum is penalized with a significant coefficient only when `objective_choice = 2`.
+This barycenter depends on the configurable parameter `ratio_voltage_target`.
+  - The sum of squared deviations between the calculated voltage values and their initial values (`v (pu)` in `ampl_network_buses.txt`) at each node.
+This sum is penalized with a significant coefficient only when `objective_choice = 2`.
   - The sum of squared deviations of variable transformation ratios from their initial values. 
 This sum is penalized by a small coefficient. The goal is to limit this deviation without overly restricting it.
-  - The sum of squared ratios of reactive powers generated by generating units at 
+  - The sum of squared ratios of reactive powers generated by units over 
 their maximal reactive power bounds.
 This sum is penalized by a small coefficient. The goal is to limit this deviation without overly restricting it.
 
+TODO : expliciter le fait qu'on fasse plusieurs optimisations à la suite en jouant sur alpha si besoin.
+
 TODO : add comments on results treatment by Knitro (what kind of solutions are considered as good...)
     
-### X Output
+### 7 Output
 
-#### X.1 In case of inconsistency
+#### 7.1 In case of inconsistency
 
-If the computation of the main connex component or of the DCOPF fails (Knitro diverges
-or the problem is solved with too much slack), the problem is considered as inconsistent.
+If the computation of the main connex component or of the DCOPF fails (see [6.1](#61-direct-current-optimal-power-flow)), 
+the problem is considered as inconsistent.
 Then, the script `reactiveopfexit.run` is executed and the following file is exported:
 
-- `reactiveopf_results_indic.txt`, which contains various indicators to
+`reactiveopf_results_indic.txt`, which contains various indicators to
   provide an overview of the run. It includes:
-  - The error message(s) returned by AMPL.
+  - The error message(s) returned by the execution.
   - General information (system OS, computation time, etc.).
-  - The configurable thresholds/parameters used in the run (see section X).
+  - The configurable thresholds/parameters used in the run (see section [3.2](#32-configuration-of-the-run)).
 
-#### X.2 In case of convergence
+#### 7.2 In case of convergence
 
 If the AMPL process defined in `reactiveopf.run` is successful, the script `reactiveopfoutput.run` is executed 
-(even if the solving of ACOPF failed) and the following files are exported:
+(even if the solving of ACOPF did not reached a feasible point) and the following files are exported:
 
 - `reactiveopf_results_indic.txt`, which contains various indicators to provide an overview of the
   run. It includes:
   - General information (system OS, computation time, etc.).
-  - The configurable thresholds/parameters used in the run (see section X).
+  - The configurable thresholds/parameters used in the run (see section [3.2](#32-configuration-of-the-run)).
   - The cardinality of the sets used in the optimization problems (number of non-impedance branches,
     number of buses with slack variables, etc.).
   - Information about calculated angles (maximum/minimum theta, maximum
