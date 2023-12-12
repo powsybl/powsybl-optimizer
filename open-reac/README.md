@@ -271,9 +271,8 @@ are determined by verifying that the associated variable `teta_ccomputation` is 
 
 ### 6 Optimal power flow problems
 
-Deux OPFs sont résolus de manière successive. D'abord un Direct Current Optimal Power Flow (DCOPF), 
-décrit en section [6.1](#61-direct-current-optimal-power-flow)
-puis un Alternative Current Optimal Power Flow (ACOPF), décrit en section [6.2](#62-alternative-current-optimal-power-flow). This is done for 
+Two OPFs are successively solved. First, a Direct Current Optimal Power Flow (DCOPF) as described in section [6.1](#61-direct-current-optimal-power-flow), 
+followed by an Alternating Current Optimal Power Flow (ACOPF) described in section [6.2](#62-alternative-current-optimal-power-flow). This is done for 
 two main reasons:
 - If the DCOPF resolution fails (see [6.1](#61-direct-current-optimal-power-flow)), it provides a strong indication that the ACOPF resolution will also fail.
   The DCOPF serves as a formal consistency check on the data.
