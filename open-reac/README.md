@@ -5,9 +5,10 @@ for voltage and reactive controls by network equipments such as
 generators, shunt compensators and transformers. OpenReac can be used
 for network planning or in operation as well.
 
----
 
 ## Getting started
+
+---
 
 ### AMPL
 For this project, you must have [AMPL](https://ampl.com/) installed.
@@ -39,9 +40,10 @@ To check, start a bash and run :
 knitroampl stub
 ```
 
----
 
 ## Reactive Optimal Power Flow
+
+---
 
 ### 1 Overview
 
@@ -92,25 +94,25 @@ The user can configure the run with the dedicated Java interface
 Specifically, the user can set various parameters and thresholds used in the preprocessing and modeling of the reactive OPF. 
 These are specified in the file `param_algo.txt`:
 
-| Parameter                        | Description                                                                                                                                                                       | Default value     | Possible value                                       |
-|----------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------|------------------------------------------------------|
-| log_level_ampl                   | Level of display for AMPL prints                                                                                                                                                  | INFO              | {DEBUG, INFO, WARNING, ERROR}                        |
-| log_level_knitro                 | Level of display for solver prints (see [AMPL documentation](https://dev.ampl.com/ampl/options.html)                                                                              | $1$               | $\{0, 1, 2\}$                                        |  
-| objective_choice                 | Choice of the objective function for the ACOPF (see [6.2](#62-alternative-current-optimal-power-flow))                                                                            | $0$               | $\{0, 1, 2\}$                                        |
-| ratio_voltage_target             | Ratio to calculate target V of buses when objective_choice = 1                                                                                                                    | $0.5$             | $\[0; 1\]$                                           |
-| coeff_alpha                      | Weight to favor more/less minimization of active power produced by generators or deviation between them and target values (see [6.2](#62-alternative-current-optimal-power-flow)) | $1$               | $\[0; 1\]$                                           |
-| Pnull                            | Threshold of active and reactive powers considered as null                                                                                                                        | $0.01$ (MW)       | $\[0; 1\]$                                           |
-| Znull                            | Threshold of impedance considered as null (see [4.2](#42-zero-impedance-lines))                                                                                                   | $10^{-5}$ (p.u.)  | $\[0; 0.1\]$                                         |                                                                                                                                                                  
- | epsilon_nominal_voltage          | Threshold to ignore voltage levels with nominal voltage lower than it                                                                                                             | $1$ (kV)          | $\mathcal{R}^{+}$                                    | 
-| min_plausible_low_voltage_limit  | Consistency bound for low voltage limit of voltage levels (see [4.1](#41-voltage-level-limits-computation))                                                                       | $0.5$ (p.u.)      | $\mathcal{R}^{+}$                                    |
-| max_plausible_high_voltage_limit | Consistency bound for high voltage limit of voltage levels (see [4.1](#41-voltage-level-limits-computation))                                                                      | $1.5$ (p.u.)      | $\[{\rm min_plausible_low_voltage_limit}; \infty \]$ |
-| ignore_voltage_bounds            | Threshold to replace voltage limits of voltage levels with nominal voltage lower than it, by  [`min_plausible_low_voltage_limit`; `max_plausible_high_voltage_limit`]             | $0$ (p.u.)        | $\mathcal{R}^{+}$                                    |
-| buses_with_reactive_slacks       | Choice of which buses will have reactive slacks attached in ACOPF solving (see [6.2](#62-alternative-current-optimal-power-flow))                                                 | $NO_GENERATION$   | $\{CONFIGURED, NO_GENERATION, ALL\}$                 |
-| PQmax                            | Threshold for maximum active and reactive power considered in correction of generator limits  (see [4.5](#45-pq-units-domain))                                                    | $9000$ (MW, Mvar) |                                                      |
-| defaultPmax                      | Threshold for correction of high active power limit produced by generators (see [4.5](#45-pq-units-domain))                                                                       | $1000$ (MW)       |                                                      |
-| defaultPmin                      | Threshold for correction of low active power limit produced by generators (see [4.5](#45-pq-units-domain))                                                                        | $0$ (MW)          |                                                      |
-| defaultQmaxPmaxRatio             | Ratio used to calculate threshold for corrections of high/low reactive power limits (see [4.5](#45-pq-units-domain))                                                              | $0.3$ (Mvar/MW)   |                                                      |
-| minimalQPrange                   | Threshold to fix active (resp. reactive) power of generators with active (resp. reactive) power limits that are closer than it (see [4.5](#45-pq-units-domain))                   | $1$ (MW, MVar)    |                                                      |
+| Parameter                        | Description                                                                                                                                                                       | Default value     | Possible value                                   |
+|----------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------|--------------------------------------------------|
+| log_level_ampl                   | Level of display for AMPL prints                                                                                                                                                  | INFO              | {DEBUG, INFO, WARNING, ERROR}                    |
+| log_level_knitro                 | Level of display for solver prints (see [AMPL documentation](https://dev.ampl.com/ampl/options.html)                                                                              | $1$               | ${0, 1, 2}$                                      |  
+| objective_choice                 | Choice of the objective function for the ACOPF (see [6.2](#62-alternative-current-optimal-power-flow))                                                                            | $0$               | ${0, 1, 2}$                                      |
+| ratio_voltage_target             | Ratio to calculate target V of buses when objective_choice = 1                                                                                                                    | $0.5$             | $\[0; 1\]$                                       |
+| coeff_alpha                      | Weight to favor more/less minimization of active power produced by generators or deviation between them and target values (see [6.2](#62-alternative-current-optimal-power-flow)) | $1$               | $\[0; 1\]$                                       |
+| Pnull                            | Threshold of active and reactive powers considered as null                                                                                                                        | $0.01$ (MW)       | $\[0; 1\]$                                       |
+| Znull                            | Threshold of impedance considered as null (see [4.2](#42-zero-impedance-lines))                                                                                                   | $10^{-5}$ (p.u.)  | $\[0; 0.1\]$                                     |                                                                                                                                                                  
+ | epsilon_nominal_voltage          | Threshold to ignore voltage levels with nominal voltage lower than it                                                                                                             | $1$ (kV)          | $\mathcal{R}^{+}$                                | 
+| min_plausible_low_voltage_limit  | Consistency bound for low voltage limit of voltage levels (see [4.1](#41-voltage-level-limits-computation))                                                                       | $0.5$ (p.u.)      | $\mathcal{R}^{+}$                                |
+| max_plausible_high_voltage_limit | Consistency bound for high voltage limit of voltage levels (see [4.1](#41-voltage-level-limits-computation))                                                                      | $1.5$ (p.u.)      | $\[$min_plausible_low_voltage_limit$; \infty \]$ |
+| ignore_voltage_bounds            | Threshold to replace voltage limits of voltage levels with nominal voltage lower than it, by  [`min_plausible_low_voltage_limit`; `max_plausible_high_voltage_limit`]             | $0$ (p.u.)        | $\mathcal{R}^{+}$                                |
+| buses_with_reactive_slacks       | Choice of which buses will have reactive slacks attached in ACOPF solving (see [6.2](#62-alternative-current-optimal-power-flow))                                                 | NO_GENERATION     | {CONFIGURED, NO_GENERATION, ALL}                 |
+| PQmax                            | Threshold for maximum active and reactive power considered in correction of generator limits  (see [4.5](#45-pq-units-domain))                                                    | $9000$ (MW, Mvar) |                                                  |
+| defaultPmax                      | Threshold for correction of high active power limit produced by generators (see [4.5](#45-pq-units-domain))                                                                       | $1000$ (MW)       |                                                  |
+| defaultPmin                      | Threshold for correction of low active power limit produced by generators (see [4.5](#45-pq-units-domain))                                                                        | $0$ (MW)          |                                                  |
+| defaultQmaxPmaxRatio             | Ratio used to calculate threshold for corrections of high/low reactive power limits (see [4.5](#45-pq-units-domain))                                                              | $0.3$ (Mvar/MW)   |                                                  |
+| minimalQPrange                   | Threshold to fix active (resp. reactive) power of generators with active (resp. reactive) power limits that are closer than it (see [4.5](#45-pq-units-domain))                   | $1$ (MW, MVar)    |                                                  |
 
 
 In addition to the previous parameters, the user can specify which 
@@ -126,26 +128,26 @@ This is done using the following files:
 
 All of these files share the same format: 2 columns #"num" "id".
 
-#### 3.3 Voltage limits overrides
+#### 3.3 New voltage limits
 
 In addition to the elements specified in section [3.2](#32-configuration-of-the-run), the user may choose to override
-some voltage limits of specified voltage levels. 
-These values must be defined in the file ampl_network_substations_override.txt and
-are employed to establish the voltage limits of the voltage levels, as specified in section
+the voltage limits of specified voltage levels. These values are defined in `ampl_network_substations_override.txt` and
+are employed to establish the new voltage limits as specified in section
 [4.1](#41-voltage-level-limits-computation). 
 Format : 4 columns #"num" "minV (pu)" "maxV (pu)" "id"
 
-### 4 Checks and special handling
+### 4 Pre-processing
 
-Before solving the optimization problems described in [6](#6-optimal-power-flow-problems), 
-the following special handling procedures are executed to ensure the consistency 
-of the values used in the solving. 
-These specific treatments use user-configurable parameters (see [3.2](#32-configuration-of-the-run)).
+Before solving the reactive OPF described in [6](#6-optimal-power-flow-problems), 
+the following pre-processing blocks are executed to ensure the consistency of the values. 
 
-#### 4.1 Voltage level limits computation
+#### 4.1 Voltage level limits overrides
 
-In order to ensure consistent voltage level limits in the optimization of the ACOPF (see [6.2](#62-alternative-current-optimal-power-flow)),
-the consistency thresholds  `minimal_voltage_lower_bound` and `maximal_voltage_upper_bound` are employed. They are initialized as follows:
+In order to ensure consistent voltage level limits,
+the consistency thresholds  `minimal_voltage_lower_bound` and `maximal_voltage_upper_bound` are employed.
+They are initialized as follows:
+- minimal_voltage_lower_bound = ${\rm max}({\rm min_{vl\in SUBSTATIONS}}(V_{min}^{vl}), $ min_plausible_low_voltage_limit$)$
+- maximal_voltage_upper_bound = ${\rm min}({\rm max_{vl\in SUBSTATIONS}}(V_{max}^{vl}), $ max_plausible_high_voltage_limit$)$
 - `minimal_voltage_lower_bound` is set equal to the maximum value between the configurable threshold `min_plausible_low_voltage_limit` (see [3.2](#32-configuration-of-the-run))
 and the minimum voltage limit across the entire network (considering all voltage levels).
 - `maximal_voltage_upper_bound` is set equal to the minimum value between the configurable threshold `max_plausible_high_voltage_limit` (see [3.2](#32-configuration-of-the-run))
@@ -162,7 +164,6 @@ If an override value is specified by the user (see [3.3](#33-voltage-limits-over
 the previously calculated lower voltage bound, then the override value replaces `maxV (pu)`.
 
 #### 4.2 Zero impedance lines
-
 
 To determine the non-impedant lines of the network, the configurable threshold `Znull` (p.u.) is used 
 (see section [3.2](#32-configuration-of-the-run)). 
