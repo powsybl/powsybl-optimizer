@@ -87,82 +87,89 @@ These files are obtained by using the
 
 #### 3.2 Configuration of the run
 
-L'utilisateur peut configurer certains éléments du run, à l'aide de l'interface
-Java prévue à cet effet (see [OpenReacParameters](src/main/java/com/powsybl/openreac/parameters/input/OpenReacParameters.java) 
-java class).
+The user can configure certain aspects of the run with the dedicated Java interface 
+(see [OpenReacParameters](src/main/java/com/powsybl/openreac/parameters/input/OpenReacParameters.java) java class).
 
-Il peut notamment configurer certains paramètres et seuils utilisés dans les pré-traitements et modélisations de l'OPF. 
-Ces paramètres sont spécifiés dans le fichier d'import `param_algo.txt` :
-- `log_level_ampl`, le paramètre définissant le niveau d'affichage des prints AMPL. La valeur spécifiée 
-par l'utilisateur doit être "DEBUG", "INFO", "WARNING" ou "ERROR". Ce paramètre vaut "INFO" par défaut.
-- `log_level_knitro`, le paramètre définissant le niveau d'affichage des prints Knitro. La valeur spécifiée
-par l'utilisateur doit être 0,1 ou 2, comme spécifié dans la documentation AMPL. Ce paramètre vaut 1 par défaut.
-- `objective_choice`, le paramètre définissant le choix de la fonction objectif de l'ACOPF décrit section X:
-  - Si la valeur spécifiée est 0, la minimization de la puissance active produite par les générateurs est privilégiée.
-  - Si la valeur spécifiée est 1, la minimization de l'écart entre la valeur de tension et la target X des bus est privilégiée.
-  - Si la valeur spécifiée est 2, la minimization de l'écart entre la valeur de tension et la target X des bus est privilégiée.
-- `ratio_voltage_target`, le paramètre utilisé pour calculer la target des bus si le paramètre `objective_choice`
-vaut 1. Il doit être compris entre 0 et 1, pour orienter la target des bus entre les limites inférieures et supérieures
-des voltage levels auxquels les bus sont rattachés. Par défaut, ce paramètre vaut 0.5 (donc la target est entre ces deux limites).
-- `coeff_alpha`, le paramètre utilisé dans la fonction objectif de l'ACOPF pour plus ou moins 
-privilégier la minimization de la génération de puissance active des générateurs 
-(`coeff_alpha`=1) ou des écarts entre les puissances actives calculées par l'ACOPF et 
-la target value (`coeff_alpha`=0). Ce paramètre vaut 1 par défaut, et doit être compris 
-entre 0 et 1.
-- `Pnull` le paramètre définissant les puissances actives et réactives considérées comme nulles.
-Ce paramètre vaut 0.01 (MW) par défaut, et doit être compris entre 0 et 1 strictement.
-- `Znull` le paramètre utilisé pour déterminer quelles branches du réseau sont non-impédantes. 
-Ce paramètre vaut 1e-4 (pu) par défaut, et doit être compris entre 0 et 0.1 strictement.
-- `epsilon_nominal_voltage` le paramètre utilisée comme seuil de consistances pour la tension 
-nominal des bus du réseau. Les bus ayant une tension nominale inférieure à ce paramètre seront ignorés.
-Ce paramètre vaut 1 (kV) par défaut, et doit être supérieur à 0 strictement.
-- `min_plausible_low_voltage_limit` le paramètre utilisé comme borne de consistence pour les tensions
-minimales des différents voltage levels (voir section X). Par défaut, ce paramètre vaut 0.5 (p.u.), et il doit
-être supérieur à 0 strictement.
-- `max_plausible_high_voltage_limit` le paramètre utilisé comme borne de consistence pour les tensions
-maximales des différents voltage levels (voir section X). Par défaut, ce paramètre vaut 1.5 (p.u.), et il doit
-être supérieur à `min_plausible_low_voltage_limit` strictement.
-- `ignore_voltage_bounds` le paramètre utilisé comme seuil de consistances pour prendre en considération
-les bornes inférieures et supérieures en tension des bus. Les bus ayant une tension nominale inférieure à 
-ce paramètre auront leurs bornes remplacées par [`min_plausible_low_voltage_limit`; `max_plausible_high_voltage_limit`].
-- `buses_with_reactive_slacks` le paramètre déterminant quels bus auront des slacks réactifs attachés dans la résolution
-de l'ACOPF. Ces paramètres peut prendre les valeurs suivantes:
-  - "ALL", pour indiquer que tous les bus ont des reactive slack variables attached.
-  - "NO_GENERATION" pour indiquer que tous les bus ne produisant pas de réactif auront des reactive slacks variables attached.
-  - "CONFIGURED" pour indiquer que seuls les bus spécifiés dans le fichier `param_buses_with_` auront des reactive slacks variables attached.
-- `PQmax` le seuil de puissance active et réactive maximale utilisé dans la correction des 
-limites des générateurs (voir section X). Par défaut, ce paramètre vaut 9000 (MW).
-- `defaultPmax` le seuil utilisé pour corriger la puissance active maximale produite par les 
-générateurs (voir section X). Par défaut, ce paramètre vaut 1000 (MW).
-- `defaultPmin` le seuil utilisé pour corriger la puissance active minimale produite par les
-générateurs (voir section X). Par défaut, ce paramètre vaut 0 (MW).
-- `defaultQmaxPmaxRatio` le paramètre utilisé pour calculer `defaultQmin` et `defaultQmax`, 
-les seuils utilisés pour corriger les puissances réactives minimale et maximale 
-produites par les générateurs (voir section X). Par défaut, ce paramètre vaut 0.3 (MVar/MW), 
-et les seuils sont calculés comme suit :
+Specifically, the user can set various parameters and thresholds used in the preprocessing and modeling of the OPF. 
+These parameters are specified in the import file `param_algo.txt`:
+
+- `log_level_ampl`: The parameter defining the level of display for AMPL prints. 
+The user-specified value must be "DEBUG," "INFO," "WARNING," or "ERROR". The default value for this parameter is "INFO."
+- `log_level_knitro`: The parameter determining the level of display for Knitro prints. 
+The user-specified value must be 0, 1, or 2, as specified in the [AMPL documentation](https://dev.ampl.com/ampl/options.html). 
+The default value for this parameter is 1.
+- `objective_choice`: The parameter defining the choice of the objective function for the ACOPF described in section [6.2](#62-alternative-current-optimal-power-flow):
+  - If the specified value is 0, prioritization is given to the minimization of active power produced by generators.
+  - If the specified value is 1, prioritization is given to the minimization of the deviation between the voltage value and the computed target of the buses.
+    This target lies between the upper and lower voltage limits of the level voltages to which the buses are connected, and is calculated using
+    configurable parameter `ratio_voltage_target`.
+  - If the specified value is 2, prioritization is given to the minimization of the deviation between the voltage value of the buses and the target V specified in `ampl_network_buses.txt`.
+- `ratio_voltage_target`: The arameter is used to calculate the target of buses if the `objective_choice` 
+parameter is set to 1. It must be between 0 and 1 to guide the target of buses between the lower and upper 
+limits of the voltage levels to which the buses are connected. 
+By default, this parameter is set to 0.5 (resulting in the target being the mean of these two limits).
+- `coeff_alpha`: The parameter is used in the objective function of the ACOPF (see [6.2](#62-alternative-current-optimal-power-flow)) to more or less favor
+the minimization of active power generation by generators (`coeff_alpha`=1) or the deviations between the active powers calculated
+by the ACOPF and the target value (`coeff_alpha`=0). The default value for this parameter is 1, and it must lies between 0 and 1.
+- `Pnull`: This parameter defines the active and reactive powers considered as null. 
+The default value for this parameter is 0.01 (MW), and it must be strictly between 0 and 1.
+- `Znull`: The threshold to determine which branches of the network are non-impedant (see [4.2](#42-zero-impedance-lines). 
+The default value for this parameter is 1e-4 (pu), and it must be strictly between 0 and 0.1.
+- `epsilon_nominal_voltage`: The consistency threshold for the nominal voltage
+of network buses. Buses with a nominal voltage lower than this parameter will be ignored. 
+The default value for this parameter is 1 (kV), and it must be strictly greater than 0.
+- `min_plausible_low_voltage_limit`: The consistency bound for the minimum voltages of different
+voltage levels (see section [4.1](#41-voltage-level-limits-computation)). By default, this parameter 
+is set to 0.5 (p.u.), and it must be strictly greater than 0.
+- `max_plausible_high_voltage_limit`: The consistency bound for the maximum 
+voltages of different voltage levels (see section [4.1](#41-voltage-level-limits-computation)). By default,
+this parameter is set to 1.5 (p.u.), and it must be strictly greater than `min_plausible_low_voltage_limit`.
+- `ignore_voltage_bounds`: This parameter is used as the consistency threshold to consider the lower and upper
+voltage bounds of buses. Buses with a nominal voltage lower than this parameter will 
+have their bounds replaced by [`min_plausible_low_voltage_limit`; `max_plausible_high_voltage_limit`].
+- `buses_with_reactive_slacks`: This parameter determines which buses will have reactive slacks attached in the resolution of the ACOPF 
+(see [6.2](#62-alternative-current-optimal-power-flow)). 
+This parameter can take the following values:
+  - "ALL" indicates that all buses have reactive slack variables attached.
+  - "NO_GENERATION" indicates that only buses not producing reactive power will have reactive slack variables attached.
+  - "CONFIGURED" indicates that only buses specified in the `param_buses_with_reactive_slack.txt` file will have reactive slack variables attached.
+- `PQmax` : The threshold for maximum active and reactive power considered in 
+the correction of the generator limits (see section [4.4](#44-pq-units-domain)).
+The default value for this parameter is 9000 (MW).
+- `defaultPmax`: Threshold used to correct the maximum active power produced by generators 
+(see section [4.4](#44-pq-units-domain)). 
+The default value for this parameter is 1000 (MW).
+- `defaultPmin`: Threshold used to correct the minimum active power produced by generators 
+(see section [4.4](#44-pq-units-domain)). 
+The default value for this parameter is 0 (MW).
+- `defaultQmaxPmaxRatio`: Parameter used to calculate  `defaultQmin` and `defaultQmax`,
+the thresholds used to correct the minimum and maximum reactive powers produced by generators 
+(see section [4.4](#44-pq-units-domain)).
+The default value for this parameter is 0.3 (MVar/MW), and the thresholds are calculated as follows:
   - `defaultQmin` = - `defaultPmin` x `defaultQmaxPmaxRatio`
   - `defaultQmax` =   `defaultPmax` x `defaultQmaxPmaxRatio`
-- `minimalQPrange` le seuil utilisé pour fixer les puissances actives (resp. réactives) des
-générateurs ayant des limites de puissances actives (resp. réactives Q) trop proches. Par défaut,
-ce paramètre vaut 1 (MW ou Mvar).
+- `minimalQPrange`: The threshold used to fix the active (resp. reactive) power of 
+generators with active (resp. reactive) power limits that are closer than its value. 
+By default, this parameter is set to 1 (MW or MVar).
 
-En plus des éléments précédents, l'utilisateur peut spécifier une partie des éléments qui seront 
-variables ou fixes dans la résolution de l'ACOPF (see section X). Cela se fait à l'aide des 
-fichiers suivants :
 
-- `param_transformers.txt`, defining which ratio tap changers have a variable transformation ratio.
+In addition to the previous parameters and thresholds, the user can specify which 
+parameters will be variable or fixed in the resolution of 
+the ACOPF (see section [6.2](#62-alternative-current-optimal-power-flow)). This is done using the following files:
+
+- `param_transformers.txt`: Defining which ratio tap changers have a variable transformation ratio.
   By default, no ratio is variable in the network.
   Format : 2 columns #"num" "id"
 
 
-- `param_shunts.txt`, defining which shunts have a variable susceptance value and which can be modified/connected.
+- `param_shunts.txt`: Defining which shunts have a variable susceptance value and which can be modified/connected.
   By default, all susceptance shunts are constant, fixed to the values `b (pu)` defined in `ampl_network_shunts.txt`.
   Among the variable shunts, if one is not connected (`bus=-1`)
   but parameter `bus_possible` is well defined, then this shunt may be connected by the OPF.
   Format : 2 columns #"num" "id"
 
 
-- `param_generators_reactive.txt`, defining which generators have a constant reactive power value, fixed 
+- `param_generators_reactive.txt`: Defining which generators have a constant reactive power value, fixed 
   to the values `targetQ (MVar)` defined in `ampl_network_generators.txt`. This value is used even if it
   falls out of bounds (`Qmin`/`Qmax`). However, if it is
   not consistent (> `PQmax`, defined in `param_algo.txt`), then the reactive power becomes a variable. 
@@ -172,7 +179,7 @@ fichiers suivants :
   Format : 2 columns #"num" "id"
 
 
-- `param_buses_with_reactive_slack.txt`, defining which buses will have reactive slacks attached
+- `param_buses_with_reactive_slack.txt`: Defining which buses will have reactive slacks attached
   in the solving of the ACOPF, if the parameter `buses_with_reactive_slacks` equals "CONFIGURED"`.
   Format : 2 columns #"num" "id"
 
@@ -191,7 +198,7 @@ Format : 4 columns #"num" "minV (pu)" "maxV (pu)" "id"
 Before solving the optimization problems described in [6](#6-optimal-power-flow-problems), 
 the following special handling procedures are executed to ensure the consistency 
 of the values used in the solving. 
-These specific treatments use values specified by the user (see [3.2](#32-configuration-of-the-run)).
+These specific treatments use user-configurable parameters (see [3.2](#32-configuration-of-the-run)).
 
 #### 4.1 Voltage level limits computation
 
@@ -212,9 +219,13 @@ and the specified `maxV (pu)` value in `ampl_network_substations.txt`.
 If an override value is specified by the user (see [3.3](#33-voltage-limits-overrides)) and it is higher than
 the previously calculated lower voltage bound, then the override value replaces `maxV (pu)`.
 
+#### 4.2 Zero impedance lines
+
+
+
 #### 4.X Transformer consistency
 
-#### 4.X P/Q units' domain
+#### 4.4 P/Q units' domain
 
 ### 5 Reference bus & main connex component
 
