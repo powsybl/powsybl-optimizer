@@ -146,7 +146,7 @@ the following pre-processing blocks are executed to ensure the consistency of th
 In order to ensure consistent voltage level limits,
 the consistency thresholds  `minimal_voltage_lower_bound` and `maximal_voltage_upper_bound` are employed.
 They are initialized as follows:
-- minimal_voltage_lower_bound = max(${\rm min}_{vl\in SUBSTATIONS}(V_{min}^{vl})$,min_plausible_low_voltage_limit)
+- minimal_voltage_lower_bound = max($min_{vl\in SUBSTATIONS}(V_{min}^{vl})$,min_plausible_low_voltage_limit)
 - maximal_voltage_upper_bound = ${\rm min}({\rm max_{vl\in SUBSTATIONS}}(V_{max}^{vl}), $ max_plausible_high_voltage_limit$)$
 - `minimal_voltage_lower_bound` is set equal to the maximum value between the configurable threshold `min_plausible_low_voltage_limit` (see [3.2](#32-configuration-of-the-run))
 and the minimum voltage limit across the entire network (considering all voltage levels).
