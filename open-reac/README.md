@@ -252,7 +252,7 @@ TODO
 
 #### 4.5 P/Q units' domain
 
-TODO 
+$$x=\frac{1}{\mathcal{R}}$$
 
 ### 5 Reference bus & main connex component
 
