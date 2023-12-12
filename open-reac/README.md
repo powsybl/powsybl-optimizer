@@ -134,17 +134,17 @@ This parameter can take the following values:
   - "NO_GENERATION" indicates that only buses not producing reactive power will have reactive slack variables attached.
   - "CONFIGURED" indicates that only buses specified in the `param_buses_with_reactive_slack.txt` file will have reactive slack variables attached.
 - `PQmax` : The threshold for maximum active and reactive power considered in 
-the correction of the generator limits (see section [4.4](#44-pq-units-domain)).
+the correction of the generator limits (see section [4.5](#45-pq-units-domain)).
 The default value for this parameter is 9000 (MW).
 - `defaultPmax`: Threshold used to correct the maximum active power produced by generators 
-(see section [4.4](#44-pq-units-domain)). 
+(see section [4.5](#45-pq-units-domain)). 
 The default value for this parameter is 1000 (MW).
 - `defaultPmin`: Threshold used to correct the minimum active power produced by generators 
-(see section [4.4](#44-pq-units-domain)). 
+(see section [4.5](#45-pq-units-domain)). 
 The default value for this parameter is 0 (MW).
 - `defaultQmaxPmaxRatio`: Parameter used to calculate  `defaultQmin` and `defaultQmax`,
 the thresholds used to correct the minimum and maximum reactive powers produced by generators 
-(see section [4.4](#44-pq-units-domain)).
+(see section [4.5](#45-pq-units-domain)).
 The default value for this parameter is 0.3 (MVar/MW), and the thresholds are calculated as follows:
   - `defaultQmin` = - `defaultPmin` x `defaultQmaxPmaxRatio`
   - `defaultQmax` =   `defaultPmax` x `defaultQmaxPmaxRatio`
@@ -222,16 +222,43 @@ the previously calculated lower voltage bound, then the override value replaces 
 #### 4.2 Zero impedance lines
 
 
+To determine the non-impedant lines of the network, the configurable threshold `Znull` (p.u.) is used 
+(see section [3.2](#32-configuration-of-the-run)). 
+These lines are identified as those with an impedance magnitude (calculated in p.u.) lower than `Znull`.
+These lines will have their reactance replaced by `Znull`.
 
-#### 4.X Transformer consistency
+Les transformateurs ayant une impédance considérée comme nulle ne sont considérés dans les calculs, 
+et sont remplacés par des lignes. De plus, les lignes considérés comme non impédantes auront 
+une réactance remplacée par Znull. 
 
-#### 4.4 P/Q units' domain
+#### 4.3 Impedance of transformers
+
+In the calculations of the ACOPF (see section [6.2](#62-alternative-current-optimal-power-flow)), 
+the ratio tap changers (RTC) with an impedance (specified in `ampl_network_branches.txt`)
+considered as null (see [4.2](#42-zero-impedance-lines)) are treated as lines (the transformation ratio is ignored). 
+This is also the case with phase tap changers (PST), where the phase shift is consequently ignored (as well as 
+the impedance specified in the tap changer table `ampl_network_tct.txt`).
+
+For PSTs considered as having impedance, the reactance values from the tap changer table (in `ampl_network_tct.txt`)
+replace the reactance specified in `ampl_network_branches.txt`. The resistance is calculated proportionally to this reactance.
+The impedances of RTCs remain as specified in `ampl_network_branches.txt`.
+
+Please notice that there is no specific handling for cases where 
+resistances/reactances are negative or if there is both an RTC and a PST on the same branch.
+
+#### 4.4 Transformer consistency
+
+TODO 
+
+#### 4.5 P/Q units' domain
+
+TODO 
 
 ### 5 Reference bus & main connex component
 
-A _reference bus_ (`null_phase_bus` parameter) is determined to enforce the zero-phase constraint of the OPFs. 
+A reference bus (`null_phase_bus` AMPL parameter) is determined to enforce the zero-phase constraint of the OPFs. 
 This reference bus corresponds to the bus in the network with the most AC branches connected,
-among those belonging to the main connected component (`bus_CC` equals 0). 
+among those belonging to the main connected component (0 in `ampl_network_buses.txt`). 
 If multiple buses have the same maximum cardinality, the one with the highest `num` is selected.
 If no bus is found meeting these criteria, the first bus defined in the file `ampl_network_buses.txt` is chosen
 as reference bus.
