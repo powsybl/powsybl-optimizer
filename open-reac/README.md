@@ -87,104 +87,46 @@ These files are obtained by using the
 
 #### 3.2 Configuration of the run
 
-The user can configure certain aspects of the run with the dedicated Java interface 
-(see [OpenReacParameters](src/main/java/com/powsybl/openreac/parameters/input/OpenReacParameters.java) java class).
+The user can configure the run with the dedicated Java interface 
+(see [OpenReacParameters](src/main/java/com/powsybl/openreac/parameters/input/OpenReacParameters.java)).
+Specifically, the user can set various parameters and thresholds used in the preprocessing and modeling of the reactive OPF. 
+These are specified in the file `param_algo.txt`:
 
-Specifically, the user can set various parameters and thresholds used in the preprocessing and modeling of the OPF. 
-These parameters are specified in the import file `param_algo.txt`:
-
-- `log_level_ampl`: The parameter defining the level of display for AMPL prints. 
-The user-specified value must be "DEBUG," "INFO," "WARNING," or "ERROR". The default value for this parameter is "INFO."
-- `log_level_knitro`: The parameter determining the level of display for Knitro prints. 
-The user-specified value must be 0, 1, or 2, as specified in the [AMPL documentation](https://dev.ampl.com/ampl/options.html). 
-The default value for this parameter is 1.
-- `objective_choice`: The parameter defining the choice of the objective function for the ACOPF described in section [6.2](#62-alternative-current-optimal-power-flow):
-  - If the specified value is 0, prioritization is given to the minimization of active power produced by generators.
-  - If the specified value is 1, prioritization is given to the minimization of the deviation between the voltage value and the computed target of the buses.
-    This target lies between the upper and lower voltage limits of the level voltages to which the buses are connected, and is calculated using
-    configurable parameter `ratio_voltage_target`.
-  - If the specified value is 2, prioritization is given to the minimization of the deviation between the voltage value of the buses and the target V specified in `ampl_network_buses.txt`.
-- `ratio_voltage_target`: The arameter is used to calculate the target of buses if the `objective_choice` 
-parameter is set to 1. It must be between 0 and 1 to guide the target of buses between the lower and upper 
-limits of the voltage levels to which the buses are connected. 
-By default, this parameter is set to 0.5 (resulting in the target being the mean of these two limits).
-- `coeff_alpha`: The parameter is used in the objective function of the ACOPF (see [6.2](#62-alternative-current-optimal-power-flow)) to more or less favor
-the minimization of active power generation by generators (`coeff_alpha`=1) or the deviations between the active powers calculated
-by the ACOPF and the target value (`coeff_alpha`=0). The default value for this parameter is 1, and it must lies between 0 and 1.
-- `Pnull`: This parameter defines the active and reactive powers considered as null. 
-The default value for this parameter is 0.01 (MW), and it must be strictly between 0 and 1.
-- `Znull`: The threshold to determine which branches of the network are non-impedant (see [4.2](#42-zero-impedance-lines). 
-The default value for this parameter is 1e-4 (pu), and it must be strictly between 0 and 0.1.
-- `epsilon_nominal_voltage`: The consistency threshold for the nominal voltage
-of network buses. Buses with a nominal voltage lower than this parameter will be ignored. 
-The default value for this parameter is 1 (kV), and it must be strictly greater than 0.
-- `min_plausible_low_voltage_limit`: The consistency bound for the minimum voltages of different
-voltage levels (see section [4.1](#41-voltage-level-limits-computation)). By default, this parameter 
-is set to 0.5 (p.u.), and it must be strictly greater than 0.
-- `max_plausible_high_voltage_limit`: The consistency bound for the maximum 
-voltages of different voltage levels (see section [4.1](#41-voltage-level-limits-computation)). By default,
-this parameter is set to 1.5 (p.u.), and it must be strictly greater than `min_plausible_low_voltage_limit`.
-- `ignore_voltage_bounds`: This parameter is used as the consistency threshold to consider the lower and upper
-voltage bounds of buses. Buses with a nominal voltage lower than this parameter will 
-have their bounds replaced by [`min_plausible_low_voltage_limit`; `max_plausible_high_voltage_limit`].
-- `buses_with_reactive_slacks`: This parameter determines which buses will have reactive slacks attached in the resolution of the ACOPF 
-(see [6.2](#62-alternative-current-optimal-power-flow)). 
-This parameter can take the following values:
-  - "ALL" indicates that all buses have reactive slack variables attached.
-  - "NO_GENERATION" indicates that only buses not producing reactive power will have reactive slack variables attached.
-  - "CONFIGURED" indicates that only buses specified in the `param_buses_with_reactive_slack.txt` file will have reactive slack variables attached.
-- `PQmax` : The threshold for maximum active and reactive power considered in 
-the correction of the generator limits (see section [4.5](#45-pq-units-domain)).
-The default value for this parameter is 9000 (MW).
-- `defaultPmax`: Threshold used to correct the maximum active power produced by generators 
-(see section [4.5](#45-pq-units-domain)). 
-The default value for this parameter is 1000 (MW).
-- `defaultPmin`: Threshold used to correct the minimum active power produced by generators 
-(see section [4.5](#45-pq-units-domain)). 
-The default value for this parameter is 0 (MW).
-- `defaultQmaxPmaxRatio`: Parameter used to calculate  `defaultQmin` and `defaultQmax`,
-the thresholds used to correct the minimum and maximum reactive powers produced by generators 
-(see section [4.5](#45-pq-units-domain)).
-The default value for this parameter is 0.3 (MVar/MW), and the thresholds are calculated as follows:
-  - `defaultQmin` = - `defaultPmin` x `defaultQmaxPmaxRatio`
-  - `defaultQmax` =   `defaultPmax` x `defaultQmaxPmaxRatio`
-- `minimalQPrange`: The threshold used to fix the active (resp. reactive) power of 
-generators with active (resp. reactive) power limits that are closer than its value. 
-By default, this parameter is set to 1 (MW or MVar).
+| Parameter                        | Description                                                                                                                                                                       | Default value     | Possible value                                       |
+|----------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------|------------------------------------------------------|
+| log_level_ampl                   | Level of display for AMPL prints                                                                                                                                                  | INFO              | {DEBUG, INFO, WARNING, ERROR}                        |
+| log_level_knitro                 | Level of display for solver prints (see [AMPL documentation](https://dev.ampl.com/ampl/options.html)                                                                              | $1$               | $\{0, 1, 2\}$                                        |  
+| objective_choice                 | Choice of the objective function for the ACOPF (see [6.2](#62-alternative-current-optimal-power-flow))                                                                            | $0$               | $\{0, 1, 2\}$                                        |
+| ratio_voltage_target             | Ratio to calculate target V of buses when objective_choice = 1                                                                                                                    | $0.5$             | $\[0; 1\]$                                           |
+| coeff_alpha                      | Weight to favor more/less minimization of active power produced by generators or deviation between them and target values (see [6.2](#62-alternative-current-optimal-power-flow)) | $1$               | $\[0; 1\]$                                           |
+| Pnull                            | Threshold of active and reactive powers considered as null                                                                                                                        | $0.01$ (MW)       | $\[0; 1\]$                                           |
+| Znull                            | Threshold of impedance considered as null (see [4.2](#42-zero-impedance-lines))                                                                                                   | $10^{-5}$ (p.u.)  | $\[0; 0.1\]$                                         |                                                                                                                                                                  
+ | epsilon_nominal_voltage          | Threshold to ignore voltage levels with nominal voltage lower than it                                                                                                             | $1$ (kV)          | $\mathcal{R}^{+}$                                    | 
+| min_plausible_low_voltage_limit  | Consistency bound for low voltage limit of voltage levels (see [4.1](#41-voltage-level-limits-computation))                                                                       | $0.5$ (p.u.)      | $\mathcal{R}^{+}$                                    |
+| max_plausible_high_voltage_limit | Consistency bound for high voltage limit of voltage levels (see [4.1](#41-voltage-level-limits-computation))                                                                      | $1.5$ (p.u.)      | $\[{\rm min_plausible_low_voltage_limit}; \infty \]$ |
+| ignore_voltage_bounds            | Threshold to replace voltage limits of voltage levels with nominal voltage lower than it, by  [`min_plausible_low_voltage_limit`; `max_plausible_high_voltage_limit`]             | $0$ (p.u.)        | $\mathcal{R}^{+}$                                    |
+| buses_with_reactive_slacks       | Choice of which buses will have reactive slacks attached in ACOPF solving (see [6.2](#62-alternative-current-optimal-power-flow))                                                 | $NO_GENERATION$   | $\{CONFIGURED, NO_GENERATION, ALL\}$                 |
+| PQmax                            | Threshold for maximum active and reactive power considered in correction of generator limits  (see [4.5](#45-pq-units-domain))                                                    | $9000$ (MW, Mvar) |                                                      |
+| defaultPmax                      | Threshold for correction of high active power limit produced by generators (see [4.5](#45-pq-units-domain))                                                                       | $1000$ (MW)       |                                                      |
+| defaultPmin                      | Threshold for correction of low active power limit produced by generators (see [4.5](#45-pq-units-domain))                                                                        | $0$ (MW)          |                                                      |
+| defaultQmaxPmaxRatio             | Ratio used to calculate threshold for corrections of high/low reactive power limits (see [4.5](#45-pq-units-domain))                                                              | $0.3$ (Mvar/MW)   |                                                      |
+| minimalQPrange                   | Threshold to fix active (resp. reactive) power of generators with active (resp. reactive) power limits that are closer than it (see [4.5](#45-pq-units-domain))                   | $1$ (MW, MVar)    |                                                      |
 
 
-In addition to the previous parameters and thresholds, the user can specify which 
-parameters will be variable or fixed in the resolution of 
-the ACOPF (see section [6.2](#62-alternative-current-optimal-power-flow)). This is done using the following files:
+In addition to the previous parameters, the user can specify which 
+parameters will be variable or fixed in the ACOPF solving (see section [6.2](#62-alternative-current-optimal-power-flow)).
+This is done using the following files:
 
-- `param_transformers.txt`: Defining which ratio tap changers have a variable transformation ratio.
-  By default, no ratio is variable in the network.
-  Format : 2 columns #"num" "id"
+| File                                | Description                                                                                                                                            | Default behavior of modified values                                               |
+|-------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------|
+| param_transformers.txt              | Ratio tap changers with a variable transformation ratio (real variable)                                                                                | Transformation ratios are fixed                                                   |
+| param_shunt.txt                     | Shunts with a continuous variable susceptance and which can be modified and/or connected (only if possible bus is defined in `ampl_network_shunts.txt` | Shunt susceptances are fixed                                                      |
+| param_generators_reactive.txt       | Generators with a constant reactive power production. If this value is not consistent (> PQmax), the reactive power production stays variable          | Coherent reactive power productions (see [4.5](#45-pq-units-domain)) are variable |
+| param_buses_with_reactive_slack.txt | Buses with attached reactive slacks if configurable parameter buses_with_reactive_slacks = "CONFIGURED"                                                | Only buses with no reactive power production have reactive slacks attached        |    
 
-
-- `param_shunts.txt`: Defining which shunts have a variable susceptance value and which can be modified/connected.
-  By default, all susceptance shunts are constant, fixed to the values `b (pu)` defined in `ampl_network_shunts.txt`.
-  Among the variable shunts, if one is not connected (`bus=-1`)
-  but parameter `bus_possible` is well defined, then this shunt may be connected by the OPF.
-  Format : 2 columns #"num" "id"
-
-
-- `param_generators_reactive.txt`: Defining which generators have a constant reactive power value, fixed 
-  to the values `targetQ (MVar)` defined in `ampl_network_generators.txt`. This value is used even if it
-  falls out of bounds (`Qmin`/`Qmax`). However, if it is
-  not consistent (> `PQmax`, defined in `param_algo.txt`), then the reactive power becomes a variable. 
-  By default, the reactive power of all generating units are variable.
-  User is invited to note that it is also possible to fix reactive power by setting the minimum and maximum reactive
-  power bounds to same value in `ampl_network_generators.txt`.
-  Format : 2 columns #"num" "id"
-
-
-- `param_buses_with_reactive_slack.txt`: Defining which buses will have reactive slacks attached
-  in the solving of the ACOPF, if the parameter `buses_with_reactive_slacks` equals "CONFIGURED"`.
-  Format : 2 columns #"num" "id"
+All of these files share the same format: 2 columns #"num" "id".
 
 #### 3.3 Voltage limits overrides
-
 
 In addition to the elements specified in section [3.2](#32-configuration-of-the-run), the user may choose to override
 some voltage limits of specified voltage levels. 
@@ -252,7 +194,13 @@ TODO
 
 #### 4.5 P/Q units' domain
 
-$$x=\frac{1}{\mathcal{R}}$$
+TODO : add
+- `defaultQmaxPmaxRatio`: Parameter used to calculate  `defaultQmin` and `defaultQmax`,
+  the thresholds used to correct the minimum and maximum reactive powers produced by generators
+  (see section [4.5](#45-pq-units-domain)).
+  The default value for this parameter is 0.3 (MVar/MW), and the thresholds are calculated as follows:
+  - `defaultQmin` = - `defaultPmin` x `defaultQmaxPmaxRatio`
+  - `defaultQmax` =   `defaultPmax` x `defaultQmaxPmaxRatio`
 
 ### 5 Reference bus & main connex component
 
@@ -306,6 +254,26 @@ a pre-defined limit, and if the sum of all balance variables (`balance_pos` and 
 the solving is considered unsuccessful.
 
 #### 6.2 Alternative current optimal power flow
+
+TODO :
+add
+- `buses_with_reactive_slacks`: The parameter determining which buses will have reactive slacks attached in the resolution of the ACOPF
+(see [6.2](#62-alternative-current-optimal-power-flow)).
+It can take the following values:
+- "ALL": all buses have reactive slack variables attached.
+- "NO_GENERATION": only buses not producing reactive power will have reactive slack variables attached.
+- "CONFIGURED": only buses specified in `param_buses_with_reactive_slack.txt` will have reactive slack variables attached.
+
+TODO : add
+- `objective_choice` defining the choice of the objective function for the ACOPF (see [6.2](#62-alternative-current-optimal-power-flow)):
+The minimization priority depends on the value of the parameter:
+- If $0$, the active power produced by generators.
+- If $1$, the deviation between the voltage value and the calculated target of the buses.
+- If $2$, the deviation between the voltage value of the buses and the target V specified in `ampl_network_buses.txt`.
+
+TODO : add
+This target lies between the upper and lower voltage limits of the level voltages to which the buses are connected, and is calculated using
+configurable parameter `ratio_voltage_target`.
 
 This ACOPF relies on specific parameters selected by the user, 
 as thresholds and equipment of the power network which will be treated as variable or fixed (refer to [3.2](#32-configuration-of-the-run)).
