@@ -106,7 +106,7 @@ These are specified in the file `param_algo.txt`:
  | epsilon_nominal_voltage          | Threshold to ignore voltage levels with nominal voltage lower than it                                                                                                             | $1$ (kV)          | $\mathcal{R}^{+}$                           | 
 | min_plausible_low_voltage_limit  | Consistency bound for low voltage limit of voltage levels (see [4.1](#41-voltage-level-limits-computation))                                                                       | $0.5$ (p.u.)      | $\mathcal{R}^{+}$                           |
 | max_plausible_high_voltage_limit | Consistency bound for high voltage limit of voltage levels (see [4.1](#41-voltage-level-limits-computation))                                                                      | $1.5$ (p.u.)      | [min_plausible_low_voltage_limit; $\infty$] |
-| ignore_voltage_bounds            | Threshold to replace voltage limits of voltage levels with nominal voltage lower than it, by  [`min_plausible_low_voltage_limit`; `max_plausible_high_voltage_limit`]             | $0$ (p.u.)        | $\mathcal{R}^{+}$                           |
+| ignore_voltage_bounds            | Threshold to replace voltage limits of voltage levels with nominal voltage lower than it, by  [min_plausible_low_voltage_limit; max_plausible_high_voltage_limit]                 | $0$ (p.u.)        | $\mathcal{R}^{+}$                           |
 | buses_with_reactive_slacks       | Choice of which buses will have reactive slacks attached in ACOPF solving (see [6.2](#62-alternative-current-optimal-power-flow))                                                 | NO_GENERATION     | {CONFIGURED, NO_GENERATION, ALL}            |
 | PQmax                            | Threshold for maximum active and reactive power considered in correction of generator limits  (see [4.5](#45-pq-units-domain))                                                    | $9000$ (MW, Mvar) |                                             |
 | defaultPmax                      | Threshold for correction of high active power limit produced by generators (see [4.5](#45-pq-units-domain))                                                                       | $1000$ (MW)       |                                             |
@@ -144,11 +144,14 @@ the following pre-processing blocks are executed to ensure the consistency of th
 #### 4.1 Voltage level limits overrides
 
 In order to ensure consistent voltage level limits,
-the consistency thresholds  `minimal_voltage_lower_bound` and `maximal_voltage_upper_bound` are employed.
+the consistency thresholds  *minimal_voltage_lower_bound* and *maximal_voltage_upper_bound* are employed.
 They are initialized as follows:
-- minimal_voltage_lower_bound = $\max(\min\limits_{s\in SUBSTATIONS}(V_{min}^{s})$, min_plausible_low_voltage_limit)
-- maximal_voltage_upper_bound = $\min(\max\limits_{s\in SUBSTATIONS}(V_{max}^{s})$, max_plausible_high_voltage_limit)
-where $V_min$ (resp. $V_max$) is the low (resp. high) voltage limit of voltage level $s\in SUBSTATIONS$.
+- $\text{minimal_voltage_lower_bound} = \max(\min\limits_{s\in \text{SUBSTATIONS}}(V_{min}^{s}), \text{min_plausible_low_voltage_limit})$
+- $\text{maximal_voltage_upper_bound} = \min(\max\limits_{s\in \text{SUBSTATIONS}}(V_{max}^{s}), \text{max_plausible_high_voltage_limit})$
+
+where $V_{min}$ (resp. $V_{max}$) is the low (resp. high) voltage limit of voltage level $s\in \text{SUBSTATIONS}$.
+
+TODO : refactor
 
 As a result, the lower voltage bound chosen is equal to the maximum value between
 `minimal_voltage_lower_bound`
