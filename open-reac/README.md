@@ -213,18 +213,14 @@ Before to address the ACOPF (see [7](#7-alternative-current-optimal-power-flow))
   The DCOPF serves as a formal consistency check on the data.
 - The phases computed during the DCOPF resolution will be used as initial points for the ACOPF resolution.
 
-The DCOPF problem solved is :
-
-\begin{equation}
-\begin{tabular}{rl}
-minimize & $t$\\
-subject to & $f_0(x) - t \le 0$\\
-& $f_i(x) \le 0$, \quad $i=1, \dots, m$\\
-& $h_i(x) = 0$,   \quad $i=1, \dots, p$,\\
-\end{tabular}
-\end{equation}
-
 The DCOPF involves the following constraints:
+$$ \pmb{\theta_s} = 0, s\in\text{SUBSTATIONS}$$
+$$ \pmb{p}_{ij} = \frac{\pmb{\theta_i} - \pmb{\theta_j}}{x_{ij}} $$
+$$ \sum\limits_{j\in v(i)} \pmb{p}_{ij} = \pmb{P}_i^{in} + \pmb{\sigma}_{P_i^{in}}$$
+
+where $s$ is the reference bus (see [5](#5-reference-bus--main-connex-component)), 
+$p_{ij}$ the active power leaving bus $i$ on branch $ij$, and  
+
 - `ctr_null_phase_bus_dc`, which sets the phase of the reference (refer to [5](#5-reference-bus--main-connex-component)) to 0.
 - `ctr_activeflow`, which defines the active power flowing through the branches of the network.
 - `ctr_balance`, which enforces the active power balance at each network node.
