@@ -152,8 +152,8 @@ specified in `ampl_network_substations.txt`, or
 in`ampl_network_substations_override.txt` if an override is given, and $V_{min}^{vl,c}$ (resp. $V_{max}^{vl,c}$)
 the corrected low (resp. high) limit. Then, the consistent 
 voltage level limits of voltage level $vl$ are :
-- $V_{min}^{vl,c} = \max(V_{min}, \text{min_plausible_low_voltage_limit})$
-- $V_{max}^{vl,c} = \min(V_{max}, \text{max_plausible_low_voltage_limit})$
+- $V_{min}^{vl,c} = \max(V_{min},$ min_plausible_low_voltage_limit}$)$
+- $V_{max}^{vl,c} = \min(V_{max},$ max_plausible_low_voltage_limit}$)$
 
 #### 4.2 Zero-impedance branches
 
@@ -179,34 +179,34 @@ phase shift transformer on the same branch.
 #### 4.4 P/Q units' domain
 
 The following corrections apply successively to determine consistent domains for the active 
-power $P^g$ and reactive power produced $Q^g$ by generators. Please note that in the end, the bounds are rectangular, 
+power $P_g$ and reactive power produced $Q_g$ by generators. Please note that in the end, the bounds are rectangular, 
 not trapezoidal. These bounds are used only in the reactive OPF (see [7](#7-alternative-current-optimal-power-flow)).
 
 To determine the consistent domain of produced active power, the bounds of the domains
-$P^g_{min}$ and $P^g_{max}$, as well as the target $P^g_{t}$ of generator $g$ (all specified in `ampl_network_generators.txt`) are used.
-Let $P_{min}^{g,c}$ and $P_{max}^{g,c}$ be the corrected active bounds :
+$P_g^{min}$ and $P_g^{max}$, as well as the target $P_g^{t}$ of generator $g$ (all specified in `ampl_network_generators.txt`) are used.
+Let $P_{g}^{min,c}$ and $P_{g}^{max,c}$ be the corrected active bounds :
 
-- By default, $P_{min}^{g,c} = \text{defaultPmin}$ and $P_{max}^{g,c} = \text{defaultPmax}$ (see [3.2](#32-configuration-of-the-run))
-- If $|P^g_{max}| \geq \text{PQmax}$, then $P^g_{max,c} = \max(\text{defaultPmax}, P^g_t)$
-- If $|P^g_{min}| \geq \text{PQmax}$, then $P^g_{min,c} = \min(\text{defaultPmin}, P^g_t)$
-- If $|P^g_{max,c} - P^g_{min,c}| \leq \text{minimalQPrange}$, then $P^g_{max,c} = P^g_{min,c} = P^{g}_t$ (active power is fixed).
+- By default, $P_{g}^{min,c} = \text{defaultPmin}$ and $P_{g}^{max,c} = \text{defaultPmax}$ (see [3.2](#32-configuration-of-the-run))
+- If $|P_g^{max}| \geq \text{PQmax}$, then $P_{g}^{max,c} = \max(\text{defaultPmax}, P_g^t)$
+- If $|P_g^{min}| \geq \text{PQmax}$, then $P_{g}^{min,c} = \min(\text{defaultPmin}, P_g^t)$
+- If $|P_{g}^{max,c} - P_{g}^{min,c}| \leq \text{minimalQPrange}$, then $P_{g}^{max,c} = P_{g}^{min,c} = P_{g}^t$ (active power is fixed).
 
 To determine the consistent domain of produced reactive power, the reactive power diagram 
 (`specified in ampl_network_generators.txt`) of generator 
-$g$ est utilisé : $qp^g$ (resp. $qP^g$) and $Qp^g$ ($QP^g$) when $P_{min}^{g,c}$ (resp. P_{max}^{g,c}) is reached.
-Let $qp^g$ (resp. $qP^g$) and $Qp^g$ (resp. $QP^g$) be the bounds of the corrected reactive diagram, 
-and $Q_{min}^{g,c}$ and $Q_{max}^{g,c}$ be the corrected reactive bounds :
+$g$ est utilisé : $qp_g$ (resp. $qP_g$) and $Qp_g$ ($QP_g$) when $P_{g}^{min,c}$ (resp. P_{g}^{max,c}) is reached.
+Let $qp_g^c$ (resp. $qP_g^c$) and $Qp_g^c$ (resp. $QP_g^c$) be the bounds of the corrected reactive diagram, 
+and $Q_{g}^{min,c}$ and $Q_{g}^{max,c}$ be the corrected reactive bounds :
 
-- By default, $qp^{g,c} = qP^{g,c} = - \text{defaultPmin} \times \text{defaultQmaxPmaxRatio}$ 
-and $Qp^{g,c} = QP^{g,c} = \text{defaultPmax} \times \text{defaultQmaxPmaxRatio}$ (see [3.2](#32-configuration-of-the-run))
-- If $|qp^{g}| \geq \text{PQmax}$, then $qp^{g,c} = -\text{defaultQmaxPmaxRatio} \times P_{max}^{g,c}$.
-  Same with $qP^{g,c}$
-- If $|Qp^{g}|$ \geq \text{PQmax}$, then $Qp^{g,c} = \text{defaultQmaxPmaxRatio} \times P_{max}^{g,c}$.
-  Same with $QP^{g,c}$
-- If $qp^{g,c} > Qp^{g,c}$, the values are swapped. Same with $qP^{g,c}$ and $QP^{g,c}$
+- By default, $qp_g^{c} = qP_{g}^{c} = - \text{defaultPmin} \times \text{defaultQmaxPmaxRatio}$ 
+and $Qp_{g}^{c} = QP_{g}^{c} = \text{defaultPmax} \times \text{defaultQmaxPmaxRatio}$ (see [3.2](#32-configuration-of-the-run))
+- If $|qp_{g}| \geq \text{PQmax}$, then $qp_{g}^{c} = -\text{defaultQmaxPmaxRatio} \times P_{max}^{g,c}$.
+  Same with $qP_{g}^{c}$
+- If $|Qp_{g}| \geq \text{PQmax}$, then $Qp_{g}^{c} = \text{defaultQmaxPmaxRatio} \times P_{max}^{g,c}$.
+  Same with $QP_{g}^{c}$
+- If $qp_{g}^{c} > Qp_{g}^{c}$, the values are swapped. Same with $qP_{g}^{c}$ and $QP_{g}^{c}$
 - If the corrected reactive diagram is too small (distance between extremal values lower than $\text{minimalQPrange}$),
-  then $qp^{g,c} = Qp^{g,c} = qP^{g,c} = QP^{g,c} = \frac{qp^{g,c} + Qp^{g,c} + qP^{g,c} + QP^{g,c}}{4}$ (reactive power is fixed).
-- $Q_{min}^{g,c} = \min(qp^{g,c}, qP^{g,c})$ and $Q_{max}^{g,c} = \min(Qp^{g,c}, QP^{g,c})$
+  then $qp_{g}^{c} = Qp_{g}^{c} = qP_{g}^{c} = QP_{g}^{c} = \frac{qp_{g}^{c} + Qp_{g}^{c} + qP_{g}^{c} + QP_{g}^{c}}{4}$ (reactive power is fixed).
+- $Q_{g}^{min,c} = \min(qp_{g}^{c}, qP_{g}^{c})$ and $Q_{g}^{max,c} = \min(Qp_{g}^{c}, QP_{g}^{c})$
 
 ### 5 Reference bus & main connex component
 
@@ -233,7 +233,7 @@ $$\boldsymbol{\theta_s} = 0, \quad s\in\text{SUBSTATIONS}$$
 
 $$\boldsymbol{p_{ij}} = \frac{\boldsymbol{\theta_i} - \boldsymbol{\theta_j}}{x_{ij}}, ij\in\text{BRANCHCC}$$
 
-$$\sum\limits_{j\in v(i)} \boldsymbol{p_{ij}} = P_i^{in} + \boldsymbol{P_i^{g}} + \boldsymbol{\sigma_{P_i}^{+}} + \boldsymbol{\sigma_{P_i}^{-}}, i\in\text{BUSCC}$$
+$$\sum\limits_{j\in v(i)} \boldsymbol{p_{ij}} = P_i^{in} - \sum\limits_{g}\boldsymbol{P_{i,g}} + \boldsymbol{\sigma_{P_i}^{+}} + \boldsymbol{\sigma_{P_i}^{-}}, i\in\text{BUSCC}$$
 
 where : 
 - $s$ is the reference bus (see [5](#5-reference-bus--main-connex-component)). 
@@ -245,9 +245,9 @@ expressing the excess or shortfall of active power produced in $i$.
 
 And the following objective function :
 
-$$\text{minimize} 1000\sum\limits_{i\in \text{BUSCC}} \boldsymbol{\sigma_{P_i}^{+}} + \boldsymbol{\sigma_{P_i}^{-}} + \sum\limits_{g\in\text{UNITON}} (\frac{\boldsymbol{P_i^{g}} - P_{i,t}^{t}}{\max(1, 0.01 P_i^{g,t})})^2$$
+$$\text{minimize} (1000\times\sum\limits_{i} (\boldsymbol{\sigma_{P_i}^{+}} + \boldsymbol{\sigma_{P_i}^{-}}) + \sum\limits_{g} (\frac{\boldsymbol{P_{i,g}^t} - P_{i,g}^{t}}{\max(1, \frac{P_{i,g}^t}{100})})^2)$$
 
-where $P_i^{g,t}$ is the target of generator of the generator on bus $i$. The sum of the slack variables is penalized by a 
+where $P_{i,g}^{t}$ is the target of generator of the generator on bus $i$. The sum of the slack variables is penalized by a 
 high coefficient to drive these variables towards 0, ensuring active power balance at each bus.
 The resolution of this DCOPF is considered as successful if this sum does not exceed the configurable threshold `Pnull`
 (see [3.2](#32-configuration-of-the-run)), and if the solver used to solve the problem finds feasible solution without reaching
