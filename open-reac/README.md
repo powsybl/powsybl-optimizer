@@ -186,6 +186,17 @@ phase shift transformer on the same branch.
 
 #### 4.4 P/Q units' domain
 
+
+The following corrections apply successively to determine consistent domains for the active 
+power $P^g$ and reactive power produced $Q^g$ by generators. The thresholds introduced 
+in [3.2](#32-configuration-of-the-run) are used. Let $P^g_{min}$, $P^g_{max}$, $Q^g_{min}$, and $Q^g_{max}$ 
+be the bounds of these domains (specified in `ampl_network_generators.txt`), 
+and $P^g_{min,c}$, $P^g_{max,c}$, $Q^g_{min,c}$, and $Q^g_{max,c}$ be the corrected bounds :
+
+- If $|P^g_{max}| \geq \text{PQmax}$, then $P^g_{max,c} = \max(\text{defaultPmax}, P^g,t)$.
+Same with $P^g_{min}$, $P^g_{min,c}$ and defaultPmin.
+- If $|P^g_{max,c} - |P^g_{min,c}| \leq \text{minimalQPrange}$, then $P^g_{max,c}$ and $P^g_{min,c}$ are fixed to $P^{g,t}$.
+
 TODO : add
 - `defaultQmaxPmaxRatio`: Parameter used to calculate  `defaultQmin` and `defaultQmax`,
   the thresholds used to correct the minimum and maximum reactive powers produced by generators
@@ -216,27 +227,20 @@ Before to address the ACOPF (see [7](#7-alternative-current-optimal-power-flow))
 The DCOPF involves the following constraints:
 
 $$\boldsymbol{\theta}_s = 0, \quad s\in\text{SUBSTATIONS}$$
-
 $$\boldsymbol{p}_{ij} = \frac{\boldsymbol{\theta}_i - \boldsymbol{\theta}_j}{x_{ij}}, ij\in\text{BRANCHCC}$$
-
 $$\sum\limits_{j\in v(i)} \boldsymbol{p}_{ij} = P_i^{in} + \boldsymbol{P}_i^{g} + \boldsymbol{\sigma}_{P_i}^{+} + \boldsymbol{\sigma}_{P_i}^{-}, i\in\text{BUSCC}$$
-
-$$P_{i, \text{min}}^{g} \leq \boldsymbol{P}_i^{g} \leq P_{i, \text{max}}^{g}$$
 
 where : 
 - $s$ is the reference bus (see [5](#5-reference-bus--main-connex-component)). 
 - $\boldsymbol{p}_{ij}$ the active power leaving bus $i$ on branch $ij$.
 - $P_i^{in}$ the constant active power injected or consumed in bus $i$ (by batteries, loads, VSC stations and LCC stations).
 - $\boldsymbol{P}_i^{g}$ is the variable active power produced by generators of bus $i$.
-- $P_{i, \text{min}}^{g}$ (resp. $P_{i, \text{max}}^{g}$) is the lower bound of 
-the active power produced by generators on bus $i$ (see [4.4](#44-pq-units-domain))
 - $\boldsymbol{\sigma}_{P_i}$ the slack variables (both positive)
 expressing the excess or shortfall of active power produced in $i$.
 
 And the following objective function :
 
-$$\text{minimize} 1000\sum\limits_{i\in \text{BUSCC}} \boldsymbol{\sigma}_{P_i}^{+} + \boldsymbol{\sigma}_{P_i}^{-} 
-+ \sum\limits_{g\in\text{UNITON}} (\frac{\boldsymbol{P}_i^{g} - P_i^{g,t}}{\max(1, 0.01 P_i^{g,t})})^2$$
+$$\text{minimize} 1000\sum\limits_{i\in \text{BUSCC}} \boldsymbol{\sigma}_{P_i}^{+} + \boldsymbol{\sigma}_{P_i}^{-} + \sum\limits_{g\in\text{UNITON}} (\frac{\boldsymbol{P}_i^{g} - P_i^{g,t}}{\max(1, 0.01 P_i^{g,t})})^2$$
 
 where $P_i^{g,t}$ is the target of generator of the generator on bus $i$. The sum of the slack variables is penalized by a 
 high coefficient to drive these variables towards 0, ensuring active power balance at each bus.
