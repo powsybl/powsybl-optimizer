@@ -214,9 +214,12 @@ Before to address the ACOPF (see [7](#7-alternative-current-optimal-power-flow))
 - The phases computed during the DCOPF resolution will be used as initial points for the ACOPF resolution.
 
 The DCOPF involves the following constraints:
-$$ \pmb{\theta_s} = 0, s\in\text{SUBSTATIONS}$$
-$$ \pmb{p}_{ij} = \frac{\pmb{\theta_i} - \pmb{\theta_j}}{x_{ij}} $$
-$$ \sum\limits_{j\in v(i)} \pmb{p}_{ij} = \pmb{P}_i^{in} + \pmb{\sigma}_{P_i^{in}}$$
+
+$ \theta_s = 0, s\in\text{SUBSTATIONS}$
+
+$ p_{ij} = \frac{\theta_i - \theta_j}{x_{ij}} $
+
+$ \sum\limits_{j\in v(i)} p_{ij} = P_i^{in} + \sigma_{P_i^{in}}$
 
 where $s$ is the reference bus (see [5](#5-reference-bus--main-connex-component)), 
 $p_{ij}$ the active power leaving bus $i$ on branch $ij$, and  
