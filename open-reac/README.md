@@ -133,7 +133,7 @@ All of these files share the same format: 2 columns #"num" "id".
 In addition to the elements specified in section [3.2](#32-configuration-of-the-run), the user may choose to override
 the voltage limits of specified voltage levels. These values are defined in `ampl_network_substations_override.txt` and
 are employed to establish the new voltage limits as specified in section
-[4.1](#41-voltage-level-limits-overrides). 
+[4.1](#41-voltage-level-limits-consistency). 
 Format : 4 columns #"num" "minV (pu)" "maxV (pu)" "id"
 
 ### 4 Pre-processing
@@ -141,32 +141,24 @@ Format : 4 columns #"num" "minV (pu)" "maxV (pu)" "id"
 Before solving the reactive OPF described in [7](#7-alternative-current-optimal-power-flow), 
 the following pre-processing blocks are executed to ensure the consistency of the values. 
 
-#### 4.1 Voltage level limits overrides
+#### 4.1 Voltage level limits consistency
 
 In order to ensure consistent voltage level limits for the voltage levels,
-the consistency thresholds  *minimal_voltage_lower_bound* and *maximal_voltage_upper_bound* are employed.
-They are initialized as follows:
-- $\text{minimal_voltage_lower_bound} = \max(\min\limits_{s\in \text{SUBSTATIONS}}(V_{min}^{s}), \text{min_plausible_low_voltage_limit})$
-- $\text{maximal_voltage_upper_bound} = \min(\max\limits_{s\in \text{SUBSTATIONS}}(V_{max}^{s}), \text{max_plausible_high_voltage_limit})$
+the parameters min_plausible_low_voltage_limit and max_plausible_high_voltage_limit are used
+(see [3.2](#32-configuration-of-the-run)). 
 
-where $V_{min}$ (resp. $V_{max}$) is the low (resp. high) voltage limit of voltage level $s\in \text{SUBSTATIONS}$.
-
-
-
-As a result, the lower voltage bound chosen is equal to the maximum value between
-`minimal_voltage_lower_bound`
-and the specified `minV (pu)` value in `ampl_network_substations.txt`. 
-If an override value is specified by the user (see [3.3](#33-voltage-limits-overrides)), it replaces `minV (pu)`.
-
-The upper voltage bound chosen is equal to the minimum value between `maximal_voltage_upper_bound`
-and the specified `maxV (pu)` value in `ampl_network_substations.txt`.
-If an override value is specified by the user (see [3.3](#33-voltage-limits-overrides)) and it is higher than
-the previously calculated lower voltage bound, then the override value replaces `maxV (pu)`.
+Let $V_{min}^s$ (resp. $V_{max}^s$) be the low (resp. high) voltage limit of voltage level $vl$ 
+specified in `ampl_network_substations.txt`, or
+in`ampl_network_substations_override.txt` if an override is given, and $V_{min}^{vl,c}$ (resp. $V_{max}^{vl,c}$)
+the corrected low (resp. high) limit. Then, the consistent 
+voltage level limits of voltage level $vl$ are :
+- $V_{min}^{vl,c} = \max(V_{min}, \text{min_plausible_low_voltage_limit})$
+- $V_{max}^{vl,c} = \min(V_{max}, \text{max_plausible_low_voltage_limit})$
 
 #### 4.2 Zero-impedance branches
 
 Branches with an impedance magnitude (calculated in p.u.)
-below the configurable threshold `Znull` (see section [3.2](#32-configuration-of-runtime))
+below the configurable threshold `Znull` (see section [3.2](#32-configuration-of-the-run))
 are considered as non-impedant. 
 These branches will have their reactance replaced by the threshold `Znull` (in p.u.).
 
@@ -185,7 +177,6 @@ specified handling for cases where resistances/reactances are negative or if the
 phase shift transformer on the same branch.
 
 #### 4.4 P/Q units' domain
-
 
 The following corrections apply successively to determine consistent domains for the active 
 power $P^g$ and reactive power produced $Q^g$ by generators. Please note that in the end, the bounds are rectangular, 
