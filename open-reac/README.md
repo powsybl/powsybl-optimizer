@@ -71,11 +71,11 @@ each serving a specific function:
   *ampl_* prefix), and the files used to configure the run (files with *param_* prefix).
   Refer to section [3](#3-input).
 - `reactiveopf.mod` defines the sets, parameters and optimization problems (CC, DCOPF, ACOPF) solved in `reactiveopf.run`. 
-  Refer to section [5](#5-reference-bus--main-connex-component) and [6](#6-optimal-power-flow-problems).
+  Refer to sections [5](#5-reference-bus--main-connex-component), [6](#6-direct-current-optimal-power-flow) and [7](#7-alternative-current-optimal-power-flow).
 - `reactiveopfoutput.mod` exports result files if the execution of `reactiveopf.run` is successful. 
-  Refer to section [7.1](#72-in-case-of-convergence).
+  Refer to section [8.1](#81-in-case-of-convergence).
 - `reactiveopfexit.run` contains the code executed when the problem is inconsistent. 
-  Refer to section [7.2](#71-in-case-of-inconsistency).
+  Refer to section [8.2](#82-in-case-of-inconsistency).
 - `reactiveopf.run` executes the AMPL process of OpenReac, calling the previous scripts.
 
 ### 3 Input
@@ -98,25 +98,25 @@ These are specified in the file `param_algo.txt`:
 |----------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------|---------------------------------------------|
 | log_level_ampl                   | Level of display for AMPL prints                                                                                                                                                  | INFO              | {DEBUG, INFO, WARNING, ERROR}               |
 | log_level_knitro                 | Level of display for solver prints (see [AMPL documentation](https://dev.ampl.com/ampl/options.html)                                                                              | $1$               | ${0, 1, 2}$                                 |  
-| objective_choice                 | Choice of the objective function for the ACOPF (see [6.2](#62-alternative-current-optimal-power-flow))                                                                            | $0$               | ${0, 1, 2}$                                 |
+| objective_choice                 | Choice of the objective function for the ACOPF (see [7](#7-alternative-current-optimal-power-flow))                                                                               | $0$               | ${0, 1, 2}$                                 |
 | ratio_voltage_target             | Ratio to calculate target V of buses when objective_choice = 1                                                                                                                    | $0.5$             | $\[0; 1\]$                                  |
 | coeff_alpha                      | Weight to favor more/less minimization of active power produced by generators or deviation between them and target values (see [6.2](#62-alternative-current-optimal-power-flow)) | $1$               | $\[0; 1\]$                                  |
 | Pnull                            | Threshold of active and reactive powers considered as null                                                                                                                        | $0.01$ (MW)       | $\[0; 1\]$                                  |
 | Znull                            | Threshold of impedance considered as null (see [4.2](#42-zero-impedance-lines))                                                                                                   | $10^{-5}$ (p.u.)  | $\[0; 0.1\]$                                |                                                                                                                                                                  
- | epsilon_nominal_voltage          | Threshold to ignore voltage levels with nominal voltage lower than it                                                                                                             | $1$ (kV)          | $\mathcal{R}^{+}$                           | 
-| min_plausible_low_voltage_limit  | Consistency bound for low voltage limit of voltage levels (see [4.1](#41-voltage-level-limits-computation))                                                                       | $0.5$ (p.u.)      | $\mathcal{R}^{+}$                           |
+ | epsilon_nominal_voltage          | Threshold to ignore voltage levels with nominal voltage lower than it                                                                                                             | $1$ (kV)          | $\mathbb{R}^{+}$                            | 
+| min_plausible_low_voltage_limit  | Consistency bound for low voltage limit of voltage levels (see [4.1](#41-voltage-level-limits-computation))                                                                       | $0.5$ (p.u.)      | $\mathbb{R}^{+}$                            |
 | max_plausible_high_voltage_limit | Consistency bound for high voltage limit of voltage levels (see [4.1](#41-voltage-level-limits-computation))                                                                      | $1.5$ (p.u.)      | [min_plausible_low_voltage_limit; $\infty$] |
-| ignore_voltage_bounds            | Threshold to replace voltage limits of voltage levels with nominal voltage lower than it, by  [min_plausible_low_voltage_limit; max_plausible_high_voltage_limit]                 | $0$ (p.u.)        | $\mathcal{R}^{+}$                           |
-| buses_with_reactive_slacks       | Choice of which buses will have reactive slacks attached in ACOPF solving (see [6.2](#62-alternative-current-optimal-power-flow))                                                 | NO_GENERATION     | {CONFIGURED, NO_GENERATION, ALL}            |
-| PQmax                            | Threshold for maximum active and reactive power considered in correction of generator limits  (see [4.5](#45-pq-units-domain))                                                    | $9000$ (MW, Mvar) |                                             |
+| ignore_voltage_bounds            | Threshold to replace voltage limits of voltage levels with nominal voltage lower than it, by  [min_plausible_low_voltage_limit; max_plausible_high_voltage_limit]                 | $0$ (p.u.)        | $\mathbb{R}^{+}$                            |
+| buses_with_reactive_slacks       | Choice of which buses will have reactive slacks attached in ACOPF solving (see [7](#7-alternative-current-optimal-power-flow))                                                    | NO_GENERATION     | {CONFIGURED, NO_GENERATION, ALL}            |
+| PQmax                            | Threshold for maximum active and reactive power considered in correction of generator limits  (see [4.5](#45-pq-units-domain))                                                    | $9000$ (MW, MVAr) |                                             |
 | defaultPmax                      | Threshold for correction of high active power limit produced by generators (see [4.5](#45-pq-units-domain))                                                                       | $1000$ (MW)       |                                             |
 | defaultPmin                      | Threshold for correction of low active power limit produced by generators (see [4.5](#45-pq-units-domain))                                                                        | $0$ (MW)          |                                             |
-| defaultQmaxPmaxRatio             | Ratio used to calculate threshold for corrections of high/low reactive power limits (see [4.5](#45-pq-units-domain))                                                              | $0.3$ (Mvar/MW)   |                                             |
-| minimalQPrange                   | Threshold to fix active (resp. reactive) power of generators with active (resp. reactive) power limits that are closer than it (see [4.5](#45-pq-units-domain))                   | $1$ (MW, MVar)    |                                             |
+| defaultQmaxPmaxRatio             | Ratio used to calculate threshold for corrections of high/low reactive power limits (see [4.5](#45-pq-units-domain))                                                              | $0.3$ (MVAr/MW)   |                                             |
+| minimalQPrange                   | Threshold to fix active (resp. reactive) power of generators with active (resp. reactive) power limits that are closer than it (see [4.5](#45-pq-units-domain))                   | $1$ (MW, MVAr)    |                                             |
 
 
 In addition to the previous parameters, the user can specify which 
-parameters will be variable or fixed in the ACOPF solving (see section [6.2](#62-alternative-current-optimal-power-flow)).
+parameters will be variable or fixed in the ACOPF solving (see [7](#7-alternative-current-optimal-power-flow)).
 This is done using the following files:
 
 | File                                | Description                                                                                                                                            | Default behavior of modified values                                               |
@@ -133,17 +133,17 @@ All of these files share the same format: 2 columns #"num" "id".
 In addition to the elements specified in section [3.2](#32-configuration-of-the-run), the user may choose to override
 the voltage limits of specified voltage levels. These values are defined in `ampl_network_substations_override.txt` and
 are employed to establish the new voltage limits as specified in section
-[4.1](#41-voltage-level-limits-computation). 
+[4.1](#41-voltage-level-limits-overrides). 
 Format : 4 columns #"num" "minV (pu)" "maxV (pu)" "id"
 
 ### 4 Pre-processing
 
-Before solving the reactive OPF described in [6](#6-optimal-power-flow-problems), 
+Before solving the reactive OPF described in [7](#7-alternative-current-optimal-power-flow), 
 the following pre-processing blocks are executed to ensure the consistency of the values. 
 
 #### 4.1 Voltage level limits overrides
 
-In order to ensure consistent voltage level limits,
+In order to ensure consistent voltage level limits for the voltage levels,
 the consistency thresholds  *minimal_voltage_lower_bound* and *maximal_voltage_upper_bound* are employed.
 They are initialized as follows:
 - $\text{minimal_voltage_lower_bound} = \max(\min\limits_{s\in \text{SUBSTATIONS}}(V_{min}^{s}), \text{min_plausible_low_voltage_limit})$
@@ -151,7 +151,7 @@ They are initialized as follows:
 
 where $V_{min}$ (resp. $V_{max}$) is the low (resp. high) voltage limit of voltage level $s\in \text{SUBSTATIONS}$.
 
-TODO : refactor
+
 
 As a result, the lower voltage bound chosen is equal to the maximum value between
 `minimal_voltage_lower_bound`
@@ -163,35 +163,26 @@ and the specified `maxV (pu)` value in `ampl_network_substations.txt`.
 If an override value is specified by the user (see [3.3](#33-voltage-limits-overrides)) and it is higher than
 the previously calculated lower voltage bound, then the override value replaces `maxV (pu)`.
 
-#### 4.2 Zero impedance lines
+#### 4.2 Zero-impedance branches
 
-To determine the non-impedant lines of the network, the configurable threshold `Znull` (p.u.) is used 
-(see section [3.2](#32-configuration-of-the-run)). 
-These lines are identified as those with an impedance magnitude (calculated in p.u.) lower than `Znull`.
-These lines will have their reactance replaced by `Znull`.
-
-Les transformateurs ayant une impédance considérée comme nulle ne sont considérés dans les calculs, 
-et sont remplacés par des lignes. De plus, les lignes considérés comme non impédantes auront 
-une réactance remplacée par Znull. 
+Branches with an impedance magnitude (calculated in p.u.)
+below the configurable threshold `Znull` (see section [3.2](#32-configuration-of-runtime))
+are considered as non-impedant. 
+These branches will have their reactance replaced by the threshold `Znull` (in p.u.).
 
 #### 4.3 Impedance of transformers
 
-In the calculations of the ACOPF (see section [6.2](#62-alternative-current-optimal-power-flow)), 
-the ratio tap changers (RTC) with an impedance (specified in `ampl_network_branches.txt`)
-considered as null (see [4.2](#42-zero-impedance-lines)) are treated as lines (the transformation ratio is ignored). 
-This is also the case with phase tap changers (PST), where the phase shift is consequently ignored (as well as 
-the impedance specified in the tap changer table `ampl_network_tct.txt`).
+In the calculations of the ACOPF (see [7](#7-alternative-current-optimal-power-flow)), 
+the transformers with an impedance (the one specified in `ampl_network_branches.txt`)
+considered as null (see [4.2](#42-zero-impedance-branches)) 
+are treated as lines. Then, the transformation ratios/phase shifts are ignored, as well as the impedance
+specified in the tap changer table `ampl_network_tct.txt`.
 
-For PSTs considered as having impedance, the reactance values from the tap changer table (in `ampl_network_tct.txt`)
-replace the reactance specified in `ampl_network_branches.txt`. The resistance is calculated proportionally to this reactance.
-The impedances of RTCs remain as specified in `ampl_network_branches.txt`.
-
-Please notice that there is no specific handling for cases where 
-resistances/reactances are negative or if there is both an RTC and a PST on the same branch.
-
-#### 4.4 Transformer consistency
-
-TODO 
+For phase shifters transformers considered as impedant, the reactance values from the tap changer table (in `ampl_network_tct.txt`)
+replace the reactance specified in `ampl_network_branches.txt`. The resistance is then calculated proportionnaly to this reactance. 
+For the ratio tap changers, the impedance remain as specified in `ampl_network_branches.txt`. Please notice there is no
+specified handling for cases where resistances/reactances are negative or if there is both a ratio tap changer and a 
+phase shift transformer on the same branch.
 
 #### 4.5 P/Q units' domain
 
@@ -199,35 +190,28 @@ TODO : add
 - `defaultQmaxPmaxRatio`: Parameter used to calculate  `defaultQmin` and `defaultQmax`,
   the thresholds used to correct the minimum and maximum reactive powers produced by generators
   (see section [4.5](#45-pq-units-domain)).
-  The default value for this parameter is 0.3 (MVar/MW), and the thresholds are calculated as follows:
+  The default value for this parameter is 0.3 (MVAr/MW), and the thresholds are calculated as follows:
   - `defaultQmin` = - `defaultPmin` x `defaultQmaxPmaxRatio`
   - `defaultQmax` =   `defaultPmax` x `defaultQmaxPmaxRatio`
 
 ### 5 Reference bus & main connex component
 
-A reference bus (`null_phase_bus` AMPL parameter) is determined to enforce the zero-phase constraint of the OPFs. 
+A reference bus (`null_phase_bus` AMPL parameter) enforces the zero-phase constraint of the OPFs. 
 This reference bus corresponds to the bus in the network with the most AC branches connected,
-among those belonging to the main connected component (0 in `ampl_network_buses.txt`). 
-If multiple buses have the same maximum cardinality, the one with the highest `num` is selected.
-If no bus is found meeting these criteria, the first bus defined in the file `ampl_network_buses.txt` is chosen
-as reference bus.
+among those belonging to the main connected component ($0$ in `ampl_network_buses.txt`). 
+If multiple buses have the same maximum cardinality, the one with the highest `num` identifier is selected.
+If no bus is found meeting these criteria, the first bus defined in the file `ampl_network_buses.txt` is selected.
 
-The DCOPF and ACOPF are executed on buses connected to the reference bus by AC branches.
-Then, buses connected to the reference bus by HVDC lines are excluded in OPF computation.
-These buses are determined by solving the `PROBLEM_CCOMP` optimization problem 
-defined in `reactiveopf.mod`. After the optimization, buses connected by AC branches 
-are determined by verifying that the associated variable `teta_ccomputation` is set to 0.
+The OPFs are executed on the main connex component (i.e. buses connected to the reference bus by AC branches).
+Then, buses connected to the reference bus by HVDC lines are excluded.
+The main connex component is determined by solving the `PROBLEM_CCOMP` optimization problem.
 
-### 6 Optimal power flow problems
+### 6 Direct current optimal power flow
 
-Two OPFs are successively solved. First, a Direct Current Optimal Power Flow (DCOPF) as described in section [6.1](#61-direct-current-optimal-power-flow), 
-followed by an Alternating Current Optimal Power Flow (ACOPF) described in section [6.2](#62-alternative-current-optimal-power-flow). This is done for 
-two main reasons:
-- If the DCOPF resolution fails (see [6.1](#61-direct-current-optimal-power-flow)), it provides a strong indication that the ACOPF resolution will also fail.
+Before to address the ACOPF (see [7](#7-alternative-current-optimal-power-flow)), a DCOPF is solved for two main reasons:
+- If the DCOPF resolution fails, it provides a strong indication that the ACOPF resolution will also fail.
   The DCOPF serves as a formal consistency check on the data.
 - The phases computed during the DCOPF resolution will be used as initial points for the ACOPF resolution.
-
-#### 6.1 Direct current optimal power flow
 
 The DCOPF involves the following constraints:
 - `ctr_null_phase_bus_dc`, which sets the phase of the reference (refer to [5](#5-reference-bus--main-connex-component)) to 0.
@@ -250,11 +234,12 @@ which helps homogenize the deviations among different generators.
 The goal is to drive these variables towards 0, ensuring an active power balance at each node.
 
 The resolution of this DCOPF is considered as successful if the solver identifies a feasible solution without reaching
-a pre-defined limit, and if the sum of all balance variables (`balance_pos` and `balance_neg`) does not exceed the configurable threshold `Pnull` 
-(see section [3.2](#32-configuration-of-the-run)). In cases where these conditions are not met, 
-the solving is considered unsuccessful.
+a default limit, and if the sum of all balance variables (`balance_pos` and `balance_neg`) does not exceed the configurable threshold `Pnull` 
+(see [3.2](#32-configuration-of-the-run)). Otherwise, the solving is considered unsuccessful.
 
-#### 6.2 Alternative current optimal power flow
+### 7 Alternative current optimal power flow
+
+TODO : refactor
 
 TODO :
 add
@@ -330,70 +315,25 @@ TODO : expliciter le fait qu'on fasse plusieurs optimisations à la suite en jou
 
 TODO : add comments on results treatment by Knitro (what kind of solutions are considered as good...)
     
-### 7 Output
+### 8 Output
 
-#### 7.1 In case of inconsistency
-
-If the computation of the main connex component or of the DCOPF fails (see [6.1](#61-direct-current-optimal-power-flow)), 
-the problem is considered as inconsistent.
-Then, the script `reactiveopfexit.run` is executed and the following file is exported:
-
-`reactiveopf_results_indic.txt`, which contains various indicators to
-  provide an overview of the run. It includes:
-  - The error message(s) returned by the execution.
-  - General information (system OS, computation time, etc.).
-  - The configurable thresholds/parameters used in the run (see section [3.2](#32-configuration-of-the-run)).
-
-#### 7.2 In case of convergence
+#### 8.1 In case of convergence
 
 If the AMPL process defined in `reactiveopf.run` is successful, the script `reactiveopfoutput.run` is executed 
 (even if the solving of ACOPF did not reached a feasible point) and the following files are exported:
 
-- `reactiveopf_results_indic.txt`, which contains various indicators to provide an overview of the
-  run. It includes:
-  - General information (system OS, computation time, etc.).
-  - The configurable thresholds/parameters used in the run (see section [3.2](#32-configuration-of-the-run)).
-  - The cardinality of the sets used in the optimization problems (number of non-impedance branches,
-    number of buses with slack variables, etc.).
-  - Information about calculated angles (maximum/minimum theta, maximum
-    difference between neighboring buses, etc.).
+| File                                            | Content                                                                                                                                                                                                                                                                                                                                                      | Format                                                                                          |
+|-------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
+| reactiveopf_results_indic.txt                   | General information (system OS, computation time, etc.). The configurable thresholds/parameters (see section [3.2](#32-configuration-of-the-run)). The cardinality of the sets (number of non-impedance branches, number of slack variables, etc.). Information about calculated angles (maximum/minimum theta, maximum difference between neighbors, etc.). |                                                                                                 |
+| reactiveopf_results_static_var_compensators.csv | Calculated voltage and reactive power values for the SVC that regulate voltage.                                                                                                                                                                                                                                                                              | 6 columns #"variant" "num" "bus" "vRegul" "V(pu)" "Q(MVAr)"                                     |
+| reactiveopf_results_shunts.csv                  | Calculated reactive power (and susceptance) values for shunts that were either connected or modified after the optimization problems were resolved.                                                                                                                                                                                                          | 6 columns #"variant" "num" "bus" "b(pu)" "Q(MVAr)" "section"                                    |
+| reactiveopf_results_generators.csv              | Calculated active and reactive power values for generating units.                                                                                                                                                                                                                                                                                            | 9 columns #"variant" "num" "bus" "vRegul" "V(pu)" "targetP(MW)" "targetQ(MVAr)" "P(MW)" "Q(MW)" |
+| reactiveopf_results_vsc_converter_stations.csv  | Calculated reactive power values for VSC converter stations.                                                                                                                                                                                                                                                                                                 | 8 columns #"variant" "num" "bus" "vRegul" "targetV(pu)" "targetQ(MVAr)" "P(MW)" "Q(MVAr)"       |
+| reactiveopf_results_rtc.csv                     | RTCs and associated taps, with transformer ratio closest to the one calculated after the optimization.                                                                                                                                                                                                                                                       | 3 columns #"variant" "num" "tap"                                                                |
+| reactiveopf_results_reactive_slacks.csv         | Calculated reactive slack variables `slack1_balance_Q` and `slack2_balance_Q`.                                                                                                                                                                                                                                                                               | 6 columns #"variant" "bus" "slack_condensator(MVAr)" "slack_self(MVAr)" "id" "substation"       |
 
+#### 8.2 In case of inconsistency
 
-- `reactiveopf_results_static_var_compensators.csv`, which contains calculated 
-voltage and reactive power values for the SVC that regulate voltage.
-
-  Format : 6 columns #"variant" "num" "bus" "vRegul" "V(pu)" "Q(Mvar)"
-
-
-- `reactiveopf_results_shunts.csv`, which contains calculated reactive power (and susceptance) values 
-for shunts that were either connected or modified after the optimization problems were resolved.
-
-  Format : 6 columns #"variant" "num" "bus" "b(pu)" "Q(Mvar)" "section"
-
-
-- `reactiveopf_results_generators.csv`, which contains 
-calculated active and reactive power values for generating units.
-
-  Format : 9 columns #"variant" "num" "bus" "vRegul" "V(pu)"
-  "targetP(MW)" "targetQ(Mvar)" "P(MW)" "Q(MW)"
-
-
-- `reactiveopf_results_vsc_converter_stations.csv`, which contains 
-calculated reactive power values for VSC converter stations.
-
-  Format : 8 columns #"variant" "num" "bus" "vRegul" "targetV(pu)"
-  "targetQ(Mvar)" "P(MW)" "Q(Mvar)"
-
-
-- `reactiveopf_results_rtc.csv`, which contains the RTCs and their associated taps,
-with the transformation ratio closest to the one calculated after 
-the optimization.
-
-  Format : 3 columns #"variant" "num" "tap"
-
-
-- `reactiveopf_results_reactive_slacks.csv`, which contains the calculated
-reactive slack variables `slack1_balance_Q` and `slack2_balance_Q`.
-
-  Format : 6 columns #"variant" "bus" "slack_condensator(Mvar)" "slack_self(Mvar)" "id" "substation"
-
+If the computation of the main connex component (see [5](#5-reference-bus--main-connex-component)) or of the DCOPF fails (see [6](#6-direct-current-optimal-power-flow)),
+the problem is considered as inconsistent.
+Then, the script `reactiveopfexit.run` is executed and the file reactiveopf_results_indic.txt described in previous section is exported, without the information on the calculated angles.
