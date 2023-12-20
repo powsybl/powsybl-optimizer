@@ -108,11 +108,11 @@ These are specified in the file `param_algo.txt`:
 | max_plausible_high_voltage_limit | Consistency bound for high voltage limit of voltage levels (see [4.1](#41-voltage-level-limits-computation))                                                                      | $1.5$ (p.u.)      | [min_plausible_low_voltage_limit; $\infty$] |
 | ignore_voltage_bounds            | Threshold to replace voltage limits of voltage levels with nominal voltage lower than it, by  [min_plausible_low_voltage_limit; max_plausible_high_voltage_limit]                 | $0$ (p.u.)        | $\mathbb{R}^{+}$                            |
 | buses_with_reactive_slacks       | Choice of which buses will have reactive slacks attached in ACOPF solving (see [7](#7-alternative-current-optimal-power-flow))                                                    | NO_GENERATION     | {CONFIGURED, NO_GENERATION, ALL}            |
-| PQmax                            | Threshold for maximum active and reactive power considered in correction of generator limits  (see [4.5](#45-pq-units-domain))                                                    | $9000$ (MW, MVAr) |                                             |
-| defaultPmax                      | Threshold for correction of high active power limit produced by generators (see [4.5](#45-pq-units-domain))                                                                       | $1000$ (MW)       |                                             |
-| defaultPmin                      | Threshold for correction of low active power limit produced by generators (see [4.5](#45-pq-units-domain))                                                                        | $0$ (MW)          |                                             |
-| defaultQmaxPmaxRatio             | Ratio used to calculate threshold for corrections of high/low reactive power limits (see [4.5](#45-pq-units-domain))                                                              | $0.3$ (MVAr/MW)   |                                             |
-| minimalQPrange                   | Threshold to fix active (resp. reactive) power of generators with active (resp. reactive) power limits that are closer than it (see [4.5](#45-pq-units-domain))                   | $1$ (MW, MVAr)    |                                             |
+| PQmax                            | Threshold for maximum active and reactive power considered in correction of generator limits  (see [4.4](#44-pq-units-domain))                                                    | $9000$ (MW, MVAr) |                                             |
+| defaultPmax                      | Threshold for correction of high active power limit produced by generators (see [4.4](#44-pq-units-domain))                                                                       | $1000$ (MW)       |                                             |
+| defaultPmin                      | Threshold for correction of low active power limit produced by generators (see [4.4](#44-pq-units-domain))                                                                        | $0$ (MW)          |                                             |
+| defaultQmaxPmaxRatio             | Ratio used to calculate threshold for corrections of high/low reactive power limits (see [4.4](#44-pq-units-domain))                                                              | $0.3$ (MVAr/MW)   |                                             |
+| minimalQPrange                   | Threshold to fix active (resp. reactive) power of generators with active (resp. reactive) power limits that are closer than it (see [4.4](#44-pq-units-domain))                   | $1$ (MW, MVAr)    |                                             |
 
 
 In addition to the previous parameters, the user can specify which 
@@ -188,22 +188,34 @@ phase shift transformer on the same branch.
 
 
 The following corrections apply successively to determine consistent domains for the active 
-power $P^g$ and reactive power produced $Q^g$ by generators. The thresholds introduced 
-in [3.2](#32-configuration-of-the-run) are used. Let $P^g_{min}$, $P^g_{max}$, $Q^g_{min}$, and $Q^g_{max}$ 
-be the bounds of these domains (specified in `ampl_network_generators.txt`), 
-and $P^g_{min,c}$, $P^g_{max,c}$, $Q^g_{min,c}$, and $Q^g_{max,c}$ be the corrected bounds :
+power $P^g$ and reactive power produced $Q^g$ by generators. Please note that in the end, the bounds are rectangular, 
+not trapezoidal. These bounds are used only in the reactive OPF (see [7](#7-alternative-current-optimal-power-flow)).
 
-- If $|P^g_{max}| \geq \text{PQmax}$, then $P^g_{max,c} = \max(\text{defaultPmax}, P^g,t)$.
-Same with $P^g_{min}$, $P^g_{min,c}$ and defaultPmin.
-- If $|P^g_{max,c} - |P^g_{min,c}| \leq \text{minimalQPrange}$, then $P^g_{max,c}$ and $P^g_{min,c}$ are fixed to $P^{g,t}$.
+To determine the consistent domain of produced active power, the bounds of the domains
+$P^g_{min}$ and $P^g_{max}$, as well as the target $P^g_{t}$ of generator $g$ (all specified in `ampl_network_generators.txt`) are used.
+Let $P_{min}^{g,c}$ and $P_{max}^{g,c}$ be the corrected active bounds :
 
-TODO : add
-- `defaultQmaxPmaxRatio`: Parameter used to calculate  `defaultQmin` and `defaultQmax`,
-  the thresholds used to correct the minimum and maximum reactive powers produced by generators
-  (see section [4.5](#45-pq-units-domain)).
-  The default value for this parameter is 0.3 (MVAr/MW), and the thresholds are calculated as follows:
-  - `defaultQmin` = - `defaultPmin` x `defaultQmaxPmaxRatio`
-  - `defaultQmax` =   `defaultPmax` x `defaultQmaxPmaxRatio`
+- By default, $P_{min}^{g,c} = \text{defaultPmin}$ and $P_{max}^{g,c} = \text{defaultPmax}$ (see [3.2](#32-configuration-of-the-run))
+- If $|P^g_{max}| \geq \text{PQmax}$, then $P^g_{max,c} = \max(\text{defaultPmax}, P^g_t)$
+- If $|P^g_{min}| \geq \text{PQmax}$, then $P^g_{min,c} = \min(\text{defaultPmin}, P^g_t)$
+- If $|P^g_{max,c} - P^g_{min,c}| \leq \text{minimalQPrange}$, then $P^g_{max,c} = P^g_{min,c} = P^{g}_t$ (active power is fixed).
+
+To determine the consistent domain of produced reactive power, the reactive power diagram 
+(`specified in ampl_network_generators.txt`) of generator 
+$g$ est utilisé : $qp^g$ (resp. $qP^g$) and $Qp^g$ ($QP^g$) when $P_{min}^{g,c}$ (resp. P_{max}^{g,c}) is reached.
+Let $qp^g$ (resp. $qP^g$) and $Qp^g$ (resp. $QP^g$) be the bounds of the corrected reactive diagram, 
+and $Q_{min}^{g,c}$ and $Q_{max}^{g,c}$ be the corrected reactive bounds :
+
+- By default, $qp^{g,c} = qP^{g,c} = - \text{defaultPmin} \times \text{defaultQmaxPmaxRatio}$ 
+and $Qp^{g,c} = QP^{g,c} = \text{defaultPmax} \times \text{defaultQmaxPmaxRatio}$ (see [3.2](#32-configuration-of-the-run))
+- If $|qp^{g}| \geq \text{PQmax}$, then $qp^{g,c} = -\text{defaultQmaxPmaxRatio} \times P_{max}^{g,c}$.
+  Same with $qP^{g,c}$
+- If $|Qp^{g}|$ \geq \text{PQmax}$, then $Qp^{g,c} = \text{defaultQmaxPmaxRatio} \times P_{max}^{g,c}$.
+  Same with $QP^{g,c}$
+- If $qp^{g,c} > Qp^{g,c}$, the values are swapped. Same with $qP^{g,c}$ and $QP^{g,c}$
+- If the corrected reactive diagram is too small (distance between extremal values lower than $\text{minimalQPrange}$),
+  then $qp^{g,c} = Qp^{g,c} = qP^{g,c} = QP^{g,c} = \frac{qp^{g,c} + Qp^{g,c} + qP^{g,c} + QP^{g,c}}{4}$ (reactive power is fixed).
+- $Q_{min}^{g,c} = \min(qp^{g,c}, qP^{g,c})$ and $Q_{max}^{g,c} = \min(Qp^{g,c}, QP^{g,c})$
 
 ### 5 Reference bus & main connex component
 
@@ -226,9 +238,11 @@ Before to address the ACOPF (see [7](#7-alternative-current-optimal-power-flow))
 
 The DCOPF involves the following constraints:
 
-$$\boldsymbol{\theta}_s = 0, \quad s\in\text{SUBSTATIONS}$$
-$$\boldsymbol{p}_{ij} = \frac{\boldsymbol{\theta}_i - \boldsymbol{\theta}_j}{x_{ij}}, ij\in\text{BRANCHCC}$$
-$$\sum\limits_{j\in v(i)} \boldsymbol{p}_{ij} = P_i^{in} + \boldsymbol{P}_i^{g} + \boldsymbol{\sigma}_{P_i}^{+} + \boldsymbol{\sigma}_{P_i}^{-}, i\in\text{BUSCC}$$
+$$\boldsymbol{\theta_s} = 0, \quad s\in\text{SUBSTATIONS}$$
+
+$$\boldsymbol{p_{ij}} = \frac{\boldsymbol{\theta_i} - \boldsymbol{\theta_j}}{x_{ij}}, ij\in\text{BRANCHCC}$$
+
+$$\sum\limits_{j\in v(i)} \boldsymbol{p_{ij}} = P_i^{in} + \boldsymbol{P_i^{g}} + \boldsymbol{\sigma_{P_i}^{+}} + \boldsymbol{\sigma_{P_i}^{-}}, i\in\text{BUSCC}$$
 
 where : 
 - $s$ is the reference bus (see [5](#5-reference-bus--main-connex-component)). 
@@ -240,7 +254,7 @@ expressing the excess or shortfall of active power produced in $i$.
 
 And the following objective function :
 
-$$\text{minimize} 1000\sum\limits_{i\in \text{BUSCC}} \boldsymbol{\sigma}_{P_i}^{+} + \boldsymbol{\sigma}_{P_i}^{-} + \sum\limits_{g\in\text{UNITON}} (\frac{\boldsymbol{P}_i^{g} - P_i^{g,t}}{\max(1, 0.01 P_i^{g,t})})^2$$
+$$\text{minimize} 1000\sum\limits_{i\in \text{BUSCC}} \boldsymbol{\sigma_{P_i}^{+}} + \boldsymbol{\sigma_{P_i}^{-}} + \sum\limits_{g\in\text{UNITON}} (\frac{\boldsymbol{P_i^{g}} - P_{i,t}^{t}}{\max(1, 0.01 P_i^{g,t})})^2$$
 
 where $P_i^{g,t}$ is the target of generator of the generator on bus $i$. The sum of the slack variables is penalized by a 
 high coefficient to drive these variables towards 0, ensuring active power balance at each bus.
