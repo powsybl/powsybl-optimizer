@@ -215,11 +215,11 @@ Before to address the ACOPF (see [7](#7-alternative-current-optimal-power-flow))
 
 The DCOPF involves the following constraints:
 
-$\theta_s = 0, s\in\text{SUBSTATIONS}$
+$$\theta_s = 0,\;\; s\in\text{SUBSTATIONS}$$
 
-$p_{ij} = \frac{\theta_i - \theta_j}{x_{ij}} $
+$$\pmb{p}_{ij} = \frac{\theta_i - \theta_j}{x_{ij}}$$
 
-$\sum\limits_{j\in v(i)} p_{ij} = P_i^{in} + \sigma_{P_i}^{+} + \sigma_{P_i}^{-}$
+$$\sum\limits_{j\in v(i)} p_{ij} = P_i^{in} + \sigma_{P_i}^{+} + \boldsymbol{\sigma}_{P_i}^{-}$$
 
 
 
