@@ -215,14 +215,23 @@ Before to address the ACOPF (see [7](#7-alternative-current-optimal-power-flow))
 
 The DCOPF involves the following constraints:
 
-$ \theta_s = 0, s\in\text{SUBSTATIONS}$
+$\theta_s = 0, s\in\text{SUBSTATIONS}$
 
-$ p_{ij} = \frac{\theta_i - \theta_j}{x_{ij}} $
+$p_{ij} = \frac{\theta_i - \theta_j}{x_{ij}} $
 
-$ \sum\limits_{j\in v(i)} p_{ij} = P_i^{in} + \sigma_{P_i^{in}}$
+$\sum\limits_{j\in v(i)} p_{ij} = P_i^{in} + \sigma_{P_i}^{+} + \sigma_{P_i}^{-}$
+
+
 
 where $s$ is the reference bus (see [5](#5-reference-bus--main-connex-component)), 
-$p_{ij}$ the active power leaving bus $i$ on branch $ij$, and  
+$p_{ij}$ the active power leaving bus $i$ on branch $ij$, and $\sigma_{P_i}$ the slack variables (both positive)
+representing the excess or shortfall of active power produced in $i$.
+
+
+And the following objective function :
+
+$$\text{minimize} 1000\sum\limits_{i\in \text{BUSCC}} \sigma_{P_i}^{+} + \sigma_{P_i}^{-}$$
+
 
 - `ctr_null_phase_bus_dc`, which sets the phase of the reference (refer to [5](#5-reference-bus--main-connex-component)) to 0.
 - `ctr_activeflow`, which defines the active power flowing through the branches of the network.
