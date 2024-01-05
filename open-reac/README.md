@@ -179,8 +179,8 @@ phase shift transformer on the same branch.
 #### 4.4 P/Q units' domain
 
 The following corrections apply successively to determine consistent domains for the active 
-power $P_g$ and reactive power produced $Q_g$ by generators. Please note that in the end, the bounds are rectangular, 
-not trapezoidal. These bounds are used only in the reactive OPF (see [7](#7-alternative-current-optimal-power-flow)).
+power and reactive power produced by generators. Please note that in the end, the corrected bounds are rectangular
+(not trapezoidal), and they are used only in the reactive OPF (see [7](#7-alternative-current-optimal-power-flow)).
 
 To determine the consistent domain of produced active power, the bounds of the domains
 $P_g^{min}$ and $P_g^{max}$, as well as the target $P_g^{t}$ of generator $g$ (all specified in `ampl_network_generators.txt`) are used.
@@ -222,6 +222,8 @@ The main connex component is determined by solving the `PROBLEM_CCOMP` optimizat
 
 ### 6 Direct current optimal power flow
 
+TODO : add special handlings (e.g. groups with P = 0 are excluded from optimization)
+
 Before to address the ACOPF (see [7](#7-alternative-current-optimal-power-flow)), a DCOPF is solved for two main reasons:
 - If the DCOPF resolution fails, it provides a strong indication that the ACOPF resolution will also fail.
   The DCOPF serves as a formal consistency check on the data.
@@ -254,6 +256,8 @@ The resolution of this DCOPF is considered as successful if this sum does not ex
 a default limit. Otherwise, the solving is considered unsuccessful.
 
 ### 7 Alternative current optimal power flow
+
+TODO : add special handlings (e.g. groups with P = 0 are excluded from optimization)
 
 TODO : refactor
 
