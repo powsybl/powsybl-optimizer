@@ -17,6 +17,7 @@ import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.OpenReacStatus;
 
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -45,6 +46,11 @@ public final class OpenReacRunner {
      * @return All information about the run and possible modifications to apply.
      */
     public static OpenReacResult run(Network network, String variantId, OpenReacParameters parameters, OpenReacConfig config, ComputationManager manager) {
+        Objects.requireNonNull(network);
+        Objects.requireNonNull(variantId);
+        Objects.requireNonNull(parameters);
+        Objects.requireNonNull(config);
+        Objects.requireNonNull(manager);
         parameters.checkIntegrity(network);
         AmplModel reactiveOpf = OpenReacModel.buildModel();
         OpenReacAmplIOFiles amplIoInterface = new OpenReacAmplIOFiles(parameters, network, config.isDebug());
@@ -61,6 +67,12 @@ public final class OpenReacRunner {
      * @return All information about the run and possible modifications to apply.
      */
     public static CompletableFuture<OpenReacResult> runAsync(Network network, String variantId, OpenReacParameters parameters, OpenReacConfig config, ComputationManager manager) {
+        Objects.requireNonNull(network);
+        Objects.requireNonNull(variantId);
+        Objects.requireNonNull(parameters);
+        Objects.requireNonNull(config);
+        Objects.requireNonNull(manager);
+        parameters.checkIntegrity(network);
         parameters.checkIntegrity(network);
         AmplModel reactiveOpf = OpenReacModel.buildModel();
         OpenReacAmplIOFiles amplIoInterface = new OpenReacAmplIOFiles(parameters, network, config.isDebug());
