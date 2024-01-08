@@ -12,6 +12,7 @@ import com.powsybl.ampl.executor.AmplOutputFile;
 import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.divergenceanalyser.parameters.output.modifications.BusPenalization;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -42,6 +43,16 @@ public class BusPenalizationOutput implements AmplOutputFile {
     }
 
     @Override
+    public boolean throwOnMissingFile() {
+        return false;
+    }
+
+    @Override
+    public void read(BufferedReader bufferedReader, StringToIntMapper<AmplSubset> stringToIntMapper) throws IOException {
+        // TODO
+        return;
+    }
+
     public void read(Path outputPath, StringToIntMapper<AmplSubset> networkAmplMapper) {
         List<String> outputLines;
 

@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.powsybl</groupId>
         <artifactId>powsybl-optimizer</artifactId>
-        <version>0.3.0-SNAPSHOT</version>
+        <version>0.6.0-SNAPSHOT</version>
     </parent>
 
     <packaging>jar</packaging>
@@ -15,8 +15,8 @@
     <description>Divergence Analysis optimizer</description>
 
     <properties>
-        <powsybl-core.version>5.3.2</powsybl-core.version>
-        <powsybl-open-loadflow.version>1.2.2</powsybl-open-loadflow.version>
+        <powsybl-core.version>6.1.1</powsybl-core.version>
+        <powsybl-open-loadflow.version>1.6.0</powsybl-open-loadflow.version>
     </properties>
 
     <developers>
@@ -132,11 +132,6 @@
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-iidm-impl</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.powsybl</groupId>
-            <artifactId>powsybl-iidm-xml-converter</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

@@ -10,7 +10,9 @@ import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.commons.util.StringToIntMapper;
 
+import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -33,6 +35,11 @@ public class PenalizationOptions implements AmplInputFile {
     }
 
     @Override
+    public void write(BufferedWriter bufferedWriter, StringToIntMapper<AmplSubset> stringToIntMapper) throws IOException {
+        // TODO
+        return;
+    }
+
     public InputStream getParameterFileAsStream(StringToIntMapper<AmplSubset> networkAmplMapper) {
 
         StringBuilder dataBuilder = new StringBuilder();
