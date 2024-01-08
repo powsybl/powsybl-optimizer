@@ -22,8 +22,8 @@
     <description>OpenReac optimizer</description>
 
     <properties>
-        <powsybl-core.version>6.0.2</powsybl-core.version>
-        <powsybl-open-loadflow.version>1.4.0</powsybl-open-loadflow.version>
+        <powsybl-core.version>6.1.1</powsybl-core.version>
+        <powsybl-open-loadflow.version>1.6.0</powsybl-open-loadflow.version>
     </properties>
 
     <developers>
@@ -140,7 +140,7 @@
         </dependency>
         <dependency>
             <groupId>com.powsybl</groupId>
-            <artifactId>powsybl-iidm-xml-converter</artifactId>
+            <artifactId>powsybl-iidm-serde</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
