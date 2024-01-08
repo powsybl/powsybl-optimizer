@@ -6,52 +6,66 @@
  */
 package com.powsybl.openreac.parameters.input;
 
-import com.powsybl.commons.PowsyblException;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
-import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
-import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParamImpl;
-import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
+import com.powsybl.openreac.parameters.input.algo.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * This class stores all inputs parameters specific to the OpenReac optimizer.
  *
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ * @author Pierre Arvy <pierre.arvy at artelys.com>
  */
 public class OpenReacParameters {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OpenReacParameters.class);
 
-    private static final String OBJECTIVE_DISTANCE_KEY = "ratio_voltage_target";
+    private final List<VoltageLimitOverride> specificVoltageLimits = new ArrayList<>();
 
-    private final Map<String, VoltageLimitOverride> specificVoltageLimits = new HashMap<>();
     private final List<String> variableShuntCompensators = new ArrayList<>();
+
     private final List<String> constantQGenerators = new ArrayList<>();
+
     private final List<String> variableTwoWindingsTransformers = new ArrayList<>();
-    private final List<OpenReacAlgoParam> algorithmParams = new ArrayList<>();
+
+    private final List<String> configuredReactiveSlackBuses = new ArrayList<>();
+
+    // Algo parameters
+
     private OpenReacOptimisationObjective objective = OpenReacOptimisationObjective.MIN_GENERATION;
 
-    /*
-     * Must be used with {@link OpenReacOptimisationObjective#BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT}
-     * to define the voltage between low and high voltage limits, which OpenReac should converge to.
-     * Zero percent means that it should converge to low voltage limits. 100 percents means that it should
-     * converge to high voltage limits.
-     */
-    private Double objectiveDistance;
+    private OpenReacAmplLogLevel logLevelAmpl = OpenReacAmplLogLevel.INFO;
+
+    private OpenReacSolverLogLevel logLevelSolver = OpenReacSolverLogLevel.EVERYTHING;
+
+    private static final String OBJECTIVE_DISTANCE_KEY = "ratio_voltage_target";
+
+    private Double objectiveDistance; // between 0 and 100
+
+    private static final String MIN_PLAUSIBLE_LOW_VOLTAGE_LIMIT_KEY = "min_plausible_low_voltage_limit";
+
+    private double minPlausibleLowVoltageLimit = 0.5; // in pu
+
+    private static final String MAX_PLAUSIBLE_HIGH_VOLTAGE_LIMIT_KEY = "max_plausible_high_voltage_limit";
+
+    private double maxPlausibleHighVoltageLimit = 1.5; // in pu
+
+    private ReactiveSlackBusesMode reactiveSlackBusesMode = ReactiveSlackBusesMode.NO_GENERATION;
 
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.
      * <p>
      * The override is ignored if one or both of the voltage limit are NaN.
-     * @param specificVoltageLimits keys: a VoltageLevel ID, values: low and high delta limits (kV).
+     * @param specificVoltageLimits list of voltage limit overrides.
      */
-    public OpenReacParameters addSpecificVoltageLimits(Map<String, VoltageLimitOverride> specificVoltageLimits) {
-        this.specificVoltageLimits.putAll(Objects.requireNonNull(specificVoltageLimits));
+    public OpenReacParameters addSpecificVoltageLimits(List<VoltageLimitOverride> specificVoltageLimits) {
+        this.specificVoltageLimits.addAll(Objects.requireNonNull(specificVoltageLimits));
         return this;
     }
 
@@ -81,23 +95,11 @@ public class OpenReacParameters {
     }
 
     /**
-     * Add a parameter to the optimization engine
+     * A list of buses, to which reactive slacks variable will be attached by the optimizer.
      */
-    public OpenReacParameters addAlgorithmParam(List<OpenReacAlgoParam> algorithmParams) {
-        this.algorithmParams.addAll(algorithmParams);
+    public OpenReacParameters addConfiguredReactiveSlackBuses(List<String> busesIds) {
+        this.configuredReactiveSlackBuses.addAll(busesIds);
         return this;
-    }
-
-    /**
-     * Add a parameter to the optimization engine
-     */
-    public OpenReacParameters addAlgorithmParam(String name, String value) {
-        algorithmParams.add(new OpenReacAlgoParamImpl(name, value));
-        return this;
-    }
-
-    public List<OpenReacAlgoParam> getAlgorithmParams() {
-        return algorithmParams;
     }
 
     /**
@@ -115,18 +117,102 @@ public class OpenReacParameters {
         return this;
     }
 
+    /**
+     * Must be used with {@link OpenReacOptimisationObjective#BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT}
+     * to define the voltage between low and high voltage limits, which OpenReac should converge to.
+     * <p>
+     * A 0% objective means the model will target lower voltage limit.
+     * A 100% objective means the model will target upper voltage limit.
+     */
     public Double getObjectiveDistance() {
         return objectiveDistance;
     }
 
     /**
-     * A 0% objective means the model will target lower voltage limit.
+     * Must be used with {@link OpenReacOptimisationObjective#BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT}
      * <p>
+     * A 0% objective means the model will target lower voltage limit.
      * A 100% objective means the model will target upper voltage limit.
      * @param objectiveDistance is in %
      */
     public OpenReacParameters setObjectiveDistance(double objectiveDistance) {
+        if (Double.isNaN(objectiveDistance) || objectiveDistance > 100 || objectiveDistance < 0) {
+            throw new IllegalArgumentException("Objective distance must be defined and >= 0 and <= 100 to be consistent");
+        }
         this.objectiveDistance = objectiveDistance;
+        return this;
+    }
+
+    /**
+     * @return log level of ampl printings.
+     */
+    public OpenReacAmplLogLevel getLogLevelAmpl() {
+        return this.logLevelAmpl;
+    }
+
+    /**
+     * @param logLevelAmpl the log level of ampl printings.
+     */
+    public OpenReacParameters setLogLevelAmpl(OpenReacAmplLogLevel logLevelAmpl) {
+        this.logLevelAmpl = Objects.requireNonNull(logLevelAmpl);
+        return this;
+    }
+
+    /**
+     * @return log level of solver printings.
+     */
+    public OpenReacSolverLogLevel getLogLevelSolver() {
+        return this.logLevelSolver;
+    }
+
+    /**
+     * @param logLevelSolver the log level of solver printings.
+     */
+    public OpenReacParameters setLogLevelSolver(OpenReacSolverLogLevel logLevelSolver) {
+        this.logLevelSolver = Objects.requireNonNull(logLevelSolver);
+        return this;
+    }
+
+    /**
+     * @return the minimal plausible value for low voltage limits in p.u.
+     */
+    public double getMinPlausibleLowVoltageLimit() {
+        return minPlausibleLowVoltageLimit;
+    }
+
+    public OpenReacParameters setMinPlausibleLowVoltageLimit(double minPlausibleLowVoltageLimit) {
+        if (minPlausibleLowVoltageLimit < 0 || Double.isNaN(minPlausibleLowVoltageLimit)) {
+            throw new IllegalArgumentException("Min plausible low voltage limit must be >= 0 and defined to be consistent.");
+        }
+        this.minPlausibleLowVoltageLimit = minPlausibleLowVoltageLimit;
+        return this;
+    }
+
+    /**
+     * @return the maximal plausible value for high voltage limits in p.u.
+     */
+    public double getMaxPlausibleHighVoltageLimit() {
+        return maxPlausibleHighVoltageLimit;
+    }
+
+    public OpenReacParameters setMaxPlausibleHighVoltageLimit(double maxPlausibleHighVoltageLimit) {
+        if (maxPlausibleHighVoltageLimit <= 0 || Double.isNaN(maxPlausibleHighVoltageLimit)) {
+            throw new IllegalArgumentException("Max plausible high voltage limit must be > 0 and defined to be consistent.");
+        }
+        this.maxPlausibleHighVoltageLimit = maxPlausibleHighVoltageLimit;
+        return this;
+    }
+
+    /**
+     * @return the mode used to select which buses will have reactive slack variables attached in the optimization.
+     * If mode is CONFIGURED, the buses in configuredReactiveSlackBuses are used.
+     */
+    public ReactiveSlackBusesMode getReactiveSlackBusesMode() {
+        return reactiveSlackBusesMode;
+    }
+
+    public OpenReacParameters setReactiveSlackBusesMode(ReactiveSlackBusesMode reactiveSlackBusesMode) {
+        this.reactiveSlackBusesMode = Objects.requireNonNull(reactiveSlackBusesMode);
         return this;
     }
 
@@ -134,7 +220,7 @@ public class OpenReacParameters {
         return variableShuntCompensators;
     }
 
-    public Map<String, VoltageLimitOverride> getSpecificVoltageLimits() {
+    public List<VoltageLimitOverride> getSpecificVoltageLimits() {
         return specificVoltageLimits;
     }
 
@@ -146,15 +232,21 @@ public class OpenReacParameters {
         return variableTwoWindingsTransformers;
     }
 
+    public List<String> getConfiguredReactiveSlackBuses() {
+        return configuredReactiveSlackBuses;
+    }
+
     public List<OpenReacAlgoParam> getAllAlgorithmParams() {
-        ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>(algorithmParams.size() + 2);
-        allAlgoParams.addAll(algorithmParams);
-        if (objective != null) {
-            allAlgoParams.add(objective.toParam());
-        }
+        ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>();
+        allAlgoParams.add(objective.toParam());
         if (objectiveDistance != null) {
             allAlgoParams.add(new OpenReacAlgoParamImpl(OBJECTIVE_DISTANCE_KEY, Double.toString(objectiveDistance / 100)));
         }
+        allAlgoParams.add(this.logLevelAmpl.toParam());
+        allAlgoParams.add(this.logLevelSolver.toParam());
+        allAlgoParams.add(new OpenReacAlgoParamImpl(MIN_PLAUSIBLE_LOW_VOLTAGE_LIMIT_KEY, Double.toString(minPlausibleLowVoltageLimit)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(MAX_PLAUSIBLE_HIGH_VOLTAGE_LIMIT_KEY, Double.toString(maxPlausibleHighVoltageLimit)));
+        allAlgoParams.add(reactiveSlackBusesMode.toParam());
         return allAlgoParams;
     }
 
@@ -162,7 +254,7 @@ public class OpenReacParameters {
      * Do some checks on the parameters given, such as provided IDs must correspond to the given network element
      *
      * @param network Network on which ID are going to be infered
-     * @throws InvalidParametersException
+     * @throws InvalidParametersException if the parameters contain some incoherences.
      */
     public void checkIntegrity(Network network) throws InvalidParametersException {
         for (String shuntId : getVariableShuntCompensators()) {
@@ -177,41 +269,148 @@ public class OpenReacParameters {
         }
         for (String transformerId : getVariableTwoWindingsTransformers()) {
             if (network.getTwoWindingsTransformer(transformerId) == null) {
-                throw new InvalidParametersException("Two windings transfromer " + transformerId + " not found in the network.");
+                throw new InvalidParametersException("Two windings transformer " + transformerId + " not found in the network.");
             }
         }
-        for (String voltageLevelId : getSpecificVoltageLimits().keySet()) {
+        for (String busId : getConfiguredReactiveSlackBuses()) {
+            if (network.getBusView().getBus(busId) == null) {
+                throw new InvalidParametersException("Bus " + busId + " not found in the network.");
+            }
+        }
+
+        // Check integrity of voltage overrides
+        boolean integrityVoltageLimitOverrides = checkVoltageLimitOverrides(network);
+        if (!integrityVoltageLimitOverrides) {
+            throw new InvalidParametersException("At least one voltage limit override is inconsistent.");
+        }
+
+        // Check integrity of low/high voltage limits, taking into account voltage limit overrides
+        boolean integrityVoltageLevelLimits = checkLowVoltageLevelLimits(network);
+        integrityVoltageLevelLimits &= checkHighVoltageLevelLimits(network);
+        if (!integrityVoltageLevelLimits) {
+            throw new InvalidParametersException("At least one voltage level has an undefined or incorrect voltage limit.");
+        }
+
+        boolean integrityAlgorithmParameters = checkAlgorithmParametersIntegrity();
+        if (!integrityAlgorithmParameters) {
+            throw new InvalidParametersException("At least one algorithm parameter is inconsistent.");
+        }
+    }
+
+    /**
+     * @return true if the algorithm parameters are consistent, false otherwise.
+     */
+    public boolean checkAlgorithmParametersIntegrity() {
+        boolean integrityAlgorithmParameters = true;
+
+        // Check integrity of objective function
+        if (objective.equals(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT) && objectiveDistance == null) {
+            LOGGER.warn("In using {} as objective, a distance in percent between low and high voltage limits is expected.", OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT);
+            integrityAlgorithmParameters = false;
+        }
+
+        // Check integrity of min/max plausible voltage limits
+        if (minPlausibleLowVoltageLimit > maxPlausibleHighVoltageLimit) {
+            LOGGER.warn("Min plausible low voltage limit must be lower than max plausible high voltage limit.");
+            integrityAlgorithmParameters = false;
+        }
+
+        return integrityAlgorithmParameters;
+    }
+
+    /**
+     * @param network the network on which voltage levels are verified.
+     * @return true if the low voltage level limits are correct taking into account low voltage limit overrides,
+     * false otherwise.
+     */
+    boolean checkLowVoltageLevelLimits(Network network) {
+        boolean integrityVoltageLevelLimits = true;
+
+        for (VoltageLevel vl : network.getVoltageLevels()) {
+            double lowLimit = vl.getLowVoltageLimit();
+
+            if (Double.isNaN(lowLimit)) {
+                List<VoltageLimitOverride> overrides = getSpecificVoltageLimits(vl.getId(), VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT);
+                if (overrides.size() != 1) {
+                    LOGGER.warn("Voltage level {} has no low voltage limit defined. Please add one or use a voltage limit override.", vl.getId());
+                    integrityVoltageLevelLimits = false;
+                } else if (overrides.get(0).isRelative()) { // we have one and just one
+                    LOGGER.warn("Relative voltage override impossible on undefined low voltage limit for voltage level {}.", vl.getId());
+                    integrityVoltageLevelLimits = false;
+                }
+            } else if (lowLimit < 0.5 * vl.getNominalV()) {
+                LOGGER.info("Voltage level {} has maybe an inconsistent low voltage limit ({} kV)", vl.getId(), lowLimit);
+            }
+        }
+        return integrityVoltageLevelLimits;
+    }
+
+    /**
+     * @param network the network on which voltage levels are verified.
+     * @return true if the high voltage level limits are correct taking into account high voltage limit overrides,
+     * false otherwise.
+     */
+    boolean checkHighVoltageLevelLimits(Network network) {
+        boolean integrityVoltageLevelLimits = true;
+
+        for (VoltageLevel vl : network.getVoltageLevels()) {
+            double highLimit = vl.getHighVoltageLimit();
+
+            if (Double.isNaN(highLimit)) {
+                List<VoltageLimitOverride> overrides = getSpecificVoltageLimits(vl.getId(), VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT);
+                if (overrides.size() != 1) {
+                    LOGGER.warn("Voltage level {} has no high voltage limit defined. Please add one or use a voltage limit override.", vl.getId());
+                    integrityVoltageLevelLimits = false;
+                } else if (overrides.get(0).isRelative()) {
+                    LOGGER.warn("Relative voltage override impossible on undefined high voltage limit for voltage level {}.", vl.getId());
+                    integrityVoltageLevelLimits = false;
+                }
+            } else if (highLimit > 1.5 * vl.getNominalV()) {
+                LOGGER.info("Voltage level {} has maybe an inconsistent high voltage limit ({} kV)", vl.getId(), highLimit);
+            }
+        }
+        return integrityVoltageLevelLimits;
+    }
+
+    /**
+     * @param network the network on which are applied voltage limit overrides.
+     * @return true if the integrity of voltage limit overrides is verified, false otherwise.
+     */
+    boolean checkVoltageLimitOverrides(Network network) {
+        // Check integrity of voltage overrides
+        boolean integrityVoltageLimitOverrides = true;
+        for (VoltageLimitOverride voltageLimitOverride : getSpecificVoltageLimits()) {
+            String voltageLevelId = voltageLimitOverride.getVoltageLevelId();
             VoltageLevel voltageLevel = network.getVoltageLevel(voltageLevelId);
-            VoltageLimitOverride override = getSpecificVoltageLimits().get(voltageLevelId);
+
+            // Check existence of voltage level on which is applied voltage limit override
             if (voltageLevel == null) {
-                throw new InvalidParametersException("Voltage level " + voltageLevelId + " not found in the network.");
-            } else {
-                if (voltageLevel.getNominalV()
-                        + override.getDeltaLowVoltageLimit()
-                        < 0) {
-                    throw new InvalidParametersException("Voltage level " + voltageLevelId + " override leads to negative lower voltage level.");
+                LOGGER.warn("Voltage level {} not found in the network.", voltageLevelId);
+                integrityVoltageLimitOverrides = false;
+                continue;
+            }
+
+            if (voltageLimitOverride.isRelative()) {
+                double value = voltageLimitOverride.getVoltageLimitType() == VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT ?
+                        voltageLevel.getLowVoltageLimit() : voltageLevel.getHighVoltageLimit();
+                if (Double.isNaN(value)) {
+                    LOGGER.warn("Voltage level {} has undefined {}, relative voltage limit override is impossible.",
+                            voltageLevelId, voltageLimitOverride.getVoltageLimitType());
+                    integrityVoltageLimitOverrides = false;
+                }
+                // verify voltage limit override does not lead to negative limit value
+                if (value + voltageLimitOverride.getLimit() < 0) {
+                    LOGGER.warn("Voltage level {} relative override leads to a negative {}.",
+                            voltageLevelId, voltageLimitOverride.getVoltageLimitType());
+                    integrityVoltageLimitOverrides = false;
                 }
             }
         }
-        for (VoltageLevel vl : network.getVoltageLevels()) {
-            double lowLimit = vl.getLowVoltageLimit();
-            double highLimit = vl.getHighVoltageLimit();
-            if (lowLimit == 0 && Double.isNaN(highLimit)) {
-                lowLimit = Double.NaN;
-                LOGGER.warn("Voltage level '{}' has an unsupported limit [0, NaN], fix to [NaN, NaN]", vl.getId());
-            }
-            if ((Double.isNaN(highLimit) && !Double.isNaN(lowLimit)) || (Double.isNaN(lowLimit) && !Double.isNaN(
-                highLimit))) {
-                throw new PowsyblException(
-                    "Voltage level '" + vl.getId() + "' has only one voltage limit defined (min:" + lowLimit +
-                        ", max:" + highLimit + "). Please define none or both.");
-            }
-        }
+        return integrityVoltageLimitOverrides;
+    }
 
-        if (objective.equals(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT) && objectiveDistance == null) {
-            throw new InvalidParametersException("In using " + OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT +
-                    " as objective, a distance in percent between low and high voltage limits is expected.");
-        }
-
+    private List<VoltageLimitOverride> getSpecificVoltageLimits(String voltageLevelId, VoltageLimitOverride.VoltageLimitType type) {
+        return specificVoltageLimits.stream()
+                .filter(limit -> limit.getVoltageLevelId().equals(voltageLevelId) && limit.getVoltageLimitType() == type).collect(Collectors.toList());
     }
 }

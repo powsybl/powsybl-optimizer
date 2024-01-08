@@ -1,3 +1,3 @@
-#amplId powsyblId
-1 'B5-SH'
+#num id
+1 'B18-SH'
 

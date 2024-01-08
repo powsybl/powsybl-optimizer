@@ -1,3 +1,0 @@
-#Shunts (ieee14cdf/InitialState)
-#"variant" "num" "bus" "con. bus" "substation" "minB (pu)" "maxB (pu)" "inter. points" "b (pu)" "fault" "curative" "id" "description" "P (MW)" "Q (MVar)" "sections count"
-1 1 9 9 9 0.00000 0.190000 0 0.190000 0 0 "B9-SH" "B9-SH" -99999.0 -99999.0 1

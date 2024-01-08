@@ -10,9 +10,8 @@ import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.commons.util.StringToIntMapper;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -33,13 +32,15 @@ public class AlgorithmInput implements AmplInputFile {
     }
 
     @Override
-    public InputStream getParameterFileAsStream(StringToIntMapper<AmplSubset> stringToIntMapper) {
-        StringBuilder dataBuilder = new StringBuilder();
+    public void write(BufferedWriter writer, StringToIntMapper<AmplSubset> stringToIntMapper) throws IOException {
         for (OpenReacAlgoParam param : algoParameters) {
-            dataBuilder.append(param.getName()).append(" ").append(param.getValue()).append("\n");
+            writer.append(param.getName())
+                    .append(" ")
+                    .append(param.getValue());
+            writer.newLine();
         }
         //add new line at the end of the file !
-        dataBuilder.append("\n");
-        return new ByteArrayInputStream(dataBuilder.toString().getBytes(StandardCharsets.UTF_8));
+        writer.newLine();
+        writer.flush();
     }
 }

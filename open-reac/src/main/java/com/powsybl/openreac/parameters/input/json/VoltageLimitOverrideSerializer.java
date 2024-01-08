@@ -26,8 +26,10 @@ public class VoltageLimitOverrideSerializer extends StdSerializer<VoltageLimitOv
     @Override
     public void serialize(VoltageLimitOverride voltageLimitOverride, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
         jsonGenerator.writeStartObject();
-        jsonGenerator.writeNumberField("deltaLowVoltageLimit", voltageLimitOverride.getDeltaLowVoltageLimit());
-        jsonGenerator.writeNumberField("deltaHighVoltageLimit", voltageLimitOverride.getDeltaHighVoltageLimit());
+        jsonGenerator.writeStringField("voltageLevelId", voltageLimitOverride.getVoltageLevelId());
+        jsonGenerator.writeStringField("voltageLimitType", voltageLimitOverride.getVoltageLimitType().name());
+        jsonGenerator.writeBooleanField("isRelative", voltageLimitOverride.isRelative());
+        jsonGenerator.writeNumberField("value", voltageLimitOverride.getLimit());
         jsonGenerator.writeEndObject();
     }
 }

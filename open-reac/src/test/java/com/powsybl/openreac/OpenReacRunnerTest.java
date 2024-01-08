@@ -20,7 +20,10 @@ import com.powsybl.loadflow.LoadFlowResult;
 import com.powsybl.openreac.network.HvdcNetworkFactory;
 import com.powsybl.openreac.network.VoltageControlNetworkFactory;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
+import com.powsybl.openreac.parameters.input.algo.OpenReacAmplLogLevel;
+import com.powsybl.openreac.parameters.input.algo.ReactiveSlackBusesMode;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
+import com.powsybl.openreac.parameters.input.algo.OpenReacSolverLogLevel;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.OpenReacStatus;
 import org.junit.jupiter.api.AfterEach;
@@ -33,6 +36,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -74,11 +78,55 @@ class OpenReacRunnerTest {
     }
 
     @Test
+    void testDefaultParamAlgoExport() throws IOException {
+        Network network = IeeeCdfNetworkFactory.create57();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
+        OpenReacParameters parameters = new OpenReacParameters();
+
+        LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
+                List.of("empty_case/reactiveopf_results_indic.txt"));
+        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
+                localCommandExecutor, ForkJoinPool.commonPool())) {
+            OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), parameters,
+                    new OpenReacConfig(true), computationManager);
+            Path execFolder = getAmplExecPath();
+            assertEqualsToRef(execFolder.resolve("param_algo.txt"), "/openreac-input-algo-parameters/default.txt");
+        }
+    }
+
+    @Test
+    void testParamAlgoExport() throws IOException {
+        Network network = IeeeCdfNetworkFactory.create57();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
+        OpenReacParameters parameters = new OpenReacParameters()
+                .setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE)
+                .setObjectiveDistance(69)
+                .setLogLevelAmpl(OpenReacAmplLogLevel.WARNING)
+                .setLogLevelSolver(OpenReacSolverLogLevel.ONLY_RESULTS)
+                .setMinPlausibleLowVoltageLimit(0.7888)
+                .setMaxPlausibleHighVoltageLimit(1.3455)
+                .setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL);
+
+        LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
+                List.of("empty_case/reactiveopf_results_indic.txt"));
+        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
+                localCommandExecutor, ForkJoinPool.commonPool())) {
+            OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), parameters,
+                    new OpenReacConfig(true), computationManager);
+            Path execFolder = getAmplExecPath();
+            assertEqualsToRef(execFolder.resolve("param_algo.txt"), "/openreac-input-algo-parameters/modified_param_algo.txt");
+        }
+    }
+
+    @Test
     void testInputFile() throws IOException {
-        Network network = IeeeCdfNetworkFactory.create118();
+        Network network = IeeeCdfNetworkFactory.create57();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
+
         OpenReacParameters parameters = new OpenReacParameters().setObjective(
                 OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT)
             .setObjectiveDistance(70)
+            .setReactiveSlackBusesMode(ReactiveSlackBusesMode.CONFIGURED)
             .addVariableTwoWindingsTransformers(network.getTwoWindingsTransformerStream()
                 .limit(1)
                 .map(TwoWindingsTransformer::getId)
@@ -86,7 +134,9 @@ class OpenReacRunnerTest {
             .addConstantQGenerators(
                 network.getGeneratorStream().limit(1).map(Generator::getId).collect(Collectors.toList()))
             .addVariableShuntCompensators(
-                network.getShuntCompensatorStream().limit(1).map(ShuntCompensator::getId).collect(Collectors.toList()));
+                network.getShuntCompensatorStream().limit(1).map(ShuntCompensator::getId).collect(Collectors.toList()))
+            .addConfiguredReactiveSlackBuses(
+                network.getBusView().getBusStream().limit(1).map(Bus::getId).collect(Collectors.toList()));
 
         LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
             List.of("empty_case/reactiveopf_results_indic.txt"));
@@ -96,16 +146,17 @@ class OpenReacRunnerTest {
                 new OpenReacConfig(true), computationManager);
             Path execFolder = getAmplExecPath();
             assertEqualsToRef(execFolder.resolve("param_algo.txt"), "/expected_inputs/param_algo.txt");
-            assertEqualsToRef(execFolder.resolve("param_generators_reactive.txt"),
-                "/expected_inputs/param_generators_reactive.txt");
+            assertEqualsToRef(execFolder.resolve("param_generators_reactive.txt"), "/expected_inputs/param_generators_reactive.txt");
             assertEqualsToRef(execFolder.resolve("param_shunts.txt"), "/expected_inputs/param_shunts.txt");
             assertEqualsToRef(execFolder.resolve("param_transformers.txt"), "/expected_inputs/param_transformers.txt");
+            assertEqualsToRef(execFolder.resolve("param_buses_with_reactive_slack.txt"), "/expected_inputs/param_buses_with_reactive_slack.txt");
         }
     }
 
     @Test
     public void testOutputFileParsing() throws IOException {
-        Network network = IeeeCdfNetworkFactory.create118();
+        Network network = IeeeCdfNetworkFactory.create57();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         // To parse correctly data from output files, there must be an ID in the Ampl mapper
         // For this we add dummy elements to the network,
         // they will get exported, but the ampl mapper will have IDs for them.
@@ -145,7 +196,8 @@ class OpenReacRunnerTest {
 
         LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
             List.of("mock_outputs/reactiveopf_results_generators.csv",
-                "mock_outputs/reactiveopf_results_indic.txt", "mock_outputs/reactiveopf_results_rtc.csv",
+                "mock_outputs/reactiveopf_results_indic.txt",
+                "mock_outputs/reactiveopf_results_rtc.csv",
                 "mock_outputs/reactiveopf_results_shunts.csv",
                 "mock_outputs/reactiveopf_results_static_var_compensators.csv",
                 "mock_outputs/reactiveopf_results_vsc_converter_stations.csv"));
@@ -160,9 +212,34 @@ class OpenReacRunnerTest {
             assertEquals(2, openReacResult.getTapPositionModifications().size());
             assertEquals(1, openReacResult.getSvcModifications().size());
             assertEquals(1, openReacResult.getVscModifications().size());
-            assertEquals(54, openReacResult.getGeneratorModifications().size());
-            assertEquals(78, openReacResult.getIndicators().size());
+            assertEquals(7, openReacResult.getGeneratorModifications().size());
+            assertEquals(82, openReacResult.getIndicators().size());
             assertTrue(openReacResult.getReactiveSlacks().isEmpty());
+        }
+    }
+
+    @Test
+    void testRunAsync() throws IOException {
+        Network network = IeeeCdfNetworkFactory.create14();
+        String subFolder = "openreac-output-ieee14";
+        OpenReacParameters parameters = new OpenReacParameters();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
+        LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
+                List.of(subFolder + "/reactiveopf_results_generators.csv",
+                        subFolder + "/reactiveopf_results_indic.txt",
+                        subFolder + "/reactiveopf_results_rtc.csv",
+                        subFolder + "/reactiveopf_results_shunts.csv",
+                        subFolder + "/reactiveopf_results_static_var_compensators.csv",
+                        subFolder + "/reactiveopf_results_vsc_converter_stations.csv"));
+        // To really run open reac, use the commented line below. Be sure that open-reac/src/test/resources/com/powsybl/config/test/config.yml contains your ampl path
+//         try (ComputationManager computationManager = new LocalComputationManager()) {
+        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
+                localCommandExecutor, ForkJoinPool.commonPool())) {
+            CompletableFuture<OpenReacResult> openReacResults = OpenReacRunner.runAsync(network,
+                    network.getVariantManager().getWorkingVariantId(), parameters, new OpenReacConfig(true),
+                    computationManager);
+            OpenReacResult openReacResult = openReacResults.join();
+            assertEquals(OpenReacStatus.OK, openReacResult.getStatus());
         }
     }
 
@@ -175,7 +252,7 @@ class OpenReacRunnerTest {
                 subFolder + "/reactiveopf_results_static_var_compensators.csv",
                 subFolder + "/reactiveopf_results_vsc_converter_stations.csv"));
         // To really run open reac, use the commentede line below. Be sure that open-reac/src/test/resources/com/powsybl/config/test/config.yml contains your ampl path
-        // try (ComputationManager computationManager = new LocalComputationManager()) {
+//         try (ComputationManager computationManager = new LocalComputationManager()) {
         try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
             localCommandExecutor, ForkJoinPool.commonPool())) {
             OpenReacResult openReacResult = OpenReacRunner.run(network,
@@ -191,12 +268,14 @@ class OpenReacRunnerTest {
     @Test
     public void testOnlyGenerator() throws IOException {
         Network network = IeeeCdfNetworkFactory.create14();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         testAllModifAndLoadFlow(network, "openreac-output-ieee14", new OpenReacParameters());
     }
 
     @Test
     public void testHvdc() throws IOException {
         Network network = HvdcNetworkFactory.createNetworkWithGenerators2();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         network.getVscConverterStation("cs3").getTerminal().setP(0.0);
         network.getVscConverterStation("cs4").getTerminal().setP(0.0);
         OpenReacParameters parameters = new OpenReacParameters();
@@ -207,6 +286,7 @@ class OpenReacRunnerTest {
     @Test
     public void testSvc() throws IOException {
         Network network = VoltageControlNetworkFactory.createWithStaticVarCompensator();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         network.getVoltageLevelStream().forEach(vl -> vl.setLowVoltageLimit(380).setHighVoltageLimit(420));
         network.getStaticVarCompensator("svc1").setVoltageSetpoint(390).setRegulationMode(StaticVarCompensator.RegulationMode.VOLTAGE);
         OpenReacParameters parameters = new OpenReacParameters();
@@ -217,6 +297,7 @@ class OpenReacRunnerTest {
     @Test
     public void testShuntReconnection() throws IOException {
         Network network = create();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.addVariableShuntCompensators(List.of("SHUNT"));
         testAllModifAndLoadFlow(network, "openreac-output-shunt", parameters);
@@ -225,6 +306,7 @@ class OpenReacRunnerTest {
     @Test
     public void testTransformer() throws IOException {
         Network network = VoltageControlNetworkFactory.createNetworkWithT2wt();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         network.getTwoWindingsTransformer("T2wT").getRatioTapChanger().setTapPosition(2);
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.addConstantQGenerators(List.of("GEN_1"));
@@ -234,8 +316,8 @@ class OpenReacRunnerTest {
 
     @Test
     public void testRealNetwork() throws IOException {
-        // Network {CC0 SC0}: 53 generators have an inconsistent target voltage and have been discarded from voltage control
-        Network network = IeeeCdfNetworkFactory.create118();
+        Network network = IeeeCdfNetworkFactory.create57();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         OpenReacParameters parameters = new OpenReacParameters();
         testAllModifAndLoadFlow(network, "openreac-output-real-network", parameters);
     }
@@ -319,5 +401,16 @@ class OpenReacRunnerTest {
                 .setX(3)
                 .add();
         return network;
+    }
+
+    void setDefaultVoltageLimits(Network network) {
+        for (VoltageLevel vl : network.getVoltageLevels()) {
+            if (vl.getLowVoltageLimit() <= 0 || Double.isNaN(vl.getLowVoltageLimit())) {
+                vl.setLowVoltageLimit(0.5 * vl.getNominalV());
+            }
+            if (Double.isNaN(vl.getHighVoltageLimit())) {
+                vl.setHighVoltageLimit(1.5 * vl.getNominalV());
+            }
+        }
     }
 }

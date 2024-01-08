@@ -11,14 +11,17 @@ import com.powsybl.commons.json.JsonUtil;
 import com.powsybl.commons.test.ComparisonUtils;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
+import com.powsybl.openreac.parameters.input.algo.OpenReacAmplLogLevel;
+import com.powsybl.openreac.parameters.input.algo.OpenReacSolverLogLevel;
+import com.powsybl.openreac.parameters.input.algo.ReactiveSlackBusesMode;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
@@ -30,24 +33,45 @@ class OpenReacJsonModuleTest {
         ObjectMapper objectMapper = JsonUtil.createObjectMapper()
                 .registerModule(new OpenReactJsonModule());
         OpenReacParameters parameters = new OpenReacParameters();
-        parameters.addSpecificVoltageLimits(Map.of("foo", new VoltageLimitOverride(-1, 2), "bar", new VoltageLimitOverride(-1.2, 2.3)));
+
+        // List of voltage limit overrides
+        List<VoltageLimitOverride> vloList1 = new ArrayList<>();
+        vloList1.add(new VoltageLimitOverride("foo", VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, true, -1));
+        vloList1.add(new VoltageLimitOverride("foo", VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, true, 2));
+        vloList1.add(new VoltageLimitOverride("bar", VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, false, 20));
+        vloList1.add(new VoltageLimitOverride("bar", VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, false, 26));
+
+        parameters.addSpecificVoltageLimits(vloList1);
         parameters.addConstantQGenerators(List.of("g1", "g2"));
         parameters.addVariableTwoWindingsTransformers(List.of("tr1"));
         parameters.addVariableShuntCompensators(List.of("sc1", "sc2"));
-        parameters.addAlgorithmParam("p1", "v1");
-        parameters.addAlgorithmParam("p2", "v2");
         parameters.setObjectiveDistance(5);
+        parameters.setLogLevelAmpl(OpenReacAmplLogLevel.WARNING);
+        parameters.setLogLevelSolver(OpenReacSolverLogLevel.NOTHING);
+        parameters.setMinPlausibleLowVoltageLimit(0.755);
+        parameters.setMaxPlausibleHighVoltageLimit(1.236);
+        parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.CONFIGURED);
+        parameters.addConfiguredReactiveSlackBuses(List.of("bus1", "bus2"));
         String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(parameters);
         ComparisonUtils.compareTxt(Objects.requireNonNull(getClass().getResourceAsStream("/parameters.json")), json);
+
         OpenReacParameters parameters2 = objectMapper.readValue(json, OpenReacParameters.class);
-        assertEquals(Map.of("foo", new VoltageLimitOverride(-1, 2), "bar", new VoltageLimitOverride(-1.2, 2.3)), parameters2.getSpecificVoltageLimits());
+        // List of voltage limit overrides
+        List<VoltageLimitOverride> vloList2 = new ArrayList<>();
+        vloList2.add(new VoltageLimitOverride("foo", VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, true, -1));
+        vloList2.add(new VoltageLimitOverride("foo", VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, true, 2));
+        vloList2.add(new VoltageLimitOverride("bar", VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, false, 20));
+        vloList2.add(new VoltageLimitOverride("bar", VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, false, 26));
+
+        assertEquals(vloList2, parameters2.getSpecificVoltageLimits());
         assertEquals(List.of("g1", "g2"), parameters2.getConstantQGenerators());
         assertEquals(List.of("tr1"), parameters2.getVariableTwoWindingsTransformers());
-        assertEquals(2, parameters2.getAlgorithmParams().size());
-        assertEquals("p1", parameters2.getAlgorithmParams().get(0).getName());
-        assertEquals("v1", parameters2.getAlgorithmParams().get(0).getValue());
-        assertEquals("p2", parameters2.getAlgorithmParams().get(1).getName());
-        assertEquals("v2", parameters2.getAlgorithmParams().get(1).getValue());
         assertEquals(5, parameters2.getObjectiveDistance());
+        assertEquals(OpenReacAmplLogLevel.WARNING, parameters2.getLogLevelAmpl());
+        assertEquals(OpenReacSolverLogLevel.NOTHING, parameters2.getLogLevelSolver());
+        assertEquals(0.755, parameters2.getMinPlausibleLowVoltageLimit());
+        assertEquals(1.236, parameters2.getMaxPlausibleHighVoltageLimit());
+        assertEquals(ReactiveSlackBusesMode.CONFIGURED, parameters2.getReactiveSlackBusesMode());
+        assertEquals(List.of("bus1", "bus2"), parameters2.getConfiguredReactiveSlackBuses());
     }
 }
