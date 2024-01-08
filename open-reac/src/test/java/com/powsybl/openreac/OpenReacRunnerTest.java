@@ -36,6 +36,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -214,6 +215,31 @@ class OpenReacRunnerTest {
             assertEquals(7, openReacResult.getGeneratorModifications().size());
             assertEquals(82, openReacResult.getIndicators().size());
             assertTrue(openReacResult.getReactiveSlacks().isEmpty());
+        }
+    }
+
+    @Test
+    void testRunAsync() throws IOException {
+        Network network = IeeeCdfNetworkFactory.create14();
+        String subFolder = "openreac-output-ieee14";
+        OpenReacParameters parameters = new OpenReacParameters();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
+        LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
+                List.of(subFolder + "/reactiveopf_results_generators.csv",
+                        subFolder + "/reactiveopf_results_indic.txt",
+                        subFolder + "/reactiveopf_results_rtc.csv",
+                        subFolder + "/reactiveopf_results_shunts.csv",
+                        subFolder + "/reactiveopf_results_static_var_compensators.csv",
+                        subFolder + "/reactiveopf_results_vsc_converter_stations.csv"));
+        // To really run open reac, use the commented line below. Be sure that open-reac/src/test/resources/com/powsybl/config/test/config.yml contains your ampl path
+//         try (ComputationManager computationManager = new LocalComputationManager()) {
+        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
+                localCommandExecutor, ForkJoinPool.commonPool())) {
+            CompletableFuture<OpenReacResult> openReacResults = OpenReacRunner.runAsync(network,
+                    network.getVariantManager().getWorkingVariantId(), parameters, new OpenReacConfig(true),
+                    computationManager);
+            OpenReacResult openReacResult = openReacResults.join();
+            assertEquals(OpenReacStatus.OK, openReacResult.getStatus());
         }
     }
 

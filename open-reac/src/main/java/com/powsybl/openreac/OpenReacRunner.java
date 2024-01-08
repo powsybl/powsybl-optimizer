@@ -17,6 +17,9 @@ import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.OpenReacStatus;
 
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+
 /**
  * @author Nicolas Pierre <nicolas.pierre at artelys.com>
  */
@@ -43,11 +46,37 @@ public final class OpenReacRunner {
      * @return All information about the run and possible modifications to apply.
      */
     public static OpenReacResult run(Network network, String variantId, OpenReacParameters parameters, OpenReacConfig config, ComputationManager manager) {
+        Objects.requireNonNull(network);
+        Objects.requireNonNull(variantId);
+        Objects.requireNonNull(parameters);
+        Objects.requireNonNull(config);
+        Objects.requireNonNull(manager);
         parameters.checkIntegrity(network);
         AmplModel reactiveOpf = OpenReacModel.buildModel();
         OpenReacAmplIOFiles amplIoInterface = new OpenReacAmplIOFiles(parameters, network, config.isDebug());
         AmplResults run = AmplModelRunner.run(network, variantId, reactiveOpf, manager, amplIoInterface);
         return new OpenReacResult(run.isSuccess() && amplIoInterface.checkErrors() ? OpenReacStatus.OK : OpenReacStatus.NOT_OK,
                 amplIoInterface, run.getIndicators());
+    }
+
+    /**
+     * Run OpenReac on the given network. It will NOT modify the network.
+     * @param variantId the network variant to use. It will set the variant on the network.
+     * @param parameters Parameters to customize the OpenReac run.
+     * @param config allows debugging
+     * @return All information about the run and possible modifications to apply.
+     */
+    public static CompletableFuture<OpenReacResult> runAsync(Network network, String variantId, OpenReacParameters parameters, OpenReacConfig config, ComputationManager manager) {
+        Objects.requireNonNull(network);
+        Objects.requireNonNull(variantId);
+        Objects.requireNonNull(parameters);
+        Objects.requireNonNull(config);
+        Objects.requireNonNull(manager);
+        parameters.checkIntegrity(network);
+        AmplModel reactiveOpf = OpenReacModel.buildModel();
+        OpenReacAmplIOFiles amplIoInterface = new OpenReacAmplIOFiles(parameters, network, config.isDebug());
+        CompletableFuture<AmplResults> runAsync = AmplModelRunner.runAsync(network, variantId, reactiveOpf, manager, amplIoInterface);
+        return runAsync.thenApply(run -> new OpenReacResult(run.isSuccess() && amplIoInterface.checkErrors() ? OpenReacStatus.OK : OpenReacStatus.NOT_OK,
+                amplIoInterface, run.getIndicators()));
     }
 }
