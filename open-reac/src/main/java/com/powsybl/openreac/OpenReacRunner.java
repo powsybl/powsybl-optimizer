@@ -73,7 +73,6 @@ public final class OpenReacRunner {
         Objects.requireNonNull(config);
         Objects.requireNonNull(manager);
         parameters.checkIntegrity(network);
-        parameters.checkIntegrity(network);
         AmplModel reactiveOpf = OpenReacModel.buildModel();
         OpenReacAmplIOFiles amplIoInterface = new OpenReacAmplIOFiles(parameters, network, config.isDebug());
         CompletableFuture<AmplResults> runAsync = AmplModelRunner.runAsync(network, variantId, reactiveOpf, manager, amplIoInterface);
