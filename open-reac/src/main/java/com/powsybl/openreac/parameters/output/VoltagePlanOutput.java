@@ -10,6 +10,7 @@ import com.powsybl.ampl.converter.AmplConstants;
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.openreac.exceptions.IncompatibleModelException;
+import com.powsybl.openreac.parameters.AmplIOUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -22,7 +23,10 @@ import java.util.Objects;
  */
 public class VoltagePlanOutput extends AbstractNoThrowOutput {
 
-    public static final int EXPECTED_COLS = 4;
+    public static final int EXPECTED_COLS = 5;
+    private static final int ID_COLUMN_INDEX = 4;
+    private static final int V_COLUMN_INDEX = 2;
+    private static final int ANGLE_COLUMN_INDEX = 3;
     private static final String SEP = ";";
 
     public static class BusResult {
@@ -70,7 +74,7 @@ public class VoltagePlanOutput extends AbstractNoThrowOutput {
         } else {
             String line = reader.readLine();
             while (line != null) {
-                readLine(line.split(SEP), stringToIntMapper);
+                readLine(line.split(SEP));
                 line = reader.readLine();
             }
         }
@@ -82,10 +86,10 @@ public class VoltagePlanOutput extends AbstractNoThrowOutput {
         return false;
     }
 
-    private void readLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
-        String id = stringToIntMapper.getId(AmplSubset.BUS, Integer.parseInt(tokens[1]));
-        double v = readDouble(tokens[2]);
-        double angle = readDouble(tokens[3]);
+    private void readLine(String[] tokens) {
+        double v = readDouble(tokens[V_COLUMN_INDEX]);
+        double angle = readDouble(tokens[ANGLE_COLUMN_INDEX]);
+        String id = AmplIOUtils.removeQuotes(tokens[ID_COLUMN_INDEX]);
         voltagePlan.add(new BusResult(id, v, angle));
     }
 
