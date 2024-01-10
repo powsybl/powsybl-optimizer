@@ -8,9 +8,10 @@ package com.powsybl.openreac.parameters.output;
 
 import com.powsybl.iidm.modification.*;
 import com.powsybl.iidm.modification.tapchanger.RatioTapPositionModification;
-import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.*;
 import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput.ReactiveSlack;
+import com.powsybl.openreac.parameters.output.VoltagePlanOutput.BusResult;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +33,7 @@ public class OpenReacResult {
     private final List<VscConverterStationModification> vscModifications;
     private final List<StaticVarCompensatorModification> svcModifications;
     private final List<RatioTapPositionModification> tapPositionModifications;
+    private final List<BusResult> voltagePlan;
 
     /**
      * @param status      the final status of the OpenReac run.
@@ -48,6 +50,7 @@ public class OpenReacResult {
         this.vscModifications = List.copyOf(amplIOFiles.getNetworkModifications().getVscModifications());
         this.svcModifications = List.copyOf(amplIOFiles.getNetworkModifications().getSvcModifications());
         this.tapPositionModifications = List.copyOf(amplIOFiles.getNetworkModifications().getTapPositionModifications());
+        this.voltagePlan = List.copyOf(amplIOFiles.getVoltagePlanOutput().getVoltagePlan());
     }
 
     public OpenReacStatus getStatus() {
@@ -82,7 +85,11 @@ public class OpenReacResult {
         return vscModifications;
     }
 
-    public List<NetworkModification> getAllModifs() {
+    public List<BusResult> getVoltagePlan() {
+        return voltagePlan;
+    }
+
+    public List<NetworkModification> getAllNetworkModifications() {
         List<NetworkModification> modifs = new ArrayList<>(getGeneratorModifications().size() +
             getShuntsModifications().size() +
             getSvcModifications().size() +
@@ -97,8 +104,27 @@ public class OpenReacResult {
     }
 
     public void applyAllModifications(Network network) {
-        for (NetworkModification modif : getAllModifs()) {
+        for (NetworkModification modif : getAllNetworkModifications()) {
             modif.apply(network);
+        }
+
+        for (BusResult busResult : getVoltagePlan()) {
+            Bus b = network.getBusView().getBus(busResult.getBusId());
+
+            // TODO : update voltage values of b ?
+
+            // Update target of ratio tap changers regulating voltage
+            network.getTwoWindingsTransformerStream()
+                    .map(RatioTapChangerHolder::getRatioTapChanger)
+                    .filter(TapChanger::isRegulating)
+                    .filter(ratioTapChanger -> ratioTapChanger.getRegulationTerminal().getBusView().getBus() == b)
+                    .forEach(ratioTapChanger -> ratioTapChanger.setTargetV(busResult.getV()));
+
+            // Update target of shunts regulating voltage
+            network.getShuntCompensatorStream()
+                    .filter(ShuntCompensator::isVoltageRegulatorOn)
+                    .filter(shuntCompensator -> shuntCompensator.getRegulatingTerminal().getBusView().getBus() == b)
+                    .forEach(shuntCompensator -> shuntCompensator.setTargetV(busResult.getV()));
         }
     }
 }

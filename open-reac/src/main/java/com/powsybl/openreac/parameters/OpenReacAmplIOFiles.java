@@ -14,6 +14,7 @@ import com.powsybl.openreac.parameters.input.*;
 import com.powsybl.openreac.parameters.input.algo.AlgorithmInput;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput;
+import com.powsybl.openreac.parameters.output.VoltagePlanOutput;
 import com.powsybl.openreac.parameters.output.network.NetworkModifications;
 
 import java.util.ArrayList;
@@ -40,6 +41,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
     private final VoltageLevelLimitsOverrideInput voltageLimitsOverride;
     private final ConfiguredBusesWithReactiveSlack configuredReactiveSlackBuses;
     private final NetworkModifications networkModifications;
+    private final VoltagePlanOutput voltagePlanOutput;
     private final boolean debug;
 
     public OpenReacAmplIOFiles(OpenReacParameters params, Network network, boolean debug) {
@@ -54,6 +56,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
         //outputs
         this.reactiveSlackOutput = new ReactiveSlackOutput();
         this.networkModifications = new NetworkModifications(network);
+        this.voltagePlanOutput = new VoltagePlanOutput();
 
         this.debug = debug;
     }
@@ -66,6 +69,10 @@ public class OpenReacAmplIOFiles implements AmplParameters {
         return networkModifications;
     }
 
+    public VoltagePlanOutput getVoltagePlanOutput() {
+        return voltagePlanOutput;
+    }
+
     @Override
     public Collection<AmplInputFile> getInputParameters() {
         return List.of(constantQGenerators, variableShuntCompensators, variableTwoWindingsTransformers,
@@ -76,9 +83,10 @@ public class OpenReacAmplIOFiles implements AmplParameters {
     public Collection<AmplOutputFile> getOutputParameters(boolean isConvergenceOk) {
         if (isConvergenceOk) {
             List<AmplOutputFile> networkModificationsOutputFiles = networkModifications.getOutputFiles();
-            List<AmplOutputFile> list = new ArrayList<>(networkModificationsOutputFiles.size() + 1);
+            List<AmplOutputFile> list = new ArrayList<>(networkModificationsOutputFiles.size() + 2);
             list.addAll(networkModificationsOutputFiles);
             list.add(reactiveSlackOutput);
+            list.add(voltagePlanOutput);
             return list;
         }
         return List.of();
