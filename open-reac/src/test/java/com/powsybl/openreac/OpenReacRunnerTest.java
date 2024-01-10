@@ -41,8 +41,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
@@ -200,7 +199,8 @@ class OpenReacRunnerTest {
                 "mock_outputs/reactiveopf_results_rtc.csv",
                 "mock_outputs/reactiveopf_results_shunts.csv",
                 "mock_outputs/reactiveopf_results_static_var_compensators.csv",
-                "mock_outputs/reactiveopf_results_vsc_converter_stations.csv"));
+                "mock_outputs/reactiveopf_results_vsc_converter_stations.csv",
+                "mock_outputs/reactiveopf_results_voltages.csv"));
         try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
             localCommandExecutor, ForkJoinPool.commonPool())) {
             OpenReacResult openReacResult = OpenReacRunner.run(network,
@@ -213,6 +213,7 @@ class OpenReacRunnerTest {
             assertEquals(1, openReacResult.getSvcModifications().size());
             assertEquals(1, openReacResult.getVscModifications().size());
             assertEquals(7, openReacResult.getGeneratorModifications().size());
+            assertEquals(3, openReacResult.getVoltagePlan().size());
             assertEquals(82, openReacResult.getIndicators().size());
             assertTrue(openReacResult.getReactiveSlacks().isEmpty());
         }
@@ -250,7 +251,8 @@ class OpenReacRunnerTest {
                 subFolder + "/reactiveopf_results_rtc.csv",
                 subFolder + "/reactiveopf_results_shunts.csv",
                 subFolder + "/reactiveopf_results_static_var_compensators.csv",
-                subFolder + "/reactiveopf_results_vsc_converter_stations.csv"));
+                subFolder + "/reactiveopf_results_vsc_converter_stations.csv",
+                subFolder + "/reactiveopf_results_voltages.csv"));
         // To really run open reac, use the commentede line below. Be sure that open-reac/src/test/resources/com/powsybl/config/test/config.yml contains your ampl path
 //         try (ComputationManager computationManager = new LocalComputationManager()) {
         try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
@@ -295,23 +297,37 @@ class OpenReacRunnerTest {
     }
 
     @Test
-    public void testShuntReconnection() throws IOException {
+    public void testShuntModification() throws IOException {
         Network network = create();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
+        ShuntCompensator shunt = network.getShuntCompensator("SHUNT");
+        assertFalse(shunt.getTerminal().isConnected());
+        assertEquals(393, shunt.getTargetV());
+
         OpenReacParameters parameters = new OpenReacParameters();
-        parameters.addVariableShuntCompensators(List.of("SHUNT"));
+        parameters.addVariableShuntCompensators(List.of(shunt.getId()));
         testAllModifAndLoadFlow(network, "openreac-output-shunt", parameters);
+        assertTrue(shunt.getTerminal().isConnected()); // shunt has been reconnected
+        assertEquals(420.8, shunt.getTargetV()); // targetV has been updated
     }
 
     @Test
     public void testTransformer() throws IOException {
         Network network = VoltageControlNetworkFactory.createNetworkWithT2wt();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
-        network.getTwoWindingsTransformer("T2wT").getRatioTapChanger().setTapPosition(2);
+        RatioTapChanger rtc = network.getTwoWindingsTransformer("T2wT").getRatioTapChanger()
+                .setTapPosition(2)
+                .setTargetDeadband(0)
+                .setRegulating(true);
+        assertEquals(2, rtc.getTapPosition());
+        assertEquals(33.0, rtc.getTargetV());
+
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.addConstantQGenerators(List.of("GEN_1"));
         parameters.addVariableTwoWindingsTransformers(List.of("T2wT"));
         testAllModifAndLoadFlow(network, "openreac-output-transfo", parameters);
+        assertEquals(0, rtc.getTapPosition());
+        assertEquals(22.935, rtc.getTargetV()); // TODO : verify the value
     }
 
     @Test

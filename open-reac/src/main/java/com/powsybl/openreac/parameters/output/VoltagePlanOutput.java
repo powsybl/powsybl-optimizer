@@ -87,9 +87,9 @@ public class VoltagePlanOutput extends AbstractNoThrowOutput {
     }
 
     private void readLine(String[] tokens) {
+        String id = AmplIOUtils.removeQuotes(tokens[ID_COLUMN_INDEX]);
         double v = readDouble(tokens[V_COLUMN_INDEX]);
         double angle = readDouble(tokens[ANGLE_COLUMN_INDEX]);
-        String id = AmplIOUtils.removeQuotes(tokens[ID_COLUMN_INDEX]);
         voltagePlan.add(new BusResult(id, v, angle));
     }
 

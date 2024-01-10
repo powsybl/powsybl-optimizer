@@ -198,7 +198,7 @@ close (fileOut);
 if final_status == "OK" then {
 
   let fileOut := "reactiveopf_results_voltages.csv";
-  printf "#variant;bus;V;theta;%s;\n" > (fileOut);
+  printf "#variant;bus;V(pu);theta(rad);id;\n" > (fileOut);
   printf {n in BUSCC} "%i;%i;%.3f;%.3f;%s;\n",
     1, n, V[n], teta[n], '"' & bus_id[1,n] & '"'
     > (fileOut);
