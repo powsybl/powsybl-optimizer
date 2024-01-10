@@ -10,7 +10,6 @@ import com.powsybl.ampl.converter.AmplConstants;
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.openreac.exceptions.IncompatibleModelException;
-import com.powsybl.openreac.parameters.AmplIOUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -71,7 +70,7 @@ public class VoltagePlanOutput extends AbstractNoThrowOutput {
         } else {
             String line = reader.readLine();
             while (line != null) {
-                readLine(line.split(SEP));
+                readLine(line.split(SEP), stringToIntMapper);
                 line = reader.readLine();
             }
         }
@@ -83,10 +82,10 @@ public class VoltagePlanOutput extends AbstractNoThrowOutput {
         return false;
     }
 
-    private void readLine(String[] tokens) {
+    private void readLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
+        String id = stringToIntMapper.getId(AmplSubset.BUS, Integer.parseInt(tokens[1]));
         double v = readDouble(tokens[2]);
         double angle = readDouble(tokens[3]);
-        String id = AmplIOUtils.removeQuotes(tokens[4]);
         voltagePlan.add(new BusResult(id, v, angle));
     }
 
