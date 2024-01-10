@@ -8,6 +8,7 @@ package com.powsybl.openreac.parameters.output;
 
 import com.powsybl.iidm.modification.*;
 import com.powsybl.iidm.modification.tapchanger.RatioTapPositionModification;
+import com.powsybl.iidm.modification.util.VoltageRegulationUtils;
 import com.powsybl.iidm.network.*;
 import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput.ReactiveSlack;
@@ -123,9 +124,7 @@ public class OpenReacResult {
                     .forEach(ratioTapChanger -> ratioTapChanger.setTargetV(busResult.getV() * nomV));
 
             // Update target of shunts regulating voltage
-            network.getShuntCompensatorStream()
-                    .filter(ShuntCompensator::isVoltageRegulatorOn)
-                    .filter(shuntCompensator -> shuntCompensator.getRegulatingTerminal().getBusView().getBus().equals(b))
+            VoltageRegulationUtils.getRegulatingShuntCompensators(network, b)
                     .forEach(shuntCompensator -> shuntCompensator.setTargetV(busResult.getV() * nomV));
         }
     }
