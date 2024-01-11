@@ -327,7 +327,7 @@ class OpenReacRunnerTest {
         parameters.addVariableTwoWindingsTransformers(List.of("T2wT"));
         testAllModifAndLoadFlow(network, "openreac-output-transfo", parameters);
         assertEquals(0, rtc.getTapPosition());
-        assertEquals(22.935, rtc.getTargetV()); // TODO : verify the value
+        assertEquals(22.935, rtc.getTargetV());
     }
 
     @Test
@@ -336,6 +336,38 @@ class OpenReacRunnerTest {
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         OpenReacParameters parameters = new OpenReacParameters();
         testAllModifAndLoadFlow(network, "openreac-output-real-network", parameters);
+    }
+
+    @Test
+    public void testWarmStart() throws IOException {
+        Network network = VoltageControlNetworkFactory.createNetworkWithT2wt();
+        setDefaultVoltageLimits(network);
+        String subFolder = "openreac-output-warm-start";
+        LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
+                List.of(subFolder + "/reactiveopf_results_generators.csv",
+                        subFolder + "/reactiveopf_results_indic.txt",
+                        subFolder + "/reactiveopf_results_rtc.csv",
+                        subFolder + "/reactiveopf_results_shunts.csv",
+                        subFolder + "/reactiveopf_results_static_var_compensators.csv",
+                        subFolder + "/reactiveopf_results_vsc_converter_stations.csv",
+                        subFolder + "/reactiveopf_results_voltages.csv"));
+        // To really run open reac, use the commentede line below. Be sure that open-reac/src/test/resources/com/powsybl/config/test/config.yml contains your ampl path
+//        try (ComputationManager computationManager = new LocalComputationManager()) {
+        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
+            localCommandExecutor, ForkJoinPool.commonPool())) {
+            OpenReacResult openReacResult = OpenReacRunner.run(network,
+                    network.getVariantManager().getWorkingVariantId(), new OpenReacParameters(),
+                    new OpenReacConfig(true), computationManager);
+            assertEquals(OpenReacStatus.OK, openReacResult.getStatus());
+            openReacResult.applyAllModifications(network);
+        }
+
+        assertEquals(119.592, network.getBusBreakerView().getBus("BUS_1").getV());
+        assertEquals(0.014, network.getBusBreakerView().getBus("BUS_1").getAngle());
+        assertEquals(118.8, network.getBusBreakerView().getBus("BUS_2").getV());
+        assertEquals(0, network.getBusBreakerView().getBus("BUS_2").getAngle());
+        assertEquals(22.935, network.getBusBreakerView().getBus("BUS_3").getV());
+        assertEquals(-0.082, network.getBusBreakerView().getBus("BUS_3").getAngle());
     }
 
     public static Network create() {

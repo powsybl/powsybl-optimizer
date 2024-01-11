@@ -111,21 +111,24 @@ public class OpenReacResult {
 
         for (BusResult busResult : getVoltagePlan()) {
             Bus b = network.getBusView().getBus(busResult.getBusId());
-            double nomV = b.getVoltageLevel().getNominalV();
+            double v = busResult.getV() * b.getVoltageLevel().getNominalV();
+            double angle = busResult.getAngle();
 
-            // TODO : update voltage values of b ?
+            // warm start
+            b.setV(v);
+            b.setAngle(angle);
 
-            // Update target of ratio tap changers regulating voltage
+            // update target of ratio tap changers regulating voltage on b
             network.getTwoWindingsTransformerStream()
                     .filter(RatioTapChangerHolder::hasRatioTapChanger)
                     .map(RatioTapChangerHolder::getRatioTapChanger)
                     .filter(TapChanger::isRegulating)
                     .filter(ratioTapChanger -> ratioTapChanger.getRegulationTerminal().getBusView().getBus().equals(b))
-                    .forEach(ratioTapChanger -> ratioTapChanger.setTargetV(busResult.getV() * nomV));
+                    .forEach(ratioTapChanger -> ratioTapChanger.setTargetV(v));
 
-            // Update target of shunts regulating voltage
+            // update target of shunts regulating voltage on b
             VoltageRegulationUtils.getRegulatingShuntCompensators(network, b)
-                    .forEach(shuntCompensator -> shuntCompensator.setTargetV(busResult.getV() * nomV));
+                    .forEach(shuntCompensator -> shuntCompensator.setTargetV(v));
         }
     }
 }
