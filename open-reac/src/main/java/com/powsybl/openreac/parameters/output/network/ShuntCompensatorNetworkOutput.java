@@ -17,13 +17,13 @@ import com.powsybl.iidm.network.ShuntCompensator;
  */
 public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCompensatorModification> {
     private static final String ELEMENT = "shunts";
+    public static final int EXPECTED_COLS = 6;
     private static final int ID_COLUMN_INDEX = 1;
     private static final int B_COLUMN_INDEX = 3;
     private static final int BUS_COLUMN_INDEX = 2;
-    private final Network network;
 
     public ShuntCompensatorNetworkOutput(Network network) {
-        this.network = network;
+        super(network);
     }
 
     @Override
@@ -32,10 +32,14 @@ public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCo
     }
 
     @Override
-    protected ShuntCompensatorModification doReadLine(String[] tokens,
-                                                      StringToIntMapper<AmplSubset> stringToIntMapper) {
+    public int getExpectedColumns() {
+        return EXPECTED_COLS;
+    }
+
+    @Override
+    protected void doReadLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
         String id = stringToIntMapper.getId(AmplSubset.SHUNT, Integer.parseInt(tokens[ID_COLUMN_INDEX]));
-        double b = Double.parseDouble(tokens[B_COLUMN_INDEX]);
+        double b = readDouble(tokens[B_COLUMN_INDEX]);
         String busId = stringToIntMapper.getId(AmplSubset.BUS, Integer.parseInt(tokens[BUS_COLUMN_INDEX]));
         Boolean reconnect = null;
         ShuntCompensator shuntCompensator = network.getShuntCompensator(id);
@@ -43,7 +47,7 @@ public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCo
             shuntCompensator.getTerminal().getBusView().getConnectableBus().getId())) {
             reconnect = true;
         }
-        return new ShuntCompensatorModification(id, reconnect, shuntCompensator == null ? null : findSectionCount(shuntCompensator, b));
+        modifications.add(new ShuntCompensatorModification(id, reconnect, shuntCompensator == null ? null : findSectionCount(shuntCompensator, b)));
     }
 
     /**

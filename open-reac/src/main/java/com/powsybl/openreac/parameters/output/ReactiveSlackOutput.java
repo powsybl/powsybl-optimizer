@@ -6,14 +6,10 @@
  */
 package com.powsybl.openreac.parameters.output;
 
-import com.powsybl.ampl.converter.AmplConstants;
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.commons.util.StringToIntMapper;
-import com.powsybl.openreac.exceptions.IncompatibleModelException;
 import com.powsybl.openreac.parameters.AmplIOUtils;
 
-import java.io.BufferedReader;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -23,9 +19,12 @@ import java.util.Objects;
  * Reactive slacks in load convention.
  */
 public class ReactiveSlackOutput extends AbstractNoThrowOutput {
-
+    private static final String ELEMENT = "reactive_slacks";
     public static final int EXPECTED_COLS = 6;
-    private static final String SEP = ";";
+    private static final int BUS_ID_COLUMN_INDEX = 4;
+    private static final int VOLTAGE_LEVEL_ID_COLUMN_INDEX = 5;
+    private static final int REACTIVE_SLACK_GENERATION_COLUMN_INDEX = 2;
+    private static final int REACTIVE_SLACK_LOAD_COLUMN_INDEX = 3;
 
     public static class ReactiveSlack {
         public final String busId;
@@ -58,24 +57,13 @@ public class ReactiveSlackOutput extends AbstractNoThrowOutput {
     }
 
     @Override
-    public String getFileName() {
-        return "reactiveopf_results_reactive_slacks.csv";
+    public String getElement() {
+        return ELEMENT;
     }
 
     @Override
-    public void read(BufferedReader reader, StringToIntMapper<AmplSubset> stringToIntMapper) throws IOException {
-        String headers = reader.readLine();
-        int readCols = headers.split(SEP).length;
-        if (readCols != EXPECTED_COLS) {
-            triggerErrorState();
-            throw new IncompatibleModelException("Error reading " + getFileName() + ", wrong number of columns. Expected: " + EXPECTED_COLS + ", found:" + readCols);
-        } else {
-            String line = reader.readLine();
-            while (line != null) {
-                readLine(line.split(SEP));
-                line = reader.readLine();
-            }
-        }
+    public int getExpectedColumns() {
+        return EXPECTED_COLS;
     }
 
     @Override
@@ -84,19 +72,15 @@ public class ReactiveSlackOutput extends AbstractNoThrowOutput {
         return false;
     }
 
-    private void readLine(String[] tokens) {
+    protected void doReadLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
         // slack capacitor is a generation of reactive power.
         // slack self is a reactive load.
-        double slackCapacitor = -readDouble(tokens[2]);
-        double slackSelf = readDouble(tokens[3]);
-        String id = AmplIOUtils.removeQuotes(tokens[4]);
-        String voltageLevelId = AmplIOUtils.removeQuotes(tokens[5]);
+        double slackCapacitor = -readDouble(tokens[REACTIVE_SLACK_GENERATION_COLUMN_INDEX]);
+        double slackSelf = readDouble(tokens[REACTIVE_SLACK_LOAD_COLUMN_INDEX]);
+        String id = AmplIOUtils.removeQuotes(tokens[BUS_ID_COLUMN_INDEX]);
+        String voltageLevelId = AmplIOUtils.removeQuotes(tokens[VOLTAGE_LEVEL_ID_COLUMN_INDEX]);
         double slack = slackCapacitor + slackSelf;
         slacks.add(new ReactiveSlack(id, voltageLevelId, slack));
-    }
-
-    private double readDouble(String d) {
-        return Float.parseFloat(d) != AmplConstants.INVALID_FLOAT_VALUE ? Double.parseDouble(d) : Double.NaN;
     }
 
 }
