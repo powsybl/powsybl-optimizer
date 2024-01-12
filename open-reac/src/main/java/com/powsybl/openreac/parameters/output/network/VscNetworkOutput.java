@@ -21,11 +21,9 @@ public class VscNetworkOutput extends AbstractNetworkOutput<VscConverterStationM
     private static final int ID_COLUMN_INDEX = 1;
     private static final int SET_POINT_V_COLUMN_INDEX = 4;
     private static final int SET_POINT_Q_COLUMN_INDEX = 5;
-    private final Network network;
 
     public VscNetworkOutput(Network network) {
         super(network);
-        this.network = network;
     }
 
     @Override

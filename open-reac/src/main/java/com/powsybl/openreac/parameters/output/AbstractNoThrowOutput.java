@@ -31,6 +31,10 @@ public abstract class AbstractNoThrowOutput implements NoThrowAmplOutput {
         return errorState;
     }
 
+    protected void triggerErrorState() {
+        errorState = true;
+    }
+
     @Override
     public String getFileName() {
         return OpenReacModel.OUTPUT_FILE_PREFIX + "_" + getElement() + "." + OpenReacModel.OUTPUT_FILE_FORMAT.getFileExtension();
@@ -41,6 +45,9 @@ public abstract class AbstractNoThrowOutput implements NoThrowAmplOutput {
      */
     public abstract String getElement();
 
+    /**
+     * @return the number of columns expected in the output file.
+     */
     public abstract int getExpectedColumns();
 
     @Override
@@ -64,9 +71,4 @@ public abstract class AbstractNoThrowOutput implements NoThrowAmplOutput {
     protected double readDouble(String d) {
         return Float.parseFloat(d) != AmplConstants.INVALID_FLOAT_VALUE ? Double.parseDouble(d) : Double.NaN;
     }
-
-    protected void triggerErrorState() {
-        errorState = true;
-    }
-
 }
