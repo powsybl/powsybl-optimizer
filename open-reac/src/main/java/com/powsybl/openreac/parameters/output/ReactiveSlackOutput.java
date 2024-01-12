@@ -75,10 +75,10 @@ public class ReactiveSlackOutput extends AbstractNoThrowOutput {
     protected void doReadLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
         // slack capacitor is a generation of reactive power.
         // slack self is a reactive load.
-        double slackCapacitor = -readDouble(tokens[REACTIVE_SLACK_GENERATION_COLUMN_INDEX]);
-        double slackSelf = readDouble(tokens[REACTIVE_SLACK_LOAD_COLUMN_INDEX]);
         String id = AmplIOUtils.removeQuotes(tokens[BUS_ID_COLUMN_INDEX]);
         String voltageLevelId = AmplIOUtils.removeQuotes(tokens[VOLTAGE_LEVEL_ID_COLUMN_INDEX]);
+        double slackCapacitor = -readDouble(tokens[REACTIVE_SLACK_GENERATION_COLUMN_INDEX]);
+        double slackSelf = readDouble(tokens[REACTIVE_SLACK_LOAD_COLUMN_INDEX]);
         double slack = slackCapacitor + slackSelf;
         slacks.add(new ReactiveSlack(id, voltageLevelId, slack));
     }
