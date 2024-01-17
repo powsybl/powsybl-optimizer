@@ -257,6 +257,8 @@ a default limit. Otherwise, the solving is considered unsuccessful.
 
 ### 7 Alternative current optimal power flow
 
+TODO : current limits are not used in the optimization
+
 TODO : add special handlings (e.g. groups with P = 0 are excluded from optimization)
 
 TODO : refactor
