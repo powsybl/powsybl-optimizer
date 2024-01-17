@@ -6,14 +6,10 @@
  */
 package com.powsybl.openreac.parameters.output;
 
-import com.powsybl.ampl.converter.AmplConstants;
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.commons.util.StringToIntMapper;
-import com.powsybl.openreac.exceptions.IncompatibleModelException;
 import com.powsybl.openreac.parameters.AmplIOUtils;
 
-import java.io.BufferedReader;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -23,11 +19,11 @@ import java.util.Objects;
  */
 public class VoltagePlanOutput extends AbstractNoThrowOutput {
 
+    private static final String ELEMENT = "voltages";
     public static final int EXPECTED_COLS = 5;
     private static final int ID_COLUMN_INDEX = 4;
     private static final int V_COLUMN_INDEX = 2;
     private static final int ANGLE_COLUMN_INDEX = 3;
-    private static final String SEP = ";";
 
     public static class BusResult {
         private final String busId;
@@ -60,41 +56,27 @@ public class VoltagePlanOutput extends AbstractNoThrowOutput {
     }
 
     @Override
-    public String getFileName() {
-        return "reactiveopf_results_voltages.csv";
+    public String getElement() {
+        return ELEMENT;
     }
 
     @Override
-    public void read(BufferedReader reader, StringToIntMapper<AmplSubset> stringToIntMapper) throws IOException {
-        String headers = reader.readLine();
-        int readCols = headers.split(SEP).length;
-        if (readCols != EXPECTED_COLS) {
-            triggerErrorState();
-            throw new IncompatibleModelException("Error reading " + getFileName() + ", wrong number of columns. Expected: " + EXPECTED_COLS + ", found:" + readCols);
-        } else {
-            String line = reader.readLine();
-            while (line != null) {
-                readLine(line.split(SEP));
-                line = reader.readLine();
-            }
-        }
+    public int getExpectedColumns() {
+        return EXPECTED_COLS;
     }
 
     @Override
-    public boolean throwOnMissingFile() {
-        triggerErrorState();
-        return false;
-    }
-
-    private void readLine(String[] tokens) {
+    protected void readLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
         String id = AmplIOUtils.removeQuotes(tokens[ID_COLUMN_INDEX]);
         double v = readDouble(tokens[V_COLUMN_INDEX]);
         double angle = readDouble(tokens[ANGLE_COLUMN_INDEX]);
         voltagePlan.add(new BusResult(id, v, angle));
     }
 
-    private double readDouble(String d) {
-        return Float.parseFloat(d) != AmplConstants.INVALID_FLOAT_VALUE ? Double.parseDouble(d) : Double.NaN;
+    @Override
+    public boolean throwOnMissingFile() {
+        triggerErrorState();
+        return false;
     }
 
 }
