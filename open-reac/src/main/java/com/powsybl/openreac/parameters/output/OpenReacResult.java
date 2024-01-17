@@ -35,6 +35,7 @@ public class OpenReacResult {
     private final List<StaticVarCompensatorModification> svcModifications;
     private final List<RatioTapPositionModification> tapPositionModifications;
     private final List<BusResult> voltagePlan;
+    private boolean warmStart = true;
 
     /**
      * @param status      the final status of the OpenReac run.
@@ -90,6 +91,14 @@ public class OpenReacResult {
         return voltagePlan;
     }
 
+    public boolean getWarmStat() {
+        return warmStart;
+    }
+
+    public void setWarmStart(boolean warmStart) {
+        this.warmStart = warmStart;
+    }
+
     public List<NetworkModification> getAllNetworkModifications() {
         List<NetworkModification> modifs = new ArrayList<>(getGeneratorModifications().size() +
             getShuntsModifications().size() +
@@ -114,9 +123,10 @@ public class OpenReacResult {
             double v = busResult.getV() * b.getVoltageLevel().getNominalV();
             double angle = busResult.getAngle();
 
-            // warm start
-            b.setV(v);
-            b.setAngle(angle);
+            if (getWarmStat()) {
+                b.setV(v);
+                b.setAngle(angle);
+            }
 
             // update target of ratio tap changers regulating voltage on b
             network.getTwoWindingsTransformerStream()

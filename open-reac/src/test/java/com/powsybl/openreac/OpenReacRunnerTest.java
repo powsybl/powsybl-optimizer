@@ -231,7 +231,8 @@ class OpenReacRunnerTest {
                         subFolder + "/reactiveopf_results_rtc.csv",
                         subFolder + "/reactiveopf_results_shunts.csv",
                         subFolder + "/reactiveopf_results_static_var_compensators.csv",
-                        subFolder + "/reactiveopf_results_vsc_converter_stations.csv"));
+                        subFolder + "/reactiveopf_results_vsc_converter_stations.csv",
+                        subFolder + "/reactiveopf_results_voltages.csv"));
         // To really run open reac, use the commented line below. Be sure that open-reac/src/test/resources/com/powsybl/config/test/config.yml contains your ampl path
 //         try (ComputationManager computationManager = new LocalComputationManager()) {
         try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
@@ -245,24 +246,7 @@ class OpenReacRunnerTest {
     }
 
     private void testAllModifAndLoadFlow(Network network, String subFolder, OpenReacParameters parameters) throws IOException {
-        LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
-            List.of(subFolder + "/reactiveopf_results_generators.csv",
-                subFolder + "/reactiveopf_results_indic.txt",
-                subFolder + "/reactiveopf_results_rtc.csv",
-                subFolder + "/reactiveopf_results_shunts.csv",
-                subFolder + "/reactiveopf_results_static_var_compensators.csv",
-                subFolder + "/reactiveopf_results_vsc_converter_stations.csv",
-                subFolder + "/reactiveopf_results_voltages.csv"));
-        // To really run open reac, use the commentede line below. Be sure that open-reac/src/test/resources/com/powsybl/config/test/config.yml contains your ampl path
-//         try (ComputationManager computationManager = new LocalComputationManager()) {
-        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
-            localCommandExecutor, ForkJoinPool.commonPool())) {
-            OpenReacResult openReacResult = OpenReacRunner.run(network,
-                network.getVariantManager().getWorkingVariantId(), parameters, new OpenReacConfig(true),
-                computationManager);
-            assertEquals(OpenReacStatus.OK, openReacResult.getStatus());
-            openReacResult.applyAllModifications(network);
-        }
+        runAndApplyAllModifications(network, subFolder, parameters, true);
         LoadFlowResult loadFlowResult = LoadFlow.run(network);
         assertTrue(loadFlowResult.isOk());
     }
@@ -343,6 +327,26 @@ class OpenReacRunnerTest {
         Network network = VoltageControlNetworkFactory.createNetworkWithT2wt();
         setDefaultVoltageLimits(network);
         String subFolder = "openreac-output-warm-start";
+        OpenReacParameters parameters = new OpenReacParameters();
+
+        runAndApplyAllModifications(network, subFolder, parameters, false); // without warm start, no update
+        assertEquals(Double.NaN, network.getBusBreakerView().getBus("BUS_1").getV());
+        assertEquals(Double.NaN, network.getBusBreakerView().getBus("BUS_1").getAngle());
+        assertEquals(Double.NaN, network.getBusBreakerView().getBus("BUS_2").getV());
+        assertEquals(Double.NaN, network.getBusBreakerView().getBus("BUS_2").getAngle());
+        assertEquals(Double.NaN, network.getBusBreakerView().getBus("BUS_3").getV());
+        assertEquals(Double.NaN, network.getBusBreakerView().getBus("BUS_3").getAngle());
+
+        runAndApplyAllModifications(network, subFolder, parameters, true);
+        assertEquals(119.592, network.getBusBreakerView().getBus("BUS_1").getV());
+        assertEquals(0.014, network.getBusBreakerView().getBus("BUS_1").getAngle());
+        assertEquals(118.8, network.getBusBreakerView().getBus("BUS_2").getV());
+        assertEquals(0, network.getBusBreakerView().getBus("BUS_2").getAngle());
+        assertEquals(22.935, network.getBusBreakerView().getBus("BUS_3").getV());
+        assertEquals(-0.082, network.getBusBreakerView().getBus("BUS_3").getAngle());
+    }
+
+    private void runAndApplyAllModifications(Network network, String subFolder, OpenReacParameters parameters, boolean warmStart) throws IOException {
         LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
                 List.of(subFolder + "/reactiveopf_results_generators.csv",
                         subFolder + "/reactiveopf_results_indic.txt",
@@ -354,20 +358,14 @@ class OpenReacRunnerTest {
         // To really run open reac, use the commentede line below. Be sure that open-reac/src/test/resources/com/powsybl/config/test/config.yml contains your ampl path
 //        try (ComputationManager computationManager = new LocalComputationManager()) {
         try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
-            localCommandExecutor, ForkJoinPool.commonPool())) {
+                localCommandExecutor, ForkJoinPool.commonPool())) {
             OpenReacResult openReacResult = OpenReacRunner.run(network,
-                    network.getVariantManager().getWorkingVariantId(), new OpenReacParameters(),
+                    network.getVariantManager().getWorkingVariantId(), parameters,
                     new OpenReacConfig(true), computationManager);
             assertEquals(OpenReacStatus.OK, openReacResult.getStatus());
+            openReacResult.setWarmStart(warmStart);
             openReacResult.applyAllModifications(network);
         }
-
-        assertEquals(119.592, network.getBusBreakerView().getBus("BUS_1").getV());
-        assertEquals(0.014, network.getBusBreakerView().getBus("BUS_1").getAngle());
-        assertEquals(118.8, network.getBusBreakerView().getBus("BUS_2").getV());
-        assertEquals(0, network.getBusBreakerView().getBus("BUS_2").getAngle());
-        assertEquals(22.935, network.getBusBreakerView().getBus("BUS_3").getV());
-        assertEquals(-0.082, network.getBusBreakerView().getBus("BUS_3").getAngle());
     }
 
     public static Network create() {
