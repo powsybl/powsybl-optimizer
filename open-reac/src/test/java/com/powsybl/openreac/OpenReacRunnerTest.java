@@ -281,7 +281,7 @@ class OpenReacRunnerTest {
     }
 
     @Test
-    public void testShuntModification() throws IOException {
+    void testShunt() throws IOException {
         Network network = create();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         ShuntCompensator shunt = network.getShuntCompensator("SHUNT");
@@ -323,7 +323,7 @@ class OpenReacRunnerTest {
     }
 
     @Test
-    public void testWarmStart() throws IOException {
+    void testWarmStart() throws IOException {
         Network network = VoltageControlNetworkFactory.createNetworkWithT2wt();
         setDefaultVoltageLimits(network);
         String subFolder = "openreac-output-warm-start";

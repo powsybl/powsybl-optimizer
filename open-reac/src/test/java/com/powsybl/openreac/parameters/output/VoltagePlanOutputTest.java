@@ -10,7 +10,7 @@ import java.io.InputStreamReader;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class VoltagePlanOutputTest {
+class VoltagePlanOutputTest {
 
     @Test
     void busResultTest() {
