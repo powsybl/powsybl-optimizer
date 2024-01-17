@@ -37,7 +37,7 @@ public class VscNetworkOutput extends AbstractNetworkOutput<VscConverterStationM
     }
 
     @Override
-    protected void doReadLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
+    protected void readLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
         String id = stringToIntMapper.getId(AmplSubset.VSC_CONVERTER_STATION, Integer.parseInt(tokens[ID_COLUMN_INDEX]));
         VscConverterStation vscConverterStation = network.getVscConverterStation(id);
         Double targetV = readDouble(tokens[SET_POINT_V_COLUMN_INDEX]) * vscConverterStation

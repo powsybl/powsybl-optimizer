@@ -37,7 +37,7 @@ public class SvcNetworkOutput extends AbstractNetworkOutput<StaticVarCompensator
     }
 
     @Override
-    protected void doReadLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
+    protected void readLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
         String id = stringToIntMapper.getId(AmplSubset.STATIC_VAR_COMPENSATOR,
             Integer.parseInt(tokens[ID_COLUMN_INDEX]));
         StaticVarCompensator staticVarCompensator = network.getStaticVarCompensator(id);

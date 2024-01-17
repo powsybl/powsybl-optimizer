@@ -37,7 +37,7 @@ public class TapPositionNetworkOutput extends AbstractNetworkOutput<RatioTapPosi
     }
 
     @Override
-    protected void doReadLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
+    protected void readLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
         String transfoId = stringToIntMapper.getId(AmplSubset.BRANCH, Integer.parseInt(tokens[TRANSFO_ID_COLUMN_INDEX]));
         TwoWindingsTransformer twt = network.getTwoWindingsTransformer(transfoId);
         if (twt == null || !twt.hasRatioTapChanger()) {

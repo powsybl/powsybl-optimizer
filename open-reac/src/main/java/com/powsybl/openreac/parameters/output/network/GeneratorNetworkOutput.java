@@ -36,7 +36,7 @@ public class GeneratorNetworkOutput extends AbstractNetworkOutput<GeneratorModif
     }
 
     @Override
-    protected void doReadLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
+    protected void readLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
         String id = stringToIntMapper.getId(AmplSubset.GENERATOR, Integer.parseInt(tokens[ID_COLUMN_INDEX]));
         double targetV = readDouble(tokens[TARGET_V_COLUMN_INDEX]) * network.getGenerator(id).getRegulatingTerminal().getVoltageLevel().getNominalV();
         double targetQ = readDouble(tokens[TARGET_Q_COLUMN_INDEX]);

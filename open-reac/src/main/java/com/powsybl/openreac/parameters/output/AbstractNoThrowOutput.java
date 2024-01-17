@@ -61,12 +61,12 @@ public abstract class AbstractNoThrowOutput implements NoThrowAmplOutput {
         reader.lines().forEach(line -> {
             if (!COMMENTED_LINE_TEST.test(line)) {
                 String[] tokens = line.split(OpenReacModel.OUTPUT_FILE_FORMAT.getTokenSeparator());
-                doReadLine(tokens, stringToIntMapper);
+                readLine(tokens, stringToIntMapper);
             }
         });
     }
 
-    protected abstract void doReadLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper);
+    protected abstract void readLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper);
 
     protected double readDouble(String d) {
         return Float.parseFloat(d) != AmplConstants.INVALID_FLOAT_VALUE ? Double.parseDouble(d) : Double.NaN;

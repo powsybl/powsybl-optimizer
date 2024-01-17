@@ -37,7 +37,7 @@ public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCo
     }
 
     @Override
-    protected void doReadLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
+    protected void readLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
         String id = stringToIntMapper.getId(AmplSubset.SHUNT, Integer.parseInt(tokens[ID_COLUMN_INDEX]));
         double b = readDouble(tokens[B_COLUMN_INDEX]);
         String busId = stringToIntMapper.getId(AmplSubset.BUS, Integer.parseInt(tokens[BUS_COLUMN_INDEX]));
