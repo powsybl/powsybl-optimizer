@@ -303,7 +303,16 @@ Within this balance, the following elements are considered as variables:
 which represent the excess or shortfall of active power produced at the buses chosen by the user.
 
 And the following objective function :
-$$\text{minimize} (10\times\sum\limits_{i} (\boldsymbol{\sigma_{Q_i}^{+}} + \boldsymbol{\sigma_{Q_i}^{-}}) + \sum\limits_{g} (\alpha\boldsymbol{P_{i,g}} + (1-\alpha)(\frac{\boldsymbol{P_{i,g}} - P_{i,g}^t}{\max(1, |\frac{P_{i,g}^t}|)})^2) + \sum\limits_{n} (\boldsymbol{V_n} - V_n^t)^2 + \sum\limits_{ij} (\boldsymbol{\rho_{ij}} - \rho_{ij}$$
+$$\text{minimize} (10\times\sum\limits_{i} (\boldsymbol{\sigma_{Q_i}^{+}} + \boldsymbol{\sigma_{Q_i}^{-}}) 
++ \beta_1 \times \sum\limits_{g} (\alpha\boldsymbol{P_{i,g}} + (1-\alpha)(\frac{\boldsymbol{P_{i,g}} - P_{i,g}^t}{\max(1, |P_{i,g}^t|)})^2)
++ \beta_2 \times \sum\limits_{n} (\boldsymbol{V_n} - (1-\rho)V_{s}^{min,c} + \rhoV_{s}^{max,c})^2
++ \beta_3 \times \sum\limits_{n} (\boldsymbol{V_n} - V_n^t)^2
++ 0.1 \times \sum\limits_{g} (\frac{\boldsymbol{Q_{i,g}}}{\max(1,Q_{g}^{min,c}, Q_{g}^{max,c})})^2
++ 0.1 \times \sum\limits_{ij} (\boldsymbol{\rho_{ij}} - \rho_{ij})^2$$
+
+where : 
+TODO
+
 
 And the objective function `problem_acopf_objective` which minimizes the following sums:
   - The sum of `slack1_balance_Q` and `slack2_balance_Q` variables, penalized by a very high coefficient (`penalty_invest_rea_pos`). 
