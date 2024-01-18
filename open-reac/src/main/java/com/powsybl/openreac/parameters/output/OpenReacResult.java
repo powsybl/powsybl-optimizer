@@ -8,7 +8,6 @@ package com.powsybl.openreac.parameters.output;
 
 import com.powsybl.iidm.modification.*;
 import com.powsybl.iidm.modification.tapchanger.RatioTapPositionModification;
-import com.powsybl.iidm.modification.util.VoltageRegulationUtils;
 import com.powsybl.iidm.network.*;
 import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput.ReactiveSlack;
@@ -118,27 +117,40 @@ public class OpenReacResult {
             modif.apply(network);
         }
 
-        for (BusResult busResult : getVoltagePlan()) {
-            Bus b = network.getBusView().getBus(busResult.getBusId());
-            double v = busResult.getV() * b.getVoltageLevel().getNominalV();
-            double angle = busResult.getAngle();
+        // update target of ratio tap changers regulating voltage
+        network.getTwoWindingsTransformerStream()
+                .filter(RatioTapChangerHolder::hasRatioTapChanger)
+                .map(RatioTapChangerHolder::getRatioTapChanger)
+                .filter(TapChanger::isRegulating)
+                .forEach(ratioTapChanger -> {
+                    Bus bus = ratioTapChanger.getRegulationTerminal().getBusView().getBus();
+                    BusResult busResult = voltagePlan.stream()
+                            .filter(result -> Objects.equals(result.getBusId(), bus.getId()))
+                            .findFirst()
+                            .orElseThrow();
+                    ratioTapChanger.setTargetV(busResult.getV() * bus.getVoltageLevel().getNominalV());
+                }
+            );
 
-            if (getWarmStat()) {
-                b.setV(v);
-                b.setAngle(angle);
+        // update target of shunts regulating voltage
+        network.getShuntCompensatorStream()
+                .filter(ShuntCompensator::isVoltageRegulatorOn)
+                .forEach(shuntCompensator -> {
+                    Bus bus = shuntCompensator.getRegulatingTerminal().getBusView().getBus();
+                    BusResult busResult = voltagePlan.stream()
+                            .filter(result -> Objects.equals(result.getBusId(), bus.getId()))
+                            .findFirst()
+                            .orElseThrow();
+                    shuntCompensator.setTargetV(busResult.getV() * bus.getVoltageLevel().getNominalV());
+                });
+
+        // update voltages of the buses
+        if (getWarmStat()) {
+            for (BusResult busResult : voltagePlan) {
+                Bus b = network.getBusView().getBus(busResult.getBusId());
+                b.setV(busResult.getV() * b.getVoltageLevel().getNominalV());
+                b.setAngle(busResult.getAngle());
             }
-
-            // update target of ratio tap changers regulating voltage on b
-            network.getTwoWindingsTransformerStream()
-                    .filter(RatioTapChangerHolder::hasRatioTapChanger)
-                    .map(RatioTapChangerHolder::getRatioTapChanger)
-                    .filter(TapChanger::isRegulating)
-                    .filter(ratioTapChanger -> ratioTapChanger.getRegulationTerminal().getBusView().getBus().equals(b))
-                    .forEach(ratioTapChanger -> ratioTapChanger.setTargetV(v));
-
-            // update target of shunts regulating voltage on b
-            VoltageRegulationUtils.getRegulatingShuntCompensators(network, b)
-                    .forEach(shuntCompensator -> shuntCompensator.setTargetV(v));
         }
     }
 }
