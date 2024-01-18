@@ -11,12 +11,9 @@ import com.powsybl.iidm.modification.tapchanger.RatioTapPositionModification;
 import com.powsybl.iidm.network.*;
 import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput.ReactiveSlack;
-import com.powsybl.openreac.parameters.output.VoltagePlanOutput.BusResult;
+import org.jgrapht.alg.util.Pair;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * OpenReac user interface to get results information.
@@ -33,7 +30,7 @@ public class OpenReacResult {
     private final List<VscConverterStationModification> vscModifications;
     private final List<StaticVarCompensatorModification> svcModifications;
     private final List<RatioTapPositionModification> tapPositionModifications;
-    private final List<BusResult> voltagePlan;
+    private final HashMap<String, Pair<Double, Double>> voltagePlan;
     private boolean warmStart = true;
 
     /**
@@ -51,7 +48,7 @@ public class OpenReacResult {
         this.vscModifications = List.copyOf(amplIOFiles.getNetworkModifications().getVscModifications());
         this.svcModifications = List.copyOf(amplIOFiles.getNetworkModifications().getSvcModifications());
         this.tapPositionModifications = List.copyOf(amplIOFiles.getNetworkModifications().getTapPositionModifications());
-        this.voltagePlan = List.copyOf(amplIOFiles.getVoltagePlanOutput().getVoltagePlan());
+        this.voltagePlan = new HashMap<>(amplIOFiles.getVoltagePlanOutput().getVoltagePlan());
     }
 
     public OpenReacStatus getStatus() {
@@ -86,7 +83,7 @@ public class OpenReacResult {
         return vscModifications;
     }
 
-    public List<BusResult> getVoltagePlan() {
+    public HashMap<String, Pair<Double, Double>> getVoltagePlan() {
         return voltagePlan;
     }
 
@@ -124,11 +121,8 @@ public class OpenReacResult {
                 .filter(TapChanger::isRegulating)
                 .forEach(ratioTapChanger -> {
                     Bus bus = ratioTapChanger.getRegulationTerminal().getBusView().getBus();
-                    BusResult busResult = voltagePlan.stream()
-                            .filter(result -> Objects.equals(result.getBusId(), bus.getId()))
-                            .findFirst()
-                            .orElseThrow();
-                    ratioTapChanger.setTargetV(busResult.getV() * bus.getVoltageLevel().getNominalV());
+                    double v = voltagePlan.get(bus.getId()).getFirst();
+                    ratioTapChanger.setTargetV(v * bus.getVoltageLevel().getNominalV());
                 }
             );
 
@@ -137,19 +131,18 @@ public class OpenReacResult {
                 .filter(ShuntCompensator::isVoltageRegulatorOn)
                 .forEach(shuntCompensator -> {
                     Bus bus = shuntCompensator.getRegulatingTerminal().getBusView().getBus();
-                    BusResult busResult = voltagePlan.stream()
-                            .filter(result -> Objects.equals(result.getBusId(), bus.getId()))
-                            .findFirst()
-                            .orElseThrow();
-                    shuntCompensator.setTargetV(busResult.getV() * bus.getVoltageLevel().getNominalV());
+                    double v = voltagePlan.get(bus.getId()).getFirst();
+                    shuntCompensator.setTargetV(v * bus.getVoltageLevel().getNominalV());
                 });
 
         // update voltages of the buses
         if (getWarmStat()) {
-            for (BusResult busResult : voltagePlan) {
-                Bus b = network.getBusView().getBus(busResult.getBusId());
-                b.setV(busResult.getV() * b.getVoltageLevel().getNominalV());
-                b.setAngle(busResult.getAngle());
+            for (String busId : voltagePlan.keySet()) {
+                Bus b = network.getBusView().getBus(busId);
+                double v = voltagePlan.get(busId).getFirst();
+                double angle = voltagePlan.get(busId).getSecond();
+                b.setV(v * b.getVoltageLevel().getNominalV());
+                b.setAngle(angle);
             }
         }
     }

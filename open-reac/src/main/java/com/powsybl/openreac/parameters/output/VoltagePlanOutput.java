@@ -9,10 +9,9 @@ package com.powsybl.openreac.parameters.output;
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.openreac.parameters.AmplIOUtils;
+import org.jgrapht.alg.util.Pair;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * @author Pierre Arvy <pierre.arvy at artelys.com>
@@ -25,33 +24,9 @@ public class VoltagePlanOutput extends AbstractNoThrowOutput {
     private static final int V_COLUMN_INDEX = 2;
     private static final int ANGLE_COLUMN_INDEX = 3;
 
-    public static class BusResult {
-        private final String busId;
-        private final double v;
-        private final double angle;
+    private final Map<String, Pair<Double, Double>> voltagePlan = new HashMap<>();
 
-        public BusResult(String busId, double v, double angle) {
-            this.busId = Objects.requireNonNull(busId);
-            this.v = v;
-            this.angle = angle;
-        }
-
-        public String getBusId() {
-            return busId;
-        }
-
-        public double getV() {
-            return v;
-        }
-
-        public double getAngle() {
-            return angle;
-        }
-    }
-
-    private final List<BusResult> voltagePlan = new ArrayList<>();
-
-    public List<BusResult> getVoltagePlan() {
+    public Map<String, Pair<Double, Double>> getVoltagePlan() {
         return voltagePlan;
     }
 
@@ -70,7 +45,7 @@ public class VoltagePlanOutput extends AbstractNoThrowOutput {
         String id = AmplIOUtils.removeQuotes(tokens[ID_COLUMN_INDEX]);
         double v = readDouble(tokens[V_COLUMN_INDEX]);
         double angle = readDouble(tokens[ANGLE_COLUMN_INDEX]);
-        voltagePlan.add(new BusResult(id, v, angle));
+        voltagePlan.put(id, Pair.of(v, angle));
     }
 
     @Override
