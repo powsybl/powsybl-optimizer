@@ -209,48 +209,55 @@ and $Qp_{g}^{c} = QP_{g}^{c} = \text{defaultPmax} \times \text{defaultQmaxPmaxRa
   then $qp_{g}^{c} = Qp_{g}^{c} = qP_{g}^{c} = QP_{g}^{c} = \frac{qp_{g}^{c} + Qp_{g}^{c} + qP_{g}^{c} + QP_{g}^{c}}{4}$ (reactive power is fixed).
 - $Q_{g}^{min,c} = \min(qp_{g}^{c}, qP_{g}^{c})$ and $Q_{g}^{max,c} = \min(Qp_{g}^{c}, QP_{g}^{c})$
 
-### 5 Reference bus & main connex component
+### 5 Slack bus & main connex component
+ 
+The slack bus $s$ is determined by identifying the AC bus with the highest number of AC branches connected,
+within the main connected component (defined in `ampl_network_buses.txt`). 
+If multiple buses have shuch cardinality, the one with the highest identifier (`num` parameter) is chosen.
+In the event no bus satisfies these conditions, the first bus defined in `ampl_network_buses.txt` is selected.
 
-A reference bus (`null_phase_bus` AMPL parameter) enforces the zero-phase constraint of the OPFs. 
-It corresponds to the bus with the most AC branches connected,
-among those belonging to the main connected component ($0$ in `ampl_network_buses.txt`). 
-If multiple buses have the same maximum cardinality, the one with the highest `num` identifier is selected.
-If no bus is found meeting these criteria, the first bus defined in the file `ampl_network_buses.txt` is selected.
+The OPFs (see [6](#6-direct-current-optimal-power-flow) and [7](#7-alternative-current-optimal-power-flow)) 
+are executed on the main connex component (i.e. buses connected to slack bus by AC branches) of the network.
+Consequently, buses connected to the slack by HVDC lines are excluded.
+This component is determined by solving the following optimization problem (the variables are bolded):
 
-The OPFs are executed on the main connex component (i.e. buses connected to the reference bus by AC branches).
-Then, buses connected to the reference bus by HVDC lines are excluded.
-The main connex component is determined by solving the `PROBLEM_CCOMP` optimization problem.
+$$\text{minimize} \sum\limits_{i} \boldsymbol{\theta_i}}$$
+
+where $\boldsymbol{\theta_i}$ is the angle of bus $i$, and with :
+
+$$\boldsymbol{\theta_s} = 0 \quad (1)$$
+
+$$\boldsymbol{\theta_i} - \boldsymbol{\theta_j} = 0, \quad ij \in BRANCH$$
+
+The sets of buses and branches belonging to the main connex component will be denoted $BUSCC$ and $BRANCHCC$.
 
 ### 6 Direct current optimal power flow
 
 Before to address the ACOPF (see [7](#7-alternative-current-optimal-power-flow)), a DCOPF is solved for two main reasons:
 - If the DCOPF resolution fails, it provides a strong indication that the ACOPF resolution will also fail.
-  The DCOPF serves as a formal consistency check on the data.
-- The phases computed during the DCOPF resolution will be used as initial points for the ACOPF resolution.
+  Thus, it serves as a formal consistency check on the data.
+- The phases computed by DCOPF resolution will be used as initial points for the solving of the ACOPF.
 
-The DCOPF involves the following constraints:
+The DCOPF involves the following constraint, in addition to the slack $(1)$ introduced in [5](#5-slack-bus--main-connex-component):
 
-$$\boldsymbol{\theta_s} = 0, \quad s\in\text{SUBSTATIONS}$$
+$$\sum\limits_{j\in v(i)} \boldsymbol{p_{ij}} = P_i^{in} - \sum\limits_{g}\boldsymbol{P_{i,g}} + \boldsymbol{\sigma_{P,i}^{+}} + \boldsymbol{\sigma_{P,i}^{-}}, i\in\text{BUSCC}$$
 
-$$\boldsymbol{p_{ij}} = \frac{\boldsymbol{\theta_i} - \boldsymbol{\theta_j}}{x_{ij}}, ij\in\text{BRANCHCC}$$
-
-$$\sum\limits_{j\in v(i)} \boldsymbol{p_{ij}} = P_i^{in} - \sum\limits_{g}\boldsymbol{P_{i,g}} + \boldsymbol{\sigma_{P_i}^{+}} + \boldsymbol{\sigma_{P_i}^{-}}, i\in\text{BUSCC}$$
-
-where : 
-- $s$ is the reference bus (see [5](#5-reference-bus--main-connex-component)). 
-- $\boldsymbol{p}_{ij}$ the active power leaving bus $i$ on branch $ij$.
+where :
+- $\boldsymbol{p}_{ij}$ is the active power leaving bus $i$ on branch $ij$, defined as $\boldsymbol{p_{ij}} = \frac{\boldsymbol{\theta_i} - \boldsymbol{\theta_j}}{x_{ij}}$.
 - $P_i^{in}$ the constant active power injected or consumed in bus $i$ (by batteries, loads, VSC stations and LCC stations).
 - $\boldsymbol{P}_i^{g}$ is the variable active power produced by generators of bus $i$.
-- $\boldsymbol{\sigma}_{P_i}$ the slack variables (both positive)
-expressing the excess or shortfall of active power produced in $i$.
+- $\boldsymbol{\sigma}_{P,i}^{+}$ (resp. $\boldsymbol{\sigma}_{P,i}^{-}$) is a positive slack variable
+expressing the excess (resp. shortfall) of active power produced in bus $i$.
 
 And the following objective function :
 
 $$\text{minimize} (1000\times\sum\limits_{i} (\boldsymbol{\sigma_{P_i}^{+}} + \boldsymbol{\sigma_{P_i}^{-}}) + \sum\limits_{g} (\frac{\boldsymbol{P_{i,g}} - P_{i,g}^{t}}{\max(1, \frac{P_{i,g}^t}{100})})^2)$$
 
-where $P_{i,g}^{t}$ is the target of generator of the generator on bus $i$. The sum of the slack variables is penalized by a 
+where $P_{i,g}^{t}$ is the target of the generator $g$ on bus $i$. 
+
+The sum of the slack variables is penalized by a 
 high coefficient to drive these variables towards 0, ensuring active power balance at each bus.
-The resolution of this DCOPF is considered as successful if this sum does not exceed the configurable threshold `Pnull`
+The solving of the DCOPF is considered as successful if this sum does not exceed the configurable threshold `Pnull`
 (see [3.2](#32-configuration-of-the-run)), and if the solver finds a feasible solution without reaching
 one of its default limit. Otherwise, the solving is considered unsuccessful and the script `reactiveopfexit.run` is executed (see [8.2](#82-in-case-of-inconsistency).
 
@@ -301,6 +308,24 @@ Within this balance, the following elements are considered as variables:
   - The reactive power generated by VSC stations (all consistent ones defined in `ampl_network_vsc_converter_stations.txt`).
   - The slack variables `slack1_balance_Q` and `slack2_balance_Q`,
 which represent the excess or shortfall of active power produced at the buses chosen by the user.
+
+The ACOPF involves the following constraints:
+
+$$\boldsymbol{\theta_s} = 0, \quad s\in\text{SUBSTATIONS}$$
+
+$$\sum\limits_{j\in v(i)} \boldsymbol{p_{ij}} = P_i^{in} - \sum\limits_{g}\boldsymbol{P_{i,g}}, i\in\text{BUSCC}$$
+
+$$\sum\limits_{j\in v(i)} \boldsymbol{q_{ij}} = Q_i^{in} - \sum\limits_{g}\boldsymbol{Q_{i,g}} - \sum\limits_{s}\boldsymbol{b_{i,s}}{V_i}^2 \sum\limits_{vsc}\boldsymbol{b_{i,vsc}} \boldsymbol{V_i}^2 - \boldsymbol{\sigma_{Q_i}^{+}} - \boldsymbol{\sigma_{Q_i}^{-}}, i\in\text{BUSCC}$$
+
+where : 
+- $s$ is the reference bus (see [5](#5-reference-bus--main-connex-component)).
+- $\boldsymbol{p}_{ij}$ (resp. \boldsymbol{q}_{ij}) is the active (resp. reactive) power leaving bus $i$ on branch $ij$, 
+calculated as defined in the [PowSyBl documentation](https://www.powsybl.org/pages/documentation/simulation/powerflow/openlf.html).
+- $P_i^{in}$ is the constant active power injected or consumed in bus $i$ by batteries, loads, VSC stations and LCC stations. 
+- $Q_i^{in}$ is the constant reactive power injected or consumed in bus $i$, by fixed generators and fixed shunts (see [3.2](#32-configuration-of-the-run)), batteries, loads and LCC stations).
+- $\boldsymbol{P}_{i,g}$ (resp. $\boldsymbol{Q}_i^{g}$) is the variable active (resp. reactive) power produced by generator $g$ of bus $i$.
+- $\boldsymbol{b}_{i,g}$ (resp. $\boldsymbol{b}_{i,vsc}$) is the variable susceptance of shunt $s$ (resp. VSC station $vsc$) of bus $i$. It is bounded by the minimum and maximum susceptance of the network, specified in `ampl_network_shunts.txt`.
+- $\boldsymbol{\sigma}_{Q_i}$ the slack variables (both positive)
 
 And the following objective function :
 $$\text{minimize} (10\times\sum\limits_{i} (\boldsymbol{\sigma_{Q_i}^{+}} + \boldsymbol{\sigma_{Q_i}^{-}}) 
