@@ -143,17 +143,17 @@ the following pre-processing blocks are executed to ensure the consistency of th
 
 #### 4.1 Voltage level limits consistency
 
-To ensure consistent voltage level limits for the voltage levels,
-the parameters min_plausible_low_voltage_limit and max_plausible_high_voltage_limit are used
+To ensure consistent voltage level limits for the buses,
+the configurable parameters $\text{min_plausible_low_voltage_limit}$ 
+and $\text{max_plausible_high_voltage_limit}$ are used
 (see [3.2](#32-configuration-of-the-run)). 
 
-Let $V_{min}^s$ (resp. $V_{max}^s$) be the low (resp. high) voltage limit of substation $s$ 
-specified in `ampl_network_substations.txt`, or
-in `ampl_network_substations_override.txt` if an override is given, and $V_{min}^{s,c}$ (resp. $V_{max}^{s,c}$)
-the corrected low (resp. high) limit of substation $s$. Then, the consistent 
-voltage limits are :
-- $V_{min}^{s,c} = \max(V_{min}^s,$ min_plausible_low_voltage_limit})
-- $V_{max}^{s,c} = \min(V_{max}^s,$ max_plausible_low_voltage_limit})
+Let $V_{s}^{min}$ (resp. $V_{s}^{max}$) be the low (resp. high) voltage limit of substation $s$ 
+specified in `ampl_network_substations.txt` (or
+in `ampl_network_substations_override.txt` if an override is given for $s$) and $V_{s}^{min,c}$ (resp. $V_{s}^{max,c}$)
+its associated corrected low (resp. high) limit. Then, the limits are calculated as follows:
+- $V_{s}^{min,c} = \max(V_{s}^min, \text{min_plausible_low_voltage_limit})$
+- $V_{s}^{max,c} = \min(V_{s}^max, \text{max_plausible_low_voltage_limit})$
 
 #### 4.2 Zero-impedance branches
 
@@ -259,115 +259,47 @@ The sum of the slack variables is penalized by a
 high coefficient to drive these variables towards 0, ensuring active power balance at each bus.
 The solving of the DCOPF is considered as successful if this sum does not exceed the configurable threshold `Pnull`
 (see [3.2](#32-configuration-of-the-run)), and if the solver finds a feasible solution without reaching
-one of its default limit. Otherwise, the solving is considered unsuccessful and the script `reactiveopfexit.run` is executed (see [8.2](#82-in-case-of-inconsistency).
+one of its default limit. Otherwise, the solving is considered unsuccessful and the script `reactiveopfexit.run` is executed (see [8.2](#82-in-case-of-inconsistency)).
 
 ### 7 Alternative current optimal power flow
 
 
-TODO : refactor 
+In the following, we denote $V_i$ and $\theta_i$ as the voltage and phase of bus $i$, respectively, and the notations introduced in the previous sections are used.
+Before solving the ACOPF, these values are warm-started with the voltage specified at each node in `ampl_network_buses.txt` and the phase calculated by the DCOPF (see [6](#6-direct-current-optimal-power-flow)).
 
-add
-- `buses_with_reactive_slacks`: The parameter determining which buses will have reactive slacks attached in the resolution of the ACOPF
-(see [6.2](#62-alternative-current-optimal-power-flow)).
-It can take the following values:
-- "ALL": all buses have reactive slack variables attached.
-- "NO_GENERATION": only buses not producing reactive power will have reactive slack variables attached.
-- "CONFIGURED": only buses specified in `param_buses_with_reactive_slack.txt` will have reactive slack variables attached.
+The constraints of the optimization problem depend on parameters specified by the user (see [3.2](#32-configuration-of-the-run)). In particular, the user can indicate which buses will have 
+associated slacks for reactive power balance. To do so, these buses must be specified in parameter file `param_buses_with_reactive_slack.txt`, and `buses_with_reactive_slacks` must be set to $\text{CONFIGURED}$.
 
-TODO : add
-- `objective_choice` defining the choice of the objective function for the ACOPF (see [6.2](#62-alternative-current-optimal-power-flow)):
-The minimization priority depends on the value of the parameter:
-- If $0$, the active power produced by generators.
-- If $1$, the deviation between the voltage value and the calculated target of the buses.
-- If $2$, the deviation between the voltage value of the buses and the target V specified in `ampl_network_buses.txt`.
+The ACOPF involves the following constraints, in addition to the slack constraint $(1)$ introduced in [5](#5-slack-bus--main-connex-component):
 
-TODO : add
-This target lies between the upper and lower voltage limits of the level voltages to which the buses are connected, and is calculated using
-configurable parameter `ratio_voltage_target`.
-
-The model and the solving of the ACOPF relies on specific parameters selected by the user, 
-as thresholds and equipment of the power network which will be treated as variable or fixed (refer to [3.2](#32-configuration-of-the-run)).
-LThe voltage variables utilized in the ACOPF are initialized as follows:
-- The phase angles are set equal to those calculated by solving the DCOPF.
-- The voltages of buses without reactive slacks (and with nominal voltage greater than `min_plausible_low_voltage_limit`)
-are set equal to the specified `v (pu)` values in `ampl_network_buses.txt`.
-- The voltages of buses with reactive slacks are initialized to the midpoint of the voltage level limits to which they are connected.
-- `ctr_null_phase_bus`, which sets the phase of the reference bus (refer to [5](#5-reference-bus--main-connex-component)) to 0.
-- `ctr_balance_P`, which enforces the active power balance at each node of the network.
-  This balance takes into account the active power produced by generators and batteries, as well as the power consumed
-  by loads, VSC stations and LCC stations connected to each bus (in addition to what enters and exits the bus).
-Within this balance, the active power produced by units and the flows on the branches are considered as variables.
-- `ctr_balance_Q` enforces the reactive power balance at each node of the network.
-  This balance takes into account the reactive power produced by generators, batteries, shunts, static var compensators, VSC stations, 
-as well as the power consumed by loads and LCC stations connected to each bus (in addition to what enters and exits the bus).
-Within this balance, the following elements are considered as variables:
-  - The flows on the branches (tensions, phases and transformation ratios of transformers defined as variables by the user).
-  - The reactive power generated by the units defined as variables.
-  - The susceptance of shunts defined as variables by the user.
-  - The reactive power generated by SVCs (only the one with `svc_vregul` value equals to `true` in `ampl_network_static_var_compensators.txt`).
-  - The reactive power generated by VSC stations (all consistent ones defined in `ampl_network_vsc_converter_stations.txt`).
-  - The slack variables `slack1_balance_Q` and `slack2_balance_Q`,
-which represent the excess or shortfall of active power produced at the buses chosen by the user.
-
-The ACOPF involves the following constraints:
-
-$$\boldsymbol{\theta_s} = 0, \quad s\in\text{SUBSTATIONS}$$
-
-$$\sum\limits_{j\in v(i)} \boldsymbol{p_{ij}} = P_i^{in} - \sum\limits_{g}\boldsymbol{P_{i,g}}, i\in\text{BUSCC}$$
+$$\sum\limits_{j\in v(i)} \boldsymbol{p_{ij}} = P_i^{in} - \sum\limits_{g}\boldsymbol{P_{i,g}}, \quad i\in\text{BUSCC}$$
 
 $$\sum\limits_{j\in v(i)} \boldsymbol{q_{ij}} = Q_i^{in} - \sum\limits_{g}\boldsymbol{Q_{i,g}} - \sum\limits_{s}\boldsymbol{b_{i,s}}{V_i}^2 \sum\limits_{vsc}\boldsymbol{b_{i,vsc}} \boldsymbol{V_i}^2 - \boldsymbol{\sigma_{Q_i}^{+}} - \boldsymbol{\sigma_{Q_i}^{-}}, i\in\text{BUSCC}$$
 
-where : 
-- $s$ is the reference bus (see [5](#5-reference-bus--main-connex-component)).
-- $\boldsymbol{p}_{ij}$ (resp. \boldsymbol{q}_{ij}) is the active (resp. reactive) power leaving bus $i$ on branch $ij$, 
-calculated as defined in the [PowSyBl documentation](https://www.powsybl.org/pages/documentation/simulation/powerflow/openlf.html).
-- $P_i^{in}$ is the constant active power injected or consumed in bus $i$ by batteries, loads, VSC stations and LCC stations. 
+where :
+- $\boldsymbol{p}_{ij}$ (resp. \boldsymbol{q}_{ij}) is the active (resp. reactive) power leaving bus $i$ on branch $ij$,
+  calculated as defined in the [PowSyBl documentation](https://www.powsybl.org/pages/documentation/simulation/powerflow/openlf.html).
+- $P_i^{in}$ is the constant active power injected or consumed in bus $i$ by batteries, loads, VSC stations and LCC stations.
 - $Q_i^{in}$ is the constant reactive power injected or consumed in bus $i$, by fixed generators and fixed shunts (see [3.2](#32-configuration-of-the-run)), batteries, loads and LCC stations).
 - $\boldsymbol{P}_{i,g}$ (resp. $\boldsymbol{Q}_i^{g}$) is the variable active (resp. reactive) power produced by generator $g$ of bus $i$.
 - $\boldsymbol{b}_{i,g}$ (resp. $\boldsymbol{b}_{i,vsc}$) is the variable susceptance of shunt $s$ (resp. VSC station $vsc$) of bus $i$. It is bounded by the minimum and maximum susceptance of the network, specified in `ampl_network_shunts.txt`.
 - $\boldsymbol{\sigma}_{Q_i}$ the slack variables (both positive)
 
+The objective function also depends on parameters specified by the user.
+The objective_choice parameter modifies the values of penalties $\beta_1$, $\beta_2$, and $\beta_3$ in the objective function. Specifically, if objective_choice takes on:
+- $0$, the minimization of active power production is favored.
+- $1$, the minimization of the difference between $V_i$ and $\text{ratio_voltage_target}V_i^{c,min} + (1-\text{ratio_voltage_target})V_i^{c,max}$ is favored.
+- $2$, the minimization of the difference between $V_i$ and its initial value is favored.
+
 And the following objective function :
-$$\text{minimize} (10\times\sum\limits_{i} (\boldsymbol{\sigma_{Q_i}^{+}} + \boldsymbol{\sigma_{Q_i}^{-}}) 
-+ \beta_1 \times \sum\limits_{g} (\alpha\boldsymbol{P_{i,g}} + (1-\alpha)(\frac{\boldsymbol{P_{i,g}} - P_{i,g}^t}{\max(1, |P_{i,g}^t|)})^2)
-+ \beta_2 \times \sum\limits_{n} (\boldsymbol{V_n} - (1-\rho)V_{s}^{min,c} + \rhoV_{s}^{max,c})^2
-+ \beta_3 \times \sum\limits_{n} (\boldsymbol{V_n} - V_n^t)^2
-+ 0.1 \times \sum\limits_{g} (\frac{\boldsymbol{Q_{i,g}}}{\max(1,Q_{g}^{min,c}, Q_{g}^{max,c})})^2
-+ 0.1 \times \sum\limits_{ij} (\boldsymbol{\rho_{ij}} - \rho_{ij})^2$$
+$$\text{minimize} (10\times\sum\limits_{i} (\boldsymbol{\sigma_{Q_i}^{+}} + \boldsymbol{\sigma_{Q_i}^{-}}) + \beta_1 \times \sum\limits_{g} \alpha\boldsymbol{P_{i,g}} + (1-\alpha)(\frac{\boldsymbol{P_{i,g}} - P_{i,g}^t}{\max(1, |P_{i,g}^t|)})^2 + \beta_2 \times \sum\limits_{i} (\boldsymbol{V_i} - (1-\text{ratio_voltage_target})V_{i}^{min,c} + \text{ratio_voltage_target}V_{i}^{max,c})^2 + \beta_3 \times \sum\limits_{i} (\boldsymbol{V_i} - V_i^t)^2 + 0.1 \times \sum\limits_{g} (\frac{\boldsymbol{Q_{i,g}}}{\max(1,Q_{g}^{min,c}, Q_{g}^{max,c})})^2 + 0.1 \times \sum\limits_{ij} (\boldsymbol{\rho_{ij}} - \rho_{ij})^2$$
 
 where : 
 TODO
 
+TODO : optimization with $\alpha=0$ if needed.
 
-And the objective function `problem_acopf_objective` which minimizes the following sums:
-  - The sum of `slack1_balance_Q` and `slack2_balance_Q` variables, penalized by a very high coefficient (`penalty_invest_rea_pos`). 
-The objective is to drive these variables towards 0, ensuring a balance in reactive power at each node.
-  - The sum of squared barycenter between the two values.
-The first is the active power produced by each generator. The second is 
-the difference between this power and the unit's target P (`unit_Pc` parameter), divided by this target.
-This sum is penalized with a significant coefficient only when `objective_choice = 0`.
-This barycenter depends on the configurable parameter `coeff_alpha`. 
-The closer this coefficient is to 1, the more important the first term of the barycenter, 
-thus emphasizing the minimization of generated active power. 
-A coefficient closer to 1 increases the deviation between this active power and the generator's target P 
-(`targetP (MW)` defined in `ampl_network_generators.txt`).
-  - The sum of squared deviations between the calculated voltage values at each node and a 
-barycenter between the lower and upper voltage limits of the associated voltage level.
-This sum is penalized with a significant coefficient only when `objective_choice = 1`.
-This barycenter depends on the configurable parameter `ratio_voltage_target`.
-  - The sum of squared deviations between the calculated voltage values and their initial values (`v (pu)` in `ampl_network_buses.txt`) at each node.
-This sum is penalized with a significant coefficient only when `objective_choice = 2`.
-  - The sum of squared deviations of variable transformation ratios from their initial values. 
-This sum is penalized by a small coefficient. The goal is to limit this deviation without overly restricting it.
-  - The sum of squared ratios of reactive powers generated by units over 
-their maximal reactive power bounds.
-This sum is penalized by a small coefficient. The goal is to limit this deviation without overly restricting it.
-
-TODO : expliciter le fait qu'on fasse plusieurs optimisations à la suite en jouant sur alpha si besoin.
-
-TODO : add comments on results treatment by Knitro (what kind of solutions are considered as good...)
-
-Please note the following :
+Please note that :
 - units with active power specified in `ampl_network_generators.txt` inférieur au paramètre modifiable Pnull sont exclues de l'optimisation.
 - Les current limits ne sont pas prises en compte dans l'optimisation.
 
