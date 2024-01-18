@@ -144,16 +144,15 @@ the following pre-processing blocks are executed to ensure the consistency of th
 #### 4.1 Voltage level limits consistency
 
 To ensure consistent voltage level limits for the buses,
-the configurable parameters $\text{min_plausible_low_voltage_limit}$ 
-and $\text{max_plausible_high_voltage_limit}$ are used
+the configurable domain [min_plausible_low_voltage_limit; max_plausible_high_voltage_limit] is used
 (see [3.2](#32-configuration-of-the-run)). 
 
 Let $V_{s}^{min}$ (resp. $V_{s}^{max}$) be the low (resp. high) voltage limit of substation $s$ 
 specified in `ampl_network_substations.txt` (or
 in `ampl_network_substations_override.txt` if an override is given for $s$) and $V_{s}^{min,c}$ (resp. $V_{s}^{max,c}$)
 its associated corrected low (resp. high) limit. Then, the limits are calculated as follows:
-- $V_{s}^{min,c} = \max(V_{s}^min, \text{min_plausible_low_voltage_limit})$
-- $V_{s}^{max,c} = \min(V_{s}^max, \text{max_plausible_low_voltage_limit})$
+- $V_{s}^{min,c} = \max(V_{s}^min,$ min_plausible_low_voltage_limit)
+- $V_{s}^{max,c} = \min(V_{s}^max,$ max_plausible_low_voltage_limit)
 
 #### 4.2 Zero-impedance branches
 
@@ -221,7 +220,7 @@ are executed on the main connex component (i.e. buses connected to slack bus by 
 Consequently, buses connected to the slack by HVDC lines are excluded.
 This component is determined by solving the following optimization problem (the variables are bolded):
 
-$$\text{minimize} \sum\limits_{i} \boldsymbol{\theta_i}}$$
+$$\text{minimize} \sum\limits_{i} \boldsymbol{\theta_i}$$
 
 where $\boldsymbol{\theta_i}$ is the angle of bus $i$, and with :
 
@@ -240,7 +239,7 @@ Before to address the ACOPF (see [7](#7-alternative-current-optimal-power-flow))
 
 The DCOPF involves the following constraint, in addition to the slack $(1)$ introduced in [5](#5-slack-bus--main-connex-component):
 
-$$\sum\limits_{j\in v(i)} \boldsymbol{p_{ij}} = P_i^{in} - \sum\limits_{g}\boldsymbol{P_{i,g}} + \boldsymbol{\sigma_{P,i}^{+}} + \boldsymbol{\sigma_{P,i}^{-}}, i\in\text{BUSCC}$$
+$$\sum\limits_{j\in v(i)} \boldsymbol{p_{ij}} = P_i^{in} - \sum\limits_{g}\boldsymbol{P_{i,g}} + \boldsymbol{\sigma_{P,i}^{+}} + \boldsymbol{\sigma_{P,i}^{-}}, \quad i\in\text{BUSCC}$$
 
 where :
 - $\boldsymbol{p}_{ij}$ is the active power leaving bus $i$ on branch $ij$, defined as $\boldsymbol{p_{ij}} = \frac{\boldsymbol{\theta_i} - \boldsymbol{\theta_j}}{x_{ij}}$.
@@ -274,7 +273,7 @@ The ACOPF involves the following constraints, in addition to the slack constrain
 
 $$\sum\limits_{j\in v(i)} \boldsymbol{p_{ij}} = P_i^{in} - \sum\limits_{g}\boldsymbol{P_{i,g}}, \quad i\in\text{BUSCC}$$
 
-$$\sum\limits_{j\in v(i)} \boldsymbol{q_{ij}} = Q_i^{in} - \sum\limits_{g}\boldsymbol{Q_{i,g}} - \sum\limits_{s}\boldsymbol{b_{i,s}}{V_i}^2 \sum\limits_{vsc}\boldsymbol{b_{i,vsc}} \boldsymbol{V_i}^2 - \boldsymbol{\sigma_{Q_i}^{+}} - \boldsymbol{\sigma_{Q_i}^{-}}, i\in\text{BUSCC}$$
+$$\sum\limits_{j\in v(i)} \boldsymbol{q_{ij}} = Q_i^{in} - \sum\limits_{g}\boldsymbol{Q_{i,g}} - \sum\limits_{s}\boldsymbol{b_{i,s}}{V_i}^2 - \sum\limits_{vsc}\boldsymbol{b_{i,vsc}} \boldsymbol{V_i}^2 - \boldsymbol{\sigma_{Q_i}^{+}} + \boldsymbol{\sigma_{Q_i}^{-}}, \quad i\in\text{BUSCC}$$
 
 where :
 - $\boldsymbol{p}_{ij}$ (resp. \boldsymbol{q}_{ij}) is the active (resp. reactive) power leaving bus $i$ on branch $ij$,
@@ -288,11 +287,13 @@ where :
 The objective function also depends on parameters specified by the user.
 The objective_choice parameter modifies the values of penalties $\beta_1$, $\beta_2$, and $\beta_3$ in the objective function. Specifically, if objective_choice takes on:
 - $0$, the minimization of active power production is favored.
-- $1$, the minimization of the difference between $V_i$ and $\text{ratio_voltage_target}V_i^{c,min} + (1-\text{ratio_voltage_target})V_i^{c,max}$ is favored.
+- $1$, the minimization of the difference between $V_i$ and $\rhoV_i^{c,min} + (1-\rho)V_i^{c,max}$ is favored.
 - $2$, the minimization of the difference between $V_i$ and its initial value is favored.
 
+TODO : explicit rho
+
 And the following objective function :
-$$\text{minimize} (10\times\sum\limits_{i} (\boldsymbol{\sigma_{Q_i}^{+}} + \boldsymbol{\sigma_{Q_i}^{-}}) + \beta_1 \times \sum\limits_{g} \alpha\boldsymbol{P_{i,g}} + (1-\alpha)(\frac{\boldsymbol{P_{i,g}} - P_{i,g}^t}{\max(1, |P_{i,g}^t|)})^2 + \beta_2 \times \sum\limits_{i} (\boldsymbol{V_i} - (1-\text{ratio_voltage_target})V_{i}^{min,c} + \text{ratio_voltage_target}V_{i}^{max,c})^2 + \beta_3 \times \sum\limits_{i} (\boldsymbol{V_i} - V_i^t)^2 + 0.1 \times \sum\limits_{g} (\frac{\boldsymbol{Q_{i,g}}}{\max(1,Q_{g}^{min,c}, Q_{g}^{max,c})})^2 + 0.1 \times \sum\limits_{ij} (\boldsymbol{\rho_{ij}} - \rho_{ij})^2$$
+$$\text{minimize} (10\times\sum\limits_{i} (\boldsymbol{\sigma_{Q_i}^{+}} + \boldsymbol{\sigma_{Q_i}^{-}}) + \beta_1 \times \sum\limits_{g} \alpha\boldsymbol{P_{i,g}} + (1-\alpha)(\frac{\boldsymbol{P_{i,g}} - P_{i,g}^t}{\max(1, |P_{i,g}^t|)})^2 + \beta_2 \times \sum\limits_{i} (\boldsymbol{V_i} - (1-\rho)V_{i}^{min,c} + \rho V_{i}^{max,c})^2 + \beta_3 \times \sum\limits_{i} (\boldsymbol{V_i} - V_i^t)^2 + 0.1 \times \sum\limits_{g} (\frac{\boldsymbol{Q_{i,g}}}{\max(1,Q_{g}^{min,c}, Q_{g}^{max,c})})^2 + 0.1 \times \sum\limits_{ij} (\boldsymbol{\rho_{ij}} - \rho_{ij})^2$$
 
 where : 
 TODO
