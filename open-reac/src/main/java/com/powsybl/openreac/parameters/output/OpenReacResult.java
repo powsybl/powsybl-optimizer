@@ -83,7 +83,7 @@ public class OpenReacResult {
         return vscModifications;
     }
 
-    public HashMap<String, Pair<Double, Double>> getVoltagePlan() {
+    public Map<String, Pair<Double, Double>> getVoltagePlan() {
         return voltagePlan;
     }
 
@@ -137,10 +137,10 @@ public class OpenReacResult {
 
         // update voltages of the buses
         if (getWarmStat()) {
-            for (String busId : voltagePlan.keySet()) {
-                Bus b = network.getBusView().getBus(busId);
-                double v = voltagePlan.get(busId).getFirst();
-                double angle = voltagePlan.get(busId).getSecond();
+            for (var busUpdate : voltagePlan.entrySet()) {
+                Bus b = network.getBusView().getBus(busUpdate.getKey());
+                double v = busUpdate.getValue().getFirst();
+                double angle = busUpdate.getValue().getSecond();
                 b.setV(v * b.getVoltageLevel().getNominalV());
                 b.setAngle(angle);
             }
