@@ -41,7 +41,7 @@ knitroampl stub
 ```
 
 
-## Reactive Optimal Power Flow
+## Reactive optimal power flow
 
 ---
 
@@ -71,7 +71,7 @@ each serving a specific function:
   *ampl_* prefix), and the files used to configure the run (files with *param_* prefix).
   Refer to section [3](#3-input).
 - `reactiveopf.mod` defines the sets, parameters and optimization problems (CC, DCOPF, ACOPF) solved in `reactiveopf.run`. 
-  Refer to sections [5](#5-reference-bus--main-connex-component), [6](#6-direct-current-optimal-power-flow) and [7](#7-alternative-current-optimal-power-flow).
+  Refer to sections [5](#5-slack-bus--main-connex-component), [6](#6-direct-current-optimal-power-flow) and [7](#7-alternative-current-optimal-power-flow).
 - `reactiveopfoutput.mod` exports result files if the execution of `reactiveopf.run` is successful. 
   Refer to section [8.1](#81-in-case-of-convergence).
 - `reactiveopfexit.run` contains the code executed when the problem is inconsistent. 
@@ -94,37 +94,37 @@ The user can configure the run with the dedicated Java interface
 Specifically, the user can set various parameters and thresholds used in the preprocessing and modeling of the reactive OPF. 
 These are specified in the file `param_algo.txt`:
 
-| Parameter                        | Description                                                                                                                                                                       | Default value     | Domain                                      |
-|----------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------|---------------------------------------------|
-| log_level_ampl                   | Level of display for AMPL prints                                                                                                                                                  | INFO              | {DEBUG, INFO, WARNING, ERROR}               |
-| log_level_knitro                 | Level of display for solver prints (see [AMPL documentation](https://dev.ampl.com/ampl/options.html)                                                                              | $1$               | ${0, 1, 2}$                                 |  
-| objective_choice                 | Choice of the objective function for the ACOPF (see [7](#7-alternative-current-optimal-power-flow))                                                                               | $0$               | ${0, 1, 2}$                                 |
-| ratio_voltage_target             | Ratio to calculate target V of buses when objective_choice = 1                                                                                                                    | $0.5$             | $\[0; 1\]$                                  |
-| coeff_alpha                      | Weight to favor more/less minimization of active power produced by generators or deviation between them and target values (see [6.2](#62-alternative-current-optimal-power-flow)) | $1$               | $\[0; 1\]$                                  |
-| Pnull                            | Threshold of active and reactive powers considered as null                                                                                                                        | $0.01$ (MW)       | $\[0; 1\]$                                  |
-| Znull                            | Threshold of impedance considered as null (see [4.2](#42-zero-impedance-lines))                                                                                                   | $10^{-5}$ (p.u.)  | $\[0; 0.1\]$                                |                                                                                                                                                                  
- | epsilon_nominal_voltage          | Threshold to ignore voltage levels with nominal voltage lower than it                                                                                                             | $1$ (kV)          | $\mathbb{R}^{+}$                            | 
-| min_plausible_low_voltage_limit  | Consistency bound for low voltage limit of voltage levels (see [4.1](#41-voltage-level-limits-computation))                                                                       | $0.5$ (p.u.)      | $\mathbb{R}^{+}$                            |
-| max_plausible_high_voltage_limit | Consistency bound for high voltage limit of voltage levels (see [4.1](#41-voltage-level-limits-computation))                                                                      | $1.5$ (p.u.)      | [min_plausible_low_voltage_limit; $\infty$] |
-| ignore_voltage_bounds            | Threshold to replace voltage limits of voltage levels with nominal voltage lower than it, by  [min_plausible_low_voltage_limit; max_plausible_high_voltage_limit]                 | $0$ (p.u.)        | $\mathbb{R}^{+}$                            |
-| buses_with_reactive_slacks       | Choice of which buses will have reactive slacks attached in ACOPF solving (see [7](#7-alternative-current-optimal-power-flow))                                                    | NO_GENERATION     | {CONFIGURED, NO_GENERATION, ALL}            |
-| PQmax                            | Threshold for maximum active and reactive power considered in correction of generator limits  (see [4.4](#44-pq-units-domain))                                                    | $9000$ (MW, MVAr) | $\mathbb{R}$                                |
-| defaultPmax                      | Threshold for correction of high active power limit produced by generators (see [4.4](#44-pq-units-domain))                                                                       | $1000$ (MW)       | $\mathbb{R}$                                |
-| defaultPmin                      | Threshold for correction of low active power limit produced by generators (see [4.4](#44-pq-units-domain))                                                                        | $0$ (MW)          | $\mathbb{R}$                                |
-| defaultQmaxPmaxRatio             | Ratio used to calculate threshold for corrections of high/low reactive power limits (see [4.4](#44-pq-units-domain))                                                              | $0.3$ (MVAr/MW)   | $\mathbb{R}$                                |
-| minimalQPrange                   | Threshold to fix active (resp. reactive) power of generators with active (resp. reactive) power limits that are closer than it (see [4.4](#44-pq-units-domain))                   | $1$ (MW, MVAr)    | $\mathbb{R}$                                |
+| Parameter                          | Description                                                                                                                                                                       | Default value     | Domain                                        |
+|------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------|-----------------------------------------------|
+| `log_level_ampl`                   | Level of display for AMPL prints                                                                                                                                                  | INFO              | {DEBUG, INFO, WARNING, ERROR}                 |
+| `log_level_knitro`                 | Level of display for solver prints (see [AMPL documentation](https://dev.ampl.com/ampl/options.html)                                                                              | $1$               | {0, 1, 2}                                     |  
+| `objective_choice`                 | Choice of the objective function for the ACOPF (see [7](#7-alternative-current-optimal-power-flow))                                                                               | $0$               | {0, 1, 2}                                     |
+| `ratio_voltage_target`             | Ratio to calculate target V of buses when `objective_choice` is set to $1$ (see [7](#7-alternative-current-optimal-power-flow))                                                   | $0.5$             | $\[0; 1\]$                                    |
+| `coeff_alpha`                      | Weight to favor more/less minimization of active power produced by generators or deviation between them and target values (see [6.2](#62-alternative-current-optimal-power-flow)) | $1$               | $\[0; 1\]$                                    |
+| `Pnull`                            | Threshold of active and reactive powers considered as null                                                                                                                        | $0.01$ (MW)       | $\[0; 1\]$                                    |
+| `Znull`                            | Threshold of impedance considered as null (see [4.2](#))                                                                                                                          | $10^{-5}$ (p.u.)  | $\[0; 0.1\]$                                  |                                                                                                                                                                  
+ | `epsilon_nominal_voltage`          | Threshold to ignore voltage levels with nominal voltage lower than it                                                                                                             | $1$ (kV)          | $\mathbb{R}^{+}$                              | 
+| `min_plausible_low_voltage_limit`  | Consistency bound for low voltage limit of voltage levels (see [4.1](#41-voltage-level-limits-computation))                                                                       | $0.5$ (p.u.)      | $\mathbb{R}^{+}$                              |
+| `max_plausible_high_voltage_limit` | Consistency bound for high voltage limit of voltage levels (see [4.1](#41-voltage-level-limits-computation))                                                                      | $1.5$ (p.u.)      | [`min_plausible_low_voltage_limit`; $\infty$] |
+| `ignore_voltage_bounds`            | Threshold to replace voltage limits of voltage levels with nominal voltage lower than it, by  [min_plausible_low_voltage_limit; max_plausible_high_voltage_limit]                 | $0$ (p.u.)        | $\mathbb{R}^{+}$                              |
+| `buses_with_reactive_slacks`       | Choice of which buses will have reactive slacks attached in ACOPF solving (see [7](#7-alternative-current-optimal-power-flow))                                                    | NO_GENERATION     | {CONFIGURED, NO_GENERATION, ALL}              |
+| `PQmax`                            | Threshold for maximum active and reactive power considered in correction of generator limits  (see [4.4](#44-pq-units-domain))                                                    | $9000$ (MW, MVAr) | $\mathbb{R}$                                  |
+| `defaultPmax`                      | Threshold for correction of high active power limit produced by generators (see [4.4](#44-pq-units-domain))                                                                       | $1000$ (MW)       | $\mathbb{R}$                                  |
+| `defaultPmin`                      | Threshold for correction of low active power limit produced by generators (see [4.4](#44-pq-units-domain))                                                                        | $0$ (MW)          | $\mathbb{R}$                                  |
+| `defaultQmaxPmaxRatio`             | Ratio used to calculate threshold for corrections of high/low reactive power limits (see [4.4](#44-pq-units-domain))                                                              | $0.3$ (MVAr/MW)   | $\mathbb{R}$                                  |
+| `minimalQPrange`                   | Threshold to fix active (resp. reactive) power of generators with active (resp. reactive) power limits that are closer than it (see [4.4](#44-pq-units-domain))                   | $1$ (MW, MVAr)    | $\mathbb{R}$                                  |
 
 
 In addition to the previous parameters, the user can specify which 
 parameters will be variable or fixed in the ACOPF solving (see [7](#7-alternative-current-optimal-power-flow)).
 This is done using the following files:
 
-| File                                | Description                                                                                                                                             | Default behavior of modified values                                               |
-|-------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------|
-| param_transformers.txt              | Ratio tap changers with a variable transformation ratio (real variable)                                                                                 | Transformation ratios are fixed                                                   |
-| param_shunt.txt                     | Shunts with a continuous variable susceptance and which can be modified and/or connected (only if possible bus is defined in `ampl_network_shunts.txt`) | Shunt susceptances are fixed                                                      |
-| param_generators_reactive.txt       | Generators with a constant reactive power production. If this value is not consistent (> PQmax), the reactive power production stays variable           | Coherent reactive power productions (see [4.5](#45-pq-units-domain)) are variable |
-| param_buses_with_reactive_slack.txt | Buses with attached reactive slacks if configurable parameter buses_with_reactive_slacks = "CONFIGURED"                                                 | Only buses with no reactive power production have reactive slacks attached        |    
+| File                                  | Description                                                                                                                                             | Default behavior of modified values                                               |
+|---------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------|
+| `param_transformers.txt`              | Ratio tap changers with a variable transformation ratio (real variable)                                                                                 | Transformation ratios are fixed                                                   |
+| `param_shunt.txt`                     | Shunts with a continuous variable susceptance and which can be modified and/or connected (only if possible bus is defined in `ampl_network_shunts.txt`) | Shunt susceptances are fixed                                                      |
+| `param_generators_reactive.txt`       | Generators with a constant reactive power production. If this value is not consistent (> PQmax), the reactive power production stays variable           | Coherent reactive power productions (see [4.5](#45-pq-units-domain)) are variable |
+| `param_buses_with_reactive_slack.txt` | Buses with attached reactive slacks if configurable parameter buses_with_reactive_slacks = "CONFIGURED"                                                 | Only buses with no reactive power production have reactive slacks attached        |    
 
 All of these files share the same format: 2 columns #"num" "id".
 
@@ -144,7 +144,7 @@ the following pre-processing blocks are executed to ensure the consistency of th
 #### 4.1 Voltage level limits consistency
 
 To ensure consistent voltage level limits for the buses,
-the configurable domain [min_plausible_low_voltage_limit; max_plausible_high_voltage_limit] is used
+the configurable domain [`min_plausible_low_voltage_limit`; `max_plausible_high_voltage_limit`] is used
 (see [3.2](#32-configuration-of-the-run)). 
 
 Let $V_{s}^{min}$ (resp. $V_{s}^{max}$) be the low (resp. high) voltage limit of substation $s$ 
@@ -210,14 +210,15 @@ and $Qp_{g}^{c} = QP_{g}^{c} = \text{defaultPmax} \times \text{defaultQmaxPmaxRa
 
 ### 5 Slack bus & main connex component
  
-The slack bus $s$ is determined by identifying the AC bus with the highest number of AC branches connected,
-within the main connected component (defined in `ampl_network_buses.txt`). 
-If multiple buses have shuch cardinality, the one with the highest identifier (`num` parameter) is chosen.
+The slack bus $s$ is determined by identifying the bus with the highest number of AC branches connected,
+within the main component (`cc` set to $0$ in `ampl_network_buses.txt`). 
+If multiple buses have such cardinality, the one with the highest identifier (`num` parameter) is chosen.
 In the event no bus satisfies these conditions, the first bus defined in `ampl_network_buses.txt` is selected.
 
 The OPFs (see [6](#6-direct-current-optimal-power-flow) and [7](#7-alternative-current-optimal-power-flow)) 
 are executed on the main connex component (i.e. buses connected to slack bus by AC branches) of the network.
 Consequently, buses connected to the slack by HVDC lines are excluded.
+
 This component is determined by solving the following optimization problem (the variables are bolded):
 
 $$\text{minimize} \sum\limits_{i} \boldsymbol{\theta_i}$$
@@ -226,9 +227,11 @@ where $\boldsymbol{\theta_i}$ is the angle of bus $i$, and with :
 
 $$\boldsymbol{\theta_s} = 0 \quad (1)$$
 
-$$\boldsymbol{\theta_i} - \boldsymbol{\theta_j} = 0, \quad ij \in BRANCH$$
+$$\boldsymbol{\theta_i} - \boldsymbol{\theta_j} = 0, \quad ij \in BRANCH \quad (2)$$
 
-The sets of buses and branches belonging to the main connex component will be denoted $BUSCC$ and $BRANCHCC$.
+If the solving is unsuccessful,  the script
+`reactiveopfexit.run` is executed (see [8.2](#82-in-case-of-inconsistency)) and the execution is stopped.
+The sets of buses and branches belonging to the main connex component are now denoted $BUSCC$ and $BRANCHCC$.
 
 ### 6 Direct current optimal power flow
 
@@ -239,7 +242,7 @@ Before to address the ACOPF (see [7](#7-alternative-current-optimal-power-flow))
 
 The DCOPF involves the following constraint, in addition to the slack $(1)$ introduced in [5](#5-slack-bus--main-connex-component):
 
-$$\sum\limits_{j\in v(i)} \boldsymbol{p_{ij}} = P_i^{in} - \sum\limits_{g}\boldsymbol{P_{i,g}} + \boldsymbol{\sigma_{P,i}^{+}} + \boldsymbol{\sigma_{P,i}^{-}}, \quad i\in\text{BUSCC}$$
+$$\sum\limits_{j\in v(i)} \boldsymbol{p_{ij}} = P_i^{in} - \sum\limits_{g}\boldsymbol{P_{i,g}} + \boldsymbol{\sigma_{P,i}^{+}} + \boldsymbol{\sigma_{P,i}^{-}}, \quad i\in\text{BUSCC} \quad (3)$$
 
 where :
 - $\boldsymbol{p}_{ij}$ is the active power leaving bus $i$ on branch $ij$, defined as $\boldsymbol{p_{ij}} = \frac{\boldsymbol{\theta_i} - \boldsymbol{\theta_j}}{x_{ij}}$.
@@ -250,18 +253,18 @@ expressing the excess (resp. shortfall) of active power produced in bus $i$.
 
 And the following objective function :
 
-$$\text{minimize} (1000\times\sum\limits_{i} (\boldsymbol{\sigma_{P_i}^{+}} + \boldsymbol{\sigma_{P_i}^{-}}) + \sum\limits_{g} (\frac{\boldsymbol{P_{i,g}} - P_{i,g}^{t}}{\max(1, \frac{P_{i,g}^t}{100})})^2)$$
+$$\text{minimize} (1000\times\sum\limits_{i} (\boldsymbol{\sigma_{i}^{P,+}} + \boldsymbol{\sigma_{i}^{P,-}}) + \sum\limits_{g} (\frac{\boldsymbol{P_{i,g}} - P_{i,g}^{t}}{\max(1, \frac{P_{i,g}^t}{100})})^2)$$
 
 where $P_{i,g}^{t}$ is the target of the generator $g$ on bus $i$. 
 
-The sum of the slack variables is penalized by a 
-high coefficient to drive these variables towards 0, ensuring active power balance at each bus.
+The sum of the active slack variables ($\boldsymbol{\sigma_{i}^{P,+}}$ and $\boldsymbol{\sigma_{i}^{P,-}}$) is penalized by a 
+high coefficient to drive it towards 0, ensuring active power balance at each bus of the network.
 The solving of the DCOPF is considered as successful if this sum does not exceed the configurable threshold `Pnull`
 (see [3.2](#32-configuration-of-the-run)), and if the solver finds a feasible solution without reaching
-one of its default limit. Otherwise, the solving is considered unsuccessful and the script `reactiveopfexit.run` is executed (see [8.2](#82-in-case-of-inconsistency)).
+one of its default limit. Otherwise, the solving is considered unsuccessful and the script
+`reactiveopfexit.run` is executed (see [8.2](#82-in-case-of-inconsistency)) and the execution is stopped.
 
 ### 7 Alternative current optimal power flow
-
 
 In the following, we denote $V_i$ and $\theta_i$ as the voltage and phase of bus $i$, respectively, and the notations introduced in the previous sections are used.
 Before solving the ACOPF, these values are warm-started with the voltage specified at each node in `ampl_network_buses.txt` and the phase calculated by the DCOPF (see [6](#6-direct-current-optimal-power-flow)).
@@ -271,9 +274,9 @@ associated slacks for reactive power balance. To do so, these buses must be spec
 
 The ACOPF involves the following constraints, in addition to the slack constraint $(1)$ introduced in [5](#5-slack-bus--main-connex-component):
 
-$$\sum\limits_{j\in v(i)} \boldsymbol{p_{ij}} = P_i^{in} - \sum\limits_{g}\boldsymbol{P_{i,g}}, \quad i\in\text{BUSCC}$$
+$$\sum\limits_{j\in v(i)} \boldsymbol{p_{ij}} = P_i^{in} - \sum\limits_{g}\boldsymbol{P_{i,g}}, \quad i\in\text{BUSCC} \quad (4)$$
 
-$$\sum\limits_{j\in v(i)} \boldsymbol{q_{ij}} = Q_i^{in} - \sum\limits_{g}\boldsymbol{Q_{i,g}} - \sum\limits_{s}\boldsymbol{b_{i,s}}{V_i}^2 - \sum\limits_{vsc}\boldsymbol{b_{i,vsc}} \boldsymbol{V_i}^2 - \boldsymbol{\sigma_{Q_i}^{+}} + \boldsymbol{\sigma_{Q_i}^{-}}, \quad i\in\text{BUSCC}$$
+$$\sum\limits_{j\in v(i)} \boldsymbol{q_{ij}} = Q_i^{in} - \sum\limits_{g}\boldsymbol{Q_{i,g}} - \sum\limits_{s}\boldsymbol{b_{i,s}}{V_i}^2 - \sum\limits_{vsc}\boldsymbol{b_{i,vsc}} \boldsymbol{V_i}^2 - \boldsymbol{\sigma_{Q_i}^{+}} + \boldsymbol{\sigma_{Q_i}^{-}}, \quad i\in\text{BUSCC} \quad (5)$$
 
 where :
 - $\boldsymbol{p}_{ij}$ (resp. \boldsymbol{q}_{ij}) is the active (resp. reactive) power leaving bus $i$ on branch $ij$,
@@ -293,37 +296,55 @@ The objective_choice parameter modifies the values of penalties $\beta_1$, $\bet
 TODO : explicit rho
 
 And the following objective function :
-$$\text{minimize} (10\times\sum\limits_{i} (\boldsymbol{\sigma_{Q_i}^{+}} + \boldsymbol{\sigma_{Q_i}^{-}}) + \beta_1 \times \sum\limits_{g} \alpha\boldsymbol{P_{i,g}} + (1-\alpha)(\frac{\boldsymbol{P_{i,g}} - P_{i,g}^t}{\max(1, |P_{i,g}^t|)})^2 + \beta_2 \times \sum\limits_{i} (\boldsymbol{V_i} - (1-\rho)V_{i}^{min,c} + \rho V_{i}^{max,c})^2 + \beta_3 \times \sum\limits_{i} (\boldsymbol{V_i} - V_i^t)^2 + 0.1 \times \sum\limits_{g} (\frac{\boldsymbol{Q_{i,g}}}{\max(1,Q_{g}^{min,c}, Q_{g}^{max,c})})^2 + 0.1 \times \sum\limits_{ij} (\boldsymbol{\rho_{ij}} - \rho_{ij})^2$$
+$$\text{minimize} (10\times\sum\limits_{i} (\boldsymbol{\sigma_{i}^{Q,+}} + \boldsymbol{\sigma_{i}^{Q,-}}) + \beta_1 \times \sum\limits_{g} \alpha\boldsymbol{P_{i,g}} + (1-\alpha)(\frac{\boldsymbol{P_{i,g}} - P_{i,g}^t}{\max(1, |P_{i,g}^t|)})^2 + \beta_2 \times \sum\limits_{i} (\boldsymbol{V_i} - (1-\rho)V_{i}^{min,c} + \rho V_{i}^{max,c})^2 + \beta_3 \times \sum\limits_{i} (\boldsymbol{V_i} - V_i^t)^2 + 0.1 \times \sum\limits_{g} (\frac{\boldsymbol{Q_{i,g}}}{\max(1,Q_{g}^{min,c}, Q_{g}^{max,c})})^2 + 0.1 \times \sum\limits_{ij} (\boldsymbol{\rho_{ij}} - \rho_{ij})^2$$
 
 where : 
 TODO
 
-TODO : optimization with $\alpha=0$ if needed.
+The sum of the reactive slack variables ($\boldsymbol{\sigma^{Q,+}}$ and $\boldsymbol{\sigma^{Q,-}}$) is penalized by a
+high coefficient to drive it towards 0, ensuring reactive power balance at each bus of the network.
+The solving is considered as successful if the solver finds a feasible approximate solution (even if the sum of 
+slacks is important), and the results files are then exported (see [8.1](#81-in-case-of-convergence)). 
+Otherwise, it is considered unsuccessful.
+
+TODO : explicit multiple solving with alpha values
 
 Please note that :
-- units with active power specified in `ampl_network_generators.txt` inférieur au paramètre modifiable Pnull sont exclues de l'optimisation.
-- Les current limits ne sont pas prises en compte dans l'optimisation.
+- Units with active power specified in `ampl_network_generators.txt` that is less than the adjustable parameter `Pnull` are excluded from the optimization, 
+even if the user designates these generators as fixed in the `param_generators_reactive.txt` (see [3.2](#32-configuration-of-the-run)).
+- Current limits are not considered in the optimization.
 
 ### 8 Output
 
 #### 8.1 In case of convergence
 
-If the AMPL process defined in `reactiveopf.run` is successful, the script `reactiveopfoutput.run` is executed 
-(even if the solving of ACOPF did not reached a feasible point) and the following files are exported:
+After the solving of the ACOPF, the script `reactiveopfoutput.run` is executed 
+ and the following files (except `reactiveopf_results_indic.txt`) are exported only if the solving 
+is considered as successful (see [7](#7-alternative-current-optimal-power-flow)):
 
-| File                                            | Content                                                                                                                                                                                                                                                                                                                                                      | Format                                                                                          |
-|-------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
-| reactiveopf_results_indic.txt                   | General information (system OS, computation time, etc.). The configurable thresholds/parameters (see section [3.2](#32-configuration-of-the-run)). The cardinality of the sets (number of non-impedance branches, number of slack variables, etc.). Information about calculated angles (maximum/minimum theta, maximum difference between neighbors, etc.). |                                                                                                 |
-| reactiveopf_results_static_var_compensators.csv | Calculated voltage and reactive power values for the SVC that regulate voltage.                                                                                                                                                                                                                                                                              | 6 columns #"variant" "num" "bus" "vRegul" "V(pu)" "Q(MVAr)"                                     |
-| reactiveopf_results_shunts.csv                  | Calculated reactive power (and susceptance) values for shunts that were either connected or modified after the optimization problems were resolved.                                                                                                                                                                                                          | 6 columns #"variant" "num" "bus" "b(pu)" "Q(MVAr)" "section"                                    |
-| reactiveopf_results_generators.csv              | Calculated active and reactive power values for generating units.                                                                                                                                                                                                                                                                                            | 9 columns #"variant" "num" "bus" "vRegul" "V(pu)" "targetP(MW)" "targetQ(MVAr)" "P(MW)" "Q(MW)" |
-| reactiveopf_results_vsc_converter_stations.csv  | Calculated reactive power values for VSC converter stations.                                                                                                                                                                                                                                                                                                 | 8 columns #"variant" "num" "bus" "vRegul" "targetV(pu)" "targetQ(MVAr)" "P(MW)" "Q(MVAr)"       |
-| reactiveopf_results_rtc.csv                     | RTCs and associated taps, with transformer ratio closest to the one calculated after the optimization.                                                                                                                                                                                                                                                       | 3 columns #"variant" "num" "tap"                                                                |
-| reactiveopf_results_reactive_slacks.csv         | Calculated reactive slack variables `slack1_balance_Q` and `slack2_balance_Q`.                                                                                                                                                                                                                                                                               | 6 columns #"variant" "bus" "slack_condensator(MVAr)" "slack_self(MVAr)" "id" "substation"       |
-| reactiveopf_results_voltages.csv                | Calculated voltages for each bus of the main connex component (see [5](#5-reference-bus--main-connex-component))                                                                                                                                                                                                                                             | 5 columns #"variant" "bus" "V(pu)" "theta(rad)" "id"                                            |
+| File                                              | Content                                                                                                                                                                                                                                                                                                                                                      | Format                                                                                          |
+|---------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
+| `reactiveopf_results_indic.txt`                   | General information (system OS, computation time, etc.). The configurable thresholds/parameters (see section [3.2](#32-configuration-of-the-run)). The cardinality of the sets (number of non-impedance branches, number of slack variables, etc.). Information about calculated angles (maximum/minimum theta, maximum difference between neighbors, etc.). |                                                                                                 |
+| `reactiveopf_results_static_var_compensators.csv` | Calculated voltage and reactive power values for the SVC that regulate voltage.                                                                                                                                                                                                                                                                              | 6 columns #"variant" "num" "bus" "vRegul" "V(pu)" "Q(MVAr)"                                     |
+| `reactiveopf_results_shunts.csv`                  | Calculated reactive power (and susceptance) values for shunts that were either connected or modified after the optimization problems were resolved.                                                                                                                                                                                                          | 6 columns #"variant" "num" "bus" "b(pu)" "Q(MVAr)" "section"                                    |
+| `reactiveopf_results_generators.csv`              | Calculated active and reactive power values for generating units.                                                                                                                                                                                                                                                                                            | 9 columns #"variant" "num" "bus" "vRegul" "V(pu)" "targetP(MW)" "targetQ(MVAr)" "P(MW)" "Q(MW)" |
+| `reactiveopf_results_vsc_converter_stations.csv`  | Calculated reactive power values for VSC converter stations.                                                                                                                                                                                                                                                                                                 | 8 columns #"variant" "num" "bus" "vRegul" "targetV(pu)" "targetQ(MVAr)" "P(MW)" "Q(MVAr)"       |
+| `reactiveopf_results_rtc.csv`                     | RTCs and associated taps, with transformer ratio closest to the one calculated after the optimization.                                                                                                                                                                                                                                                       | 3 columns #"variant" "num" "tap"                                                                |
+| `reactiveopf_results_reactive_slacks.csv`         | Calculated reactive slack variables $\boldsymbol{\sigma^{Q,-}}$ and $\boldsymbol{\sigma^{Q,+}}$.                                                                                                                                                                                                                                                             | 6 columns #"variant" "bus" "slack_condensator(MVAr)" "slack_self(MVAr)" "id" "substation"       |
+| `reactiveopf_results_voltages.csv`                | Calculated voltages for each bus of the main connex component (see [5](#5-slack-bus--main-connex-component)).                                                                                                                                                                                                                                                | 5 columns #"variant" "bus" "V(pu)" "theta(rad)" "id"                                            |
+
+If ACOPF solving is not successful, the user can export the following optional files (aiding for the analysis of ACOPF results) by specifying the
+ ampl log to a debug level (see [3.2](#32-configuration-of-the-run)):
+
+| File                                       | Content                                                                                                                | Format                                                                                                                  |
+|--------------------------------------------|------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|
+| `debug_bus.csv`                            | Information on calculated voltages (values, bounds, repartition, etc.).                                                | 13 columns #"bus_id" "Vnom" "V" "Vlb" "Vub" "Vmin_mod" "Vmax_mod" "Vmin_OK" "Vmax_OK" "Vmin_ori" "Vmax_ori" "sQ1" "sQ2" |
+| `reactiveopf_results_generators_Pnull.csv` | Information on units that are excluded from the solving of ACOPF (see [7](#7-alternative-current-optimal-power-flow)). | 11 columns #"variant" "num" "bus" "vRegul" "V(pu)" "targetP(MW)" "targetQ(Mvar)" "P(MW)" "Q(MW)" "id" "bus_id"          |
 
 #### 8.2 In case of inconsistency
 
-If the computation of the main connex component (see [5](#5-reference-bus--main-connex-component)) or of the DCOPF fails (see [6](#6-direct-current-optimal-power-flow)),
+If the computation of the main connex component (see [5](#5-slack-bus--main-connex-component)) or 
+of the DCOPF fails (see [6](#6-direct-current-optimal-power-flow)),
 the problem is considered as inconsistent.
-Then, the script `reactiveopfexit.run` is executed and the file `reactiveopf_results_indic.txt` described in previous section is exported, without the information on the calculated angles.
+Then, the script `reactiveopfexit.run` is executed and the file `reactiveopf_results_indic.txt` described in [8.1](#81-in-case-of-convergence)
+ is exported, without the information on the calculated angles.
