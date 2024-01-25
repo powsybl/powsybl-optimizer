@@ -3,6 +3,7 @@ package com.powsybl.openreac;
 import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.RatioTapChanger;
+import com.powsybl.iidm.network.ShuntCompensator;
 import com.powsybl.openreac.network.ShuntNetworkFactory;
 import com.powsybl.openreac.network.VoltageControlNetworkFactory;
 import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
@@ -23,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class OpenReacResultsTest {
 
     @Test
-    void testRegulatingTransformerWithoutVoltageProfile() throws IOException {
+    void testTransformerWithoutVoltageResult() throws IOException {
         Network network = VoltageControlNetworkFactory.createNetworkWithT2wt();
         RatioTapChanger rtc = network.getTwoWindingsTransformer("T2wT").getRatioTapChanger()
                 .setTargetDeadband(0)
@@ -37,9 +38,24 @@ class OpenReacResultsTest {
     }
 
     @Test
-    void testRegulatingShuntWithoutVoltageProfile() throws IOException {
+    void testTransformerWithNullBus() throws IOException {
+        Network network = VoltageControlNetworkFactory.createNetworkWithT2wt();
+        RatioTapChanger rtc = network.getTwoWindingsTransformer("T2wT").getRatioTapChanger()
+                .setTargetDeadband(0)
+                .setRegulating(true);
+        rtc.getRegulationTerminal().disconnect();
+
+        OpenReacAmplIOFiles io = getIOWithMockVoltageProfile(network);
+        OpenReacResult results = new OpenReacResult(OpenReacStatus.OK, io, new HashMap<>());
+        IllegalStateException e = assertThrows(IllegalStateException.class, () -> results.applyAllModifications(network));
+        assertEquals("No bus found for regulating ratio tap changer.", e.getMessage());
+    }
+
+    @Test
+    void testShuntWithoutVoltageResult() throws IOException {
         Network network = ShuntNetworkFactory.create();
-        String regulatedBusId = network.getShuntCompensator("SHUNT").getRegulatingTerminal().getBusView().getBus().getId();
+        ShuntCompensator shunt = network.getShuntCompensator("SHUNT");
+        String regulatedBusId = shunt.getRegulatingTerminal().getBusView().getBus().getId();
 
         OpenReacAmplIOFiles io = getIOWithMockVoltageProfile(network);
         OpenReacResult results = new OpenReacResult(OpenReacStatus.OK, io, new HashMap<>());
@@ -48,7 +64,19 @@ class OpenReacResultsTest {
     }
 
     @Test
-    void testWrongVoltageProfile() throws IOException {
+    void testShuntWithNullBus() throws IOException {
+        Network network = ShuntNetworkFactory.create();
+        ShuntCompensator shunt = network.getShuntCompensator("SHUNT");
+        shunt.getRegulatingTerminal().disconnect();
+
+        OpenReacAmplIOFiles io = getIOWithMockVoltageProfile(network);
+        OpenReacResult results = new OpenReacResult(OpenReacStatus.OK, io, new HashMap<>());
+        IllegalStateException e = assertThrows(IllegalStateException.class, () -> results.applyAllModifications(network));
+        assertEquals("No bus found for regulating shunt compensator " + shunt.getId(), e.getMessage());
+    }
+
+    @Test
+    void testWrongVoltageResult() throws IOException {
         Network network = IeeeCdfNetworkFactory.create14();
         OpenReacAmplIOFiles io = getIOWithMockVoltageProfile(network);
         String idBusNotFound = io.getVoltageProfileOutput().getVoltageProfile().keySet().iterator().next();

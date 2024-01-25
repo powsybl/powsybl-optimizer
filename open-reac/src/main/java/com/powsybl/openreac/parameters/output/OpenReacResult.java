@@ -128,7 +128,7 @@ public class OpenReacResult {
                             throw new IllegalStateException("Voltage result not found for bus " + bus.getId());
                         }),
                     () -> {
-                        throw new IllegalStateException();
+                        throw new IllegalStateException("No bus found for regulating ratio tap changer.");
                     }));
 
         // update target of shunts regulating voltage
@@ -143,7 +143,7 @@ public class OpenReacResult {
                             throw new IllegalStateException("Voltage result not found for bus " + bus.getId());
                         }),
                     () -> {
-                        throw new IllegalStateException("Shunt compensator" + shuntCompensator.getId() + "has a null regulating terminal.");
+                        throw new IllegalStateException("No bus found for regulating shunt compensator " + shuntCompensator.getId());
                     }));
 
         // update voltages of the buses
