@@ -1,4 +1,4 @@
-#variant;bus;V;theta;id;
+#variant;bus;V(pu);theta(rad);id;
 1;1;1.393;0.040;"VL1_0";
 1;2;1.382;0.040;"VL2_0";
 1;3;1.390;0.032;"VL3_0";
