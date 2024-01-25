@@ -30,8 +30,8 @@ public class OpenReacResult {
     private final List<VscConverterStationModification> vscModifications;
     private final List<StaticVarCompensatorModification> svcModifications;
     private final List<RatioTapPositionModification> tapPositionModifications;
-    private final HashMap<String, Pair<Double, Double>> voltagePlan;
-    private boolean warmStart = true;
+    private final HashMap<String, Pair<Double, Double>> voltageProfile;
+    private boolean updateNetworkWithVoltages = true;
 
     /**
      * @param status      the final status of the OpenReac run.
@@ -48,7 +48,7 @@ public class OpenReacResult {
         this.vscModifications = List.copyOf(amplIOFiles.getNetworkModifications().getVscModifications());
         this.svcModifications = List.copyOf(amplIOFiles.getNetworkModifications().getSvcModifications());
         this.tapPositionModifications = List.copyOf(amplIOFiles.getNetworkModifications().getTapPositionModifications());
-        this.voltagePlan = new HashMap<>(amplIOFiles.getVoltagePlanOutput().getVoltagePlan());
+        this.voltageProfile = new HashMap<>(amplIOFiles.getVoltageProfileOutput().getVoltageProfile());
     }
 
     public OpenReacStatus getStatus() {
@@ -83,16 +83,16 @@ public class OpenReacResult {
         return vscModifications;
     }
 
-    public Map<String, Pair<Double, Double>> getVoltagePlan() {
-        return voltagePlan;
+    public Map<String, Pair<Double, Double>> getVoltageProfile() {
+        return voltageProfile;
     }
 
-    public boolean getWarmStat() {
-        return warmStart;
+    public boolean isUpdateNetworkWithVoltages() {
+        return updateNetworkWithVoltages;
     }
 
-    public void setWarmStart(boolean warmStart) {
-        this.warmStart = warmStart;
+    public void setUpdateNetworkWithVoltages(boolean updateNetworkWithVoltages) {
+        this.updateNetworkWithVoltages = updateNetworkWithVoltages;
     }
 
     public List<NetworkModification> getAllNetworkModifications() {
@@ -119,30 +119,45 @@ public class OpenReacResult {
                 .filter(RatioTapChangerHolder::hasRatioTapChanger)
                 .map(RatioTapChangerHolder::getRatioTapChanger)
                 .filter(TapChanger::isRegulating)
-                .forEach(ratioTapChanger -> {
-                    Bus bus = ratioTapChanger.getRegulationTerminal().getBusView().getBus();
-                    double v = voltagePlan.get(bus.getId()).getFirst();
-                    ratioTapChanger.setTargetV(v * bus.getVoltageLevel().getNominalV());
-                }
-            );
+                .forEach(ratioTapChanger -> Optional.ofNullable(ratioTapChanger.getRegulationTerminal().getBusView().getBus()).ifPresentOrElse(
+                    bus -> Optional.ofNullable(voltageProfile.get(bus.getId())).ifPresentOrElse(
+                        busUpdate -> {
+                            double v = busUpdate.getFirst();
+                            ratioTapChanger.setTargetV(v * bus.getVoltageLevel().getNominalV());
+                        }, () -> {
+                            throw new IllegalStateException("Voltage result not found for bus " + bus.getId());
+                        }),
+                    () -> {
+                        throw new IllegalStateException();
+                    }));
 
         // update target of shunts regulating voltage
         network.getShuntCompensatorStream()
                 .filter(ShuntCompensator::isVoltageRegulatorOn)
-                .forEach(shuntCompensator -> {
-                    Bus bus = shuntCompensator.getRegulatingTerminal().getBusView().getBus();
-                    double v = voltagePlan.get(bus.getId()).getFirst();
-                    shuntCompensator.setTargetV(v * bus.getVoltageLevel().getNominalV());
-                });
+                .forEach(shuntCompensator -> Optional.ofNullable(shuntCompensator.getRegulatingTerminal().getBusView().getBus()).ifPresentOrElse(
+                    bus -> Optional.ofNullable(voltageProfile.get(bus.getId())).ifPresentOrElse(
+                        busUpdate -> {
+                            double v = busUpdate.getFirst();
+                            shuntCompensator.setTargetV(v * bus.getVoltageLevel().getNominalV());
+                        }, () -> {
+                            throw new IllegalStateException("Voltage result not found for bus " + bus.getId());
+                        }),
+                    () -> {
+                        throw new IllegalStateException("Shunt compensator" + shuntCompensator.getId() + "has a null regulating terminal.");
+                    }));
 
         // update voltages of the buses
-        if (getWarmStat()) {
-            for (var busUpdate : voltagePlan.entrySet()) {
-                Bus b = network.getBusView().getBus(busUpdate.getKey());
-                double v = busUpdate.getValue().getFirst();
-                double angle = busUpdate.getValue().getSecond();
-                b.setV(v * b.getVoltageLevel().getNominalV());
-                b.setAngle(angle);
+        if (isUpdateNetworkWithVoltages()) {
+            for (var busUpdate : voltageProfile.entrySet()) {
+                Optional.ofNullable(network.getBusView().getBus(busUpdate.getKey())).ifPresentOrElse(
+                    bus -> {
+                        double v = busUpdate.getValue().getFirst();
+                        double angle = busUpdate.getValue().getSecond();
+                        bus.setV(v * bus.getVoltageLevel().getNominalV());
+                        bus.setAngle(Math.toDegrees(angle));
+                    }, () -> {
+                        throw new IllegalStateException("Bus " + busUpdate.getKey() + " not found in the in the network.");
+                    });
             }
         }
     }

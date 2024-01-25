@@ -11,20 +11,20 @@ import java.io.InputStreamReader;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class VoltagePlanOutputTest {
+class VoltageProfileOutputTest {
 
     @Test
     void readTest() throws IOException {
-        VoltagePlanOutput output = new VoltagePlanOutput();
+        VoltageProfileOutput output = new VoltageProfileOutput();
         try (InputStream input = getClass().getResourceAsStream("/mock_outputs/reactiveopf_results_voltages.csv");
              InputStreamReader in = new InputStreamReader(input);
              BufferedReader reader = new BufferedReader(in)) {
 
             output.read(reader, null);
-            assertEquals(3, output.getVoltagePlan().size());
-            Pair<Double, Double> busVoltage1 = output.getVoltagePlan().get("bus1");
-            Pair<Double, Double> busVoltage2 = output.getVoltagePlan().get("bus2");
-            Pair<Double, Double> busVoltage3 = output.getVoltagePlan().get("bus3");
+            assertEquals(3, output.getVoltageProfile().size());
+            Pair<Double, Double> busVoltage1 = output.getVoltageProfile().get("bus1");
+            Pair<Double, Double> busVoltage2 = output.getVoltageProfile().get("bus2");
+            Pair<Double, Double> busVoltage3 = output.getVoltageProfile().get("bus3");
             Assertions.assertAll(
                     () -> assertEquals(0.8, busVoltage1.getFirst()),
                     () -> assertEquals(1.1, busVoltage1.getSecond()),

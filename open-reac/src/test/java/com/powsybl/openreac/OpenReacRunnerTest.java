@@ -213,7 +213,7 @@ class OpenReacRunnerTest {
             assertEquals(1, openReacResult.getSvcModifications().size());
             assertEquals(1, openReacResult.getVscModifications().size());
             assertEquals(7, openReacResult.getGeneratorModifications().size());
-            assertEquals(3, openReacResult.getVoltagePlan().size());
+            assertEquals(3, openReacResult.getVoltageProfile().size());
             assertEquals(82, openReacResult.getIndicators().size());
             assertTrue(openReacResult.getReactiveSlacks().isEmpty());
         }
@@ -339,14 +339,14 @@ class OpenReacRunnerTest {
 
         runAndApplyAllModifications(network, subFolder, parameters, true);
         assertEquals(119.592, network.getBusBreakerView().getBus("BUS_1").getV());
-        assertEquals(0.014, network.getBusBreakerView().getBus("BUS_1").getAngle());
+        assertEquals(0.802, network.getBusBreakerView().getBus("BUS_1").getAngle(), 0.001);
         assertEquals(118.8, network.getBusBreakerView().getBus("BUS_2").getV());
         assertEquals(0, network.getBusBreakerView().getBus("BUS_2").getAngle());
         assertEquals(22.935, network.getBusBreakerView().getBus("BUS_3").getV());
-        assertEquals(-0.082, network.getBusBreakerView().getBus("BUS_3").getAngle());
+        assertEquals(-4.698, network.getBusBreakerView().getBus("BUS_3").getAngle(), 0.001);
     }
 
-    private void runAndApplyAllModifications(Network network, String subFolder, OpenReacParameters parameters, boolean warmStart) throws IOException {
+    private void runAndApplyAllModifications(Network network, String subFolder, OpenReacParameters parameters, boolean updateNetworkWithVoltages) throws IOException {
         LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
                 List.of(subFolder + "/reactiveopf_results_generators.csv",
                         subFolder + "/reactiveopf_results_indic.txt",
@@ -363,7 +363,7 @@ class OpenReacRunnerTest {
                     network.getVariantManager().getWorkingVariantId(), parameters,
                     new OpenReacConfig(true), computationManager);
             assertEquals(OpenReacStatus.OK, openReacResult.getStatus());
-            openReacResult.setWarmStart(warmStart);
+            openReacResult.setUpdateNetworkWithVoltages(updateNetworkWithVoltages);
             openReacResult.applyAllModifications(network);
         }
     }

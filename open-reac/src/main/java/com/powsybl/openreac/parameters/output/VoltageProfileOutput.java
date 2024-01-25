@@ -16,7 +16,7 @@ import java.util.*;
 /**
  * @author Pierre Arvy <pierre.arvy at artelys.com>
  */
-public class VoltagePlanOutput extends AbstractNoThrowOutput {
+public class VoltageProfileOutput extends AbstractNoThrowOutput {
 
     private static final String ELEMENT = "voltages";
     public static final int EXPECTED_COLS = 5;
@@ -24,10 +24,10 @@ public class VoltagePlanOutput extends AbstractNoThrowOutput {
     private static final int V_COLUMN_INDEX = 2;
     private static final int ANGLE_COLUMN_INDEX = 3;
 
-    private final Map<String, Pair<Double, Double>> voltagePlan = new HashMap<>();
+    private final Map<String, Pair<Double, Double>> voltageProfile = new HashMap<>();
 
-    public Map<String, Pair<Double, Double>> getVoltagePlan() {
-        return voltagePlan;
+    public Map<String, Pair<Double, Double>> getVoltageProfile() {
+        return voltageProfile;
     }
 
     @Override
@@ -45,7 +45,7 @@ public class VoltagePlanOutput extends AbstractNoThrowOutput {
         String id = AmplIOUtils.removeQuotes(tokens[ID_COLUMN_INDEX]);
         double v = readDouble(tokens[V_COLUMN_INDEX]);
         double angle = readDouble(tokens[ANGLE_COLUMN_INDEX]);
-        voltagePlan.put(id, Pair.of(v, angle));
+        voltageProfile.put(id, Pair.of(v, angle));
     }
 
     @Override
