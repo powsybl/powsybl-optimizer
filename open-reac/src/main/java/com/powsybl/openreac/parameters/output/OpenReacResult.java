@@ -12,6 +12,8 @@ import com.powsybl.iidm.network.*;
 import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput.ReactiveSlack;
 import org.jgrapht.alg.util.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -22,6 +24,7 @@ import java.util.*;
  */
 public class OpenReacResult {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(OpenReacResult.class);
     private final OpenReacStatus status;
     private final List<ReactiveSlack> reactiveSlacks;
     private final Map<String, String> indicators;
@@ -119,17 +122,18 @@ public class OpenReacResult {
                 .filter(RatioTapChangerHolder::hasRatioTapChanger)
                 .map(RatioTapChangerHolder::getRatioTapChanger)
                 .filter(TapChanger::isRegulating)
-                .forEach(ratioTapChanger -> Optional.ofNullable(ratioTapChanger.getRegulationTerminal().getBusView().getBus()).ifPresentOrElse(
-                    bus -> Optional.ofNullable(voltageProfile.get(bus.getId())).ifPresentOrElse(
-                        busUpdate -> {
-                            double v = busUpdate.getFirst();
-                            ratioTapChanger.setTargetV(v * bus.getVoltageLevel().getNominalV());
-                        }, () -> {
-                            throw new IllegalStateException("Voltage result not found for bus " + bus.getId());
-                        }),
-                    () -> {
-                        throw new IllegalStateException("No bus found for regulating ratio tap changer.");
-                    }));
+                .forEach(ratioTapChanger -> Optional.ofNullable(ratioTapChanger.getRegulationTerminal()).ifPresentOrElse(
+                    regulationTerminal -> Optional.ofNullable(regulationTerminal.getBusView().getBus()).ifPresentOrElse(
+                        bus -> Optional.ofNullable(voltageProfile.get(bus.getId())).ifPresentOrElse(
+                            busUpdate -> {
+                                LOGGER.warn("TODO");
+                                double v = busUpdate.getFirst();
+                                ratioTapChanger.setTargetV(v * bus.getVoltageLevel().getNominalV());
+                            }, () -> {
+                                throw new IllegalStateException("Voltage result not found for bus " + bus.getId());
+                            }),
+                        () -> LOGGER.warn("TODO")),
+                    () -> LOGGER.warn("TODO")));
 
         // update target of shunts regulating voltage
         network.getShuntCompensatorStream()
