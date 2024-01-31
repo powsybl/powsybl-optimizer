@@ -126,29 +126,28 @@ public class OpenReacResult {
                     regulationTerminal -> Optional.ofNullable(regulationTerminal.getBusView().getBus()).ifPresentOrElse(
                         bus -> Optional.ofNullable(voltageProfile.get(bus.getId())).ifPresentOrElse(
                             busUpdate -> {
-                                LOGGER.warn("TODO");
                                 double v = busUpdate.getFirst();
                                 ratioTapChanger.setTargetV(v * bus.getVoltageLevel().getNominalV());
                             }, () -> {
-                                throw new IllegalStateException("Voltage result not found for bus " + bus.getId());
+                                throw new IllegalStateException("Voltage profile not found for bus " + bus.getId());
                             }),
-                        () -> LOGGER.warn("TODO")),
-                    () -> LOGGER.warn("TODO")));
+                        () -> LOGGER.warn("Bus of regulation terminal is null.")),
+                    () -> LOGGER.warn("Regulation terminal of ratio tap changer is null.")));
 
         // update target of shunts regulating voltage
         network.getShuntCompensatorStream()
                 .filter(ShuntCompensator::isVoltageRegulatorOn)
-                .forEach(shuntCompensator -> Optional.ofNullable(shuntCompensator.getRegulatingTerminal().getBusView().getBus()).ifPresentOrElse(
-                    bus -> Optional.ofNullable(voltageProfile.get(bus.getId())).ifPresentOrElse(
-                        busUpdate -> {
-                            double v = busUpdate.getFirst();
-                            shuntCompensator.setTargetV(v * bus.getVoltageLevel().getNominalV());
-                        }, () -> {
-                            throw new IllegalStateException("Voltage result not found for bus " + bus.getId());
-                        }),
-                    () -> {
-                        throw new IllegalStateException("No bus found for regulating shunt compensator " + shuntCompensator.getId());
-                    }));
+                .forEach(shuntCompensator -> Optional.ofNullable(shuntCompensator.getRegulatingTerminal()).ifPresentOrElse(
+                    regulationTerminal -> Optional.ofNullable(regulationTerminal.getBusView().getBus()).ifPresentOrElse(
+                        bus -> Optional.ofNullable(voltageProfile.get(bus.getId())).ifPresentOrElse(
+                            busUpdate -> {
+                                double v = busUpdate.getFirst();
+                                shuntCompensator.setTargetV(v * bus.getVoltageLevel().getNominalV());
+                            }, () -> {
+                                throw new IllegalStateException("Voltage profile not found for bus " + bus.getId());
+                            }),
+                        () -> LOGGER.warn("Bus of regulation terminal is null.")),
+                    () -> LOGGER.warn("Regulating terminal of shunt compensator {} is null.", shuntCompensator.getId())));
 
         // update voltages of the buses
         if (isUpdateNetworkWithVoltages()) {
@@ -160,7 +159,7 @@ public class OpenReacResult {
                         bus.setV(v * bus.getVoltageLevel().getNominalV());
                         bus.setAngle(Math.toDegrees(angle));
                     }, () -> {
-                        throw new IllegalStateException("Bus " + busUpdate.getKey() + " not found in the in the network.");
+                        throw new IllegalStateException("Bus " + busUpdate.getKey() + " not found in network " + network.getId());
                     });
             }
         }

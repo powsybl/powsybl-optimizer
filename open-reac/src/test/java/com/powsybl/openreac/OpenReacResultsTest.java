@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class OpenReacResultsTest {
 
     @Test
-    void testTransformerWithoutVoltageResult() throws IOException {
+    void testTransformerUpdateWithoutVoltageResult() throws IOException {
         Network network = VoltageControlNetworkFactory.createNetworkWithT2wt();
         RatioTapChanger rtc = network.getTwoWindingsTransformer("T2wT").getRatioTapChanger()
                 .setTargetDeadband(0)
@@ -34,11 +34,11 @@ class OpenReacResultsTest {
         OpenReacAmplIOFiles io = getIOWithMockVoltageProfile(network);
         OpenReacResult results = new OpenReacResult(OpenReacStatus.OK, io, new HashMap<>());
         IllegalStateException e = assertThrows(IllegalStateException.class, () -> results.applyAllModifications(network));
-        assertEquals("Voltage result not found for bus " + regulatedBusId, e.getMessage());
+        assertEquals("Voltage profile not found for bus " + regulatedBusId, e.getMessage());
     }
 
     @Test
-    void testTransformerWithNullBus() throws IOException {
+    void testTransformerUpdateWithNullRegulatedBus() throws IOException {
         Network network = VoltageControlNetworkFactory.createNetworkWithT2wt();
         RatioTapChanger rtc = network.getTwoWindingsTransformer("T2wT").getRatioTapChanger()
                 .setTargetDeadband(0)
@@ -47,12 +47,17 @@ class OpenReacResultsTest {
 
         OpenReacAmplIOFiles io = getIOWithMockVoltageProfile(network);
         OpenReacResult results = new OpenReacResult(OpenReacStatus.OK, io, new HashMap<>());
-        IllegalStateException e = assertThrows(IllegalStateException.class, () -> results.applyAllModifications(network));
-        assertEquals("No bus found for regulating ratio tap changer.", e.getMessage());
+
+        // apply results without warm start
+        results.setUpdateNetworkWithVoltages(false);
+        results.applyAllModifications(network);
+
+        // target V not updated
+        assertEquals(33, rtc.getTargetV());
     }
 
     @Test
-    void testShuntWithoutVoltageResult() throws IOException {
+    void testShuntUpdateWithoutVoltageResult() throws IOException {
         Network network = ShuntNetworkFactory.create();
         ShuntCompensator shunt = network.getShuntCompensator("SHUNT");
         String regulatedBusId = shunt.getRegulatingTerminal().getBusView().getBus().getId();
@@ -60,19 +65,24 @@ class OpenReacResultsTest {
         OpenReacAmplIOFiles io = getIOWithMockVoltageProfile(network);
         OpenReacResult results = new OpenReacResult(OpenReacStatus.OK, io, new HashMap<>());
         IllegalStateException e = assertThrows(IllegalStateException.class, () -> results.applyAllModifications(network));
-        assertEquals("Voltage result not found for bus " + regulatedBusId, e.getMessage());
+        assertEquals("Voltage profile not found for bus " + regulatedBusId, e.getMessage());
     }
 
     @Test
-    void testShuntWithNullBus() throws IOException {
+    void testShuntUpdateWithNullRegulatedBus() throws IOException {
         Network network = ShuntNetworkFactory.create();
         ShuntCompensator shunt = network.getShuntCompensator("SHUNT");
         shunt.getRegulatingTerminal().disconnect();
 
         OpenReacAmplIOFiles io = getIOWithMockVoltageProfile(network);
         OpenReacResult results = new OpenReacResult(OpenReacStatus.OK, io, new HashMap<>());
-        IllegalStateException e = assertThrows(IllegalStateException.class, () -> results.applyAllModifications(network));
-        assertEquals("No bus found for regulating shunt compensator " + shunt.getId(), e.getMessage());
+
+        // apply results without warm start
+        results.setUpdateNetworkWithVoltages(false);
+        results.applyAllModifications(network);
+
+        // target V not updated
+        assertEquals(393, shunt.getTargetV());
     }
 
     @Test
@@ -82,7 +92,7 @@ class OpenReacResultsTest {
         String idBusNotFound = io.getVoltageProfileOutput().getVoltageProfile().keySet().iterator().next();
         OpenReacResult results = new OpenReacResult(OpenReacStatus.OK, io, new HashMap<>());
         IllegalStateException e = assertThrows(IllegalStateException.class, () -> results.applyAllModifications(network));
-        assertEquals("Bus " + idBusNotFound + " not found in the in the network.", e.getMessage());
+        assertEquals("Bus " + idBusNotFound + " not found in network " + network.getId(), e.getMessage());
     }
 
     private OpenReacAmplIOFiles getIOWithMockVoltageProfile(Network network) throws IOException {
