@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class VoltageProfileOutputTest {
 
@@ -34,5 +34,13 @@ class VoltageProfileOutputTest {
                     () -> assertEquals(0.11, busVoltage3.getSecond())
             );
         }
+    }
+
+    @Test
+    void testErrorState() {
+        VoltageProfileOutput output = new VoltageProfileOutput();
+        boolean throwOnMissingFile = output.throwOnMissingFile();
+        assertFalse(throwOnMissingFile);
+        assertTrue(output.isErrorState());
     }
 }
