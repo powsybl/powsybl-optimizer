@@ -9,7 +9,9 @@ package com.powsybl.openreac.parameters;
 import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.ampl.executor.AmplOutputFile;
 import com.powsybl.ampl.executor.AmplParameters;
+import com.powsybl.commons.reporter.Reporter;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.openreac.Reports;
 import com.powsybl.openreac.parameters.input.*;
 import com.powsybl.openreac.parameters.input.algo.AlgorithmInput;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
@@ -44,7 +46,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
     private final VoltageProfileOutput voltageProfileOutput;
     private final boolean debug;
 
-    public OpenReacAmplIOFiles(OpenReacParameters params, Network network, boolean debug) {
+    public OpenReacAmplIOFiles(OpenReacParameters params, Network network, boolean debug, Reporter reporter) {
         //inputs
         this.constantQGenerators = new ConstantQGenerators(params.getConstantQGenerators());
         this.variableShuntCompensators = new VariableShuntCompensators(params.getVariableShuntCompensators());
@@ -59,6 +61,10 @@ public class OpenReacAmplIOFiles implements AmplParameters {
         this.voltageProfileOutput = new VoltageProfileOutput();
 
         this.debug = debug;
+
+        Reports.reportConstantQGeneratorsSize(reporter, params.getConstantQGenerators().size());
+        Reports.reportVariableTwoWindingsTransformersSize(reporter, params.getVariableTwoWindingsTransformers().size());
+        Reports.reportVariableShuntCompensatorsSize(reporter, params.getVariableShuntCompensators().size());
     }
 
     public ReactiveSlackOutput getReactiveSlackOutput() {
