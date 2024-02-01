@@ -7,6 +7,7 @@
 package com.powsybl.openreac.parameters.output;
 
 import com.powsybl.iidm.modification.*;
+import com.powsybl.iidm.modification.tapchanger.AbstractTapPositionModification;
 import com.powsybl.iidm.modification.tapchanger.RatioTapPositionModification;
 import com.powsybl.iidm.network.*;
 import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
@@ -117,37 +118,41 @@ public class OpenReacResult {
             modif.apply(network);
         }
 
-        // update target of ratio tap changers regulating voltage
-        network.getTwoWindingsTransformerStream()
-                .filter(RatioTapChangerHolder::hasRatioTapChanger)
-                .map(RatioTapChangerHolder::getRatioTapChanger)
-                .filter(TapChanger::isRegulating)
-                .forEach(ratioTapChanger -> Optional.ofNullable(ratioTapChanger.getRegulationTerminal()).ifPresentOrElse(
-                    regulationTerminal -> Optional.ofNullable(regulationTerminal.getBusView().getBus()).ifPresentOrElse(
-                        bus -> Optional.ofNullable(voltageProfile.get(bus.getId())).ifPresentOrElse(
-                            busUpdate -> {
-                                double v = busUpdate.getFirst();
-                                ratioTapChanger.setTargetV(v * bus.getVoltageLevel().getNominalV());
-                            }, () -> {
-                                throw new IllegalStateException("Voltage profile not found for bus " + bus.getId());
-                            }),
-                        () -> LOGGER.warn("Bus of regulation terminal is null.")),
-                    () -> LOGGER.warn("Regulation terminal of ratio tap changer is null.")));
+        // update target of ratio tap changers specified as variable by user
+        getTapPositionModifications().stream()
+                                        .map(AbstractTapPositionModification::getTransformerId)
+                                        .forEach(transformerId -> Optional.ofNullable(network.getTwoWindingsTransformer(transformerId)).ifPresentOrElse(
+                                            transformer -> Optional.ofNullable(transformer.getRatioTapChanger()).ifPresentOrElse(
+                                                ratioTapChanger -> Optional.ofNullable(ratioTapChanger.getRegulationTerminal()).ifPresentOrElse(
+                                                    regulationTerminal -> Optional.ofNullable(regulationTerminal.getBusView().getBus()).ifPresentOrElse(
+                                                        bus -> Optional.ofNullable(voltageProfile.get(bus.getId())).ifPresentOrElse(
+                                                            busUpdate -> {
+                                                                double v = busUpdate.getFirst();
+                                                                ratioTapChanger.setTargetV(v * bus.getVoltageLevel().getNominalV());
+                                                            }, () -> {
+                                                                throw new IllegalStateException("Voltage profile not found for bus " + bus.getId());
+                                                            }),
+                                                        () -> LOGGER.warn("Bus of regulation terminal is null.")),
+                                                    () -> LOGGER.warn("Regulation terminal of ratio tap changer is null.")),
+                                                () -> LOGGER.warn("Transformer {} has no ratio tap changer", transformerId)),
+                                            () -> LOGGER.warn("Network {} has no transformer with id {}", network.getId(), transformerId)));
 
-        // update target of shunts regulating voltage
-        network.getShuntCompensatorStream()
-                .filter(ShuntCompensator::isVoltageRegulatorOn)
-                .forEach(shuntCompensator -> Optional.ofNullable(shuntCompensator.getRegulatingTerminal()).ifPresentOrElse(
-                    regulationTerminal -> Optional.ofNullable(regulationTerminal.getBusView().getBus()).ifPresentOrElse(
-                        bus -> Optional.ofNullable(voltageProfile.get(bus.getId())).ifPresentOrElse(
-                            busUpdate -> {
-                                double v = busUpdate.getFirst();
-                                shuntCompensator.setTargetV(v * bus.getVoltageLevel().getNominalV());
-                            }, () -> {
-                                throw new IllegalStateException("Voltage profile not found for bus " + bus.getId());
-                            }),
-                        () -> LOGGER.warn("Bus of regulation terminal is null.")),
-                    () -> LOGGER.warn("Regulating terminal of shunt compensator {} is null.", shuntCompensator.getId())));
+        // update target of shunts specified as variable by user
+        getShuntsModifications().stream()
+                                .map(ShuntCompensatorModification::getShuntCompensatorId)
+                                .forEach(id -> Optional.ofNullable(network.getShuntCompensator(id)).ifPresentOrElse(
+                                    shuntCompensator -> Optional.ofNullable(shuntCompensator.getRegulatingTerminal()).ifPresentOrElse(
+                                        regulationTerminal -> Optional.ofNullable(regulationTerminal.getBusView().getBus()).ifPresentOrElse(
+                                            bus -> Optional.ofNullable(voltageProfile.get(bus.getId())).ifPresentOrElse(
+                                                busUpdate -> {
+                                                    double v = busUpdate.getFirst();
+                                                    shuntCompensator.setTargetV(v * bus.getVoltageLevel().getNominalV());
+                                                }, () -> {
+                                                    throw new IllegalStateException("Voltage profile not found for bus " + bus.getId());
+                                                }),
+                                            () -> LOGGER.warn("Bus of regulation terminal is null.")),
+                                        () -> LOGGER.warn("Regulating terminal of shunt compensator {} is null.", id)),
+                                    () -> LOGGER.warn("Network {} has no shunt compensator with id {}", network.getId(), id)));
 
         // update voltages of the buses
         if (isUpdateNetworkWithVoltages()) {
