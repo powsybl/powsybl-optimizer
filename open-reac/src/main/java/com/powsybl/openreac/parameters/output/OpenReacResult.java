@@ -127,8 +127,10 @@ public class OpenReacResult {
                                                     regulationTerminal -> Optional.ofNullable(regulationTerminal.getBusView().getBus()).ifPresentOrElse(
                                                         bus -> Optional.ofNullable(voltageProfile.get(bus.getId())).ifPresentOrElse(
                                                             busUpdate -> {
-                                                                double v = busUpdate.getFirst();
-                                                                ratioTapChanger.setTargetV(v * bus.getVoltageLevel().getNominalV());
+                                                                if (!Double.isNaN(ratioTapChanger.getTargetV())) {
+                                                                    double v = busUpdate.getFirst();
+                                                                    ratioTapChanger.setTargetV(v * bus.getVoltageLevel().getNominalV());
+                                                                }
                                                             }, () -> {
                                                                 throw new IllegalStateException("Voltage profile not found for bus " + bus.getId());
                                                             }),
@@ -145,8 +147,10 @@ public class OpenReacResult {
                                         regulationTerminal -> Optional.ofNullable(regulationTerminal.getBusView().getBus()).ifPresentOrElse(
                                             bus -> Optional.ofNullable(voltageProfile.get(bus.getId())).ifPresentOrElse(
                                                 busUpdate -> {
-                                                    double v = busUpdate.getFirst();
-                                                    shuntCompensator.setTargetV(v * bus.getVoltageLevel().getNominalV());
+                                                    if (!Double.isNaN(shuntCompensator.getTargetV())) {
+                                                        double v = busUpdate.getFirst();
+                                                        shuntCompensator.setTargetV(v * bus.getVoltageLevel().getNominalV());
+                                                    }
                                                 }, () -> {
                                                     throw new IllegalStateException("Voltage profile not found for bus " + bus.getId());
                                                 }),
