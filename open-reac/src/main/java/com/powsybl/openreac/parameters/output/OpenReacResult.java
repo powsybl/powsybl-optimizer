@@ -120,37 +120,38 @@ public class OpenReacResult {
 
         // update target of ratio tap changers specified as variable by user
         getTapPositionModifications().stream()
-                                        .map(AbstractTapPositionModification::getTransformerId)
-                                        .map(network::getTwoWindingsTransformer)
-                                        .forEach(transformer -> Optional.ofNullable(transformer.getRatioTapChanger()).ifPresentOrElse(
-                                            ratioTapChanger -> Optional.ofNullable(ratioTapChanger.getRegulationTerminal()).ifPresentOrElse(
-                                                regulationTerminal -> Optional.ofNullable(regulationTerminal.getBusView().getBus()).ifPresentOrElse(
-                                                    bus -> Optional.ofNullable(voltageProfile.get(bus.getId())).ifPresentOrElse(
-                                                        busUpdate -> {
-                                                            double v = busUpdate.getFirst();
-                                                            ratioTapChanger.setTargetV(v * bus.getVoltageLevel().getNominalV());
-                                                        }, () -> {
-                                                            throw new IllegalStateException("Voltage profile not found for bus " + bus.getId());
-                                                        }),
-                                                    () -> LOGGER.warn("Bus of regulation terminal is null.")),
-                                                () -> LOGGER.warn("Regulation terminal of ratio tap changer is null.")),
-                                            () -> LOGGER.warn("Transformer {} has no ratio tap changer.", transformer.getId())));
+                .map(AbstractTapPositionModification::getTransformerId)
+                .map(network::getTwoWindingsTransformer)
+                .forEach(transformer -> {
+                    RatioTapChanger ratioTapChanger = transformer.getRatioTapChanger();
+                    if (ratioTapChanger != null) {
+                        Optional<Bus> bus = getRegulatingBus(ratioTapChanger.getRegulationTerminal(), transformer.getId());
+                        bus.ifPresent(b -> {
+                            Pair<Double, Double> busUpdate = voltageProfile.get(b.getId());
+                            if (busUpdate != null) {
+                                ratioTapChanger.setTargetV(busUpdate.getFirst() * b.getVoltageLevel().getNominalV());
+                            } else {
+                                throw new IllegalStateException("Voltage profile not found for bus " + b.getId());
+                            }
+                        });
+                    }
+                });
 
         // update target of shunts specified as variable by user
         getShuntsModifications().stream()
-                                .map(ShuntCompensatorModification::getShuntCompensatorId)
-                                .map(network::getShuntCompensator)
-                                .forEach(shuntCompensator -> Optional.ofNullable(shuntCompensator.getRegulatingTerminal()).ifPresentOrElse(
-                                    regulationTerminal -> Optional.ofNullable(regulationTerminal.getBusView().getBus()).ifPresentOrElse(
-                                        bus -> Optional.ofNullable(voltageProfile.get(bus.getId())).ifPresentOrElse(
-                                            busUpdate -> {
-                                                double v = busUpdate.getFirst();
-                                                shuntCompensator.setTargetV(v * bus.getVoltageLevel().getNominalV());
-                                            }, () -> {
-                                                throw new IllegalStateException("Voltage profile not found for bus " + bus.getId());
-                                            }),
-                                        () -> LOGGER.warn("Bus of regulation terminal is null.")),
-                                    () -> LOGGER.warn("Regulating terminal of shunt compensator {} is null.", shuntCompensator.getId())));
+                .map(ShuntCompensatorModification::getShuntCompensatorId)
+                .map(network::getShuntCompensator)
+                .forEach(shunt -> {
+                    Optional<Bus> bus = getRegulatingBus(shunt.getRegulatingTerminal(), shunt.getId());
+                    bus.ifPresent(b -> {
+                        Pair<Double, Double> busUpdate = voltageProfile.get(b.getId());
+                        if (busUpdate != null) {
+                            shunt.setTargetV(busUpdate.getFirst() * b.getVoltageLevel().getNominalV());
+                        } else {
+                            throw new IllegalStateException("Voltage profile not found for bus " + b.getId());
+                        }
+                    });
+                });
 
         // update voltages of the buses
         if (isUpdateNetworkWithVoltages()) {
@@ -166,5 +167,18 @@ public class OpenReacResult {
                     });
             }
         }
+    }
+
+    Optional<Bus> getRegulatingBus(Terminal terminal, String elementId) {
+        if (terminal == null) {
+            LOGGER.warn("Regulating terminal of element {} is null.", elementId);
+            return Optional.empty();
+        }
+        Bus bus = terminal.getBusView().getBus();
+        if (bus == null) {
+            LOGGER.warn("Bus of regulating terminal of element {} is null.", elementId);
+            return Optional.empty();
+        }
+        return Optional.ofNullable(bus);
     }
 }
