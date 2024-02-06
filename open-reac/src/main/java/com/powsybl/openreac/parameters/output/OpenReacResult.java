@@ -7,15 +7,16 @@
 package com.powsybl.openreac.parameters.output;
 
 import com.powsybl.iidm.modification.*;
+import com.powsybl.iidm.modification.tapchanger.AbstractTapPositionModification;
 import com.powsybl.iidm.modification.tapchanger.RatioTapPositionModification;
-import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.*;
 import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput.ReactiveSlack;
+import org.jgrapht.alg.util.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * OpenReac user interface to get results information.
@@ -24,6 +25,7 @@ import java.util.Objects;
  */
 public class OpenReacResult {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(OpenReacResult.class);
     private final OpenReacStatus status;
     private final List<ReactiveSlack> reactiveSlacks;
     private final Map<String, String> indicators;
@@ -32,6 +34,8 @@ public class OpenReacResult {
     private final List<VscConverterStationModification> vscModifications;
     private final List<StaticVarCompensatorModification> svcModifications;
     private final List<RatioTapPositionModification> tapPositionModifications;
+    private final HashMap<String, Pair<Double, Double>> voltageProfile;
+    private boolean updateNetworkWithVoltages = true;
 
     /**
      * @param status      the final status of the OpenReac run.
@@ -48,6 +52,7 @@ public class OpenReacResult {
         this.vscModifications = List.copyOf(amplIOFiles.getNetworkModifications().getVscModifications());
         this.svcModifications = List.copyOf(amplIOFiles.getNetworkModifications().getSvcModifications());
         this.tapPositionModifications = List.copyOf(amplIOFiles.getNetworkModifications().getTapPositionModifications());
+        this.voltageProfile = new HashMap<>(amplIOFiles.getVoltageProfileOutput().getVoltageProfile());
     }
 
     public OpenReacStatus getStatus() {
@@ -82,7 +87,19 @@ public class OpenReacResult {
         return vscModifications;
     }
 
-    public List<NetworkModification> getAllModifs() {
+    public Map<String, Pair<Double, Double>> getVoltageProfile() {
+        return voltageProfile;
+    }
+
+    public boolean isUpdateNetworkWithVoltages() {
+        return updateNetworkWithVoltages;
+    }
+
+    public void setUpdateNetworkWithVoltages(boolean updateNetworkWithVoltages) {
+        this.updateNetworkWithVoltages = updateNetworkWithVoltages;
+    }
+
+    public List<NetworkModification> getAllNetworkModifications() {
         List<NetworkModification> modifs = new ArrayList<>(getGeneratorModifications().size() +
             getShuntsModifications().size() +
             getSvcModifications().size() +
@@ -97,8 +114,71 @@ public class OpenReacResult {
     }
 
     public void applyAllModifications(Network network) {
-        for (NetworkModification modif : getAllModifs()) {
+        for (NetworkModification modif : getAllNetworkModifications()) {
             modif.apply(network);
         }
+
+        // update target of ratio tap changers specified as variable by user
+        getTapPositionModifications().stream()
+                .map(AbstractTapPositionModification::getTransformerId)
+                .map(network::getTwoWindingsTransformer)
+                .forEach(transformer -> {
+                    RatioTapChanger ratioTapChanger = transformer.getRatioTapChanger();
+                    if (ratioTapChanger != null) {
+                        Optional<Bus> bus = getRegulatingBus(ratioTapChanger.getRegulationTerminal(), transformer.getId());
+                        bus.ifPresent(b -> {
+                            Pair<Double, Double> busUpdate = voltageProfile.get(b.getId());
+                            if (busUpdate != null) {
+                                ratioTapChanger.setTargetV(busUpdate.getFirst() * b.getVoltageLevel().getNominalV());
+                            } else {
+                                throw new IllegalStateException("Voltage profile not found for bus " + b.getId());
+                            }
+                        });
+                    }
+                });
+
+        // update target of shunts specified as variable by user
+        getShuntsModifications().stream()
+                .map(ShuntCompensatorModification::getShuntCompensatorId)
+                .map(network::getShuntCompensator)
+                .forEach(shunt -> {
+                    Optional<Bus> bus = getRegulatingBus(shunt.getRegulatingTerminal(), shunt.getId());
+                    bus.ifPresent(b -> {
+                        Pair<Double, Double> busUpdate = voltageProfile.get(b.getId());
+                        if (busUpdate != null) {
+                            shunt.setTargetV(busUpdate.getFirst() * b.getVoltageLevel().getNominalV());
+                        } else {
+                            throw new IllegalStateException("Voltage profile not found for bus " + b.getId());
+                        }
+                    });
+                });
+
+        // update voltages of the buses
+        if (isUpdateNetworkWithVoltages()) {
+            for (var busUpdate : voltageProfile.entrySet()) {
+                Optional.ofNullable(network.getBusView().getBus(busUpdate.getKey())).ifPresentOrElse(
+                    bus -> {
+                        double v = busUpdate.getValue().getFirst();
+                        double angle = busUpdate.getValue().getSecond();
+                        bus.setV(v * bus.getVoltageLevel().getNominalV());
+                        bus.setAngle(Math.toDegrees(angle));
+                    }, () -> {
+                        throw new IllegalStateException("Bus " + busUpdate.getKey() + " not found in network " + network.getId());
+                    });
+            }
+        }
+    }
+
+    Optional<Bus> getRegulatingBus(Terminal terminal, String elementId) {
+        if (terminal == null) {
+            LOGGER.warn("Regulating terminal of element {} is null.", elementId);
+            return Optional.empty();
+        }
+        Bus bus = terminal.getBusView().getBus();
+        if (bus == null) {
+            LOGGER.warn("Bus of regulating terminal of element {} is null.", elementId);
+            return Optional.empty();
+        }
+        return Optional.ofNullable(bus);
     }
 }

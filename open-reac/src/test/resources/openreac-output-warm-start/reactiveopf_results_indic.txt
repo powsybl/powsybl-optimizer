@@ -1,18 +1,18 @@
 final_status OK
 dcopf_status OK
 
-ctime_start 'Wed Jan 10 12:32:01 2024'
+ctime_start 'Thu Jan 11 15:12:16 2024'
 last_solve_result_num 0
-nb_iter_last 4
-nb_iter_total 4
-_ampl_elapsed_time 0.125000
+nb_iter_last 5
+nb_iter_total 5
+_ampl_elapsed_time 0.047000
 _total_solve_time 0.031250
 total_time 0
 
 operatingSystem windows
 OS 'Windows_NT'
 COMPUTERNAME 'ARTELYS-PC253'
-directory 'C:\Users\parvy\AppData\Local\Temp\ampl_4525712114905560758'
+directory 'C:\Users\parvy\AppData\Local\Temp\ampl_1724309836662612364'
 
 log_level_ampl INFO
 log_level_knitro 2
@@ -57,8 +57,8 @@ nb_shunt_in_data_file 0
 nb_shunt_connectable_or_in_AC_CC 0
 nb_shunt_with_fixed_value 0
 nb_shunt_with_variable_value 0
-nb_transformers_with_variable_ratio 1
-nb_transformers_with_fixed_ratio 0
+nb_transformers_with_variable_ratio 0
+nb_transformers_with_fixed_ratio 1
 nb_svc_in_data_file 0
 nb_svc_in_AC_CC 0
 nb_svc_up_and_operating 0
@@ -77,7 +77,7 @@ min_teta_dc -0.05
 min_teta_ac -0.08
 teta_min -3.05
 max_delta_teta_dc 0.045914
-max_delta_teta_ac 0.081648
+max_delta_teta_ac 0.081650
 min_delta_teta_dc 0.009298
 min_delta_teta_ac 0.014293
 
