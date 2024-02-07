@@ -9,6 +9,9 @@ package com.powsybl.openreac;
 import com.powsybl.commons.reporter.Report;
 import com.powsybl.commons.reporter.Reporter;
 import com.powsybl.commons.reporter.TypedValue;
+import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
+
+import java.util.Map;
 
 /**
  * @author Joris Mancini <joris.mancini_externe at rte-france.com>
@@ -19,14 +22,21 @@ public final class Reports {
         // Should not be instantiated
     }
 
-    public static Reporter createVoltageInitReporter(Reporter reporter, String networkId) {
-        return reporter.createSubReporter("voltageInit", "Voltage init on network '${networkId}'", "networkId", networkId);
+    public static Reporter createOpenReacReporter(Reporter reporter, String networkId, OpenReacOptimisationObjective objective) {
+        return reporter.createSubReporter(
+            "openReac",
+            "Open Reac on network '${networkId}' with ${objective} objective",
+            Map.of(
+                "networkId", new TypedValue(networkId, TypedValue.UNTYPED),
+                "objective", new TypedValue(objective.toString(), TypedValue.UNTYPED)
+            )
+        );
     }
 
     public static void reportConstantQGeneratorsSize(Reporter reporter, int constantQGeneratorsSize) {
         reporter.report(Report.builder()
             .withKey("constantQGeneratorsSize")
-            .withDefaultMessage("Reactive power set point is considered fixed for ${size} generators")
+            .withDefaultMessage("Reactive power target is considered fixed for ${size} generators")
             .withSeverity(TypedValue.INFO_SEVERITY)
             .withValue("size", constantQGeneratorsSize)
             .build());
@@ -35,7 +45,7 @@ public final class Reports {
     public static void reportVariableTwoWindingsTransformersSize(Reporter reporter, int variableTwoWindingsTransformersSize) {
         reporter.report(Report.builder()
             .withKey("variableTwoWindingsTransformersSize")
-            .withDefaultMessage("${size} two-windings transformers are considered as variable")
+            .withDefaultMessage("There are ${size} tap positions considered as variable on two-winding transformers")
             .withSeverity(TypedValue.INFO_SEVERITY)
             .withValue("size", variableTwoWindingsTransformersSize)
             .build());
@@ -44,7 +54,7 @@ public final class Reports {
     public static void reportVariableShuntCompensatorsSize(Reporter reporter, int variableShuntCompensatorsSize) {
         reporter.report(Report.builder()
             .withKey("variableShuntCompensatorsSize")
-            .withDefaultMessage("${size} shunt compensators are considered as variable")
+            .withDefaultMessage("There are ${size} shunt sections considered as variable on shunt compensators")
             .withSeverity(TypedValue.INFO_SEVERITY)
             .withValue("size", variableShuntCompensatorsSize)
             .build());

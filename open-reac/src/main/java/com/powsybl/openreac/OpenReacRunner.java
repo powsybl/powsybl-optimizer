@@ -64,7 +64,7 @@ public final class OpenReacRunner {
     public static OpenReacResult run(Network network, String variantId, OpenReacParameters parameters, OpenReacConfig config, ComputationManager manager, Reporter reporter) {
         checkParameters(network, variantId, parameters, config, manager, reporter);
         AmplModel reactiveOpf = OpenReacModel.buildModel();
-        OpenReacAmplIOFiles amplIoInterface = new OpenReacAmplIOFiles(parameters, network, config.isDebug(), Reports.createVoltageInitReporter(reporter, network.getId()));
+        OpenReacAmplIOFiles amplIoInterface = new OpenReacAmplIOFiles(parameters, network, config.isDebug(), Reports.createOpenReacReporter(reporter, network.getId(), parameters.getObjective()));
         AmplResults run = AmplModelRunner.run(network, variantId, reactiveOpf, manager, amplIoInterface);
         return new OpenReacResult(run.isSuccess() && amplIoInterface.checkErrors() ? OpenReacStatus.OK : OpenReacStatus.NOT_OK,
                 amplIoInterface, run.getIndicators());
@@ -94,7 +94,7 @@ public final class OpenReacRunner {
     public static CompletableFuture<OpenReacResult> runAsync(Network network, String variantId, OpenReacParameters parameters, OpenReacConfig config, ComputationManager manager, Reporter reporter) {
         checkParameters(network, variantId, parameters, config, manager, reporter);
         AmplModel reactiveOpf = OpenReacModel.buildModel();
-        OpenReacAmplIOFiles amplIoInterface = new OpenReacAmplIOFiles(parameters, network, config.isDebug(), Reports.createVoltageInitReporter(reporter, network.getId()));
+        OpenReacAmplIOFiles amplIoInterface = new OpenReacAmplIOFiles(parameters, network, config.isDebug(), Reports.createOpenReacReporter(reporter, network.getId(), parameters.getObjective()));
         CompletableFuture<AmplResults> runAsync = AmplModelRunner.runAsync(network, variantId, reactiveOpf, manager, amplIoInterface);
         return runAsync.thenApply(run -> new OpenReacResult(run.isSuccess() && amplIoInterface.checkErrors() ? OpenReacStatus.OK : OpenReacStatus.NOT_OK,
                 amplIoInterface, run.getIndicators()));
