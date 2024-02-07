@@ -112,7 +112,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
     public boolean isDebug() {
         return debug;
     }
-    
+
     @Override
     public AmplExportConfig getAmplExportConfig() {
         return amplExportConfig;

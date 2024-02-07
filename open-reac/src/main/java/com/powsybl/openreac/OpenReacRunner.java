@@ -6,7 +6,7 @@
  */
 package com.powsybl.openreac;
 
- import com.powsybl.ampl.converter.AmplExportConfig;
+import com.powsybl.ampl.converter.AmplExportConfig;
 import com.powsybl.ampl.executor.AmplModel;
 import com.powsybl.ampl.executor.AmplModelRunner;
 import com.powsybl.ampl.executor.AmplResults;
