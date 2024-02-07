@@ -6,6 +6,7 @@
  */
 package com.powsybl.openreac;
 
+ import com.powsybl.ampl.converter.AmplExportConfig;
 import com.powsybl.ampl.executor.AmplModel;
 import com.powsybl.ampl.executor.AmplModelRunner;
 import com.powsybl.ampl.executor.AmplResults;
@@ -35,7 +36,7 @@ public final class OpenReacRunner {
      * @return All information about the run and possible modifications to apply.
      */
     public static OpenReacResult run(Network network, String variantId, OpenReacParameters parameters) {
-        return run(network, variantId, parameters, new OpenReacConfig(false), LocalComputationManager.getDefault());
+        return run(network, variantId, parameters, new OpenReacConfig(false), LocalComputationManager.getDefault(), null);
     }
 
     /**
@@ -51,9 +52,27 @@ public final class OpenReacRunner {
         Objects.requireNonNull(parameters);
         Objects.requireNonNull(config);
         Objects.requireNonNull(manager);
+        return run(network, variantId, parameters, config, manager, null);
+    }
+
+    /**
+     * Run OpenReac on the given network. It will NOT modify the network.
+     * @param variantId the network variant to use. It will set the variant on the network.
+     * @param parameters Parameters to customize the OpenReac run.
+     * @param config allows debugging
+     * @param amplExportConfig enables tuning of Ampl exporter
+     * @return All information about the run and possible modifications to apply.
+     */
+    public static OpenReacResult run(Network network, String variantId, OpenReacParameters parameters, OpenReacConfig config, ComputationManager manager, AmplExportConfig amplExportConfig) {
+        Objects.requireNonNull(network);
+        Objects.requireNonNull(variantId);
+        Objects.requireNonNull(parameters);
+        Objects.requireNonNull(config);
+        Objects.requireNonNull(manager);
+        Objects.requireNonNull(amplExportConfig);
         parameters.checkIntegrity(network);
         AmplModel reactiveOpf = OpenReacModel.buildModel();
-        OpenReacAmplIOFiles amplIoInterface = new OpenReacAmplIOFiles(parameters, network, config.isDebug());
+        OpenReacAmplIOFiles amplIoInterface = new OpenReacAmplIOFiles(parameters, amplExportConfig, network, config.isDebug());
         AmplResults run = AmplModelRunner.run(network, variantId, reactiveOpf, manager, amplIoInterface);
         return new OpenReacResult(run.isSuccess() && amplIoInterface.checkErrors() ? OpenReacStatus.OK : OpenReacStatus.NOT_OK,
                 amplIoInterface, run.getIndicators());
