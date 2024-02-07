@@ -6,6 +6,7 @@
  */
 package com.powsybl.openreac;
 
+import com.powsybl.ampl.converter.AmplExportConfig;
 import com.powsybl.ampl.executor.AmplModel;
 import com.powsybl.ampl.executor.AmplModelRunner;
 import com.powsybl.ampl.executor.AmplResults;
@@ -33,38 +34,46 @@ public final class OpenReacRunner {
      * Run OpenReac on the given network. It will NOT modify the network.
      *
      * @param variantId  the network variant to use. It will set the variant on the network.
-     * @param parameters Parameters to customize the OpenReac run.
+     * @param parameters parameters to customize the OpenReac run.
      * @return All information about the run and possible modifications to apply.
      */
     public static OpenReacResult run(Network network, String variantId, OpenReacParameters parameters) {
-        return run(network, variantId, parameters, new OpenReacConfig(false), LocalComputationManager.getDefault(), ReportNode.NO_OP);
+        return run(network, variantId, parameters, new OpenReacConfig(false), LocalComputationManager.getDefault(), ReportNode.NO_OP, null);
     }
 
     /**
      * Run OpenReac on the given network. It will NOT modify the network.
      *
      * @param variantId  the network variant to use. It will set the variant on the network.
-     * @param parameters Parameters to customize the OpenReac run.
+     * @param parameters parameters to customize the OpenReac run.
      * @param config     allows debugging
+     * @param manager    the ComputationManager to use
      * @return All information about the run and possible modifications to apply.
      */
     public static OpenReacResult run(Network network, String variantId, OpenReacParameters parameters, OpenReacConfig config, ComputationManager manager) {
-        return run(network, variantId, parameters, config, manager, ReportNode.NO_OP);
+        Objects.requireNonNull(network);
+        Objects.requireNonNull(variantId);
+        Objects.requireNonNull(parameters);
+        Objects.requireNonNull(config);
+        Objects.requireNonNull(manager);
+        return run(network, variantId, parameters, config, manager, ReportNode.NO_OP, null);
     }
 
     /**
      * Run OpenReac on the given network. It will NOT modify the network.
      *
-     * @param variantId  the network variant to use. It will set the variant on the network.
-     * @param parameters Parameters to customize the OpenReac run.
-     * @param config     allows debugging
-     * @param reportNode   aggregates functional logging
-     * @return All information about the run and possible modifications to apply.
+     * @param variantId         the network variant to use. It will set the variant on the network.
+     * @param parameters        parameters to customize the OpenReac run.
+     * @param config            allows debugging
+     * @param manager           the ComputationManager to use
+     * @param reportNode        aggregates functional logging
+     * @param amplExportConfig  enables tuning of Ampl exporter
+     * @return All information  about the run and possible modifications to apply.
      */
-    public static OpenReacResult run(Network network, String variantId, OpenReacParameters parameters, OpenReacConfig config, ComputationManager manager, ReportNode reportNode) {
+    public static OpenReacResult run(Network network, String variantId, OpenReacParameters parameters, OpenReacConfig config, ComputationManager manager, ReportNode reportNode, AmplExportConfig amplExportConfig) {
         checkParameters(network, variantId, parameters, config, manager, reportNode);
         AmplModel reactiveOpf = OpenReacModel.buildModel();
-        OpenReacAmplIOFiles amplIoInterface = new OpenReacAmplIOFiles(parameters, network, config.isDebug(), Reports.createOpenReacReporter(reportNode, network.getId(), parameters.getObjective()));
+        OpenReacAmplIOFiles amplIoInterface = new OpenReacAmplIOFiles(parameters, amplExportConfig, network, config.isDebug(), Reports.createOpenReacReporter(reportNode, network.getId(), parameters.getObjective()));
         AmplResults run = AmplModelRunner.run(network, variantId, reactiveOpf, manager, amplIoInterface);
         return new OpenReacResult(run.isSuccess() && amplIoInterface.checkErrors() ? OpenReacStatus.OK : OpenReacStatus.NOT_OK,
                 amplIoInterface, run.getIndicators());
@@ -73,28 +82,30 @@ public final class OpenReacRunner {
     /**
      * Run OpenReac on the given network. It will NOT modify the network.
      *
-     * @param variantId  the network variant to use. It will set the variant on the network.
-     * @param parameters Parameters to customize the OpenReac run.
-     * @param config     allows debugging
+     * @param variantId     the network variant to use. It will set the variant on the network.
+     * @param parameters    parameters to customize the OpenReac run.
+     * @param config        allows debugging
+     * @param manager       the ComputationManager to use
      * @return All information about the run and possible modifications to apply.
      */
     public static CompletableFuture<OpenReacResult> runAsync(Network network, String variantId, OpenReacParameters parameters, OpenReacConfig config, ComputationManager manager) {
-        return runAsync(network, variantId, parameters, config, manager, ReportNode.NO_OP);
+        return runAsync(network, variantId, parameters, config, manager, ReportNode.NO_OP, null);
     }
 
     /**
      * Run OpenReac on the given network. It will NOT modify the network.
      *
-     * @param variantId  the network variant to use. It will set the variant on the network.
-     * @param parameters Parameters to customize the OpenReac run.
-     * @param config     allows debugging
-     * @param reportNode   aggregates functional logging
+     * @param variantId         the network variant to use. It will set the variant on the network.
+     * @param parameters        parameters to customize the OpenReac run.
+     * @param config            allows debugging
+     * @param reportNode        aggregates functional logging
+     * @param amplExportConfig  enables tuning of Ampl exporter
      * @return All information about the run and possible modifications to apply.
      */
-    public static CompletableFuture<OpenReacResult> runAsync(Network network, String variantId, OpenReacParameters parameters, OpenReacConfig config, ComputationManager manager, ReportNode reportNode) {
+    public static CompletableFuture<OpenReacResult> runAsync(Network network, String variantId, OpenReacParameters parameters, OpenReacConfig config, ComputationManager manager, ReportNode reportNode, AmplExportConfig amplExportConfig) {
         checkParameters(network, variantId, parameters, config, manager, reportNode);
         AmplModel reactiveOpf = OpenReacModel.buildModel();
-        OpenReacAmplIOFiles amplIoInterface = new OpenReacAmplIOFiles(parameters, network, config.isDebug(), Reports.createOpenReacReporter(reportNode, network.getId(), parameters.getObjective()));
+        OpenReacAmplIOFiles amplIoInterface = new OpenReacAmplIOFiles(parameters, amplExportConfig, network, config.isDebug(), Reports.createOpenReacReporter(reportNode, network.getId(), parameters.getObjective()));
         CompletableFuture<AmplResults> runAsync = AmplModelRunner.runAsync(network, variantId, reactiveOpf, manager, amplIoInterface);
         return runAsync.thenApply(run -> new OpenReacResult(run.isSuccess() && amplIoInterface.checkErrors() ? OpenReacStatus.OK : OpenReacStatus.NOT_OK,
                 amplIoInterface, run.getIndicators()));
