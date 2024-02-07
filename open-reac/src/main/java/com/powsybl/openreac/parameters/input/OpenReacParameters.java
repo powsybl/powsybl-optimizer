@@ -60,35 +60,35 @@ public class OpenReacParameters {
 
     private static final String ALPHA_COEFFICIENT_KEY = "coeff_alpha";
 
-    private double alphaCoefficient = 1.; // in [0;1]
+    private double alphaCoefficient = 1; // in [0;1]
 
-    private static final String ZERO_POWER_THRESHOLD_KEY = "Pnull";
+    private static final String MIN_PLAUSIBLE_ACTIVE_POWER_THRESHOLD_KEY = "Pnull";
 
-    private double zeroPowerThreshold = 0.01; // in MW, for detecting zero value for power
+    private double minPlausibleActivePowerThreshold = 0.01; // in MW, for detecting zero value for power
 
-    private static final String ZERO_IMPEDANCE_THRESHOLD_KEY = "Znull";
+    private static final String LOW_IMPEDANCE_THRESHOLD_KEY = "Znull";
 
-    private double zeroImpedanceThreshold = 1e-4; // in p.u., for detecting null impedance branches
+    private double lowImpedanceThreshold = 1e-4; // in p.u., for detecting null impedance branches
 
     private static final String NOMINAL_THRESHOLD_IGNORED_BUS_KEY = "epsilon_nominal_voltage";
 
-    private double nominalThresholdIgnoredBuses = 1.; // in kV, to ignore buses with Vnom lower than this value
+    private double nominalThresholdIgnoredBuses = 1; // in kV, to ignore buses with Vnom lower than this value
 
     private static final String NOMINAL_THRESHOLD_IGNORED_VOLTAGE_BOUNDS_KEY = "ignore_voltage_bounds";
 
-    private double nominalThresholdIgnoredVoltageBounds = 0.; // in kV, to ignore voltage bounds of buses with Vnom lower than this value
+    private double nominalThresholdIgnoredVoltageBounds = 0; // in kV, to ignore voltage bounds of buses with Vnom lower than this value
 
-    private static final String PQMAX_KEY = "PQmax";
+    private static final String PLAUSIBLE_POWER_LIMIT_KEY = "PQmax";
 
-    private double pQMax = 9000.; // MW
+    private double plausiblePowerLimit = 9000; // MW
 
     private static final String DEFAULT_PMAX_KEY = "defaultPmax";
 
-    private double defaultPMax = 1000.; // MW
+    private double defaultPMax = 1000; // MW
 
     private static final String DEFAULT_PMIN_KEY = "defaultPmin";
 
-    private double defaultPMin = 0.; // MW
+    private double defaultPMin = 0; // MW
 
     private static final String DEFAULT_QMAX_PMAX_RATIO_KEY = "defaultQmaxPmaxRatio";
 
@@ -96,7 +96,7 @@ public class OpenReacParameters {
 
     private static final String DEFAULT_MINIMAL_QP_RANGE_KEY = "minimalQPrange";
 
-    private double defaultMinimalQPRange = 1.;
+    private double defaultMinimalQPRange = 1;
 
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.
@@ -288,27 +288,27 @@ public class OpenReacParameters {
         return this;
     }
 
-    public double getZeroPowerThreshold() {
-        return zeroPowerThreshold;
+    public double getMinPlausibleActivePowerThreshold() {
+        return minPlausibleActivePowerThreshold;
     }
 
-    public OpenReacParameters setZeroPowerThreshold(double zeroPowerThreshold) {
-        if (Double.isNaN(zeroPowerThreshold) || zeroPowerThreshold < 0) {
+    public OpenReacParameters setMinPlausibleActivePowerThreshold(double minPlausibleActivePowerThreshold) {
+        if (Double.isNaN(minPlausibleActivePowerThreshold) || minPlausibleActivePowerThreshold < 0) {
             throw new IllegalArgumentException("Zero power threshold must be defined and >= 0 to be consistent.");
         }
-        this.zeroPowerThreshold = zeroPowerThreshold;
+        this.minPlausibleActivePowerThreshold = minPlausibleActivePowerThreshold;
         return this;
     }
 
-    public double getZeroImpedanceThreshold() {
-        return zeroImpedanceThreshold;
+    public double getLowImpedanceThreshold() {
+        return lowImpedanceThreshold;
     }
 
-    public OpenReacParameters setZeroImpedanceThreshold(double zeroImpedanceThreshold) {
-        if (Double.isNaN(zeroImpedanceThreshold) || zeroImpedanceThreshold < 0) {
+    public OpenReacParameters setLowImpedanceThreshold(double lowImpedanceThreshold) {
+        if (Double.isNaN(lowImpedanceThreshold) || lowImpedanceThreshold < 0) {
             throw new IllegalArgumentException("Zero impedance threshold must be defined and >= 0 to be consistent.");
         }
-        this.zeroImpedanceThreshold = zeroImpedanceThreshold;
+        this.lowImpedanceThreshold = lowImpedanceThreshold;
         return this;
     }
 
@@ -337,14 +337,14 @@ public class OpenReacParameters {
     }
 
     public double getPQMax() {
-        return pQMax;
+        return plausiblePowerLimit;
     }
 
     public OpenReacParameters setPQMax(double pQMax) {
         if (Double.isNaN(pQMax) || pQMax <= 0) {
             throw new IllegalArgumentException("Maximal consistency value for P and Q must be defined and > 0 to be consistent");
         }
-        this.pQMax = pQMax;
+        this.plausiblePowerLimit = pQMax;
         return this;
     }
 
@@ -409,11 +409,11 @@ public class OpenReacParameters {
         allAlgoParams.add(new OpenReacAlgoParamImpl(MAX_PLAUSIBLE_HIGH_VOLTAGE_LIMIT_KEY, Double.toString(maxPlausibleHighVoltageLimit)));
         allAlgoParams.add(reactiveSlackBusesMode.toParam());
         allAlgoParams.add(new OpenReacAlgoParamImpl(ALPHA_COEFFICIENT_KEY, Double.toString(alphaCoefficient)));
-        allAlgoParams.add(new OpenReacAlgoParamImpl(ZERO_POWER_THRESHOLD_KEY, Double.toString(zeroPowerThreshold)));
-        allAlgoParams.add(new OpenReacAlgoParamImpl(ZERO_IMPEDANCE_THRESHOLD_KEY, Double.toString(zeroImpedanceThreshold)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(MIN_PLAUSIBLE_ACTIVE_POWER_THRESHOLD_KEY, Double.toString(minPlausibleActivePowerThreshold)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(LOW_IMPEDANCE_THRESHOLD_KEY, Double.toString(lowImpedanceThreshold)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(NOMINAL_THRESHOLD_IGNORED_BUS_KEY, Double.toString(nominalThresholdIgnoredBuses)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(NOMINAL_THRESHOLD_IGNORED_VOLTAGE_BOUNDS_KEY, Double.toString(nominalThresholdIgnoredVoltageBounds)));
-        allAlgoParams.add(new OpenReacAlgoParamImpl(PQMAX_KEY, Double.toString(pQMax)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(PLAUSIBLE_POWER_LIMIT_KEY, Double.toString(plausiblePowerLimit)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(DEFAULT_PMIN_KEY, Double.toString(defaultPMin)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(DEFAULT_PMAX_KEY, Double.toString(defaultPMax)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(DEFAULT_QMAX_PMAX_RATIO_KEY, Double.toString(defaultQmaxPmaxRatio)));
@@ -493,13 +493,13 @@ public class OpenReacParameters {
             integrityAlgorithmParameters = false;
         }
 
-        if (defaultPMax > pQMax) {
+        if (defaultPMax > plausiblePowerLimit) {
             LOGGER.warn("Default P min = {} and default P max = {} must be lower than PQmax value = {} to be consistent.",
-                    defaultPMin, defaultPMax, pQMax);
+                    defaultPMin, defaultPMax, plausiblePowerLimit);
             integrityAlgorithmParameters = false;
         }
 
-        if (defaultPMax * defaultQmaxPmaxRatio > pQMax) {
+        if (defaultPMax * defaultQmaxPmaxRatio > plausiblePowerLimit) {
             LOGGER.warn("Default Q max value = {} value must be lower than PQmax value to be consistent.",
                     defaultPMax * defaultQmaxPmaxRatio);
             integrityAlgorithmParameters = false;

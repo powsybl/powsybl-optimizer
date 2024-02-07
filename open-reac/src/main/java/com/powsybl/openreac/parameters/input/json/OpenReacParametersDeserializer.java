@@ -94,13 +94,13 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                     parser.nextToken();
                     parameters.setAlphaCoefficient(parser.getValueAsDouble());
                     break;
-                case "zeroPowerThreshold":
+                case "minPlausibleActivePowerThreshold":
                     parser.nextToken();
-                    parameters.setZeroPowerThreshold(parser.getValueAsDouble());
+                    parameters.setMinPlausibleActivePowerThreshold(parser.getValueAsDouble());
                     break;
-                case "zeroImpedanceThreshold":
+                case "lowImpedanceThreshold":
                     parser.nextToken();
-                    parameters.setZeroImpedanceThreshold(parser.getValueAsDouble());
+                    parameters.setLowImpedanceThreshold(parser.getValueAsDouble());
                     break;
                 case "nominalThresholdIgnoredBuses":
                     parser.nextToken();

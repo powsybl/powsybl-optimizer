@@ -135,14 +135,14 @@ public class OpenReacParametersTest {
     @Test
     void testZeroPowerThresholdIntegrity() {
         OpenReacParameters parameters = new OpenReacParameters();
-        parameters.setZeroPowerThreshold(0);
-        assertEquals(0., parameters.getZeroPowerThreshold()); // min value
-        parameters.setZeroPowerThreshold(2.365);
-        assertEquals(2.365, parameters.getZeroPowerThreshold());
+        parameters.setMinPlausibleActivePowerThreshold(0);
+        assertEquals(0., parameters.getMinPlausibleActivePowerThreshold()); // min value
+        parameters.setMinPlausibleActivePowerThreshold(2.365);
+        assertEquals(2.365, parameters.getMinPlausibleActivePowerThreshold());
 
-        IllegalArgumentException e1 = assertThrows(IllegalArgumentException.class, () -> parameters.setZeroPowerThreshold(-1.2));
+        IllegalArgumentException e1 = assertThrows(IllegalArgumentException.class, () -> parameters.setMinPlausibleActivePowerThreshold(-1.2));
         assertEquals("Zero power threshold must be defined and >= 0 to be consistent.", e1.getMessage());
-        IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class, () -> parameters.setZeroPowerThreshold(Double.NaN));
+        IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class, () -> parameters.setMinPlausibleActivePowerThreshold(Double.NaN));
         assertEquals("Zero power threshold must be defined and >= 0 to be consistent.", e2.getMessage());
         assertTrue(parameters.checkAlgorithmParametersIntegrity());
     }
@@ -150,14 +150,14 @@ public class OpenReacParametersTest {
     @Test
     void testZeroImpedanceThresholdIntegrity() {
         OpenReacParameters parameters = new OpenReacParameters();
-        parameters.setZeroImpedanceThreshold(0);
-        assertEquals(0., parameters.getZeroImpedanceThreshold()); // min value
-        parameters.setZeroImpedanceThreshold(1e-5);
-        assertEquals(1e-5, parameters.getZeroImpedanceThreshold());
+        parameters.setLowImpedanceThreshold(0);
+        assertEquals(0., parameters.getLowImpedanceThreshold()); // min value
+        parameters.setLowImpedanceThreshold(1e-5);
+        assertEquals(1e-5, parameters.getLowImpedanceThreshold());
 
-        IllegalArgumentException e1 = assertThrows(IllegalArgumentException.class, () -> parameters.setZeroImpedanceThreshold(-1.2));
+        IllegalArgumentException e1 = assertThrows(IllegalArgumentException.class, () -> parameters.setLowImpedanceThreshold(-1.2));
         assertEquals("Zero impedance threshold must be defined and >= 0 to be consistent.", e1.getMessage());
-        IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class, () -> parameters.setZeroImpedanceThreshold(Double.NaN));
+        IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class, () -> parameters.setLowImpedanceThreshold(Double.NaN));
         assertEquals("Zero impedance threshold must be defined and >= 0 to be consistent.", e2.getMessage());
     }
 
@@ -259,8 +259,8 @@ public class OpenReacParametersTest {
         parameters.setMaxPlausibleHighVoltageLimit(1.2);
         parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL);
         parameters.setAlphaCoefficient(0.56);
-        parameters.setZeroPowerThreshold(0.5);
-        parameters.setZeroImpedanceThreshold(1e-5);
+        parameters.setMinPlausibleActivePowerThreshold(0.5);
+        parameters.setLowImpedanceThreshold(1e-5);
         parameters.setNominalThresholdIgnoredBuses(10);
         parameters.setNominalThresholdIgnoredVoltageBounds(5);
         parameters.setPQMax(8555.3);
@@ -315,8 +315,8 @@ public class OpenReacParametersTest {
         assertEquals(1.5, parameters.getMaxPlausibleHighVoltageLimit());
         assertEquals(ReactiveSlackBusesMode.NO_GENERATION, parameters.getReactiveSlackBusesMode());
         assertEquals(1., parameters.getAlphaCoefficient());
-        assertEquals(0.01, parameters.getZeroPowerThreshold());
-        assertEquals(1e-4, parameters.getZeroImpedanceThreshold());
+        assertEquals(0.01, parameters.getMinPlausibleActivePowerThreshold());
+        assertEquals(1e-4, parameters.getLowImpedanceThreshold());
         assertEquals(1., parameters.getNominalThresholdIgnoredBuses());
         assertEquals(0., parameters.getNominalThresholdIgnoredVoltageBounds());
         assertEquals(9000., parameters.getPQMax());

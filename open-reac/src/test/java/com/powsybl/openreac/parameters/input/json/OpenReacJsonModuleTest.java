@@ -55,8 +55,8 @@ class OpenReacJsonModuleTest {
         parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.CONFIGURED);
         parameters.addConfiguredReactiveSlackBuses(List.of("bus1", "bus2"));
         parameters.setAlphaCoefficient(0.56);
-        parameters.setZeroPowerThreshold(0.5);
-        parameters.setZeroImpedanceThreshold(1e-5);
+        parameters.setMinPlausibleActivePowerThreshold(0.5);
+        parameters.setLowImpedanceThreshold(1e-5);
         parameters.setNominalThresholdIgnoredBuses(10.);
         parameters.setNominalThresholdIgnoredVoltageBounds(5.);
         parameters.setPQMax(8555.3);
@@ -89,8 +89,8 @@ class OpenReacJsonModuleTest {
         assertEquals(ReactiveSlackBusesMode.CONFIGURED, parameters2.getReactiveSlackBusesMode());
         assertEquals(OpenReacOptimisationObjective.MIN_GENERATION, parameters2.getObjective());
         assertEquals(0.56, parameters2.getAlphaCoefficient());
-        assertEquals(0.5, parameters2.getZeroPowerThreshold());
-        assertEquals(1e-5, parameters2.getZeroImpedanceThreshold());
+        assertEquals(0.5, parameters2.getMinPlausibleActivePowerThreshold());
+        assertEquals(1e-5, parameters2.getLowImpedanceThreshold());
         assertEquals(10., parameters2.getNominalThresholdIgnoredBuses());
         assertEquals(5., parameters2.getNominalThresholdIgnoredVoltageBounds());
         assertEquals(8555.3, parameters2.getPQMax());

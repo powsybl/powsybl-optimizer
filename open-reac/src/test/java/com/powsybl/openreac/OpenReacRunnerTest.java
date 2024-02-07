@@ -46,7 +46,6 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
  * @author Nicolas PIERRE <nicolas.pierre at artelys.com>
- * @author Pierre ARVY <pierre.arvy at artelys.com>
  */
 class OpenReacRunnerTest {
     protected FileSystem fileSystem;
@@ -107,8 +106,8 @@ class OpenReacRunnerTest {
                 .setMaxPlausibleHighVoltageLimit(1.3455)
                 .setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL)
                 .setAlphaCoefficient(0.88)
-                .setZeroPowerThreshold(0.45)
-                .setZeroImpedanceThreshold(1e-5)
+                .setMinPlausibleActivePowerThreshold(0.45)
+                .setLowImpedanceThreshold(1e-5)
                 .setNominalThresholdIgnoredBuses(2.)
                 .setNominalThresholdIgnoredVoltageBounds(0.75)
                 .setPQMax(3987.76)
