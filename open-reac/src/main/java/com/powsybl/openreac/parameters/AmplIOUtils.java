@@ -15,7 +15,7 @@ import java.util.Objects;
  */
 public final class AmplIOUtils {
 
-    private static final String QUOTE = "'";
+    private static final String QUOTE = "\"";
 
     public static String addQuotes(String str) {
         return QUOTE + str + QUOTE;

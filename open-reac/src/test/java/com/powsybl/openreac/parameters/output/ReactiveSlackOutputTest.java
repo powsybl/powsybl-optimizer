@@ -23,6 +23,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class ReactiveSlackOutputTest {
 
     @Test
+    void testReactiveSlack() {
+        ReactiveSlackOutput.ReactiveSlack reactiveSlack = new ReactiveSlackOutput.ReactiveSlack("busId", "vlId", 10);
+        assertEquals("busId", reactiveSlack.getBusId());
+        assertEquals("vlId", reactiveSlack.getVoltageLevelId());
+        assertEquals(10, reactiveSlack.getSlack());
+    }
+
+    @Test
     void readTest() throws IOException {
         ReactiveSlackOutput output = new ReactiveSlackOutput();
         try (InputStream input = getClass().getResourceAsStream("/mock_outputs/reactiveopf_results_reactive_slacks.csv");

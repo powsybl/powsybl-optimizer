@@ -16,13 +16,13 @@ import com.powsybl.iidm.network.Network;
  */
 public class GeneratorNetworkOutput extends AbstractNetworkOutput<GeneratorModification> {
     private static final String ELEMENT = "generators";
+    public static final int EXPECTED_COLS = 9;
     private static final int ID_COLUMN_INDEX = 1;
     private static final int TARGET_V_COLUMN_INDEX = 4;
     private static final int TARGET_Q_COLUMN_INDEX = 6;
-    private final Network network;
 
     public GeneratorNetworkOutput(Network network) {
-        this.network = network;
+        super(network);
     }
 
     @Override
@@ -31,10 +31,15 @@ public class GeneratorNetworkOutput extends AbstractNetworkOutput<GeneratorModif
     }
 
     @Override
-    protected GeneratorModification doReadLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
+    public int getExpectedColumns() {
+        return EXPECTED_COLS;
+    }
+
+    @Override
+    protected void readLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
         String id = stringToIntMapper.getId(AmplSubset.GENERATOR, Integer.parseInt(tokens[ID_COLUMN_INDEX]));
-        double targetV = Double.parseDouble(tokens[TARGET_V_COLUMN_INDEX]) * network.getGenerator(id).getRegulatingTerminal().getVoltageLevel().getNominalV();
-        double targetQ = Double.parseDouble(tokens[TARGET_Q_COLUMN_INDEX]);
+        double targetV = readDouble(tokens[TARGET_V_COLUMN_INDEX]) * network.getGenerator(id).getRegulatingTerminal().getVoltageLevel().getNominalV();
+        double targetQ = readDouble(tokens[TARGET_Q_COLUMN_INDEX]);
 
         GeneratorModification.Modifs modifs = new GeneratorModification.Modifs();
         if (targetQ != network.getGenerator(id).getTargetQ()) {
@@ -43,6 +48,6 @@ public class GeneratorNetworkOutput extends AbstractNetworkOutput<GeneratorModif
         if (targetV != network.getGenerator(id).getTargetV()) {
             modifs.setTargetV(targetV);
         }
-        return new GeneratorModification(id, modifs);
+        modifications.add(new GeneratorModification(id, modifs));
     }
 }

@@ -18,12 +18,12 @@ import com.powsybl.iidm.network.TwoWindingsTransformer;
  */
 public class TapPositionNetworkOutput extends AbstractNetworkOutput<RatioTapPositionModification> {
     private static final String ELEMENT = "rtc";
+    public static final int EXPECTED_COLS = 3;
     private static final int TRANSFO_ID_COLUMN_INDEX = 1;
     private static final int TAP_POS_COLUMN_INDEX = 2;
-    private final Network network;
 
     public TapPositionNetworkOutput(Network network) {
-        this.network = network;
+        super(network);
     }
 
     @Override
@@ -32,7 +32,12 @@ public class TapPositionNetworkOutput extends AbstractNetworkOutput<RatioTapPosi
     }
 
     @Override
-    protected RatioTapPositionModification doReadLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
+    public int getExpectedColumns() {
+        return EXPECTED_COLS;
+    }
+
+    @Override
+    protected void readLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
         String transfoId = stringToIntMapper.getId(AmplSubset.BRANCH, Integer.parseInt(tokens[TRANSFO_ID_COLUMN_INDEX]));
         TwoWindingsTransformer twt = network.getTwoWindingsTransformer(transfoId);
         if (twt == null || !twt.hasRatioTapChanger()) {
@@ -40,6 +45,6 @@ public class TapPositionNetworkOutput extends AbstractNetworkOutput<RatioTapPosi
         }
         int tapPosition = -1 + twt.getRatioTapChanger().getLowTapPosition()
             + Integer.parseInt(tokens[TAP_POS_COLUMN_INDEX]);
-        return new RatioTapPositionModification(transfoId, tapPosition);
+        modifications.add(new RatioTapPositionModification(transfoId, tapPosition));
     }
 }
