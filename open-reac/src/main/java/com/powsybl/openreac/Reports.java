@@ -45,7 +45,7 @@ public final class Reports {
     public static void reportVariableTwoWindingsTransformersSize(Reporter reporter, int variableTwoWindingsTransformersSize) {
         reporter.report(Report.builder()
             .withKey("variableTwoWindingsTransformersSize")
-            .withDefaultMessage("There are ${size} tap positions considered as variable on two-winding transformers")
+            .withDefaultMessage("There are ${size} two-winding transformers with tap position considered as variable")
             .withSeverity(TypedValue.INFO_SEVERITY)
             .withValue("size", variableTwoWindingsTransformersSize)
             .build());
@@ -54,7 +54,7 @@ public final class Reports {
     public static void reportVariableShuntCompensatorsSize(Reporter reporter, int variableShuntCompensatorsSize) {
         reporter.report(Report.builder()
             .withKey("variableShuntCompensatorsSize")
-            .withDefaultMessage("There are ${size} shunt sections considered as variable on shunt compensators")
+            .withDefaultMessage("There are ${size} shunt compensators with section considered as variable")
             .withSeverity(TypedValue.INFO_SEVERITY)
             .withValue("size", variableShuntCompensatorsSize)
             .build());
