@@ -6,18 +6,12 @@
  */
 package com.powsybl.openreac.parameters.output.network;
 
-import com.powsybl.ampl.converter.AmplSubset;
-import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.iidm.modification.NetworkModification;
-import com.powsybl.openreac.OpenReacModel;
+import com.powsybl.iidm.network.Network;
 import com.powsybl.openreac.parameters.output.AbstractNoThrowOutput;
 
-import java.io.BufferedReader;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Predicate;
-import java.util.regex.Pattern;
 
 /**
  * Abstract class that reads output from ampl and generates network modifications
@@ -27,39 +21,20 @@ import java.util.regex.Pattern;
  */
 public abstract class AbstractNetworkOutput<T extends NetworkModification> extends AbstractNoThrowOutput {
 
-    private static final Predicate<String> COMMENTED_LINE_TEST = Pattern.compile("\\s*#.*").asMatchPredicate();
+    protected final Network network;
+    protected final List<T> modifications = new ArrayList<>();
 
-    private final List<T> modifications = new ArrayList<>();
-
-    /**
-     * @return the name of the element that will be read.
-     */
-    public abstract String getElement();
-
-    @Override
-    public String getFileName() {
-        return OpenReacModel.OUTPUT_FILE_PREFIX + "_" + getElement() + "." + OpenReacModel.OUTPUT_FILE_FORMAT.getFileExtension();
+    protected AbstractNetworkOutput(Network network) {
+        this.network = network;
     }
 
-    @Override
-    public void read(BufferedReader bufferedReader, StringToIntMapper<AmplSubset> stringToIntMapper) throws IOException {
-        bufferedReader.lines().forEach(line -> {
-            if (!COMMENTED_LINE_TEST.test(line)) {
-                String[] tokens = line.split(OpenReacModel.OUTPUT_FILE_FORMAT.getTokenSeparator());
-                modifications.add(doReadLine(tokens, stringToIntMapper));
-            }
-        });
+    public List<T> getModifications() {
+        return modifications;
     }
-
-    protected abstract T doReadLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper);
 
     @Override
     public boolean throwOnMissingFile() {
         triggerErrorState();
         return false;
-    }
-
-    public List<T> getModifications() {
-        return modifications;
     }
 }
