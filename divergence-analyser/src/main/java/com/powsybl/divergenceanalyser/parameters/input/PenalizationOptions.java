@@ -11,17 +11,13 @@ import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.commons.util.StringToIntMapper;
 
 import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
 /**
  * @author Pierre ARVY <pierre.arvy@artelys.com>
  */
 public class PenalizationOptions implements AmplInputFile {
-    private final String fileName = "penal_options.txt";
 
     HashMap<String, Integer> penalization;
 
@@ -31,22 +27,20 @@ public class PenalizationOptions implements AmplInputFile {
 
     @Override
     public String getFileName() {
-        return fileName;
+        return "penal_options.txt";
     }
 
     @Override
-    public void write(BufferedWriter bufferedWriter, StringToIntMapper<AmplSubset> stringToIntMapper) throws IOException {
-        // TODO
-        return;
-    }
-
-    public InputStream getParameterFileAsStream(StringToIntMapper<AmplSubset> networkAmplMapper) {
-
-        StringBuilder dataBuilder = new StringBuilder();
-        for (String penal : penalization.keySet()) {
-            dataBuilder.append(penal).append(" ").append(penalization.get(penal)).append("\n");
+    public void write(BufferedWriter writer, StringToIntMapper<AmplSubset> stringToIntMapper) throws IOException {
+        for (var penal : penalization.entrySet()) {
+            String[] tokens = {penal.getKey(), Integer.toString(penal.getValue())};
+            writer.write(String.join(" ", tokens));
+            writer.newLine();
         }
-        return new ByteArrayInputStream(dataBuilder.toString().getBytes(StandardCharsets.UTF_8));
+
+        //add new line at the end of the file !
+        writer.newLine();
+        writer.flush();
     }
 }
 

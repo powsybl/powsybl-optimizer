@@ -11,17 +11,13 @@ import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.commons.util.StringToIntMapper;
 
 import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
 /**
  * @author Pierre ARVY <pierre.arvy@artelys.com>
  */
 public class SolvingOptions implements AmplInputFile {
-    private final String fileName = "solving_options.txt";
 
     HashMap<String, Integer> options;
 
@@ -31,20 +27,19 @@ public class SolvingOptions implements AmplInputFile {
 
     @Override
     public String getFileName() {
-        return fileName;
+        return "solving_options.txt";
     }
 
     @Override
-    public void write(BufferedWriter bufferedWriter, StringToIntMapper<AmplSubset> stringToIntMapper) throws IOException {
-        // TODO
-        return;
-    }
-
-    public InputStream getParameterFileAsStream(StringToIntMapper<AmplSubset> networkAmplMapper) {
-        StringBuilder dataBuilder = new StringBuilder();
-        for (String option : options.keySet()) {
-            dataBuilder.append(option).append(" ").append(options.get(option)).append("\n");
+    public void write(BufferedWriter writer, StringToIntMapper<AmplSubset> stringToIntMapper) throws IOException {
+        for (var option : options.entrySet()) {
+            String[] tokens = {option.getKey(), Integer.toString(option.getValue())};
+            writer.write(String.join(" ", tokens));
+            writer.newLine();
         }
-        return new ByteArrayInputStream(dataBuilder.toString().getBytes(StandardCharsets.UTF_8));
+
+        //add new line at the end of the file !
+        writer.newLine();
+        writer.flush();
     }
 }

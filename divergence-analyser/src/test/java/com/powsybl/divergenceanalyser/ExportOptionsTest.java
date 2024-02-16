@@ -11,14 +11,9 @@ import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.divergenceanalyser.parameters.input.DivergenceAnalyserParameters;
 import com.powsybl.divergenceanalyser.parameters.input.PenalizationOptions;
 import com.powsybl.divergenceanalyser.parameters.input.SolvingOptions;
-import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
+import java.io.*;
 import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -42,13 +37,14 @@ public class ExportOptionsTest {
 
         // Get file content of solving_options.txt
         SolvingOptions options = new SolvingOptions(solvingOptions);
-        InputStream solvingOptionsFileContent = options.getParameterFileAsStream(new StringToIntMapper<>(AmplSubset.class));
-        ByteArrayOutputStream outputStreamCaptor = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(outputStreamCaptor));
-
-        // Check the file content
-        System.out.print(IOUtils.toString(solvingOptionsFileContent, StandardCharsets.UTF_8));
-        assertEquals("max_time_solving 17\nsolving_mode 2\n", outputStreamCaptor.toString());
+        try (Writer w = new StringWriter();
+             BufferedWriter writer = new BufferedWriter(w)) {
+            options.write(writer, new StringToIntMapper<>(AmplSubset.class));
+            String data = w.toString();
+            String ref = String.join(System.lineSeparator(), "max_time_solving 17", "solving_mode 2")
+                    + System.lineSeparator() + System.lineSeparator();
+            assertEquals(ref, data);
+        }
     }
 
     /**
@@ -60,20 +56,22 @@ public class ExportOptionsTest {
         HashMap<String, Integer> penalizationOptions = parameters.getPenalizationOptions();
 
         // Update the divergence analysis parameters
-        parameters.setB1Penal(true).setYPenal(true).setXiPenal(true).setTargetVUnitsPenal(true);
+        parameters.setB1Penal(true)
+                .setYPenal(true)
+                .setXiPenal(true)
+                .setTargetVUnitsPenal(true);
 
         // Get file content of solving_options.txt
         PenalizationOptions options = new PenalizationOptions(penalizationOptions);
-        InputStream penalizationOptionsFileContent = options.getParameterFileAsStream(new StringToIntMapper<>(AmplSubset.class));
-
-        ByteArrayOutputStream outputStreamCaptor = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(outputStreamCaptor));
-
-        // Check the file content
-        System.out.print(IOUtils.toString(penalizationOptionsFileContent, StandardCharsets.UTF_8));
-        String expected = "g_shunt_2 0\nb_shunt_1 1\nxi 1\ng_shunt_1 0\nb_shunt_2 0\ntarget_v_units 1\n"
-                + "target_v_svc 0\nadmittance 1\nphase_shift 0\nrho_transformer 0\n";
-        assertEquals(expected, outputStreamCaptor.toString());
+        try (Writer w = new StringWriter();
+             BufferedWriter writer = new BufferedWriter(w)) {
+            options.write(writer, new StringToIntMapper<>(AmplSubset.class));
+            String data = w.toString();
+            String ref = String.join(System.lineSeparator(), "g_shunt_2 0", "b_shunt_1 1", "xi 1", "g_shunt_1 0",
+                    "b_shunt_2 0", "target_v_units 1", "target_v_svc 0", "admittance 1", "phase_shift 0", "rho_transformer 0")
+                    + System.lineSeparator() + System.lineSeparator();
+            assertEquals(ref, data);
+        }
     }
 
 }

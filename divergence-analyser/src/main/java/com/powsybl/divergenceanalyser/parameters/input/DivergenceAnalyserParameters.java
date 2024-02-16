@@ -54,12 +54,7 @@ public class DivergenceAnalyserParameters {
      * @return the object on which the method is applied.
      */
     public DivergenceAnalyserParameters setTargetVUnitsPenal(boolean isActivated) {
-        if (isActivated) {
-            penalizationOptions.put("target_v_units", 1);
-        } else {
-            penalizationOptions.put("target_v_units", 0);
-        }
-
+        penalizationOptions.put("target_v_units", isActivated ? 1 : 0);
         return this;
     }
 
@@ -68,12 +63,7 @@ public class DivergenceAnalyserParameters {
      * @return the object on which the method is applied.
      */
     public DivergenceAnalyserParameters setTargetVSvcPenal(boolean isActivated) {
-        if (isActivated) {
-            penalizationOptions.put("target_v_svc", 1);
-        } else {
-            penalizationOptions.put("target_v_svc", 0);
-        }
-
+        penalizationOptions.put("target_v_svc", isActivated ? 1 : 0);
         return this;
     }
 
@@ -82,11 +72,7 @@ public class DivergenceAnalyserParameters {
      * @return the object on which the method is applied.
      */
     public DivergenceAnalyserParameters setRhoTransformerPenal(boolean isActivated) {
-        if (isActivated) {
-            penalizationOptions.put("rho_transformer", 1);
-        } else {
-            penalizationOptions.put("rho_transformer", 0);
-        }
+        penalizationOptions.put("rho_transformer", isActivated ? 1 : 0);
         return this;
     }
 
@@ -95,11 +81,7 @@ public class DivergenceAnalyserParameters {
      * @return the object on which the method is applied.
      */
     public DivergenceAnalyserParameters setAlphaPSTPenal(boolean isActivated) {
-        if (isActivated) {
-            penalizationOptions.put("phase_shift", 1);
-        } else {
-            penalizationOptions.put("phase_shift", 0);
-        }
+        penalizationOptions.put("phase_shift", isActivated ? 1 : 0);
         return this;
     }
 
@@ -108,11 +90,7 @@ public class DivergenceAnalyserParameters {
      * @return the object on which the method is applied.
      */
     public DivergenceAnalyserParameters setYPenal(boolean isActivated) {
-        if (isActivated) {
-            penalizationOptions.put("admittance", 1);
-        } else {
-            penalizationOptions.put("admittance", 0);
-        }
+        penalizationOptions.put("admittance", isActivated ? 1 : 0);
         return this;
     }
 
@@ -121,11 +99,7 @@ public class DivergenceAnalyserParameters {
      * @return the object on which the method is applied.
      */
     public DivergenceAnalyserParameters setXiPenal(boolean isActivated) {
-        if (isActivated) {
-            penalizationOptions.put("xi", 1);
-        } else {
-            penalizationOptions.put("xi", 0);
-        }
+        penalizationOptions.put("xi", isActivated ? 1 : 0);
         return this;
     }
 
@@ -134,11 +108,7 @@ public class DivergenceAnalyserParameters {
      * @return the object on which the method is applied.
      */
     public DivergenceAnalyserParameters setG1Penal(boolean isActivated) {
-        if (isActivated) {
-            penalizationOptions.put("g_shunt_1", 1);
-        } else {
-            penalizationOptions.put("g_shunt_1", 0);
-        }
+        penalizationOptions.put("g_shunt_1", isActivated ? 1 : 0);
         return this;
     }
 
@@ -147,11 +117,7 @@ public class DivergenceAnalyserParameters {
      * @return the object on which the method is applied.
      */
     public DivergenceAnalyserParameters setG2Penal(boolean isActivated) {
-        if (isActivated) {
-            penalizationOptions.put("g_shunt_2", 1);
-        } else {
-            penalizationOptions.put("g_shunt_2", 0);
-        }
+        penalizationOptions.put("g_shunt_2", isActivated ? 1 : 0);
         return this;
     }
 
@@ -160,11 +126,7 @@ public class DivergenceAnalyserParameters {
      * @return the object on which the method is applied.
      */
     public DivergenceAnalyserParameters setB1Penal(boolean isActivated) {
-        if (isActivated) {
-            penalizationOptions.put("b_shunt_1", 1);
-        } else {
-            penalizationOptions.put("b_shunt_1", 0);
-        }
+        penalizationOptions.put("b_shunt_1", isActivated ? 1 : 0);
         return this;
     }
 
@@ -173,11 +135,7 @@ public class DivergenceAnalyserParameters {
      * @return the object on which the method is applied.
      */
     public DivergenceAnalyserParameters setB2Penal(boolean isActivated) {
-        if (isActivated) {
-            penalizationOptions.put("b_shunt_2", 1);
-        } else {
-            penalizationOptions.put("b_shunt_2", 0);
-        }
+        penalizationOptions.put("b_shunt_2", isActivated ? 1 : 0);
         return this;
     }
 
@@ -186,12 +144,10 @@ public class DivergenceAnalyserParameters {
      * @return the object on which the method is applied.
      */
     public DivergenceAnalyserParameters setSolvingMode(int solvingMode) {
-        if (0 <= solvingMode && solvingMode <= 2) {
-            solvingOptions.put("solving_mode", solvingMode);
-        } else {
-            throw new IllegalArgumentException();
+        if (solvingMode < 0 || solvingMode > 2) {
+            throw new IllegalArgumentException("Solving mode must be in [0, 1, 2].");
         }
-
+        solvingOptions.put("solving_mode", solvingMode);
         return this;
     }
 
@@ -224,12 +180,10 @@ public class DivergenceAnalyserParameters {
      * @return the object on which the method is applied.
      */
     public DivergenceAnalyserParameters setMaxTimeSolving(int maxTimeSolving) {
-        if (maxTimeSolving > 0) {
-            solvingOptions.put("max_time_solving", maxTimeSolving);
-        } else {
-            throw new IllegalArgumentException();
+        if (maxTimeSolving <= 0) {
+            throw new IllegalArgumentException("Max time solving must be > 0.");
         }
-
+        solvingOptions.put("max_time_solving", maxTimeSolving);
         return this;
     }
 
