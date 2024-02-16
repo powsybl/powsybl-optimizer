@@ -36,12 +36,12 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
@@ -199,7 +199,8 @@ class OpenReacRunnerTest {
                 "mock_outputs/reactiveopf_results_rtc.csv",
                 "mock_outputs/reactiveopf_results_shunts.csv",
                 "mock_outputs/reactiveopf_results_static_var_compensators.csv",
-                "mock_outputs/reactiveopf_results_vsc_converter_stations.csv"));
+                "mock_outputs/reactiveopf_results_vsc_converter_stations.csv",
+                "mock_outputs/reactiveopf_results_voltages.csv"));
         try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
             localCommandExecutor, ForkJoinPool.commonPool())) {
             OpenReacResult openReacResult = OpenReacRunner.run(network,
@@ -212,29 +213,40 @@ class OpenReacRunnerTest {
             assertEquals(1, openReacResult.getSvcModifications().size());
             assertEquals(1, openReacResult.getVscModifications().size());
             assertEquals(7, openReacResult.getGeneratorModifications().size());
+            assertEquals(3, openReacResult.getVoltageProfile().size());
             assertEquals(82, openReacResult.getIndicators().size());
             assertTrue(openReacResult.getReactiveSlacks().isEmpty());
         }
     }
 
-    private void testAllModifAndLoadFlow(Network network, String subFolder, OpenReacParameters parameters) throws IOException {
+    @Test
+    void testRunAsync() throws IOException {
+        Network network = IeeeCdfNetworkFactory.create14();
+        String subFolder = "openreac-output-ieee14";
+        OpenReacParameters parameters = new OpenReacParameters();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
-            List.of(subFolder + "/reactiveopf_results_generators.csv",
-                subFolder + "/reactiveopf_results_indic.txt",
-                subFolder + "/reactiveopf_results_rtc.csv",
-                subFolder + "/reactiveopf_results_shunts.csv",
-                subFolder + "/reactiveopf_results_static_var_compensators.csv",
-                subFolder + "/reactiveopf_results_vsc_converter_stations.csv"));
-        // To really run open reac, use the commentede line below. Be sure that open-reac/src/test/resources/com/powsybl/config/test/config.yml contains your ampl path
+                List.of(subFolder + "/reactiveopf_results_generators.csv",
+                        subFolder + "/reactiveopf_results_indic.txt",
+                        subFolder + "/reactiveopf_results_rtc.csv",
+                        subFolder + "/reactiveopf_results_shunts.csv",
+                        subFolder + "/reactiveopf_results_static_var_compensators.csv",
+                        subFolder + "/reactiveopf_results_vsc_converter_stations.csv",
+                        subFolder + "/reactiveopf_results_voltages.csv"));
+        // To really run open reac, use the commented line below. Be sure that open-reac/src/test/resources/com/powsybl/config/test/config.yml contains your ampl path
 //         try (ComputationManager computationManager = new LocalComputationManager()) {
         try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
-            localCommandExecutor, ForkJoinPool.commonPool())) {
-            OpenReacResult openReacResult = OpenReacRunner.run(network,
-                network.getVariantManager().getWorkingVariantId(), parameters, new OpenReacConfig(true),
-                computationManager);
+                localCommandExecutor, ForkJoinPool.commonPool())) {
+            CompletableFuture<OpenReacResult> openReacResults = OpenReacRunner.runAsync(network,
+                    network.getVariantManager().getWorkingVariantId(), parameters, new OpenReacConfig(true),
+                    computationManager);
+            OpenReacResult openReacResult = openReacResults.join();
             assertEquals(OpenReacStatus.OK, openReacResult.getStatus());
-            openReacResult.applyAllModifications(network);
         }
+    }
+
+    private void testAllModifAndLoadFlow(Network network, String subFolder, OpenReacParameters parameters) throws IOException {
+        runAndApplyAllModifications(network, subFolder, parameters, true);
         LoadFlowResult loadFlowResult = LoadFlow.run(network);
         assertTrue(loadFlowResult.isOk());
     }
@@ -269,23 +281,37 @@ class OpenReacRunnerTest {
     }
 
     @Test
-    public void testShuntReconnection() throws IOException {
+    void testShunt() throws IOException {
         Network network = create();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
+        ShuntCompensator shunt = network.getShuntCompensator("SHUNT");
+        assertFalse(shunt.getTerminal().isConnected());
+        assertEquals(393, shunt.getTargetV());
+
         OpenReacParameters parameters = new OpenReacParameters();
-        parameters.addVariableShuntCompensators(List.of("SHUNT"));
+        parameters.addVariableShuntCompensators(List.of(shunt.getId()));
         testAllModifAndLoadFlow(network, "openreac-output-shunt", parameters);
+        assertTrue(shunt.getTerminal().isConnected()); // shunt has been reconnected
+        assertEquals(420.8, shunt.getTargetV()); // targetV has been updated
     }
 
     @Test
     public void testTransformer() throws IOException {
         Network network = VoltageControlNetworkFactory.createNetworkWithT2wt();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
-        network.getTwoWindingsTransformer("T2wT").getRatioTapChanger().setTapPosition(2);
+        RatioTapChanger rtc = network.getTwoWindingsTransformer("T2wT").getRatioTapChanger()
+                .setTapPosition(2)
+                .setTargetDeadband(0)
+                .setRegulating(true);
+        assertEquals(2, rtc.getTapPosition());
+        assertEquals(33.0, rtc.getTargetV());
+
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.addConstantQGenerators(List.of("GEN_1"));
         parameters.addVariableTwoWindingsTransformers(List.of("T2wT"));
         testAllModifAndLoadFlow(network, "openreac-output-transfo", parameters);
+        assertEquals(0, rtc.getTapPosition());
+        assertEquals(22.935, rtc.getTargetV());
     }
 
     @Test
@@ -294,6 +320,52 @@ class OpenReacRunnerTest {
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         OpenReacParameters parameters = new OpenReacParameters();
         testAllModifAndLoadFlow(network, "openreac-output-real-network", parameters);
+    }
+
+    @Test
+    void testWarmStart() throws IOException {
+        Network network = VoltageControlNetworkFactory.createNetworkWithT2wt();
+        setDefaultVoltageLimits(network);
+        String subFolder = "openreac-output-warm-start";
+        OpenReacParameters parameters = new OpenReacParameters();
+
+        runAndApplyAllModifications(network, subFolder, parameters, false); // without warm start, no update
+        assertEquals(Double.NaN, network.getBusBreakerView().getBus("BUS_1").getV());
+        assertEquals(Double.NaN, network.getBusBreakerView().getBus("BUS_1").getAngle());
+        assertEquals(Double.NaN, network.getBusBreakerView().getBus("BUS_2").getV());
+        assertEquals(Double.NaN, network.getBusBreakerView().getBus("BUS_2").getAngle());
+        assertEquals(Double.NaN, network.getBusBreakerView().getBus("BUS_3").getV());
+        assertEquals(Double.NaN, network.getBusBreakerView().getBus("BUS_3").getAngle());
+
+        runAndApplyAllModifications(network, subFolder, parameters, true);
+        assertEquals(119.592, network.getBusBreakerView().getBus("BUS_1").getV());
+        assertEquals(0.802, network.getBusBreakerView().getBus("BUS_1").getAngle(), 0.001);
+        assertEquals(118.8, network.getBusBreakerView().getBus("BUS_2").getV());
+        assertEquals(0, network.getBusBreakerView().getBus("BUS_2").getAngle());
+        assertEquals(22.935, network.getBusBreakerView().getBus("BUS_3").getV());
+        assertEquals(-4.698, network.getBusBreakerView().getBus("BUS_3").getAngle(), 0.001);
+    }
+
+    private void runAndApplyAllModifications(Network network, String subFolder, OpenReacParameters parameters, boolean updateNetworkWithVoltages) throws IOException {
+        LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
+                List.of(subFolder + "/reactiveopf_results_generators.csv",
+                        subFolder + "/reactiveopf_results_indic.txt",
+                        subFolder + "/reactiveopf_results_rtc.csv",
+                        subFolder + "/reactiveopf_results_shunts.csv",
+                        subFolder + "/reactiveopf_results_static_var_compensators.csv",
+                        subFolder + "/reactiveopf_results_vsc_converter_stations.csv",
+                        subFolder + "/reactiveopf_results_voltages.csv"));
+        // To really run open reac, use the commentede line below. Be sure that open-reac/src/test/resources/com/powsybl/config/test/config.yml contains your ampl path
+//        try (ComputationManager computationManager = new LocalComputationManager()) {
+        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
+                localCommandExecutor, ForkJoinPool.commonPool())) {
+            OpenReacResult openReacResult = OpenReacRunner.run(network,
+                    network.getVariantManager().getWorkingVariantId(), parameters,
+                    new OpenReacConfig(true), computationManager);
+            assertEquals(OpenReacStatus.OK, openReacResult.getStatus());
+            openReacResult.setUpdateNetworkWithVoltages(updateNetworkWithVoltages);
+            openReacResult.applyAllModifications(network);
+        }
     }
 
     public static Network create() {
