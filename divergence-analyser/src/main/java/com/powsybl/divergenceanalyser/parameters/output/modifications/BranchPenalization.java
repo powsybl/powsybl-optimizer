@@ -142,9 +142,14 @@ public class BranchPenalization {
             printB2Si(vNom);
 
         } else {
-            // If the branch is not on the network, the given network is not the good one
-            throw new IllegalArgumentException("The network given as argument is " +
-                    "not the one on which DA has been applied.");
+            System.out.println("Branch " + getBranchId() + " not found in network " + network.getId() + ", print in PU:");
+            printRhoPu();
+            printAlpha();
+            printImpedancePu();
+            printG1Pu();
+            printB1Pu();
+            printG2Pu();
+            printB2Pu();
         }
 
     }
