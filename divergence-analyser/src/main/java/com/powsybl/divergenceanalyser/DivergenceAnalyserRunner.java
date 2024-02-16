@@ -15,6 +15,8 @@ import com.powsybl.computation.ComputationManager;
 import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.iidm.network.Network;
 
+import java.util.Objects;
+
 /**
  * @author Pierre ARVY <pierre.arvy@artelys.com>
  */
@@ -41,11 +43,14 @@ public final class DivergenceAnalyserRunner {
      * @return All information about the run and possible modifications to apply.
      */
     public static DivergenceAnalyserResults run(Network network, String variantId, DivergenceAnalyserParameters parameters, DivergenceAnalyserConfig config, ComputationManager manager) {
-        // TODO : add a check of parameters integrity
+        Objects.requireNonNull(network);
+        Objects.requireNonNull(variantId);
+        Objects.requireNonNull(parameters);
+        Objects.requireNonNull(config);
+        Objects.requireNonNull(manager);
         AmplModel divergenceAnalysis = DivergenceAnalyserModel.buildModel();
         DivergenceAnalyserAmplIOFiles amplIoInterface = new DivergenceAnalyserAmplIOFiles(parameters, config.isDebug());
         AmplResults run = AmplModelRunner.run(network, variantId, divergenceAnalysis, manager, amplIoInterface);
         return new DivergenceAnalyserResults(run.isSuccess(), amplIoInterface, run.getIndicators()); // TODO : Add the check of status // TODO : Define status of DA run
     }
-
 }

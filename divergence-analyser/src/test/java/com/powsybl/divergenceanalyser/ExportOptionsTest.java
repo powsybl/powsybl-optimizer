@@ -43,7 +43,6 @@ public class ExportOptionsTest {
         // Get file content of solving_options.txt
         SolvingOptions options = new SolvingOptions(solvingOptions);
         InputStream solvingOptionsFileContent = options.getParameterFileAsStream(new StringToIntMapper<>(AmplSubset.class));
-
         ByteArrayOutputStream outputStreamCaptor = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outputStreamCaptor));
 

@@ -48,8 +48,8 @@ public class DivergenceAnalyserResults {
         for (Map.Entry<String, String> entry : runIndicators.entrySet()) {
             this.runIndicators.add(Pair.of(entry.getKey(), entry.getValue()));
         }
-        this.penalizationIndicators = amplIOFiles.getPenalizationIndicatorsOutput().getPenalizationIndicators();
-        this.networkIndicators = amplIOFiles.getNetworkIndicatorsOutput().getNetworkIndicators();
+        this.penalizationIndicators = amplIOFiles.getPenalizationIndicatorsOutput().getIndicators();
+        this.networkIndicators = amplIOFiles.getNetworkIndicatorsOutput().getIndicators();
     }
 
     public boolean getStatus() {

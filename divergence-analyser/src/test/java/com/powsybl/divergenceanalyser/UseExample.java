@@ -6,6 +6,7 @@
  */
 package com.powsybl.divergenceanalyser;
 
+import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.divergenceanalyser.parameters.input.DivergenceAnalyserParameters;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.loadflow.LoadFlow;
@@ -33,7 +34,7 @@ public class UseExample {
 
         // Verify LF diverges (otherwise, divergence analysis is useless)
         LoadFlowResult loadFlowResult = LoadFlow.run(network, parametersLf);
-        assertFalse(loadFlowResult.isOk());
+        assertFalse(loadFlowResult.isFullyConverged());
 
         // Defines the parameters of divergence analysis
         DivergenceAnalyserParameters parameters = new DivergenceAnalyserParameters();
@@ -44,7 +45,8 @@ public class UseExample {
                 .setMaxTimeSolving(30);
 
         // print the results of divergence analysis
-        DivergenceAnalyserResults results = DivergenceAnalyser.runDivergenceAnalysis(network, parameters);
+        DivergenceAnalyserResults results = DivergenceAnalyser.runDivergenceAnalysis(network, network.getVariantManager().getWorkingVariantId(),
+                parameters, new DivergenceAnalyserConfig(true), new LocalComputationManager());
         results.printIndicators();
         results.printPenalizationPu();
     }

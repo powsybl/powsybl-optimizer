@@ -26,7 +26,8 @@ public final class DivergenceAnalyser {
      * @return the results of the divergence analysis, without penalties.
      */
     public static DivergenceAnalyserResults runDivergenceAnalysis(Network network) throws IOException {
-        return runDivergenceAnalysis(network, new DivergenceAnalyserParameters());
+        return runDivergenceAnalysis(network, network.getVariantManager().getWorkingVariantId(), new DivergenceAnalyserParameters(),
+                new DivergenceAnalyserConfig(false), new LocalComputationManager());
     }
 
     /**
@@ -34,16 +35,8 @@ public final class DivergenceAnalyser {
      * @param parameters the divergence analysis parameters (penalization, solving options) used.
      * @return the results of the divergence analysis, with the given penalties and solving options.
      */
-    public static DivergenceAnalyserResults runDivergenceAnalysis(Network network, DivergenceAnalyserParameters parameters) throws IOException {
-        DivergenceAnalyserResults divAnalysisResult;
-
-        try (ComputationManager computationManager = new LocalComputationManager()) {
-            divAnalysisResult = DivergenceAnalyserRunner.run(network,
-                    network.getVariantManager().getWorkingVariantId(), parameters, new DivergenceAnalyserConfig(true),
-                    computationManager);
-        }
-
-        return divAnalysisResult;
+    public static DivergenceAnalyserResults runDivergenceAnalysis(Network network, String variantId, DivergenceAnalyserParameters parameters, DivergenceAnalyserConfig config, ComputationManager manager) {
+        return DivergenceAnalyserRunner.run(network, variantId, parameters, config, manager);
     }
 
 }

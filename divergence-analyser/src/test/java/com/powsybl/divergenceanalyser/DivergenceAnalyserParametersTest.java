@@ -16,19 +16,22 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Pierre ARVY <pierre.arvy@artelys.com>
  */
-public class UpdateParametersTest {
+public class DivergenceAnalyserParametersTest {
 
-    /**
-     * Verify the update of the solving options.
-     */
     @Test
-    void testSolvingOptionsUpdate() {
+    void testDefaultValues() {
+        DivergenceAnalyserParameters parameters = new DivergenceAnalyserParameters();
+        assertTrue(parameters.getPenalizationOptions().values()
+                .stream()
+                .allMatch(value -> value == 0));
+        assertEquals(120, parameters.getSolvingOptions().get("max_time_solving"));
+        assertEquals(0, parameters.getSolvingOptions().get("solving_mode"));
+    }
+
+    @Test
+    void testSolvingOptions() {
         DivergenceAnalyserParameters parameters = new DivergenceAnalyserParameters();
         HashMap<String, Integer> solvingOptions = parameters.getSolvingOptions();
-
-        // default values
-        assertEquals(solvingOptions.get("max_time_solving"), 120);
-        assertEquals(solvingOptions.get("solving_mode"), 0);
 
         // update of solving_mode
         parameters.setResolutionNlp();
@@ -51,6 +54,21 @@ public class UpdateParametersTest {
         assertThrows(IllegalArgumentException.class, () -> parameters.setMaxTimeSolving(-5));
     }
 
+    @Test
+    void testAllPenalization() {
+        DivergenceAnalyserParameters parameters = new DivergenceAnalyserParameters();
+        // every penalization is activated
+        parameters.setAllPenalization(true);
+        assertTrue(parameters.getPenalizationOptions().values()
+                .stream()
+                .allMatch(value -> value == 1));
+
+        // no penalization is activated
+        parameters.setAllPenalization(false);
+        assertTrue(parameters.getPenalizationOptions().values()
+                .stream()
+                .allMatch(value -> value == 0));
+    }
 
     /**
      * Verify a penalization is removed if user asks it.
@@ -141,15 +159,6 @@ public class UpdateParametersTest {
 
         assertEquals(penalization.size(), 10);
         assertFalse(penalization.containsValue(0));
-    }
-
-    @Test
-    void testAllPenalization() {
-        DivergenceAnalyserParameters parameters = new DivergenceAnalyserParameters();
-        parameters.setAllPenalization(true);
-        assertFalse(parameters.getPenalizationOptions().containsValue(0));
-        
-        HashMap<String, Integer> penalization = parameters.getPenalizationOptions();
     }
 
 }
