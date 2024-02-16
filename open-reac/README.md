@@ -1,7 +1,7 @@
 # OpenReac
 
 OpenReac is a reactive optimal power flow that gives a set of hypotheses
-for voltage and reactive controls by network equipments such as
+for voltage and reactive controls by network equipment such as
 generators, shunt compensators and transformers. OpenReac can be used
 for network planning or in operation as well.
 
@@ -45,11 +45,12 @@ Artelys is the company developing Knitro. You can find keys
 
 ### 1 Overview
 
-The reactive optimal power flow (OPF) is implemented with AMPL. Its goal is to propose values
-for all voltage and reactive equipment and controllers of the grid
+The reactive optimal power flow (OPF) is implemented with AMPL.
+Its goal is to compute voltage values on each point of the network as well as control values
+for reactive equipment and controllers of the grid
 (voltage set point of generating units, shunts, transformers ratios...).
 
-In a grid development study, you decide new equipments, new generating units,
+In a grid development study, you decide new equipment, new generating units,
 new substations, new loads, you set values for active and reactive loads,
 you set values for active power generation and HVDC flows.
 Then if you wish to do AC powerflow simulations with N-1 analysis, you need
@@ -149,8 +150,8 @@ Let $V_{s}^{min}$ (resp. $V_{s}^{max}$) be the low (resp. high) voltage limit of
 specified in `ampl_network_substations.txt` (or
 in `ampl_network_substations_override.txt` if an override is given for $s$) and $V_{s}^{min,c}$ (resp. $V_{s}^{max,c}$)
 its associated corrected low (resp. high) limit. Then, the limits are calculated as follows:
-- $V_{s}^{min,c} = \max(V_{s}^min,$ min_plausible_low_voltage_limit)
-- $V_{s}^{max,c} = \min(V_{s}^max,$ max_plausible_low_voltage_limit)
+- $V_{s}^{min,c} = \max(V_{s}^{min},$ min_plausible_low_voltage_limit)
+- $V_{s}^{max,c} = \min(V_{s}^{max},$ max_plausible_low_voltage_limit)
 
 #### 4.2 Zero-impedance branches
 
