@@ -177,12 +177,11 @@ phase shift transformer on the same branch.
 #### 4.4 P/Q units' domain
 
 The following corrections apply successively to determine consistent domains for the active 
-power and reactive power produced by generators. Please note that in the end, the corrected bounds are rectangular
-(not trapezoidal), and they are used only in the reactive OPF (see [7](#7-alternative-current-optimal-power-flow)).
+power and reactive power produced by generators.
 
 To determine the consistent domain of produced active power, the bounds of the domains
 $P_g^{min}$ and $P_g^{max}$, as well as the target $P_g^{t}$ of generator $g$ (all specified in `ampl_network_generators.txt`) are used.
-Let $P_{g}^{min,c}$ and $P_{g}^{max,c}$ be the corrected active bounds :
+Let $P_{g}^{min,c}$ and $P_{g}^{max,c}$ be the corrected active bounds:
 
 - By default, $P_{g}^{min,c} = \text{defaultPmin}$ and $P_{g}^{max,c} = \text{defaultPmax}$ (see [3.2](#32-configuration-of-the-run))
 - If $|P_g^{max}| \geq \text{PQmax}$, then $P_{g}^{max,c} = \max(\text{defaultPmax}, P_g^t)$
@@ -190,21 +189,29 @@ Let $P_{g}^{min,c}$ and $P_{g}^{max,c}$ be the corrected active bounds :
 - If $|P_{g}^{max,c} - P_{g}^{min,c}| \leq \text{minimalQPrange}$, then $P_{g}^{max,c} = P_{g}^{min,c} = P_{g}^t$ (active power is fixed).
 
 To determine the consistent domain of produced reactive power, the reactive power diagram 
-(`specified in ampl_network_generators.txt`) of generator 
-$g$ est utilisé : $qp_g$ (resp. $qP_g$) and $Qp_g$ ($QP_g$) when $P_{g}^{min,c}$ (resp. P_{g}^{max,c}) is reached.
+(specified in `ampl_network_generators.txt`) of generator 
+$g$ is used : $qp_g$ (resp. $qP_g$) and $Qp_g$ ($QP_g$) when $P_{g}^{min,c}$ (resp. $P_{g}^{max,c}$) is reached.
 Let $qp_g^c$ (resp. $qP_g^c$) and $Qp_g^c$ (resp. $QP_g^c$) be the bounds of the corrected reactive diagram, 
-and $Q_{g}^{min,c}$ and $Q_{g}^{max,c}$ be the corrected reactive bounds :
+and $Q_{g}^{min,c}$ and $Q_{g}^{max,c}$ be the corrected reactive bounds:
 
 - By default, $qp_g^{c} = qP_{g}^{c} = - \text{defaultPmin} \times \text{defaultQmaxPmaxRatio}$ 
 and $Qp_{g}^{c} = QP_{g}^{c} = \text{defaultPmax} \times \text{defaultQmaxPmaxRatio}$ (see [3.2](#32-configuration-of-the-run))
 - If $|qp_{g}| \geq \text{PQmax}$, then $qp_{g}^{c} = -\text{defaultQmaxPmaxRatio} \times P_{max}^{g,c}$.
-  Same with $qP_{g}^{c}$
+  Same with $qP_{g}^{c}$.
 - If $|Qp_{g}| \geq \text{PQmax}$, then $Qp_{g}^{c} = \text{defaultQmaxPmaxRatio} \times P_{max}^{g,c}$.
-  Same with $QP_{g}^{c}$
-- If $qp_{g}^{c} > Qp_{g}^{c}$, the values are swapped. Same with $qP_{g}^{c}$ and $QP_{g}^{c}$
-- If the corrected reactive diagram is too small (distance between extremal values lower than $\text{minimalQPrange}$),
+  Same with $QP_{g}^{c}$.
+- If $qp_{g}^{c} > Qp_{g}^{c}$, the values are swapped. Same with $qP_{g}^{c}$ and $QP_{g}^{c}$.
+- If the corrected reactive diagram is too small (the distances between the vertices of the reactive diagram are lower than $\text{minimalQPrange}$),
   then $qp_{g}^{c} = Qp_{g}^{c} = qP_{g}^{c} = QP_{g}^{c} = \frac{qp_{g}^{c} + Qp_{g}^{c} + qP_{g}^{c} + QP_{g}^{c}}{4}$ (reactive power is fixed).
 - $Q_{g}^{min,c} = \min(qp_{g}^{c}, qP_{g}^{c})$ and $Q_{g}^{max,c} = \min(Qp_{g}^{c}, QP_{g}^{c})$
+
+Please note that in the end, the corrected bounds are rectangular
+(not trapezoidal), and they are used only in the reactive OPF 
+(see [7](#7-alternative-current-optimal-power-flow)).
+The general correction of the generator's reactive power diagram $g$
+is illustrated in the following figure:
+
+TODO : add figure.
 
 ### 5 Slack bus & main connex component
  
