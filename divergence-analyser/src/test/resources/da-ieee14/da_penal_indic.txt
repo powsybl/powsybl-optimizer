@@ -1,0 +1,11 @@
+# Penalization indicators
+num_target_v_modif 0
+num_rho_modif 0
+num_Y_modif 0
+num_alpha_modif 0
+num_xi_modif 0
+num_g1_modif 0
+num_b1_modif 0
+num_g2_modif 0
+num_b2_modif 0
+total_num_penal 0

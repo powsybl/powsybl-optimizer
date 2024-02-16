@@ -26,27 +26,27 @@ public class UpdateParametersTest {
         DivergenceAnalyserParameters parameters = new DivergenceAnalyserParameters();
         HashMap<String, Integer> solvingOptions = parameters.getSolvingOptions();
 
-        // Verify default values of the parameters
+        // default values
         assertEquals(solvingOptions.get("max_time_solving"), 120);
         assertEquals(solvingOptions.get("solving_mode"), 0);
 
-        // Verify the update of solving_mode param
+        // update of solving_mode
         parameters.setResolutionNlp();
         assertEquals(solvingOptions.get("solving_mode"), 1);
-
         parameters.setResolutionMPEC();
         assertEquals(solvingOptions.get("solving_mode"), 2);
-
         parameters.setResolutionMinlp();
         assertEquals(solvingOptions.get("solving_mode"), 0);
 
+        // wrong values
         assertThrows(IllegalArgumentException.class, () -> parameters.setSolvingMode(4));
         assertThrows(IllegalArgumentException.class, () -> parameters.setSolvingMode(-1));
 
-        // Verify the update of max_time_solving param
+        // update of max_time_solving
         parameters.setMaxTimeSolving(68);
         assertEquals(solvingOptions.get("max_time_solving"), 68);
 
+        // wrong values
         assertThrows(IllegalArgumentException.class, () -> parameters.setMaxTimeSolving(0));
         assertThrows(IllegalArgumentException.class, () -> parameters.setMaxTimeSolving(-5));
     }
@@ -141,6 +141,15 @@ public class UpdateParametersTest {
 
         assertEquals(penalization.size(), 10);
         assertFalse(penalization.containsValue(0));
+    }
+
+    @Test
+    void testAllPenalization() {
+        DivergenceAnalyserParameters parameters = new DivergenceAnalyserParameters();
+        parameters.setAllPenalization(true);
+        assertFalse(parameters.getPenalizationOptions().containsValue(0));
+        
+        HashMap<String, Integer> penalization = parameters.getPenalizationOptions();
     }
 
 }

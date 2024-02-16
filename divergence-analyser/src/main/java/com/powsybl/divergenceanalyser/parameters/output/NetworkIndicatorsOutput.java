@@ -6,67 +6,13 @@
  */
 package com.powsybl.divergenceanalyser.parameters.output;
 
-import com.powsybl.ampl.converter.AmplSubset;
-import com.powsybl.ampl.executor.AmplOutputFile;
-import com.powsybl.commons.util.StringToIntMapper;
-import org.jgrapht.alg.util.Pair;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * @author Pierre ARVY <pierre.arvy@artelys.com>
  */
-public class NetworkIndicatorsOutput implements AmplOutputFile {
-
-    List<Pair<String, String>> networkIndicators = new ArrayList<>();
+public class NetworkIndicatorsOutput extends AbstractDivergenceAnalyserIndicatorsOutput {
 
     @Override
     public String getFileName() {
         return "da_network_indic.txt";
-    }
-
-    @Override
-    public boolean throwOnMissingFile() {
-        return false;
-    }
-
-    @Override
-    public void read(BufferedReader bufferedReader, StringToIntMapper<AmplSubset> stringToIntMapper) throws IOException {
-        // TODO
-        return;
-    }
-
-    public void read(Path outputPath, StringToIntMapper<AmplSubset> networkAmplMapper) throws IOException {
-        List<String> outputLines;
-
-        if (Files.isRegularFile(outputPath)) {
-            try {
-                outputLines = Files.readAllLines(outputPath, StandardCharsets.UTF_8);
-            } catch (IOException e) {
-                // File reading went wrong
-                return;
-            }
-
-            // We must skip the first line of the file
-            for (String line : outputLines.subList(1, outputLines.size())) {
-                String[] tokens = line.split(" ");
-
-                if (tokens.length != 2) {
-                    throw new IOException();
-                }
-
-                networkIndicators.add(Pair.of(tokens[0], tokens[1]));
-            }
-        }
-    }
-
-    public List<Pair<String, String>> getNetworkIndicators() {
-        return networkIndicators;
     }
 }

@@ -1,0 +1,8 @@
+# Network indicators
+num_main_cc 0
+num_buses 3
+num_PV_buses 2
+num_branches 2
+num_rtc 0
+num_pst 0
+num_3wt 0

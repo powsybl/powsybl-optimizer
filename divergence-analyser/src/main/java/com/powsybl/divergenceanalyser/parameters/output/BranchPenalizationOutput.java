@@ -8,22 +8,19 @@ package com.powsybl.divergenceanalyser.parameters.output;
 
 import com.powsybl.ampl.converter.AmplConstants;
 import com.powsybl.ampl.converter.AmplSubset;
-import com.powsybl.ampl.executor.AmplOutputFile;
+import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.divergenceanalyser.parameters.output.modifications.BranchPenalization;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Pierre ARVY <pierre.arvy@artelys.com>
  */
-public class BranchPenalizationOutput implements AmplOutputFile {
+public class BranchPenalizationOutput extends AbstractDivergenceAnalyserOutput {
 
     // The order of parameters is rho, Y, alpha, Xi, g1, b1, g2, b2
     public static final int RHO_PLACE = 0;
@@ -53,44 +50,25 @@ public class BranchPenalizationOutput implements AmplOutputFile {
     }
 
     @Override
-    public boolean throwOnMissingFile() {
-        return false;
-    }
-
-    @Override
     public void read(BufferedReader bufferedReader, StringToIntMapper<AmplSubset> stringToIntMapper) throws IOException {
-        // TODO
-        return;
-    }
+        String headers = bufferedReader.readLine(); // consume header
 
-    public void read(Path outputPath, StringToIntMapper<AmplSubset> networkAmplMapper) {
-        List<String> outputLines;
-
-        if (Files.isRegularFile(outputPath)) {
-            try {
-                outputLines = Files.readAllLines(outputPath, StandardCharsets.UTF_8);
-            } catch (IOException e) {
-                // File reading went wrong
-                return;
-            }
-
-            String headers = outputLines.get(0);
-            int readCols = headers.split(SEP).length;
-            if (readCols != EXPECTED_COLS) {
-                try {
-                    throw new Exception("Error reading " + getFileName() + ", wrong number of columns. Expected: " + EXPECTED_COLS + ", found:" + readCols);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            } else {
-                for (String line : outputLines.subList(1, outputLines.size())) {
-                    readLine(line.split(SEP), networkAmplMapper);
-                }
-            }
+        // Verify number of columns
+        int readCols = headers.split(SEP).length;
+        if (readCols != EXPECTED_COLS) {
+            throw new PowsyblException("Error reading " + getFileName() + ", wrong number of columns. Expected: " + EXPECTED_COLS + ", found:" + readCols);
         }
+
+        // read lines
+        bufferedReader.lines().forEach(line -> {
+            readLine(line.split(SEP), stringToIntMapper);
+            if (!COMMENTED_LINE_TEST.test(line)) {
+                readLine(line.split(SEP), stringToIntMapper);
+            }
+        });
     }
 
-    private void readLine(String[] tokens, StringToIntMapper<AmplSubset> amplMapper) {
+    void readLine(String[] tokens, StringToIntMapper<AmplSubset> amplMapper) {
 
         String id = amplMapper.getId(AmplSubset.BRANCH, Integer.parseInt(tokens[0]));
 
@@ -112,9 +90,9 @@ public class BranchPenalizationOutput implements AmplOutputFile {
         double slackG2 = readDouble(tokens[SLACK_FIRST_COL + G2_PLACE]);
         double slackB2 = readDouble(tokens[SLACK_FIRST_COL + B2_PLACE]);
 
-        penalization.add(
-                new BranchPenalization(id, slackRho, slackY, slackAlpha, slackXi, slackG1, slackB1, slackG2, slackB2, // Slacks
-                rho, y, alpha, xi, g1, b1, g2, b2)); // New values
+        BranchPenalization branchPenalization = new BranchPenalization(id, slackRho, slackY, slackAlpha, slackXi, slackG1, slackB1, slackG2, slackB2, // Slacks
+                rho, y, alpha, xi, g1, b1, g2, b2);
+        penalization.add(branchPenalization);
 
     }
 

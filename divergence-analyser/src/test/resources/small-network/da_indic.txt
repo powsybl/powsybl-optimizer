@@ -1,0 +1,7 @@
+# Run indicators
+final_status OK
+penalization NO
+da_begin 'Fri Feb 16 10:40:12 2024'
+da_end 'Fri Feb 16 10:40:12 2024'
+total_solve_time 0.03125
+knitro_mode MINLP
