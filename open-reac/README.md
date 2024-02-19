@@ -14,14 +14,14 @@ For this project, you must have [AMPL](https://ampl.com/) installed on your mach
 AMPL is a proprietary tool that works as an optimization modelling language, 
 and it can be interfaced with many solvers.
 
-AMPL is sold by many companies including Artelys. You can find keys [here](https://www.artelys.com/solvers/ampl/).
-
 To run OpenReac, you must add in your `~/.itools/config.yml` an ampl section like this:
 ```yaml
 ampl:
   # Change to the ampl folder path that contains the ampl executable
   homeDir: /home/user/ampl
 ```
+
+AMPL is sold by many companies, including Artelys, and you can find keys [here](https://www.artelys.com/solvers/ampl/).
 
 ### Non-linear optimization solver
 
@@ -35,7 +35,7 @@ of the solver is done and that you got a valid licence. To check, start a bash a
 knitroampl stub
 ```
 
-Artelys is the company developing Knitro. You can find keys
+Artelys is the company developing Knitro, and you can find keys
 [here](https://www.artelys.com/solvers/knitro/).
 
 ---
@@ -55,10 +55,7 @@ you set values for active power generation and HVDC flows.
 Then if you wish to do AC powerflow simulations with N-1 analysis, you need
 all voltage and reactive set points and this reactive OPF is your solution.
 
-Please notice that this reactive OPF:
-- does **not** decide active power of generating units and HVDC branches,
-- does **not** take into account current nor power limits on branches,
-- **use** upper and lower limits for voltage, so be careful with them.
+Please notice that this reactive OPF does **not** decide active power of generating units and HVDC branches.
 
 
 ### 2 Division of the code
@@ -72,7 +69,7 @@ each serving a specific function:
   Refer to sections [5](#5-slack-bus--main-connex-component), [6](#6-direct-current-optimal-power-flow) and [7](#7-alternative-current-optimal-power-flow).
 - `reactiveopfoutput.mod` exports result files if the execution of `reactiveopf.run` is successful. 
   Refer to section [8.1](#81-in-case-of-convergence).
-- `reactiveopfexit.run` contains the code executed when the problem is inconsistent. 
+- `reactiveopfexit.run` contains the code executed when the process fails. 
   Refer to section [8.2](#82-in-case-of-inconsistency).
 - `reactiveopf.run` executes the AMPL process of OpenReac, calling the previous scripts.
 
@@ -129,10 +126,11 @@ All of these files share the same format: 2 columns #"num" "id".
 #### 3.3 New voltage limits
 
 In addition to the elements specified in section [3.2](#32-configuration-of-the-run), the user may choose to override
-the voltage limits of specified voltage levels. These values are defined in `ampl_network_substations_override.txt` and
+the voltage limits of specified voltage levels. These values must be defined in `ampl_network_substations_override.txt` and
 are employed to establish the new voltage limits as specified in section
 [4.1](#41-voltage-level-limits-consistency). 
-Format: 4 columns #"num" "minV (pu)" "maxV (pu)" "id"
+
+Format of `ampl_network_substations_override.txt`: 4 columns #"num" "minV (pu)" "maxV (pu)" "id"
 
 ### 4 Pre-processing
 
@@ -154,7 +152,7 @@ its associated corrected low (resp. high) limit. Then, the limits are calculated
 
 #### 4.2 Zero-impedance branches
 
-Branches with an impedance magnitude (calculated in p.u.)
+Branches with an impedance magnitude, **calculated in per unit**,
 lower than the configurable threshold `Znull` (see section [3.2](#32-configuration-of-the-run))
 are considered as non-impedant. 
 These branches will have their reactance replaced by the threshold `Znull` (in p.u.),
@@ -163,16 +161,16 @@ These branches will have their reactance replaced by the threshold `Znull` (in p
 #### 4.3 Impedance of transformers
 
 In the calculations of the ACOPF (see [7](#7-alternative-current-optimal-power-flow)), 
-the transformers with an impedance (the one specified in `ampl_network_branches.txt`)
+the transformers with an impedance (specified in `ampl_network_branches.txt`)
 considered as null (see [4.2](#42-zero-impedance-branches)) 
-are treated as lines. Then, the transformation ratios/phase shifts are ignored, as well as the impedance
+**are treated as lines**. Then, the transformation ratios/phase shifts are ignored, as well as the impedance
 specified in the tap changer table `ampl_network_tct.txt`.
 
 For phase shifters transformers considered as impedant, the reactance values from the tap changer table (in `ampl_network_tct.txt`)
-replace the reactance specified in `ampl_network_branches.txt`. The resistance is then calculated proportionnaly to this reactance. 
-For the ratio tap changers, the impedance remain as specified in `ampl_network_branches.txt`. Please notice there is no
-specified handling for cases where resistances/reactances are negative or if there is both a ratio tap changer and a 
-phase shift transformer on the same branch.
+replace the reactance specified in `ampl_network_branches.txt`. The resistance is then calculated proportionally. 
+For the ratio tap changers, the impedance stays as specified in `ampl_network_branches.txt`. **Please notice there is no
+specified handling for cases where resistance and/or reactance is negative or if there is both a ratio tap changer and a 
+phase shift transformer on the same branch.**
 
 #### 4.4 P/Q units' domain
 
@@ -186,7 +184,7 @@ Let $P_{g}^{min,c}$ and $P_{g}^{max,c}$ be the corrected active bounds:
 - By default, $P_{g}^{min,c} = \text{defaultPmin}$ and $P_{g}^{max,c} = \text{defaultPmax}$ (see [3.2](#32-configuration-of-the-run))
 - If $|P_g^{max}| \geq \text{PQmax}$, then $P_{g}^{max,c} = \max(\text{defaultPmax}, P_g^t)$
 - If $|P_g^{min}| \geq \text{PQmax}$, then $P_{g}^{min,c} = \min(\text{defaultPmin}, P_g^t)$
-- If $|P_{g}^{max,c} - P_{g}^{min,c}| \leq \text{minimalQPrange}$, then $P_{g}^{max,c} = P_{g}^{min,c} = P_{g}^t$ (active power is fixed).
+- If $|P_{g}^{max,c} - P_{g}^{min,c}| \leq \text{minimalQPrange}$, then $P_{g}^{max,c} = P_{g}^{min,c} = P_{g}^t$ (active power is fixed)
 
 To determine the consistent domain of produced reactive power, the reactive power diagram 
 (specified in `ampl_network_generators.txt`) of generator 
@@ -217,20 +215,19 @@ TODO: add figure.
 
 ### 5 Slack bus & main connex component
  
-The slack bus $s$ is determined by identifying the **bus with the highest number of AC branches connected**,
+The slack bus $s$ is determined by identifying the bus with the **highest number of AC branches connected**,
 within the main component (`cc` set to $0$ in `ampl_network_buses.txt`). 
 If multiple buses have such cardinality, the one with the highest identifier (`num` parameter) is chosen.
 In the event no bus satisfies these conditions, the first bus defined in `ampl_network_buses.txt` is selected.
 
-The OPFs (see [6](#6-direct-current-optimal-power-flow) and [7](#7-alternative-current-optimal-power-flow)) 
-are executed on the **main connex component** (i.e. buses connected to slack bus by AC branches) of the network.
+The OPFs are executed on the **main connex component** (i.e. buses connected to slack bus by AC branches) of the network.
 Consequently, **buses connected to the slack by HVDC lines are excluded**.
 
 This component is determined by solving the following optimization problem (the variables are bolded):
 
 $$\text{minimize} \sum\limits_{i} \boldsymbol{\theta_i}$$
 
-where $\boldsymbol{\theta_i}$ is the voltage angle of bus $i$, and with:
+where $\boldsymbol{\theta_i}$ is the voltage angle of bus $i$, and with the following constraints:
 
 $$\boldsymbol{\theta_s} = 0 \quad (1)$$
 
@@ -238,7 +235,8 @@ $$\boldsymbol{\theta_i} - \boldsymbol{\theta_j} = 0, \quad ij \in BRANCH \quad (
 
 If the solving is unsuccessful,  the script
 `reactiveopfexit.run` is executed (see [8.2](#82-in-case-of-inconsistency)) and the execution is stopped.
-The sets of buses and branches belonging to the main connex component are now denoted $BUSCC$ and $BRANCHCC$.
+The sets of buses and branches belonging to the main connex component are now denoted $BUSCC$ and $BRANCHCC$
+, respectively.
 
 ### 6 Direct current optimal power flow
 
@@ -254,10 +252,11 @@ Before to address the ACOPF (see [7](#7-alternative-current-optimal-power-flow))
 The DCOPF model involves the following constraints, 
 in addition to the slack constraint $(1)$ introduced in [5](#5-slack-bus--main-connex-component):
 
-$$\sum\limits_{j\in v(i)} \boldsymbol{p_{ij}} = P_i^{in} - \sum\limits_{g}\boldsymbol{P_{i,g}} + \boldsymbol{\sigma_{P,i}^{+}} + \boldsymbol{\sigma_{P,i}^{-}}, \quad i\in\text{BUSCC} \quad (3)$$
+$$\sum\limits_{j\in v(i)} \boldsymbol{p_{ij}} = P_i^{in} + \boldsymbol{\sigma_{P,i}^{+}} - \boldsymbol{\sigma_{P,i}^{-}} - \sum\limits_{g}\boldsymbol{P_{i,g}}, \quad i\in\text{BUSCC} \quad (3)$$
 
 where:
-- $\boldsymbol{p_{ij}}$ is the active power leaving bus $i$ on branch $ij$, defined as $\boldsymbol{p_{ij}} = \frac{\boldsymbol{\theta_i} - \boldsymbol{\theta_j}}{x_{ij}}$.
+- $\boldsymbol{p_{ij}}$ is the active power leaving bus $i$ on branch $ij$, defined as $\boldsymbol{p_{ij}} = \frac{\boldsymbol{\theta_i} - \boldsymbol{\theta_j}}{X_{ij}}$, where 
+$X_{ij}$ is the reactance of line $ij$ (specified in `ampl_network_branches.txt`).
 - $P_i^{in}$ the constant active power injected or consumed in bus $i$ (by batteries, loads, VSC stations and LCC stations).
 - $\boldsymbol{P}_i^{g}$ is the variable active power produced by generators of bus $i$.
 - $\boldsymbol{\sigma_{P,i}^{+}}$ (resp. $\boldsymbol{\sigma_{P,i}^{-}}$) is a positive slack variable
@@ -271,7 +270,7 @@ where $P_{i,g}^{t}$ is the target of the generator $g$ on bus $i$.
 
 The sum of the active slack variables ($\boldsymbol{\sigma_{i}^{P,+}}$ and $\boldsymbol{\sigma_{i}^{P,-}}$) is penalized by a 
 high coefficient ($1000$) to drive it towards $0$, ensuring active power balance at each bus of the network.
-The solving of the DCOPF is considered as successful if this sum does not exceed the configurable threshold `Pnull`
+The solving of the DCOPF is considered as successful if this sum **does not exceed** the configurable threshold `Pnull`
 (see [3.2](#32-configuration-of-the-run)), and if the non-linear solver employed (see [Non-linear solver](#non-linear-optimization-solver)) 
 finds a feasible solution without reaching one of its default limit. Otherwise, the solving is considered unsuccessful and the script
 `reactiveopfexit.run` is executed (see [8.2](#82-in-case-of-inconsistency)).
@@ -280,8 +279,7 @@ finds a feasible solution without reaching one of its default limit. Otherwise, 
 
 #### 7.1 Generalities
 
-The goal of the reactive ACOPF is to compute voltage values on each bus,  
-as well as control values for reactive equipment and controllers of the grid. 
+The goal of the reactive ACOPF is to compute voltage values on each bus, as well as control values for reactive equipment and controllers of the grid. 
 Then, the following values will be variable in the optimization:
 - $\boldsymbol{V_i}$ and $\boldsymbol{\theta_i}$ the voltage magnitude and phase of bus $i$.
 - $\boldsymbol{P}_{i,g}$ (resp. $\boldsymbol{Q}_i^{g}$) the active (resp. reactive) power produced by variable generator $g$ of bus $i$.
@@ -292,22 +290,22 @@ specified as variable by the user (see [3.2](#32-configuration-of-the-run)).
 
 Please note that:
 - Units with active power specified in `ampl_network_generators.txt` that is less than the configurable parameter `Pnull` **are excluded from the optimization**,
-  even if the user designates these generators as fixed in the `param_generators_reactive.txt` (see [3.2](#32-configuration-of-the-run)).
-  Therefore, when the optimization results are exported, these generators are exported with a reactive power target of $0$.
+  even if the user designates these generators as fixed in the parameter file `param_generators_reactive.txt` (see [3.2](#32-configuration-of-the-run)).
+  Therefore, when the optimization results are exported, **these generators are exported with a reactive power target of $0$**.
 - **Neither current limits nor power limits** on branches are considered in the optimization.
 
 #### 7.2 Constraints
 
 The constraints of the optimization problem depend on parameters specified by the user (see [3.2](#32-configuration-of-the-run)). 
-In particular, the user can indicate which buses will have associated **reactive slacks** $\boldsymbol{\sigma_{i}^{Q,+}}$ and $\boldsymbol{\sigma_{i}^{Q,-}}$ for 
-reactive power balance. To do so, these buses must be specified in parameter 
-file `param_buses_with_reactive_slack.txt`, and `buses_with_reactive_slacks` must be set to $\text{CONFIGURED}$.
+In particular, the user can indicate which buses will have associated **reactive slacks** $\boldsymbol{\sigma_{i}^{Q,+}}$ and $\boldsymbol{\sigma_{i}^{Q,-}}$
+, expressing the excess (resp. shortfall) of reactive power produced in bus $i$, and used to ensure reactive power balance. 
+To do so, these buses must be specified in parameter file `param_buses_with_reactive_slack.txt`, and `buses_with_reactive_slacks` must be set to $\text{CONFIGURED}$.
 
 The ACOPF involves the following constraints, in addition to the slack constraint $(1)$ introduced in [5](#5-slack-bus--main-connex-component):
 
 $$\sum\limits_{j\in v(i)} \boldsymbol{p_{ij}} = P_i^{in} - \sum\limits_{g}\boldsymbol{P_{i,g}}, \quad i\in\text{BUSCC} \quad (4)$$
 
-$$\sum\limits_{j\in v(i)} \boldsymbol{q_{ij}} = Q_i^{in} - \boldsymbol{\sigma_{i}^{Q,+}} + \boldsymbol{\sigma_{Q_i}^{-}} - \sum\limits_{g}\boldsymbol{Q_{i,g}} - \sum\limits_{s}\boldsymbol{b_{i,s}}{V_i}^2 - \sum\limits_{svc}\boldsymbol{b_{i,svc}}{V_i}^2 - \sum\limits_{vsc}\boldsymbol{Q_{i,vsc}}, \quad i\in\text{BUSCC} \quad (5)$$
+$$\sum\limits_{j\in v(i)} \boldsymbol{q_{ij}} = Q_i^{in} - \boldsymbol{\sigma_{i}^{Q,+}} + \boldsymbol{\sigma_{Q_i}^{-}} - \sum\limits_{g}\boldsymbol{Q_{i,g}} - \sum\limits_{vsc}\boldsymbol{Q_{i,vsc}} - \sum\limits_{s}\boldsymbol{b_{i,s}}{V_i}^2 - \sum\limits_{svc}\boldsymbol{b_{i,svc}}{V_i}^2, \quad i\in\text{BUSCC} \quad (5)$$
 
 where:
 - $\boldsymbol{p_{ij}}$ (resp. $\boldsymbol{q_{ij}}$) is the active (resp. reactive) power leaving bus $i$ on branch $ij$,
@@ -317,15 +315,15 @@ where:
 - $Q_i^{in}$ is the constant reactive power injected or consumed in bus $i$, by fixed generators and fixed shunts (see [3.2](#32-configuration-of-the-run)), batteries, loads and LCC stations.
 
 In order to bound the variables described in [7.1](#71-generalities), the limits specified in the files of network data (see [3.1](#31-network-data)) 
-are used. We note the following special treatments:
+are used. We specify the following special treatments:
 - The voltage magnitude $\boldsymbol{V_i}$ lies between the corrected voltage limits described in [4.1](#41-voltage-level-limits-consistency).
 - The reactive power $\boldsymbol{Q_{i,g}}$ lies between the corrected limits described in [4.4](#44-pq-units-domain).
-- The reactive power $\boldsymbol{Q_{i,vsc}}$ is included in $\[\min(qP_{vsc}, qp_{vsc}, qp_{vsc}^0)$; $\max(QP_{vsc}, Qp_{vsc}, Qp_{vsc}^0)\]$.
-**The bounds are therefore rectangular, not trapezoidal.**
 - The active power $\boldsymbol{P_{i,g}}$ also lies between the corrected limits described in [4.4](#44-pq-units-domain),
 but these bounds are only considered when the configurable parameter $\alpha$ is different than $1$ (default value).
 Otherwise, all active powers evolve proportionally to their initial point $P_{i,g}^t$ (specified in `ampl_network_generators.txt`):
 $\boldsymbol{P_{i,g}} = P_{i,g}^t + \boldsymbol{\gamma} (P_{g}^{max,c} - P_{i,g}^t)$, where $\boldsymbol{\gamma}$ is optimized and lies in $\[-1;1\]$.
+- The reactive power $\boldsymbol{Q_{i,vsc}}$ is included in $\[\min(qP_{vsc}, qp_{vsc}, qp_{vsc}^0)$; $\max(QP_{vsc}, Qp_{vsc}, Qp_{vsc}^0)\]$.
+**The bounds are therefore rectangular, not trapezoidal.**
 
 #### 7.3 Objective function
 
@@ -333,24 +331,24 @@ The objective function also depends on parameters specified by the user (see [3.
 The `objective_choice` parameter modifies the values of penalties $\beta_1$, $\beta_2$, and $\beta_3$ in the objective function. 
 Specifically, if `objective_choice` takes on:
 - $0$, the minimization of active power production $\sum\limits_{i,g}\boldsymbol{P_{i,g}}$ is prioritized.
-- $1$, the minimization of $\sum\limits_{i} \boldsymbol{V_i}-(\rho V_i^{c,min} + (1-\rho)V_i^{c,max})$ is prioritized. The parameter $\rho$ 
+- $1$, the minimization of $\sum\limits_{i} \boldsymbol{V_i}-(\rho V_i^{c,max} - (1-\rho)V_i^{c,min})^2$ is prioritized. The parameter $\rho$ 
 equals the configurable parameter `ratio_voltage_target`. 
-- $2$, the minimization of $\sum\limits_{i} \boldsymbol{V_i} - V_i^t$ is prioritized.
+- $2$, the minimization of $\sum\limits_{i} (\boldsymbol{V_i} - V_i^t)^2$ is prioritized.
 
 The objective function of the ACOPF is:
 $$\text{minimize} (10\times\sum\limits_{i} (\boldsymbol{\sigma_{i}^{Q,+}} + \boldsymbol{\sigma_{i}^{Q,-}}) + \beta_1 \times \sum\limits_{g} \alpha\boldsymbol{P_{i,g}} + (1-\alpha)(\frac{\boldsymbol{P_{i,g}} - P_{i,g}^t}{\max(1, |P_{i,g}^t|)})^2 + \beta_2 \times \sum\limits_{i} (\boldsymbol{V_i} - (1-\rho)V_{i}^{min,c} + \rho V_{i}^{max,c})^2 + \beta_3 \times \sum\limits_{i} (\boldsymbol{V_i} - V_i^t)^2 + 0.1 \times \sum\limits_{g} (\frac{\boldsymbol{Q_{i,g}}}{\max(1,Q_{g}^{min,c}, Q_{g}^{max,c})})^2 + 0.1 \times \sum\limits_{ij} (\boldsymbol{\rho_{ij}} - \rho_{ij})^2$$
 
 where: 
-- $P_{i,g}^t$ (resp. $V_i^t$) is the target (resp. initial point) specified in `ampl_network_generators.txt` (resp. `ampl_network_buses.txt`).
+- $P_{i,g}^t$ (resp. $V_i^t$) is the active target (resp. voltage initial point) specified in `ampl_network_generators.txt` (resp. `ampl_network_buses.txt`).
 - $\rho_{ij}$ is the transformer ratio of line $ij$, specified in `ampl_network_tct.txt`.
 
-The sum of the reactive slack variables ($\boldsymbol{\sigma^{Q,+}}$ and $\boldsymbol{\sigma^{Q,-}}$) is penalized by a
+The sum of the reactive slack variables is penalized by a
 high coefficient ($10$) to drive it towards $0$, ensuring reactive power balance at each bus of the network.
 
 #### 7.4 Solving
 
-Before solving the ACOPF, the voltage magnitudes $\boldsymbol{V_i}$ are warm-started with $V_i^t$, 
-as well as the voltage phases $\boldsymbol{\theta_i}$ with the results of the DCOPF (see [6](#6-direct-current-optimal-power-flow)).
+Before solving the ACOPF, the voltage magnitudes $\boldsymbol{V_i}$ are warm-started with $V_i^t$
+(specified in `ampl_network_buses.txt`), as well as the voltage phases $\boldsymbol{\theta_i}$ with the results of the DCOPF (see [6](#6-direct-current-optimal-power-flow)).
 
 The solving is considered as successful if the non-linear solver employed (see [Non-linear solver](#non-linear-optimization-solver)) 
 finds a feasible approximate solution (**even if the sum of 
@@ -360,7 +358,7 @@ Note that if the solving of ACOPF fails, and the $\alpha$ parameter is set to $1
 then a new resolution is attempted, with $\alpha$ set to zero. This gives more freedom to the active powers
 produced (see [7.2](#72-constraints)), leaving these variables free withing their respective bounds.
 
-If ACOPF solving fails, the script `reactiveopfexit.run` is executed (see [8.2](#82-in-case-of-inconsistency)).
+If ACOPF solving fails another time, the script `reactiveopfexit.run` is executed (see [8.2](#82-in-case-of-inconsistency)).
 
 ### 8 Output
 
