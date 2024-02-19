@@ -325,17 +325,17 @@ are used. We note the following special treatments:
 - The active power $\boldsymbol{P_{i,g}}$ also lies between the corrected limits described in [4.4](#44-pq-units-domain),
 but these bounds are only considered when the configurable parameter $\alpha$ is different than $1$ (default value).
 Otherwise, all active powers evolve proportionally to their initial point $P_{i,g}^t$ (specified in `ampl_network_generators.txt`):
-$\boldsymbol{P_{i,g}} = P_{i,g}^t + \gamma (P_{g}^{max,c} - P_{i,g}^t)$, where $\gamma$ is optimized and lies in $\[-1;1\]$.
+$\boldsymbol{P_{i,g}} = P_{i,g}^t + \boldsymbol{\gamma} (P_{g}^{max,c} - P_{i,g}^t)$, where $\boldsymbol{\gamma}$ is optimized and lies in $\[-1;1\]$.
 
 #### 7.3 Objective function
 
-The objective function also depends on parameters specified by the user.
+The objective function also depends on parameters specified by the user (see [3.2](#32-configuration-of-the-run)).
 The `objective_choice` parameter modifies the values of penalties $\beta_1$, $\beta_2$, and $\beta_3$ in the objective function. 
 Specifically, if `objective_choice` takes on:
-- $0$, the minimization of active power production ($\boldsymbol{P_{i,g}}$) is prioritized.
-- $1$, the minimization of the difference between $\boldsymbol{V_i}$ and $\rho V_i^{c,min} + (1-\rho)V_i^{c,max}$ is prioritized. The parameter $\rho$ 
-equals the configurable parameter `ratio_voltage_target` (see [3.2](#32-configuration-of-the-run)). 
-- $2$, the minimization of the difference between $\boldsymbol{V_i}$ and its initial value is prioritized.
+- $0$, the minimization of active power production $\sum\limits_{i,g}\boldsymbol{P_{i,g}}$ is prioritized.
+- $1$, the minimization of $\sum\limits_{i} \boldsymbol{V_i}-(\rho V_i^{c,min} + (1-\rho)V_i^{c,max})$ is prioritized. The parameter $\rho$ 
+equals the configurable parameter `ratio_voltage_target`. 
+- $2$, the minimization of $\sum\limits_{i} \boldsymbol{V_i} - V_i^t$ is prioritized.
 
 The objective function of the ACOPF is:
 $$\text{minimize} (10\times\sum\limits_{i} (\boldsymbol{\sigma_{i}^{Q,+}} + \boldsymbol{\sigma_{i}^{Q,-}}) + \beta_1 \times \sum\limits_{g} \alpha\boldsymbol{P_{i,g}} + (1-\alpha)(\frac{\boldsymbol{P_{i,g}} - P_{i,g}^t}{\max(1, |P_{i,g}^t|)})^2 + \beta_2 \times \sum\limits_{i} (\boldsymbol{V_i} - (1-\rho)V_{i}^{min,c} + \rho V_{i}^{max,c})^2 + \beta_3 \times \sum\limits_{i} (\boldsymbol{V_i} - V_i^t)^2 + 0.1 \times \sum\limits_{g} (\frac{\boldsymbol{Q_{i,g}}}{\max(1,Q_{g}^{min,c}, Q_{g}^{max,c})})^2 + 0.1 \times \sum\limits_{ij} (\boldsymbol{\rho_{ij}} - \rho_{ij})^2$$
@@ -358,7 +358,7 @@ slacks is important**), and the script `reactiveopfoutput.run` is executed (see 
 
 Note that if the solving of ACOPF fails, and the $\alpha$ parameter is set to $1$ (default value),
 then a new resolution is attempted, with $\alpha$ set to zero. This gives more freedom to the active powers
-produced (see [7.2](#72-constraints), leaving these variables free withing their respective bounds.
+produced (see [7.2](#72-constraints)), leaving these variables free withing their respective bounds.
 
 If ACOPF solving fails, the script `reactiveopfexit.run` is executed (see [8.2](#82-in-case-of-inconsistency)).
 
