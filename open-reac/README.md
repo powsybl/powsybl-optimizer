@@ -211,7 +211,9 @@ as generators with zero active power will be excluded from the optimisation (see
 The general correction of the generator's reactive power diagram $g$
 is illustrated in the following figure:
 
-![Alt text](image/reactive-diagram.PNG?center=true "Reactive diagram correction")
+<div style="text-align:center;">
+    <img src="image/reactive-diagram.PNG" alt="Reactive Diagram Correction" style="width:30%;">
+</div>
 
 ### 5 Slack bus & main connex component
  
