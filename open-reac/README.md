@@ -332,8 +332,8 @@ $\boldsymbol{P_{i,g}} = P_{i,g}^t + \boldsymbol{\gamma} (P_{g}^{max,c} - P_{i,g}
 #### 7.3 Objective function
 
 The objective function also depends on parameters specified by the user (see [3.2](#32-configuration-of-the-run)).
-The `objective_choice` parameter modifies the values of penalties $\beta_1$, $\beta_2$, and $\beta_3$ in the objective function, as follows:
-if `objective_choice` $= i$, then $beta_i = 1$ and $beta_j = 0.01$ pour $j \neq i$.
+The `objective_choice` parameter modifies the values of penalties $\beta_1$, $\beta_2$, and $\beta_3$ in the objective function:
+if `objective_choice` $= i$, then $\beta_i = 1$ and $\beta_j = 0.01$ for $j \neq i$.
 
 Specifically, if `objective_choice` takes on:
 - $0$, the minimization of active power production $\sum\limits_{i,g}\boldsymbol{P_{i,g}}$ is prioritized.
