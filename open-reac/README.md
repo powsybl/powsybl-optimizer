@@ -342,7 +342,7 @@ equals the configurable parameter `ratio_voltage_target`).
 - $2$, the minimization of $\sum\limits_{i} (\boldsymbol{V_i} - V_i^t)^2$ is prioritized.
 
 The objective function of the ACOPF is:
-$$\text{minimize} (10\times\sum\limits_{i} (\boldsymbol{\sigma_{i}^{Q,+}} + \boldsymbol{\sigma_{i}^{Q,-}}) + \beta_1 \times \sum\limits_{g} \left( \alpha\boldsymbol{P_{i,g}} + (1-\alpha)(\frac{\boldsymbol{P_{i,g}} - P_{i,g}^t}{\max(1, |P_{i,g}^t|)})^2 \right) + \beta_2 \times \sum\limits_{i} (\boldsymbol{V_i} - (1-\rho)V_{i}^{min,c} + \rho V_{i}^{max,c})^2 + \beta_3 \times \sum\limits_{i} (\boldsymbol{V_i} - V_i^t)^2 + 0.1 \times \sum\limits_{g} (\frac{\boldsymbol{Q_{i,g}}}{\max(1,Q_{g}^{min,c}, Q_{g}^{max,c})})^2 + 0.1 \times \sum\limits_{ij} (\boldsymbol{\rho_{ij}} - \rho_{ij})^2$$
+$$\text{minimize} \left( 10\times\sum\limits_{i} (\boldsymbol{\sigma_{i}^{Q,+}} + \boldsymbol{\sigma_{i}^{Q,-}}) + \beta_1 \sum\limits_{g} \left( \alpha\boldsymbol{P_{i,g}} + (1-\alpha)(\frac{\boldsymbol{P_{i,g}} - P_{i,g}^t}{\max(1, |P_{i,g}^t|)})^2 \right) + \beta_2 \sum\limits_{i} \left( \boldsymbol{V_i} - (1-\rho)V_{i}^{min,c} + \rho V_{i}^{max,c} \right)^2 + \beta_3 \sum\limits_{i} (\boldsymbol{V_i} - V_i^t)^2 + 0.1 \times \sum\limits_{g} \left(\frac{\boldsymbol{Q_{i,g}}}{\max(1,Q_{g}^{min,c}, Q_{g}^{max,c})}\right)^2 + 0.1 \times \sum\limits_{ij} (\boldsymbol{\rho_{ij}} - \rho_{ij})^2 \right)$$
 
 where: 
 - $P_{i,g}^t$ (resp. $V_i^t$) is the active target (resp. voltage initial point) specified in `ampl_network_generators.txt` (resp. `ampl_network_buses.txt`).
