@@ -223,17 +223,19 @@ If multiple buses have such cardinality, the one with the highest identifier (`n
 In the event no bus satisfies these conditions, the first bus defined in `ampl_network_buses.txt` is selected.
 
 The OPFs are executed on the **main connex component** (i.e. buses connected to slack bus by AC branches) of the network.
-Consequently, **buses connected to the slack by HVDC lines are excluded**.
+Consequently, **buses connected to the slack only by HVDC lines are excluded**.
 
 This component is determined by solving the following optimization problem (the variables are bolded):
 
-$$\text{minimize} \sum\limits_{i} \boldsymbol{\theta_i}$$
+$$\text{minimize} \sum\limits_{i} \boldsymbol{\theta_i^{cc}}$$
 
-where $\boldsymbol{\theta_i}$ is the voltage angle of bus $i$, and with the following constraints:
+where $\boldsymbol{\theta_i^{cc}}$ is the voltage angle of bus $i$, and with the following constraints:
 
-$$\boldsymbol{\theta_s} = 0 \quad (1)$$
+$$\boldsymbol{\theta_s^{cc}} = 0 \quad (1)$$
 
-$$\boldsymbol{\theta_i} - \boldsymbol{\theta_j} = 0, \quad ij \in BRANCH \quad (2)$$
+$$\boldsymbol{\theta_i^{cc}} - \boldsymbol{\theta_j^{cc}} = 0, \quad ij \in BRANCH \quad (2)$$
+
+$$0 \leq \boldsymbol{\theta_i^{cc}} \leq 1, \quad i \in BUS \quad (3)$$ 
 
 If the solving is unsuccessful,  the script
 `reactiveopfexit.run` is executed (see [8.2](#82-in-case-of-inconsistency)) and the execution is stopped.
@@ -254,13 +256,13 @@ Before to address the ACOPF (see [7](#7-alternative-current-optimal-power-flow))
 The DCOPF model involves the following constraints, 
 in addition to the slack constraint $(1)$ introduced in [5](#5-slack-bus--main-connex-component):
 
-$$\sum\limits_{j\in v(i)} \boldsymbol{p_{ij}} = P_i^{in} + \boldsymbol{\sigma_{P,i}^{+}} - \boldsymbol{\sigma_{P,i}^{-}} - \sum\limits_{g}\boldsymbol{P_{i,g}}, \quad i\in\text{BUSCC} \quad (3)$$
+$$\sum\limits_{j\in v(i)} \boldsymbol{p_{ij}} = P_i^{in} + \boldsymbol{\sigma_{P,i}^{+}} - \boldsymbol{\sigma_{P,i}^{-}} - \sum\limits_{g}\boldsymbol{P_{i,g}}, \quad i\in\text{BUSCC} \quad (4)$$
 
 where:
 - $\boldsymbol{p_{ij}}$ is the active power leaving bus $i$ on branch $ij$, defined as $\boldsymbol{p_{ij}} = \frac{\boldsymbol{\theta_i} - \boldsymbol{\theta_j}}{X_{ij}}$, where 
 $X_{ij}$ is the reactance of line $ij$ (specified in `ampl_network_branches.txt`).
 - $P_i^{in}$ the constant active power injected or consumed in bus $i$ (by batteries, loads, VSC stations and LCC stations).
-- $\boldsymbol{P}_i^{g}$ is the variable active power produced by generators of bus $i$.
+- $\boldsymbol{P_{i,g}}$ is the variable active power produced by generators of bus $i$.
 - $\boldsymbol{\sigma_{P,i}^{+}}$ (resp. $\boldsymbol{\sigma_{P,i}^{-}}$) is a positive slack variable
 expressing the excess (resp. shortfall) of active power produced in bus $i$.
 
@@ -284,7 +286,7 @@ finds a feasible solution without reaching one of its default limit. Otherwise, 
 The goal of the reactive ACOPF is to compute voltage values on each bus, as well as control values for reactive equipment and controllers of the grid. 
 Then, the following values will be variable in the optimization:
 - $\boldsymbol{V_i}$ and $\boldsymbol{\theta_i}$ the voltage magnitude and phase of bus $i$.
-- $\boldsymbol{P}_{i,g}$ (resp. $\boldsymbol{Q}_i^{g}$) the active (resp. reactive) power produced by variable generator $g$ of bus $i$.
+- $\boldsymbol{P_{i,g}}$ (resp. $\boldsymbol{Q_{i,g}}$) the active (resp. reactive) power produced by variable generator $g$ of bus $i$.
 - $\boldsymbol{Q_{i,vsc}}$ the reactive power produced by voltage source converter stations $vsc$ of bus $i$.
 - $\boldsymbol{b_{i,g}}$ (resp. $\boldsymbol{b_{i,svc}}$) the susceptance of shunt $s$ (resp. of static var compensator $svc$) of bus $i$.
 - $\boldsymbol{\rho_{ij}}$ the transformer ratio of the ratio tap changer on branch $ij$, 
@@ -305,9 +307,9 @@ To do so, these buses must be specified in parameter file `param_buses_with_reac
 
 The ACOPF involves the following constraints, in addition to the slack constraint $(1)$ introduced in [5](#5-slack-bus--main-connex-component):
 
-$$\sum\limits_{j\in v(i)} \boldsymbol{p_{ij}} = P_i^{in} - \sum\limits_{g}\boldsymbol{P_{i,g}}, \quad i\in\text{BUSCC} \quad (4)$$
+$$\sum\limits_{j\in v(i)} \boldsymbol{p_{ij}} = P_i^{in} - \sum\limits_{g}\boldsymbol{P_{i,g}}, \quad i\in\text{BUSCC} \quad (5)$$
 
-$$\sum\limits_{j\in v(i)} \boldsymbol{q_{ij}} = Q_i^{in} - \boldsymbol{\sigma_{i}^{Q,+}} + \boldsymbol{\sigma_{Q_i}^{-}} - \sum\limits_{g}\boldsymbol{Q_{i,g}} - \sum\limits_{vsc}\boldsymbol{Q_{i,vsc}} - \sum\limits_{s}\boldsymbol{b_{i,s}}{V_i}^2 - \sum\limits_{svc}\boldsymbol{b_{i,svc}}{V_i}^2, \quad i\in\text{BUSCC} \quad (5)$$
+$$\sum\limits_{j\in v(i)} \boldsymbol{q_{ij}} = Q_i^{in} - \boldsymbol{\sigma_{i}^{Q,+}} + \boldsymbol{\sigma_{Q_i}^{-}} - \sum\limits_{g}\boldsymbol{Q_{i,g}} - \sum\limits_{vsc}\boldsymbol{Q_{i,vsc}} - \sum\limits_{s}\boldsymbol{b_{i,s}}{V_i}^2 - \sum\limits_{svc}\boldsymbol{b_{i,svc}}{V_i}^2, \quad i\in\text{BUSCC} \quad (6)$$
 
 where:
 - $\boldsymbol{p_{ij}}$ (resp. $\boldsymbol{q_{ij}}$) is the active (resp. reactive) power leaving bus $i$ on branch $ij$,
@@ -319,18 +321,20 @@ where:
 In order to bound the variables described in [7.1](#71-generalities), the limits specified in the files of network data (see [3.1](#31-network-data)) 
 are used. We specify the following special treatments:
 - The voltage magnitude $\boldsymbol{V_i}$ lies between the corrected voltage limits described in [4.1](#41-voltage-level-limits-consistency).
-- The reactive power $\boldsymbol{Q_{i,g}}$ lies between the corrected limits described in [4.4](#44-pq-units-domain).
+- The reactive power $\boldsymbol{Q_{i,g}}$ produced by unit $g$ lies between the corrected limits described in [4.4](#44-pq-units-domain).
 - The active power $\boldsymbol{P_{i,g}}$ also lies between the corrected limits described in [4.4](#44-pq-units-domain),
 but these bounds are only considered when the configurable parameter $\alpha$ is different than $1$ (default value).
 Otherwise, all active powers evolve proportionally to their initial point $P_{i,g}^t$ (specified in `ampl_network_generators.txt`):
 $\boldsymbol{P_{i,g}} = P_{i,g}^t + \boldsymbol{\gamma} (P_{g}^{max,c} - P_{i,g}^t)$, where $\boldsymbol{\gamma}$ is optimized and lies in $\[-1;1\]$.
-- The reactive power $\boldsymbol{Q_{i,vsc}}$ is included in $\[\min(qP_{vsc}, qp_{vsc}, qp_{vsc}^0)$; $\max(QP_{vsc}, Qp_{vsc}, Qp_{vsc}^0)\]$.
+- The reactive power $\boldsymbol{Q_{i,vsc}}$ produced by voltage source converter station $vsc$ is included in $\[\min(qP_{vsc}, qp_{vsc}, qp_{vsc}^0)$; $\max(QP_{vsc}, Qp_{vsc}, Qp_{vsc}^0)\]$.
 **The bounds are therefore rectangular, not trapezoidal.**
 
 #### 7.3 Objective function
 
 The objective function also depends on parameters specified by the user (see [3.2](#32-configuration-of-the-run)).
-The `objective_choice` parameter modifies the values of penalties $\beta_1$, $\beta_2$, and $\beta_3$ in the objective function. 
+The `objective_choice` parameter modifies the values of penalties $\beta_1$, $\beta_2$, and $\beta_3$ in the objective function, as follows:
+if `objective_choice` $= i$, then $beta_i = 1$ and $beta_j = 0.01$ pour $j \neq i$.
+
 Specifically, if `objective_choice` takes on:
 - $0$, the minimization of active power production $\sum\limits_{i,g}\boldsymbol{P_{i,g}}$ is prioritized.
 - $1$, the minimization of $\sum\limits_{i} \boldsymbol{V_i}-(\rho V_i^{c,max} - (1-\rho)V_i^{c,min})^2$ is prioritized ($\rho$ 
@@ -338,7 +342,7 @@ equals the configurable parameter `ratio_voltage_target`).
 - $2$, the minimization of $\sum\limits_{i} (\boldsymbol{V_i} - V_i^t)^2$ is prioritized.
 
 The objective function of the ACOPF is:
-$$\text{minimize} (10\times\sum\limits_{i} (\boldsymbol{\sigma_{i}^{Q,+}} + \boldsymbol{\sigma_{i}^{Q,-}}) + \beta_1 \times \sum\limits_{g} \alpha\boldsymbol{P_{i,g}} + (1-\alpha)(\frac{\boldsymbol{P_{i,g}} - P_{i,g}^t}{\max(1, |P_{i,g}^t|)})^2 + \beta_2 \times \sum\limits_{i} (\boldsymbol{V_i} - (1-\rho)V_{i}^{min,c} + \rho V_{i}^{max,c})^2 + \beta_3 \times \sum\limits_{i} (\boldsymbol{V_i} - V_i^t)^2 + 0.1 \times \sum\limits_{g} (\frac{\boldsymbol{Q_{i,g}}}{\max(1,Q_{g}^{min,c}, Q_{g}^{max,c})})^2 + 0.1 \times \sum\limits_{ij} (\boldsymbol{\rho_{ij}} - \rho_{ij})^2$$
+$$\text{minimize} (10\times\sum\limits_{i} (\boldsymbol{\sigma_{i}^{Q,+}} + \boldsymbol{\sigma_{i}^{Q,-}}) + \beta_1 \times \sum\limits_{g} \left( \alpha\boldsymbol{P_{i,g}} + (1-\alpha)(\frac{\boldsymbol{P_{i,g}} - P_{i,g}^t}{\max(1, |P_{i,g}^t|)})^2 \right) + \beta_2 \times \sum\limits_{i} (\boldsymbol{V_i} - (1-\rho)V_{i}^{min,c} + \rho V_{i}^{max,c})^2 + \beta_3 \times \sum\limits_{i} (\boldsymbol{V_i} - V_i^t)^2 + 0.1 \times \sum\limits_{g} (\frac{\boldsymbol{Q_{i,g}}}{\max(1,Q_{g}^{min,c}, Q_{g}^{max,c})})^2 + 0.1 \times \sum\limits_{ij} (\boldsymbol{\rho_{ij}} - \rho_{ij})^2$$
 
 where: 
 - $P_{i,g}^t$ (resp. $V_i^t$) is the active target (resp. voltage initial point) specified in `ampl_network_generators.txt` (resp. `ampl_network_buses.txt`).
