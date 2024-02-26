@@ -184,7 +184,7 @@ Let $P_{g}^{min,c}$ and $P_{g}^{max,c}$ be the corrected active bounds:
 - By default, $P_{g}^{min,c} = \text{defaultPmin}$ and $P_{g}^{max,c} = \text{defaultPmax}$ (see [3.2](#32-configuration-of-the-run))
 - If $|P_g^{max}| \geq \text{PQmax}$, then $P_{g}^{max,c} = \max(\text{defaultPmax}, P_g^t)$
 - If $|P_g^{min}| \geq \text{PQmax}$, then $P_{g}^{min,c} = \min(\text{defaultPmin}, P_g^t)$
-- If $|P_{g}^{max,c} - P_{g}^{min,c}| \leq \text{minimalQPrange}$, then $P_{g}^{max,c} = P_{g}^{min,c} = P_{g}^t$ (active power is fixed)
+- If $|P_{g}^{max,c} - P_{g}^{min,c}| \leq \text{minimalQPrange}$, then $P_{g}^{max,c} = P_{g}^{min,c} = P_{g}^t$ (active power is fixed).
 
 To determine the consistent domain of produced reactive power, the reactive power diagram 
 (specified in `ampl_network_generators.txt`) of generator 
@@ -227,7 +227,7 @@ Consequently, **buses connected to the slack only by HVDC lines are excluded**.
 
 This component is determined by solving the following optimization problem (the variables are bolded):
 
-$$\text{minimize} \sum\limits_{i} \boldsymbol{\theta_i^{cc}}$$
+$$\text{minimize} \left(\sum\limits_{i} \boldsymbol{\theta_i^{cc}}\right)$$
 
 where $\boldsymbol{\theta_i^{cc}}$ is the voltage angle of bus $i$, and with the following constraints:
 
@@ -268,7 +268,7 @@ expressing the excess (resp. shortfall) of active power produced in bus $i$.
 
 And the following objective function:
 
-$$\text{minimize} (1000\times\sum\limits_{i} (\boldsymbol{\sigma_{i}^{P,+}} + \boldsymbol{\sigma_{i}^{P,-}}) + \sum\limits_{g} (\frac{\boldsymbol{P_{i,g}} - P_{i,g}^{t}}{\max(1, \frac{P_{i,g}^t}{100})})^2)$$
+$$\text{minimize} \left(1000 \sum\limits_{i} (\boldsymbol{\sigma_{i}^{P,+}} + \boldsymbol{\sigma_{i}^{P,-}}) + \sum\limits_{g} \left(\frac{\boldsymbol{P_{i,g}} - P_{i,g}^{t}}{\max(1, \frac{P_{i,g}^t}{100})}\right)^2\right)$$
 
 where $P_{i,g}^{t}$ is the target of the generator $g$ on bus $i$. 
 
@@ -342,7 +342,7 @@ equals the configurable parameter `ratio_voltage_target`).
 - $2$, the minimization of $\sum\limits_{i} (\boldsymbol{V_i} - V_i^t)^2$ is prioritized.
 
 The objective function of the ACOPF is:
-$$\text{minimize} \left( 10\times\sum\limits_{i} (\boldsymbol{\sigma_{i}^{Q,+}} + \boldsymbol{\sigma_{i}^{Q,-}}) + \beta_1 \sum\limits_{g} \left( \alpha\boldsymbol{P_{i,g}} + (1-\alpha)(\frac{\boldsymbol{P_{i,g}} - P_{i,g}^t}{\max(1, |P_{i,g}^t|)})^2 \right) + \beta_2 \sum\limits_{i} \left( \boldsymbol{V_i} - (1-\rho)V_{i}^{min,c} + \rho V_{i}^{max,c} \right)^2 + \beta_3 \sum\limits_{i} (\boldsymbol{V_i} - V_i^t)^2 + 0.1 \times \sum\limits_{g} \left(\frac{\boldsymbol{Q_{i,g}}}{\max(1,Q_{g}^{min,c}, Q_{g}^{max,c})}\right)^2 + 0.1 \times \sum\limits_{ij} (\boldsymbol{\rho_{ij}} - \rho_{ij})^2 \right)$$
+$$\text{minimize} \left( 10\sum\limits_{i} (\boldsymbol{\sigma_{i}^{Q,+}} + \boldsymbol{\sigma_{i}^{Q,-}}) + \beta_1 \sum\limits_{g} \left( \alpha\boldsymbol{P_{i,g}} + (1-\alpha)(\frac{\boldsymbol{P_{i,g}} - P_{i,g}^t}{\max(1, |P_{i,g}^t|)})^2 \right) + \beta_2 \sum\limits_{i} \left( \boldsymbol{V_i} - (1-\rho)V_{i}^{min,c} + \rho V_{i}^{max,c} \right)^2 + \beta_3 \sum\limits_{i} (\boldsymbol{V_i} - V_i^t)^2 + 0.1 \sum\limits_{g} \left(\frac{\boldsymbol{Q_{i,g}}}{\max(1,Q_{g}^{min,c}, Q_{g}^{max,c})}\right)^2 + 0.1 \sum\limits_{ij} (\boldsymbol{\rho_{ij}} - \rho_{ij})^2 \right)$$
 
 where: 
 - $P_{i,g}^t$ (resp. $V_i^t$) is the active target (resp. voltage initial point) specified in `ampl_network_generators.txt` (resp. `ampl_network_buses.txt`).
