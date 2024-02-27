@@ -26,7 +26,7 @@ AMPL is sold by many companies, including Artelys, and you can find keys [here](
 ### Non-linear optimization solver
 
 To run the model implemented in AMPL, you'll need a non-linear optimization solver.
-By default, the AMPL code is configured to run Knitro, which is a proprietary non-linear, but you
+By default, the AMPL code is configured to run Knitro, which is a proprietary non-linear solver, but you
 are free to configure a different one.
 
 If you chose to run Knitro, you must have `knitroampl` in your path, after the installation
@@ -47,7 +47,7 @@ Artelys is the company developing Knitro, and you can find keys
 The reactive optimal power flow (OPF) is implemented with AMPL.
 Its goal is to compute voltage values on each point of the network as well as control values
 for reactive equipment and controllers of the grid
-(voltage set point of generating units, shunts, transformers ratios...).
+(voltage set point of generating units, shunts, transformer ratios...).
 
 In a grid development study, you decide new equipment, new generating units,
 new substations, new loads, you set values for active and reactive loads,
@@ -92,7 +92,7 @@ These are specified in the file `param_algo.txt`:
 | Parameter                          | Description                                                                                                                                                                       | Default value     | Domain                                        |
 |------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------|-----------------------------------------------|
 | `log_level_ampl`                   | Level of display for AMPL prints                                                                                                                                                  | INFO              | {DEBUG, INFO, WARNING, ERROR}                 |
-| `log_level_knitro`                 | Level of display for solver prints (see [AMPL documentation](https://dev.ampl.com/ampl/options.html)                                                                              | $1$               | {0, 1, 2}                                     |  
+| `log_level_knitro`                 | Level of display for solver prints (see [AMPL documentation](https://dev.ampl.com/ampl/options.html))                                                                             | $1$               | {0, 1, 2}                                     |  
 | `objective_choice`                 | Choice of the objective function for the ACOPF (see [7](#7-alternative-current-optimal-power-flow))                                                                               | $0$               | {0, 1, 2}                                     |
 | `ratio_voltage_target`             | Ratio to calculate target V of buses when `objective_choice` is set to $1$ (see [7](#7-alternative-current-optimal-power-flow))                                                   | $0.5$             | $\[0; 1\]$                                    |
 | `coeff_alpha`                      | Weight to favor more/less minimization of active power produced by generators or deviation between them and target values (see [6.2](#62-alternative-current-optimal-power-flow)) | $1$               | $\[0; 1\]$                                    |
@@ -137,7 +137,7 @@ Format of `ampl_network_substations_override.txt`: 4 columns #"num" "minV (pu)" 
 Before solving the reactive ACOPF described in [7](#7-alternative-current-optimal-power-flow), 
 the following pre-processing blocks are executed to ensure the consistency of the values used in the optimization. 
 
-#### 4.1 Voltage level limits consistency
+#### 4.1 Voltage level limit consistency
 
 To ensure consistent voltage level limits for the buses,
 the configurable domain [`min_plausible_low_voltage_limit`; `max_plausible_high_voltage_limit`] is used
@@ -205,7 +205,8 @@ and $Qp_{g}^{c} = QP_{g}^{c} = \text{defaultPmax} \times \text{defaultQmaxPmaxRa
 
 Please note that in the end, **the corrected bounds are rectangular**,
 not trapezoidal, and they are used only in the reactive OPF 
-(see [7](#7-alternative-current-optimal-power-flow)). In addition, bounds $qP_{g}^0$ and $Qp_{g}^0$ are not used,
+(see [7](#7-alternative-current-optimal-power-flow)). The trapezoidal diagram should be added shortly. 
+In addition, bounds $qP_{g}^0$ and $Qp_{g}^0$ are not used,
 as generators with zero active power will be excluded from the optimisation (see [7.1](#71-generalities)).
 
 The general correction of the generator's reactive power diagram $g$
