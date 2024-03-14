@@ -14,6 +14,7 @@ import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAmplLogLevel;
 import com.powsybl.openreac.parameters.input.algo.OpenReacSolverLogLevel;
 import com.powsybl.openreac.parameters.input.algo.ReactiveSlackBusesMode;
+import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -41,6 +42,7 @@ class OpenReacJsonModuleTest {
         vloList1.add(new VoltageLimitOverride("bar", VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, false, 20));
         vloList1.add(new VoltageLimitOverride("bar", VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, false, 26));
 
+        // modify open reac parameters
         parameters.addSpecificVoltageLimits(vloList1);
         parameters.addConstantQGenerators(List.of("g1", "g2"));
         parameters.addVariableTwoWindingsTransformers(List.of("tr1"));
@@ -52,6 +54,17 @@ class OpenReacJsonModuleTest {
         parameters.setMaxPlausibleHighVoltageLimit(1.236);
         parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.CONFIGURED);
         parameters.addConfiguredReactiveSlackBuses(List.of("bus1", "bus2"));
+        parameters.setAlphaCoefficient(0.56);
+        parameters.setMinPlausibleActivePowerThreshold(0.5);
+        parameters.setLowImpedanceThreshold(1e-5);
+        parameters.setNominalThresholdIgnoredBuses(10.);
+        parameters.setNominalThresholdIgnoredVoltageBounds(5.);
+        parameters.setPQMax(8555.3);
+        parameters.setDefaultPMin(99.2);
+        parameters.setDefaultPMax(1144.);
+        parameters.setDefaultQmaxPmaxRatio(0.4);
+        parameters.setDefaultMinimalQPRange(1.1);
+
         String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(parameters);
         ComparisonUtils.compareTxt(Objects.requireNonNull(getClass().getResourceAsStream("/parameters.json")), json);
 
@@ -66,12 +79,24 @@ class OpenReacJsonModuleTest {
         assertEquals(vloList2, parameters2.getSpecificVoltageLimits());
         assertEquals(List.of("g1", "g2"), parameters2.getConstantQGenerators());
         assertEquals(List.of("tr1"), parameters2.getVariableTwoWindingsTransformers());
+        assertEquals(List.of("bus1", "bus2"), parameters2.getConfiguredReactiveSlackBuses());
+        assertEquals(List.of("sc1", "sc2"), parameters2.getVariableShuntCompensators());
         assertEquals(5, parameters2.getObjectiveDistance());
         assertEquals(OpenReacAmplLogLevel.WARNING, parameters2.getLogLevelAmpl());
         assertEquals(OpenReacSolverLogLevel.NOTHING, parameters2.getLogLevelSolver());
         assertEquals(0.755, parameters2.getMinPlausibleLowVoltageLimit());
         assertEquals(1.236, parameters2.getMaxPlausibleHighVoltageLimit());
         assertEquals(ReactiveSlackBusesMode.CONFIGURED, parameters2.getReactiveSlackBusesMode());
-        assertEquals(List.of("bus1", "bus2"), parameters2.getConfiguredReactiveSlackBuses());
+        assertEquals(OpenReacOptimisationObjective.MIN_GENERATION, parameters2.getObjective());
+        assertEquals(0.56, parameters2.getAlphaCoefficient());
+        assertEquals(0.5, parameters2.getMinPlausibleActivePowerThreshold());
+        assertEquals(1e-5, parameters2.getLowImpedanceThreshold());
+        assertEquals(10., parameters2.getNominalThresholdIgnoredBuses());
+        assertEquals(5., parameters2.getNominalThresholdIgnoredVoltageBounds());
+        assertEquals(8555.3, parameters2.getPQMax());
+        assertEquals(99.2, parameters2.getDefaultPMin());
+        assertEquals(1144., parameters2.getDefaultPMax());
+        assertEquals(0.4, parameters2.getDefaultQmaxPmaxRatio());
+        assertEquals(1.1, parameters2.getDefaultMinimalQPRange());
     }
 }

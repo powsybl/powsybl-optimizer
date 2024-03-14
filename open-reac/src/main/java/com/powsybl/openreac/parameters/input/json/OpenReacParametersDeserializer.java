@@ -90,6 +90,46 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                     parser.nextToken();
                     parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.valueOf(parser.getText()));
                     break;
+                case "alphaCoefficient":
+                    parser.nextToken();
+                    parameters.setAlphaCoefficient(parser.getValueAsDouble());
+                    break;
+                case "minPlausibleActivePowerThreshold":
+                    parser.nextToken();
+                    parameters.setMinPlausibleActivePowerThreshold(parser.getValueAsDouble());
+                    break;
+                case "lowImpedanceThreshold":
+                    parser.nextToken();
+                    parameters.setLowImpedanceThreshold(parser.getValueAsDouble());
+                    break;
+                case "nominalThresholdIgnoredBuses":
+                    parser.nextToken();
+                    parameters.setNominalThresholdIgnoredBuses(parser.getValueAsDouble());
+                    break;
+                case "nominalThresholdIgnoredVoltageBounds":
+                    parser.nextToken();
+                    parameters.setNominalThresholdIgnoredVoltageBounds(parser.getValueAsDouble());
+                    break;
+                case "pQmax":
+                    parser.nextToken();
+                    parameters.setPQMax(parser.getValueAsDouble());
+                    break;
+                case "defaultPMin":
+                    parser.nextToken();
+                    parameters.setDefaultPMin(parser.getValueAsDouble());
+                    break;
+                case "defaultPMax":
+                    parser.nextToken();
+                    parameters.setDefaultPMax(parser.getValueAsDouble());
+                    break;
+                case "defaultQmaxPmaxRatio":
+                    parser.nextToken();
+                    parameters.setDefaultQmaxPmaxRatio(parser.getValueAsDouble());
+                    break;
+                case "defaultMinimalQPRange":
+                    parser.nextToken();
+                    parameters.setDefaultMinimalQPRange(parser.getValueAsDouble());
+                    break;
                 default:
                     throw new IllegalStateException("Unexpected field: " + parser.getCurrentName());
             }

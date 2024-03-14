@@ -116,6 +116,139 @@ public class OpenReacParametersTest {
     }
 
     @Test
+    void testAlphaCoefficientIntegrity() {
+        OpenReacParameters parameters = new OpenReacParameters();
+        parameters.setAlphaCoefficient(0); // min value
+        assertEquals(0., parameters.getAlphaCoefficient());
+        parameters.setAlphaCoefficient(0.445556);
+        assertEquals(0.445556, parameters.getAlphaCoefficient());
+
+        IllegalArgumentException e1 = assertThrows(IllegalArgumentException.class, () -> parameters.setAlphaCoefficient(-1.2));
+        assertEquals("Coefficient alpha parameter must be defined and between 0 and 1 to be consistent.", e1.getMessage());
+        IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class, () -> parameters.setAlphaCoefficient(42));
+        assertEquals("Coefficient alpha parameter must be defined and between 0 and 1 to be consistent.", e2.getMessage());
+        IllegalArgumentException e3 = assertThrows(IllegalArgumentException.class, () -> parameters.setAlphaCoefficient(Double.NaN));
+        assertEquals("Coefficient alpha parameter must be defined and between 0 and 1 to be consistent.", e3.getMessage());
+        assertTrue(parameters.checkAlgorithmParametersIntegrity());
+    }
+
+    @Test
+    void testZeroPowerThresholdIntegrity() {
+        OpenReacParameters parameters = new OpenReacParameters();
+        parameters.setMinPlausibleActivePowerThreshold(0);
+        assertEquals(0., parameters.getMinPlausibleActivePowerThreshold()); // min value
+        parameters.setMinPlausibleActivePowerThreshold(2.365);
+        assertEquals(2.365, parameters.getMinPlausibleActivePowerThreshold());
+
+        IllegalArgumentException e1 = assertThrows(IllegalArgumentException.class, () -> parameters.setMinPlausibleActivePowerThreshold(-1.2));
+        assertEquals("Zero power threshold must be defined and >= 0 to be consistent.", e1.getMessage());
+        IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class, () -> parameters.setMinPlausibleActivePowerThreshold(Double.NaN));
+        assertEquals("Zero power threshold must be defined and >= 0 to be consistent.", e2.getMessage());
+        assertTrue(parameters.checkAlgorithmParametersIntegrity());
+    }
+
+    @Test
+    void testZeroImpedanceThresholdIntegrity() {
+        OpenReacParameters parameters = new OpenReacParameters();
+        parameters.setLowImpedanceThreshold(0);
+        assertEquals(0., parameters.getLowImpedanceThreshold()); // min value
+        parameters.setLowImpedanceThreshold(1e-5);
+        assertEquals(1e-5, parameters.getLowImpedanceThreshold());
+
+        IllegalArgumentException e1 = assertThrows(IllegalArgumentException.class, () -> parameters.setLowImpedanceThreshold(-1.2));
+        assertEquals("Zero impedance threshold must be defined and >= 0 to be consistent.", e1.getMessage());
+        IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class, () -> parameters.setLowImpedanceThreshold(Double.NaN));
+        assertEquals("Zero impedance threshold must be defined and >= 0 to be consistent.", e2.getMessage());
+    }
+
+    @Test
+    void testNominalThresholdsIntegrity() {
+        OpenReacParameters parameters = new OpenReacParameters();
+        parameters.setNominalThresholdIgnoredBuses(0); // min value
+        assertEquals(0, parameters.getNominalThresholdIgnoredBuses());
+        parameters.setNominalThresholdIgnoredBuses(45);
+        assertEquals(45, parameters.getNominalThresholdIgnoredBuses());
+        IllegalArgumentException e1 = assertThrows(IllegalArgumentException.class, () -> parameters.setNominalThresholdIgnoredBuses(-1.2));
+        assertEquals("Nominal threshold for ignored buses must be defined and >= 0 to be consistent.", e1.getMessage());
+        IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class, () -> parameters.setNominalThresholdIgnoredBuses(Double.NaN));
+        assertEquals("Nominal threshold for ignored buses must be defined and >= 0 to be consistent.", e2.getMessage());
+
+        parameters.setNominalThresholdIgnoredVoltageBounds(200);
+        assertEquals(200, parameters.getNominalThresholdIgnoredVoltageBounds());
+        IllegalArgumentException e3 = assertThrows(IllegalArgumentException.class, () -> parameters.setNominalThresholdIgnoredVoltageBounds(-1.2));
+        assertEquals("Nominal threshold for ignored voltage bounds must be defined and >= 0 to be consistent", e3.getMessage());
+        IllegalArgumentException e4 = assertThrows(IllegalArgumentException.class, () -> parameters.setNominalThresholdIgnoredVoltageBounds(Double.NaN));
+        assertEquals("Nominal threshold for ignored voltage bounds must be defined and >= 0 to be consistent", e4.getMessage());
+
+        assertTrue(parameters.checkAlgorithmParametersIntegrity());
+    }
+
+    @Test
+    void testPMinMaxIntegrity() {
+        OpenReacParameters parameters = new OpenReacParameters();
+        parameters.setPQMax(5775);
+        assertEquals(5775, parameters.getPQMax());
+        IllegalArgumentException e1 = assertThrows(IllegalArgumentException.class, () -> parameters.setPQMax(0)); // min value
+        assertEquals("Maximal consistency value for P and Q must be defined and > 0 to be consistent", e1.getMessage());
+        IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class, () -> parameters.setPQMax(-2.1));
+        assertEquals("Maximal consistency value for P and Q must be defined and > 0 to be consistent", e2.getMessage());
+        IllegalArgumentException e3 = assertThrows(IllegalArgumentException.class, () -> parameters.setPQMax(Double.NaN));
+        assertEquals("Maximal consistency value for P and Q must be defined and > 0 to be consistent", e3.getMessage());
+
+        parameters.setDefaultPMin(1500);
+        assertEquals(1500, parameters.getDefaultPMin());
+        IllegalArgumentException e4 = assertThrows(IllegalArgumentException.class, () -> parameters.setDefaultPMin(-100));
+        assertEquals("Default P min value must be defined and >= 0 to be consistent.", e4.getMessage());
+        IllegalArgumentException e5 = assertThrows(IllegalArgumentException.class, () -> parameters.setDefaultPMin(Double.NaN));
+        assertEquals("Default P min value must be defined and >= 0 to be consistent.", e5.getMessage());
+
+        parameters.setDefaultPMax(1250);
+        assertEquals(1250, parameters.getDefaultPMax());
+        IllegalArgumentException e6 = assertThrows(IllegalArgumentException.class, () -> parameters.setDefaultPMax(0));
+        assertEquals("Default P max value must be defined and > 0 to be consistent.", e6.getMessage());
+        IllegalArgumentException e7 = assertThrows(IllegalArgumentException.class, () -> parameters.setDefaultPMax(-100));
+        assertEquals("Default P max value must be defined and > 0 to be consistent.", e7.getMessage());
+        IllegalArgumentException e8 = assertThrows(IllegalArgumentException.class, () -> parameters.setDefaultPMax(Double.NaN));
+        assertEquals("Default P max value must be defined and > 0 to be consistent.", e8.getMessage());
+
+        assertFalse(parameters.checkAlgorithmParametersIntegrity()); // case defaultPmin > defaultPmax
+        parameters.setDefaultPMax(10000);
+        assertFalse(parameters.checkAlgorithmParametersIntegrity()); // case defaultPmax > pQmax
+        parameters.setDefaultPMin(50).setDefaultPMax(1000);
+        assertTrue(parameters.checkAlgorithmParametersIntegrity());
+    }
+
+    @Test
+    void testDefaultQmaxPmaxRatioIntegrity() {
+        OpenReacParameters parameters = new OpenReacParameters();
+        parameters.setDefaultQmaxPmaxRatio(0.778);
+        assertEquals(0.778, parameters.getDefaultQmaxPmaxRatio());
+        IllegalArgumentException e1 = assertThrows(IllegalArgumentException.class, () -> parameters.setDefaultQmaxPmaxRatio(0));
+        assertEquals("Default Qmax and Pmax ratio must be defined and > 0 to be consistent.", e1.getMessage());
+        IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class, () -> parameters.setDefaultQmaxPmaxRatio(-0.3));
+        assertEquals("Default Qmax and Pmax ratio must be defined and > 0 to be consistent.", e2.getMessage());
+        IllegalArgumentException e3 = assertThrows(IllegalArgumentException.class, () -> parameters.setDefaultQmaxPmaxRatio(Double.NaN));
+        assertEquals("Default Qmax and Pmax ratio must be defined and > 0 to be consistent.", e3.getMessage());
+
+        parameters.setDefaultQmaxPmaxRatio(500);
+        assertFalse(parameters.checkAlgorithmParametersIntegrity());
+    }
+
+    @Test
+    void testDefaultMinimalQPRangeIntegrity() {
+        OpenReacParameters parameters = new OpenReacParameters();
+        parameters.setDefaultMinimalQPRange(10);
+        assertEquals(10, parameters.getDefaultMinimalQPRange());
+        parameters.setDefaultMinimalQPRange(0);
+        assertEquals(0, parameters.getDefaultMinimalQPRange());
+
+        IllegalArgumentException e1 = assertThrows(IllegalArgumentException.class, () -> parameters.setDefaultMinimalQPRange(-1.5));
+        assertEquals("Default minimal QP range must be defined and >= 0 to be consistent.", e1.getMessage());
+        IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class, () -> parameters.setDefaultMinimalQPRange(Double.NaN));
+        assertEquals("Default minimal QP range must be defined and >= 0 to be consistent.", e2.getMessage());
+    }
+
+    @Test
     void testAlgorithmParams() {
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE);
@@ -125,9 +258,19 @@ public class OpenReacParametersTest {
         parameters.setMinPlausibleLowVoltageLimit(0.8);
         parameters.setMaxPlausibleHighVoltageLimit(1.2);
         parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL);
+        parameters.setAlphaCoefficient(0.56);
+        parameters.setMinPlausibleActivePowerThreshold(0.5);
+        parameters.setLowImpedanceThreshold(1e-5);
+        parameters.setNominalThresholdIgnoredBuses(10);
+        parameters.setNominalThresholdIgnoredVoltageBounds(5);
+        parameters.setPQMax(8555.3);
+        parameters.setDefaultPMin(99.2);
+        parameters.setDefaultPMax(1144);
+        parameters.setDefaultQmaxPmaxRatio(0.4);
+        parameters.setDefaultMinimalQPRange(1.1);
 
         List<OpenReacAlgoParam> algoParams = parameters.getAllAlgorithmParams();
-        assertEquals(7, algoParams.size());
+        assertEquals(17, algoParams.size());
         assertEquals("2", algoParams.get(0).getValue());
         assertEquals("0.4", algoParams.get(1).getValue());
         assertEquals("DEBUG", algoParams.get(2).getValue());
@@ -135,6 +278,16 @@ public class OpenReacParametersTest {
         assertEquals("0.8", algoParams.get(4).getValue());
         assertEquals("1.2", algoParams.get(5).getValue());
         assertEquals("ALL", algoParams.get(6).getValue());
+        assertEquals("0.56", algoParams.get(7).getValue());
+        assertEquals("0.5", algoParams.get(8).getValue());
+        assertEquals("1.0E-5", algoParams.get(9).getValue());
+        assertEquals("10.0", algoParams.get(10).getValue());
+        assertEquals("5.0", algoParams.get(11).getValue());
+        assertEquals("8555.3", algoParams.get(12).getValue());
+        assertEquals("99.2", algoParams.get(13).getValue());
+        assertEquals("1144.0", algoParams.get(14).getValue());
+        assertEquals("0.4", algoParams.get(15).getValue());
+        assertEquals("1.1", algoParams.get(16).getValue());
     }
 
     @Test
@@ -152,7 +305,30 @@ public class OpenReacParametersTest {
     }
 
     @Test
-    void testDefaultListsOfParametersIntegrity() {
+    void testDefaultParametersValuesIntegrity() {
+        OpenReacParameters parameters = new OpenReacParameters();
+        assertEquals(OpenReacOptimisationObjective.MIN_GENERATION, parameters.getObjective());
+        assertNull(parameters.getObjectiveDistance());
+        assertEquals(OpenReacAmplLogLevel.INFO, parameters.getLogLevelAmpl());
+        assertEquals(OpenReacSolverLogLevel.EVERYTHING, parameters.getLogLevelSolver());
+        assertEquals(0.5, parameters.getMinPlausibleLowVoltageLimit());
+        assertEquals(1.5, parameters.getMaxPlausibleHighVoltageLimit());
+        assertEquals(ReactiveSlackBusesMode.NO_GENERATION, parameters.getReactiveSlackBusesMode());
+        assertEquals(1., parameters.getAlphaCoefficient());
+        assertEquals(0.01, parameters.getMinPlausibleActivePowerThreshold());
+        assertEquals(1e-4, parameters.getLowImpedanceThreshold());
+        assertEquals(1., parameters.getNominalThresholdIgnoredBuses());
+        assertEquals(0., parameters.getNominalThresholdIgnoredVoltageBounds());
+        assertEquals(9000., parameters.getPQMax());
+        assertEquals(0, parameters.getDefaultPMin());
+        assertEquals(1000., parameters.getDefaultPMax());
+        assertEquals(0.3, parameters.getDefaultQmaxPmaxRatio());
+        assertEquals(1., parameters.getDefaultMinimalQPRange());
+        assertTrue(parameters.checkAlgorithmParametersIntegrity());
+    }
+
+    @Test
+    void testDefaultParametersListsIntegrity() {
         // testing default lists of parameters
         OpenReacParameters parameters = new OpenReacParameters();
         assertEquals(0, parameters.getVariableTwoWindingsTransformers().size(), "VariableTwoWindingsTransformers should be empty when using default OpenReacParameter constructor.");
@@ -160,7 +336,7 @@ public class OpenReacParametersTest {
         assertEquals(0, parameters.getConstantQGenerators().size(), "ConstantQGenerators should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getVariableShuntCompensators().size(), "VariableShuntCompensators should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getConfiguredReactiveSlackBuses().size(), "ConfiguredReactiveSlackBuses should be empty when using default OpenREacParameter constructor.");
-        assertEquals(6, parameters.getAllAlgorithmParams().size());
+        assertEquals(16, parameters.getAllAlgorithmParams().size());
     }
 
     @Test

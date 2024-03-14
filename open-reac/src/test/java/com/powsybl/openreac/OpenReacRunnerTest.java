@@ -94,7 +94,7 @@ class OpenReacRunnerTest {
     }
 
     @Test
-    void testParamAlgoExport() throws IOException {
+    void testModifiedParamAlgoExport() throws IOException {
         Network network = IeeeCdfNetworkFactory.create57();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         OpenReacParameters parameters = new OpenReacParameters()
@@ -104,7 +104,17 @@ class OpenReacRunnerTest {
                 .setLogLevelSolver(OpenReacSolverLogLevel.ONLY_RESULTS)
                 .setMinPlausibleLowVoltageLimit(0.7888)
                 .setMaxPlausibleHighVoltageLimit(1.3455)
-                .setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL);
+                .setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL)
+                .setAlphaCoefficient(0.88)
+                .setMinPlausibleActivePowerThreshold(0.45)
+                .setLowImpedanceThreshold(1e-5)
+                .setNominalThresholdIgnoredBuses(2.)
+                .setNominalThresholdIgnoredVoltageBounds(0.75)
+                .setPQMax(3987.76)
+                .setDefaultPMin(12.32)
+                .setDefaultPMax(1452.66)
+                .setDefaultQmaxPmaxRatio(0.24)
+                .setDefaultMinimalQPRange(2.);
 
         LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
                 List.of("empty_case/reactiveopf_results_indic.txt"));
