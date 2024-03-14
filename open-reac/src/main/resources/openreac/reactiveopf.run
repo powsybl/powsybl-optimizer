@@ -175,34 +175,6 @@ if length($SHELL) > 0 then {
 
 
 ###############################################################################
-# Management of optional input files
-###############################################################################
-# AMPL is able to manage empty files; in that case, sets and parameters are well
-# initialized to empty sets or tables; so the minimum we need is empty file.
-# Maybe this is not the best way to manage optional parameter files...
-if operatingSystem == "linux" then {
-  shell "if [ ! -f param_algo.txt ];                        then touch param_algo.txt ;fi";
-  shell "if [ ! -f param_shunts.txt ];                      then touch param_shunts.txt ;fi";
-  shell "if [ ! -f param_generators_reactive.txt ];         then touch param_generators_reactive.txt ;fi";
-  shell "if [ ! -f param_transformers.txt ];                then touch param_transformers.txt ;fi";
-  shell "if [ ! -f param_buses_with_reactive_slack.txt ];   then touch param_buses_with_reactive_slack.txt ;fi";
-  shell "if [ ! -f ampl_network_substations_override.txt ]; then touch ampl_network_substations_override.txt ;fi";
-  shell "chmod a+rX . * 2>/dev/null";
-}
-if operatingSystem == "windows" then {
-  shell "if not exist param_algo.txt                        echo #empty > param_algo.txt";
-  shell "if not exist param_shunts.txt                      echo #empty > param_shunts.txt";
-  shell "if not exist param_generators_reactive.txt         echo #empty > param_generators_reactive.txt";
-  shell "if not exist param_transformers.txt                echo #empty > param_transformers.txt";
-  shell "if not exist param_buses_with_reactive_slack.txt   echo #empty > param_buses_with_reactive_slack.txt";
-  shell "if not exist ampl_network_substations_override.txt echo #empty > ampl_network_substations_override.txt";
-}
-# If operating system is not linux nor windows, then these optional files are
-# not optional anymore: you need to provide at least empty files
-
-
-
-###############################################################################
 #
 # General options
 #
