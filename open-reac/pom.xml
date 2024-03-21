@@ -22,7 +22,7 @@
     <description>OpenReac optimizer</description>
 
     <properties>
-        <powsybl-core.version>6.2.0</powsybl-core.version>
+        <powsybl-core.version>6.3.0-alpha-1</powsybl-core.version>
         <powsybl-open-loadflow.version>1.7.0</powsybl-open-loadflow.version>
     </properties>
 
