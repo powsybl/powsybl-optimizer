@@ -108,7 +108,7 @@ class OpenReacResultsTest {
     }
 
     private OpenReacAmplIOFiles getIOWithMockVoltageProfile(Network network) throws IOException {
-        OpenReacAmplIOFiles io = new OpenReacAmplIOFiles(new OpenReacParameters(), network, true, ReportNode.NO_OP);
+        OpenReacAmplIOFiles io = new OpenReacAmplIOFiles(new OpenReacParameters(), null, network, true, ReportNode.NO_OP);
         try (InputStream input = getClass().getResourceAsStream("/mock_outputs/reactiveopf_results_voltages.csv");
              InputStreamReader in = new InputStreamReader(input);
              BufferedReader reader = new BufferedReader(in)) {
