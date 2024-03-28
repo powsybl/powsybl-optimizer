@@ -6,12 +6,9 @@
  */
 package com.powsybl.openreac;
 
-import com.powsybl.commons.reporter.Report;
-import com.powsybl.commons.reporter.Reporter;
-import com.powsybl.commons.reporter.TypedValue;
+import com.powsybl.commons.report.ReportNode;
+import com.powsybl.commons.report.TypedValue;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
-
-import java.util.Map;
 
 /**
  * @author Joris Mancini <joris.mancini_externe at rte-france.com>
@@ -22,41 +19,35 @@ public final class Reports {
         // Should not be instantiated
     }
 
-    public static Reporter createOpenReacReporter(Reporter reporter, String networkId, OpenReacOptimisationObjective objective) {
-        return reporter.createSubReporter(
-            "openReac",
-            "Open Reac on network '${networkId}' with ${objective} objective",
-            Map.of(
-                "networkId", new TypedValue(networkId, TypedValue.UNTYPED),
-                "objective", new TypedValue(objective.toString(), TypedValue.UNTYPED)
-            )
-        );
+    public static ReportNode createOpenReacReporter(ReportNode reportNode, String networkId, OpenReacOptimisationObjective objective) {
+        return reportNode.newReportNode()
+                .withMessageTemplate("openReac", "Open Reac on network '${networkId}' with ${objective} objective")
+                .withUntypedValue("networkId", networkId)
+                .withUntypedValue("objective", objective.toString())
+                .add();
     }
 
-    public static void reportConstantQGeneratorsSize(Reporter reporter, int constantQGeneratorsSize) {
-        reporter.report(Report.builder()
-            .withKey("constantQGeneratorsSize")
-            .withDefaultMessage("Reactive power target is considered fixed for ${size} generators")
-            .withSeverity(TypedValue.INFO_SEVERITY)
-            .withValue("size", constantQGeneratorsSize)
-            .build());
+    public static void reportConstantQGeneratorsSize(ReportNode reportNode, int constantQGeneratorsSize) {
+        reportNode.newReportNode()
+                .withMessageTemplate("constantQGeneratorsSize", "Reactive power target is considered fixed for ${size} generators")
+                .withSeverity(TypedValue.INFO_SEVERITY)
+                .withUntypedValue("size", constantQGeneratorsSize)
+                .add();
     }
 
-    public static void reportVariableTwoWindingsTransformersSize(Reporter reporter, int variableTwoWindingsTransformersSize) {
-        reporter.report(Report.builder()
-            .withKey("variableTwoWindingsTransformersSize")
-            .withDefaultMessage("There are ${size} two-winding transformers with tap position considered as variable")
-            .withSeverity(TypedValue.INFO_SEVERITY)
-            .withValue("size", variableTwoWindingsTransformersSize)
-            .build());
+    public static void reportVariableTwoWindingsTransformersSize(ReportNode reportNode, int variableTwoWindingsTransformersSize) {
+        reportNode.newReportNode()
+                .withMessageTemplate("variableTwoWindingsTransformersSize", "There are ${size} two-winding transformers with tap position considered as variable")
+                .withSeverity(TypedValue.INFO_SEVERITY)
+                .withUntypedValue("size", variableTwoWindingsTransformersSize)
+                .add();
     }
 
-    public static void reportVariableShuntCompensatorsSize(Reporter reporter, int variableShuntCompensatorsSize) {
-        reporter.report(Report.builder()
-            .withKey("variableShuntCompensatorsSize")
-            .withDefaultMessage("There are ${size} shunt compensators with section considered as variable")
-            .withSeverity(TypedValue.INFO_SEVERITY)
-            .withValue("size", variableShuntCompensatorsSize)
-            .build());
+    public static void reportVariableShuntCompensatorsSize(ReportNode reportNode, int variableShuntCompensatorsSize) {
+        reportNode.newReportNode()
+                .withMessageTemplate("variableShuntCompensatorsSize", "There are ${size} shunt compensators with section considered as variable")
+                .withSeverity(TypedValue.INFO_SEVERITY)
+                .withUntypedValue("size", variableShuntCompensatorsSize)
+                .add();
     }
 }
