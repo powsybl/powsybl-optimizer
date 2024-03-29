@@ -489,6 +489,11 @@ public class StateEstimatorKnowledge {
         return slackBusId;
     }
 
+    public StateEstimatorKnowledge generateRandomMeasurements(Network network) {
+        long seed = System.currentTimeMillis();
+        return generateRandomMeasurements(network, seed);
+    }
+
     /**
      * This method generates random measurements out of the Load Flow results obtained on a network.
      * The measurements generated are added to the "knowledge" instance.
@@ -502,7 +507,7 @@ public class StateEstimatorKnowledge {
      * @param network The network (LF run previously) for which random measurements must be generated
      * @return The object on which the method is applied.
      */
-    public StateEstimatorKnowledge generateRandomMeasurements(Network network) throws IllegalArgumentException {
+    public StateEstimatorKnowledge generateRandomMeasurements(Network network, long seed) throws IllegalArgumentException {
 
         // Compute the number of measurements needed (desired : 4 times the number of buses)
         long nbMeasurements = 4 * network.getBusView().getBusStream().count();
@@ -523,21 +528,23 @@ public class StateEstimatorKnowledge {
         Branch randomBranch;
         int randomSide;
         Bus randomBus;
+        // Initialize new Random with seed given
+        Random random = new Random(seed);
 
         // For each measurement to be generated, pick a measurement type at random
         for (int i = 1; i < nbMeasurements+1; i++) {
             Map<String, String> randomMeasure = new HashMap<>();
-            randomType = new Random().nextInt(ALL_MEASUREMENT_TYPES.size());
+            randomType = random.nextInt(ALL_MEASUREMENT_TYPES.size());
 
             if (randomType == 0 || randomType == 1) {
                 // Add a "Pf" measure
                 randomMeasure.put("Type", "Pf");
                 // Pick at random which branch side will be measured
-                randomSide = new Random().nextInt(2);
+                randomSide = random.nextInt(2);
                 if (randomSide == 0) {
                     // Pick a branch at random and remove it from the list of potential choices for next measurement (if some branches are still to be picked)
                     if (!listOfBranchesPfSide1.isEmpty()) {
-                        randomBranch = listOfBranchesPfSide1.remove(new Random().nextInt(listOfBranchesPfSide1.size()));
+                        randomBranch = listOfBranchesPfSide1.remove(random.nextInt(listOfBranchesPfSide1.size()));
                         // Get location IDs and the corresponding value (in SI), as given by the Load Flow solution
                         randomMeasure.put("BranchID", randomBranch.getId());
                         randomMeasure.put("FirstBusID", randomBranch.getTerminal1().getBusView().getBus().getId());
@@ -551,7 +558,7 @@ public class StateEstimatorKnowledge {
                 else {
                     // Pick a branch at random and remove it from the list of potential choices for next measurement (if some branches are still to be picked)
                     if (!listOfBranchesPfSide2.isEmpty()) {
-                        randomBranch = listOfBranchesPfSide2.remove(new Random().nextInt(listOfBranchesPfSide2.size()));
+                        randomBranch = listOfBranchesPfSide2.remove(random.nextInt(listOfBranchesPfSide2.size()));
                         // Get location IDs and the corresponding value (in SI), as given by the Load Flow solution
                         randomMeasure.put("BranchID", randomBranch.getId());
                         randomMeasure.put("FirstBusID", randomBranch.getTerminal2().getBusView().getBus().getId());
@@ -570,11 +577,11 @@ public class StateEstimatorKnowledge {
                 // Add a "Qf" measure
                 randomMeasure.put("Type", "Qf");
                 // Pick at random which branch side will be measured
-                randomSide = new Random().nextInt(2);
+                randomSide = random.nextInt(2);
                 if (randomSide == 0) {
                     // Pick a branch at random and remove it from the list of potential choices for next measurement (if some branches are still to be picked)
                     if (!listOfBranchesQfSide1.isEmpty()) {
-                        randomBranch = listOfBranchesQfSide1.remove(new Random().nextInt(listOfBranchesQfSide1.size()));
+                        randomBranch = listOfBranchesQfSide1.remove(random.nextInt(listOfBranchesQfSide1.size()));
                         // Get location IDs and the corresponding value (in SI), as given by the Load Flow solution
                         randomMeasure.put("BranchID", randomBranch.getId());
                         randomMeasure.put("FirstBusID", randomBranch.getTerminal1().getBusView().getBus().getId());
@@ -588,7 +595,7 @@ public class StateEstimatorKnowledge {
                 else {
                     // Pick a branch at random and remove it from the list of potential choices for next measurement (if some branches are still to be picked)
                     if (!listOfBranchesQfSide2.isEmpty()) {
-                        randomBranch = listOfBranchesQfSide2.remove(new Random().nextInt(listOfBranchesQfSide2.size()));
+                        randomBranch = listOfBranchesQfSide2.remove(random.nextInt(listOfBranchesQfSide2.size()));
                         // Get location IDs and the corresponding value (in SI), as given by the Load Flow solution
                         randomMeasure.put("BranchID", randomBranch.getId());
                         randomMeasure.put("FirstBusID", randomBranch.getTerminal2().getBusView().getBus().getId());
@@ -608,7 +615,7 @@ public class StateEstimatorKnowledge {
                 randomMeasure.put("Type", "P");
                 // Pick a bus at random and remove it from the list (if some buses are still to be picked)
                 if (!listOfBusesP.isEmpty()) {
-                    randomBus = listOfBusesP.remove(new Random().nextInt(listOfBusesP.size()));
+                    randomBus = listOfBusesP.remove(random.nextInt(listOfBusesP.size()));
                     // Get bus ID
                     randomMeasure.put("BusID", randomBus.getId());
                     // Get measurement value (in SI), as given by the Load Flow solution
@@ -626,7 +633,7 @@ public class StateEstimatorKnowledge {
                 randomMeasure.put("Type", "Q");
                 // Pick a bus at random and remove it from the list (if some buses are still to be picked)
                 if (!listOfBusesQ.isEmpty()) {
-                    randomBus = listOfBusesQ.remove(new Random().nextInt(listOfBusesQ.size()));
+                    randomBus = listOfBusesQ.remove(random.nextInt(listOfBusesQ.size()));
                     // Get bus ID
                     randomMeasure.put("BusID", randomBus.getId());
                     // Get measurement value (in SI), as given by the Load Flow solution
@@ -644,7 +651,7 @@ public class StateEstimatorKnowledge {
                 randomMeasure.put("Type", "V");
                 // Pick a bus at random and remove it from the list (if some buses are still to be picked)
                 if (!listOfBusesV.isEmpty()) {
-                    randomBus = listOfBusesV.remove(new Random().nextInt(listOfBusesV.size()));
+                    randomBus = listOfBusesV.remove(random.nextInt(listOfBusesV.size()));
                     // Get bus ID
                     randomMeasure.put("BusID", randomBus.getId());
                     // Get measurement value (in SI), as given by the Load Flow solution
