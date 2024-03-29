@@ -6,6 +6,9 @@
  */
 package com.powsybl.stateestimator.parameters.input.knowledge;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.ObjectCodec; // Keep this, even if marked as unused!
 import com.powsybl.iidm.network.Branch;
 import com.powsybl.iidm.network.Bus;
 import com.powsybl.iidm.network.Identifiable;
@@ -13,6 +16,8 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.openloadflow.util.PerUnit;
 import org.antlr.v4.runtime.misc.Pair;
 
+import java.io.*;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -23,7 +28,7 @@ import java.util.stream.Collectors;
 public class StateEstimatorKnowledge {
 
     public static final String DEFAULT_SLACK_SELECTION_MODE = "MOST_MESHED";
-    public static final ArrayList<String> ALL_MEASUREMENT_TYPES = new ArrayList<>(){{
+    public static final ArrayList<String> ALL_MEASUREMENT_TYPES = new ArrayList<>() {{
         add("PfSide1");
         add("PfSide2");
         add("QfSide1");
@@ -32,16 +37,16 @@ public class StateEstimatorKnowledge {
         add("Q");
         add("V");
     }};
-    public static final Map<String, Double> DEFAULT_STD_IN_PU_BY_MEAS_TYPE = new HashMap<>(){{
+    public static final Map<String, Double> DEFAULT_STD_IN_PU_BY_MEAS_TYPE = new HashMap<>() {{
         put("Pf", 0.02);
         put("Qf", 0.04);
         put("P", 0.02);
         put("Q", 0.04);
-        put("V",  0.0001);
+        put("V", 0.0001);
     }};
     // Standard deviation values (p.u) above as chosen in doi:10.3390/en11030570
     // TODO : check consistency of these values
-    public static final double BASE_POWER_MVA = 100; //PerUnit.SB
+    public static final double BASE_POWER_MVA = PerUnit.SB;
 
 
     Map<Integer, ArrayList<String>> activePowerFlowMeasures = new HashMap<>();
@@ -108,20 +113,15 @@ public class StateEstimatorKnowledge {
     public StateEstimatorKnowledge addMeasure(Integer measurementNumber, Map<String, String> measure, Network network) throws IllegalArgumentException {
         if (measure.get("Type").equals("Pf")) {
             return this.addActivePowerFlowMeasure(measurementNumber, measure, network);
-        }
-        else if (measure.get("Type").equals("Qf")) {
+        } else if (measure.get("Type").equals("Qf")) {
             return this.addReactivePowerFlowMeasure(measurementNumber, measure, network);
-        }
-        else if (measure.get("Type").equals("P")) {
+        } else if (measure.get("Type").equals("P")) {
             return this.addActivePowerInjectedMeasure(measurementNumber, measure, network);
-        }
-        else if (measure.get("Type").equals("Q")) {
+        } else if (measure.get("Type").equals("Q")) {
             return this.addReactivePowerInjectedMeasure(measurementNumber, measure, network);
-        }
-        else if (measure.get("Type").equals("V")) {
+        } else if (measure.get("Type").equals("V")) {
             return this.addVoltageMagnitudeMeasure(measurementNumber, measure, network);
-        }
-        else {
+        } else {
             throw new IllegalArgumentException(("The measurement type provided is not accepted. Only types accepted : \"Pf\", \"Qf\", \"P\", \"Q\", \"V\"."));
         }
     }
@@ -184,7 +184,7 @@ public class StateEstimatorKnowledge {
             throw new IllegalArgumentException("FirstBusID and SecondBusID can not be the same string.");
         }
         // Check that the measurement is not already contained in activePowerFlowMeasures (it is sufficient to check that the pair (BranchID, FirstBusID) does not already exist)
-        if (activePowerFlowMeasures.values().stream().map(ArrayList -> new Pair(ArrayList.get(1),ArrayList.get(2))).toList().contains(
+        if (activePowerFlowMeasures.values().stream().map(ArrayList -> new Pair(ArrayList.get(1), ArrayList.get(2))).toList().contains(
                 new Pair(measure.get("BranchID"), measure.get("FirstBusID")))) {
             throw new IllegalArgumentException("A measurement already exists for the location and type of the measurement provided. It can not be added.");
         }
@@ -258,7 +258,7 @@ public class StateEstimatorKnowledge {
             throw new IllegalArgumentException("FirstBusID and SecondBusID can not be the same string.");
         }
         // Check that the measurement is not already contained in activePowerFlowMeasures (it is sufficient to check that the pair (BranchID, FirstBusID) does not already exist)
-        if (reactivePowerFlowMeasures.values().stream().map(ArrayList -> new Pair(ArrayList.get(1),ArrayList.get(2))).toList().contains(
+        if (reactivePowerFlowMeasures.values().stream().map(ArrayList -> new Pair(ArrayList.get(1), ArrayList.get(2))).toList().contains(
                 new Pair(measure.get("BranchID"), measure.get("FirstBusID")))) {
             throw new IllegalArgumentException("A measurement already exists for the location and type of the measurement provided. It can not be added.");
         }
@@ -504,6 +504,7 @@ public class StateEstimatorKnowledge {
      * Note 1 : this method should be used for testing purposes only.
      * Note 2 : the sign of injected powers (P, Q) is inverted.
      * </p>
+     *
      * @param network The network (LF run previously) for which random measurements must be generated
      * @return The object on which the method is applied.
      */
@@ -532,7 +533,7 @@ public class StateEstimatorKnowledge {
         Random random = new Random(seed);
 
         // For each measurement to be generated, pick a measurement type at random
-        for (int i = 1; i < nbMeasurements+1; i++) {
+        for (int i = 1; i < nbMeasurements + 1; i++) {
             Map<String, String> randomMeasure = new HashMap<>();
             randomType = random.nextInt(ALL_MEASUREMENT_TYPES.size());
 
@@ -550,12 +551,10 @@ public class StateEstimatorKnowledge {
                         randomMeasure.put("FirstBusID", randomBranch.getTerminal1().getBusView().getBus().getId());
                         randomMeasure.put("SecondBusID", randomBranch.getTerminal2().getBusView().getBus().getId());
                         randomMeasure.put("Value", String.valueOf(randomBranch.getTerminal1().getP()));
-                    }
-                    else {
+                    } else {
                         randomMeasure = null;
                     }
-                }
-                else {
+                } else {
                     // Pick a branch at random and remove it from the list of potential choices for next measurement (if some branches are still to be picked)
                     if (!listOfBranchesPfSide2.isEmpty()) {
                         randomBranch = listOfBranchesPfSide2.remove(random.nextInt(listOfBranchesPfSide2.size()));
@@ -564,16 +563,14 @@ public class StateEstimatorKnowledge {
                         randomMeasure.put("FirstBusID", randomBranch.getTerminal2().getBusView().getBus().getId());
                         randomMeasure.put("SecondBusID", randomBranch.getTerminal1().getBusView().getBus().getId());
                         randomMeasure.put("Value", String.valueOf(randomBranch.getTerminal2().getP()));
-                    }
-                    else {
+                    } else {
                         randomMeasure = null;
                     }
                 }
                 // Get variance (in SI^2, not p.u.^2)
                 randomMeasure.put("Variance", String.valueOf(
                         Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("Pf") * BASE_POWER_MVA, 2)));
-            }
-            else if (randomType == 2 || randomType == 3) {
+            } else if (randomType == 2 || randomType == 3) {
                 // Add a "Qf" measure
                 randomMeasure.put("Type", "Qf");
                 // Pick at random which branch side will be measured
@@ -587,12 +584,10 @@ public class StateEstimatorKnowledge {
                         randomMeasure.put("FirstBusID", randomBranch.getTerminal1().getBusView().getBus().getId());
                         randomMeasure.put("SecondBusID", randomBranch.getTerminal2().getBusView().getBus().getId());
                         randomMeasure.put("Value", String.valueOf(randomBranch.getTerminal1().getQ()));
-                    }
-                    else {
+                    } else {
                         randomMeasure = null;
                     }
-                }
-                else {
+                } else {
                     // Pick a branch at random and remove it from the list of potential choices for next measurement (if some branches are still to be picked)
                     if (!listOfBranchesQfSide2.isEmpty()) {
                         randomBranch = listOfBranchesQfSide2.remove(random.nextInt(listOfBranchesQfSide2.size()));
@@ -601,16 +596,14 @@ public class StateEstimatorKnowledge {
                         randomMeasure.put("FirstBusID", randomBranch.getTerminal2().getBusView().getBus().getId());
                         randomMeasure.put("SecondBusID", randomBranch.getTerminal1().getBusView().getBus().getId());
                         randomMeasure.put("Value", String.valueOf(randomBranch.getTerminal2().getQ()));
-                    }
-                    else {
+                    } else {
                         randomMeasure = null;
                     }
                 }
                 // Get variance (in SI^2, not p.u.^2)
                 randomMeasure.put("Variance", String.valueOf(
                         Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("Qf") * BASE_POWER_MVA, 2)));
-            }
-            else if (randomType == 4) {
+            } else if (randomType == 4) {
                 // Add a "P" measure
                 randomMeasure.put("Type", "P");
                 // Pick a bus at random and remove it from the list (if some buses are still to be picked)
@@ -623,12 +616,10 @@ public class StateEstimatorKnowledge {
                     // Get variance (in SI^2, not p.u.^2)
                     randomMeasure.put("Variance", String.valueOf(
                             Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("P") * BASE_POWER_MVA, 2)));
-                }
-                else {
+                } else {
                     randomMeasure = null;
                 }
-            }
-            else if (randomType == 5) {
+            } else if (randomType == 5) {
                 // Add a "Q" measure
                 randomMeasure.put("Type", "Q");
                 // Pick a bus at random and remove it from the list (if some buses are still to be picked)
@@ -641,12 +632,10 @@ public class StateEstimatorKnowledge {
                     // Get variance (in SI^2, not p.u.^2)
                     randomMeasure.put("Variance", String.valueOf(
                             Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("Q") * BASE_POWER_MVA, 2)));
-                }
-                else {
+                } else {
                     randomMeasure = null;
                 }
-            }
-            else if (randomType == 6) {
+            } else if (randomType == 6) {
                 // Add a "V" measure
                 randomMeasure.put("Type", "V");
                 // Pick a bus at random and remove it from the list (if some buses are still to be picked)
@@ -659,27 +648,23 @@ public class StateEstimatorKnowledge {
                     // Get variance (in SI^2, not p.u.^2)
                     randomMeasure.put("Variance", String.valueOf(
                             Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("V") * randomBus.getVoltageLevel().getNominalV(), 2)));
-                }
-                else {
+                } else {
                     randomMeasure = null;
                 }
-            }
-            else {
+            } else {
                 throw new IllegalArgumentException("More measurements types given than what the generator can handle. Check ALL_MEASUREMENT_TYPES");
             }
             // Try to add the measure if not null (could be redundant)
             if (randomMeasure != null) {
                 try {
                     this.addMeasure(i, randomMeasure, network);
-                }
-                catch(IllegalArgumentException illegalArgumentException) {
+                } catch (IllegalArgumentException illegalArgumentException) {
                     System.out.printf("%nMeasurement n° %d could not be added. Reason :%n", i);
                     throw illegalArgumentException;
                 }
-            }
-            else { // If measure is null, it is because the list to choose measurement location has become empty (ex : all the buses are already assigned a voltage measure)
+            } else { // If measure is null, it is because the list to choose measurement location has become empty (ex : all the buses are already assigned a voltage measure)
                 // In this case, decrease i to get the proper quantity of measurements at the end of the process
-                i = i-1;
+                i = i - 1;
             }
         }
         return this;
@@ -696,17 +681,46 @@ public class StateEstimatorKnowledge {
     public void printActivePowerFlowMeasures() {
         new ActivePowerFlowMeasures(this.getActivePowerFlowMeasures()).print();
     }
+
     public void printReactivePowerFlowMeasures() {
         new ReactivePowerFlowMeasures(this.getReactivePowerFlowMeasures()).print();
     }
+
     public void printActivePowerInjectedMeasures() {
         new ActivePowerInjectedMeasures(this.getActivePowerInjectedMeasures()).print();
     }
+
     public void printReactivePowerInjectedMeasures() {
         new ReactivePowerInjectedMeasures(this.getReactivePowerInjectedMeasures()).print();
     }
+
     public void printVoltageMagnitudeMeasures() {
         new VoltageMagnitudeMeasures(this.getVoltageMagnitudeMeasures()).print();
     }
+
+    // To save and load an instance of StateEstimatorKnowledge
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+    // Empty constructor, for deserialization
+    public StateEstimatorKnowledge() {
+    }
+
+    // Save StateEstimatorKnowledge instance as JSON file
+    public void write(FileOutputStream fileOutputStream) {
+        try {
+            OBJECT_MAPPER.writeValue(fileOutputStream, this);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    // Build a StateEstimatorKnowledge instance from a JSON file
+    public static StateEstimatorKnowledge read(String pathToFile) throws IOException {
+        File file = new File(pathToFile);
+        OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        return OBJECT_MAPPER.readValue(file, StateEstimatorKnowledge.class);
+    }
 }
+
+
 

@@ -314,7 +314,8 @@ printf "\n######################################################################
 printf "# SE solve: start (%s)\n\n",ctime();
 let tempstr := ctime();
 
-option knitro_options ("opttol=1 opttolabs=1e-1 feastol=1  ms_enable=0 feastolabs=1e-3 maxit=1500 mip_heuristic_strategy=3 mip_intvar_strategy=" & mip_strategy & " mip_multistart=1 mip_maxtime_real=" & max_time_solving);
+#option knitro_options ("opttol=1 opttolabs=1e-1 feastol=1  ms_enable=0 feastolabs=1e-3 maxit=1500 mip_heuristic_strategy=3 mip_intvar_strategy=" & mip_strategy & " mip_multistart=1 mip_maxtime_real=" & max_time_solving);
+option knitro_options ("opttol=1e-6 opttolabs=1e-3 feastol=1e-6  ms_enable=0 feastolabs=1e-3 maxit=1500 mip_heuristic_strategy=3 mip_intvar_strategy=" & mip_strategy & " mip_multistart=1 mip_maxtime_real=" & max_time_solving);
 
 # Solve the problem chosen
 solve problem_sum_of_squares_of_residuals;

@@ -141,9 +141,4 @@ minimize problem_sum_of_squares_of_residuals:
   + sum{l in MEASURECC_P} (resid_P[l])**2 / P_variance[l]
   + sum{l in MEASURECC_Q} (resid_Q[l])**2 / Q_variance[l]
   + sum{l in MEASURECC_V} (resid_V[l])**2 / V_variance[l]
-  #+ 1 / max_Pf_value * sum{l in MEASURECC_Pf} (resid_Pf[l])**2 / Pf_variance[l]
-  #+ 1 / max_Qf_value * sum{l in MEASURECC_Qf} (resid_Qf[l])**2 / Qf_variance[l]
-  #+ 1 / max_P_value * sum{l in MEASURECC_P} (resid_P[l])**2 / P_variance[l]
-  #+ 1 / max_Q_value * sum{l in MEASURECC_Q} (resid_Q[l])**2 / Q_variance[l]
-  #+ 1 / max_V_value * sum{l in MEASURECC_V} (resid_V[l])**2 / V_variance[l]
   ;

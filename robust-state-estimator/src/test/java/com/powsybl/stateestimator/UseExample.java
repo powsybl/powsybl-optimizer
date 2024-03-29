@@ -22,11 +22,14 @@ import com.powsybl.stateestimator.parameters.input.knowledge.StateEstimatorKnowl
 import com.powsybl.stateestimator.parameters.input.options.StateEstimatorOptions;
 import org.junit.jupiter.api.Test;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
+import static com.powsybl.openloadflow.OpenLoadFlowParameters.LowImpedanceBranchMode.REPLACE_BY_MIN_IMPEDANCE_LINE;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -44,10 +47,12 @@ public class UseExample {
         Network network = IeeeCdfNetworkFactory.create14();
         //network.write();
 
-        // Load Flow parameters
+        // Load Flow parameters (note : we mimic the way the AMPL code deals with zero-impedance branches)
         LoadFlowParameters parametersLf = new LoadFlowParameters();
         OpenLoadFlowParameters parametersExt = OpenLoadFlowParameters.create(parametersLf);
-        parametersExt.setAlwaysUpdateNetwork(true);
+        parametersExt.setAlwaysUpdateNetwork(true)
+                .setLowImpedanceBranchMode(REPLACE_BY_MIN_IMPEDANCE_LINE)
+                .setLowImpedanceThreshold(1e-4);
 
         // Solve the Load Flow problem for the network
         LoadFlowResult loadFlowResult = LoadFlow.run(network, parametersLf);
@@ -58,9 +63,14 @@ public class UseExample {
         StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network);
 
         // Randomly generate measurements (useful for test cases) out of load flow results
-        knowledge.generateRandomMeasurements(network);
+        knowledge.generateRandomMeasurements(network, 3);
         // Note : we can also add by hand our measurements, and complete them with generated measurements until observability is ensured
         //knowledge.addActivePowerFlowMeasure(measurementNumber, Map<"BranchID", "FirstBusID", "SecondBusID", "Value", "Variance", "Type">, network);
+
+        // Save "knowledge" in the desired folder as a JSON
+        //knowledge.write(new FileOutputStream("D:/Projet/Tests/knowledge_14bus_seed2.json"));
+        // Read the JSON file as an StateEstimatorKnowledge instance
+        //StateEstimatorKnowledge test = StateEstimatorKnowledge.read("D:/Projet/Tests/knowledge_14bus_seed2.json");
 
         // Print these measurements
         //knowledge.printAllMeasures();
@@ -101,5 +111,9 @@ public class UseExample {
         System.out.printf("%nAverage voltage error : %f p.u (std = %f)%n", avgVoltageError, stdVoltageError);
         System.out.printf("%nAverage angle error : %f degrees (std = %f)%n", avgAngleErrror, stdAngleError);
         System.out.printf("%nNumber of voltage magnitude measurements : %d%n", knowledge.getVoltageMagnitudeMeasures().size());
+
+        for (Bus bus : network.getBusView().getBuses()) {
+            System.out.printf("%nBus %s : voltage = %f p.u, angle = %f rad %n", bus.getId(), bus.getV()/bus.getVoltageLevel().getNominalV(), Math.toRadians(bus.getAngle()));
+        }
     }
 }
