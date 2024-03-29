@@ -1,0 +1,68 @@
+###############################################################################
+#
+# Copyright (c) 2022,2023 RTE (http://www.rte-france.com), Coreso and TSCNet Services 
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+###############################################################################
+
+###############################################################################
+# State Estimator
+# Author : Jean Maeght 2022 2023
+# Author : Pierre Arvy 2023
+# Author : Lucas Riou 2024
+###############################################################################
+
+######################
+# Export run results #
+######################
+
+# Export the network state estimate (V, theta)
+let fileOut := "se_state_estimate.csv";
+printf "bus;bus_id;V(pu);theta(rad)\n" > (fileOut);
+printf{n in BUSCC} "%i;%Q;%.5f;%.5f\n", n, bus_id[1,n], V[n], theta[n] > (fileOut);
+close (fileOut);
+printf "\nExportation of se_state_estimate.csv done.\n";
+
+# Export the network topology estimate (branch status)
+let fileOut := "se_topology_estimate.csv";
+printf "branch;bus1;bus2;branch_id;was_suspected;status\n" > (fileOut); 
+printf{(qq,m,n) in BRANCHCC_FULL} "%i;%i;%i;%Q;%Q;%Q\n",
+      qq, m, n, branch_id[1,qq,m,n], 
+      if (qq,m,n) in BRANCHCC_SUSP then "YES" else "NO", 
+      if y[qq,m,n] == 1 then "CLOSED" else "OPENED"
+      > (fileOut);
+close (fileOut);
+printf "Exportation of se_topology_estimate.csv done.\n";
+
+# Export the residuals (for Pf, Qf, P, Q, V)
+# TODO !
+
+
+########################################
+# Export all the indicators of the run #
+########################################
+
+# Export run indicators
+let fileOut := "se_indic.txt";
+printf "# Run indicators\n" > (fileOut);
+printf "final_status %s\n", final_status                                > (fileOut);
+printf "se_begin %Q\n", ctime_start                                     > (fileOut);
+printf "se_end %Q\n", ctime()                                           > (fileOut);
+printf "total_solve_time %.5f\n", _total_solve_time                     > (fileOut);
+printf "knitro_mode %s\n", mip_strategy                                 > (fileOut);
+close(fileOut);
+printf "Exportation of se_indic.txt done.\n";
+
+# Export network indicators
+let fileOut := "se_network_indic.txt";
+printf "# Network indicators\n" > (fileOut);
+printf "num_main_cc %i\n",  index_main_connex_component > (fileOut);
+printf "num_buses %i\n",    card(BUSCC)                 > (fileOut);
+printf "num_branches %i\n", card(BRANCHCC_FULL)         > (fileOut);
+printf "num_rtc %i\n",      card(BRANCHCC_REGL)         > (fileOut);
+printf "num_pst %i\n",      card(BRANCHCC_DEPH)         > (fileOut);
+printf "num_3wt %i\n",      card(BRANCHCC_3WT) / 3      > (fileOut);
+close(fileOut);
+printf "Exportation of se_network_indic.txt done.\n";

@@ -1,0 +1,388 @@
+###############################################################################
+#
+# Copyright (c) 2022,2023 RTE (http://www.rte-france.com), Coreso and TSCNet Services 
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+###############################################################################
+
+###############################################################################
+# State Estimator
+# Author : Jean Maeght 2022 2023
+# Author : Pierre Arvy 2023
+# Author : Lucas Riou 2024
+###############################################################################
+
+# Close any files that might have been opened previously
+close;
+
+###############################################################################
+#                                     Start                                   #
+###############################################################################
+
+# Clean parameters, variables, constraints and any former models pre-existing
+reset;
+
+# Print date of start of calculation
+param ctime_start symbolic := ctime();
+printf "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
+printf "*** Start of file divergence analysis : %s\n",ctime_start;
+
+# Global status
+# Possible values : CRASH OK NOK UNKNOWN
+param final_status symbolic default "UNKNOWN";
+
+###############################################################################
+#                                                                             #
+#                               General options                               #
+#                                                                             #
+###############################################################################
+
+###############################################################################
+#                   Controls and associated parameters                        #
+###############################################################################
+
+# Read activation/desactivation of penalization
+model;
+set SOLVING_OPTIONS_KEYS;
+param SOLVING_OPTIONS_VALUES{SOLVING_OPTIONS_KEYS} symbolic;
+data;
+param: SOLVING_OPTIONS_KEYS: SOLVING_OPTIONS_VALUES := include solving_options.txt;
+model;
+display SOLVING_OPTIONS_VALUES;
+
+# Solving options for MINLP
+
+# "mip_strategy" specifies the value to KNITRO option mip_intvar_strategy
+# This specifies how to handle integer variables : 0 = No special treatment, 1 = Relax all integer variables, 2 = Convert all binary variables to complementarity constraints
+#param mip_strategy integer default 0; 
+param mip_strategy integer default 2; 
+#if "solving_mode" in SOLVING_OPTIONS_KEYS then let mip_strategy := num(SOLVING_OPTIONS_VALUES["solving_mode"]);
+
+param max_time_solving integer default 120;
+if "max_time_solving" in SOLVING_OPTIONS_KEYS then let max_time_solving := num(SOLVING_OPTIONS_VALUES["max_time_solving"]);
+
+# Absolute parameter : base 100MVA.
+# Never change this unless you really know what you do
+param base100MVA := 100;
+
+# Parameter for detection of branches with zero impedance
+param Znull default 1e-4; # in Ohms
+printf "Parameter: threshold to detect zero impedance branch Znull:=%Q pu\n",Znull;
+# always check Znull > 0 and Znull < 0.1;
+
+###############################################################################
+#     Solver choice and options # TODO : Check if this is what we want        #
+###############################################################################
+
+option solver knitroampl;
+option dual_initial_guesses 0;
+option presolve 10;
+option show_boundtol 0;
+
+suffix cfeastol IN;
+suffix xfeastol IN;
+
+suffix cscalefactor IN;
+suffix xscalefactor IN;
+suffix objscalefactor IN;
+
+suffix usercomp IN;
+suffix intvarstrategy IN;
+
+# FIXME CHECK HERE
+suffix knitro_feaserror OUT;
+suffix knitro_opterror OUT;
+suffix knitro_neval OUT;
+suffix knitro_niter OUT;
+
+###############################################################################
+#                               Global variables                              #
+###############################################################################
+
+# Gobal variables for writing and messages
+param fileOut symbolic default "dummy.txt";
+param errorMessage symbolic default "empty error message";
+
+# Messages to be written in final indicator file
+param messageInfo symbolic default "empty information message";
+set messagesInfo default {};
+
+# Number of iterations for divergence analysis
+param nb_iter_last  integer default 0;
+param nb_iter_total integer default 0;
+
+# Additional dummy parameters, used for local computation
+# Remenber you cannot declare new variable in loop or "if"
+param temp1;
+param temp2;
+param temp3;
+param temp4;
+param tempo;
+param tempstr symbolic default "empty string";
+
+###############################################################################
+#                       Inclusions files .mod and .dat                        #
+###############################################################################
+
+model "state_estimator.mod";
+data  "data_network.dat";
+
+###############################################################################
+# This command "check" means that all checks in .mod file are done right now  #
+###############################################################################
+check;
+
+###############################################################################
+#            Check uniqueness of branches and buses IDs                       #
+###############################################################################
+
+for {(1,n) in BUS} {
+  for {(1,m) in BUS: m != n} {
+    if bus_id[1,n] = bus_id[1,m] then {
+      printf "\nWARNING: Bus ID %s appears more than once and could cause an error.\n", bus_id[1,n];
+      }
+  }
+}
+
+for {(1,qq,m,n) in BRANCH} {
+  for {(1,rr,o,p) in BRANCH: rr != qq or o != m or p != n} {
+    if branch_id[1,qq,m,n] = branch_id[1,rr,o,p] then {
+      printf "\nWARNING: Branch ID %s appears more than once and could cause an error.\n", branch_id[1,qq,m,n];
+    }
+  }
+}
+
+###############################################################################
+#      Relate locations (IDs) of measurements to buses/branches numbers       #
+###############################################################################
+
+# "P_bus" is not loaded from data, but is assigned the bus number (see ampl_network_buses.txt) that relates to "P_bus_id" (unique identifier)
+for {l in MEASURES_P} {
+  for {(t,n) in BUS} {
+    if P_bus_id[l] == bus_id[t,n] then let P_bus[l] := n;
+  }
+}
+
+# Same goes for "Q_bus", "V_bus" "Pf_branch", "Pf_firstbus", "Pf_secondbus", "Qf_branch", "Qf_firstbus", "Qf_secondbus"
+for {l in MEASURES_Q} {
+  for {(t,n) in BUS} {
+    if Q_bus_id[l] == bus_id[t,n] then let Q_bus[l] := n;
+  }
+}
+
+for {l in MEASURES_V} {
+  for {(t,n) in BUS} {
+    if V_bus_id[l] == bus_id[t,n] then let V_bus[l] := n;
+  }
+}
+
+for {l in MEASURES_Pf} {
+  for {(t,n) in BUS} {
+    if Pf_firstbus_id[l] == bus_id[t,n] then let Pf_firstbus[l] := n;
+    if Pf_secondbus_id[l] == bus_id[t,n] then let Pf_secondbus[l] := n;
+  }
+}
+for {l in MEASURES_Pf} {
+  for {(t,qq,m,n) in BRANCH} {
+    if Pf_branch_id[l] == branch_id[t,qq,m,n] then let Pf_branch[l] := qq;
+  }
+}
+
+for {l in MEASURES_Qf} {
+  for {(t,n) in BUS} {
+    if Qf_firstbus_id[l] == bus_id[t,n] then let Qf_firstbus[l] := n;
+    if Qf_secondbus_id[l] == bus_id[t,n] then let Qf_secondbus[l] := n;
+  }
+}
+for {l in MEASURES_Qf} {
+  for {(t,qq,m,n) in BRANCH} {
+    if Qf_branch_id[l] == branch_id[t,qq,m,n] then let Qf_branch[l] := qq;
+  }
+}
+
+
+###############################################################################
+#                            Slack bus                                        #
+###############################################################################
+
+# Slack bus selection mode (most meshed or by hand) is handled in Java, so that the bus indicated in "ampl_slackbus.txt" is the one to use as slack
+
+for{n in BUS2 : bus_id[1,n] == slack_bus_id[1]}{
+  let null_phase_bus := n;
+}
+
+###############################################################################
+#           Connexity checks and computation of connex components             #
+###############################################################################
+
+printf "\n*** Connexity computation\n";
+let PROBLEM_CCOMP := {1};
+
+# Let the other problem be non active
+let PROBLEM_SE := { };
+
+option knitro_options "outlev=0"; # Avoid printing of too much information.
+option presolve 0;
+let tempstr := ctime();
+printf "# CCcomp solve: start (%s)\n\n",tempstr;
+solve cccomputation_objective;
+if solve_result_num > 103 or card({n in BUS2: teta_ccomputation[n].val > 0.01 and teta_ccomputation[n].val < 0.99})>0 
+then {
+  # First return codes of knitro :
+  # See https://www.artelys.com/docs/knitro/3_referenceManual/knitroamplReference.html#return-codes
+  #   0 Locally optimal or satisfactory solution.
+  let errorMessage := "Optimization for connex component computation failed";
+  let final_status := "NOK";
+  include results_exit.run; # CC computation did not work ==> Return indications and exit
+}
+printf "# CCcomp solve: end   (%s -> %s)\n\n",tempstr,ctime();
+
+option presolve 10;
+
+# Once main connex component is computed, define the set of buses in it :
+# here we keep the buses that have been calculated as linked to the slack bus with AC lines
+let BUSCC := {n in BUS2: teta_ccomputation[n].val <= 0.01};
+
+# TODO : change all this to make it simpler
+/* for {n in BUSCC} {
+  let bus_V0_corrected[n] := bus_V0[1,n];
+  let bus_angl0_corrected[n] := bus_angl0[1,n];
+} */
+
+printf "\n\n*** Connexity computation\n";
+for{n in BUS2 diff BUSCC}
+  printf "Bus %Q in substation %Q (Vnomi=%.2fkV, country=%Q) is out of main AC CC\n",
+    bus_id[1,n], substation_id[1,bus_substation[1,n]],
+    substation_Vnomi[1,bus_substation[1,n]], substation_country[1,bus_substation[1,n]];
+printf "Nb of busses in AC CC: %i\n",card(BUS2); 
+printf "Nb of busses in CC of slack bus %Q: %i\n",bus_id[1,null_phase_bus],card(BUSCC);
+printf "Nb of busses in other CCs: %Q\n",card(BUS2)-card(BUSCC);
+printf "Nb of V measurements discarded as they were not related to main AC CC: %i\n", 
+  card(MEASURES_V)-card(MEASURECC_V);
+printf "Nb of P measurements discarded as they were not related to main AC CC: %i\n", 
+  card(MEASURES_P)-card(MEASURECC_P);
+printf "Nb of Q measurements discarded as they were not related to main AC CC: %i\n", 
+  card(MEASURES_Q)-card(MEASURECC_Q);
+printf "Nb of Pf measurements discarded as they were not related to main AC CC: %i\n", 
+  card(MEASURES_Pf)-card(MEASURECC_Pf);
+printf "Nb of Qf measurements discarded as they were not related to main AC CC: %i\n", 
+  card(MEASURES_Qf)-card(MEASURECC_Qf);
+printf "Nb of suspect branches out of main AC CC: %i\n", card(BRANCH_SUSP)-card(BRANCHCC_SUSP);
+printf "\n";
+
+###############################################################################
+#                                                                             #
+#                         Robust State Estimation                             #
+#                                                                             #
+###############################################################################
+
+# Initial values of state variables : "flat start"
+let {n in BUSCC} V[n] := 1;
+let {n in BUSCC} theta[n] := 0;
+
+# Start by assuming all branches are closed
+let {(qq,m,n) in BRANCHCC_FULL} y[qq,m,n] := 1; #fix/let
+
+# Fix the status to "closed" for branches not in BRANCHCC_SUSP
+for {(qq,m,n) in BRANCHCC_FULL diff BRANCHCC_SUSP} {
+  fix y[qq,m,n] := 1;
+}
+
+/* # Consistency with power flow measurement : 
+# if a power flow is measured and not null, the status of the corresponding branch must be "closed"
+for {l in MEASURES_Pf} {
+  if abs(Pf_value[l]) > 0 and (Pf_branch[l],Pf_firstbus[l],Pf_secondbus[l]) in BRANCHCC_FULL 
+  then fix y[Pf_branch[l],Pf_firstbus[l],Pf_secondbus[l]] := 1;
+}
+for {l in MEASURES_Qf} {
+  if abs(Qf_value[l]) > 0 and (Qf_branch[l],Qf_firstbus[l],Qf_secondbus[l]) in BRANCHCC_FULL 
+  then fix y[Qf_branch[l],Qf_firstbus[l],Qf_secondbus[l]] := 1;
+} */
+
+# Activation of the good optimization problem
+let PROBLEM_CCOMP := { };
+let PROBLEM_SE := {1};
+
+printf "\n######################################################################\n";
+printf "Check of consistency of all the sets & parameters";
+printf "\n######################################################################\n";
+check;
+
+printf "\n######################################################################\n";
+printf "# SE solve: start (%s)\n\n",ctime();
+let tempstr := ctime();
+
+option knitro_options ("opttol=1 opttolabs=1e-1 feastol=1  ms_enable=0 feastolabs=1e-3 maxit=1500 mip_heuristic_strategy=3 mip_intvar_strategy=" & mip_strategy & " mip_multistart=1 mip_maxtime_real=" & max_time_solving);
+
+# Solve the problem chosen
+solve problem_sum_of_squares_of_residuals;
+let nb_iter_last := problem_sum_of_squares_of_residuals.numiters;
+let nb_iter_total := nb_iter_total + nb_iter_last; 
+
+# Analysis of solve_result_num
+
+# 0 : solution satisfies termination conditions for verifying optimality
+# <= 103 : feasible approximate solution was found
+# >= 400 and <= 406 : feasible but Knitro reached pre-defined limit
+# 200 convergence to unfeasible
+# > 200 : failure
+
+param output_results binary default 0;
+printf "Return code of knitro : %i\n", solve_result_num;
+if solve_result_num == 200 
+then {
+  let output_results := 0;
+  let messageInfo := "Optimization was ***not*** successfull - Convergence to an infeasible solution";
+  printf "%s\n", messageInfo;
+  let messagesInfo := messagesInfo union {messageInfo};
+  let final_status := "NOK";
+}
+else if solve_result_num > 103 and (solve_result_num < 400 or solve_result_num > 406)
+then {
+  let output_results := 0;
+  let messageInfo := "Optimization was ***not*** successfull - no solution found";
+  printf "%s\n", messageInfo;
+  let messagesInfo := messagesInfo union {messageInfo};
+  let final_status := "NOK";
+}
+else {
+  let output_results := 1;
+  let final_status := "OK";
+}
+
+printf "\n# SE solve: end   (%s -> %s)\n",tempstr,ctime();
+printf "######################################################################\n\n";
+
+printf "######################################################################\n";
+printf "#                      Displays after solving                        #\n";
+printf "######################################################################\n";
+
+printf "State estimation :\n";
+for {n in BUSCC} {
+    printf "Bus %Q : voltage magnitude = %.3f (p.u) / %.3f (kV) and voltage angle = %.3f (rad)", 
+    bus_id[1,n], V[n], V[n] * substation_Vnomi[1,bus_substation[1,n]], theta[n];          
+    printf"\n";
+}
+/* printf "Average squared residual : %.3f ", problem_sum_of_squares_of_residuals / 
+  (card(MEASURECC_P)+card(MEASURECC_Pf)+card(MEASURECC_Q)+card(MEASURECC_Qf)+card(MEASURECC_V)); */
+
+printf "\n";
+if (card(REGL) == 0) then printf "[INFO] No rtc on the network\n";
+if (card(DEPH) == 0) then printf "[INFO] No ptc on the network\n";
+if (card({(1,qq,m,n) in BRANCH : branch_3wt[1,qq,m,n] != -1}) == 0) then printf "[INFO] No 3wt on the network\n";
+
+###############################################################################
+#                       Writing results and indicators                        #
+###############################################################################
+
+include results_exporter.run;
+
+###############################################################################
+#                                End of file                                  #
+###############################################################################
+
+printf "\n";
+printf "*** Start of file state_estimator.run : %Q\n",ctime_start;
+printf "*** End of file state_estimator.run : %Q\n",ctime();

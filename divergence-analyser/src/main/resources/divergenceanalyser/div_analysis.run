@@ -98,7 +98,7 @@ param base100MVA := 100;
 
 # Limit for detecting zero value for power
 param Pnull default 0.01; # MW
-printf "Parameter: threshold to decide wether an active or reactive power value is zero Pnull:=%Q (MW or Mvar or MVA)\n",Pnull;
+printf "Parameter: threshold to decide whether an active or reactive power value is zero Pnull:=%Q (MW or Mvar or MVA)\n",Pnull;
 # always check Pnull > 0 and Pnull < 1;
 
 # Parameter for detection of branches with zero impedance

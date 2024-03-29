@@ -97,7 +97,7 @@ var rea_power_dir_YXi_penal{(qq,m,n) in BRANCHCC} =
   + (rho_penal[qq,m,n])**2 * V[m] * (y_penal
 [qq,m,n] * cos(Xi_penal[qq,m,n]) - B1_penal[qq,m,n]);
 
-var act_power_inv_YXi_penal{(qq,m,n) in BRANCHCC} = 
+var act_power_inv_YXi_penal{(qq,m,n) in BRANCHCC} =
   rho_penal[qq,m,n] * V[m] * y_penal
 [qq,m,n] * sin(teta[n] - teta[m] - alpha_penal[qq,m,n] - Xi_penal[qq,m,n])
   + V[n] * (y_penal

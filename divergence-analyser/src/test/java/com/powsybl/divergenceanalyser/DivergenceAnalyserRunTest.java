@@ -59,9 +59,9 @@ public class DivergenceAnalyserRunTest {
                         subFolder + "/da_V_theta.csv"));
 
         // To really run the divergence analyser, use the commented line below. Be sure that divergence-analyser/src/test/resources/com/powsybl/config/test/config.yml contains your ampl path
-//        try (ComputationManager computationManager = new LocalComputationManager()) {
-        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
-                localCommandExecutor, ForkJoinPool.commonPool())) {
+        try (ComputationManager computationManager = new LocalComputationManager()) {
+//        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
+//                localCommandExecutor, ForkJoinPool.commonPool())) {
 
             // Run DA without penal activated
             DivergenceAnalyserResults results = DivergenceAnalyser.runDivergenceAnalysis(network, network.getVariantManager().getWorkingVariantId(),
