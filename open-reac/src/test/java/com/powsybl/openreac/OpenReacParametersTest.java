@@ -116,6 +116,58 @@ public class OpenReacParametersTest {
     }
 
     @Test
+    void testVariablesScalingFactorsIntegrity() {
+        OpenReacParameters parameters = new OpenReacParameters();
+
+        // Consistency of default scaling factor
+        assertEquals(1, parameters.getDefaultVariablesScalingFactor()); // default value
+        parameters.setDefaultVariablesScalingFactor(0.8);
+        assertEquals(0.8, parameters.getDefaultVariablesScalingFactor());
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> parameters.setDefaultVariablesScalingFactor(-0.25));
+        assertEquals("Default scaling factor for variables must be > 0 and defined to be consistent.", e.getMessage());
+        IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class, () -> parameters.setDefaultVariablesScalingFactor(0));
+        assertEquals("Default scaling factor for variables must be > 0 and defined to be consistent.", e2.getMessage());
+        IllegalArgumentException e3 = assertThrows(IllegalArgumentException.class, () -> parameters.setDefaultVariablesScalingFactor(Double.NaN));
+        assertEquals("Default scaling factor for variables must be > 0 and defined to be consistent.", e3.getMessage());
+
+        // Consistency of reactive slack variables scaling factor
+        assertEquals(1e-1, parameters.getReactiveSlackVariablesScalingFactor()); // default value
+        parameters.setReactiveSlackVariablesScalingFactor(0.058);
+        assertEquals(0.058, parameters.getReactiveSlackVariablesScalingFactor());
+        IllegalArgumentException e4 = assertThrows(IllegalArgumentException.class, () -> parameters.setReactiveSlackVariablesScalingFactor(-0.25));
+        assertEquals("Scaling factor for reactive slack variables must be > 0 and defined to be consistent.", e4.getMessage());
+        IllegalArgumentException e5 = assertThrows(IllegalArgumentException.class, () -> parameters.setReactiveSlackVariablesScalingFactor(0));
+        assertEquals("Scaling factor for reactive slack variables must be > 0 and defined to be consistent.", e5.getMessage());
+        IllegalArgumentException e6 = assertThrows(IllegalArgumentException.class, () -> parameters.setReactiveSlackVariablesScalingFactor(Double.NaN));
+        assertEquals("Scaling factor for reactive slack variables must be > 0 and defined to be consistent.", e6.getMessage());
+
+        // Consistency of t2wt ratio variables scaling factor
+        assertEquals(1e-3, parameters.getTwoWindingTransformerRatioVariablesScalingFactor()); // default value
+        parameters.setTwoWindingTransformerRatioVariablesScalingFactor(0.007);
+        assertEquals(0.007, parameters.getTwoWindingTransformerRatioVariablesScalingFactor());
+        IllegalArgumentException e7 = assertThrows(IllegalArgumentException.class, () -> parameters.setTwoWindingTransformerRatioVariablesScalingFactor(-0.25));
+        assertEquals("Scaling factor for transformer ratio variables must be > 0 and defined to be consistent.", e7.getMessage());
+        IllegalArgumentException e8 = assertThrows(IllegalArgumentException.class, () -> parameters.setTwoWindingTransformerRatioVariablesScalingFactor(0));
+        assertEquals("Scaling factor for transformer ratio variables must be > 0 and defined to be consistent.", e8.getMessage());
+        IllegalArgumentException e9 = assertThrows(IllegalArgumentException.class, () -> parameters.setTwoWindingTransformerRatioVariablesScalingFactor(Double.NaN));
+        assertEquals("Scaling factor for transformer ratio variables must be > 0 and defined to be consistent.", e9.getMessage());
+    }
+
+    @Test
+    void testConstraintsScalingFactorsIntegrity() {
+        OpenReacParameters parameters = new OpenReacParameters();
+
+        // Consistency of default constraints scaling factor
+        assertEquals(1, parameters.getDefaultConstraintsScalingFactor()); // default value
+        parameters.setDefaultConstraintsScalingFactor(0);
+        assertEquals(0, parameters.getDefaultConstraintsScalingFactor());
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> parameters.setDefaultConstraintsScalingFactor(-0.25));
+        assertEquals("Default scaling factor for constraints must be >= 0 and defined to be consistent.", e.getMessage());
+        IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class, () -> parameters.setDefaultConstraintsScalingFactor(Double.NaN));
+        assertEquals("Default scaling factor for constraints must be >= 0 and defined to be consistent.", e2.getMessage());
+    }
+
+    @Test
     void testAlgorithmParams() {
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE);
@@ -125,9 +177,13 @@ public class OpenReacParametersTest {
         parameters.setMinPlausibleLowVoltageLimit(0.8);
         parameters.setMaxPlausibleHighVoltageLimit(1.2);
         parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL);
+        parameters.setDefaultVariablesScalingFactor(0.5);
+        parameters.setDefaultConstraintsScalingFactor(0.75);
+        parameters.setReactiveSlackVariablesScalingFactor(1e-2);
+        parameters.setTwoWindingTransformerRatioVariablesScalingFactor(0.0001);
 
         List<OpenReacAlgoParam> algoParams = parameters.getAllAlgorithmParams();
-        assertEquals(7, algoParams.size());
+        assertEquals(11, algoParams.size());
         assertEquals("2", algoParams.get(0).getValue());
         assertEquals("0.4", algoParams.get(1).getValue());
         assertEquals("DEBUG", algoParams.get(2).getValue());
@@ -135,6 +191,10 @@ public class OpenReacParametersTest {
         assertEquals("0.8", algoParams.get(4).getValue());
         assertEquals("1.2", algoParams.get(5).getValue());
         assertEquals("ALL", algoParams.get(6).getValue());
+        assertEquals("0.5", algoParams.get(7).getValue());
+        assertEquals("0.75", algoParams.get(8).getValue());
+        assertEquals("0.01", algoParams.get(9).getValue());
+        assertEquals("1.0E-4", algoParams.get(10).getValue());
     }
 
     @Test
@@ -160,7 +220,7 @@ public class OpenReacParametersTest {
         assertEquals(0, parameters.getConstantQGenerators().size(), "ConstantQGenerators should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getVariableShuntCompensators().size(), "VariableShuntCompensators should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getConfiguredReactiveSlackBuses().size(), "ConfiguredReactiveSlackBuses should be empty when using default OpenREacParameter constructor.");
-        assertEquals(6, parameters.getAllAlgorithmParams().size());
+        assertEquals(10, parameters.getAllAlgorithmParams().size());
     }
 
     @Test

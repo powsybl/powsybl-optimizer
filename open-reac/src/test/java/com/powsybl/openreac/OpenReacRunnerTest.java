@@ -104,7 +104,11 @@ class OpenReacRunnerTest {
                 .setLogLevelSolver(OpenReacSolverLogLevel.ONLY_RESULTS)
                 .setMinPlausibleLowVoltageLimit(0.7888)
                 .setMaxPlausibleHighVoltageLimit(1.3455)
-                .setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL);
+                .setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL)
+                .setDefaultVariablesScalingFactor(1.1222)
+                .setDefaultConstraintsScalingFactor(0.7889)
+                .setReactiveSlackVariablesScalingFactor(0.2)
+                .setTwoWindingTransformerRatioVariablesScalingFactor(0.0045);
 
         LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
                 List.of("empty_case/reactiveopf_results_indic.txt"));
@@ -356,9 +360,9 @@ class OpenReacRunnerTest {
                         subFolder + "/reactiveopf_results_vsc_converter_stations.csv",
                         subFolder + "/reactiveopf_results_voltages.csv"));
         // To really run open reac, use the commentede line below. Be sure that open-reac/src/test/resources/com/powsybl/config/test/config.yml contains your ampl path
-//        try (ComputationManager computationManager = new LocalComputationManager()) {
-        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
-                localCommandExecutor, ForkJoinPool.commonPool())) {
+        try (ComputationManager computationManager = new LocalComputationManager()) {
+//        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
+//                localCommandExecutor, ForkJoinPool.commonPool())) {
             OpenReacResult openReacResult = OpenReacRunner.run(network,
                     network.getVariantManager().getWorkingVariantId(), parameters,
                     new OpenReacConfig(true), computationManager);
