@@ -101,10 +101,10 @@ These are specified in the file `param_algo.txt`:
 | `defaultPmin`                                | Threshold for correction of low active power limit produced by generators (see [4.4](#44-pq-units-domain))                                                                        | $0$ (MW)          | $\mathbb{R}$                                  |
 | `defaultQmaxPmaxRatio`                       | Ratio used to calculate threshold for corrections of high/low reactive power limits (see [4.4](#44-pq-units-domain))                                                              | $0.3$ (MVAr/MW)   | $\mathbb{R}$                                  |
 | `minimalQPrange`                             | Threshold to fix active (resp. reactive) power of generators with active (resp. reactive) power limits that are closer than it (see [4.4](#44-pq-units-domain))                   | $1$ (MW, MVAr)    | $\mathbb{R}$                                  |
-| `default_variables_scaling_factor`           | Default scaling factor applied to all the variables (except reactive slacks and transformer ratios) before ACOPF solving                                                          | $1$               | $\mathbb{R}^{+} \setminus {0}$                |
+| `default_variables_scaling_factor`           | Default scaling factor applied to all the variables (except reactive slacks and transformer ratios) before ACOPF solving                                                          | $1$               | $\mathbb{R}^{*,+}                             |
 | `default_constraints_scaling_factor`         | Default scaling factor applied to all the constraints before ACOPF solving                                                                                                        | $1$               | $\mathbb{R}^{+}$                              |
-| `reactive_slack_variables_scaling_factor`    | Scaling factor applied to all reactive slacks variables before ACOPF solving (see [7](#7-alternative-current-optimal-power-flow))                                                 | $0.1$             | $\mathbb{R}^{+} \setminus {0}$                |
-| `transformer_ratio_variables_scaling_factor` | Scaling factor applied to all transformer ratio variables before ACOPF solving (see [7](#7-alternative-current-optimal-power-flow))                                               | $0.001$           | $\mathbb{R}^{+} \setminus {0}$                |
+| `reactive_slack_variables_scaling_factor`    | Scaling factor applied to all reactive slacks variables before ACOPF solving (see [7](#7-alternative-current-optimal-power-flow))                                                 | $0.1$             | $\mathbb{R}^{*,+}                             |
+| `transformer_ratio_variables_scaling_factor` | Scaling factor applied to all transformer ratio variables before ACOPF solving (see [7](#7-alternative-current-optimal-power-flow))                                               | $0.001$           | $\mathbb{R}^{*,+}                             |
 
 
 In addition to the previous parameters, the user can specify which 
@@ -225,7 +225,7 @@ Consequently, **buses connected to the slack only by HVDC lines are excluded**.
 
 This component is determined by solving the following optimization problem (the variables are bolded):
 
-$$\text{minimize} \left(\sum\limits_{i} \boldsymbol{\theta_i^{cc}}\right)$$
+$$\text{maximize} \left(\sum\limits_{i} \boldsymbol{\theta_i^{cc}}\right)$$
 
 where $\boldsymbol{\theta_i^{cc}}$ is the voltage angle of bus $i$, and with the following constraints:
 
