@@ -72,7 +72,7 @@ public class OpenReacParameters {
 
     private static final String TWO_WINDING_TRANSFORMER_RATIO_VARIABLES_SCALING_FACTOR = "transformer_ratio_variables_scaling_factor";
 
-    private double t2wtRatioVariablesScalingFactor = 1e-3;
+    private double twoWindingTransformerRatioVariablesScalingFactor = 1e-3;
 
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.
@@ -280,15 +280,15 @@ public class OpenReacParameters {
     /**
      * @return the scaling value of transformer ratios in ACOPF solving.
      */
-    public double getT2wtRatioVariablesScalingFactor() {
-        return t2wtRatioVariablesScalingFactor;
+    public double getTwoWindingTransformerRatioVariablesScalingFactor() {
+        return twoWindingTransformerRatioVariablesScalingFactor;
     }
 
-    public OpenReacParameters setT2wtRatioVariablesScalingFactor(double t2wtRatioVariablesScalingFactor) {
-        if (t2wtRatioVariablesScalingFactor <= 0 || Double.isNaN(t2wtRatioVariablesScalingFactor)) {
+    public OpenReacParameters setTwoWindingTransformerRatioVariablesScalingFactor(double twoWindingTransformerRatioVariablesScalingFactor) {
+        if (twoWindingTransformerRatioVariablesScalingFactor <= 0 || Double.isNaN(twoWindingTransformerRatioVariablesScalingFactor)) {
             throw new IllegalArgumentException("Scaling factor for transformer ratio variables must be > 0 and defined to be consistent.");
         }
-        this.t2wtRatioVariablesScalingFactor = t2wtRatioVariablesScalingFactor;
+        this.twoWindingTransformerRatioVariablesScalingFactor = twoWindingTransformerRatioVariablesScalingFactor;
         return this;
     }
 
@@ -326,7 +326,7 @@ public class OpenReacParameters {
         allAlgoParams.add(new OpenReacAlgoParamImpl(DEFAULT_VARIABLES_SCALING_FACTOR, Double.toString(defaultVariablesScalingFactor)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(DEFAULT_CONSTRAINTS_SCALING_FACTOR, Double.toString(defaultConstraintsScalingFactor)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(REACTIVE_SLACK_VARIABLES_SCALING_FACTOR, Double.toString(reactiveSlackVariablesScalingFactor)));
-        allAlgoParams.add(new OpenReacAlgoParamImpl(TWO_WINDING_TRANSFORMER_RATIO_VARIABLES_SCALING_FACTOR, Double.toString(t2wtRatioVariablesScalingFactor)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(TWO_WINDING_TRANSFORMER_RATIO_VARIABLES_SCALING_FACTOR, Double.toString(twoWindingTransformerRatioVariablesScalingFactor)));
         return allAlgoParams;
     }
 

@@ -90,6 +90,22 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                     parser.nextToken();
                     parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.valueOf(parser.getText()));
                     break;
+                case "defaultVariablesScalingFactor":
+                    parser.nextToken();
+                    parameters.setDefaultVariablesScalingFactor(parser.readValueAs(Double.class));
+                    break;
+                case "defaultConstraintsScalingFactor":
+                    parser.nextToken();
+                    parameters.setDefaultConstraintsScalingFactor(parser.readValueAs(Double.class));
+                    break;
+                case "reactiveSlackVariablesScalingFactor":
+                    parser.nextToken();
+                    parameters.setReactiveSlackVariablesScalingFactor(parser.readValueAs(Double.class));
+                    break;
+                case "twoWindingTransformerRatioVariablesScalingFactor":
+                    parser.nextToken();
+                    parameters.setTwoWindingTransformerRatioVariablesScalingFactor(parser.readValueAs(Double.class));
+                    break;
                 default:
                     throw new IllegalStateException("Unexpected field: " + parser.getCurrentName());
             }
