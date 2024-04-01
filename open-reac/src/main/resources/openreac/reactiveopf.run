@@ -968,6 +968,7 @@ printf{LOG_KNITRO} "\n##########################################################
 printf{LOG_KNITRO} "** ACopf solve: start (%s)\n\n",ctime();
 
 option knitro_options ("opttol=1 opttolabs=1e-1 feastol=1 feastolabs=1e-3 maxit=200 outlev=3");
+include "acopf_scaling.run";
 
 # solve acopf and avoid knitro printing if user asks
 if (log_level_knitro <= 1) then {
