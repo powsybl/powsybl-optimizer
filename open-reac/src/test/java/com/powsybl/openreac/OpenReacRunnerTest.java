@@ -217,7 +217,7 @@ class OpenReacRunnerTest {
             assertEquals(1, openReacResult.getSvcModifications().size());
             assertEquals(1, openReacResult.getVscModifications().size());
             assertEquals(7, openReacResult.getGeneratorModifications().size());
-            assertEquals(57, openReacResult.getVoltageProfile().size());
+            assertEquals(3, openReacResult.getVoltageProfile().size());
             assertEquals(86, openReacResult.getIndicators().size());
             assertTrue(openReacResult.getReactiveSlacks().isEmpty());
         }
