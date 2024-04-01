@@ -66,6 +66,10 @@ printf "%s %f\n","defaultQmaxPmaxRatio",defaultQmaxPmaxRatio > (fileOut);
 printf "%s %f\n","defaultQmin",defaultQmin > (fileOut);
 printf "%s %f\n","defaultQmax",defaultQmax > (fileOut);
 printf "%s %f\n","minimalQPrange",minimalQPrange > (fileOut);
+printf "%s %f\n","default_variables_scaling_factor",default_variables_scaling_factor > (fileOut);
+printf "%s %f\n","default_constraints_scaling_factor",default_constraints_scaling_factor > (fileOut);
+printf "%s %f\n","reactive_slack_variables_scaling_factor",reactive_slack_variables_scaling_factor > (fileOut);
+printf "%s %f\n","transformer_ratio_variables_scaling_factor",transformer_ratio_variables_scaling_factor > (fileOut);
 
 close (fileOut);
 
