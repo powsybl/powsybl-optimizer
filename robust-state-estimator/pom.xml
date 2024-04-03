@@ -10,8 +10,8 @@
     </parent>
 
     <packaging>jar</packaging>
-    <artifactId>powsybl-robust-state-estimator</artifactId>
-    <name>Robust State Estimator</name>
+    <artifactId>powsybl-state-estimator</artifactId>
+    <name>State Estimator</name>
 
     <properties>
         <powsybl-core.version>6.2.0</powsybl-core.version>
@@ -34,7 +34,7 @@
                 <configuration>
                     <archive>
                         <manifestEntries>
-                            <Automatic-Module-Name>com.powsybl.robuststateestimator</Automatic-Module-Name>
+                            <Automatic-Module-Name>com.powsybl.stateestimator</Automatic-Module-Name>
                         </manifestEntries>
                     </archive>
                 </configuration>
