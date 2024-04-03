@@ -52,7 +52,7 @@ public class OpenReacModel implements AmplModel {
     public static OpenReacModel buildModel() {
         return new OpenReacModel(OUTPUT_FILE_PREFIX, "openreac",
                 List.of("reactiveopf.run"),
-                List.of("reactiveopf.mod", "reactiveopf.dat", "reactiveopfoutput.run", "reactiveopfexit.run", "acopf_scaling.run"));
+                List.of("reactiveopf.mod", "reactiveopf.dat", "reactiveopfoutput.run", "reactiveopfexit.run"));
     }
 
     private static final String NETWORK_DATA_PREFIX = "ampl";
