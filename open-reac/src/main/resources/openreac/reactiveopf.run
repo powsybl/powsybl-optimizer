@@ -10,6 +10,7 @@
 ###############################################################################
 # Reactive OPF
 # Author:  Jean Maeght 2022 2023
+# Author:  Manuel Ruiz 2023 2024
 ###############################################################################
 
 
@@ -989,7 +990,14 @@ printf{LOG_KNITRO} "\n##########################################################
 printf{LOG_KNITRO} "** ACopf solve: start (%s)\n\n",ctime();
 
 option knitro_options ("opttol=1 opttolabs=1e-1 feastol=1 feastolabs=1e-3 maxit=200 outlev=3");
-include "acopf_scaling.run";
+
+let {i in 1.._nvars} _var[i].xscalefactor := default_variables_scaling_factor;
+let {i in 1.._ncons} _con[i].cscalefactor := default_constraints_scaling_factor;
+
+let {n in BUSCC_SLACK} slack1_balance_Q[n].xscalefactor := reactive_slack_variables_scaling_factor;
+let {n in BUSCC_SLACK} slack2_balance_Q[n].xscalefactor := reactive_slack_variables_scaling_factor;
+
+let {(qq,m,n) in BRANCHCC_REGL_VAR} branch_Ror_var[qq,m,n].xscalefactor := transformer_ratio_variables_scaling_factor;
 
 # solve acopf and avoid knitro printing if user asks
 if (log_level_knitro <= 1) then {
