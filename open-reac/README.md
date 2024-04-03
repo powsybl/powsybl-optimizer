@@ -63,7 +63,6 @@ each serving a specific function:
   Refer to section [8.1](#81-in-case-of-convergence).
 - `reactiveopfexit.run` contains the code executed when the process fails. 
   Refer to section [8.2](#82-in-case-of-inconsistency).
-- `acopf_scaling.run` defines the scaling applied to variables and constraints before ACOPF solving.
 - `reactiveopf.run` executes the AMPL process of OpenReac, calling the previous scripts.
 
 ### 3 Input
@@ -353,7 +352,7 @@ high coefficient ($10$) to drive it towards $0$, ensuring reactive power balance
 
 Before solving the ACOPF, the voltage magnitudes $\boldsymbol{V_i}$ are warm-started with $V_i^t$
 (specified in `ampl_network_buses.txt`), as well as the voltage phases $\boldsymbol{\theta_i}$ with the results of the DCOPF (see [6](#6-direct-current-optimal-power-flow)).
-Please also note that the scaling defined in `acopf_solving.run` is applied with user-defined values before solving the ACOPF.
+Please also note that a scaling is applied with user-defined values before solving the ACOPF.
 
 The solving is considered as successful if the non-linear solver employed (see [Non-linear solver](#non-linear-optimization-solver)) 
 finds a feasible approximate solution (**even if the sum of 
