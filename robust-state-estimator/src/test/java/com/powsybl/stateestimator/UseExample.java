@@ -43,8 +43,8 @@ public class UseExample {
     void useExample() throws IOException {
 
         // Load your favorite network (IIDM format preferred)
-        //Network network = Network.read("your favorite network");
-        Network network = IeeeCdfNetworkFactory.create14();
+        Network network = Network.read("D:/Projet/Tests/case14.mat");
+        // Don't ! Network network = IeeeCdfNetworkFactory.create14(); ==> Susceptance values for branches are false
         //network.write();
 
         // Load Flow parameters (note : we mimic the way the AMPL code deals with zero-impedance branches)
