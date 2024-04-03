@@ -58,6 +58,7 @@
     <modules>
         <module>open-reac</module>
         <module>divergence-analyser</module>
+        <module>robust-state-estimator</module>
     </modules>
 
     <properties>

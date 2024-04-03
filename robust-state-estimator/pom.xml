@@ -10,8 +10,8 @@
     </parent>
 
     <packaging>jar</packaging>
-    <artifactId>powsybl-divergence-analyser</artifactId>
-    <name>Divergence analyser</name>
+    <artifactId>powsybl-robust-state-estimator</artifactId>
+    <name>Robust State Estimator</name>
 
     <properties>
         <powsybl-core.version>6.2.0</powsybl-core.version>
@@ -20,20 +20,8 @@
 
     <developers>
         <developer>
-            <name>Nicolas PIERRE</name>
-            <email>nicolas.pierre@artelys.com</email>
-            <organization>Artelys</organization>
-            <organizationUrl>https://www.artelys.com</organizationUrl>
-        </developer>
-        <developer>
-            <name>Geoffroy JAMGOTCHIAN</name>
-            <email>geoffroy.jamgotchian@rte-france.com</email>
-            <organization>RTE</organization>
-            <organizationUrl>https://www.rte-france.com</organizationUrl>
-        </developer>
-        <developer>
-            <name>Pierre ARVY</name>
-            <email>pierre.arvy@artelys.com</email>
+            <name>Lucas RIOU</name>
+            <email>lucas.riou@artelys.com</email>
             <organization>Artelys</organization>
             <organizationUrl>https://www.artelys.com</organizationUrl>
         </developer>
@@ -46,7 +34,7 @@
                 <configuration>
                     <archive>
                         <manifestEntries>
-                            <Automatic-Module-Name>com.powsybl.divergenceanalyser</Automatic-Module-Name>
+                            <Automatic-Module-Name>com.powsybl.robuststateestimator</Automatic-Module-Name>
                         </manifestEntries>
                     </archive>
                 </configuration>
