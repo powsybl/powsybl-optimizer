@@ -56,9 +56,8 @@ display SOLVING_OPTIONS_VALUES;
 
 # "mip_strategy" specifies the value to KNITRO option mip_intvar_strategy
 # This specifies how to handle integer variables : 0 = No special treatment, 1 = Relax all integer variables, 2 = Convert all binary variables to complementarity constraints
-#param mip_strategy integer default 0; 
 param mip_strategy integer default 2; 
-#if "solving_mode" in SOLVING_OPTIONS_KEYS then let mip_strategy := num(SOLVING_OPTIONS_VALUES["solving_mode"]);
+if "solving_mode" in SOLVING_OPTIONS_KEYS then let mip_strategy := num(SOLVING_OPTIONS_VALUES["solving_mode"]);
 
 param max_time_solving integer default 120;
 if "max_time_solving" in SOLVING_OPTIONS_KEYS then let max_time_solving := num(SOLVING_OPTIONS_VALUES["max_time_solving"]);
@@ -283,7 +282,7 @@ let {n in BUSCC} V[n] := 1;
 let {n in BUSCC} theta[n] := 0;
 
 # Start by assuming all branches are closed
-let {(qq,m,n) in BRANCHCC_FULL} y[qq,m,n] := 1; #fix/let
+let {(qq,m,n) in BRANCHCC_FULL} y[qq,m,n] := 1;
 
 # Fix the status to "closed" for branches not in BRANCHCC_SUSP
 for {(qq,m,n) in BRANCHCC_FULL diff BRANCHCC_SUSP} {

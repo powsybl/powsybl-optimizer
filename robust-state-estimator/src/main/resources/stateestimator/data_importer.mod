@@ -24,6 +24,7 @@
 # provided through a measurement file. Most information about generators, loads, 
 # bus voltages provided through network files is loaded but will not be
 # considered by the State Estimator.
+# Measurements are given in SI.
 
 ###############################################################################
 #               Active power flows (ampl_measures_Pf.txt)                     #
@@ -115,6 +116,9 @@ param V_bus {l in MEASURES_V} symbolic;
 #                              NETWORK                                        #
 ###############################################################################
 
+# Network parameters for which the current consideration is relevant are given
+# in per unit (but base voltage can vary on location, see Ampl Exporter in powsybl-core)
+
 ###############################################################################
 #               Substations (ampl_network_substations.txt)                    #
 ###############################################################################
@@ -122,8 +126,8 @@ param V_bus {l in MEASURES_V} symbolic;
 
 # [variant, substation]
 # The 1st column "variant" may also be used to define time step, in case this
-# PowSyBl format is used for multi-timestep OPF. This is why the letter for
-# the variant is mostly 't' and not 'v' (in power system, v is for voltage).
+# PowSyBl format is used for multi-timestep OPF. The letter mostly used to
+# refer to the variant is 't' (unused feature in the state estimator)
 
 set SUBSTATIONS dimen 2; #See this in error message? Use "ampl reactiveopf.run" instead of .mod 
 param substation_horizon     {SUBSTATIONS} symbolic;
@@ -485,8 +489,8 @@ param branch_Por          {BRANCH};
 param branch_Pex          {BRANCH};
 param branch_Qor          {BRANCH};
 param branch_Qex          {BRANCH};
-param branch_patl1        {BRANCH};
-param branch_patl2        {BRANCH};
+param branch_patl1        {BRANCH}; # current limit 1 (in A)
+param branch_patl2        {BRANCH}; # current limit 2 (in A)
 param branch_merged       {BRANCH} symbolic;
 param branch_fault        {BRANCH};
 param branch_curative     {BRANCH};
@@ -525,7 +529,7 @@ param branch_susp_id {BRANCH_SUSP_ID} symbolic;
 # Same goes with buses/branches IDs related to measurements
 
 #####################################################################################################
-#                     Sets gathering equipments present in the main CC                              #
+#                     Build the sets of equipments present in the main CC                           #
 #####################################################################################################
 
 # Elements (buses and branches) in the main connex component
@@ -563,34 +567,17 @@ set BRANCHCC_SUSP := BRANCHCC inter BRANCH_SUSP;
 #set UNITCC  := setof {(1,g,n)    in UNIT  : n in BUSCC} (g,n);
 
 ###############################################################################
-#                  Deal with "zero"-impedance branches                        #
+#        Deal with "zero"-impedance branches (first step)                     #
 ###############################################################################
 
-# Compute module of Z (without per unit)
+# Compute module of Z in SI (use only base voltage of terminal 1 !)
 param branch_Z{(qq,m,n) in BRANCHCC_FULL} := 
-  sqrt((branch_R[1,qq,m,n]*substation_Vnomi[1,branch_subex[1,qq,m,n]]^2/base100MVA)^2
-  +(branch_X[1,qq,m,n]*substation_Vnomi[1,branch_subex[1,qq,m,n]]^2/base100MVA)^2);
+  sqrt((branch_R[1,qq,m,n] * substation_Vnomi[1,branch_subor[1,qq,m,n]]^2 / base100MVA)^2
+  + (branch_X[1,qq,m,n] * substation_Vnomi[1,branch_subor[1,qq,m,n]]^2 / base100MVA)^2);
 check {(qq,m,n) in BRANCHCC_FULL}: branch_Z[qq,m,n] >= 0;
 
 # Define set BRANCHZNULL (used later)
 set BRANCHZNULL := {(qq,m,n) in BRANCHCC_FULL: branch_Z[qq,m,n] <= Znull};
-
-# Modify R and X only for branches in BRANCHZNULL :
-# If Z=0, then set R = X = Znull/sqrt(2)
-# Else if 0 < Z < Znull, then set R = R*Znull/Z and X = X*Znull/Z (keep the same impedance angle)
-# Else keep Z the same
-
-param branch_R_mod{(qq,m,n) in BRANCHCC_FULL} :=
-  if (branch_Z[qq,m,n] == 0) then Znull/sqrt(2)
-  else if (branch_Z[qq,m,n] <= Znull) then branch_R[1,qq,m,n] * Znull / branch_Z[qq,m,n]
-  else branch_R[1,qq,m,n];
-check {(qq,m,n) in BRANCHCC_FULL}: branch_R_mod[qq,m,n] >= 0;
-
-param branch_X_mod{(qq,m,n) in BRANCHCC_FULL} :=
-  if (branch_Z[qq,m,n] == 0) then Znull/sqrt(2)
-  else if (branch_Z[qq,m,n] <= Znull) then branch_X[1,qq,m,n] * Znull / branch_Z[qq,m,n]
-  else branch_X[1,qq,m,n];
-check {(qq,m,n) in BRANCHCC_FULL}: abs(branch_X_mod[qq,m,n]) >= 0;
 
 #####################################################################################################
 #                                Additional sets                                                    #
@@ -599,7 +586,7 @@ check {(qq,m,n) in BRANCHCC_FULL}: abs(branch_X_mod[qq,m,n]) >= 0;
 #
 # Shunts, regleurs et dephaseurs
 #
-# NB : SHUNTCC are the shunts that are fixed. Could be variable but we do not want for now
+# NB : SHUNTCC are the shunts that are fixed
 set SHUNTCC := {(1,s,n) in SHUNT: n in BUSCC or shunt_possiblebus[1,s,n] in BUSCC}; # We want to be able to reconnect shunts
 set BRANCHCC_REGL := {(qq,m,n) in BRANCHCC_FULL diff BRANCHZNULL: branch_ptrRegl[1,qq,m,n] != -1 }; 
 set BRANCHCC_DEPH := {(qq,m,n) in BRANCHCC_FULL diff BRANCHZNULL: branch_ptrDeph[1,qq,m,n] != -1 };
@@ -608,7 +595,12 @@ set BRANCHCC_3WT := {(qq,m,n) in BRANCHCC_FULL : branch_3wt[1,qq,m,n] != -1};
 set SVCCC   := setof {(1,svc,n) in SVC: n in BUSCC} (svc,n);
 set BUSCC_3WT := setof {(qq,m,n) in BRANCHCC : branch_3wt[1,qq,m,n] != -1} n;
 
-#param targetV_busPV{n in BUSCC_PV}; # def in divergenceanalysor.run
+# Define the set of transformers that are not indicated as such in 'ampl_network_branches.txt'
+# Will only be used for transformer not appearing as such
+set BRANCHCC_TRANSFO_AS_LINES := {(qq,m,n) in BRANCHCC_FULL diff BRANCHCC_TRANSFORMER: 
+                                substr(branch_id[1,qq,m,n], 1, 1) == "T"};
+
+#param targetV_busPV{n in BUSCC_PV};
 
 # VSC converter stations
 /* check {(t,v,n) in VSCCONV}: n in BUSCC and abs(vscconv_P0[t,v,n]  ) <= PQmax
@@ -622,16 +614,65 @@ set VSCCONVON := setof{(t,v,n) in VSCCONV} (v,n);
 set LCCCONVON := setof{(t,l,n) in LCCCONV} (l,n); 
 
 ###############################################################################
+#   Convert R and X to SI for lines (and transformers not indicated as such)  #
+###############################################################################
+
+# In view of AMPLExporter methods, different cases must be considered when converting back from p.u to SI
+
+# Compute R in SI and correct its value if the branch has "zero impedance"
+
+param branch_R_SI{(qq,m,n) in BRANCHCC_FULL} :=
+
+  if (branch_Z[qq,m,n] == 0) 
+  then Znull / sqrt(2)
+
+  else if (qq,m,n) in BRANCHCC_TRANSFO_AS_LINES and (branch_Z[qq,m,n] <= Znull)
+  then branch_R[1,qq,m,n] * Znull / branch_Z[qq,m,n] * substation_Vnomi[1,branch_subex[1,qq,m,n]]^2 / base100MVA
+
+  else if (qq,m,n) in BRANCHCC_TRANSFO_AS_LINES
+  then branch_R[1,qq,m,n] * substation_Vnomi[1,branch_subex[1,qq,m,n]]^2 / base100MVA
+
+  else if (branch_Z[qq,m,n] <= Znull) 
+  then branch_R[1,qq,m,n] * Znull / branch_Z[qq,m,n] * substation_Vnomi[1,branch_subor[1,qq,m,n]]^2 / base100MVA
+
+  else branch_R[1,qq,m,n] * substation_Vnomi[1,branch_subor[1,qq,m,n]]^2 / base100MVA;
+
+check {(qq,m,n) in BRANCHCC_FULL}: branch_R_SI[qq,m,n] >= 0;
+
+# Compute X in SI and correct its value if the branch has "zero impedance"
+
+param branch_X_SI{(qq,m,n) in BRANCHCC_FULL} :=
+
+  if (branch_Z[qq,m,n] == 0) 
+  then Znull / sqrt(2)
+
+  else if (qq,m,n) in BRANCHCC_TRANSFO_AS_LINES and (branch_Z[qq,m,n] <= Znull)
+  then branch_X[1,qq,m,n] * Znull / branch_Z[qq,m,n] * substation_Vnomi[1,branch_subex[1,qq,m,n]]^2 / base100MVA
+
+  else if (qq,m,n) in BRANCHCC_TRANSFO_AS_LINES
+  then branch_X[1,qq,m,n] * substation_Vnomi[1,branch_subex[1,qq,m,n]]^2 / base100MVA
+
+  else if (branch_Z[qq,m,n] <= Znull) 
+  then branch_X[1,qq,m,n] * Znull / branch_Z[qq,m,n] * substation_Vnomi[1,branch_subor[1,qq,m,n]]^2 / base100MVA
+
+  else branch_X[1,qq,m,n] * substation_Vnomi[1,branch_subor[1,qq,m,n]]^2 / base100MVA;
+
+check {(qq,m,n) in BRANCHCC_FULL}: abs(branch_X_SI[qq,m,n]) >= 0;
+
+###############################################################################
 #           Transformers and Phase shifting transformers parameters           #
 ###############################################################################
 
-# Variable reactance, depending on tap
+# TODO : check this !!!
+
+# Variable reactance, depending on tap (in SI)
 param branch_Xdeph{(qq,m,n) in BRANCHCC_TRANSFORMER} =
   if (qq,m,n) in BRANCHCC_DEPH and (qq,m,n) in BRANCHCC_REGL
   and abs(tap_x[1,deph_table[1,branch_ptrDeph[1,qq,m,n]],deph_tap0[1,branch_ptrDeph[1,qq,m,n]]] 
       * tap_x[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]] / branch_X[1,qq,m,n]) > Znull
   then tap_x[1,deph_table[1,branch_ptrDeph[1,qq,m,n]],deph_tap0[1,branch_ptrDeph[1,qq,m,n]]] 
-      * tap_x[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]] / branch_X[1,qq,m,n]
+      * tap_x[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]] / (branch_X[1,qq,m,n])
+      * substation_Vnomi[1,branch_subex[1,qq,m,n]]^2 / base100MVA
 
   else if (qq,m,n) in BRANCHCC_DEPH and (qq,m,n) in BRANCHCC_REGL and
   tap_x[1,deph_table[1,branch_ptrDeph[1,qq,m,n]],deph_tap0[1,branch_ptrDeph[1,qq,m,n]]] 
@@ -644,7 +685,8 @@ param branch_Xdeph{(qq,m,n) in BRANCHCC_TRANSFORMER} =
   then -Znull
 
   else if (qq,m,n) in BRANCHCC_DEPH and abs(tap_x[1,deph_table[1,branch_ptrDeph[1,qq,m,n]],deph_tap0[1,branch_ptrDeph[1,qq,m,n]]]) > Znull
-  then tap_x[1,deph_table[1,branch_ptrDeph[1,qq,m,n]],deph_tap0[1,branch_ptrDeph[1,qq,m,n]]] # Without abs here
+  then tap_x[1,deph_table[1,branch_ptrDeph[1,qq,m,n]],deph_tap0[1,branch_ptrDeph[1,qq,m,n]]]
+      * substation_Vnomi[1,branch_subex[1,qq,m,n]]^2 / base100MVA
 
   else if (qq,m,n) in BRANCHCC_DEPH and tap_x[1,deph_table[1,branch_ptrDeph[1,qq,m,n]],deph_tap0[1,branch_ptrDeph[1,qq,m,n]]] > 0
   then Znull
@@ -654,6 +696,7 @@ param branch_Xdeph{(qq,m,n) in BRANCHCC_TRANSFORMER} =
 
   else if (qq,m,n) in BRANCHCC_REGL and abs(tap_x[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]]) > Znull
   then tap_x[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]]
+      * substation_Vnomi[1,branch_subex[1,qq,m,n]]^2 / base100MVA
 
   else if (qq,m,n) in BRANCHCC_REGL and tap_x[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]] > 0
   then Znull
@@ -664,22 +707,25 @@ param branch_Xdeph{(qq,m,n) in BRANCHCC_TRANSFORMER} =
   else Znull;
 
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# TODO : check if this still works with branch_R_mod
+# TODO : check if this still works with branch_R_SI
 
-# Variable resistance, depending on tap
+# Variable resistance, depending on tap (in SI)
 # As we do not have access to true values of R in law tables of transformers, we choose to vary R proportionnaly to X
 param branch_Rdeph{(qq,m,n) in BRANCHCC_TRANSFORMER} =
-  if abs(branch_X_mod[qq,m,n]) >= Znull 
-  then branch_R[1,qq,m,n]*branch_Xdeph[qq,m,n]/branch_X_mod[qq,m,n]
+  if abs(branch_X_SI[qq,m,n]) >= Znull 
+  then branch_R[1,qq,m,n] * branch_Xdeph[qq,m,n] / branch_X_SI[qq,m,n]
+        * substation_Vnomi[1,branch_subex[1,qq,m,n]]^2 / base100MVA
   else branch_R[1,qq,m,n]
+        * substation_Vnomi[1,branch_subex[1,qq,m,n]]^2 / base100MVA
   ;
 
-# Set of branches on which we can deduce a cut for theta diff (depending on Fmax)
+/* # Set of branches on which we can deduce a cut for theta diff (depending on Fmax)
 set BRANCHCC_DIFF_THETA_CONST := setof {(qq,m,n) in BRANCHCC diff BRANCHCC_3WT: min(branch_patl1[1,qq,m,n], branch_patl2[1,qq,m,n]) > 250 
-                                          and (branch_X_mod[qq,m,n] > 0.05 or ((qq,m,n) in BRANCHCC_TRANSFORMER and branch_Xdeph[qq,m,n] > 0.05))} (qq,m,n); 
+                                          and (branch_X_SI[qq,m,n] > 0.05 or ((qq,m,n) in BRANCHCC_TRANSFORMER and branch_Xdeph[qq,m,n] > 0.05))} (qq,m,n); 
 param Fmax{(qq,m,n) in BRANCHCC_DIFF_THETA_CONST} :=
   1.732 * 0.001
   * max(substation_Vnomi[1,bus_substation[1,m]]*abs(branch_patl1[1,qq,m,n]),substation_Vnomi[1,bus_substation[1,n]]*abs(branch_patl2[1,qq,m,n]));
+ */
 
 check {(qq,m,n) in BRANCHCC_TRANSFORMER}: branch_Rdeph[qq,m,n] > 0;
 
@@ -687,46 +733,80 @@ check {(qq,m,n) in BRANCHCC_TRANSFORMER}: branch_Rdeph[qq,m,n] > 0;
 #     Additional information on impedances and admittances of the lines       #
 ###############################################################################
 
+# All values in SI
+
 param branch_angper{(qq,m,n) in BRANCHCC_FULL} =
-  if (qq,m,n) in BRANCHCC_TRANSFORMER then
-  atan2(branch_Rdeph[qq,m,n], branch_Xdeph[qq,m,n])
-  else atan2(branch_R_mod[qq,m,n], branch_X_mod[qq,m,n]);
+  if (qq,m,n) in BRANCHCC_TRANSFORMER 
+  then atan2(branch_Rdeph[qq,m,n], branch_Xdeph[qq,m,n])
+  else atan2(branch_R_SI[qq,m,n], branch_X_SI[qq,m,n]);
 
-param branch_admi{(qq,m,n) in BRANCHCC_FULL} =  
-  if (qq,m,n) in BRANCHCC_TRANSFORMER then
-  1./sqrt(branch_Rdeph[qq,m,n]^2 + branch_Xdeph[qq,m,n]^2 )
-  else 1./sqrt(branch_R_mod[qq,m,n]^2 + branch_X_mod[qq,m,n]^2);
+param branch_admi_SI{(qq,m,n) in BRANCHCC_FULL} =  
+  if (qq,m,n) in BRANCHCC_TRANSFORMER 
+  then 1./sqrt(branch_Rdeph[qq,m,n]^2 + branch_Xdeph[qq,m,n]^2 )
+  else 1./sqrt(branch_R_SI[qq,m,n]^2 + branch_X_SI[qq,m,n]^2);
 
-param branch_G{(qq,m,n) in BRANCHCC_FULL} = 
-  if (qq,m,n) in BRANCHCC_TRANSFORMER then
-  branch_Rdeph[qq,m,n] / (branch_Rdeph[qq,m,n]^2 + branch_Xdeph[qq,m,n]^2)
-  else branch_R_mod[qq,m,n] / (branch_R_mod[qq,m,n]^2 + branch_X_mod[qq,m,n]^2);
+/* param branch_G{(qq,m,n) in BRANCHCC_FULL} = 
+  if (qq,m,n) in BRANCHCC_TRANSFORMER 
+  then branch_Rdeph[qq,m,n] / (branch_Rdeph[qq,m,n]^2 + branch_Xdeph[qq,m,n]^2)
+  else branch_R_SI[qq,m,n] / (branch_R_SI[qq,m,n]^2 + branch_X_SI[qq,m,n]^2);
 
 param branch_B{(qq,m,n) in BRANCHCC_FULL} =  
-  if (qq,m,n) in BRANCHCC_TRANSFORMER then
-  -branch_Xdeph[qq,m,n] / (branch_Rdeph[qq,m,n]^2 + branch_Xdeph[qq,m,n]^2)
-  else -branch_X_mod[qq,m,n] / (branch_R_mod[qq,m,n]^2 + branch_X_mod[qq,m,n]^2);
+  if (qq,m,n) in BRANCHCC_TRANSFORMER 
+  then -branch_Xdeph[qq,m,n] / (branch_Rdeph[qq,m,n]^2 + branch_Xdeph[qq,m,n]^2)
+  else -branch_X_SI[qq,m,n] / (branch_R_SI[qq,m,n]^2 + branch_X_SI[qq,m,n]^2); */
+
+param branch_Gor_SI{(qq,m,n) in BRANCHCC_FULL} = 
+  if (qq,m,n) in BRANCHCC_TRANSFORMER or (qq,m,n) in BRANCHCC_3WT or (qq,m,n) in BRANCHCC_TRANSFO_AS_LINES
+  then branch_Gor[1,qq,m,n] / (substation_Vnomi[1,branch_subex[1,qq,m,n]]^2 / base100MVA)
+  else branch_Gor[1,qq,m,n] / (substation_Vnomi[1,branch_subor[1,qq,m,n]]^2 / base100MVA);
+
+param branch_Gex_SI{(qq,m,n) in BRANCHCC_FULL} = 
+  if (qq,m,n) in BRANCHCC_TRANSFORMER or (qq,m,n) in BRANCHCC_3WT or (qq,m,n) in BRANCHCC_TRANSFO_AS_LINES
+  then branch_Gex[1,qq,m,n] / (substation_Vnomi[1,branch_subex[1,qq,m,n]]^2 / base100MVA)
+  else branch_Gex[1,qq,m,n] / (substation_Vnomi[1,branch_subor[1,qq,m,n]]^2 / base100MVA);
+
+param branch_Bor_SI{(qq,m,n) in BRANCHCC_FULL} = 
+  if (qq,m,n) in BRANCHCC_TRANSFORMER or (qq,m,n) in BRANCHCC_3WT or (qq,m,n) in BRANCHCC_TRANSFO_AS_LINES
+  then branch_Bor[1,qq,m,n] / (substation_Vnomi[1,branch_subex[1,qq,m,n]]^2 / base100MVA)
+  else branch_Bor[1,qq,m,n] / (substation_Vnomi[1,branch_subor[1,qq,m,n]]^2 / base100MVA);
+
+param branch_Bex_SI{(qq,m,n) in BRANCHCC_FULL} = 
+  if (qq,m,n) in BRANCHCC_TRANSFORMER or (qq,m,n) in BRANCHCC_3WT or (qq,m,n) in BRANCHCC_TRANSFO_AS_LINES
+  then branch_Bex[1,qq,m,n] / (substation_Vnomi[1,branch_subex[1,qq,m,n]]^2 / base100MVA)
+  else branch_Bex[1,qq,m,n] / (substation_Vnomi[1,branch_subor[1,qq,m,n]]^2 / base100MVA);
 
 ###############################################################################
 #         Additional information on rho and alpha of transformers             #
 ###############################################################################
 
-# Note : in IIDM network, a transformer on line (i,j) is always indicated on side i
-# If in reality, transformer is on side j, then an equivalent transformer is computed so that it is on the other side
-# Consequence : branch_Rex is always equal to 1
+# Note 1 : in IIDM network, a transformer on line (i,j) is always indicated on side i
+# If in reality, transformer is on side j, then an equivalent transformer is computed so that it appears on side i
+# Consequence : branch_Rex is always equal to 1 (in p.u.)
 
-param branch_Ror {(qq,m,n) in BRANCHCC_FULL} =
+# Note 2 : rho is calculated using per-unit voltages in AMPL exporter (rho = (Vrated2/Vb2) / (Vrated1/Vb1)). 
+# Therefore we must multiply by Vb2 and Vb1 to get rho as if calculated using SI voltages
+# This must be done for transformers only : when dealing with a line (even if linking two different voltage levels), rho=1
+
+# Note 3 : values "in SI" obtained are not exactly equal to those obtained in PowSyBl doing rho = Vrated2 / Vrated1
+
+param branch_Ror_SI {(qq,m,n) in BRANCHCC_FULL} =
     ( if ((qq,m,n) in BRANCHCC_REGL)
       then tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]]
+            * substation_Vnomi[1,branch_subex[1,qq,m,n]] / substation_Vnomi[1,branch_subor[1,qq,m,n]]
       else 1.0
     )
   * ( if ((qq,m,n) in BRANCHCC_DEPH) # TODO : Shouldn't be diff BRANCHCC_REGL ??
       then tap_ratio[1,deph_table[1,branch_ptrDeph[1,qq,m,n]],deph_tap0[1,branch_ptrDeph[1,qq,m,n]]]
+            * substation_Vnomi[1,branch_subex[1,qq,m,n]] / substation_Vnomi[1,branch_subor[1,qq,m,n]]
       else 1.0
     )
-  * (branch_cstratio[1,qq,m,n]);
+  * ( if ((qq,m,n) in BRANCHCC_TRANSFO_AS_LINES) # Recall : BRANCHCC_TRANSFO_AS_LINES INTERSECT BRANCHCC_REGL = empty (same goes with BRANCHCC_DEPH)
+      then branch_cstratio[1,qq,m,n] 
+            * substation_Vnomi[1,branch_subex[1,qq,m,n]] / substation_Vnomi[1,branch_subor[1,qq,m,n]]
+      else 1.0
+    );
 
-param branch_Rex {(qq,m,n) in BRANCHCC_FULL} = 1;
+param branch_Rex_SI {(qq,m,n) in BRANCHCC_FULL} = 1;
 
 param branch_dephor {(qq,m,n) in BRANCHCC_FULL} =
   if ((qq,m,n) in BRANCHCC_DEPH)
@@ -734,62 +814,3 @@ param branch_dephor {(qq,m,n) in BRANCHCC_FULL} =
   else 0;
 
 param branch_dephex {(qq,m,n) in BRANCHCC_FULL} = 0;
-
-
-
-###############################################################################
-#                      For optimization summary only                          #
-###############################################################################
-
-/* # Get max/min values for rho/alpha param, on each rtc/ptc (will be used for optimization summary)
-param max_branch_regl {(qq,m,n) in BRANCHCC_TRANSFORMER} = if (qq,m,n) in BRANCHCC_REGL 
-                                                          then max {(vv,tab,tap) in TAPS : regl_table[1,branch_ptrRegl[1,qq,m,n]] == tab} tap_ratio[vv,tab,tap]
-                                                          else max {(vv,tab,tap) in TAPS : deph_table[1,branch_ptrDeph[1,qq,m,n]] == tab} tap_ratio[vv,tab,tap];
-
-param min_branch_regl {(qq,m,n) in BRANCHCC_TRANSFORMER} = if (qq,m,n) in BRANCHCC_REGL 
-                                                          then min {(vv,tab,tap) in TAPS : regl_table[1,branch_ptrRegl[1,qq,m,n]] == tab} tap_ratio[vv,tab,tap]
-                                                          else min {(vv,tab,tap) in TAPS : deph_table[1,branch_ptrDeph[1,qq,m,n]] == tab} tap_ratio[vv,tab,tap];
-
-param max_branch_deph {(qq,m,n) in BRANCHCC_DEPH} = max {(vv,tab,tap) in TAPS : deph_table[1,branch_ptrDeph[1,qq,m,n]] == tab} tap_angle[vv,tab,tap];
-
-param min_branch_deph {(qq,m,n) in BRANCHCC_DEPH} = min {(vv,tab,tap) in TAPS : deph_table[1,branch_ptrDeph[1,qq,m,n]] == tab} tap_angle[vv,tab,tap];
-
-# Get the maximum of each parameter (will be used for optimization summary)
-#param max_targetV := (max {n in BUSCC_PV} targetV_busPV[n]);
-param max_branch_Ror := (max {(qq,m,n) in BRANCHCC_FULL} branch_Ror[qq,m,n]);
-param max_branch_admi := (max {(qq,m,n) in BRANCHCC_FULL} branch_admi[qq,m,n]);
-param max_branch_dephor := (max {(qq,m,n) in BRANCHCC_FULL} abs(branch_dephor[qq,m,n]));
-param max_branch_angper := (max {(qq,m,n) in BRANCHCC_FULL} branch_angper[qq,m,n]);
-param max_branch_Gor := (max {(qq,m,n) in BRANCHCC_FULL} abs(branch_Gor[1,qq,m,n]));
-param max_branch_Bor := (max {(qq,m,n) in BRANCHCC_FULL} abs(branch_Bor[1,qq,m,n]));
-param max_branch_Gex := (max {(qq,m,n) in BRANCHCC_FULL} abs(branch_Gex[1,qq,m,n]));
-param max_branch_Bex := (max {(qq,m,n) in BRANCHCC_FULL} abs(branch_Bex[1,qq,m,n]));
-param max_branch_G := (max {(qq,m,n) in BRANCHCC_FULL} branch_G[qq,m,n]);
-param max_branch_B := (max {(qq,m,n) in BRANCHCC_FULL} branch_B[qq,m,n]);
-
-# Get the minimum of each parameter (will be used for optimization summary)
-#param min_targetV := (min {n in BUSCC_PV} targetV_busPV[n]);
-param min_branch_Ror := (min {(qq,m,n) in BRANCHCC_FULL} branch_Ror[qq,m,n]);
-param min_branch_admi := (min {(qq,m,n) in BRANCHCC_FULL} branch_admi[qq,m,n]);
-param min_branch_dephor := (min {(qq,m,n) in BRANCHCC_FULL} branch_dephor[qq,m,n]);
-param min_branch_angper := (min {(qq,m,n) in BRANCHCC_FULL} branch_angper[qq,m,n]);
-param min_branch_Gor := (min {(qq,m,n) in BRANCHCC_FULL} branch_Gor[1,qq,m,n]);
-param min_branch_Bor := (min {(qq,m,n) in BRANCHCC_FULL} branch_Bor[1,qq,m,n]);
-param min_branch_Gex := (min {(qq,m,n) in BRANCHCC_FULL} branch_Gex[1,qq,m,n]);
-param min_branch_Bex := (min {(qq,m,n) in BRANCHCC_FULL} branch_Bex[1,qq,m,n]);
-param min_branch_G := (min {(qq,m,n) in BRANCHCC_FULL} branch_G[qq,m,n]);
-param min_branch_B := (min {(qq,m,n) in BRANCHCC_FULL} branch_B[qq,m,n]);
-
-# Get absolute mean of each parameter (will be used for optimization summary)
-#param abs_mean_targetV := (sum {n in BUSCC_PV} targetV_busPV[n]) / card(BUSCC_PV);
-param abs_mean_branch_Ror := (sum {(qq,m,n) in BRANCHCC_FULL} abs(branch_Ror[qq,m,n])) / card(BRANCHCC_FULL);
-param abs_mean_branch_admi := (sum {(qq,m,n) in BRANCHCC_FULL} abs(branch_admi[qq,m,n])) / card(BRANCHCC_FULL);
-param abs_mean_branch_dephor := (sum {(qq,m,n) in BRANCHCC_FULL} abs(branch_dephor[qq,m,n])) / card(BRANCHCC_FULL);
-param abs_mean_branch_angper := (sum {(qq,m,n) in BRANCHCC_FULL} abs(branch_angper[qq,m,n])) / card(BRANCHCC_FULL);
-param abs_mean_branch_Gor := (sum {(qq,m,n) in BRANCHCC_FULL} abs(branch_Gor[1,qq,m,n])) / card(BRANCHCC_FULL);
-param abs_mean_branch_Bor := (sum {(qq,m,n) in BRANCHCC_FULL} abs(branch_Bor[1,qq,m,n])) / card(BRANCHCC_FULL);
-param abs_mean_branch_Gex := (sum {(qq,m,n) in BRANCHCC_FULL} abs(branch_Gex[1,qq,m,n])) / card(BRANCHCC_FULL);
-param abs_mean_branch_Bex := (sum {(qq,m,n) in BRANCHCC_FULL} abs(branch_Bex[1,qq,m,n])) / card(BRANCHCC_FULL);
-
-param max_qq_transformers := (max {(qq,m,n) in BRANCHCC_FULL : branch_ptrRegl[1,qq,m,n] != -1 or branch_ptrDeph[1,qq,m,n] != -1} qq);
-param max_qq_3wt := (max {(qq,m,n) in BRANCHCC_FULL : branch_3wt[1,qq,m,n]!=-1} qq); */

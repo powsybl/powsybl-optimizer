@@ -8,9 +8,7 @@ package com.powsybl.stateestimator;
 
 import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
-import com.powsybl.iidm.network.Branch;
-import com.powsybl.iidm.network.Bus;
-import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.*;
 import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.loadflow.LoadFlowResult;
@@ -43,9 +41,7 @@ public class UseExample {
     void useExample() throws IOException {
 
         // Load your favorite network (IIDM format preferred)
-        Network network = Network.read("D:/Projet/Tests/case14.mat");
-        // Don't ! Network network = IeeeCdfNetworkFactory.create14(); ==> Susceptance values for branches are false
-        //network.write();
+        Network network = IeeeCdfNetworkFactory.create14();
 
         // Load Flow parameters (note : we mimic the way the AMPL code deals with zero-impedance branches)
         LoadFlowParameters parametersLf = new LoadFlowParameters();
@@ -59,33 +55,28 @@ public class UseExample {
         assertTrue(loadFlowResult.isFullyConverged());
 
         // Create "knowledge" instance, containing the slackBus (most meshed bus by default)
-        // as well as sets of measurements and suspect branches
+        // as well as the sets of measurements and suspect branches
         StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network);
 
         // Randomly generate measurements (useful for test cases) out of load flow results
-        knowledge.generateRandomMeasurements(network, 3);
+        knowledge.generateRandomMeasurements(network, 4);
         // Note : we can also add by hand our measurements, and complete them with generated measurements until observability is ensured
         //knowledge.addActivePowerFlowMeasure(measurementNumber, Map<"BranchID", "FirstBusID", "SecondBusID", "Value", "Variance", "Type">, network);
 
-        // Save "knowledge" in the desired folder as a JSON
+        // Save "knowledge" object as a JSON
         //knowledge.write(new FileOutputStream("D:/Projet/Tests/knowledge_14bus_seed2.json"));
-        // Read the JSON file as an StateEstimatorKnowledge instance
+        // Read the JSON file as an StateEstimatorKnowledge object
         //StateEstimatorKnowledge test = StateEstimatorKnowledge.read("D:/Projet/Tests/knowledge_14bus_seed2.json");
 
-        // Print these measurements
-        //knowledge.printAllMeasures();
-        knowledge.printActivePowerFlowMeasures();
-        knowledge.printReactivePowerFlowMeasures();
-        knowledge.printActivePowerInjectedMeasures();
-        knowledge.printReactivePowerInjectedMeasures();
-        knowledge.printVoltageMagnitudeMeasures();
+        // Print all the measurements
+        knowledge.printAllMeasures();
         System.out.printf("%nTotal number of measurements : %d%n", knowledge.getMeasuresCount());
 
         // Add suspect branches if wanted
         //knowledge.addSuspectBranch(1, "L1-2-1", network);
 
         // Define the options for the state estimation
-        //StateEstimatorOptions options = new StateEstimatorOptions().setSolvingMode(2).setMaxTimeSolving(30);
+        StateEstimatorOptions options = new StateEstimatorOptions().setSolvingMode(2).setMaxTimeSolving(30);
 
         // Run the state estimation and print the results
         StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
@@ -111,9 +102,5 @@ public class UseExample {
         System.out.printf("%nAverage voltage error : %f p.u (std = %f)%n", avgVoltageError, stdVoltageError);
         System.out.printf("%nAverage angle error : %f degrees (std = %f)%n", avgAngleErrror, stdAngleError);
         System.out.printf("%nNumber of voltage magnitude measurements : %d%n", knowledge.getVoltageMagnitudeMeasures().size());
-
-        for (Bus bus : network.getBusView().getBuses()) {
-            System.out.printf("%nBus %s : voltage = %f p.u, angle = %f rad %n", bus.getId(), bus.getV()/bus.getVoltageLevel().getNominalV(), Math.toRadians(bus.getAngle()));
-        }
     }
 }

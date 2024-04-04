@@ -13,8 +13,7 @@ import com.powsybl.iidm.network.Branch;
 import com.powsybl.iidm.network.Bus;
 import com.powsybl.iidm.network.Identifiable;
 import com.powsybl.iidm.network.Network;
-import com.powsybl.openloadflow.util.PerUnit;
-import org.antlr.v4.runtime.misc.Pair;
+import org.jgrapht.alg.util.Pair;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -46,7 +45,7 @@ public class StateEstimatorKnowledge {
     }};
     // Standard deviation values (p.u) above as chosen in doi:10.3390/en11030570
     // TODO : check consistency of these values
-    public static final double BASE_POWER_MVA = PerUnit.SB;
+    public static final double BASE_POWER_MVA = 100;
 
 
     Map<Integer, ArrayList<String>> activePowerFlowMeasures = new HashMap<>();
