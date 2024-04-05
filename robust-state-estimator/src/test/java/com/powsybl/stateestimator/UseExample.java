@@ -72,8 +72,11 @@ public class UseExample {
         knowledge.printAllMeasures();
         System.out.printf("%nTotal number of measurements : %d%n", knowledge.getMeasuresCount());
 
-        // Add suspect branches if wanted
-        //knowledge.addSuspectBranch(1, "L1-2-1", network);
+        // Make a branch suspect and change its presumed status
+        knowledge.setSuspectBranch("L1-2-1", true, "PRESUMED OPENED");
+        knowledge.setSuspectBranch("L1-5-1", true, "PRESUMED CLOSED");
+        knowledge.setSuspectBranch("L2-3-1", true, "PRESUMED OPENED");
+        knowledge.setSuspectBranch("L2-4-1", true, "PRESUMED CLOSED");
 
         // Define the options for the state estimation
         StateEstimatorOptions options = new StateEstimatorOptions().setSolvingMode(2).setMaxTimeSolving(30);

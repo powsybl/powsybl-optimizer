@@ -46,6 +46,16 @@ subject to ctrl_voltage_ang_min{PROBLEM_SE, n in BUSCC}:
 
 ###########################################################
 #                                                         #
+#         Number of topology changes allowed              #
+#                                                         #
+###########################################################
+
+subject to ctrl_nb_topology_changes{PROBLEM_SE}:
+  sum{(qq,k,n,l) in BRANCHCC_FULL cross BRANCH_SUSP: branch_id[1,qq,k,n] == branch_susp_id[l]} 
+    abs(y[qq,k,n] - y_prior[l]) <= max_nb_topology_errors; 
+
+###########################################################
+#                                                         #
 #             Measurement residuals (in SI)               #
 #                                                         #
 ###########################################################

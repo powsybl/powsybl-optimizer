@@ -17,11 +17,13 @@ public class StateEstimatorOptions {
     // About MINLP options
     public static final int DEFAULT_SOLVING_MODE = 2; //0;
     public static final int DEFAULT_MAX_TIME_SOLVING = 120;
+    public static final int DEFAULT_MAX_TOPOLOGY_CHANGES = 5;
     HashMap<String, Integer> solvingOptions = new HashMap<>();
 
     public StateEstimatorOptions() {
         setSolvingMode(DEFAULT_SOLVING_MODE);
         setMaxTimeSolving(DEFAULT_MAX_TIME_SOLVING);
+        setMaxNbTopologyErrors(DEFAULT_MAX_TOPOLOGY_CHANGES);
     }
 
     public HashMap<String, Integer> getSolvingOptions() {
@@ -73,6 +75,18 @@ public class StateEstimatorOptions {
             throw new IllegalArgumentException("Max time solving must be > 0.");
         }
         solvingOptions.put("max_time_solving", maxTimeSolving);
+        return this;
+    }
+
+    /**
+     * @param maxNbTopologyErrors The maximum number of branches status the solver is allowed to switch
+     * @return The object on which the method is applied.
+     */
+    public StateEstimatorOptions setMaxNbTopologyErrors(int maxNbTopologyErrors) {
+        if (maxNbTopologyErrors < 0) {
+            throw new IllegalArgumentException("Maximum number of topology errors must be >= 0.");
+        }
+        solvingOptions.put("max_nb_topology_errors", maxNbTopologyErrors);
         return this;
     }
 

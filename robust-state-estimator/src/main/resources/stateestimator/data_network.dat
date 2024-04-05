@@ -46,8 +46,8 @@ param: MEASURES_V: V_type V_bus_id V_value V_variance := include ampl_measures_V
 ###############################################################################
 
 # ampl_suspect_branches.txt;
-# "num" "branch_susp_id"
-param: BRANCH_SUSP_ID: branch_susp_id := include ampl_suspect_branches.txt;
+# "num" "branch_susp_id" "is_suspected" "y_prior"
+param: BRANCH_SUSP: branch_susp_id is_suspected y_prior := include ampl_suspect_branches.txt;
 
 
 ###############################################################################

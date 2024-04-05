@@ -62,8 +62,10 @@ if "solving_mode" in SOLVING_OPTIONS_KEYS then let mip_strategy := num(SOLVING_O
 param max_time_solving integer default 120;
 if "max_time_solving" in SOLVING_OPTIONS_KEYS then let max_time_solving := num(SOLVING_OPTIONS_VALUES["max_time_solving"]);
 
-# Absolute parameter : base 100MVA.
-# Never change this unless you really know what you do
+param max_nb_topology_errors integer default 5;
+if "max_nb_topology_errors" in SOLVING_OPTIONS_KEYS then let max_nb_topology_errors := num(SOLVING_OPTIONS_VALUES["max_nb_topology_errors"]);
+
+# Absolute parameter : base 100MVA (never change this)
 param base100MVA := 100;
 
 # Parameter for detection of branches with zero impedance
@@ -268,7 +270,7 @@ printf "Nb of Pf measurements discarded as they were not related to main AC CC: 
   card(MEASURES_Pf)-card(MEASURECC_Pf);
 printf "Nb of Qf measurements discarded as they were not related to main AC CC: %i\n", 
   card(MEASURES_Qf)-card(MEASURECC_Qf);
-printf "Nb of suspect branches out of main AC CC: %i\n", card(BRANCH_SUSP)-card(BRANCHCC_SUSP);
+printf "Nb of suspect branches out of main AC CC: %i\n", card(BRANCH_TRULY_SUSP)-card(BRANCHCC_TRULY_SUSP);
 printf "\n";
 
 ###############################################################################
@@ -281,12 +283,14 @@ printf "\n";
 let {n in BUSCC} V[n] := 1;
 let {n in BUSCC} theta[n] := 0;
 
-# Start by assuming all branches are closed
-let {(qq,m,n) in BRANCHCC_FULL} y[qq,m,n] := 1;
+# For branches not suspected, fix their status to y_prior
+for {(qq,m,n,l) in BRANCHCC_FULL cross BRANCH_SUSP: branch_susp_id[l] == branch_id[1,qq,m,n] and is_suspected[l] != 1} {
+  fix y[qq,m,n] := y_prior[l];
+}
 
-# Fix the status to "closed" for branches not in BRANCHCC_SUSP
-for {(qq,m,n) in BRANCHCC_FULL diff BRANCHCC_SUSP} {
-  fix y[qq,m,n] := 1;
+# For branches suspected, assign a first value to their status based on y_prior
+for {(qq,m,n,l) in BRANCHCC_FULL cross BRANCH_SUSP: branch_susp_id[l] == branch_id[1,qq,m,n] and is_suspected[l] == 1} {
+  let y[qq,m,n] := y_prior[l];
 }
 
 /* # Consistency with power flow measurement : 

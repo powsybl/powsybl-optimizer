@@ -57,16 +57,16 @@ public class StateEstimatorKnowledge {
 
     Map<Integer, ArrayList<String>> voltageMagnitudeMeasures = new HashMap<>();
 
-    Map<Integer, String> suspectBranches = new HashMap<>();
+    Map<Integer, ArrayList<String>> suspectBranches = new HashMap<>();
 
     String slackBus;
 
     public StateEstimatorKnowledge(Network network) {
-        setSlack(DEFAULT_SLACK_SELECTION_MODE, network);
+        setSlack(DEFAULT_SLACK_SELECTION_MODE, network).setSuspectBranchesByDefault(network);
     }
 
     public StateEstimatorKnowledge(Network network, String slackBusId) {
-        setSlack(slackBusId, network);
+        setSlack(slackBusId, network).setSuspectBranchesByDefault(network);
     }
 
     public int getMeasuresCount() {
@@ -95,7 +95,7 @@ public class StateEstimatorKnowledge {
         return voltageMagnitudeMeasures;
     }
 
-    public Map<Integer, String> getSuspectBranches() {
+    public Map<Integer, ArrayList<String>> getSuspectBranches() {
         return suspectBranches;
     }
 
@@ -418,31 +418,46 @@ public class StateEstimatorKnowledge {
     }
 
     /**
-     * @param suspectBranchNumber The number corresponding to the addition of new suspect branch
-     * @param suspectBranchId     The ID of the suspect branch added, within the network
-     * @param network             The network to which the measurement is related
+     * @param network The network for which the object suspectBranches is created by default
      * @return The object on which the method is applied.
      */
-    public StateEstimatorKnowledge addSuspectBranch(Integer suspectBranchNumber, String suspectBranchId, Network network) {
-        // Consistency checks
-        if (suspectBranchNumber < 1) {
-            throw new IllegalArgumentException("The suspect branch number must be a nonzero integer.");
+    public StateEstimatorKnowledge setSuspectBranchesByDefault(Network network) {
+        int i = 1;
+        for (Branch branch : network.getBranches()) {
+            ArrayList<String> suspectBranch = new ArrayList<>();
+            suspectBranch.add(branch.getId());
+            suspectBranch.add("0"); // By default, branch is not suspected
+            suspectBranch.add("1"); // By default, branch is presumed to be closed
+            suspectBranches.put(i, suspectBranch);
+            i++;
         }
-        if (suspectBranches.containsKey(suspectBranchNumber)) {
-            throw new IllegalArgumentException("The suspect branch number must be unique within the set of suspect branches.");
+        return this;
+    }
+
+    /**
+     * @param suspectBranchID The ID of the branch to be set
+     * @param isSuspected     Boolean : if true, branch status is suspected; else, it is not
+     * @param presumedStatus  Initial assumption on the status of the branch : can only equal "ASSUMED CLOSED" or "ASSUMED OPENED"
+     * @return The object on which the method is applied.
+     */
+    public StateEstimatorKnowledge setSuspectBranch(String suspectBranchID, boolean isSuspected, String presumedStatus) {
+        // Check that the ID of the suspect branch exists in the network (or equivalently, in suspectBranches, as suspectBranches contains all the branches by default)
+        if (!suspectBranches.values().stream().map(ArrayList -> ArrayList.get(0)).toList().contains(suspectBranchID)) {
+            throw new IllegalArgumentException("The branch ID provided does not exist in the network.");
         }
-        if (suspectBranches.containsValue(suspectBranchId)) {
-            throw new IllegalArgumentException("This suspect branch has already been added.");
+        if (!presumedStatus.equals("PRESUMED CLOSED") && !presumedStatus.equals("PRESUMED OPENED")) {
+            throw new IllegalArgumentException("The assumed status can only be one of the two following values : "+
+                    "PRESUMED CLOSED or PRESUMED OPENED");
         }
-        // Check that the ID of the suspect branch exists in the network
-        if (!network.getBranchStream().map(Identifiable::getId).toList().contains(suspectBranchId)) {
-            throw new IllegalArgumentException("The ID of the suspect branch does not exist in the network.");
-        }
-        // Check that the suspect branch is not already contained in suspectBranches
-        if (suspectBranches.values().stream().toList().contains(suspectBranchId)) {
-            throw new IllegalArgumentException("The suspect branch provided as already been added.");
-        }
-        suspectBranches.put(suspectBranchNumber, suspectBranchId);
+        // Get the suspect branch number corresponding to suspectBranchID
+        Integer suspectBranchNumber = suspectBranches.entrySet().stream().filter(entry -> entry.getValue()
+                        .get(0).equals(suspectBranchID)).map(Map.Entry::getKey)
+                        .findFirst().get();
+        ArrayList<String> newAssumption = new ArrayList<>();
+        newAssumption.add(suspectBranchID);
+        newAssumption.add(isSuspected ? "1" : "0");
+        newAssumption.add(presumedStatus.equals("PRESUMED CLOSED") ? "1" : "0");
+        suspectBranches.put(suspectBranchNumber, newAssumption);
         return this;
     }
 

@@ -102,8 +102,6 @@ public class StateEstimatorAmplIOFiles implements AmplParameters {
         return networkIndicatorsOutput;
     }
 
-
-
     public StateVectorEstimateOutput getStateVectorEstimateOutput() {
         return stateVectorEstimateOutput;
     }

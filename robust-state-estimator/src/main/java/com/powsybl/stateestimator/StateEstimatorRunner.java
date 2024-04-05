@@ -53,7 +53,7 @@ public final class StateEstimatorRunner {
         Objects.requireNonNull(options);
         Objects.requireNonNull(config);
         Objects.requireNonNull(manager);
-        AmplModel stateEstimation = StateEstimatorModel.buildModel(); // Only AMPL files (.dat,.mod,.run) that never change should be given here
+        AmplModel stateEstimation = StateEstimatorModel.buildModel(); // Only AMPL files (.dat,.mod,.run) that never change should be given during this step
         StateEstimatorAmplIOFiles amplIoInterface = new StateEstimatorAmplIOFiles(knowledge, options, config.isDebug());
         AmplResults run = AmplModelRunner.run(network, variantId, stateEstimation, manager, amplIoInterface);
         return new StateEstimatorResults(run.isSuccess(), amplIoInterface, run.getIndicators());

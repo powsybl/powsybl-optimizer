@@ -23,13 +23,15 @@ import java.util.List;
  */
 public class NetworkTopologyEstimateOutput extends AbstractStateEstimatorEstimateOutput {
 
-    public static final int EXPECTED_NB_COLS = 6;
+    public static final int EXPECTED_NB_COLS = 4;
     private static final String SEP = ";";
 
-    public static final int COL_BRANCH_ID = 3;
-    public static final int COL_ESTIMATED_STATUS = 5;
-    public static final String VALID_CLOSED_STATUS = "\'CLOSED\'";
-    public static final String VALID_OPENED_STATUS = "\'OPENED\'";
+    public static final int COL_BRANCH_ID = 0;
+    public static final int COL_IS_SUSPECTED = 1;
+    public static final int COL_ASSUMED_STATUS = 2;
+    public static final int COL_ESTIMATED_STATUS = 3;
+    public static final String VALID_CLOSED_STATUS = "'CLOSED'";
+    public static final String VALID_OPENED_STATUS = "'OPENED'";
 
     private final List<BranchStatusEstimate> networkTopologyEstimate = new ArrayList<>();
 
@@ -62,8 +64,10 @@ public class NetworkTopologyEstimateOutput extends AbstractStateEstimatorEstimat
     void readLine(String[] tokens, StringToIntMapper<AmplSubset> amplMapper) {
         if (tokens[COL_ESTIMATED_STATUS].equals(VALID_CLOSED_STATUS) || tokens[COL_ESTIMATED_STATUS].equals(VALID_OPENED_STATUS)) {
             String branchId = tokens[COL_BRANCH_ID].replaceAll("'", "");
+            String isSuspected = tokens[COL_IS_SUSPECTED].replaceAll("'", "");
+            String assumedStatus = tokens[COL_ASSUMED_STATUS].replaceAll("'", "");
             String estimatedStatus = tokens[COL_ESTIMATED_STATUS].replaceAll("'", "");
-            networkTopologyEstimate.add(new BranchStatusEstimate(branchId, estimatedStatus));
+            networkTopologyEstimate.add(new BranchStatusEstimate(branchId, isSuspected, assumedStatus, estimatedStatus));
         }
         else {
             throw new PowsyblException("Status indicated for the branch is not valid. Only 'CLOSED' or 'OPENED' are accepted.");

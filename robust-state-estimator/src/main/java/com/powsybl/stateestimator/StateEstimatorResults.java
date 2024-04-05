@@ -118,13 +118,14 @@ public class StateEstimatorResults {
     }
 
     public void printNetworkTopology() {
-        System.out.println("Printing estimates on branch status : ");
+        System.out.println("Printing network topology estimate : ");
         // Print the table header
-        System.out.format("%n%-25s%-25s%n", "BranchID", "Estimated status");
-        System.out.format("%-25s%-25s%n", "--------", "----------------");
+        System.out.format("%n%-20s%-20s%-20s%-20s%n", "BranchID", "Was suspected", "Presumed status", "Estimated status");
+        System.out.format("%-20s%-20s%-20s%-20s%n",   "--------", "-------------", "--------------", "----------------");
         // Print state estimation for each branch
         for (BranchStatusEstimate branchStatusEstimate : networkTopologyEstimate) {
-            System.out.format("%-25s%-25s%n", branchStatusEstimate.getBranchId(), branchStatusEstimate.getStatus());
+            System.out.format("%-20s%-20s%-20s%-20s%n", branchStatusEstimate.getBranchId(), branchStatusEstimate.getIsSuspected(),
+                    branchStatusEstimate.getPresumedStatus(), branchStatusEstimate.getEstimatedStatus());
         }
         System.out.println();
     }

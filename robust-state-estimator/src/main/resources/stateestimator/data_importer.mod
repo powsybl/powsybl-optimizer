@@ -116,8 +116,8 @@ param V_bus {l in MEASURES_V} symbolic;
 #                              NETWORK                                        #
 ###############################################################################
 
-# Network parameters for which the current consideration is relevant are given
-# in per unit (but base voltage can vary on location, see Ampl Exporter in powsybl-core)
+# In 'ampl_network' files, parameters are given in per unit
+# Great care must be taken when choosing base voltages to revert to SI units(see Ampl Exporter in powsybl-core)
 
 ###############################################################################
 #               Substations (ampl_network_substations.txt)                    #
@@ -522,8 +522,10 @@ check card(BRANCH) == card(TEST_UNIQUENESS_BRANCH);
 #                     SET OF SUSPECT BRANCHES                                 #
 ###############################################################################
 
-set BRANCH_SUSP_ID dimen 1; # [num]
-param branch_susp_id {BRANCH_SUSP_ID} symbolic;
+set BRANCH_SUSP dimen 1; # [num]
+param branch_susp_id {BRANCH_SUSP} symbolic; # All branches are present in ampl_suspect_branches.txt
+param is_suspected {BRANCH_SUSP} binary; # If equal to 1, then branch status is suspected to be false. Change of status allowed.
+param y_prior {BRANCH_SUSP} binary; # "A priori" status of the branch
 
 # Note : checking that suspect branches IDs are valid is done in Java
 # Same goes with buses/branches IDs related to measurements
@@ -559,9 +561,11 @@ set MEASURECC_Q := setof{l in MEASURES_Q: Q_bus[l] in BUSCC} l;
 set MEASURECC_Pf := setof{l in MEASURES_Pf: Pf_firstbus[l] in BUSCC and Pf_secondbus[l] in BUSCC} l;
 set MEASURECC_Qf := setof{l in MEASURES_Qf: Qf_firstbus[l] in BUSCC and Qf_secondbus[l] in BUSCC} l;
 
-# Define the set of suspect branches included in BRANCHCC
-set BRANCH_SUSP := setof{(1,qq,m,n,l) in BRANCH cross BRANCH_SUSP_ID: branch_susp_id[l] == branch_id[1,qq,m,n]} (qq,m,n);
-set BRANCHCC_SUSP := BRANCHCC inter BRANCH_SUSP;
+# Define the set of truly suspect branches (used only for information)
+set BRANCH_TRULY_SUSP := setof{l in BRANCH_SUSP: is_suspected[l] == 1} l;
+# Define the set of truly suspect branches included in BRANCHCC (used only for information)
+set BRANCHCC_TRULY_SUSP := setof{(qq,m,n,l) in BRANCHCC_FULL cross BRANCH_SUSP: 
+    branch_susp_id[l] == branch_id[1,qq,m,n] and is_suspected[l] == 1} (qq,m,n);
 
 #set LOADCC  := setof {(1,c,n)    in LOAD  : n in BUSCC} (c,n);
 #set UNITCC  := setof {(1,g,n)    in UNIT  : n in BUSCC} (g,n);

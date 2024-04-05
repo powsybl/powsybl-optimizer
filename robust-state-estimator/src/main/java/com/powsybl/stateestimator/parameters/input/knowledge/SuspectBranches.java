@@ -22,9 +22,9 @@ import java.util.Map;
  */
 public class SuspectBranches implements AmplInputFile {
 
-    Map<Integer, String> suspectBranches;
+    Map<Integer, ArrayList<String>> suspectBranches;
 
-    public SuspectBranches(Map<Integer, String> suspectBranches) {
+    public SuspectBranches(Map<Integer, ArrayList<String>> suspectBranches) {
         this.suspectBranches = suspectBranches;
     }
 
@@ -35,10 +35,16 @@ public class SuspectBranches implements AmplInputFile {
 
     @Override
     public void write(BufferedWriter writer, StringToIntMapper<AmplSubset> stringToIntMapper) throws IOException {
-        // Format attendu : "num" "branch_susp_id"
+        // Expected format : "num" "branch_susp_id" "is_suspected" "y_prior"
+        writer.write("#\"num\" \"branch_susp_id\" \"is_suspected\" \"y_prior\"");
+        writer.newLine();
+        // For each branch
         for (var suspectBranch : suspectBranches.entrySet()) {
-            String line = suspectBranch.getKey().toString() + " " + suspectBranch.getValue();
-            writer.write(line);
+            StringBuilder line = new StringBuilder(suspectBranch.getKey().toString());
+            for (String var : suspectBranch.getValue()) {
+                line.append(" ").append(var);
+            }
+            writer.write(line.toString());
             writer.newLine();
         }
         //add new line at the end of the file !

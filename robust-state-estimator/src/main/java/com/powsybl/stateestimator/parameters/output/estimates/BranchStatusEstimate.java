@@ -15,15 +15,19 @@ import java.util.ArrayList;
 public class BranchStatusEstimate {
 
     String branchId;
-    String status;
+    String isSuspected;
+    String presumedStatus;
+    String estimatedStatus;
 
-    public BranchStatusEstimate(String branchId, String status) {
+    public BranchStatusEstimate(String branchId, String isSuspected, String presumedStatus, String estimatedStatus) {
         this.branchId = branchId;
-        this.status = status;
+        this.isSuspected = isSuspected;
+        this.presumedStatus = presumedStatus;
+        this.estimatedStatus = estimatedStatus;
     }
 
     public void print() {
-        System.out.println("\nEstimated state of branch " + getBranchId() + " : " + getStatus());
+        System.out.println("\nEstimated state of branch " + getBranchId() + " : " + getEstimatedStatus());
     }
 
 
@@ -31,7 +35,15 @@ public class BranchStatusEstimate {
         return branchId;
     }
 
-    public String getStatus() {
-        return status;
+    public String getIsSuspected() {
+        return isSuspected;
+    }
+
+    public String getPresumedStatus() {
+        return presumedStatus;
+    }
+
+    public String getEstimatedStatus() {
+        return estimatedStatus;
     }
 }

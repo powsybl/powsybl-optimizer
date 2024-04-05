@@ -27,11 +27,13 @@ printf "\nExportation of se_state_estimate.csv done.\n";
 
 # Export the network topology estimate (branch status)
 let fileOut := "se_topology_estimate.csv";
-printf "branch;bus1;bus2;branch_id;was_suspected;status\n" > (fileOut); 
-printf{(qq,m,n) in BRANCHCC_FULL} "%i;%i;%i;%Q;%Q;%Q\n",
-      qq, m, n, branch_id[1,qq,m,n], 
-      if (qq,m,n) in BRANCHCC_SUSP then "YES" else "NO", 
-      if y[qq,m,n] == 1 then "CLOSED" else "OPENED"
+printf "branch_id;was_suspected;presumed_status;true_status\n" > (fileOut);
+printf{(qq,m,n,l) in BRANCHCC_FULL cross BRANCH_SUSP:branch_susp_id[l] == branch_id[1,qq,m,n]}
+      "%Q;%Q;%Q;%Q\n",
+      branch_susp_id[l], 
+      if is_suspected[l] == 1 then "YES" else "NO", 
+      if y_prior[l] == 1 then "PRESUMED CLOSED" else "PRESUMED OPENED",
+      if round(y[qq,m,n]) == 1 then "CLOSED" else "OPENED" # rounding is necessary when solving_mode = 2
       > (fileOut);
 close (fileOut);
 printf "Exportation of se_topology_estimate.csv done.\n";
