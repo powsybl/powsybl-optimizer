@@ -9,11 +9,13 @@ package com.powsybl.stateestimator.parameters.input.knowledge;
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.commons.util.StringToIntMapper;
+import org.jgrapht.alg.util.Pair;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -24,8 +26,23 @@ public class ReactivePowerFlowMeasures implements AmplInputFile {
 
     Map<Integer, ArrayList<String>> measures;
 
+    Map<Integer, ArrayList<String>> measuresWithResiduals;
+
     public ReactivePowerFlowMeasures(Map<Integer, ArrayList<String>> measures) {
         this.measures = measures;
+    }
+
+    public ReactivePowerFlowMeasures(Map<Integer, ArrayList<String>> measures, Map<Integer, String> allResiduals) {
+        this.measuresWithResiduals = new HashMap<>();
+        for (Integer measurementNumber : measures.keySet()) {
+            for (Integer residualNumber : allResiduals.keySet()) {
+                if (residualNumber.equals(measurementNumber)) {
+                    ArrayList<String> measureWithResidual = new ArrayList<>(measures.get(measurementNumber));
+                    measureWithResidual.add(allResiduals.get(residualNumber));
+                    this.measuresWithResiduals.put(measurementNumber, measureWithResidual);
+                }
+            }
+        }
     }
 
     @Override
@@ -61,6 +78,26 @@ public class ReactivePowerFlowMeasures implements AmplInputFile {
         for (var measure : measures.entrySet()) {
             System.out.format("%-15s%-15s%-15s%-15s%-15s%-20s%n",
                     measure.getValue().stream().map(
+                            String -> {
+                                if (String.length() <= 12) {
+                                    return String;
+                                } else {
+                                    return String.substring(0, 6) + "..." + String.substring(String.length() - 3);
+                                }
+                            }).toArray());
+        }
+        System.out.println();
+    }
+
+    public void printWithResiduals() {
+        System.out.println("Printing reactive power flow measurements : ");
+        // Print the table header
+        System.out.format("%n%-15s%-15s%-15s%-15s%-15s%-20s%-15s%n", "Type", "BranchID", "FirstBusID", "SecondBusID", "Value (MVar)", "Variance (MVar^2)", "Residual (MVar)");
+        System.out.format("%-15s%-15s%-15s%-15s%-15s%-20s%-15s%n",        "----", "--------", "----------", "-----------", "------------", "-----------------", "--------------");
+        // Print each measurement
+        for (var measureWithResidual : measuresWithResiduals.entrySet()) {
+            System.out.format("%-15s%-15s%-15s%-15s%-15s%-20s%-15s%n",
+                    measureWithResidual.getValue().stream().map(
                             String -> {
                                 if (String.length() <= 12) {
                                     return String;

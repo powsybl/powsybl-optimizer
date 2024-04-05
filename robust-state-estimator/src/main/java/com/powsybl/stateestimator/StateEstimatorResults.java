@@ -11,6 +11,7 @@ import com.powsybl.stateestimator.parameters.StateEstimatorAmplIOFiles;
 //import main.java.com.powsybl.stateestimator.parameters.output.modifications.StateBus;
 //import main.java.com.powsybl.stateestimator.parameters.output.modifications.NetworkTopology;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.stateestimator.parameters.input.knowledge.*;
 import com.powsybl.stateestimator.parameters.output.estimates.BranchStatusEstimate;
 import com.powsybl.stateestimator.parameters.output.estimates.BusStateEstimate;
 import org.jgrapht.alg.util.Pair;
@@ -35,6 +36,9 @@ public class StateEstimatorResults {
     private final List<Pair<String, String>> runIndicators;
     private final List<Pair<String, String>> networkIndicators;
 
+    // Measurement residuals at the end of the state estimation
+    Map<Integer, String> measurementResiduals;
+
     /**
      * @param status      The final status of the state estimation run.
      * @param amplIOFiles A file interface to fetch output file information.
@@ -46,6 +50,9 @@ public class StateEstimatorResults {
         this.stateVectorEstimate = amplIOFiles.getStateVectorEstimateOutput().getStateVectorEstimate();
         this.networkTopologyEstimate = amplIOFiles.getNetworkTopologyEstimateOutput().getNetworkTopologyEstimate();
         this.networkIndicators = amplIOFiles.getNetworkIndicatorsOutput().getIndicators();
+        this.measurementResiduals = amplIOFiles.getMeasurementResidualsOutput().getMeasurementResiduals();
+
+        System.out.println(this.measurementResiduals);
 
         // TODO : change code about runIndicators, to use ours (se_run_indic.txt) and not those returned by AMPL/Java interface
         Objects.requireNonNull(runIndicators);
@@ -131,6 +138,23 @@ public class StateEstimatorResults {
     }
 
     /**
+     * Print all residuals (in SI) related to the measurements
+     * @param knowledge The network on which was performed the state estimation
+     */
+    public void printResidualsSi(StateEstimatorKnowledge knowledge) {
+        new ActivePowerFlowMeasures(knowledge.getActivePowerFlowMeasures(), this.measurementResiduals)
+                .printWithResiduals();
+        new ReactivePowerFlowMeasures(knowledge.getReactivePowerFlowMeasures(), this.measurementResiduals)
+                .printWithResiduals();
+        new ActivePowerInjectedMeasures(knowledge.getActivePowerInjectedMeasures(), this.measurementResiduals)
+                .printWithResiduals();
+        new ReactivePowerInjectedMeasures(knowledge.getReactivePowerInjectedMeasures(), this.measurementResiduals)
+                .printWithResiduals();
+        new VoltageMagnitudeMeasures(knowledge.getVoltageMagnitudeMeasures(), this.measurementResiduals)
+                .printWithResiduals();
+    }
+
+    /**
      * Print all the indicators of the state estimation.
      */
     public void printIndicators() {
@@ -205,6 +229,10 @@ public class StateEstimatorResults {
 
     public List<Pair<String, String>> getNetworkIndicators() {
         return networkIndicators;
+    }
+
+    public Map<Integer, String> getMeasurementResiduals() {
+        return measurementResiduals;
     }
 
 }

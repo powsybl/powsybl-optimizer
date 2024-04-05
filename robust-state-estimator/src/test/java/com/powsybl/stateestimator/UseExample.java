@@ -42,6 +42,7 @@ public class UseExample {
 
         // Load your favorite network (IIDM format preferred)
         Network network = IeeeCdfNetworkFactory.create14();
+        //Network network = IeeeCdfNetworkFactory.create118();
 
         // Load Flow parameters (note : we mimic the way the AMPL code deals with zero-impedance branches)
         LoadFlowParameters parametersLf = new LoadFlowParameters();
@@ -58,6 +59,9 @@ public class UseExample {
         // as well as the sets of measurements and suspect branches
         StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network);
 
+        // For IEEE 118 bus, slack is "VL69_0"
+        //knowledge.setSlack("VL69_0", network);
+
         // Randomly generate measurements (useful for test cases) out of load flow results
         knowledge.generateRandomMeasurements(network, 4);
         // Note : we can also add by hand our measurements, and complete them with generated measurements until observability is ensured
@@ -73,10 +77,10 @@ public class UseExample {
         System.out.printf("%nTotal number of measurements : %d%n", knowledge.getMeasuresCount());
 
         // Make a branch suspect and change its presumed status
-        knowledge.setSuspectBranch("L1-2-1", true, "PRESUMED OPENED");
-        knowledge.setSuspectBranch("L1-5-1", true, "PRESUMED CLOSED");
-        knowledge.setSuspectBranch("L2-3-1", true, "PRESUMED OPENED");
-        knowledge.setSuspectBranch("L2-4-1", true, "PRESUMED CLOSED");
+        //knowledge.setSuspectBranch("L1-2-1", true, "PRESUMED OPENED");
+        //knowledge.setSuspectBranch("L1-5-1", true, "PRESUMED CLOSED");
+        //knowledge.setSuspectBranch("L2-3-1", true, "PRESUMED OPENED");
+        //knowledge.setSuspectBranch("L2-4-1", true, "PRESUMED CLOSED");
 
         // Define the options for the state estimation
         StateEstimatorOptions options = new StateEstimatorOptions().setSolvingMode(2).setMaxTimeSolving(30);
@@ -85,6 +89,9 @@ public class UseExample {
         StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
                 knowledge, new StateEstimatorOptions(), new StateEstimatorConfig(true), new LocalComputationManager());
         results.printAllResultsSi(network);
+
+        // Print measurement residuals
+        results.printResidualsSi(knowledge);
 
         // Print some indicators on the accuracy of the state estimation w.r.t load flow solution
         long nbBuses = network.getBusView().getBusStream().count();

@@ -19,6 +19,7 @@ import com.powsybl.stateestimator.parameters.input.options.SolvingOptions;
 import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.ampl.executor.AmplOutputFile;
 import com.powsybl.ampl.executor.AmplParameters;
+import com.powsybl.stateestimator.parameters.output.MeasurementResidualsOutput;
 import com.powsybl.stateestimator.parameters.output.NetworkIndicatorsOutput;
 import com.powsybl.stateestimator.parameters.output.NetworkTopologyEstimateOutput;
 import com.powsybl.stateestimator.parameters.output.StateVectorEstimateOutput;
@@ -47,6 +48,7 @@ public class StateEstimatorAmplIOFiles implements AmplParameters {
     NetworkIndicatorsOutput networkIndicatorsOutput;
     StateVectorEstimateOutput stateVectorEstimateOutput;
     NetworkTopologyEstimateOutput networkTopologyEstimateOutput;
+    MeasurementResidualsOutput measurementResidualsOutput;
 
 
     boolean debug;
@@ -70,6 +72,7 @@ public class StateEstimatorAmplIOFiles implements AmplParameters {
         this.networkIndicatorsOutput = new NetworkIndicatorsOutput();
         this.stateVectorEstimateOutput = new StateVectorEstimateOutput();
         this.networkTopologyEstimateOutput = new NetworkTopologyEstimateOutput();
+        this.measurementResidualsOutput = new MeasurementResidualsOutput();
 
         this.debug = debug;
     }
@@ -84,10 +87,14 @@ public class StateEstimatorAmplIOFiles implements AmplParameters {
     @Override
     public Collection<AmplOutputFile> getOutputParameters(boolean hasConverged) {
         List<AmplOutputFile> list = new ArrayList<>();
+
+        // TODO : add runIndicators
+
         list.add(networkIndicatorsOutput);
         if (hasConverged) {
             list.add(stateVectorEstimateOutput);
             list.add(networkTopologyEstimateOutput);
+            list.add(measurementResidualsOutput);
         }
         return list;
     }
@@ -109,5 +116,7 @@ public class StateEstimatorAmplIOFiles implements AmplParameters {
     public NetworkTopologyEstimateOutput getNetworkTopologyEstimateOutput() {
         return networkTopologyEstimateOutput;
     }
+
+    public MeasurementResidualsOutput getMeasurementResidualsOutput() {return measurementResidualsOutput;}
 
 }
