@@ -41,6 +41,7 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
         while (parser.nextToken() != JsonToken.END_OBJECT) {
             switch (parser.getCurrentName()) {
                 case "version" -> {
+                    // nothing to do
                 }
                 case "specificVoltageLimits" -> {
                     parser.nextToken();
