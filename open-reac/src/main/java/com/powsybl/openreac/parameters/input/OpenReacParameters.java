@@ -58,21 +58,21 @@ public class OpenReacParameters {
 
     private ReactiveSlackBusesMode reactiveSlackBusesMode = ReactiveSlackBusesMode.NO_GENERATION;
 
-    private static final String DEFAULT_VARIABLES_SCALING_FACTOR = "default_variables_scaling_factor";
+    private static final String DEFAULT_VARIABLE_SCALING_FACTOR = "default_variable_scaling_factor";
 
-    private double defaultVariablesScalingFactor = 1;
+    private double defaultVariableScalingFactor = 1;
 
-    private static final String DEFAULT_CONSTRAINTS_SCALING_FACTOR = "default_constraints_scaling_factor";
+    private static final String DEFAULT_CONSTRAINT_SCALING_FACTOR = "default_constraint_scaling_factor";
 
-    private double defaultConstraintsScalingFactor = 1;
+    private double defaultConstraintScalingFactor = 1;
 
-    private static final String REACTIVE_SLACK_VARIABLES_SCALING_FACTOR = "reactive_slack_variables_scaling_factor";
+    private static final String REACTIVE_SLACK_VARIABLE_SCALING_FACTOR = "reactive_slack_variable_scaling_factor";
 
-    private double reactiveSlackVariablesScalingFactor = 1e-1;
+    private double reactiveSlackVariableScalingFactor = 1e-1;
 
-    private static final String TWO_WINDING_TRANSFORMER_RATIO_VARIABLES_SCALING_FACTOR = "transformer_ratio_variables_scaling_factor";
+    private static final String TWO_WINDING_TRANSFORMER_RATIO_VARIABLE_SCALING_FACTOR = "transformer_ratio_variable_scaling_factor";
 
-    private double twoWindingTransformerRatioVariablesScalingFactor = 1e-3;
+    private double twoWindingTransformerRatioVariableScalingFactor = 1e-3;
 
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.
@@ -235,60 +235,60 @@ public class OpenReacParameters {
     /**
      * @return the default scaling value of all the variables in ACOPF solving.
      */
-    public double getDefaultVariablesScalingFactor() {
-        return defaultVariablesScalingFactor;
+    public double getDefaultVariableScalingFactor() {
+        return defaultVariableScalingFactor;
     }
 
-    public OpenReacParameters setDefaultVariablesScalingFactor(double defaultVariablesScalingFactor) {
-        if (defaultVariablesScalingFactor <= 0 || Double.isNaN(defaultVariablesScalingFactor)) {
+    public OpenReacParameters setDefaultVariableScalingFactor(double defaultVariableScalingFactor) {
+        if (defaultVariableScalingFactor <= 0 || Double.isNaN(defaultVariableScalingFactor)) {
             throw new IllegalArgumentException("Default scaling factor for variables must be > 0 and defined to be consistent.");
         }
-        this.defaultVariablesScalingFactor = defaultVariablesScalingFactor;
+        this.defaultVariableScalingFactor = defaultVariableScalingFactor;
         return this;
     }
 
     /**
      * @return the default scaling value of all the constraints in ACOPF solving.
      */
-    public double getDefaultConstraintsScalingFactor() {
-        return defaultConstraintsScalingFactor;
+    public double getDefaultConstraintScalingFactor() {
+        return defaultConstraintScalingFactor;
     }
 
-    public OpenReacParameters setDefaultConstraintsScalingFactor(double defaultConstraintsScalingFactor) {
-        if (defaultConstraintsScalingFactor < 0 || Double.isNaN(defaultConstraintsScalingFactor)) {
+    public OpenReacParameters setDefaultConstraintScalingFactor(double defaultConstraintScalingFactor) {
+        if (defaultConstraintScalingFactor < 0 || Double.isNaN(defaultConstraintScalingFactor)) {
             throw new IllegalArgumentException("Default scaling factor for constraints must be >= 0 and defined to be consistent.");
         }
-        this.defaultConstraintsScalingFactor = defaultConstraintsScalingFactor;
+        this.defaultConstraintScalingFactor = defaultConstraintScalingFactor;
         return this;
     }
 
     /**
      * @return the scaling value of reactive slack variables in ACOPF solving.
      */
-    public double getReactiveSlackVariablesScalingFactor() {
-        return reactiveSlackVariablesScalingFactor;
+    public double getReactiveSlackVariableScalingFactor() {
+        return reactiveSlackVariableScalingFactor;
     }
 
-    public OpenReacParameters setReactiveSlackVariablesScalingFactor(double reactiveSlackVariablesScalingFactor) {
-        if (reactiveSlackVariablesScalingFactor <= 0 || Double.isNaN(reactiveSlackVariablesScalingFactor)) {
+    public OpenReacParameters setReactiveSlackVariableScalingFactor(double reactiveSlackVariableScalingFactor) {
+        if (reactiveSlackVariableScalingFactor <= 0 || Double.isNaN(reactiveSlackVariableScalingFactor)) {
             throw new IllegalArgumentException("Scaling factor for reactive slack variables must be > 0 and defined to be consistent.");
         }
-        this.reactiveSlackVariablesScalingFactor = reactiveSlackVariablesScalingFactor;
+        this.reactiveSlackVariableScalingFactor = reactiveSlackVariableScalingFactor;
         return this;
     }
 
     /**
      * @return the scaling value of transformer ratios in ACOPF solving.
      */
-    public double getTwoWindingTransformerRatioVariablesScalingFactor() {
-        return twoWindingTransformerRatioVariablesScalingFactor;
+    public double getTwoWindingTransformerRatioVariableScalingFactor() {
+        return twoWindingTransformerRatioVariableScalingFactor;
     }
 
-    public OpenReacParameters setTwoWindingTransformerRatioVariablesScalingFactor(double twoWindingTransformerRatioVariablesScalingFactor) {
-        if (twoWindingTransformerRatioVariablesScalingFactor <= 0 || Double.isNaN(twoWindingTransformerRatioVariablesScalingFactor)) {
+    public OpenReacParameters setTwoWindingTransformerRatioVariableScalingFactor(double twoWindingTransformerRatioVariableScalingFactor) {
+        if (twoWindingTransformerRatioVariableScalingFactor <= 0 || Double.isNaN(twoWindingTransformerRatioVariableScalingFactor)) {
             throw new IllegalArgumentException("Scaling factor for transformer ratio variables must be > 0 and defined to be consistent.");
         }
-        this.twoWindingTransformerRatioVariablesScalingFactor = twoWindingTransformerRatioVariablesScalingFactor;
+        this.twoWindingTransformerRatioVariableScalingFactor = twoWindingTransformerRatioVariableScalingFactor;
         return this;
     }
 
@@ -323,10 +323,10 @@ public class OpenReacParameters {
         allAlgoParams.add(new OpenReacAlgoParamImpl(MIN_PLAUSIBLE_LOW_VOLTAGE_LIMIT_KEY, Double.toString(minPlausibleLowVoltageLimit)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(MAX_PLAUSIBLE_HIGH_VOLTAGE_LIMIT_KEY, Double.toString(maxPlausibleHighVoltageLimit)));
         allAlgoParams.add(reactiveSlackBusesMode.toParam());
-        allAlgoParams.add(new OpenReacAlgoParamImpl(DEFAULT_VARIABLES_SCALING_FACTOR, Double.toString(defaultVariablesScalingFactor)));
-        allAlgoParams.add(new OpenReacAlgoParamImpl(DEFAULT_CONSTRAINTS_SCALING_FACTOR, Double.toString(defaultConstraintsScalingFactor)));
-        allAlgoParams.add(new OpenReacAlgoParamImpl(REACTIVE_SLACK_VARIABLES_SCALING_FACTOR, Double.toString(reactiveSlackVariablesScalingFactor)));
-        allAlgoParams.add(new OpenReacAlgoParamImpl(TWO_WINDING_TRANSFORMER_RATIO_VARIABLES_SCALING_FACTOR, Double.toString(twoWindingTransformerRatioVariablesScalingFactor)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(DEFAULT_VARIABLE_SCALING_FACTOR, Double.toString(defaultVariableScalingFactor)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(DEFAULT_CONSTRAINT_SCALING_FACTOR, Double.toString(defaultConstraintScalingFactor)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(REACTIVE_SLACK_VARIABLE_SCALING_FACTOR, Double.toString(reactiveSlackVariableScalingFactor)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(TWO_WINDING_TRANSFORMER_RATIO_VARIABLE_SCALING_FACTOR, Double.toString(twoWindingTransformerRatioVariableScalingFactor)));
         return allAlgoParams;
     }
 

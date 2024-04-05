@@ -90,21 +90,21 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                     parser.nextToken();
                     parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.valueOf(parser.getText()));
                     break;
-                case "defaultVariablesScalingFactor":
+                case "defaultVariableScalingFactor":
                     parser.nextToken();
-                    parameters.setDefaultVariablesScalingFactor(parser.readValueAs(Double.class));
+                    parameters.setDefaultVariableScalingFactor(parser.readValueAs(Double.class));
                     break;
-                case "defaultConstraintsScalingFactor":
+                case "defaultConstraintScalingFactor":
                     parser.nextToken();
-                    parameters.setDefaultConstraintsScalingFactor(parser.readValueAs(Double.class));
+                    parameters.setDefaultConstraintScalingFactor(parser.readValueAs(Double.class));
                     break;
-                case "reactiveSlackVariablesScalingFactor":
+                case "reactiveSlackVariableScalingFactor":
                     parser.nextToken();
-                    parameters.setReactiveSlackVariablesScalingFactor(parser.readValueAs(Double.class));
+                    parameters.setReactiveSlackVariableScalingFactor(parser.readValueAs(Double.class));
                     break;
-                case "twoWindingTransformerRatioVariablesScalingFactor":
+                case "twoWindingTransformerRatioVariableScalingFactor":
                     parser.nextToken();
-                    parameters.setTwoWindingTransformerRatioVariablesScalingFactor(parser.readValueAs(Double.class));
+                    parameters.setTwoWindingTransformerRatioVariableScalingFactor(parser.readValueAs(Double.class));
                     break;
                 default:
                     throw new IllegalStateException("Unexpected field: " + parser.getCurrentName());

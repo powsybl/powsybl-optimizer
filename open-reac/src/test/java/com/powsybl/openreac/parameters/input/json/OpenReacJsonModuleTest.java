@@ -51,10 +51,10 @@ class OpenReacJsonModuleTest {
         parameters.setMinPlausibleLowVoltageLimit(0.755);
         parameters.setMaxPlausibleHighVoltageLimit(1.236);
         parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.CONFIGURED);
-        parameters.setDefaultVariablesScalingFactor(0.756);
-        parameters.setDefaultConstraintsScalingFactor(0.888);
-        parameters.setReactiveSlackVariablesScalingFactor(1e-2);
-        parameters.setTwoWindingTransformerRatioVariablesScalingFactor(0.005);
+        parameters.setDefaultVariableScalingFactor(0.756);
+        parameters.setDefaultConstraintScalingFactor(0.888);
+        parameters.setReactiveSlackVariableScalingFactor(1e-2);
+        parameters.setTwoWindingTransformerRatioVariableScalingFactor(0.005);
         parameters.addConfiguredReactiveSlackBuses(List.of("bus1", "bus2"));
         String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(parameters);
         ComparisonUtils.compareTxt(Objects.requireNonNull(getClass().getResourceAsStream("/parameters.json")), json);
@@ -76,10 +76,10 @@ class OpenReacJsonModuleTest {
         assertEquals(0.755, parameters2.getMinPlausibleLowVoltageLimit());
         assertEquals(1.236, parameters2.getMaxPlausibleHighVoltageLimit());
         assertEquals(ReactiveSlackBusesMode.CONFIGURED, parameters2.getReactiveSlackBusesMode());
-        assertEquals(0.756, parameters2.getDefaultVariablesScalingFactor());
-        assertEquals(0.888, parameters2.getDefaultConstraintsScalingFactor());
-        assertEquals(1e-2, parameters2.getReactiveSlackVariablesScalingFactor());
-        assertEquals(0.005, parameters2.getTwoWindingTransformerRatioVariablesScalingFactor());
+        assertEquals(0.756, parameters2.getDefaultVariableScalingFactor());
+        assertEquals(0.888, parameters2.getDefaultConstraintScalingFactor());
+        assertEquals(1e-2, parameters2.getReactiveSlackVariableScalingFactor());
+        assertEquals(0.005, parameters2.getTwoWindingTransformerRatioVariableScalingFactor());
         assertEquals(List.of("bus1", "bus2"), parameters2.getConfiguredReactiveSlackBuses());
     }
 }

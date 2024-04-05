@@ -105,10 +105,10 @@ class OpenReacRunnerTest {
                 .setMinPlausibleLowVoltageLimit(0.7888)
                 .setMaxPlausibleHighVoltageLimit(1.3455)
                 .setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL)
-                .setDefaultVariablesScalingFactor(1.1222)
-                .setDefaultConstraintsScalingFactor(0.7889)
-                .setReactiveSlackVariablesScalingFactor(0.2)
-                .setTwoWindingTransformerRatioVariablesScalingFactor(0.0045);
+                .setDefaultVariableScalingFactor(1.1222)
+                .setDefaultConstraintScalingFactor(0.7889)
+                .setReactiveSlackVariableScalingFactor(0.2)
+                .setTwoWindingTransformerRatioVariableScalingFactor(0.0045);
 
         LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
                 List.of("empty_case/reactiveopf_results_indic.txt"));

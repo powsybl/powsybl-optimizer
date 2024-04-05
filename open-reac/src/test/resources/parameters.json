@@ -32,8 +32,8 @@
   "minPlausibleLowVoltageLimit" : 0.755,
   "maxPlausibleHighVoltageLimit" : 1.236,
   "reactiveSlackBusesMode" : "CONFIGURED",
-  "defaultVariablesScalingFactor" : 0.756,
-  "defaultConstraintsScalingFactor" : 0.888,
-  "reactiveSlackVariablesScalingFactor" : 0.01,
-  "twoWindingTransformerRatioVariablesScalingFactor" : 0.005
+  "defaultVariableScalingFactor" : 0.756,
+  "defaultConstraintScalingFactor" : 0.888,
+  "reactiveSlackVariableScalingFactor" : 0.01,
+  "twoWindingTransformerRatioVariableScalingFactor" : 0.005
 }
