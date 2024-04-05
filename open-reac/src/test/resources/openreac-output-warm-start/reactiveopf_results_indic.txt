@@ -33,10 +33,10 @@ defaultQmaxPmaxRatio 0.300000
 defaultQmin -300.000000
 defaultQmax 300.000000
 minimalQPrange 1.000000
-default_variables_scaling_factor 1.000000
-default_constraints_scaling_factor 1.000000
-reactive_slack_variables_scaling_factor 0.100000
-transformer_ratio_variables_scaling_factor 0.001000
+default_variable_scaling_factor 1.000000
+default_constraint_scaling_factor 1.000000
+reactive_slack_variable_scaling_factor 0.100000
+transformer_ratio_variable_scaling_factor 0.001000
 
 nb_substations 3
 nb_bus_in_data_file 3
