@@ -17,6 +17,7 @@ import com.powsybl.stateestimator.StateEstimator;
 import com.powsybl.stateestimator.StateEstimatorConfig;
 import com.powsybl.stateestimator.StateEstimatorResults;
 import com.powsybl.stateestimator.parameters.input.knowledge.StateEstimatorKnowledge;
+import com.powsybl.stateestimator.parameters.input.knowledge.RandomMeasuresGenerator;
 import com.powsybl.stateestimator.parameters.input.options.StateEstimatorOptions;
 import org.junit.jupiter.api.Test;
 
@@ -25,6 +26,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 
 import static com.powsybl.openloadflow.OpenLoadFlowParameters.LowImpedanceBranchMode.REPLACE_BY_MIN_IMPEDANCE_LINE;
@@ -63,9 +65,13 @@ public class UseExample {
         //knowledge.setSlack("VL69_0", network);
 
         // Randomly generate measurements (useful for test cases) out of load flow results
-        knowledge.generateRandomMeasurements(network, 4);
-        // Note : we can also add by hand our measurements, and complete them with generated measurements until observability is ensured
-        //knowledge.addActivePowerFlowMeasure(measurementNumber, Map<"BranchID", "FirstBusID", "SecondBusID", "Value", "Variance", "Type">, network);
+        //RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, Optional.empty(), Optional.empty(), Optional.empty());
+        RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
+                Optional.of(4), Optional.of(2), Optional.of(false));
+
+        // We can also add by hand our measurements, and complete them with generated measurements until observability is ensured
+        // If some measurements are added after random generation, one might get more measurements than expected
+        //knowledge.addMeasure(measurementNumber, Map<("BranchID"), "FirstBusID", ("SecondBusID"), "Value", "Variance", "Type">, network);
 
         // Save "knowledge" object as a JSON
         //knowledge.write(new FileOutputStream("D:/Projet/Tests/knowledge_14bus_seed2.json"));
@@ -82,7 +88,7 @@ public class UseExample {
         //knowledge.setSuspectBranch("L2-3-1", true, "PRESUMED OPENED");
         //knowledge.setSuspectBranch("L2-4-1", true, "PRESUMED CLOSED");
 
-        // Define the options for the state estimation
+        // Define the solving options for the state estimation
         StateEstimatorOptions options = new StateEstimatorOptions().setSolvingMode(2).setMaxTimeSolving(30);
 
         // Run the state estimation and print the results
