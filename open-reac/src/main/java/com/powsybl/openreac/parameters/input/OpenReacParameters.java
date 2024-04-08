@@ -276,6 +276,9 @@ public class OpenReacParameters {
         return this;
     }
 
+    /**
+     * @return the weight to favor more/less minimization of active power produced by generators.
+     */
     public double getAlphaCoefficient() {
         return alphaCoefficient;
     }
@@ -288,6 +291,9 @@ public class OpenReacParameters {
         return this;
     }
 
+    /**
+     * @return the threshold of active and reactive power considered as null.
+     */
     public double getMinPlausibleActivePowerThreshold() {
         return minPlausibleActivePowerThreshold;
     }
@@ -300,6 +306,9 @@ public class OpenReacParameters {
         return this;
     }
 
+    /**
+     * @return the threshold of impedance considered as null.
+     */
     public double getLowImpedanceThreshold() {
         return lowImpedanceThreshold;
     }
@@ -312,6 +321,9 @@ public class OpenReacParameters {
         return this;
     }
 
+    /**
+     * @return the threshold to ignore voltage levels with nominal voltager lower than it.
+     */
     public double getNominalThresholdIgnoredBuses() {
         return nominalThresholdIgnoredBuses;
     }
@@ -324,6 +336,10 @@ public class OpenReacParameters {
         return this;
     }
 
+    /**
+     * @return the threshold used to replace voltage limits of voltage levels with nominal voltage
+     * than it.
+     */
     public double getNominalThresholdIgnoredVoltageBounds() {
         return nominalThresholdIgnoredVoltageBounds;
     }
@@ -336,6 +352,9 @@ public class OpenReacParameters {
         return this;
     }
 
+    /**
+     * @return the threshold for maximum active and reactive power considered in correction of generator limits.
+     */
     public double getPQMax() {
         return plausiblePowerLimit;
     }
@@ -348,6 +367,9 @@ public class OpenReacParameters {
         return this;
     }
 
+    /**
+     * @return the threshold for correction of high active power limit produced by generators.
+     */
     public double getDefaultPMax() {
         return defaultPMax;
     }
@@ -360,6 +382,9 @@ public class OpenReacParameters {
         return this;
     }
 
+    /**
+     * @return the threshold for correction of low active power limit produced by generators.
+     */
     public double getDefaultPMin() {
         return defaultPMin;
     }
@@ -372,6 +397,9 @@ public class OpenReacParameters {
         return this;
     }
 
+    /**
+     * @return the ratio used to calculate threshold for corrections of high/low reactive power limits.
+     */
     public double getDefaultQmaxPmaxRatio() {
         return defaultQmaxPmaxRatio;
     }
@@ -385,6 +413,10 @@ public class OpenReacParameters {
         return this;
     }
 
+    /**
+     * @return the threshold to fix active (resp. reactive) power of generators with
+     * active (resp. reactive) power limits that are closer than it.
+     */
     public double getDefaultMinimalQPRange() {
         return defaultMinimalQPRange;
     }
@@ -466,7 +498,6 @@ public class OpenReacParameters {
         if (!integrityAlgorithmParameters) {
             throw new InvalidParametersException("At least one algorithm parameter is inconsistent.");
         }
-
     }
 
     /**
