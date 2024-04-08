@@ -102,25 +102,25 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                     parser.nextToken();
                     parameters.setLowImpedanceThreshold(parser.getValueAsDouble());
                     break;
-                case "nominalThresholdIgnoredBuses":
+                case "minNominalVoltageIgnoredBus":
                     parser.nextToken();
-                    parameters.setNominalThresholdIgnoredBuses(parser.getValueAsDouble());
+                    parameters.setMinNominalVoltageIgnoredBus(parser.getValueAsDouble());
                     break;
-                case "nominalThresholdIgnoredVoltageBounds":
+                case "minNominalVoltageIgnoredVoltageBounds":
                     parser.nextToken();
-                    parameters.setNominalThresholdIgnoredVoltageBounds(parser.getValueAsDouble());
+                    parameters.setMinNominalVoltageIgnoredVoltageBounds(parser.getValueAsDouble());
                     break;
-                case "pQmax":
+                case "maxPlausiblePowerLimit":
                     parser.nextToken();
                     parameters.setPQMax(parser.getValueAsDouble());
                     break;
-                case "defaultPMin":
+                case "lowActivePowerDefaultLimit":
                     parser.nextToken();
-                    parameters.setDefaultPMin(parser.getValueAsDouble());
+                    parameters.setLowActivePowerDefaultLimit(parser.getValueAsDouble());
                     break;
-                case "defaultPMax":
+                case "highActivePowerDefaultLimit":
                     parser.nextToken();
-                    parameters.setDefaultPMax(parser.getValueAsDouble());
+                    parameters.setHighActivePowerDefaultLimit(parser.getValueAsDouble());
                     break;
                 case "defaultQmaxPmaxRatio":
                     parser.nextToken();

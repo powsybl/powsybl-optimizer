@@ -108,11 +108,11 @@ class OpenReacRunnerTest {
                 .setAlphaCoefficient(0.88)
                 .setMinPlausibleActivePowerThreshold(0.45)
                 .setLowImpedanceThreshold(1e-5)
-                .setNominalThresholdIgnoredBuses(2.)
-                .setNominalThresholdIgnoredVoltageBounds(0.75)
+                .setMinNominalVoltageIgnoredBus(2.)
+                .setMinNominalVoltageIgnoredVoltageBounds(0.75)
                 .setPQMax(3987.76)
-                .setDefaultPMin(12.32)
-                .setDefaultPMax(1452.66)
+                .setLowActivePowerDefaultLimit(12.32)
+                .setHighActivePowerDefaultLimit(1452.66)
                 .setDefaultQmaxPmaxRatio(0.24)
                 .setDefaultMinimalQPRange(2.);
 

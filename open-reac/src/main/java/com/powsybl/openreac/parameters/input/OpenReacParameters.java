@@ -70,25 +70,25 @@ public class OpenReacParameters {
 
     private double lowImpedanceThreshold = 1e-4; // in p.u., for detecting null impedance branches
 
-    private static final String NOMINAL_THRESHOLD_IGNORED_BUS_KEY = "epsilon_nominal_voltage";
+    private static final String MIN_NOMINAL_VOLTAGE_IGNORED_BUS_KEY = "epsilon_nominal_voltage";
 
-    private double nominalThresholdIgnoredBuses = 1; // in kV, to ignore buses with Vnom lower than this value
+    private double minNominalVoltageIgnoredBus = 1; // in kV, to ignore buses with Vnom lower than this value
 
-    private static final String NOMINAL_THRESHOLD_IGNORED_VOLTAGE_BOUNDS_KEY = "ignore_voltage_bounds";
+    private static final String MIN_NOMINAL_VOLTAGE_IGNORED_VOLTAGE_BOUNDS_KEY = "ignore_voltage_bounds";
 
-    private double nominalThresholdIgnoredVoltageBounds = 0; // in kV, to ignore voltage bounds of buses with Vnom lower than this value
+    private double minNominalVoltageIgnoredVoltageBounds = 0; // in kV, to ignore voltage bounds of buses with Vnom lower than this value
 
-    private static final String PLAUSIBLE_POWER_LIMIT_KEY = "PQmax";
+    private static final String MAX_PLAUSIBLE_POWER_LIMIT_KEY = "PQmax";
 
-    private double plausiblePowerLimit = 9000; // MW
+    private double maxPlausiblePowerLimit = 9000; // MW
 
-    private static final String DEFAULT_PMAX_KEY = "defaultPmax";
+    private static final String HIGH_ACTIVE_POWER_DEFAULT_LIMIT_KEY = "defaultPmax";
 
-    private double defaultPMax = 1000; // MW
+    private double highActivePowerDefaultLimit = 1000; // MW
 
-    private static final String DEFAULT_PMIN_KEY = "defaultPmin";
+    private static final String LOW_ACTIVE_POWER_DEFAULT_LIMIT_KEY = "defaultPmin";
 
-    private double defaultPMin = 0; // MW
+    private double lowActivePowerDefaultLimit = 0; // MW
 
     private static final String DEFAULT_QMAX_PMAX_RATIO_KEY = "defaultQmaxPmaxRatio";
 
@@ -324,15 +324,15 @@ public class OpenReacParameters {
     /**
      * @return the threshold to ignore voltage levels with nominal voltager lower than it.
      */
-    public double getNominalThresholdIgnoredBuses() {
-        return nominalThresholdIgnoredBuses;
+    public double getMinNominalVoltageIgnoredBus() {
+        return minNominalVoltageIgnoredBus;
     }
 
-    public OpenReacParameters setNominalThresholdIgnoredBuses(double nominalThresholdIgnoredBuses) {
-        if (Double.isNaN(nominalThresholdIgnoredBuses) || nominalThresholdIgnoredBuses < 0) {
+    public OpenReacParameters setMinNominalVoltageIgnoredBus(double minNominalVoltageIgnoredBus) {
+        if (Double.isNaN(minNominalVoltageIgnoredBus) || minNominalVoltageIgnoredBus < 0) {
             throw new IllegalArgumentException("Nominal threshold for ignored buses must be defined and >= 0 to be consistent.");
         }
-        this.nominalThresholdIgnoredBuses = nominalThresholdIgnoredBuses;
+        this.minNominalVoltageIgnoredBus = minNominalVoltageIgnoredBus;
         return this;
     }
 
@@ -340,15 +340,15 @@ public class OpenReacParameters {
      * @return the threshold used to replace voltage limits of voltage levels with nominal voltage
      * than it.
      */
-    public double getNominalThresholdIgnoredVoltageBounds() {
-        return nominalThresholdIgnoredVoltageBounds;
+    public double getMinNominalVoltageIgnoredVoltageBounds() {
+        return minNominalVoltageIgnoredVoltageBounds;
     }
 
-    public OpenReacParameters setNominalThresholdIgnoredVoltageBounds(double nominalThresholdIgnoredVoltageBounds) {
-        if (Double.isNaN(nominalThresholdIgnoredVoltageBounds) || nominalThresholdIgnoredVoltageBounds < 0) {
+    public OpenReacParameters setMinNominalVoltageIgnoredVoltageBounds(double minNominalVoltageIgnoredVoltageBounds) {
+        if (Double.isNaN(minNominalVoltageIgnoredVoltageBounds) || minNominalVoltageIgnoredVoltageBounds < 0) {
             throw new IllegalArgumentException("Nominal threshold for ignored voltage bounds must be defined and >= 0 to be consistent");
         }
-        this.nominalThresholdIgnoredVoltageBounds = nominalThresholdIgnoredVoltageBounds;
+        this.minNominalVoltageIgnoredVoltageBounds = minNominalVoltageIgnoredVoltageBounds;
         return this;
     }
 
@@ -356,44 +356,44 @@ public class OpenReacParameters {
      * @return the threshold for maximum active and reactive power considered in correction of generator limits.
      */
     public double getPQMax() {
-        return plausiblePowerLimit;
+        return maxPlausiblePowerLimit;
     }
 
     public OpenReacParameters setPQMax(double pQMax) {
         if (Double.isNaN(pQMax) || pQMax <= 0) {
             throw new IllegalArgumentException("Maximal consistency value for P and Q must be defined and > 0 to be consistent");
         }
-        this.plausiblePowerLimit = pQMax;
+        this.maxPlausiblePowerLimit = pQMax;
         return this;
     }
 
     /**
      * @return the threshold for correction of high active power limit produced by generators.
      */
-    public double getDefaultPMax() {
-        return defaultPMax;
+    public double getHighActivePowerDefaultLimit() {
+        return highActivePowerDefaultLimit;
     }
 
-    public OpenReacParameters setDefaultPMax(double defaultPMax) {
-        if (Double.isNaN(defaultPMax) || defaultPMax <= 0) {
+    public OpenReacParameters setHighActivePowerDefaultLimit(double highActivePowerDefaultLimit) {
+        if (Double.isNaN(highActivePowerDefaultLimit) || highActivePowerDefaultLimit <= 0) {
             throw new IllegalArgumentException("Default P max value must be defined and > 0 to be consistent.");
         }
-        this.defaultPMax = defaultPMax;
+        this.highActivePowerDefaultLimit = highActivePowerDefaultLimit;
         return this;
     }
 
     /**
      * @return the threshold for correction of low active power limit produced by generators.
      */
-    public double getDefaultPMin() {
-        return defaultPMin;
+    public double getLowActivePowerDefaultLimit() {
+        return lowActivePowerDefaultLimit;
     }
 
-    public OpenReacParameters setDefaultPMin(double defaultPMin) {
-        if (Double.isNaN(defaultPMin) || defaultPMin < 0) {
+    public OpenReacParameters setLowActivePowerDefaultLimit(double lowActivePowerDefaultLimit) {
+        if (Double.isNaN(lowActivePowerDefaultLimit) || lowActivePowerDefaultLimit < 0) {
             throw new IllegalArgumentException("Default P min value must be defined and >= 0 to be consistent.");
         }
-        this.defaultPMin = defaultPMin;
+        this.lowActivePowerDefaultLimit = lowActivePowerDefaultLimit;
         return this;
     }
 
@@ -443,11 +443,11 @@ public class OpenReacParameters {
         allAlgoParams.add(new OpenReacAlgoParamImpl(ALPHA_COEFFICIENT_KEY, Double.toString(alphaCoefficient)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(MIN_PLAUSIBLE_ACTIVE_POWER_THRESHOLD_KEY, Double.toString(minPlausibleActivePowerThreshold)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(LOW_IMPEDANCE_THRESHOLD_KEY, Double.toString(lowImpedanceThreshold)));
-        allAlgoParams.add(new OpenReacAlgoParamImpl(NOMINAL_THRESHOLD_IGNORED_BUS_KEY, Double.toString(nominalThresholdIgnoredBuses)));
-        allAlgoParams.add(new OpenReacAlgoParamImpl(NOMINAL_THRESHOLD_IGNORED_VOLTAGE_BOUNDS_KEY, Double.toString(nominalThresholdIgnoredVoltageBounds)));
-        allAlgoParams.add(new OpenReacAlgoParamImpl(PLAUSIBLE_POWER_LIMIT_KEY, Double.toString(plausiblePowerLimit)));
-        allAlgoParams.add(new OpenReacAlgoParamImpl(DEFAULT_PMIN_KEY, Double.toString(defaultPMin)));
-        allAlgoParams.add(new OpenReacAlgoParamImpl(DEFAULT_PMAX_KEY, Double.toString(defaultPMax)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(MIN_NOMINAL_VOLTAGE_IGNORED_BUS_KEY, Double.toString(minNominalVoltageIgnoredBus)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(MIN_NOMINAL_VOLTAGE_IGNORED_VOLTAGE_BOUNDS_KEY, Double.toString(minNominalVoltageIgnoredVoltageBounds)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(MAX_PLAUSIBLE_POWER_LIMIT_KEY, Double.toString(maxPlausiblePowerLimit)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(LOW_ACTIVE_POWER_DEFAULT_LIMIT_KEY, Double.toString(lowActivePowerDefaultLimit)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(HIGH_ACTIVE_POWER_DEFAULT_LIMIT_KEY, Double.toString(highActivePowerDefaultLimit)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(DEFAULT_QMAX_PMAX_RATIO_KEY, Double.toString(defaultQmaxPmaxRatio)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(DEFAULT_MINIMAL_QP_RANGE_KEY, Double.toString(defaultMinimalQPRange)));
         return allAlgoParams;
@@ -518,25 +518,25 @@ public class OpenReacParameters {
             integrityAlgorithmParameters = false;
         }
 
-        if (defaultPMin > defaultPMax) {
+        if (lowActivePowerDefaultLimit > highActivePowerDefaultLimit) {
             LOGGER.warn("Default P min = {} must be lower than default P max = {} to be consistent.",
-                    defaultPMin, defaultPMax);
+                    lowActivePowerDefaultLimit, highActivePowerDefaultLimit);
             integrityAlgorithmParameters = false;
         }
 
-        if (defaultPMax > plausiblePowerLimit) {
+        if (highActivePowerDefaultLimit > maxPlausiblePowerLimit) {
             LOGGER.warn("Default P min = {} and default P max = {} must be lower than PQmax value = {} to be consistent.",
-                    defaultPMin, defaultPMax, plausiblePowerLimit);
+                    lowActivePowerDefaultLimit, highActivePowerDefaultLimit, maxPlausiblePowerLimit);
             integrityAlgorithmParameters = false;
         }
 
-        if (defaultPMax * defaultQmaxPmaxRatio > plausiblePowerLimit) {
+        if (highActivePowerDefaultLimit * defaultQmaxPmaxRatio > maxPlausiblePowerLimit) {
             LOGGER.warn("Default Q max value = {} value must be lower than PQmax value to be consistent.",
-                    defaultPMax * defaultQmaxPmaxRatio);
+                    highActivePowerDefaultLimit * defaultQmaxPmaxRatio);
             integrityAlgorithmParameters = false;
         }
 
-        if (nominalThresholdIgnoredBuses > nominalThresholdIgnoredVoltageBounds) {
+        if (minNominalVoltageIgnoredBus > minNominalVoltageIgnoredVoltageBounds) {
             LOGGER.warn("Some buses with ignored voltage bounds will be ignored in calculations.");
         }
 

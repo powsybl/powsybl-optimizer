@@ -35,11 +35,11 @@
   "alphaCoefficient" : 0.56,
   "minPlausibleActivePowerThreshold" : 0.5,
   "lowImpedanceThreshold" : 1.0E-5,
-  "nominalThresholdIgnoredBuses" : 10.0,
-  "nominalThresholdIgnoredVoltageBounds" : 5.0,
-  "pQmax" : 8555.3,
-  "defaultPMin" : 99.2,
-  "defaultPMax" : 1144.0,
+  "minNominalVoltageIgnoredBus" : 10.0,
+  "minNominalVoltageIgnoredVoltageBounds" : 5.0,
+  "maxPlausiblePowerLimit" : 8555.3,
+  "lowActivePowerDefaultLimit" : 99.2,
+  "highActivePowerDefaultLimit" : 1144.0,
   "defaultQmaxPmaxRatio" : 0.4,
   "defaultMinimalQPRange" : 1.1
 }

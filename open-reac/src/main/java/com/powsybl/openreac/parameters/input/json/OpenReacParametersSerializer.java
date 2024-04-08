@@ -50,11 +50,11 @@ public class OpenReacParametersSerializer extends StdSerializer<OpenReacParamete
         serializerProvider.defaultSerializeField("alphaCoefficient", openReacParameters.getAlphaCoefficient(), jsonGenerator);
         serializerProvider.defaultSerializeField("minPlausibleActivePowerThreshold", openReacParameters.getMinPlausibleActivePowerThreshold(), jsonGenerator);
         serializerProvider.defaultSerializeField("lowImpedanceThreshold", openReacParameters.getLowImpedanceThreshold(), jsonGenerator);
-        serializerProvider.defaultSerializeField("nominalThresholdIgnoredBuses", openReacParameters.getNominalThresholdIgnoredBuses(), jsonGenerator);
-        serializerProvider.defaultSerializeField("nominalThresholdIgnoredVoltageBounds", openReacParameters.getNominalThresholdIgnoredVoltageBounds(), jsonGenerator);
-        serializerProvider.defaultSerializeField("pQmax", openReacParameters.getPQMax(), jsonGenerator);
-        serializerProvider.defaultSerializeField("defaultPMin", openReacParameters.getDefaultPMin(), jsonGenerator);
-        serializerProvider.defaultSerializeField("defaultPMax", openReacParameters.getDefaultPMax(), jsonGenerator);
+        serializerProvider.defaultSerializeField("minNominalVoltageIgnoredBus", openReacParameters.getMinNominalVoltageIgnoredBus(), jsonGenerator);
+        serializerProvider.defaultSerializeField("minNominalVoltageIgnoredVoltageBounds", openReacParameters.getMinNominalVoltageIgnoredVoltageBounds(), jsonGenerator);
+        serializerProvider.defaultSerializeField("maxPlausiblePowerLimit", openReacParameters.getPQMax(), jsonGenerator);
+        serializerProvider.defaultSerializeField("lowActivePowerDefaultLimit", openReacParameters.getLowActivePowerDefaultLimit(), jsonGenerator);
+        serializerProvider.defaultSerializeField("highActivePowerDefaultLimit", openReacParameters.getHighActivePowerDefaultLimit(), jsonGenerator);
         serializerProvider.defaultSerializeField("defaultQmaxPmaxRatio", openReacParameters.getDefaultQmaxPmaxRatio(), jsonGenerator);
         serializerProvider.defaultSerializeField("defaultMinimalQPRange", openReacParameters.getDefaultMinimalQPRange(), jsonGenerator);
 
