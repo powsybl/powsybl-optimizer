@@ -19,6 +19,7 @@ import com.powsybl.stateestimator.StateEstimatorResults;
 import com.powsybl.stateestimator.parameters.input.knowledge.StateEstimatorKnowledge;
 import com.powsybl.stateestimator.parameters.input.knowledge.RandomMeasuresGenerator;
 import com.powsybl.stateestimator.parameters.input.options.StateEstimatorOptions;
+import org.jgrapht.alg.util.Pair;
 import org.junit.jupiter.api.Test;
 
 import java.io.FileOutputStream;
@@ -43,8 +44,8 @@ public class UseExample {
     void useExample() throws IOException {
 
         // Load your favorite network (IIDM format preferred)
-        Network network = IeeeCdfNetworkFactory.create14();
-        //Network network = IeeeCdfNetworkFactory.create118();
+        //Network network = IeeeCdfNetworkFactory.create14();
+        Network network = IeeeCdfNetworkFactory.create118();
 
         // Load Flow parameters (note : we mimic the way the AMPL code deals with zero-impedance branches)
         LoadFlowParameters parametersLf = new LoadFlowParameters();
@@ -61,13 +62,13 @@ public class UseExample {
         // as well as the sets of measurements and suspect branches
         StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network);
 
-        // For IEEE 118 bus, slack is "VL69_0"
-        //knowledge.setSlack("VL69_0", network);
+        // For IEEE 118 bus, slack is "VL69_0": our state estimator must use the same slack
+        knowledge.setSlack("VL69_0", network);
 
         // Randomly generate measurements (useful for test cases) out of load flow results
         //RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, Optional.empty(), Optional.empty(), Optional.empty());
         RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
-                Optional.of(4), Optional.of(2), Optional.of(false));
+                Optional.of(0), Optional.of(4.0), Optional.of(false));
 
         // We can also add by hand our measurements, and complete them with generated measurements until observability is ensured
         // If some measurements are added after random generation, one might get more measurements than expected
@@ -79,7 +80,7 @@ public class UseExample {
         //StateEstimatorKnowledge test = StateEstimatorKnowledge.read("D:/Projet/Tests/knowledge_14bus_seed2.json");
 
         // Print all the measurements
-        knowledge.printAllMeasures();
+        //knowledge.printAllMeasures();
         System.out.printf("%nTotal number of measurements : %d%n", knowledge.getMeasuresCount());
 
         // Make a branch suspect and change its presumed status
@@ -96,27 +97,14 @@ public class UseExample {
                 knowledge, new StateEstimatorOptions(), new StateEstimatorConfig(true), new LocalComputationManager());
         results.printAllResultsSi(network);
 
-        // Print measurement residuals
+        // Print measurements along with residuals
         results.printResidualsSi(knowledge);
 
         // Print some indicators on the accuracy of the state estimation w.r.t load flow solution
-        long nbBuses = network.getBusView().getBusStream().count();
-        double avgVoltageError = 0;
-        double squaredVoltageError = 0;
-        double avgAngleErrror = 0;
-        double squaredAngleError = 0;
-        for (Bus bus : network.getBusView().getBuses()) {
-            avgVoltageError += Math.abs(bus.getV()/bus.getVoltageLevel().getNominalV() - results.getBusStateEstimate(bus.getId()).getV());
-            squaredVoltageError += Math.pow(bus.getV()/bus.getVoltageLevel().getNominalV() - results.getBusStateEstimate(bus.getId()).getV(), 2);
-            avgAngleErrror += Math.abs(bus.getAngle() - Math.toDegrees(results.getBusStateEstimate(bus.getId()).getTheta()));
-            squaredAngleError += Math.pow(bus.getAngle() - Math.toDegrees(results.getBusStateEstimate(bus.getId()).getTheta()), 2);
-        }
-        avgVoltageError = avgVoltageError / nbBuses;
-        avgAngleErrror = avgAngleErrror / nbBuses;
-        double stdVoltageError = Math.sqrt(squaredVoltageError/nbBuses - Math.pow(avgVoltageError, 2));
-        double stdAngleError = Math.sqrt(squaredAngleError/nbBuses - Math.pow(avgAngleErrror, 2));
-        System.out.printf("%nAverage voltage error : %f p.u (std = %f)%n", avgVoltageError, stdVoltageError);
-        System.out.printf("%nAverage angle error : %f degrees (std = %f)%n", avgAngleErrror, stdAngleError);
+        Pair<Double, Double> voltageErrorStats = results.computeVoltageErrorStatsPu(network);
+        Pair<Double, Double> angleErrorStats = results.computeAngleErrorStatsDegree(network);
+        System.out.printf("%nAverage voltage error : %f p.u (std = %f)%n", voltageErrorStats.getFirst(), voltageErrorStats.getSecond());
+        System.out.printf("%nAverage angle error : %f degrees (std = %f)%n", angleErrorStats.getFirst(), angleErrorStats.getSecond());
         System.out.printf("%nNumber of voltage magnitude measurements : %d%n", knowledge.getVoltageMagnitudeMeasures().size());
     }
 }

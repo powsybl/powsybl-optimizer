@@ -14,8 +14,8 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.stateestimator.parameters.input.knowledge.*;
 import com.powsybl.stateestimator.parameters.output.estimates.BranchStatusEstimate;
 import com.powsybl.stateestimator.parameters.output.estimates.BusStateEstimate;
-import org.jgrapht.alg.util.Pair;
 
+import org.jgrapht.alg.util.Pair;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -51,8 +51,6 @@ public class StateEstimatorResults {
         this.networkTopologyEstimate = amplIOFiles.getNetworkTopologyEstimateOutput().getNetworkTopologyEstimate();
         this.networkIndicators = amplIOFiles.getNetworkIndicatorsOutput().getIndicators();
         this.measurementResiduals = amplIOFiles.getMeasurementResidualsOutput().getMeasurementResiduals();
-
-        System.out.println(this.measurementResiduals);
 
         // TODO : change code about runIndicators, to use ours (se_run_indic.txt) and not those returned by AMPL/Java interface
         Objects.requireNonNull(runIndicators);
@@ -194,6 +192,42 @@ public class StateEstimatorResults {
 
         // Print foot box
         System.out.println("╚" + separator + "╝");
+    }
+
+    /**
+     * Compute statistics for voltage magnitude error (p.u.) of the state estimate, taking OLF results as ground truth
+     * @param network The network on which was performed the state estimation
+     * @return A pair (voltage error mean, voltage error std)
+     */
+    public Pair<Double, Double> computeVoltageErrorStatsPu(Network network) {
+        long nbBuses = network.getBusView().getBusStream().count();
+        double meanVoltageError = 0;
+        double squaredVoltageError = 0;
+        for (Bus bus : network.getBusView().getBuses()) {
+            meanVoltageError += Math.abs(bus.getV()/bus.getVoltageLevel().getNominalV() - this.getBusStateEstimate(bus.getId()).getV());
+            squaredVoltageError += Math.pow(bus.getV()/bus.getVoltageLevel().getNominalV() - this.getBusStateEstimate(bus.getId()).getV(), 2);
+        }
+        meanVoltageError = meanVoltageError / nbBuses;
+        double stdVoltageError = Math.sqrt(squaredVoltageError/nbBuses - Math.pow(meanVoltageError, 2));
+        return Pair.of(meanVoltageError, stdVoltageError);
+    }
+
+    /**
+     * Compute statistics for voltage angle error (degrees) of the state estimate, taking OLF results as ground truth
+     * @param network The network on which was performed the state estimation
+     * @return A pair (angle error mean, angle error std)
+     */
+    public Pair<Double, Double> computeAngleErrorStatsDegree(Network network) {
+        long nbBuses = network.getBusView().getBusStream().count();
+        double meanAngleErrror = 0;
+        double squaredAngleError = 0;
+        for (Bus bus : network.getBusView().getBuses()) {
+            meanAngleErrror += Math.abs(bus.getAngle() - Math.toDegrees(this.getBusStateEstimate(bus.getId()).getTheta()));
+            squaredAngleError += Math.pow(bus.getAngle() - Math.toDegrees(this.getBusStateEstimate(bus.getId()).getTheta()), 2);
+        }
+        meanAngleErrror = meanAngleErrror / nbBuses;
+        double stdAngleError = Math.sqrt(squaredAngleError/nbBuses - Math.pow(meanAngleErrror, 2));
+        return Pair.of(meanAngleErrror, stdAngleError);
     }
 
     // Getters

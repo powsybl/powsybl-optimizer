@@ -6,12 +6,9 @@
  */
 package com.powsybl.stateestimator.parameters.input.knowledge;
 
-import com.powsybl.stateestimator.parameters.input.knowledge.StateEstimatorKnowledge;
 import com.powsybl.iidm.network.Branch;
 import com.powsybl.iidm.network.Bus;
-import com.powsybl.iidm.network.Identifiable;
 import com.powsybl.iidm.network.Network;
-import org.jgrapht.alg.util.Pair;
 
 import java.util.*;
 
@@ -31,19 +28,18 @@ public class RandomMeasuresGenerator {
         add("V");
     }};
     public static final Map<String, Double> DEFAULT_STD_IN_PU_BY_MEAS_TYPE = new HashMap<>() {{
-        put("Pf", 0.02);
-        put("Qf", 0.04);
-        put("P", 0.02);
-        put("Q", 0.04);
+        put("Pf", 0.021);
+        put("Qf", 0.043);
+        put("P", 0.021);
+        put("Q", 0.043);
         put("V", 0.0001);
     }};
-    // Standard deviation values (p.u) above as chosen in doi:10.3390/en11030570
-    // TODO : check consistency of the values above
+    // Standard deviation values (p.u) for measurements, see Master Thesis' report
 
     public static final double BASE_POWER_MVA = 100;
 
     // By default, the number of measurements generated will be 4 times the number of buses in the network (ensure observability)
-    public static final Integer DEFAULT_RATIO_MEASURES_TO_BUSES = 4;
+    public static final double DEFAULT_RATIO_MEASURES_TO_BUSES = 4.0;
 
     /**
      * This method generates random measurements out of the Load Flow results obtained on a network.
@@ -62,9 +58,8 @@ public class RandomMeasuresGenerator {
      * @param ratioMeasuresToBuses (optional) The ratio "number of measures"/"number of buses in the network" used to compute the number of measures generated
      * @param biasTowardsHVNodes (optional) If "true", a bias towards HV nodes, making them more likely to be picked as the locations of generated measurements
      */
-
     public static void generateRandomMeasurements(StateEstimatorKnowledge knowledge, Network network,
-                                                  Optional<Integer> seed, Optional<Integer> ratioMeasuresToBuses,
+                                                  Optional<Integer> seed, Optional<Double> ratioMeasuresToBuses,
                                                   Optional<Boolean> biasTowardsHVNodes)
             throws IllegalArgumentException {
 
@@ -72,12 +67,17 @@ public class RandomMeasuresGenerator {
         long nbMeasurements;
         if (ratioMeasuresToBuses.isPresent()) {
             if (ratioMeasuresToBuses.get() <= 0) {
-                throw new IllegalArgumentException("Invalid value for the parameter ratioMeasuresToBuses");
+                throw new IllegalArgumentException("Invalid value for the parameter ratioMeasuresToBuses : should be a positive float");
             }
-            nbMeasurements = ratioMeasuresToBuses.get() * network.getBusView().getBusStream().count();
+            Double maxRatioMeasuresToBuses = (2.0 * network.getBranchCount() + 3.0 * network.getBusView().getBusStream().count())
+                                / network.getBusView().getBusStream().count();
+            if (ratioMeasuresToBuses.get() > maxRatioMeasuresToBuses) {
+                throw new IllegalArgumentException(String.format("Provided value for ratioMeasuresToBuses is too large. Should be smaller than %f", maxRatioMeasuresToBuses));
+            }
+            nbMeasurements = Math.round(ratioMeasuresToBuses.get() * network.getBusView().getBusStream().count());
         }
         else {
-            nbMeasurements = DEFAULT_RATIO_MEASURES_TO_BUSES * network.getBusView().getBusStream().count();
+            nbMeasurements = Math.round(DEFAULT_RATIO_MEASURES_TO_BUSES * network.getBusView().getBusStream().count());
         }
         // Remove from it the number of measurements that already exist
         long nbAlreadyExistingMeasurements = knowledge.getMeasuresCount();

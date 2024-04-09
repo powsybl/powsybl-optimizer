@@ -37,16 +37,6 @@ public class StateEstimatorKnowledge {
         add("Q");
         add("V");
     }};
-    public static final Map<String, Double> DEFAULT_STD_IN_PU_BY_MEAS_TYPE = new HashMap<>() {{
-        put("Pf", 0.02);
-        put("Qf", 0.04);
-        put("P", 0.02);
-        put("Q", 0.04);
-        put("V", 0.0001);
-    }};
-    // Standard deviation values (p.u) above as chosen in doi:10.3390/en11030570
-    // TODO : check consistency of these values
-    public static final double BASE_POWER_MVA = 100;
 
     private Map<Integer, ArrayList<String>> activePowerFlowMeasures = new HashMap<>();
     private Map<Integer, ArrayList<String>> reactivePowerFlowMeasures = new HashMap<>();
