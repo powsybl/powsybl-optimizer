@@ -122,7 +122,7 @@ public class RandomMeasuresGenerator {
                     if (!listOfBranchesPfSide1.isEmpty()) {
                         randomBranch = listOfBranchesPfSide1.remove(random.nextInt(listOfBranchesPfSide1.size()));
                         // If bias towards HV nodes activated, pick 2 branches at random and keep the one connected to the highest voltage level
-                        if (withBias) {
+                        if (withBias && !listOfBranchesPfSide1.isEmpty()) {
                             tmpVNomi = Math.max(randomBranch.getTerminal1().getVoltageLevel().getNominalV(), randomBranch.getTerminal2().getVoltageLevel().getNominalV());
                             randomBranchSecondPick = listOfBranchesPfSide1.remove(random.nextInt(listOfBranchesPfSide1.size()));
                             if (tmpVNomi < Math.max(randomBranchSecondPick.getTerminal1().getVoltageLevel().getNominalV(), randomBranchSecondPick.getTerminal2().getVoltageLevel().getNominalV())) {
@@ -147,7 +147,7 @@ public class RandomMeasuresGenerator {
                     if (!listOfBranchesPfSide2.isEmpty()) {
                         randomBranch = listOfBranchesPfSide2.remove(random.nextInt(listOfBranchesPfSide2.size()));
                         // If bias towards HV nodes activated, pick 2 branches at random and keep the one connected to the highest voltage level
-                        if (withBias) {
+                        if (withBias && !listOfBranchesPfSide2.isEmpty()) {
                             tmpVNomi = Math.max(randomBranch.getTerminal1().getVoltageLevel().getNominalV(), randomBranch.getTerminal2().getVoltageLevel().getNominalV());
                             randomBranchSecondPick = listOfBranchesPfSide2.remove(random.nextInt(listOfBranchesPfSide2.size()));
                             if (tmpVNomi < Math.max(randomBranchSecondPick.getTerminal1().getVoltageLevel().getNominalV(), randomBranchSecondPick.getTerminal2().getVoltageLevel().getNominalV())) {
@@ -183,7 +183,7 @@ public class RandomMeasuresGenerator {
                     if (!listOfBranchesQfSide1.isEmpty()) {
                         randomBranch = listOfBranchesQfSide1.remove(random.nextInt(listOfBranchesQfSide1.size()));
                         // If bias towards HV nodes activated, pick 2 branches at random and keep the one connected to the highest voltage level
-                        if (withBias) {
+                        if (withBias && !listOfBranchesQfSide1.isEmpty()) {
                             tmpVNomi = Math.max(randomBranch.getTerminal1().getVoltageLevel().getNominalV(), randomBranch.getTerminal2().getVoltageLevel().getNominalV());
                             randomBranchSecondPick = listOfBranchesQfSide1.remove(random.nextInt(listOfBranchesQfSide1.size()));
                             if (tmpVNomi < Math.max(randomBranchSecondPick.getTerminal1().getVoltageLevel().getNominalV(), randomBranchSecondPick.getTerminal2().getVoltageLevel().getNominalV())) {
@@ -208,7 +208,7 @@ public class RandomMeasuresGenerator {
                     if (!listOfBranchesQfSide2.isEmpty()) {
                         randomBranch = listOfBranchesQfSide2.remove(random.nextInt(listOfBranchesQfSide2.size()));
                         // If bias towards HV nodes activated, pick 2 branches at random and keep the one connected to the highest voltage level
-                        if (withBias) {
+                        if (withBias && !listOfBranchesQfSide2.isEmpty()) {
                             tmpVNomi = Math.max(randomBranch.getTerminal1().getVoltageLevel().getNominalV(), randomBranch.getTerminal2().getVoltageLevel().getNominalV());
                             randomBranchSecondPick = listOfBranchesQfSide2.remove(random.nextInt(listOfBranchesQfSide2.size()));
                             if (tmpVNomi < Math.max(randomBranchSecondPick.getTerminal1().getVoltageLevel().getNominalV(), randomBranchSecondPick.getTerminal2().getVoltageLevel().getNominalV())) {
@@ -241,7 +241,7 @@ public class RandomMeasuresGenerator {
                 if (!listOfBusesP.isEmpty()) {
                     randomBus = listOfBusesP.remove(random.nextInt(listOfBusesP.size()));
                     // If bias towards HV nodes activated, pick 2 buses at random and keep the one with the highest voltage level
-                    if (withBias) {
+                    if (withBias && !listOfBusesP.isEmpty()) {
                         tmpVNomi = randomBus.getVoltageLevel().getNominalV();
                         randomBusSecondPick = listOfBusesP.remove(random.nextInt(listOfBusesP.size()));
                         if (tmpVNomi < randomBusSecondPick.getVoltageLevel().getNominalV()) {
@@ -270,7 +270,7 @@ public class RandomMeasuresGenerator {
                 if (!listOfBusesQ.isEmpty()) {
                     randomBus = listOfBusesQ.remove(random.nextInt(listOfBusesQ.size()));
                     // If bias towards HV nodes activated, pick 2 buses at random and keep the one with the highest voltage level
-                    if (withBias) {
+                    if (withBias && !listOfBusesQ.isEmpty()) {
                         tmpVNomi = randomBus.getVoltageLevel().getNominalV();
                         randomBusSecondPick = listOfBusesQ.remove(random.nextInt(listOfBusesQ.size()));
                         if (tmpVNomi < randomBusSecondPick.getVoltageLevel().getNominalV()) {
@@ -301,7 +301,7 @@ public class RandomMeasuresGenerator {
                 if (!listOfBusesV.isEmpty()) {
                     randomBus = listOfBusesV.remove(random.nextInt(listOfBusesV.size()));
                     // If bias towards HV nodes activated, pick 2 buses at random and keep the one with the highest voltage level
-                    if (withBias) {
+                    if (withBias && !listOfBusesV.isEmpty()) {
                         tmpVNomi = randomBus.getVoltageLevel().getNominalV();
                         randomBusSecondPick = listOfBusesV.remove(random.nextInt(listOfBusesV.size()));
                         if (tmpVNomi < randomBusSecondPick.getVoltageLevel().getNominalV()) {

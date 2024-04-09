@@ -65,14 +65,14 @@ public class Ieee118BusesTests {
         List<Double> ratiosTested = Arrays.asList(1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0);
 
         for (Double ratioTested : ratiosTested) {
-            for (int seed = 0; seed < 10; seed++) {
+            for (int seed = 0; seed < 100; seed++) {
                 // Create "knowledge" instance
                 StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network);
                 // For IEEE 118 bus, slack is "VL69_0": our state estimator must use the same slack
                 knowledge.setSlack("VL69_0", network);
-                // Randomly generate measurements out of load flow results using proper seed and ZtoN ratio
+                // Randomly generate measurements out of load flow results using proper seed and Z to N ratio
                 RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
-                        Optional.of(seed), Optional.of(ratioTested), Optional.of(false));
+                        Optional.of(seed), Optional.of(ratioTested), Optional.of(true));
                 // Define the solving options for the state estimation
                 StateEstimatorOptions options = new StateEstimatorOptions().setSolvingMode(2).setMaxTimeSolving(30);
                 // Run the state estimation and print the results
@@ -89,7 +89,7 @@ public class Ieee118BusesTests {
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("ZtoNratio_test_IEEE118.csv");
+        try (FileWriter fileWriter = new FileWriter("ZtoNratioWithHVbias_test_IEEE118.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 
