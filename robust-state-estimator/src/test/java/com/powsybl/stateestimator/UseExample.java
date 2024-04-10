@@ -68,7 +68,8 @@ public class UseExample {
         // Randomly generate measurements (useful for test cases) out of load flow results
         //RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, Optional.empty(), Optional.empty(), Optional.empty());
         RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
-                Optional.of(0), Optional.of(4.0), Optional.of(false));
+                Optional.of(2), Optional.of(4.0),
+                Optional.of(false), Optional.of(false));
 
         // We can also add by hand our measurements, and complete them with generated measurements until observability is ensured
         // If some measurements are added after random generation, one might get more measurements than expected
@@ -80,7 +81,7 @@ public class UseExample {
         //StateEstimatorKnowledge test = StateEstimatorKnowledge.read("D:/Projet/Tests/knowledge_14bus_seed2.json");
 
         // Print all the measurements
-        //knowledge.printAllMeasures();
+        knowledge.printAllMeasures();
         System.out.printf("%nTotal number of measurements : %d%n", knowledge.getMeasuresCount());
 
         // Make a branch suspect and change its presumed status

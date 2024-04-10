@@ -9,8 +9,10 @@ package com.powsybl.stateestimator.parameters.input.knowledge;
 import com.powsybl.iidm.network.Branch;
 import com.powsybl.iidm.network.Bus;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.VoltageLevel;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Pierre ARVY <pierre.arvy@artelys.com>
@@ -50,6 +52,10 @@ public class RandomMeasuresGenerator {
      * <p>
      * Note 1 : this method should be used for testing purposes only.
      * Note 2 : the sign of injected powers (P, Q) is inverted.
+     * Note 3 : variance for measurement voltage is given by (std_V_pu x V_nom)^2, with V_nom the nominal voltage at bus of interest
+     * Note 4 : variance for measurement power "S" (=P,Q,Pf,Qf) is given by (std_"S"_pu x S_n x (V_nom/V_nom_max)^2)^2,
+     *          with S_n = 100 MVA, V_nom_max the maximum nominal voltage on the grid and V_nom the nominal voltage at bus of interest.
+     *          (V_nom/V_nom_max)^2 acts as a scaling factor for variance computation
      * </p>
      *
      * @param knowledge The knowledge object that will store the random measurements generated
@@ -57,10 +63,11 @@ public class RandomMeasuresGenerator {
      * @param seed (optional) The seed used by the random generator
      * @param ratioMeasuresToBuses (optional) The ratio "number of measures"/"number of buses in the network" used to compute the number of measures generated
      * @param biasTowardsHVNodes (optional) If "true", a bias towards HV nodes, making them more likely to be picked as the locations of generated measurements
+     * @param addNoise (optional) If "true", add gaussian noise (based on measurement type's variance) to the measurement value
      */
     public static void generateRandomMeasurements(StateEstimatorKnowledge knowledge, Network network,
                                                   Optional<Integer> seed, Optional<Double> ratioMeasuresToBuses,
-                                                  Optional<Boolean> biasTowardsHVNodes)
+                                                  Optional<Boolean> biasTowardsHVNodes, Optional<Boolean> addNoise)
             throws IllegalArgumentException {
 
         // Compute the number of measurements that must be generated
@@ -104,8 +111,23 @@ public class RandomMeasuresGenerator {
         Bus randomBusSecondPick;
         double tmpVNomi;
 
-        // Initialize new Random (use the seed if provided)
+        // Initialize a boolean stating if noise must be added to measurements,
+        // and a Random for gaussian noise (use constant seed for repeatability)
+        boolean withNoise = addNoise.isPresent() && addNoise.get().equals(true);
+        Random noise = new Random(0);
+
+        // Initialize new Random (use the seed if provided) to pick measurements
         Random random = seed.map(Random::new).orElseGet(() -> new Random(System.currentTimeMillis()));
+
+        // Initialize measurement value and variance
+        double measurementValue;
+        double measurementVariance;
+
+        // Get maximum nominal voltage in the grid (used for variance scaling)
+        double VNomMax = Collections.max(network.getVoltageLevelStream().map(VoltageLevel::getNominalV).toList());
+
+        // TODO : à retirer in fine (variance minimale = 1 MW/MVar)
+        double VARIANCE_MIN = 1;
 
         // For each measurement to be generated, pick a measurement type at random
         for (int i = 1; i < nbMeasurements + 1; i++) {
@@ -138,7 +160,20 @@ public class RandomMeasuresGenerator {
                         randomMeasure.put("BranchID", randomBranch.getId());
                         randomMeasure.put("FirstBusID", randomBranch.getTerminal1().getBusView().getBus().getId());
                         randomMeasure.put("SecondBusID", randomBranch.getTerminal2().getBusView().getBus().getId());
-                        randomMeasure.put("Value", String.valueOf(randomBranch.getTerminal1().getP()));
+                        measurementValue = randomBranch.getTerminal1().getP();
+
+                        // TODO : modifier le scaling de la variance (utiliser les Vnomi et VnomiMax)
+                        // Get and add measurement variance (in SI^2)
+                        //measurementVariance = Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("Pf") * BASE_POWER_MVA
+                        //                * Math.pow(randomBranch.getTerminal1().getVoltageLevel().getNominalV() / VNomMax, 2), 2);
+                        measurementVariance = measurementValue==0 ? VARIANCE_MIN : Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("Pf") * measurementValue, 2);
+
+                        randomMeasure.put("Variance", String.valueOf(measurementVariance));
+                        // Add measurement value (possibly with noise)
+                        if (withNoise) {
+                            measurementValue += noise.nextGaussian() * Math.sqrt(measurementVariance);
+                        }
+                        randomMeasure.put("Value", String.valueOf(measurementValue));
                     } else {
                         randomMeasure = null;
                     }
@@ -159,18 +194,28 @@ public class RandomMeasuresGenerator {
                                 listOfBranchesPfSide2.add(randomBranchSecondPick);
                             }
                         }
-                        // Get location IDs and the corresponding value (in SI), as given by the Load Flow solution
+                        // Get location IDs and the corresponding measurement value (in SI), as given by the Load Flow solution
                         randomMeasure.put("BranchID", randomBranch.getId());
                         randomMeasure.put("FirstBusID", randomBranch.getTerminal2().getBusView().getBus().getId());
                         randomMeasure.put("SecondBusID", randomBranch.getTerminal1().getBusView().getBus().getId());
-                        randomMeasure.put("Value", String.valueOf(randomBranch.getTerminal2().getP()));
+                        measurementValue = randomBranch.getTerminal2().getP();
+
+                        // TODO
+                        // Get and add measurement variance (in SI^2)
+                        //measurementVariance = Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("Pf") * BASE_POWER_MVA
+                        //        * Math.pow(randomBranch.getTerminal2().getVoltageLevel().getNominalV() / VNomMax, 2), 2);
+                        measurementVariance = measurementValue==0 ? VARIANCE_MIN : Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("Pf") * measurementValue, 2);
+
+                        randomMeasure.put("Variance", String.valueOf(measurementVariance));
+                        // Add measurement value (possibly with noise)
+                        if (withNoise) {
+                            measurementValue += noise.nextGaussian() * Math.sqrt(measurementVariance);
+                        }
+                        randomMeasure.put("Value", String.valueOf(measurementValue));
                     } else {
                         randomMeasure = null;
                     }
                 }
-                // Get variance (in SI^2, not p.u.^2)
-                randomMeasure.put("Variance", String.valueOf(
-                        Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("Pf") * BASE_POWER_MVA, 2)));
             }
 
             else if (randomType == 2 || randomType == 3) {
@@ -199,7 +244,20 @@ public class RandomMeasuresGenerator {
                         randomMeasure.put("BranchID", randomBranch.getId());
                         randomMeasure.put("FirstBusID", randomBranch.getTerminal1().getBusView().getBus().getId());
                         randomMeasure.put("SecondBusID", randomBranch.getTerminal2().getBusView().getBus().getId());
-                        randomMeasure.put("Value", String.valueOf(randomBranch.getTerminal1().getQ()));
+                        measurementValue = randomBranch.getTerminal1().getQ();
+
+                        // TODO
+                        // Get and add measurement variance (in SI^2)
+                        //measurementVariance = Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("Qf") * BASE_POWER_MVA
+                        //                * Math.pow(randomBranch.getTerminal1().getVoltageLevel().getNominalV() / VNomMax, 2), 2);
+                        measurementVariance = measurementValue==0 ? VARIANCE_MIN : Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("Qf") * measurementValue, 2);
+
+                        randomMeasure.put("Variance", String.valueOf(measurementVariance));
+                        // Add measurement value (possibly with noise)
+                        if (withNoise) {
+                            measurementValue += noise.nextGaussian() * Math.sqrt(measurementVariance);
+                        }
+                        randomMeasure.put("Value", String.valueOf(measurementValue));
                     } else {
                         randomMeasure = null;
                     }
@@ -224,14 +282,24 @@ public class RandomMeasuresGenerator {
                         randomMeasure.put("BranchID", randomBranch.getId());
                         randomMeasure.put("FirstBusID", randomBranch.getTerminal2().getBusView().getBus().getId());
                         randomMeasure.put("SecondBusID", randomBranch.getTerminal1().getBusView().getBus().getId());
-                        randomMeasure.put("Value", String.valueOf(randomBranch.getTerminal2().getQ()));
+                        measurementValue = randomBranch.getTerminal2().getQ();
+
+                        // TODO
+                        // Get and add measurement variance (in SI^2)
+                        //measurementVariance = Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("Qf") * BASE_POWER_MVA
+                        //                * Math.pow(randomBranch.getTerminal2().getVoltageLevel().getNominalV() / VNomMax, 2), 2);
+                        measurementVariance = measurementValue==0 ? VARIANCE_MIN : Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("Qf") * measurementValue, 2);
+
+                        randomMeasure.put("Variance", String.valueOf(measurementVariance));
+                        // Add measurement value (possibly with noise)
+                        if (withNoise) {
+                            measurementValue += noise.nextGaussian() * Math.sqrt(measurementVariance);
+                        }
+                        randomMeasure.put("Value", String.valueOf(measurementValue));
                     } else {
                         randomMeasure = null;
                     }
                 }
-                // Get variance (in SI^2, not p.u.^2)
-                randomMeasure.put("Variance", String.valueOf(
-                        Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("Qf") * BASE_POWER_MVA, 2)));
             }
 
             else if (randomType == 4) {
@@ -256,13 +324,25 @@ public class RandomMeasuresGenerator {
                     // Get bus ID
                     randomMeasure.put("BusID", randomBus.getId());
                     // Get measurement value (in SI), as given by the Load Flow solution
-                    randomMeasure.put("Value", String.valueOf(-1 * randomBus.getP()));
-                    // Get variance (in SI^2, not p.u.^2)
-                    randomMeasure.put("Variance", String.valueOf(
-                            Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("P") * BASE_POWER_MVA, 2)));
+                    measurementValue = -1 * randomBus.getP();
+
+                    // TODO
+                    // Get and add measurement variance (in SI^2)
+                    //measurementVariance = Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("P") * BASE_POWER_MVA
+                    //                * Math.pow(randomBus.getVoltageLevel().getNominalV() / VNomMax, 2), 2);
+                    measurementVariance = measurementValue==0 ? VARIANCE_MIN : Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("P") * measurementValue, 2);
+
+
+                    randomMeasure.put("Variance", String.valueOf(measurementVariance));
+                    // Add measurement value (possibly with noise)
+                    if (withNoise) {
+                        measurementValue += noise.nextGaussian() * Math.sqrt(measurementVariance);
+                    }
+                    randomMeasure.put("Value", String.valueOf(measurementValue));
                 } else {
                     randomMeasure = null;
                 }
+
             } else if (randomType == 5) {
                 // Add a "Q" measure
                 randomMeasure.put("Type", "Q");
@@ -285,10 +365,21 @@ public class RandomMeasuresGenerator {
                     // Get bus ID
                     randomMeasure.put("BusID", randomBus.getId());
                     // Get measurement value (in SI), as given by the Load Flow solution
-                    randomMeasure.put("Value", String.valueOf(-1 * randomBus.getQ()));
-                    // Get variance (in SI^2, not p.u.^2)
-                    randomMeasure.put("Variance", String.valueOf(
-                            Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("Q") * BASE_POWER_MVA, 2)));
+                    measurementValue = -1 * randomBus.getQ();
+
+                    // TODO
+                    // Get and add measurement variance (in SI^2)
+                    //measurementVariance = Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("Q") * BASE_POWER_MVA
+                    //                * Math.pow(randomBus.getVoltageLevel().getNominalV() / VNomMax, 2), 2);
+                    measurementVariance = measurementValue==0 ? VARIANCE_MIN : Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("Q") * measurementValue, 2);
+
+                    randomMeasure.put("Variance", String.valueOf(measurementVariance));
+
+                    // Add measurement value (possibly with noise)
+                    if (withNoise) {
+                        measurementValue += noise.nextGaussian() * Math.sqrt(measurementVariance);
+                    }
+                    randomMeasure.put("Value", String.valueOf(measurementValue));
                 } else {
                     randomMeasure = null;
                 }
@@ -315,16 +406,21 @@ public class RandomMeasuresGenerator {
                     }
                     // Get bus ID
                     randomMeasure.put("BusID", randomBus.getId());
+                    // Get and add measurement variance (in SI^2)
+                    measurementVariance = Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("V") * randomBus.getVoltageLevel().getNominalV(), 2);
+                    randomMeasure.put("Variance", String.valueOf(measurementVariance));
                     // Get measurement value (in SI), as given by the Load Flow solution
-                    randomMeasure.put("Value", String.valueOf(randomBus.getV()));
-                    // Get variance (in SI^2, not p.u.^2)
-                    randomMeasure.put("Variance", String.valueOf(
-                            Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("V") * randomBus.getVoltageLevel().getNominalV(), 2)));
+                    measurementValue = randomBus.getV();
+                    // Add measurement value (possibly with noise)
+                    if (withNoise) {
+                        measurementValue += noise.nextGaussian() * Math.sqrt(measurementVariance);
+                    }
+                    randomMeasure.put("Value", String.valueOf(measurementValue));
                 } else {
                     randomMeasure = null;
                 }
             } else {
-                throw new IllegalArgumentException("More measurements types given than what the generator can handle. Check ALL_MEASUREMENT_TYPES");
+                throw new IllegalArgumentException("More measurement types given than what the generator can handle. Check ALL_MEASUREMENT_TYPES");
             }
 
             // Try to add the measure if not null (note that the measure could be redundant)

@@ -72,7 +72,8 @@ public class Ieee118BusesTests {
                 knowledge.setSlack("VL69_0", network);
                 // Randomly generate measurements out of load flow results using proper seed and Z to N ratio
                 RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
-                        Optional.of(seed), Optional.of(ratioTested), Optional.of(true));
+                        Optional.of(seed), Optional.of(ratioTested),
+                        Optional.of(true), Optional.of(false));
                 // Define the solving options for the state estimation
                 StateEstimatorOptions options = new StateEstimatorOptions().setSolvingMode(2).setMaxTimeSolving(30);
                 // Run the state estimation and print the results
