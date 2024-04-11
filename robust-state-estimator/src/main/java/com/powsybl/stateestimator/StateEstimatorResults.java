@@ -12,6 +12,7 @@ import com.powsybl.stateestimator.parameters.StateEstimatorAmplIOFiles;
 //import main.java.com.powsybl.stateestimator.parameters.output.modifications.NetworkTopology;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.stateestimator.parameters.input.knowledge.*;
+import com.powsybl.stateestimator.parameters.output.estimates.BranchPowersEstimate;
 import com.powsybl.stateestimator.parameters.output.estimates.BranchStatusEstimate;
 import com.powsybl.stateestimator.parameters.output.estimates.BusStateEstimate;
 
@@ -26,9 +27,10 @@ import java.util.*;
 public class StateEstimatorResults {
     private final boolean status;
 
-    // State vector and network topology estimates (MINLP variables written and calculated in AMPL)
+    // State vector, network topology and power flows estimates (MINLP variables written and calculated in AMPL)
     List<BusStateEstimate> stateVectorEstimate;
     List<BranchStatusEstimate> networkTopologyEstimate;
+    List<BranchPowersEstimate> networkPowersEstimate;
 
     // Indicators returned by the AMPL code
     private final List<Pair<String, String>> runIndicators;
@@ -47,6 +49,7 @@ public class StateEstimatorResults {
         this.status = status;
         this.stateVectorEstimate = amplIOFiles.getStateVectorEstimateOutput().getStateVectorEstimate();
         this.networkTopologyEstimate = amplIOFiles.getNetworkTopologyEstimateOutput().getNetworkTopologyEstimate();
+        this.networkPowersEstimate = amplIOFiles.getNetworkPowersEstimateOutput().getNetworkPowersEstimate();
         this.networkIndicators = amplIOFiles.getNetworkIndicatorsOutput().getIndicators();
         this.measurementResiduals = amplIOFiles.getMeasurementResidualsOutput().getMeasurementResiduals();
 
@@ -252,6 +255,8 @@ public class StateEstimatorResults {
         return List.of(meanAngleErrror, stdAngleError, medianError, maxError, fifthPercentileError, ninetyFifthPercentileError);
     }
 
+    // TODO : add methods to compute statistics on errors regarding power flows
+
     public static double percentile(List<Double> array, double percentile) {
         int index = (int) Math.ceil(percentile / 100.0 * array.size());
         return array.get(index-1);
@@ -282,6 +287,10 @@ public class StateEstimatorResults {
             }
         }
         return null;
+    }
+
+    public List<BranchPowersEstimate> getNetworkPowersEstimate() {
+        return networkPowersEstimate;
     }
 
     public List<Pair<String, String>> getRunIndicators() {

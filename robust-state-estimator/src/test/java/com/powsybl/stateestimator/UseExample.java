@@ -78,7 +78,7 @@ public class UseExample {
         //StateEstimatorKnowledge test = StateEstimatorKnowledge.read("D:/Projet/Tests/knowledge_14bus_seed2.json");
 
         // Print all the measurements
-        knowledge.printAllMeasures();
+        //knowledge.printAllMeasures();
         System.out.printf("%nTotal number of measurements : %d%n", knowledge.getMeasuresCount());
 
         // Make a branch suspect and change its presumed status
@@ -104,5 +104,10 @@ public class UseExample {
         System.out.printf("%nAverage voltage error : %f p.u (std = %f)%n", voltageErrorStats.get(0), voltageErrorStats.get(1));
         System.out.printf("%nAverage angle error : %f degrees (std = %f)%n", angleErrorStats.get(0), angleErrorStats.get(1));
         System.out.printf("%nNumber of voltage magnitude measurements : %d%n", knowledge.getVoltageMagnitudeMeasures().size());
+
+        System.out.println(results.getNetworkPowersEstimate().get(0).getActivePowerEnd1());
+        System.out.println(results.getNetworkPowersEstimate().get(0).getActivePowerEnd2());
+        System.out.println(results.getNetworkPowersEstimate().get(0).getReactivePowerEnd1());
+        System.out.println(results.getNetworkPowersEstimate().get(0).getReactivePowerEnd2());
     }
 }

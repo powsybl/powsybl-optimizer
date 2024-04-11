@@ -19,10 +19,7 @@ import com.powsybl.stateestimator.parameters.input.options.SolvingOptions;
 import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.ampl.executor.AmplOutputFile;
 import com.powsybl.ampl.executor.AmplParameters;
-import com.powsybl.stateestimator.parameters.output.MeasurementResidualsOutput;
-import com.powsybl.stateestimator.parameters.output.NetworkIndicatorsOutput;
-import com.powsybl.stateestimator.parameters.output.NetworkTopologyEstimateOutput;
-import com.powsybl.stateestimator.parameters.output.StateVectorEstimateOutput;
+import com.powsybl.stateestimator.parameters.output.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -49,6 +46,7 @@ public class StateEstimatorAmplIOFiles implements AmplParameters {
     StateVectorEstimateOutput stateVectorEstimateOutput;
     NetworkTopologyEstimateOutput networkTopologyEstimateOutput;
     MeasurementResidualsOutput measurementResidualsOutput;
+    NetworkPowersEstimateOutput networkPowersEstimateOutput;
 
 
     boolean debug;
@@ -73,6 +71,7 @@ public class StateEstimatorAmplIOFiles implements AmplParameters {
         this.stateVectorEstimateOutput = new StateVectorEstimateOutput();
         this.networkTopologyEstimateOutput = new NetworkTopologyEstimateOutput();
         this.measurementResidualsOutput = new MeasurementResidualsOutput();
+        this.networkPowersEstimateOutput = new NetworkPowersEstimateOutput();
 
         this.debug = debug;
     }
@@ -95,6 +94,7 @@ public class StateEstimatorAmplIOFiles implements AmplParameters {
             list.add(stateVectorEstimateOutput);
             list.add(networkTopologyEstimateOutput);
             list.add(measurementResidualsOutput);
+            list.add(networkPowersEstimateOutput);
         }
         return list;
     }
@@ -118,5 +118,9 @@ public class StateEstimatorAmplIOFiles implements AmplParameters {
     }
 
     public MeasurementResidualsOutput getMeasurementResidualsOutput() {return measurementResidualsOutput;}
+
+    public NetworkPowersEstimateOutput getNetworkPowersEstimateOutput() {
+        return networkPowersEstimateOutput;
+    }
 
 }
