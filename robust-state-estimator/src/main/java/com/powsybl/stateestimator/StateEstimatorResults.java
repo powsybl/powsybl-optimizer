@@ -16,10 +16,8 @@ import com.powsybl.stateestimator.parameters.output.estimates.BranchStatusEstima
 import com.powsybl.stateestimator.parameters.output.estimates.BusStateEstimate;
 
 import org.jgrapht.alg.util.Pair;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+
+import java.util.*;
 
 /**
  * @author Pierre ARVY <pierre.arvy@artelys.com>
@@ -197,37 +195,66 @@ public class StateEstimatorResults {
     /**
      * Compute statistics for voltage magnitude error (p.u.) of the state estimate, taking OLF results as ground truth
      * @param network The network on which was performed the state estimation
-     * @return A pair (voltage error mean, voltage error std)
+     * @return (meanVoltageError, stdVoltageError, medianError, maxError, fifthPercentileError, ninetyFifthPercentileError)
      */
-    public Pair<Double, Double> computeVoltageErrorStatsPu(Network network) {
+    public List<Double> computeVoltageErrorStatsPu(Network network) {
         long nbBuses = network.getBusView().getBusStream().count();
+        // Initialize a list containing all errors
+        List<Double> allErrors = new ArrayList<>();
+        // Compute mean and standard deviation (and fill the list)
         double meanVoltageError = 0;
         double squaredVoltageError = 0;
         for (Bus bus : network.getBusView().getBuses()) {
-            meanVoltageError += Math.abs(bus.getV()/bus.getVoltageLevel().getNominalV() - this.getBusStateEstimate(bus.getId()).getV());
-            squaredVoltageError += Math.pow(bus.getV()/bus.getVoltageLevel().getNominalV() - this.getBusStateEstimate(bus.getId()).getV(), 2);
+            double tmpVoltageError = Math.abs(bus.getV()/bus.getVoltageLevel().getNominalV() - this.getBusStateEstimate(bus.getId()).getV());
+            meanVoltageError += tmpVoltageError;
+            squaredVoltageError += Math.pow(tmpVoltageError, 2);
+            allErrors.add(tmpVoltageError);
         }
         meanVoltageError = meanVoltageError / nbBuses;
         double stdVoltageError = Math.sqrt(squaredVoltageError/nbBuses - Math.pow(meanVoltageError, 2));
-        return Pair.of(meanVoltageError, stdVoltageError);
+        // Compute 5th, 50th (median) and 95th percentiles
+        Collections.sort(allErrors);
+        double fifthPercentileError = percentile(allErrors, 5);
+        double medianError = percentile(allErrors, 50);
+        double ninetyFifthPercentileError = percentile(allErrors, 95);
+        // Compute maximum
+        double maxError = allErrors.get(allErrors.size()-1);
+        return List.of(meanVoltageError, stdVoltageError, medianError, maxError, fifthPercentileError, ninetyFifthPercentileError);
     }
 
     /**
      * Compute statistics for voltage angle error (degrees) of the state estimate, taking OLF results as ground truth
      * @param network The network on which was performed the state estimation
-     * @return A pair (angle error mean, angle error std)
+     * @return (meanAngleError, stdVAngleError, medianError, maxError, fifthPercentileError, ninetyFifthPercentileError)
      */
-    public Pair<Double, Double> computeAngleErrorStatsDegree(Network network) {
+    public List<Double> computeAngleErrorStatsDegree(Network network) {
         long nbBuses = network.getBusView().getBusStream().count();
+        // Initialize a list containing all errors
+        List<Double> allErrors = new ArrayList<>();
+        // Compute mean and standard deviation (and fill the list)
         double meanAngleErrror = 0;
         double squaredAngleError = 0;
         for (Bus bus : network.getBusView().getBuses()) {
-            meanAngleErrror += Math.abs(bus.getAngle() - Math.toDegrees(this.getBusStateEstimate(bus.getId()).getTheta()));
-            squaredAngleError += Math.pow(bus.getAngle() - Math.toDegrees(this.getBusStateEstimate(bus.getId()).getTheta()), 2);
+            double tmpAngleError = Math.abs(bus.getAngle() - Math.toDegrees(this.getBusStateEstimate(bus.getId()).getTheta()));
+            meanAngleErrror += tmpAngleError;
+            squaredAngleError += Math.pow(tmpAngleError, 2);
+            allErrors.add(meanAngleErrror);
         }
         meanAngleErrror = meanAngleErrror / nbBuses;
         double stdAngleError = Math.sqrt(squaredAngleError/nbBuses - Math.pow(meanAngleErrror, 2));
-        return Pair.of(meanAngleErrror, stdAngleError);
+        // Compute 5th, 50th (median) and 95th percentiles
+        Collections.sort(allErrors);
+        double fifthPercentileError = percentile(allErrors, 5);
+        double medianError = percentile(allErrors, 50);
+        double ninetyFifthPercentileError = percentile(allErrors, 95);
+        // Compute maximum
+        double maxError = allErrors.get(allErrors.size()-1);
+        return List.of(meanAngleErrror, stdAngleError, medianError, maxError, fifthPercentileError, ninetyFifthPercentileError);
+    }
+
+    public static double percentile(List<Double> array, double percentile) {
+        int index = (int) Math.ceil(percentile / 100.0 * array.size());
+        return array.get(index-1);
     }
 
     // Getters

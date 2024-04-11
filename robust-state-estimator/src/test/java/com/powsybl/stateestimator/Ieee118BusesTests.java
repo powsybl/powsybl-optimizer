@@ -43,9 +43,13 @@ public class Ieee118BusesTests {
     @Test
     void ieee118BusesTests() throws IOException {
 
-        // Initialize the dataframe that will store results
-        List<String> headers = List.of("RatioMeasuresToBuses", "Seed", "MeanVError(pu)",
-                "StdVError(pu)", "MeanThetaError(deg)", "StdThetaError(deg)", "NbVMeasures");
+        // Initialize the dataframe that will store the results
+        List<String> headers = List.of("RatioMeasuresToBuses", "Seed",
+                "MeanVError(pu)", "StdVError(pu)", "MedianVError(pu)", "MaxVError(pu)",
+                "5percentileVError(pu)", "95percentileVError(pu)",
+                "MeanThetaError(deg)", "StdThetaError(deg)", "MedianThetaError(deg)", "MaxThetaError(deg)",
+                "5percentileThetaError(deg)", "95percentileThetaError(deg)",
+                "NbVMeasures");
         List<List<String>> data = new ArrayList<>();
 
         Network network = IeeeCdfNetworkFactory.create118();
@@ -73,24 +77,28 @@ public class Ieee118BusesTests {
                 // Randomly generate measurements out of load flow results using proper seed and Z to N ratio
                 RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
                         Optional.of(seed), Optional.of(ratioTested),
-                        Optional.of(true), Optional.of(false));
+                        Optional.of(false), Optional.of(false));
                 // Define the solving options for the state estimation
                 StateEstimatorOptions options = new StateEstimatorOptions().setSolvingMode(2).setMaxTimeSolving(30);
                 // Run the state estimation and print the results
                 StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
                         knowledge, new StateEstimatorOptions(), new StateEstimatorConfig(true), new LocalComputationManager());
                 // Save statistics on the accuracy of the state estimation w.r.t load flow solution
-                Pair<Double, Double> voltageErrorStats = results.computeVoltageErrorStatsPu(network);
-                Pair<Double, Double> angleErrorStats = results.computeAngleErrorStatsDegree(network);
+                List<Double> voltageErrorStats = results.computeVoltageErrorStatsPu(network);
+                List<Double> angleErrorStats = results.computeAngleErrorStatsDegree(network);
                 data.add(List.of(String.valueOf(ratioTested), String.valueOf(seed),
-                        String.valueOf(voltageErrorStats.getFirst()), String.valueOf(voltageErrorStats.getSecond()),
-                        String.valueOf(angleErrorStats.getFirst()), String.valueOf(angleErrorStats.getSecond()),
+                        String.valueOf(voltageErrorStats.get(0)), String.valueOf(voltageErrorStats.get(1)),
+                        String.valueOf(voltageErrorStats.get(2)), String.valueOf(voltageErrorStats.get(3)),
+                        String.valueOf(voltageErrorStats.get(4)), String.valueOf(voltageErrorStats.get(5)),
+                        String.valueOf(angleErrorStats.get(0)), String.valueOf(angleErrorStats.get(1)),
+                        String.valueOf(angleErrorStats.get(2)), String.valueOf(angleErrorStats.get(3)),
+                        String.valueOf(angleErrorStats.get(4)), String.valueOf(angleErrorStats.get(5)),
                         String.valueOf(knowledge.getVoltageMagnitudeMeasures().size())));
             }
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("ZtoNratioWithHVbias_test_IEEE118.csv");
+        try (FileWriter fileWriter = new FileWriter("ZtoNratio_test_IEEE118_v2.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 
