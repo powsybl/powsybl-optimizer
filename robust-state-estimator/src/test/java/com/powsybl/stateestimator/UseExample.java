@@ -25,10 +25,7 @@ import org.junit.jupiter.api.Test;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 
 import static com.powsybl.openloadflow.OpenLoadFlowParameters.LowImpedanceBranchMode.REPLACE_BY_MIN_IMPEDANCE_LINE;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -102,10 +99,10 @@ public class UseExample {
         results.printResidualsSi(knowledge);
 
         // Print some indicators on the accuracy of the state estimation w.r.t load flow solution
-        Pair<Double, Double> voltageErrorStats = results.computeVoltageErrorStatsPu(network);
-        Pair<Double, Double> angleErrorStats = results.computeAngleErrorStatsDegree(network);
-        System.out.printf("%nAverage voltage error : %f p.u (std = %f)%n", voltageErrorStats.getFirst(), voltageErrorStats.getSecond());
-        System.out.printf("%nAverage angle error : %f degrees (std = %f)%n", angleErrorStats.getFirst(), angleErrorStats.getSecond());
+        List<Double> voltageErrorStats = results.computeVoltageErrorStatsPu(network);
+        List<Double> angleErrorStats = results.computeAngleErrorStatsDegree(network);
+        System.out.printf("%nAverage voltage error : %f p.u (std = %f)%n", voltageErrorStats.get(0), voltageErrorStats.get(1));
+        System.out.printf("%nAverage angle error : %f degrees (std = %f)%n", angleErrorStats.get(0), angleErrorStats.get(1));
         System.out.printf("%nNumber of voltage magnitude measurements : %d%n", knowledge.getVoltageMagnitudeMeasures().size());
     }
 }
