@@ -99,15 +99,10 @@ public class UseExample {
         results.printResidualsSi(knowledge);
 
         // Print some indicators on the accuracy of the state estimation w.r.t load flow solution
-        List<Double> voltageErrorStats = results.computeVoltageErrorStatsPu(network);
-        List<Double> angleErrorStats = results.computeAngleErrorStatsDegree(network);
-        System.out.printf("%nAverage voltage error : %f p.u (std = %f)%n", voltageErrorStats.get(0), voltageErrorStats.get(1));
+        List<Double> voltageErrorStats = results.computeVoltageRelativeErrorStats(network);
+        List<Double> angleErrorStats = results.computeAngleDegreeErrorStats(network);
+        System.out.printf("%nAverage voltage error : %f %% (std = %f)%n", voltageErrorStats.get(0), voltageErrorStats.get(1));
         System.out.printf("%nAverage angle error : %f degrees (std = %f)%n", angleErrorStats.get(0), angleErrorStats.get(1));
         System.out.printf("%nNumber of voltage magnitude measurements : %d%n", knowledge.getVoltageMagnitudeMeasures().size());
-
-        System.out.println(results.getNetworkPowersEstimate().get(0).getActivePowerEnd1());
-        System.out.println(results.getNetworkPowersEstimate().get(0).getActivePowerEnd2());
-        System.out.println(results.getNetworkPowersEstimate().get(0).getReactivePowerEnd1());
-        System.out.println(results.getNetworkPowersEstimate().get(0).getReactivePowerEnd2());
     }
 }

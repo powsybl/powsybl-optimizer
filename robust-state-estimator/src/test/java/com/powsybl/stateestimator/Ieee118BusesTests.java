@@ -45,10 +45,14 @@ public class Ieee118BusesTests {
 
         // Initialize the dataframe that will store the results
         List<String> headers = List.of("RatioMeasuresToBuses", "Seed",
-                "MeanVError(pu)", "StdVError(pu)", "MedianVError(pu)", "MaxVError(pu)",
-                "5percentileVError(pu)", "95percentileVError(pu)",
+                "MeanVError(%)", "StdVError(%)", "MedianVError(%)", "MaxVError(%)",
+                "5percentileVError(%)", "95percentileVError(%)",
                 "MeanThetaError(deg)", "StdThetaError(deg)", "MedianThetaError(deg)", "MaxThetaError(deg)",
                 "5percentileThetaError(deg)", "95percentileThetaError(deg)",
+                "MeanPfError(%)", "StdPfError(%)", "MedianPfError(%)", "MaxPfError(%)",
+                "5percentilePfError(%)", "95percentilePfError(%)",
+                "MeanQfError(%)", "StdQfError(%)", "MedianQfError(%)", "MaxQfError(%)",
+                "5percentileQfError(%)", "95percentileQfError(%)",
                 "NbVMeasures");
         List<List<String>> data = new ArrayList<>();
 
@@ -84,8 +88,10 @@ public class Ieee118BusesTests {
                 StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
                         knowledge, new StateEstimatorOptions(), new StateEstimatorConfig(true), new LocalComputationManager());
                 // Save statistics on the accuracy of the state estimation w.r.t load flow solution
-                List<Double> voltageErrorStats = results.computeVoltageErrorStatsPu(network);
-                List<Double> angleErrorStats = results.computeAngleErrorStatsDegree(network);
+                List<Double> voltageErrorStats = results.computeVoltageRelativeErrorStats(network);
+                List<Double> angleErrorStats = results.computeAngleDegreeErrorStats(network);
+                List<Double> PfErrorStats = results.computeActivePowerFlowsRelativeErrorsStats(network);
+                List<Double> QfErrorStats = results.computeReactivePowerFlowsRelativeErrorsStats(network);
                 data.add(List.of(String.valueOf(ratioTested), String.valueOf(seed),
                         String.valueOf(voltageErrorStats.get(0)), String.valueOf(voltageErrorStats.get(1)),
                         String.valueOf(voltageErrorStats.get(2)), String.valueOf(voltageErrorStats.get(3)),
@@ -93,6 +99,12 @@ public class Ieee118BusesTests {
                         String.valueOf(angleErrorStats.get(0)), String.valueOf(angleErrorStats.get(1)),
                         String.valueOf(angleErrorStats.get(2)), String.valueOf(angleErrorStats.get(3)),
                         String.valueOf(angleErrorStats.get(4)), String.valueOf(angleErrorStats.get(5)),
+                        String.valueOf(PfErrorStats.get(0)), String.valueOf(PfErrorStats.get(1)),
+                        String.valueOf(PfErrorStats.get(2)), String.valueOf(PfErrorStats.get(3)),
+                        String.valueOf(PfErrorStats.get(4)), String.valueOf(PfErrorStats.get(5)),
+                        String.valueOf(QfErrorStats.get(0)), String.valueOf(QfErrorStats.get(1)),
+                        String.valueOf(QfErrorStats.get(2)), String.valueOf(QfErrorStats.get(3)),
+                        String.valueOf(QfErrorStats.get(4)), String.valueOf(QfErrorStats.get(5)),
                         String.valueOf(knowledge.getVoltageMagnitudeMeasures().size())));
             }
         }

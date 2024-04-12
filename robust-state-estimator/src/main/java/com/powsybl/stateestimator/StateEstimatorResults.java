@@ -6,6 +6,7 @@
  */
 package com.powsybl.stateestimator;
 
+import com.powsybl.iidm.network.Branch;
 import com.powsybl.iidm.network.Bus;
 import com.powsybl.stateestimator.parameters.StateEstimatorAmplIOFiles;
 //import main.java.com.powsybl.stateestimator.parameters.output.modifications.StateBus;
@@ -196,11 +197,11 @@ public class StateEstimatorResults {
     }
 
     /**
-     * Compute statistics for voltage magnitude error (p.u.) of the state estimate, taking OLF results as ground truth
+     * Compute statistics for voltage magnitude relative errors (%) of the state estimate, taking OLF results as ground truth
      * @param network The network on which was performed the state estimation
      * @return (meanVoltageError, stdVoltageError, medianError, maxError, fifthPercentileError, ninetyFifthPercentileError)
      */
-    public List<Double> computeVoltageErrorStatsPu(Network network) {
+    public List<Double> computeVoltageRelativeErrorStats(Network network) {
         long nbBuses = network.getBusView().getBusStream().count();
         // Initialize a list containing all errors
         List<Double> allErrors = new ArrayList<>();
@@ -208,7 +209,8 @@ public class StateEstimatorResults {
         double meanVoltageError = 0;
         double squaredVoltageError = 0;
         for (Bus bus : network.getBusView().getBuses()) {
-            double tmpVoltageError = Math.abs(bus.getV()/bus.getVoltageLevel().getNominalV() - this.getBusStateEstimate(bus.getId()).getV());
+            double tmpVoltageError = Math.abs((this.getBusStateEstimate(bus.getId()).getV() * bus.getVoltageLevel().getNominalV() - bus.getV())
+                    / bus.getV()) * 100;
             meanVoltageError += tmpVoltageError;
             squaredVoltageError += Math.pow(tmpVoltageError, 2);
             allErrors.add(tmpVoltageError);
@@ -226,11 +228,11 @@ public class StateEstimatorResults {
     }
 
     /**
-     * Compute statistics for voltage angle error (degrees) of the state estimate, taking OLF results as ground truth
+     * Compute statistics for voltage angle absolute errors (degrees) of the state estimate, taking OLF results as ground truth
      * @param network The network on which was performed the state estimation
      * @return (meanAngleError, stdVAngleError, medianError, maxError, fifthPercentileError, ninetyFifthPercentileError)
      */
-    public List<Double> computeAngleErrorStatsDegree(Network network) {
+    public List<Double> computeAngleDegreeErrorStats(Network network) {
         long nbBuses = network.getBusView().getBusStream().count();
         // Initialize a list containing all errors
         List<Double> allErrors = new ArrayList<>();
@@ -255,7 +257,81 @@ public class StateEstimatorResults {
         return List.of(meanAngleErrror, stdAngleError, medianError, maxError, fifthPercentileError, ninetyFifthPercentileError);
     }
 
-    // TODO : add methods to compute statistics on errors regarding power flows
+    /**
+     * Compute statistics for active power flows (on both sides) relative errors (%) based on the state estimate, taking OLF results as ground truth
+     * @param network The network on which was performed the state estimation
+     * @return (meanPfError, stdPfError, medianError, maxError, fifthPercentileError, ninetyFifthPercentileError)
+     */
+    public List<Double> computeActivePowerFlowsRelativeErrorsStats(Network network) {
+        // Define the threshold for minimal tolerated error on power flows
+        double Pf_EPSILON = 1e-3;
+        // Get number of active/reactive power flows (two sides for each branch)
+        int nbPowerFlows = network.getBranchCount() * 2;
+        // Initialize a list containing all errors
+        List<Double> allErrors = new ArrayList<>();
+        // Compute mean and standard deviation (and fill the list)
+        double meanPfErrror = 0;
+        double squaredPfError = 0;
+        for (Branch branch : network.getBranches()) {
+            BranchPowersEstimate branchPowersEstimate = this.getBranchPowersEstimate(branch.getId());
+            double tmpPfErrorEnd1 = Math.abs(branchPowersEstimate.getActivePowerEnd1() - branch.getTerminal1().getP())
+                                            / (Math.abs(branch.getTerminal1().getP()) + Pf_EPSILON) * 100;
+            double tmpPfErrorEnd2 = Math.abs(branchPowersEstimate.getActivePowerEnd2() - branch.getTerminal2().getP())
+                    / (Math.abs(branch.getTerminal2().getP()) + Pf_EPSILON) * 100;
+            meanPfErrror += tmpPfErrorEnd1 + tmpPfErrorEnd2;
+            squaredPfError += Math.pow(tmpPfErrorEnd1, 2) + Math.pow(tmpPfErrorEnd2, 2);
+            allErrors.add(tmpPfErrorEnd1);
+            allErrors.add(tmpPfErrorEnd2);
+        }
+        meanPfErrror = meanPfErrror / nbPowerFlows;
+        double stdPfError = Math.sqrt(squaredPfError/nbPowerFlows - Math.pow(meanPfErrror, 2));
+        // Compute 5th, 50th (median) and 95th percentiles
+        Collections.sort(allErrors);
+        double fifthPercentileError = percentile(allErrors, 5);
+        double medianError = percentile(allErrors, 50);
+        double ninetyFifthPercentileError = percentile(allErrors, 95);
+        // Compute maximum
+        double maxError = allErrors.get(allErrors.size()-1);
+        return List.of(meanPfErrror, stdPfError, medianError, maxError, fifthPercentileError, ninetyFifthPercentileError);
+    }
+
+    /**
+     * Compute statistics for reactive power flows (on both sides) relative errors (%) based on the state estimate, taking OLF results as ground truth
+     * @param network The network on which was performed the state estimation
+     * @return (meanQfError, stdQfError, medianError, maxError, fifthPercentileError, ninetyFifthPercentileError)
+     */
+    public List<Double> computeReactivePowerFlowsRelativeErrorsStats(Network network) {
+        // Define the threshold for minimal tolerated error on power flows
+        double Qf_EPSILON = 1e-3;
+        // Get number of active/reactive power flows (two sides for each branch)
+        int nbPowerFlows = network.getBranchCount() * 2;
+        // Initialize a list containing all errors
+        List<Double> allErrors = new ArrayList<>();
+        // Compute mean and standard deviation (and fill the list)
+        double meanQfErrror = 0;
+        double squaredQfError = 0;
+        for (Branch branch : network.getBranches()) {
+            BranchPowersEstimate branchPowersEstimate = this.getBranchPowersEstimate(branch.getId());
+            double tmpQfErrorEnd1 = Math.abs(branchPowersEstimate.getReactivePowerEnd1() - branch.getTerminal1().getQ())
+                    / (Math.abs(branch.getTerminal1().getQ()) + Qf_EPSILON) * 100;
+            double tmpQfErrorEnd2 = Math.abs(branchPowersEstimate.getReactivePowerEnd2() - branch.getTerminal2().getQ())
+                    / (Math.abs(branch.getTerminal2().getQ()) + Qf_EPSILON) * 100;
+            meanQfErrror += tmpQfErrorEnd1 + tmpQfErrorEnd2;
+            squaredQfError += Math.pow(tmpQfErrorEnd1, 2) + Math.pow(tmpQfErrorEnd2, 2);
+            allErrors.add(tmpQfErrorEnd1);
+            allErrors.add(tmpQfErrorEnd2);
+        }
+        meanQfErrror = meanQfErrror / nbPowerFlows;
+        double stdQfError = Math.sqrt(squaredQfError/nbPowerFlows - Math.pow(meanQfErrror, 2));
+        // Compute 5th, 50th (median) and 95th percentiles
+        Collections.sort(allErrors);
+        double fifthPercentileError = percentile(allErrors, 5);
+        double medianError = percentile(allErrors, 50);
+        double ninetyFifthPercentileError = percentile(allErrors, 95);
+        // Compute maximum
+        double maxError = allErrors.get(allErrors.size()-1);
+        return List.of(meanQfErrror, stdQfError, medianError, maxError, fifthPercentileError, ninetyFifthPercentileError);
+    }
 
     public static double percentile(List<Double> array, double percentile) {
         int index = (int) Math.ceil(percentile / 100.0 * array.size());
@@ -291,6 +367,15 @@ public class StateEstimatorResults {
 
     public List<BranchPowersEstimate> getNetworkPowersEstimate() {
         return networkPowersEstimate;
+    }
+
+    public BranchPowersEstimate getBranchPowersEstimate(String branchId) {
+        for (BranchPowersEstimate branchPowersEstimate : networkPowersEstimate) {
+            if (branchPowersEstimate.getBranchID().equals(branchId)) {
+                return branchPowersEstimate;
+            }
+        }
+        return null;
     }
 
     public List<Pair<String, String>> getRunIndicators() {
