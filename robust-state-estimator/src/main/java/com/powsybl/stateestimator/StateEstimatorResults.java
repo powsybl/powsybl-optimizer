@@ -241,7 +241,7 @@ public class StateEstimatorResults {
             double tmpAngleError = Math.abs(bus.getAngle() - Math.toDegrees(this.getBusStateEstimate(bus.getId()).getTheta()));
             meanAngleErrror += tmpAngleError;
             squaredAngleError += Math.pow(tmpAngleError, 2);
-            allErrors.add(meanAngleErrror);
+            allErrors.add(tmpAngleError);
         }
         meanAngleErrror = meanAngleErrror / nbBuses;
         double stdAngleError = Math.sqrt(squaredAngleError/nbBuses - Math.pow(meanAngleErrror, 2));
