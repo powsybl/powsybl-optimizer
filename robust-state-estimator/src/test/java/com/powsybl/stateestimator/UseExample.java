@@ -101,8 +101,8 @@ public class UseExample {
         // Print some indicators on the accuracy of the state estimation w.r.t load flow solution
         List<Double> voltageErrorStats = results.computeVoltageRelativeErrorStats(network);
         List<Double> angleErrorStats = results.computeAngleDegreeErrorStats(network);
-        System.out.printf("%nAverage voltage error : %f %% (std = %f)%n", voltageErrorStats.get(0), voltageErrorStats.get(1));
-        System.out.printf("%nAverage angle error : %f degrees (std = %f)%n", angleErrorStats.get(0), angleErrorStats.get(1));
+        System.out.printf("%nAverage voltage relative error : %f %% (std = %f)%n", voltageErrorStats.get(0), voltageErrorStats.get(1));
+        System.out.printf("%nAverage angle absolute error : %f degrees (std = %f)%n", angleErrorStats.get(0), angleErrorStats.get(1));
         System.out.printf("%nNumber of voltage magnitude measurements : %d%n", knowledge.getVoltageMagnitudeMeasures().size());
     }
 }

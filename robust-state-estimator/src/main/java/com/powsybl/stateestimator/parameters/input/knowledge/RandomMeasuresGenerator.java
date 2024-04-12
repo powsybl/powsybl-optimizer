@@ -34,11 +34,15 @@ public class RandomMeasuresGenerator {
         put("Qf", 0.043);
         put("P", 0.021);
         put("Q", 0.043);
-        put("V", 0.0001);
+        put("V", 0.01); // TODO : change to 0.0001 ?
     }};
     // Standard deviation values (p.u) for measurements, see Master Thesis' report
 
+    // Standard values used for calculations
     public static final double BASE_POWER_MVA = 100;
+    public static final double STANDARD_CURRENT_AMPERE = 400;
+    public static final double STANDARD_POWER_FACTOR = 0.85; // = cos(phi)
+
 
     // By default, the number of measurements generated will be 4 times the number of buses in the network (ensure observability)
     public static final double DEFAULT_RATIO_MEASURES_TO_BUSES = 4.0;
@@ -126,8 +130,6 @@ public class RandomMeasuresGenerator {
         // Get maximum nominal voltage in the grid (used for variance scaling)
         double VNomMax = Collections.max(network.getVoltageLevelStream().map(VoltageLevel::getNominalV).toList());
 
-        // TODO : à retirer in fine (variance minimale = 1 MW/MVar)
-        double VARIANCE_MIN = 1;
 
         // For each measurement to be generated, pick a measurement type at random
         for (int i = 1; i < nbMeasurements + 1; i++) {
@@ -162,11 +164,12 @@ public class RandomMeasuresGenerator {
                         randomMeasure.put("SecondBusID", randomBranch.getTerminal2().getBusView().getBus().getId());
                         measurementValue = randomBranch.getTerminal1().getP();
 
-                        // TODO : modifier le scaling de la variance (utiliser les Vnomi et VnomiMax)
+                        // TODO : modifier le scaling de la variance
                         // Get and add measurement variance (in SI^2)
-                        //measurementVariance = Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("Pf") * BASE_POWER_MVA
-                        //                * Math.pow(randomBranch.getTerminal1().getVoltageLevel().getNominalV() / VNomMax, 2), 2);
-                        measurementVariance = measurementValue==0 ? VARIANCE_MIN : Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("Pf") * measurementValue, 2);
+                        measurementVariance = Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("Pf")
+                                        * randomBranch.getTerminal1().getVoltageLevel().getNominalV() * STANDARD_CURRENT_AMPERE
+                                        * STANDARD_POWER_FACTOR / 1000
+                                , 2);
 
                         randomMeasure.put("Variance", String.valueOf(measurementVariance));
                         // Add measurement value (possibly with noise)
@@ -200,11 +203,12 @@ public class RandomMeasuresGenerator {
                         randomMeasure.put("SecondBusID", randomBranch.getTerminal1().getBusView().getBus().getId());
                         measurementValue = randomBranch.getTerminal2().getP();
 
-                        // TODO
+                        // TODO : modifier le scaling de la variance
                         // Get and add measurement variance (in SI^2)
-                        //measurementVariance = Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("Pf") * BASE_POWER_MVA
-                        //        * Math.pow(randomBranch.getTerminal2().getVoltageLevel().getNominalV() / VNomMax, 2), 2);
-                        measurementVariance = measurementValue==0 ? VARIANCE_MIN : Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("Pf") * measurementValue, 2);
+                        measurementVariance = Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("Pf")
+                                        * randomBranch.getTerminal2().getVoltageLevel().getNominalV()
+                                        * STANDARD_CURRENT_AMPERE * STANDARD_POWER_FACTOR / 1000
+                                , 2);
 
                         randomMeasure.put("Variance", String.valueOf(measurementVariance));
                         // Add measurement value (possibly with noise)
@@ -246,11 +250,12 @@ public class RandomMeasuresGenerator {
                         randomMeasure.put("SecondBusID", randomBranch.getTerminal2().getBusView().getBus().getId());
                         measurementValue = randomBranch.getTerminal1().getQ();
 
-                        // TODO
+                        // TODO : modifier le scaling de la variance
                         // Get and add measurement variance (in SI^2)
-                        //measurementVariance = Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("Qf") * BASE_POWER_MVA
-                        //                * Math.pow(randomBranch.getTerminal1().getVoltageLevel().getNominalV() / VNomMax, 2), 2);
-                        measurementVariance = measurementValue==0 ? VARIANCE_MIN : Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("Qf") * measurementValue, 2);
+                        measurementVariance = Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("Qf")
+                                        * randomBranch.getTerminal1().getVoltageLevel().getNominalV()
+                                        * STANDARD_CURRENT_AMPERE * Math.sqrt(1-Math.pow(STANDARD_POWER_FACTOR, 2)) / 1000
+                                , 2);
 
                         randomMeasure.put("Variance", String.valueOf(measurementVariance));
                         // Add measurement value (possibly with noise)
@@ -284,11 +289,12 @@ public class RandomMeasuresGenerator {
                         randomMeasure.put("SecondBusID", randomBranch.getTerminal1().getBusView().getBus().getId());
                         measurementValue = randomBranch.getTerminal2().getQ();
 
-                        // TODO
+                        // TODO : modifier le scaling de la variance
                         // Get and add measurement variance (in SI^2)
-                        //measurementVariance = Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("Qf") * BASE_POWER_MVA
-                        //                * Math.pow(randomBranch.getTerminal2().getVoltageLevel().getNominalV() / VNomMax, 2), 2);
-                        measurementVariance = measurementValue==0 ? VARIANCE_MIN : Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("Qf") * measurementValue, 2);
+                        measurementVariance = Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("Qf")
+                                        * randomBranch.getTerminal2().getVoltageLevel().getNominalV()
+                                        * STANDARD_CURRENT_AMPERE * Math.sqrt(1-Math.pow(STANDARD_POWER_FACTOR, 2)) / 1000
+                                , 2);
 
                         randomMeasure.put("Variance", String.valueOf(measurementVariance));
                         // Add measurement value (possibly with noise)
@@ -326,12 +332,12 @@ public class RandomMeasuresGenerator {
                     // Get measurement value (in SI), as given by the Load Flow solution
                     measurementValue = -1 * randomBus.getP();
 
-                    // TODO
+                    // TODO : modifier le scaling de la variance
                     // Get and add measurement variance (in SI^2)
-                    //measurementVariance = Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("P") * BASE_POWER_MVA
-                    //                * Math.pow(randomBus.getVoltageLevel().getNominalV() / VNomMax, 2), 2);
-                    measurementVariance = measurementValue==0 ? VARIANCE_MIN : Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("P") * measurementValue, 2);
-
+                    measurementVariance = Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("P")
+                                    * randomBus.getVoltageLevel().getNominalV()
+                                    * STANDARD_CURRENT_AMPERE * STANDARD_POWER_FACTOR / 1000
+                            , 2);
 
                     randomMeasure.put("Variance", String.valueOf(measurementVariance));
                     // Add measurement value (possibly with noise)
@@ -367,11 +373,12 @@ public class RandomMeasuresGenerator {
                     // Get measurement value (in SI), as given by the Load Flow solution
                     measurementValue = -1 * randomBus.getQ();
 
-                    // TODO
+                    // TODO : modifier le scaling de la variance
                     // Get and add measurement variance (in SI^2)
-                    //measurementVariance = Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("Q") * BASE_POWER_MVA
-                    //                * Math.pow(randomBus.getVoltageLevel().getNominalV() / VNomMax, 2), 2);
-                    measurementVariance = measurementValue==0 ? VARIANCE_MIN : Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("Q") * measurementValue, 2);
+                    measurementVariance = Math.pow(DEFAULT_STD_IN_PU_BY_MEAS_TYPE.get("Q")
+                                    * randomBus.getVoltageLevel().getNominalV()
+                                    * STANDARD_CURRENT_AMPERE * Math.sqrt(1-Math.pow(STANDARD_POWER_FACTOR, 2)) / 1000
+                            , 2);
 
                     randomMeasure.put("Variance", String.valueOf(measurementVariance));
 
