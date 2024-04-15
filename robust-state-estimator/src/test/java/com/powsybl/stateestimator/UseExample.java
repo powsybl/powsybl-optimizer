@@ -66,7 +66,7 @@ public class UseExample {
         //RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, Optional.empty(), Optional.empty(), Optional.empty());
         RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
                 Optional.of(4), Optional.of(4.0),
-                Optional.of(false), Optional.of(false));
+                Optional.of(false), Optional.of(true));
 
         // We can also add by hand our measurements, and complete them with generated measurements until observability is ensured
         // If some measurements are added after random generation, one might get more measurements than expected
@@ -103,10 +103,10 @@ public class UseExample {
         List<Double> angleErrorStats = results.computeAngleDegreeErrorStats(network);
         List<Double> activePowerFlowErrorStats = results.computeActivePowerFlowsRelativeErrorsStats(network);
         List<Double> reactivePowerFlowErrorStats = results.computeReactivePowerFlowsRelativeErrorsStats(network);
-        System.out.printf("%nAverage voltage relative error : %f %% (std = %f)%n", voltageErrorStats.get(0), voltageErrorStats.get(1));
-        System.out.printf("%nAverage angle absolute error : %f degrees (std = %f)%n", angleErrorStats.get(0), angleErrorStats.get(1));
-        System.out.printf("%nAverage active power flow relative error : %f %% (std = %f)%n", activePowerFlowErrorStats.get(0), activePowerFlowErrorStats.get(1));
-        System.out.printf("%nAverage reactive power flow relative error : %f %% (std = %f)%n", reactivePowerFlowErrorStats.get(0), reactivePowerFlowErrorStats.get(1));
+        System.out.printf("%nMedian voltage relative error : %f %% %n", voltageErrorStats.get(2));
+        System.out.printf("%nMedian angle absolute error : %f degrees %n", angleErrorStats.get(2));
+        System.out.printf("%nMedian active power flow relative error : %f %% %n", activePowerFlowErrorStats.get(2));
+        System.out.printf("%nMedian reactive power flow relative error : %f %% %n", reactivePowerFlowErrorStats.get(2));
         System.out.printf("%nNumber of voltage magnitude measurements : %d%n", knowledge.getVoltageMagnitudeMeasures().size());
 
     }
