@@ -49,6 +49,14 @@ param: MEASURES_V: V_type V_bus_id V_value V_variance := include ampl_measures_V
 # "num" "branch_susp_id" "is_suspected" "y_prior"
 param: BRANCH_SUSP: branch_susp_id is_suspected y_prior := include ampl_suspect_branches.txt;
 
+###############################################################################
+#                        SET OF ZERO-INJECTION BUSES                          #
+###############################################################################
+
+# ampl_zero_injection_buses.txt;
+# "num" "bus_zero_injection_id"
+param: BUS_ZERO_INJECTION: bus_zero_injection_id := include ampl_zero_injection_buses.txt;
+
 
 ###############################################################################
 #                              NETWORK                                        #

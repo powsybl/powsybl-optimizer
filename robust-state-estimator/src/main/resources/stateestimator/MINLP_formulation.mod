@@ -56,6 +56,44 @@ subject to ctrl_nb_topology_changes{PROBLEM_SE}:
 
 ###########################################################
 #                                                         #
+#         Hard constraints on zero-injection buses        #
+#                                                         #
+###########################################################
+
+subject to ctrl_zero_injection_buses_act_power{PROBLEM_SE, 
+  (a,b) in BUSCC cross BUS_ZERO_INJECTION : bus_id[1,a] == bus_zero_injection_id[b]}:
+      abs(
+      # Flows on branches
+      sum{(qq,k,n) in BRANCHCC : k == a}
+      y[qq,k,n] * act_power_dir[qq,k,n]
+      + sum{(qq,m,k) in BRANCHCC : k == a}
+      y[qq,m,k] * act_power_inv[qq,m,k]
+      # Flows on branches with one side opened
+      + sum{(qq,k,n) in BRANCH_WITH_SIDE_2_OPENED : k == a}
+      y[qq,k,n] * act_power_bus2_opened[qq,k,n]
+      + sum{(qq,m,k) in BRANCH_WITH_SIDE_1_OPENED : k == a}
+      y[qq,m,k] * act_power_bus1_opened[qq,m,k]
+      )
+      <= epsilon_max_power_balance; 
+
+subject to ctrl_zero_injection_buses_rea_power{PROBLEM_SE, 
+  (a,b) in BUSCC cross BUS_ZERO_INJECTION : bus_id[1,a] == bus_zero_injection_id[b]}:
+      abs(
+      # Flows on branches
+      sum{(qq,k,n) in BRANCHCC : k == a}
+      y[qq,k,n] * rea_power_dir[qq,k,n]
+      + sum{(qq,m,k) in BRANCHCC : k == a}
+      y[qq,m,k] * rea_power_inv[qq,m,k]
+      # Flows on branches with one side opened
+      + sum{(qq,k,n) in BRANCH_WITH_SIDE_2_OPENED : k == a}
+      y[qq,k,n] * rea_power_bus2_opened[qq,k,n]
+      + sum{(qq,m,k) in BRANCH_WITH_SIDE_1_OPENED : k == a}
+      y[qq,m,k] * rea_power_bus1_opened[qq,m,k]
+      )
+      <= epsilon_max_power_balance; 
+
+###########################################################
+#                                                         #
 #             Measurement residuals (in SI)               #
 #                                                         #
 ###########################################################

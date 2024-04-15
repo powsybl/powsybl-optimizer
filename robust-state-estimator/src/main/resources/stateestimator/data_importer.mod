@@ -517,9 +517,12 @@ check card(BRANCH) == card(TEST_UNIQUENESS_BRANCH);
 #param branch_G {(t,qq,m,n) in BRANCH} = +branch_R[t,qq,m,n]/(branch_R[t,qq,m,n]^2+branch_X[t,qq,m,n]^2);
 #param branch_B {(t,qq,m,n) in BRANCH} = -branch_X[t,qq,m,n]/(branch_R[t,qq,m,n]^2+branch_X[t,qq,m,n]^2);
 
+###############################################################################
+#                        ADDITIONAL KNOWLEDGE                                 #
+###############################################################################
 
 ###############################################################################
-#                     SET OF SUSPECT BRANCHES                                 #
+#       Set of suspect branches (ampl_suspect_branches.txt)                   #
 ###############################################################################
 
 set BRANCH_SUSP dimen 1; # [num]
@@ -529,6 +532,15 @@ param y_prior {BRANCH_SUSP} binary; # "A priori" status of the branch
 
 # Note : checking that suspect branches IDs are valid is done in Java
 # Same goes with buses/branches IDs related to measurements
+
+###############################################################################
+#       Set of zero-injection buses (ampl_zero_injection_buses.txt)           #
+###############################################################################
+
+set BUS_ZERO_INJECTION dimen 1; # [num]
+param bus_zero_injection_id {BUS_ZERO_INJECTION} symbolic;
+
+
 
 #####################################################################################################
 #                     Build the sets of equipments present in the main CC                           #

@@ -65,7 +65,7 @@ public class UseExample {
         // Randomly generate measurements (useful for test cases) out of load flow results
         //RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, Optional.empty(), Optional.empty(), Optional.empty());
         RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
-                Optional.of(2), Optional.of(4.0),
+                Optional.of(4), Optional.of(4.0),
                 Optional.of(false), Optional.of(false));
 
         // We can also add by hand our measurements, and complete them with generated measurements until observability is ensured
@@ -101,8 +101,13 @@ public class UseExample {
         // Print some indicators on the accuracy of the state estimation w.r.t load flow solution
         List<Double> voltageErrorStats = results.computeVoltageRelativeErrorStats(network);
         List<Double> angleErrorStats = results.computeAngleDegreeErrorStats(network);
+        List<Double> activePowerFlowErrorStats = results.computeActivePowerFlowsRelativeErrorsStats(network);
+        List<Double> reactivePowerFlowErrorStats = results.computeReactivePowerFlowsRelativeErrorsStats(network);
         System.out.printf("%nAverage voltage relative error : %f %% (std = %f)%n", voltageErrorStats.get(0), voltageErrorStats.get(1));
         System.out.printf("%nAverage angle absolute error : %f degrees (std = %f)%n", angleErrorStats.get(0), angleErrorStats.get(1));
+        System.out.printf("%nAverage active power flow relative error : %f %% (std = %f)%n", activePowerFlowErrorStats.get(0), activePowerFlowErrorStats.get(1));
+        System.out.printf("%nAverage reactive power flow relative error : %f %% (std = %f)%n", reactivePowerFlowErrorStats.get(0), reactivePowerFlowErrorStats.get(1));
         System.out.printf("%nNumber of voltage magnitude measurements : %d%n", knowledge.getVoltageMagnitudeMeasures().size());
+
     }
 }

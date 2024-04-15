@@ -6,14 +6,7 @@
  */
 package com.powsybl.stateestimator.parameters;
 
-import com.powsybl.stateestimator.parameters.input.knowledge.StateEstimatorKnowledge;
-import com.powsybl.stateestimator.parameters.input.knowledge.ActivePowerFlowMeasures;
-import com.powsybl.stateestimator.parameters.input.knowledge.ReactivePowerFlowMeasures;
-import com.powsybl.stateestimator.parameters.input.knowledge.ActivePowerInjectedMeasures;
-import com.powsybl.stateestimator.parameters.input.knowledge.ReactivePowerInjectedMeasures;
-import com.powsybl.stateestimator.parameters.input.knowledge.VoltageMagnitudeMeasures;
-import com.powsybl.stateestimator.parameters.input.knowledge.SuspectBranches;
-import com.powsybl.stateestimator.parameters.input.knowledge.SlackBus;
+import com.powsybl.stateestimator.parameters.input.knowledge.*;
 import com.powsybl.stateestimator.parameters.input.options.StateEstimatorOptions;
 import com.powsybl.stateestimator.parameters.input.options.SolvingOptions;
 import com.powsybl.ampl.executor.AmplInputFile;
@@ -40,6 +33,7 @@ public class StateEstimatorAmplIOFiles implements AmplParameters {
     VoltageMagnitudeMeasures voltageMagnitudeMeasures;
     SuspectBranches suspectBranches;
     SlackBus slackBus;
+    ZeroInjectionBuses zeroInjectionBuses;
 
     // Output files
     NetworkIndicatorsOutput networkIndicatorsOutput;
@@ -65,6 +59,8 @@ public class StateEstimatorAmplIOFiles implements AmplParameters {
         this.suspectBranches = new SuspectBranches(knowledge.getSuspectBranches());
         // Reference angle bus (slack)
         this.slackBus = new SlackBus(knowledge.getSlackBus());
+        // Set of zero-injection buses
+        this.zeroInjectionBuses = new ZeroInjectionBuses(knowledge.getZeroInjectionBuses());
 
         // Output files
         this.networkIndicatorsOutput = new NetworkIndicatorsOutput();
@@ -80,7 +76,7 @@ public class StateEstimatorAmplIOFiles implements AmplParameters {
     public Collection<AmplInputFile> getInputParameters() {
         return List.of(solvingOptions, activePowerFlowMeasures, reactivePowerFlowMeasures,
                 activePowerInjectedMeasures, reactivePowerInjectedMeasures, voltageMagnitudeMeasures,
-                suspectBranches, slackBus);
+                suspectBranches, slackBus, zeroInjectionBuses);
     }
 
     @Override

@@ -70,8 +70,12 @@ param base100MVA := 100;
 
 # Parameter for detection of branches with zero impedance
 param Znull default 1e-4; # in Ohms
-printf "Parameter: threshold to detect zero impedance branch Znull:=%Q pu\n",Znull;
+printf "Parameter: threshold to detect zero impedance branch Znull:=%Q Ohms\n",Znull;
 # always check Znull > 0 and Znull < 0.1;
+
+# Tolerance for power balance of zero-injection buses
+param epsilon_max_power_balance default 1e-4; # in MVA
+printf "Parameter: tolerance on power balance of zero-injection buses epsilon_max_power_balance:=%Q MVA\n",epsilon_max_power_balance;
 
 ###############################################################################
 #     Solver choice and options # TODO : Check if this is what we want        #
@@ -369,13 +373,72 @@ for {n in BUSCC} {
     bus_id[1,n], V[n], V[n] * substation_Vnomi[1,bus_substation[1,n]], theta[n];          
     printf"\n";
 }
-/* printf "Average squared residual : %.3f ", problem_sum_of_squares_of_residuals / 
-  (card(MEASURECC_P)+card(MEASURECC_Pf)+card(MEASURECC_Q)+card(MEASURECC_Qf)+card(MEASURECC_V)); */
 
 printf "\n";
 if (card(REGL) == 0) then printf "[INFO] No rtc on the network\n";
 if (card(DEPH) == 0) then printf "[INFO] No ptc on the network\n";
 if (card({(1,qq,m,n) in BRANCH : branch_3wt[1,qq,m,n] != -1}) == 0) then printf "[INFO] No 3wt on the network\n";
+
+
+###############################################################################
+#                   Computing power flows estimate                            #
+###############################################################################
+
+# As a solution (V, theta) has been found, we now compute power flow values based on this solution
+# for ALL branches in the network (not just for branches related to the set of measurements)
+
+param act_power_end1{(qq,k,n) in BRANCHCC};
+param act_power_end2{(qq,k,n) in BRANCHCC};
+param rea_power_end1{(qq,k,n) in BRANCHCC};
+param rea_power_end2{(qq,k,n) in BRANCHCC};
+
+for{(qq,k,n) in BRANCHCC} {
+
+  let act_power_end1[qq,k,n] :=
+  round(y[qq,k,n]) * (
+    branch_Ror_SI[qq,k,n]^2 * branch_Gor_SI[qq,k,n] * V[k]^2
+      * substation_Vnomi[1,bus_substation[1,k]]^2
+    + branch_Ror_SI[qq,k,n]^2 * branch_admi_SI[qq,k,n] * V[k]^2 * sin(branch_angper[qq,k,n])
+      * substation_Vnomi[1,bus_substation[1,k]]^2
+    - branch_Ror_SI[qq,k,n] * branch_Rex_SI[qq,k,n] * branch_admi_SI[qq,k,n] * V[k] * V[n]
+      * sin(branch_angper[qq,k,n] - branch_dephor[qq,k,n] + theta[n] - theta[k])
+      * substation_Vnomi[1,bus_substation[1,k]] * substation_Vnomi[1,bus_substation[1,n]]
+  );
+
+  let act_power_end2[qq,k,n] :=
+  round(y[qq,k,n]) * (
+    branch_Rex_SI[qq,k,n]^2 * branch_Gex_SI[qq,k,n] * V[n]^2
+      * substation_Vnomi[1,bus_substation[1,n]]^2
+    + branch_Rex_SI[qq,k,n]^2 * branch_admi_SI[qq,k,n] * V[n]^2 * sin(branch_angper[qq,k,n])
+      * substation_Vnomi[1,bus_substation[1,n]]^2
+    - branch_Rex_SI[qq,k,n] * branch_Ror_SI[qq,k,n] * branch_admi_SI[qq,k,n] * V[n] * V[k]
+      * sin(branch_angper[qq,k,n] + branch_dephor[qq,k,n] + theta[k] - theta[n])
+      * substation_Vnomi[1,bus_substation[1,n]] * substation_Vnomi[1,bus_substation[1,k]]
+  );
+
+  let rea_power_end1[qq,k,n] :=
+  round(y[qq,k,n]) * (
+    - branch_Ror_SI[qq,k,n]^2 * branch_Bor_SI[qq,k,n] * V[k]^2
+      * substation_Vnomi[1,bus_substation[1,k]]^2
+    + branch_Ror_SI[qq,k,n]^2 * branch_admi_SI[qq,k,n] * V[k]^2 * cos(branch_angper[qq,k,n])
+      * substation_Vnomi[1,bus_substation[1,k]]^2
+    - branch_Ror_SI[qq,k,n] * branch_Rex_SI[qq,k,n] * branch_admi_SI[qq,k,n] * V[k] * V[n]
+      * cos(theta[k] - theta[n] + branch_dephor[qq,k,n] - branch_angper[qq,k,n])
+      * substation_Vnomi[1,bus_substation[1,k]] * substation_Vnomi[1,bus_substation[1,n]]
+  );
+
+  let rea_power_end2[qq,k,n] :=
+  round(y[qq,k,n]) * (
+    - branch_Rex_SI[qq,k,n]^2 * branch_Bex_SI[qq,k,n] * V[n]^2
+      * substation_Vnomi[1,bus_substation[1,n]]^2
+    + branch_Rex_SI[qq,k,n]^2 * branch_admi_SI[qq,k,n] * V[n]^2 * cos(branch_angper[qq,k,n])
+      * substation_Vnomi[1,bus_substation[1,n]]^2
+    - branch_Ror_SI[qq,k,n] * branch_Rex_SI[qq,k,n] * branch_admi_SI[qq,k,n] * V[n] * V[k]
+      * cos(theta[n] - theta[k] - branch_dephor[qq,k,n] - branch_angper[qq,k,n])
+      * substation_Vnomi[1,bus_substation[1,n]] * substation_Vnomi[1,bus_substation[1,k]]
+  );
+}
+
 
 ###############################################################################
 #                       Writing results and indicators                        #

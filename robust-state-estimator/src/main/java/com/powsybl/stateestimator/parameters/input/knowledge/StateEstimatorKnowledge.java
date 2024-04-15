@@ -43,17 +43,20 @@ public class StateEstimatorKnowledge {
     private Map<Integer, ArrayList<String>> activePowerInjectedMeasures = new HashMap<>();
     private Map<Integer, ArrayList<String>> reactivePowerInjectedMeasures = new HashMap<>();
     private Map<Integer, ArrayList<String>> voltageMagnitudeMeasures = new HashMap<>();
-
     Map<Integer, ArrayList<String>> suspectBranches = new HashMap<>();
-
     String slackBus;
+    Map<Integer, String> zeroInjectionBuses = new HashMap<>();
 
     public StateEstimatorKnowledge(Network network) {
-        setSlack(DEFAULT_SLACK_SELECTION_MODE, network).setSuspectBranchesByDefault(network);
+        setSlack(DEFAULT_SLACK_SELECTION_MODE, network)
+                .setZeroInjectionBuses(network)
+                .setSuspectBranchesByDefault(network);
     }
 
     public StateEstimatorKnowledge(Network network, String slackBusId) {
-        setSlack(slackBusId, network).setSuspectBranchesByDefault(network);
+        setSlack(slackBusId, network)
+                .setZeroInjectionBuses(network)
+                .setSuspectBranchesByDefault(network);
     }
 
     public int getMeasuresCount() {
@@ -88,6 +91,10 @@ public class StateEstimatorKnowledge {
 
     public String getSlackBus() {
         return slackBus;
+    }
+
+    public Map<Integer, String> getZeroInjectionBuses() {
+        return zeroInjectionBuses;
     }
 
     /**
@@ -488,6 +495,23 @@ public class StateEstimatorKnowledge {
             }
         }
         return slackBusId;
+    }
+
+    /**
+     * @param network    The network the zero-injection buses belong to.
+     * @return The object on which the method is applied.
+     */
+    public StateEstimatorKnowledge setZeroInjectionBuses(Network network) {
+        int i = 1;
+        for (Bus bus: network.getBusView().getBuses()) {
+            if (bus.getGeneratorStream().findAny().isEmpty() && bus.getLoadStream().findAny().isEmpty()
+                    && bus.getShuntCompensatorStream().findAny().isEmpty() && bus.getStaticVarCompensatorStream().findAny().isEmpty()
+                    && bus.getBatteryStream().findAny().isEmpty() && bus.getLccConverterStationStream().findAny().isEmpty()
+                    && bus.getVscConverterStationStream().findAny().isEmpty()) {
+                zeroInjectionBuses.put(i++, bus.getId());
+            }
+        }
+        return this;
     }
 
     public void printAllMeasures() {
