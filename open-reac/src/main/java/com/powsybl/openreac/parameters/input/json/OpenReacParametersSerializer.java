@@ -47,6 +47,10 @@ public class OpenReacParametersSerializer extends StdSerializer<OpenReacParamete
         serializerProvider.defaultSerializeField("minPlausibleLowVoltageLimit", openReacParameters.getMinPlausibleLowVoltageLimit(), jsonGenerator);
         serializerProvider.defaultSerializeField("maxPlausibleHighVoltageLimit", openReacParameters.getMaxPlausibleHighVoltageLimit(), jsonGenerator);
         serializerProvider.defaultSerializeField("reactiveSlackBusesMode", openReacParameters.getReactiveSlackBusesMode().name(), jsonGenerator);
+        serializerProvider.defaultSerializeField("defaultVariableScalingFactor", openReacParameters.getDefaultVariableScalingFactor(), jsonGenerator);
+        serializerProvider.defaultSerializeField("defaultConstraintScalingFactor", openReacParameters.getDefaultConstraintScalingFactor(), jsonGenerator);
+        serializerProvider.defaultSerializeField("reactiveSlackVariableScalingFactor", openReacParameters.getReactiveSlackVariableScalingFactor(), jsonGenerator);
+        serializerProvider.defaultSerializeField("twoWindingTransformerRatioVariableScalingFactor", openReacParameters.getTwoWindingTransformerRatioVariableScalingFactor(), jsonGenerator);
         jsonGenerator.writeEndObject();
     }
 }
