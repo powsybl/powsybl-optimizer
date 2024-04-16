@@ -979,45 +979,6 @@ if (log_level_knitro <= 1) then {
 let nb_iter_last := problem_acopf_objective.numiters;
 let nb_iter_total := nb_iter_total + nb_iter_last;
 
-# <= 103 : feasible
-# 200 convergence to unfeasible
-# > 200 : failure
-param solve_result_num_limit := 200;
-
-if solve_result_num > solve_result_num_limit then
-for {n in 1 .. 2}
-{
-  # solve acopf and avoid knitro printing if user asks
-  if (log_level_knitro <= 1) then {
-    solve problem_acopf_objective > (nullDevice);
-  } else {
-    solve problem_acopf_objective;
-  }
-
-  let nb_iter_last := problem_acopf_objective.numiters;
-  let nb_iter_total := nb_iter_total + nb_iter_last;
-  if solve_result_num <= solve_result_num_limit then break;
-}
-
-# In case of failure and coeff_alpha was 1, then switch to coeff_alpha=0 to give more freedom to generation
-if solve_result_num > solve_result_num_limit and coeff_alpha >= 0.999 then
-for {n in 1 .. 2}
-{
-  printf{LOG_DEBUG} "* change coeff_alpha from  %f ",coeff_alpha;
-  let coeff_alpha := 0.0;
-  printf{LOG_DEBUG} " to %f\n",coeff_alpha;
-
-  # solve acopf and avoid knitro printing if user asks
-  if (log_level_knitro <= 1) then {
-    solve problem_acopf_objective > (nullDevice);
-  } else {
-    solve problem_acopf_objective;
-  }
-  let nb_iter_last := problem_acopf_objective.numiters;
-  let nb_iter_total := nb_iter_total + nb_iter_last;
-  if solve_result_num <= solve_result_num_limit then break;
-}
-
 printf{LOG_KNITRO} "\n** ACopf solve: end   (%s -> %s)\n",tempstr,ctime();
 printf{LOG_KNITRO} "######################################################################\n\n";
 
@@ -1026,6 +987,9 @@ printf{LOG_KNITRO} "############################################################
 # Analysis of solve_result_num
 ###############################################################################
 
+# <= 103 : feasible
+# 200 convergence to unfeasible
+# > 200 : failure
 param output_results binary default 0;
 if solve_result_num == 200
 then {
