@@ -10,6 +10,7 @@
 ###############################################################################
 # Reactive OPF
 # Author:  Jean Maeght 2022 2023
+# Author:  Manuel Ruiz 2023 2024
 ###############################################################################
 
 
@@ -351,6 +352,27 @@ printf{LOG_INFO} "Parameter: %s = %Q Mvar\n","defaultQmax",defaultQmax;
 param minimalQPrange default 1; # MW or Mvar; if domain is smaller, Q or P is fixed
 if "minimalQPrange" in PARAM_ALGO_KEYS then let minimalQPrange := num(PARAM_ALGO_VALUES["minimalQPrange"]);
 printf{LOG_INFO} "Parameter: %s = %Q MW or Mvar\n","minimalQPrange",minimalQPrange;
+
+# Scaling values for variables/constraints of the ACOPF
+param default_variable_scaling_factor default 1;
+if "default_variable_scaling_factor" in PARAM_ALGO_KEYS then let default_variable_scaling_factor := num(PARAM_ALGO_VALUES["default_variable_scaling_factor"]);
+printf{LOG_INFO} "Parameter: default scaling factor for variables := %.3f\n",default_variable_scaling_factor;
+check default_variable_scaling_factor > 0;
+
+param default_constraint_scaling_factor default 1;
+if "default_constraint_scaling_factor" in PARAM_ALGO_KEYS then let default_constraint_scaling_factor := num(PARAM_ALGO_VALUES["default_constraint_scaling_factor"]);
+printf{LOG_INFO} "Parameter: default scaling factor for constraints := %.3f\n",default_constraint_scaling_factor;
+check default_constraint_scaling_factor >= 0;
+
+param reactive_slack_variable_scaling_factor default 1e-1;
+if "reactive_slack_variable_scaling_factor" in PARAM_ALGO_KEYS then let reactive_slack_variable_scaling_factor := num(PARAM_ALGO_VALUES["reactive_slack_variable_scaling_factor"]);
+printf{LOG_INFO} "Parameter: scaling factor for reactive slack variables := %.3f\n",reactive_slack_variable_scaling_factor;
+check reactive_slack_variable_scaling_factor > 0;
+
+param transformer_ratio_variable_scaling_factor default 1e-1;
+if "transformer_ratio_variable_scaling_factor" in PARAM_ALGO_KEYS then let transformer_ratio_variable_scaling_factor := num(PARAM_ALGO_VALUES["transformer_ratio_variable_scaling_factor"]);
+printf{LOG_INFO} "Parameter: scaling factor for tranformer ratio variables := %.3f\n",transformer_ratio_variable_scaling_factor;
+check transformer_ratio_variable_scaling_factor > 0;
 
 
 ###############################################################################
@@ -968,6 +990,14 @@ printf{LOG_KNITRO} "\n##########################################################
 printf{LOG_KNITRO} "** ACopf solve: start (%s)\n\n",ctime();
 
 option knitro_options ("opttol=1 opttolabs=1e-1 feastol=1 feastolabs=1e-3 maxit=200 outlev=3");
+
+let {i in 1.._nvars} _var[i].xscalefactor := default_variable_scaling_factor;
+let {i in 1.._ncons} _con[i].cscalefactor := default_constraint_scaling_factor;
+
+let {n in BUSCC_SLACK} slack1_balance_Q[n].xscalefactor := reactive_slack_variable_scaling_factor;
+let {n in BUSCC_SLACK} slack2_balance_Q[n].xscalefactor := reactive_slack_variable_scaling_factor;
+
+let {(qq,m,n) in BRANCHCC_REGL_VAR} branch_Ror_var[qq,m,n].xscalefactor := transformer_ratio_variable_scaling_factor;
 
 # solve acopf and avoid knitro printing if user asks
 if (log_level_knitro <= 1) then {

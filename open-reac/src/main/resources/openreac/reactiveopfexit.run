@@ -9,7 +9,8 @@
 
 ###############################################################################
 # Reactive OPF
-# Author :  Jean Maeght 2022 2023
+# Author:  Jean Maeght 2022 2023
+# Author:  Manuel Ruiz 2023 2024
 ###############################################################################
 
 # Exit procedure
@@ -66,6 +67,10 @@ printf "%s %f\n","defaultQmaxPmaxRatio",defaultQmaxPmaxRatio > (fileOut);
 printf "%s %f\n","defaultQmin",defaultQmin > (fileOut);
 printf "%s %f\n","defaultQmax",defaultQmax > (fileOut);
 printf "%s %f\n","minimalQPrange",minimalQPrange > (fileOut);
+printf "%s %f\n","default_variable_scaling_factor",default_variable_scaling_factor > (fileOut);
+printf "%s %f\n","default_constraint_scaling_factor",default_constraint_scaling_factor > (fileOut);
+printf "%s %f\n","reactive_slack_variable_scaling_factor",reactive_slack_variable_scaling_factor > (fileOut);
+printf "%s %f\n","transformer_ratio_variable_scaling_factor",transformer_ratio_variable_scaling_factor > (fileOut);
 
 close (fileOut);
 

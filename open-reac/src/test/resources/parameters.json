@@ -31,5 +31,9 @@
   "logLevelSolver" : "NOTHING",
   "minPlausibleLowVoltageLimit" : 0.755,
   "maxPlausibleHighVoltageLimit" : 1.236,
-  "reactiveSlackBusesMode" : "CONFIGURED"
+  "reactiveSlackBusesMode" : "CONFIGURED",
+  "defaultVariableScalingFactor" : 0.756,
+  "defaultConstraintScalingFactor" : 0.888,
+  "reactiveSlackVariableScalingFactor" : 0.01,
+  "twoWindingTransformerRatioVariableScalingFactor" : 0.005
 }
