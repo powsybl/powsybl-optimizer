@@ -50,16 +50,26 @@ printf{(qq,m,n) in BRANCHCC}
 close (fileOut);
 printf "Exportation of se_network_powers_estimate.csv done.\n";
 
-# Export all the residuals (for Pf, Qf, P, Q, V) in one file
-let fileOut := "se_measure_residuals.csv";
-printf "measurement_number;residual(SI)\n" > (fileOut);
-printf{l in MEASURES_Pf} "%i;%.5f\n", l, if l in MEASURECC_Pf then resid_Pf[l] else "NaN" > (fileOut);
-printf{l in MEASURES_Qf} "%i;%.5f\n", l, if l in MEASURECC_Qf then resid_Qf[l] else "NaN" > (fileOut);
-printf{l in MEASURES_P} "%i;%.5f\n", l, if l in MEASURECC_P then resid_P[l] else "NaN" > (fileOut);
-printf{l in MEASURES_Q} "%i;%.5f\n", l, if l in MEASURECC_Q then resid_Q[l] else "NaN" > (fileOut);
-printf{l in MEASURES_V} "%i;%.5f\n", l, if l in MEASURECC_V then resid_V[l] else "NaN" > (fileOut);
+# Export all the measurements estimates and residuals (for Pf, Qf, P, Q, V) in one file
+let fileOut := "se_measurements_estimates_and_residuals.csv";
+printf "measurement_number;estimate(SI);residual(SI)\n" > (fileOut);
+printf{l in MEASURES_Pf} "%i;%.5f;%.5f\n", l, 
+      if l in MEASURECC_Pf then estimate_Pf[l] else "NaN", if l in MEASURECC_Pf then resid_Pf[l] else "NaN" 
+            > (fileOut);
+printf{l in MEASURES_Qf} "%i;%.5f;%.5f\n", l, 
+      if l in MEASURECC_Qf then estimate_Qf[l] else "NaN", if l in MEASURECC_Qf then resid_Qf[l] else "NaN" 
+            > (fileOut);
+printf{l in MEASURES_P} "%i;%.5f;%.5f\n", l, 
+      if l in MEASURECC_P then estimate_P[l] else "NaN", if l in MEASURECC_P then resid_P[l] else "NaN" 
+            > (fileOut);
+printf{l in MEASURES_Q} "%i;%.5f;%.5f\n", l, 
+      if l in MEASURECC_Q then estimate_Q[l] else "NaN", if l in MEASURECC_Q then resid_Q[l] else "NaN" 
+            > (fileOut);
+printf{l in MEASURES_V} "%i;%.5f;%.5f\n", l, 
+      if l in MEASURECC_V then estimate_V[l] else "NaN", if l in MEASURECC_V then resid_V[l] else "NaN" 
+            > (fileOut);
 close (fileOut);
-printf "Exportation of se_measure_residuals.csv done.\n";
+printf "Exportation of se_measurements_estimates_and_residuals.csv done.\n";
 
 ########################################
 # Export all the indicators of the run #

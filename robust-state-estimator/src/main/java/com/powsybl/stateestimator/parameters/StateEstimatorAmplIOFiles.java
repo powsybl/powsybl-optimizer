@@ -39,7 +39,7 @@ public class StateEstimatorAmplIOFiles implements AmplParameters {
     NetworkIndicatorsOutput networkIndicatorsOutput;
     StateVectorEstimateOutput stateVectorEstimateOutput;
     NetworkTopologyEstimateOutput networkTopologyEstimateOutput;
-    MeasurementResidualsOutput measurementResidualsOutput;
+    MeasurementEstimatesAndResidualsOutput measurementEstimatesAndResidualsOutput;
     NetworkPowersEstimateOutput networkPowersEstimateOutput;
 
 
@@ -66,7 +66,7 @@ public class StateEstimatorAmplIOFiles implements AmplParameters {
         this.networkIndicatorsOutput = new NetworkIndicatorsOutput();
         this.stateVectorEstimateOutput = new StateVectorEstimateOutput();
         this.networkTopologyEstimateOutput = new NetworkTopologyEstimateOutput();
-        this.measurementResidualsOutput = new MeasurementResidualsOutput();
+        this.measurementEstimatesAndResidualsOutput = new MeasurementEstimatesAndResidualsOutput();
         this.networkPowersEstimateOutput = new NetworkPowersEstimateOutput();
 
         this.debug = debug;
@@ -89,7 +89,7 @@ public class StateEstimatorAmplIOFiles implements AmplParameters {
         if (hasConverged) {
             list.add(stateVectorEstimateOutput);
             list.add(networkTopologyEstimateOutput);
-            list.add(measurementResidualsOutput);
+            list.add(measurementEstimatesAndResidualsOutput);
             list.add(networkPowersEstimateOutput);
         }
         return list;
@@ -113,7 +113,7 @@ public class StateEstimatorAmplIOFiles implements AmplParameters {
         return networkTopologyEstimateOutput;
     }
 
-    public MeasurementResidualsOutput getMeasurementResidualsOutput() {return measurementResidualsOutput;}
+    public MeasurementEstimatesAndResidualsOutput getMeasurementEstimatesAndResidualsOutput() {return measurementEstimatesAndResidualsOutput;}
 
     public NetworkPowersEstimateOutput getNetworkPowersEstimateOutput() {
         return networkPowersEstimateOutput;

@@ -73,7 +73,7 @@ param Znull default 1e-4; # in Ohms
 printf "Parameter: threshold to detect zero impedance branch Znull:=%Q Ohms\n",Znull;
 # always check Znull > 0 and Znull < 0.1;
 
-# Tolerance for power balance of zero-injection buses
+# Tolerance for power balance of zero-injection buses (TODO : use it ?)
 param epsilon_max_power_balance default 1e-4; # in MVA
 printf "Parameter: tolerance on power balance of zero-injection buses epsilon_max_power_balance:=%Q MVA\n",epsilon_max_power_balance;
 
@@ -381,11 +381,12 @@ if (card({(1,qq,m,n) in BRANCH : branch_3wt[1,qq,m,n] != -1}) == 0) then printf 
 
 
 ###############################################################################
-#                   Computing power flows estimate                            #
+#                   Computing power flows estimates                           #
 ###############################################################################
 
-# As a solution (V, theta) has been found, we now compute power flow values based on this solution
-# for ALL branches in the network (not just for branches related to the set of measurements)
+# As a solution (V, theta) has been found, compute power flow values (in SI) based on this solution.
+# Note that this step might be redundant (already done in the optimization process), but we want to make sure
+# that power flows estimates are updated with the solution for ALL branches (not just branches related to the set of measurements)
 
 param act_power_end1{(qq,k,n) in BRANCHCC};
 param act_power_end2{(qq,k,n) in BRANCHCC};
@@ -439,6 +440,33 @@ for{(qq,k,n) in BRANCHCC} {
   );
 }
 
+###############################################################################
+#                   Computing measurements estimates                          #
+###############################################################################
+
+# Compute measurements estimates (in SI) as given by the solution found : z_est = z_given - residual
+
+param estimate_Pf{l in MEASURECC_Pf};
+param estimate_Qf{l in MEASURECC_Qf};
+param estimate_P{l in MEASURECC_P};
+param estimate_Q{l in MEASURECC_Q};
+param estimate_V{l in MEASURECC_V};
+
+for {l in MEASURECC_Pf} {
+  let estimate_Pf[l] := Pf_value[l] - resid_Pf[l];
+}
+for {l in MEASURECC_Qf} {
+  let estimate_Qf[l] := Qf_value[l] - resid_Qf[l];
+}
+for {l in MEASURECC_P} {
+  let estimate_P[l] := P_value[l] - resid_P[l];
+}
+for {l in MEASURECC_Q} {
+  let estimate_Q[l] := Q_value[l] - resid_Q[l];
+}
+for {l in MEASURECC_V} {
+  let estimate_V[l] := V_value[l] - resid_V[l];
+}
 
 ###############################################################################
 #                       Writing results and indicators                        #

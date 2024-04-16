@@ -23,22 +23,23 @@ import java.util.Map;
  * @author Pierre ARVY <pierre.arvy@artelys.com>
  * @author Lucas RIOU <lucas.riou@artelys.com>
  */
-public class MeasurementResidualsOutput extends AbstractStateEstimatorEstimateOutput {
+public class MeasurementEstimatesAndResidualsOutput extends AbstractStateEstimatorEstimateOutput {
 
-    public static final int EXPECTED_NB_COLS = 2;
+    public static final int EXPECTED_NB_COLS = 3;
     private static final String SEP = ";";
     public static final int COL_MEASUREMENT_NUMBER = 0;
-    public static final int COL_RESIDUAL_VALUE = 1;
+    public static final int COL_MEASUREMENT_ESTIMATE = 1;
+    public static final int COL_MEASUREMENT_RESIDUAL = 2;
 
-    private final Map<Integer, String> measurementResiduals = new HashMap<>();
+    private final Map<Integer, ArrayList<String>> measurementEstimatesAndResiduals = new HashMap<>();
 
-    public Map<Integer, String> getMeasurementResiduals() {
-        return measurementResiduals;
+    public Map<Integer, ArrayList<String>> getMeasurementEstimatesAndResiduals() {
+        return measurementEstimatesAndResiduals;
     }
 
     @Override
     public String getFileName() {
-        return "se_measure_residuals.csv";
+        return "se_measurements_estimates_and_residuals.csv";
     }
 
     @Override
@@ -60,8 +61,10 @@ public class MeasurementResidualsOutput extends AbstractStateEstimatorEstimateOu
 
     void readLine(String[] tokens, StringToIntMapper<AmplSubset> amplMapper) {
         Integer measurementNumber = Integer.parseInt(tokens[COL_MEASUREMENT_NUMBER]);
-        String residualValue = tokens[COL_RESIDUAL_VALUE];
-        measurementResiduals.put(measurementNumber, residualValue);
+        ArrayList<String> val = new ArrayList<>();
+        val.add(tokens[COL_MEASUREMENT_ESTIMATE]);
+        val.add(tokens[COL_MEASUREMENT_RESIDUAL]);
+        measurementEstimatesAndResiduals.put(measurementNumber, val);
     }
 
 }

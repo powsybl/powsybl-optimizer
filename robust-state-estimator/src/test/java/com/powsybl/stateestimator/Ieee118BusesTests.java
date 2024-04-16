@@ -53,7 +53,7 @@ public class Ieee118BusesTests {
                 "5percentilePfError(%)", "95percentilePfError(%)",
                 "MeanQfError(%)", "StdQfError(%)", "MedianQfError(%)", "MaxQfError(%)",
                 "5percentileQfError(%)", "95percentileQfError(%)",
-                "NbVMeasures");
+                "NbVMeasures","NbPfMeasures","NbQfMeasures","NbPMeasures","NbQMeasures");
         List<List<String>> data = new ArrayList<>();
 
         Network network = IeeeCdfNetworkFactory.create118();
@@ -69,7 +69,7 @@ public class Ieee118BusesTests {
         LoadFlowResult loadFlowResult = LoadFlow.run(network, parametersLf);
         assertTrue(loadFlowResult.isFullyConverged());
 
-        // All MeasuresToBuses ratios tested
+        // All MeasuresToBuses ratios to be tested
         List<Double> ratiosTested = Arrays.asList(1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0);
 
         for (Double ratioTested : ratiosTested) {
@@ -78,20 +78,24 @@ public class Ieee118BusesTests {
                 StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network);
                 // For IEEE 118 bus, slack is "VL69_0": our state estimator must use the same slack
                 knowledge.setSlack("VL69_0", network);
+
                 // Randomly generate measurements out of load flow results using proper seed and Z to N ratio
                 RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
                         Optional.of(seed), Optional.of(ratioTested),
-                        Optional.of(false), Optional.of(false));
+                        Optional.of(false), Optional.of(true));
+
                 // Define the solving options for the state estimation
                 StateEstimatorOptions options = new StateEstimatorOptions().setSolvingMode(2).setMaxTimeSolving(30);
-                // Run the state estimation and print the results
+                // Run the state estimation and save the results
                 StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
                         knowledge, new StateEstimatorOptions(), new StateEstimatorConfig(true), new LocalComputationManager());
+
                 // Save statistics on the accuracy of the state estimation w.r.t load flow solution
-                List<Double> voltageErrorStats = results.computeVoltageRelativeErrorStats(network);
-                List<Double> angleErrorStats = results.computeAngleDegreeErrorStats(network);
-                List<Double> PfErrorStats = results.computeActivePowerFlowsRelativeErrorsStats(network);
-                List<Double> QfErrorStats = results.computeReactivePowerFlowsRelativeErrorsStats(network);
+                StateEstimatorEvaluator evaluator = new StateEstimatorEvaluator(network, knowledge, results);
+                List<Double> voltageErrorStats = evaluator.computeVoltageRelativeErrorStats();
+                List<Double> angleErrorStats = evaluator.computeAngleDegreeErrorStats();
+                List<Double> PfErrorStats = evaluator.computeActivePowerFlowsRelativeErrorsStats();
+                List<Double> QfErrorStats = evaluator.computeReactivePowerFlowsRelativeErrorsStats();
                 data.add(List.of(String.valueOf(ratioTested), String.valueOf(seed),
                         String.valueOf(voltageErrorStats.get(0)), String.valueOf(voltageErrorStats.get(1)),
                         String.valueOf(voltageErrorStats.get(2)), String.valueOf(voltageErrorStats.get(3)),
@@ -105,12 +109,17 @@ public class Ieee118BusesTests {
                         String.valueOf(QfErrorStats.get(0)), String.valueOf(QfErrorStats.get(1)),
                         String.valueOf(QfErrorStats.get(2)), String.valueOf(QfErrorStats.get(3)),
                         String.valueOf(QfErrorStats.get(4)), String.valueOf(QfErrorStats.get(5)),
-                        String.valueOf(knowledge.getVoltageMagnitudeMeasures().size())));
+                        String.valueOf(knowledge.getVoltageMagnitudeMeasures().size()),
+                        String.valueOf(knowledge.getActivePowerFlowMeasures().size()),
+                        String.valueOf(knowledge.getReactivePowerFlowMeasures().size()),
+                        String.valueOf(knowledge.getActivePowerInjectedMeasures().size()),
+                        String.valueOf(knowledge.getReactivePowerInjectedMeasures().size())
+                        )); // String.valueOf(evaluator.computePerformanceIndex())
             }
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("ZtoNratio_test_IEEE118_v2.csv");
+        try (FileWriter fileWriter = new FileWriter("ZtoNratioWithNoise_test_IEEE118.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 

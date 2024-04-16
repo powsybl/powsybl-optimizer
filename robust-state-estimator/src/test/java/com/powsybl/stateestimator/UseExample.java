@@ -65,7 +65,7 @@ public class UseExample {
         // Randomly generate measurements (useful for test cases) out of load flow results
         //RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, Optional.empty(), Optional.empty(), Optional.empty());
         RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
-                Optional.of(4), Optional.of(4.0),
+                Optional.of(42), Optional.of(4.0),
                 Optional.of(false), Optional.of(true));
 
         // We can also add by hand our measurements, and complete them with generated measurements until observability is ensured
@@ -95,19 +95,23 @@ public class UseExample {
                 knowledge, new StateEstimatorOptions(), new StateEstimatorConfig(true), new LocalComputationManager());
         results.printAllResultsSi(network);
 
-        // Print measurements along with residuals
-        results.printResidualsSi(knowledge);
+        // Print measurement estimates along with residuals for all measures
+        results.printAllMeasurementEstimatesAndResidualsSi(knowledge);
+
+        // In our testing cases, as we know the true values, we can build a StateEstimatorEvaluator
+        // to compute statistics on the errors made by the State Estimation
+        StateEstimatorEvaluator evaluator = new StateEstimatorEvaluator(network, knowledge, results);
 
         // Print some indicators on the accuracy of the state estimation w.r.t load flow solution
-        List<Double> voltageErrorStats = results.computeVoltageRelativeErrorStats(network);
-        List<Double> angleErrorStats = results.computeAngleDegreeErrorStats(network);
-        List<Double> activePowerFlowErrorStats = results.computeActivePowerFlowsRelativeErrorsStats(network);
-        List<Double> reactivePowerFlowErrorStats = results.computeReactivePowerFlowsRelativeErrorsStats(network);
+        List<Double> voltageErrorStats = evaluator.computeVoltageRelativeErrorStats();
+        List<Double> angleErrorStats = evaluator.computeAngleDegreeErrorStats();
+        List<Double> activePowerFlowErrorStats = evaluator.computeActivePowerFlowsRelativeErrorsStats();
+        List<Double> reactivePowerFlowErrorStats = evaluator.computeReactivePowerFlowsRelativeErrorsStats();
         System.out.printf("%nMedian voltage relative error : %f %% %n", voltageErrorStats.get(2));
         System.out.printf("%nMedian angle absolute error : %f degrees %n", angleErrorStats.get(2));
         System.out.printf("%nMedian active power flow relative error : %f %% %n", activePowerFlowErrorStats.get(2));
         System.out.printf("%nMedian reactive power flow relative error : %f %% %n", reactivePowerFlowErrorStats.get(2));
         System.out.printf("%nNumber of voltage magnitude measurements : %d%n", knowledge.getVoltageMagnitudeMeasures().size());
-
+        //System.out.println(evaluator.computePerformanceIndex()); // Only if noise added to measures
     }
 }

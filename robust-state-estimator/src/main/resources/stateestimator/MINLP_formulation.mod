@@ -74,9 +74,9 @@ subject to ctrl_zero_injection_buses_act_power{PROBLEM_SE,
       + sum{(qq,m,k) in BRANCH_WITH_SIDE_1_OPENED : k == a}
       y[qq,m,k] * act_power_bus1_opened[qq,m,k]
       )
-      <= epsilon_max_power_balance; 
+      = 0; # <= epsilon_max_power_balance;
 
-subject to ctrl_zero_injection_buses_rea_power{PROBLEM_SE, 
+        subject to ctrl_zero_injection_buses_rea_power{PROBLEM_SE,
   (a,b) in BUSCC cross BUS_ZERO_INJECTION : bus_id[1,a] == bus_zero_injection_id[b]}:
       abs(
       # Flows on branches
@@ -90,7 +90,7 @@ subject to ctrl_zero_injection_buses_rea_power{PROBLEM_SE,
       + sum{(qq,m,k) in BRANCH_WITH_SIDE_1_OPENED : k == a}
       y[qq,m,k] * rea_power_bus1_opened[qq,m,k]
       )
-      <= epsilon_max_power_balance; 
+      = 0; # <= epsilon_max_power_balance;
 
 ###########################################################
 #                                                         #

@@ -26,20 +26,21 @@ public class ActivePowerInjectedMeasures implements AmplInputFile {
 
     Map<Integer, ArrayList<String>> measures;
 
-    Map<Integer, ArrayList<String>> measuresWithResiduals;
+    Map<Integer, ArrayList<String>> measuresWithEstimatesAndResiduals;
 
     public ActivePowerInjectedMeasures(Map<Integer, ArrayList<String>> measures) {
         this.measures = measures;
     }
 
-    public ActivePowerInjectedMeasures(Map<Integer, ArrayList<String>> measures, Map<Integer, String> allResiduals) {
-        this.measuresWithResiduals = new HashMap<>();
+    public ActivePowerInjectedMeasures(Map<Integer, ArrayList<String>> measures, Map<Integer, ArrayList<String>> estimatesAndResiduals) {
+        this.measuresWithEstimatesAndResiduals = new HashMap<>();
         for (Integer measurementNumber : measures.keySet()) {
-            for (Integer residualNumber : allResiduals.keySet()) {
+            for (Integer residualNumber : estimatesAndResiduals.keySet()) {
                 if (residualNumber.equals(measurementNumber)) {
-                    ArrayList<String> measureWithResidual = new ArrayList<>(measures.get(measurementNumber));
-                    measureWithResidual.add(allResiduals.get(residualNumber));
-                    this.measuresWithResiduals.put(measurementNumber, measureWithResidual);
+                    ArrayList<String> measureWithEstimateAndResidual = new ArrayList<>(measures.get(measurementNumber));
+                    measureWithEstimateAndResidual.add(estimatesAndResiduals.get(residualNumber).get(0));
+                    measureWithEstimateAndResidual.add(estimatesAndResiduals.get(residualNumber).get(1));
+                    this.measuresWithEstimatesAndResiduals.put(measurementNumber, measureWithEstimateAndResidual);
                 }
             }
         }
@@ -89,15 +90,15 @@ public class ActivePowerInjectedMeasures implements AmplInputFile {
         System.out.println();
     }
 
-    public void printWithResiduals() {
+    public void printWithEstimatesAndResiduals() {
         System.out.println("Printing active power injected measurements : ");
         // Print the table header
-        System.out.format("%n%-15s%-15s%-15s%-20s%-15s%n", "Type", "BusID", "Value (MW)", "Variance (MW^2)", "Residual (MW)");
-        System.out.format("%-15s%-15s%-15s%-20s%-15s%n",   "----", "-----", "----------", "---------------", "-------------");
+        System.out.format("%n%-15s%-15s%-15s%-20s%-15s%-15s%n", "Type", "BusID", "Value (MW)", "Variance (MW^2)", "Estimate (MW)", "Residual (MW)");
+        System.out.format("%-15s%-15s%-15s%-20s%-15s%-15s%n",   "----", "-----", "----------", "---------------", "-------------", "-------------");
         // Print each measurement
-        for (var measureWithResidual : measuresWithResiduals.entrySet()) {
-            System.out.format("%-15s%-15s%-15s%-20s%-15s%n",
-                    measureWithResidual.getValue().stream().map(
+        for (var measureWithEstimateAndResidual : measuresWithEstimatesAndResiduals.entrySet()) {
+            System.out.format("%-15s%-15s%-15s%-20s%-15s%-15s%n",
+                    measureWithEstimateAndResidual.getValue().stream().map(
                             String -> {
                                 if (String.length() <= 12) {
                                     return String;
@@ -107,5 +108,9 @@ public class ActivePowerInjectedMeasures implements AmplInputFile {
                             }).toArray());
         }
         System.out.println();
+    }
+
+    public Map<Integer, ArrayList<String>> getMeasuresWithEstimatesAndResiduals() {
+        return measuresWithEstimatesAndResiduals;
     }
 }

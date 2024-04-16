@@ -53,7 +53,7 @@ param Pf_secondbus {l in MEASURES_Pf} symbolic;
 
 set MEASURES_Qf dimen 1;
 param Qf_type             {MEASURES_Qf} symbolic;
-param Qf_branch_id        {MEASURES_Qf} symbolic; # branch (m,n) number for which Qf is measured
+param Qf_branch_id        {MEASURES_Qf} symbolic; # branch (m,n) ID for which Qf is measured
 param Qf_firstbus_id      {MEASURES_Qf} symbolic; # first bus m
 param Qf_secondbus_id     {MEASURES_Qf} symbolic; # second bus n
 param Qf_value            {MEASURES_Qf}; 
