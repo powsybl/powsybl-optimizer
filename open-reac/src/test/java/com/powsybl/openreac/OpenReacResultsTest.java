@@ -1,6 +1,6 @@
 package com.powsybl.openreac;
 
-import com.powsybl.commons.report.ReportNode;
+import com.powsybl.commons.reporter.Reporter;
 import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
 import com.powsybl.iidm.modification.ShuntCompensatorModification;
 import com.powsybl.iidm.modification.tapchanger.RatioTapPositionModification;
@@ -108,7 +108,7 @@ class OpenReacResultsTest {
     }
 
     private OpenReacAmplIOFiles getIOWithMockVoltageProfile(Network network) throws IOException {
-        OpenReacAmplIOFiles io = new OpenReacAmplIOFiles(new OpenReacParameters(), null, network, true, ReportNode.NO_OP);
+        OpenReacAmplIOFiles io = new OpenReacAmplIOFiles(new OpenReacParameters(), network, true, Reporter.NO_OP);
         try (InputStream input = getClass().getResourceAsStream("/mock_outputs/reactiveopf_results_voltages.csv");
              InputStreamReader in = new InputStreamReader(input);
              BufferedReader reader = new BufferedReader(in)) {
