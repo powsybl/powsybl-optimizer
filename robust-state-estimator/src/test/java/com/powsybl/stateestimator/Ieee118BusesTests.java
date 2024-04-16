@@ -73,7 +73,13 @@ public class Ieee118BusesTests {
         List<Double> ratiosTested = Arrays.asList(1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0);
 
         for (Double ratioTested : ratiosTested) {
+
+            System.out.println(ratioTested);
+
             for (int seed = 0; seed < 100; seed++) {
+
+                System.out.println(seed);
+
                 // Create "knowledge" instance
                 StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network);
                 // For IEEE 118 bus, slack is "VL69_0": our state estimator must use the same slack
