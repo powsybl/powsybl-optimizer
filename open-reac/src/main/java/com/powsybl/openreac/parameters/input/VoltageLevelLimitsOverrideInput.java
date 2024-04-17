@@ -33,6 +33,7 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
     private final Map<String, Pair<Double, Double>> normalizedVoltageLimitsOverride;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(VoltageLevelLimitsOverrideInput.class);
+    private static final String OVERRIDE_ON_VOLTAGE_LEVEL = "Override on voltage level ";
 
     public VoltageLevelLimitsOverrideInput(List<VoltageLimitOverride> voltageLimitsOverrides, Network network) {
         Objects.requireNonNull(voltageLimitsOverrides);
@@ -67,7 +68,7 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
             }
 
             if (newLimits.getFirst() >= newLimits.getSecond()) {
-                throw new InvalidParametersException("Override on voltage level " + voltageLevelId + " leads to low voltage limit >= high voltage limit.");
+                throw new InvalidParametersException(OVERRIDE_ON_VOLTAGE_LEVEL + voltageLevelId + " leads to low voltage limit >= high voltage limit.");
             }
             if (newLimits.getFirst() < 0.5) {
                 LOGGER.warn("Voltage level {} has a low voltage limit lower than 0.5 PU ({} PU)", voltageLevelId, newLimits.getFirst());
@@ -81,10 +82,10 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
         for (Map.Entry<String, Pair<Double, Double>> entry : normalizedVoltageLimitsOverride.entrySet()) {
             String voltageLevelId = entry.getKey();
             if (entry.getValue().getFirst() > 1.) {
-                throw new InvalidParametersException("Override on voltage level " + voltageLevelId + " leads to low voltage limit > nominal voltage.");
+                throw new InvalidParametersException(OVERRIDE_ON_VOLTAGE_LEVEL + voltageLevelId + " leads to low voltage limit > nominal voltage.");
             }
             if (entry.getValue().getSecond() < 1.) {
-                throw new InvalidParametersException("Override on voltage level " + voltageLevelId + " leads to high voltage limit < nominal voltage.");
+                throw new InvalidParametersException(OVERRIDE_ON_VOLTAGE_LEVEL + voltageLevelId + " leads to high voltage limit < nominal voltage.");
             }
         }
     }
