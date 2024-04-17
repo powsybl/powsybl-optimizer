@@ -15,4 +15,8 @@ defaultPmin 0.0
 defaultPmax 1000.0
 defaultQmaxPmaxRatio 0.3
 minimalQPrange 1.0
+default_variable_scaling_factor 1.0
+default_constraint_scaling_factor 1.0
+reactive_slack_variable_scaling_factor 0.1
+transformer_ratio_variable_scaling_factor 0.001
 

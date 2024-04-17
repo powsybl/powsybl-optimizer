@@ -40,53 +40,54 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
     public OpenReacParameters deserialize(JsonParser parser, DeserializationContext deserializationContext, OpenReacParameters parameters) throws IOException {
         while (parser.nextToken() != JsonToken.END_OBJECT) {
             switch (parser.getCurrentName()) {
-                case "version":
-                    break;
-                case "specificVoltageLimits":
+                case "version" -> {
+                    // nothing to do
+                }
+                case "specificVoltageLimits" -> {
                     parser.nextToken();
                     parameters.addSpecificVoltageLimits(parser.readValueAs(new TypeReference<List<VoltageLimitOverride>>() { }));
-                    break;
-                case "variableShuntCompensators":
+                }
+                case "variableShuntCompensators" -> {
                     parser.nextToken();
                     parameters.addVariableShuntCompensators(parser.readValueAs(new TypeReference<List<String>>() { }));
-                    break;
-                case "constantQGenerators":
+                }
+                case "constantQGenerators" -> {
                     parser.nextToken();
                     parameters.addConstantQGenerators(parser.readValueAs(new TypeReference<List<String>>() { }));
-                    break;
-                case "variableTwoWindingsTransformers":
+                }
+                case "variableTwoWindingsTransformers" -> {
                     parser.nextToken();
                     parameters.addVariableTwoWindingsTransformers(parser.readValueAs(new TypeReference<List<String>>() { }));
-                    break;
-                case "configuredReactiveSlackBuses":
+                }
+                case "configuredReactiveSlackBuses" -> {
                     parser.nextToken();
                     parameters.addConfiguredReactiveSlackBuses(parser.readValueAs(new TypeReference<List<String>>() { }));
-                    break;
-                case "objective":
+                }
+                case "objective" -> {
                     parser.nextToken();
                     parameters.setObjective(OpenReacOptimisationObjective.valueOf(parser.getText()));
-                    break;
-                case "objectiveDistance":
+                }
+                case "objectiveDistance" -> {
                     parser.nextToken();
                     parameters.setObjectiveDistance(parser.getValueAsDouble());
-                    break;
-                case "logLevelAmpl":
+                }
+                case "logLevelAmpl" -> {
                     parser.nextToken();
                     parameters.setLogLevelAmpl(OpenReacAmplLogLevel.valueOf(parser.getText()));
-                    break;
-                case "logLevelSolver":
+                }
+                case "logLevelSolver" -> {
                     parser.nextToken();
                     parameters.setLogLevelSolver(OpenReacSolverLogLevel.valueOf(parser.getText()));
-                    break;
-                case "minPlausibleLowVoltageLimit":
+                }
+                case "minPlausibleLowVoltageLimit" -> {
                     parser.nextToken();
                     parameters.setMinPlausibleLowVoltageLimit(parser.readValueAs(Double.class));
-                    break;
-                case "maxPlausibleHighVoltageLimit":
+                }
+                case "maxPlausibleHighVoltageLimit" -> {
                     parser.nextToken();
                     parameters.setMaxPlausibleHighVoltageLimit(parser.readValueAs(Double.class));
-                    break;
-                case "reactiveSlackBusesMode":
+                }
+                case "reactiveSlackBusesMode" -> {
                     parser.nextToken();
                     parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.valueOf(parser.getText()));
                     break;
@@ -132,6 +133,24 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                     break;
                 default:
                     throw new IllegalStateException("Unexpected field: " + parser.getCurrentName());
+                }
+                case "defaultVariableScalingFactor" -> {
+                    parser.nextToken();
+                    parameters.setDefaultVariableScalingFactor(parser.readValueAs(Double.class));
+                }
+                case "defaultConstraintScalingFactor" -> {
+                    parser.nextToken();
+                    parameters.setDefaultConstraintScalingFactor(parser.readValueAs(Double.class));
+                }
+                case "reactiveSlackVariableScalingFactor" -> {
+                    parser.nextToken();
+                    parameters.setReactiveSlackVariableScalingFactor(parser.readValueAs(Double.class));
+                }
+                case "twoWindingTransformerRatioVariableScalingFactor" -> {
+                    parser.nextToken();
+                    parameters.setTwoWindingTransformerRatioVariableScalingFactor(parser.readValueAs(Double.class));
+                }
+                default -> throw new IllegalStateException("Unexpected field: " + parser.getCurrentName());
             }
         }
 

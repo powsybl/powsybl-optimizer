@@ -114,7 +114,11 @@ class OpenReacRunnerTest {
                 .setLowActivePowerDefaultLimit(12.32)
                 .setHighActivePowerDefaultLimit(1452.66)
                 .setDefaultQmaxPmaxRatio(0.24)
-                .setDefaultMinimalQPRange(2.);
+                .setDefaultMinimalQPRange(2.)
+                .setDefaultVariableScalingFactor(1.1222)
+                .setDefaultConstraintScalingFactor(0.7889)
+                .setReactiveSlackVariableScalingFactor(0.2)
+                .setTwoWindingTransformerRatioVariableScalingFactor(0.0045);
 
         LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
                 List.of("empty_case/reactiveopf_results_indic.txt"));
@@ -224,7 +228,7 @@ class OpenReacRunnerTest {
             assertEquals(1, openReacResult.getVscModifications().size());
             assertEquals(7, openReacResult.getGeneratorModifications().size());
             assertEquals(3, openReacResult.getVoltageProfile().size());
-            assertEquals(82, openReacResult.getIndicators().size());
+            assertEquals(86, openReacResult.getIndicators().size());
             assertTrue(openReacResult.getReactiveSlacks().isEmpty());
         }
     }

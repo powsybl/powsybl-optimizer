@@ -53,6 +53,10 @@ class OpenReacJsonModuleTest {
         parameters.setMinPlausibleLowVoltageLimit(0.755);
         parameters.setMaxPlausibleHighVoltageLimit(1.236);
         parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.CONFIGURED);
+        parameters.setDefaultVariableScalingFactor(0.756);
+        parameters.setDefaultConstraintScalingFactor(0.888);
+        parameters.setReactiveSlackVariableScalingFactor(1e-2);
+        parameters.setTwoWindingTransformerRatioVariableScalingFactor(0.005);
         parameters.addConfiguredReactiveSlackBuses(List.of("bus1", "bus2"));
         parameters.setAlphaCoefficient(0.56);
         parameters.setMinPlausibleActivePowerThreshold(0.5);
@@ -98,5 +102,9 @@ class OpenReacJsonModuleTest {
         assertEquals(1144., parameters2.getHighActivePowerDefaultLimit());
         assertEquals(0.4, parameters2.getDefaultQmaxPmaxRatio());
         assertEquals(1.1, parameters2.getDefaultMinimalQPRange());
+        assertEquals(0.756, parameters2.getDefaultVariableScalingFactor());
+        assertEquals(0.888, parameters2.getDefaultConstraintScalingFactor());
+        assertEquals(1e-2, parameters2.getReactiveSlackVariableScalingFactor());
+        assertEquals(0.005, parameters2.getTwoWindingTransformerRatioVariableScalingFactor());
     }
 }

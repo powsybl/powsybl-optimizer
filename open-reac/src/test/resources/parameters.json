@@ -41,5 +41,9 @@
   "lowActivePowerDefaultLimit" : 99.2,
   "highActivePowerDefaultLimit" : 1144.0,
   "defaultQmaxPmaxRatio" : 0.4,
-  "defaultMinimalQPRange" : 1.1
+  "defaultMinimalQPRange" : 1.1,
+  "defaultVariableScalingFactor" : 0.756,
+  "defaultConstraintScalingFactor" : 0.888,
+  "reactiveSlackVariableScalingFactor" : 0.01,
+  "twoWindingTransformerRatioVariableScalingFactor" : 0.005
 }
