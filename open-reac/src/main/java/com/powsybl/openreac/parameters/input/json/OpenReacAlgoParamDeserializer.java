@@ -30,15 +30,16 @@ public class OpenReacAlgoParamDeserializer extends StdDeserializer<OpenReacAlgoP
         String value = null;
         while (parser.nextToken() != JsonToken.END_OBJECT) {
             switch (parser.getCurrentName()) {
-                case "name" -> {
+                case "name":
                     parser.nextToken();
                     name = parser.getText();
-                }
-                case "value" -> {
+                    break;
+                case "value":
                     parser.nextToken();
                     value = parser.getText();
-                }
-                default -> throw new IllegalStateException("Unexpected field: " + parser.getCurrentName());
+                    break;
+                default:
+                    throw new IllegalStateException("Unexpected field: " + parser.getCurrentName());
             }
         }
         return new OpenReacAlgoParamImpl(name, value);
