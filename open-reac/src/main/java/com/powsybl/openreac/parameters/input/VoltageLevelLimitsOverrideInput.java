@@ -77,6 +77,16 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
             }
             normalizedVoltageLimitsOverride.put(voltageLevelId, newLimits);
         }
+
+        for (Map.Entry<String, Pair<Double, Double>> entry : normalizedVoltageLimitsOverride.entrySet()) {
+            String voltageLevelId = entry.getKey();
+            if (entry.getValue().getFirst() > 1.) {
+                throw new InvalidParametersException("Override on voltage level " + voltageLevelId + " leads to low voltage limit > nominal voltage.");
+            }
+            if (entry.getValue().getSecond() < 1.) {
+                throw new InvalidParametersException("Override on voltage level " + voltageLevelId + " leads to high voltage limit < nominal voltage.");
+            }
+        }
     }
 
     @Override
