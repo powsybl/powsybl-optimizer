@@ -326,7 +326,7 @@ public class OpenReacParametersTest {
         parameters.setTwoWindingTransformerRatioVariableScalingFactor(0.0001);
 
         List<OpenReacAlgoParam> algoParams = parameters.getAllAlgorithmParams();
-        assertEquals(17, algoParams.size());
+        assertEquals(21, algoParams.size());
         assertEquals("2", algoParams.get(0).getValue());
         assertEquals("0.4", algoParams.get(1).getValue());
         assertEquals("DEBUG", algoParams.get(2).getValue());
@@ -344,10 +344,10 @@ public class OpenReacParametersTest {
         assertEquals("1144.0", algoParams.get(14).getValue());
         assertEquals("0.4", algoParams.get(15).getValue());
         assertEquals("1.1", algoParams.get(16).getValue());
-        assertEquals("0.5", algoParams.get(7).getValue());
-        assertEquals("0.75", algoParams.get(8).getValue());
-        assertEquals("0.01", algoParams.get(9).getValue());
-        assertEquals("1.0E-4", algoParams.get(10).getValue());
+        assertEquals("0.5", algoParams.get(17).getValue());
+        assertEquals("0.75", algoParams.get(18).getValue());
+        assertEquals("0.01", algoParams.get(19).getValue());
+        assertEquals("1.0E-4", algoParams.get(20).getValue());
     }
 
     @Test
@@ -384,6 +384,7 @@ public class OpenReacParametersTest {
         assertEquals(1000., parameters.getHighActivePowerDefaultLimit());
         assertEquals(0.3, parameters.getDefaultQmaxPmaxRatio());
         assertEquals(1., parameters.getDefaultMinimalQPRange());
+        // TODO : add cases for scaling values
         assertTrue(parameters.checkAlgorithmParametersIntegrity());
     }
 
@@ -396,7 +397,7 @@ public class OpenReacParametersTest {
         assertEquals(0, parameters.getConstantQGenerators().size(), "ConstantQGenerators should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getVariableShuntCompensators().size(), "VariableShuntCompensators should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getConfiguredReactiveSlackBuses().size(), "ConfiguredReactiveSlackBuses should be empty when using default OpenREacParameter constructor.");
-        assertEquals(16, parameters.getAllAlgorithmParams().size());
+        assertEquals(20, parameters.getAllAlgorithmParams().size());
     }
 
     @Test

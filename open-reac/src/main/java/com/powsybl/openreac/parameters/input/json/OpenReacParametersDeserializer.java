@@ -90,49 +90,46 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                 case "reactiveSlackBusesMode" -> {
                     parser.nextToken();
                     parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.valueOf(parser.getText()));
-                    break;
-                case "alphaCoefficient":
+                }
+                case "alphaCoefficient" -> {
                     parser.nextToken();
                     parameters.setAlphaCoefficient(parser.getValueAsDouble());
-                    break;
-                case "minPlausibleActivePowerThreshold":
+                }
+                case "minPlausibleActivePowerThreshold" -> {
                     parser.nextToken();
                     parameters.setMinPlausibleActivePowerThreshold(parser.getValueAsDouble());
-                    break;
-                case "lowImpedanceThreshold":
+                }
+                case "lowImpedanceThreshold" -> {
                     parser.nextToken();
                     parameters.setLowImpedanceThreshold(parser.getValueAsDouble());
-                    break;
-                case "minNominalVoltageIgnoredBus":
+                }
+                case "minNominalVoltageIgnoredBus" -> {
                     parser.nextToken();
                     parameters.setMinNominalVoltageIgnoredBus(parser.getValueAsDouble());
-                    break;
-                case "minNominalVoltageIgnoredVoltageBounds":
+                }
+                case "minNominalVoltageIgnoredVoltageBounds" -> {
                     parser.nextToken();
                     parameters.setMinNominalVoltageIgnoredVoltageBounds(parser.getValueAsDouble());
-                    break;
-                case "maxPlausiblePowerLimit":
+                }
+                case "maxPlausiblePowerLimit" -> {
                     parser.nextToken();
                     parameters.setPQMax(parser.getValueAsDouble());
-                    break;
-                case "lowActivePowerDefaultLimit":
+                }
+                case "lowActivePowerDefaultLimit" -> {
                     parser.nextToken();
                     parameters.setLowActivePowerDefaultLimit(parser.getValueAsDouble());
-                    break;
-                case "highActivePowerDefaultLimit":
+                }
+                case "highActivePowerDefaultLimit" -> {
                     parser.nextToken();
                     parameters.setHighActivePowerDefaultLimit(parser.getValueAsDouble());
-                    break;
-                case "defaultQmaxPmaxRatio":
+                }
+                case "defaultQmaxPmaxRatio" -> {
                     parser.nextToken();
                     parameters.setDefaultQmaxPmaxRatio(parser.getValueAsDouble());
-                    break;
-                case "defaultMinimalQPRange":
+                }
+                case "defaultMinimalQPRange" -> {
                     parser.nextToken();
                     parameters.setDefaultMinimalQPRange(parser.getValueAsDouble());
-                    break;
-                default:
-                    throw new IllegalStateException("Unexpected field: " + parser.getCurrentName());
                 }
                 case "defaultVariableScalingFactor" -> {
                     parser.nextToken();

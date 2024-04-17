@@ -403,6 +403,48 @@ public class OpenReacParameters {
      */
     public double getLowActivePowerDefaultLimit() {
         return lowActivePowerDefaultLimit;
+    }
+
+    public OpenReacParameters setLowActivePowerDefaultLimit(double lowActivePowerDefaultLimit) {
+        if (Double.isNaN(lowActivePowerDefaultLimit) || lowActivePowerDefaultLimit < 0) {
+            throw new IllegalArgumentException("Default P min value must be defined and >= 0 to be consistent.");
+        }
+        this.lowActivePowerDefaultLimit = lowActivePowerDefaultLimit;
+        return this;
+    }
+
+    /**
+     * @return the ratio used to calculate threshold for corrections of high/low reactive power limits.
+     */
+    public double getDefaultQmaxPmaxRatio() {
+        return defaultQmaxPmaxRatio;
+    }
+
+    public OpenReacParameters setDefaultQmaxPmaxRatio(double defaultQmaxPmaxRatio) {
+        // Qmin/Qmax are computed with this value in OpenReac, can not be zero
+        if (Double.isNaN(defaultQmaxPmaxRatio) || defaultQmaxPmaxRatio <= 0) {
+            throw new IllegalArgumentException("Default Qmax and Pmax ratio must be defined and > 0 to be consistent.");
+        }
+        this.defaultQmaxPmaxRatio = defaultQmaxPmaxRatio;
+        return this;
+    }
+
+    /**
+     * @return the threshold to fix active (resp. reactive) power of generators with
+     * active (resp. reactive) power limits that are closer than it.
+     */
+    public double getDefaultMinimalQPRange() {
+        return defaultMinimalQPRange;
+    }
+
+    public OpenReacParameters setDefaultMinimalQPRange(double defaultMinimalQPRange) {
+        if (Double.isNaN(defaultMinimalQPRange) || defaultMinimalQPRange < 0) {
+            throw new IllegalArgumentException("Default minimal QP range must be defined and >= 0 to be consistent.");
+        }
+        this.defaultMinimalQPRange = defaultMinimalQPRange;
+        return this;
+    }
+
     /**
      * @return the default scaling value of all the variables in ACOPF solving.
      */
@@ -460,50 +502,6 @@ public class OpenReacParameters {
             throw new IllegalArgumentException("Scaling factor for transformer ratio variables must be > 0 and defined to be consistent.");
         }
         this.twoWindingTransformerRatioVariableScalingFactor = twoWindingTransformerRatioVariableScalingFactor;
-        return this;
-    }
-
-    public List<String> getVariableShuntCompensators() {
-        return variableShuntCompensators;
-    }
-
-    public OpenReacParameters setLowActivePowerDefaultLimit(double lowActivePowerDefaultLimit) {
-        if (Double.isNaN(lowActivePowerDefaultLimit) || lowActivePowerDefaultLimit < 0) {
-            throw new IllegalArgumentException("Default P min value must be defined and >= 0 to be consistent.");
-        }
-        this.lowActivePowerDefaultLimit = lowActivePowerDefaultLimit;
-        return this;
-    }
-
-    /**
-     * @return the ratio used to calculate threshold for corrections of high/low reactive power limits.
-     */
-    public double getDefaultQmaxPmaxRatio() {
-        return defaultQmaxPmaxRatio;
-    }
-
-    public OpenReacParameters setDefaultQmaxPmaxRatio(double defaultQmaxPmaxRatio) {
-        // Qmin/Qmax are computed with this value in OpenReac, can not be zero
-        if (Double.isNaN(defaultQmaxPmaxRatio) || defaultQmaxPmaxRatio <= 0) {
-            throw new IllegalArgumentException("Default Qmax and Pmax ratio must be defined and > 0 to be consistent.");
-        }
-        this.defaultQmaxPmaxRatio = defaultQmaxPmaxRatio;
-        return this;
-    }
-
-    /**
-     * @return the threshold to fix active (resp. reactive) power of generators with
-     * active (resp. reactive) power limits that are closer than it.
-     */
-    public double getDefaultMinimalQPRange() {
-        return defaultMinimalQPRange;
-    }
-
-    public OpenReacParameters setDefaultMinimalQPRange(double defaultMinimalQPRange) {
-        if (Double.isNaN(defaultMinimalQPRange) || defaultMinimalQPRange < 0) {
-            throw new IllegalArgumentException("Default minimal QP range must be defined and >= 0 to be consistent.");
-        }
-        this.defaultMinimalQPRange = defaultMinimalQPRange;
         return this;
     }
 
