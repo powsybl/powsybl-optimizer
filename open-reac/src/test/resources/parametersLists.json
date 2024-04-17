@@ -1,0 +1,48 @@
+{
+  "version" : "1.0",
+  "specificVoltageLimits" : [ {
+    "voltageLevelId" : "foo",
+    "voltageLimitType" : "LOW_VOLTAGE_LIMIT",
+    "isRelative" : true,
+    "value" : -1.0
+  }, {
+    "voltageLevelId" : "foo",
+    "voltageLimitType" : "HIGH_VOLTAGE_LIMIT",
+    "isRelative" : true,
+    "value" : 2.0
+  }, {
+    "voltageLevelId" : "bar",
+    "voltageLimitType" : "LOW_VOLTAGE_LIMIT",
+    "isRelative" : false,
+    "value" : 20.0
+  }, {
+    "voltageLevelId" : "bar",
+    "voltageLimitType" : "HIGH_VOLTAGE_LIMIT",
+    "isRelative" : false,
+    "value" : 26.0
+  } ],
+  "constantQGenerators" : [ "g1", "g2" ],
+  "variableTwoWindingsTransformers" : [ "tr1" ],
+  "variableShuntCompensators" : [ "sc1", "sc2" ],
+  "configuredReactiveSlackBuses" : [ "bus1", "bus2" ],
+  "objective" : "MIN_GENERATION",
+  "logLevelAmpl" : "INFO",
+  "logLevelSolver" : "EVERYTHING",
+  "minPlausibleLowVoltageLimit" : 0.5,
+  "maxPlausibleHighVoltageLimit" : 1.5,
+  "reactiveSlackBusesMode" : "CONFIGURED",
+  "alphaCoefficient" : 1.0,
+  "minPlausibleActivePowerThreshold" : 0.01,
+  "lowImpedanceThreshold" : 1.0E-4,
+  "minNominalVoltageIgnoredBus" : 1.0,
+  "minNominalVoltageIgnoredVoltageBounds" : 0.0,
+  "maxPlausiblePowerLimit" : 9000.0,
+  "lowActivePowerDefaultLimit" : 0.0,
+  "highActivePowerDefaultLimit" : 1000.0,
+  "defaultQmaxPmaxRatio" : 0.3,
+  "defaultMinimalQPRange" : 1.0,
+  "defaultVariableScalingFactor" : 1.0,
+  "defaultConstraintScalingFactor" : 1.0,
+  "reactiveSlackVariableScalingFactor" : 0.1,
+  "twoWindingTransformerRatioVariableScalingFactor" : 0.001
+}
