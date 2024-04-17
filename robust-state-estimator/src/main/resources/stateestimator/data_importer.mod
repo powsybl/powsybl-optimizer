@@ -513,9 +513,7 @@ check {(t,qq,m,n) in BRANCH}: (t,branch_ptrDeph[t,qq,m,n]) in DEPH union {(1,-1)
 set TEST_UNIQUENESS_BRANCH := setof{(1,qq,m,n) in BRANCH} branch_id[1,qq,m,n];
 check card(BRANCH) == card(TEST_UNIQUENESS_BRANCH);
 
-# Compute admittances
-#param branch_G {(t,qq,m,n) in BRANCH} = +branch_R[t,qq,m,n]/(branch_R[t,qq,m,n]^2+branch_X[t,qq,m,n]^2);
-#param branch_B {(t,qq,m,n) in BRANCH} = -branch_X[t,qq,m,n]/(branch_R[t,qq,m,n]^2+branch_X[t,qq,m,n]^2);
+# 
 
 ###############################################################################
 #                        ADDITIONAL KNOWLEDGE                                 #

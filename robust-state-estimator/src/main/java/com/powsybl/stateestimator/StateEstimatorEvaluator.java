@@ -114,17 +114,27 @@ public class StateEstimatorEvaluator {
             BranchPowersEstimate branchPowersEstimate = this.results.getBranchPowersEstimate(branch.getId());
 
             // Extra step, to make sure that (end1,end2) of the branch coincides between the network and the estimates data (although estimates are based on AMPL export, which respect how branches' ends are indicated in "network")
-            if (!branchPowersEstimate.getFirstBusID().equals(branch.getTerminal1().getBusView().getBus().getId())) {
+            if (!branchPowersEstimate.getFirstBusID().equals(branch.getTerminal1().getBusView().getConnectableBus().getId())) {
                 throw new IllegalArgumentException("Branch terminals as indicated in se_network_powers_estimate.csv are inverted w.r.t the way they are indicating in Network.");
             }
-            if (!branchPowersEstimate.getSecondBusID().equals(branch.getTerminal2().getBusView().getBus().getId())) {
+            if (!branchPowersEstimate.getSecondBusID().equals(branch.getTerminal2().getBusView().getConnectableBus().getId())) {
                 throw new IllegalArgumentException("Branch terminals as indicated in se_network_powers_estimate.csv are inverted w.r.t the way they are indicating in Network.");
             }
 
-            double tmpPfErrorEnd1 = Math.abs(branchPowersEstimate.getActivePowerEnd1() - branch.getTerminal1().getP())
-                                            / (Math.abs(branch.getTerminal1().getP()) + Pf_EPSILON) * 100;
-            double tmpPfErrorEnd2 = Math.abs(branchPowersEstimate.getActivePowerEnd2() - branch.getTerminal2().getP())
-                    / (Math.abs(branch.getTerminal2().getP()) + Pf_EPSILON) * 100;
+            // TODO : check this with disconnected lines
+            double truePfEnd1 = branch.getTerminal1().getP();
+            if (Double.isNaN(truePfEnd1)) {
+                truePfEnd1 = 0;
+            }
+            double truePfEnd2 = branch.getTerminal2().getP();
+            if (Double.isNaN(truePfEnd2)) {
+                truePfEnd2 = 0;
+            }
+
+            double tmpPfErrorEnd1 = Math.abs(branchPowersEstimate.getActivePowerEnd1() - truePfEnd1)
+                                            / (Math.abs(truePfEnd1) + Pf_EPSILON) * 100;
+            double tmpPfErrorEnd2 = Math.abs(branchPowersEstimate.getActivePowerEnd2() - truePfEnd2)
+                    / (Math.abs(truePfEnd2) + Pf_EPSILON) * 100;
             meanPfErrror += tmpPfErrorEnd1 + tmpPfErrorEnd2;
             squaredPfError += Math.pow(tmpPfErrorEnd1, 2) + Math.pow(tmpPfErrorEnd2, 2);
             allErrors.add(tmpPfErrorEnd1);
@@ -160,17 +170,27 @@ public class StateEstimatorEvaluator {
             BranchPowersEstimate branchPowersEstimate = this.results.getBranchPowersEstimate(branch.getId());
 
             // Extra step, to make sure that (end1,end2) of the branch coincides between the network and the estimates data (although estimates are based on AMPL export, which respect how branches' ends are indicated in "network")
-            if (!branchPowersEstimate.getFirstBusID().equals(branch.getTerminal1().getBusView().getBus().getId())) {
+            if (!branchPowersEstimate.getFirstBusID().equals(branch.getTerminal1().getBusView().getConnectableBus().getId())) {
                 throw new IllegalArgumentException("Branch terminals as indicated in se_network_powers_estimate.csv are inverted w.r.t the way they are indicating in Network.");
             }
-            if (!branchPowersEstimate.getSecondBusID().equals(branch.getTerminal2().getBusView().getBus().getId())) {
+            if (!branchPowersEstimate.getSecondBusID().equals(branch.getTerminal2().getBusView().getConnectableBus().getId())) {
                 throw new IllegalArgumentException("Branch terminals as indicated in se_network_powers_estimate.csv are inverted w.r.t the way they are indicating in Network.");
             }
 
-            double tmpQfErrorEnd1 = Math.abs(branchPowersEstimate.getReactivePowerEnd1() - branch.getTerminal1().getQ())
-                    / (Math.abs(branch.getTerminal1().getQ()) + Qf_EPSILON) * 100;
-            double tmpQfErrorEnd2 = Math.abs(branchPowersEstimate.getReactivePowerEnd2() - branch.getTerminal2().getQ())
-                    / (Math.abs(branch.getTerminal2().getQ()) + Qf_EPSILON) * 100;
+            // TODO : check this with disconnected lines
+            double trueQfEnd1 = branch.getTerminal1().getQ();
+            if (Double.isNaN(trueQfEnd1)) {
+                trueQfEnd1 = 0;
+            }
+            double trueQfEnd2 = branch.getTerminal2().getQ();
+            if (Double.isNaN(trueQfEnd2)) {
+                trueQfEnd2 = 0;
+            }
+
+            double tmpQfErrorEnd1 = Math.abs(branchPowersEstimate.getReactivePowerEnd1() - trueQfEnd1)
+                    / (Math.abs(trueQfEnd1) + Qf_EPSILON) * 100;
+            double tmpQfErrorEnd2 = Math.abs(branchPowersEstimate.getReactivePowerEnd2() - trueQfEnd2)
+                    / (Math.abs(trueQfEnd2) + Qf_EPSILON) * 100;
             meanQfErrror += tmpQfErrorEnd1 + tmpQfErrorEnd2;
             squaredQfError += Math.pow(tmpQfErrorEnd1, 2) + Math.pow(tmpQfErrorEnd2, 2);
             allErrors.add(tmpQfErrorEnd1);
@@ -215,15 +235,23 @@ public class StateEstimatorEvaluator {
 
             ArrayList<String> values = estimate.getValue();
             // If power flow measure is on side 1
-            if (this.network.getBranch(values.get(1)).getTerminal1().getBusView().getBus().getId().equals(values.get(2))) {
-                A += Math.pow(this.network.getBranch(values.get(1)).getTerminal1().getP()
-                                - Double.parseDouble(values.get(6))
+            if (this.network.getBranch(values.get(1)).getTerminal1().getBusView().getConnectableBus().getId().equals(values.get(2))) {
+                // TODO : check this with disconnected lines
+                double truePfEnd1 = this.network.getBranch(values.get(1)).getTerminal1().getP();
+                if (Double.isNaN(truePfEnd1)) {
+                    truePfEnd1 = 0;
+                }
+                A += Math.pow(truePfEnd1 - Double.parseDouble(values.get(6))
                         , 2);
             }
             // If power flow measure is on side 2
-            else if (this.network.getBranch(values.get(1)).getTerminal2().getBusView().getBus().getId().equals(values.get(2))) {
-                A += Math.pow(this.network.getBranch(values.get(1)).getTerminal2().getP()
-                                - Double.parseDouble(values.get(6))
+            else if (this.network.getBranch(values.get(1)).getTerminal2().getBusView().getConnectableBus().getId().equals(values.get(2))) {
+                // TODO : check this with disconnected lines
+                double truePfEnd2 = this.network.getBranch(values.get(1)).getTerminal2().getP();
+                if (Double.isNaN(truePfEnd2)) {
+                    truePfEnd2 = 0;
+                }
+                A += Math.pow(truePfEnd2 - Double.parseDouble(values.get(6))
                         , 2);
             }
             else throw new IllegalArgumentException(String.format("Estimate %d can not be valid.",estimate.getKey()));
@@ -231,15 +259,23 @@ public class StateEstimatorEvaluator {
         for (var estimate : reactivePowerFlowEstimates.getMeasuresWithEstimatesAndResiduals().entrySet()) {
             ArrayList<String> values = estimate.getValue();
             // If power flow measure is on side 1
-            if (this.network.getBranch(values.get(1)).getTerminal1().getBusView().getBus().getId().equals(values.get(2))) {
-                A += Math.pow(this.network.getBranch(values.get(1)).getTerminal1().getQ()
-                                - Double.parseDouble(values.get(6))
+            if (this.network.getBranch(values.get(1)).getTerminal1().getBusView().getConnectableBus().getId().equals(values.get(2))) {
+                // TODO : check this with disconnected lines
+                double trueQfEnd1 = this.network.getBranch(values.get(1)).getTerminal1().getQ();
+                if (Double.isNaN(trueQfEnd1)) {
+                    trueQfEnd1 = 0;
+                }
+                A += Math.pow(trueQfEnd1 - Double.parseDouble(values.get(6))
                         , 2);
             }
             // If power flow measure is on side 2
-            else if (this.network.getBranch(values.get(1)).getTerminal2().getBusView().getBus().getId().equals(values.get(2))) {
-                A += Math.pow(this.network.getBranch(values.get(1)).getTerminal2().getQ()
-                                - Double.parseDouble(values.get(6))
+            else if (this.network.getBranch(values.get(1)).getTerminal2().getBusView().getConnectableBus().getId().equals(values.get(2))) {
+                // TODO : check this with disconnected lines
+                double trueQfEnd2 = this.network.getBranch(values.get(1)).getTerminal2().getQ();
+                if (Double.isNaN(trueQfEnd2)) {
+                    trueQfEnd2 = 0;
+                }
+                A += Math.pow(trueQfEnd2 - Double.parseDouble(values.get(6))
                         , 2);
             }
             else throw new IllegalArgumentException(String.format("Estimate %d can not be valid.",estimate.getKey()));
@@ -269,15 +305,23 @@ public class StateEstimatorEvaluator {
         for (Map.Entry<Integer, ArrayList<String>> measure : this.knowledge.getActivePowerFlowMeasures().entrySet()) {
             ArrayList<String> values = measure.getValue();
             // If power flow measure is on side 1
-            if (this.network.getBranch(values.get(1)).getTerminal1().getBusView().getBus().getId().equals(values.get(2))) {
-                B += Math.pow(this.network.getBranch(values.get(1)).getTerminal1().getP()
-                                - Double.parseDouble(values.get(4))
+            if (this.network.getBranch(values.get(1)).getTerminal1().getBusView().getConnectableBus().getId().equals(values.get(2))) {
+                // TODO : check this with disconnected lines
+                double noisyPfEnd1 = this.network.getBranch(values.get(1)).getTerminal1().getP();
+                if (Double.isNaN(noisyPfEnd1)) {
+                    noisyPfEnd1 = 0;
+                }
+                B += Math.pow(noisyPfEnd1 - Double.parseDouble(values.get(4))
                         , 2);
             }
             // If power flow measure is on side 2
-            else if (this.network.getBranch(values.get(1)).getTerminal2().getBusView().getBus().getId().equals(values.get(2))) {
-                B += Math.pow(this.network.getBranch(values.get(1)).getTerminal2().getP()
-                                - Double.parseDouble(values.get(4))
+            else if (this.network.getBranch(values.get(1)).getTerminal2().getBusView().getConnectableBus().getId().equals(values.get(2))) {
+                // TODO : check this with disconnected lines
+                double noisyPfEnd2 = this.network.getBranch(values.get(1)).getTerminal2().getP();
+                if (Double.isNaN(noisyPfEnd2)) {
+                    noisyPfEnd2 = 0;
+                }
+                B += Math.pow(noisyPfEnd2 - Double.parseDouble(values.get(4))
                         , 2);
             }
             else throw new IllegalArgumentException(String.format("Measure %d can not be valid.",measure.getKey()));
@@ -285,15 +329,23 @@ public class StateEstimatorEvaluator {
         for (Map.Entry<Integer, ArrayList<String>> measure : this.knowledge.getReactivePowerFlowMeasures().entrySet()) {
             ArrayList<String> values = measure.getValue();
             // If power flow measure is on side 1
-            if (this.network.getBranch(values.get(1)).getTerminal1().getBusView().getBus().getId().equals(values.get(2))) {
-                B += Math.pow(this.network.getBranch(values.get(1)).getTerminal1().getQ()
-                                - Double.parseDouble(values.get(4))
+            if (this.network.getBranch(values.get(1)).getTerminal1().getBusView().getConnectableBus().getId().equals(values.get(2))) {
+                // TODO : check this with disconnected lines
+                double noisyQfEnd1 = this.network.getBranch(values.get(1)).getTerminal1().getQ();
+                if (Double.isNaN(noisyQfEnd1)) {
+                    noisyQfEnd1 = 0;
+                }
+                B += Math.pow(noisyQfEnd1 - Double.parseDouble(values.get(4))
                         , 2);
             }
             // If power flow measure is on side 2
-            else if (this.network.getBranch(values.get(1)).getTerminal2().getBusView().getBus().getId().equals(values.get(2))) {
-                B += Math.pow(this.network.getBranch(values.get(1)).getTerminal2().getQ()
-                                - Double.parseDouble(values.get(4))
+            else if (this.network.getBranch(values.get(1)).getTerminal2().getBusView().getConnectableBus().getId().equals(values.get(2))) {
+                // TODO : check this with disconnected lines
+                double noisyQfEnd2 = this.network.getBranch(values.get(1)).getTerminal2().getQ();
+                if (Double.isNaN(noisyQfEnd2)) {
+                    noisyQfEnd2 = 0;
+                }
+                B += Math.pow(noisyQfEnd2 - Double.parseDouble(values.get(4))
                         , 2);
             }
             else throw new IllegalArgumentException(String.format("Measure %d can not be valid.",measure.getKey()));

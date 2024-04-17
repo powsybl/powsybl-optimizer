@@ -160,9 +160,13 @@ public class RandomMeasuresGenerator {
                         }
                         // Get location IDs and the corresponding value (in SI), as given by the Load Flow solution
                         randomMeasure.put("BranchID", randomBranch.getId());
-                        randomMeasure.put("FirstBusID", randomBranch.getTerminal1().getBusView().getBus().getId());
-                        randomMeasure.put("SecondBusID", randomBranch.getTerminal2().getBusView().getBus().getId());
+                        randomMeasure.put("FirstBusID", randomBranch.getTerminal1().getBusView().getConnectableBus().getId());
+                        randomMeasure.put("SecondBusID", randomBranch.getTerminal2().getBusView().getConnectableBus().getId());
                         measurementValue = randomBranch.getTerminal1().getP();
+                        // If line is disconnected, returned value will be Double.NaN : make it 0
+                        if (Double.isNaN(measurementValue)) {
+                            measurementValue = 0;
+                        }
 
                         // TODO : modifier le scaling de la variance
                         // Get and add measurement variance (in SI^2)
@@ -198,9 +202,13 @@ public class RandomMeasuresGenerator {
                         }
                         // Get location IDs and the corresponding measurement value (in SI), as given by the Load Flow solution
                         randomMeasure.put("BranchID", randomBranch.getId());
-                        randomMeasure.put("FirstBusID", randomBranch.getTerminal2().getBusView().getBus().getId());
-                        randomMeasure.put("SecondBusID", randomBranch.getTerminal1().getBusView().getBus().getId());
+                        randomMeasure.put("FirstBusID", randomBranch.getTerminal2().getBusView().getConnectableBus().getId());
+                        randomMeasure.put("SecondBusID", randomBranch.getTerminal1().getBusView().getConnectableBus().getId());
                         measurementValue = randomBranch.getTerminal2().getP();
+                        // If line is disconnected, returned value will be Double.NaN : make it 0
+                        if (Double.isNaN(measurementValue)) {
+                            measurementValue = 0;
+                        }
 
                         // TODO : modifier le scaling de la variance
                         // Get and add measurement variance (in SI^2)
@@ -244,9 +252,13 @@ public class RandomMeasuresGenerator {
                         }
                         // Get location IDs and the corresponding value (in SI), as given by the Load Flow solution
                         randomMeasure.put("BranchID", randomBranch.getId());
-                        randomMeasure.put("FirstBusID", randomBranch.getTerminal1().getBusView().getBus().getId());
-                        randomMeasure.put("SecondBusID", randomBranch.getTerminal2().getBusView().getBus().getId());
+                        randomMeasure.put("FirstBusID", randomBranch.getTerminal1().getBusView().getConnectableBus().getId());
+                        randomMeasure.put("SecondBusID", randomBranch.getTerminal2().getBusView().getConnectableBus().getId());
                         measurementValue = randomBranch.getTerminal1().getQ();
+                        // If line is disconnected, returned value will be Double.NaN : make it 0
+                        if (Double.isNaN(measurementValue)) {
+                            measurementValue = 0;
+                        }
 
                         // TODO : modifier le scaling de la variance
                         // Get and add measurement variance (in SI^2)
@@ -282,9 +294,13 @@ public class RandomMeasuresGenerator {
                         }
                         // Get location IDs and the corresponding value (in SI), as given by the Load Flow solution
                         randomMeasure.put("BranchID", randomBranch.getId());
-                        randomMeasure.put("FirstBusID", randomBranch.getTerminal2().getBusView().getBus().getId());
-                        randomMeasure.put("SecondBusID", randomBranch.getTerminal1().getBusView().getBus().getId());
+                        randomMeasure.put("FirstBusID", randomBranch.getTerminal2().getBusView().getConnectableBus().getId());
+                        randomMeasure.put("SecondBusID", randomBranch.getTerminal1().getBusView().getConnectableBus().getId());
                         measurementValue = randomBranch.getTerminal2().getQ();
+                        // If line is disconnected, returned value will be Double.NaN : make it 0
+                        if (Double.isNaN(measurementValue)) {
+                            measurementValue = 0;
+                        }
 
                         // TODO : modifier le scaling de la variance
                         // Get and add measurement variance (in SI^2)

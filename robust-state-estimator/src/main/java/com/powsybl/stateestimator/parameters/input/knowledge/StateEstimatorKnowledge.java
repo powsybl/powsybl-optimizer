@@ -38,11 +38,11 @@ public class StateEstimatorKnowledge {
         add("V");
     }};
 
-    private Map<Integer, ArrayList<String>> activePowerFlowMeasures = new HashMap<>();
-    private Map<Integer, ArrayList<String>> reactivePowerFlowMeasures = new HashMap<>();
-    private Map<Integer, ArrayList<String>> activePowerInjectedMeasures = new HashMap<>();
-    private Map<Integer, ArrayList<String>> reactivePowerInjectedMeasures = new HashMap<>();
-    private Map<Integer, ArrayList<String>> voltageMagnitudeMeasures = new HashMap<>();
+    private final Map<Integer, ArrayList<String>> activePowerFlowMeasures = new HashMap<>();
+    private final Map<Integer, ArrayList<String>> reactivePowerFlowMeasures = new HashMap<>();
+    private final Map<Integer, ArrayList<String>> activePowerInjectedMeasures = new HashMap<>();
+    private final Map<Integer, ArrayList<String>> reactivePowerInjectedMeasures = new HashMap<>();
+    private final Map<Integer, ArrayList<String>> voltageMagnitudeMeasures = new HashMap<>();
     Map<Integer, ArrayList<String>> suspectBranches = new HashMap<>();
     String slackBus;
     Map<Integer, String> zeroInjectionBuses = new HashMap<>();
@@ -165,8 +165,8 @@ public class StateEstimatorKnowledge {
             throw new IllegalArgumentException("The ID of the second bus related to the measurement does not exist in the network.");
         }
         // Check that FirstBusID and SecondBusID are indeed the IDs of the terminals of the branch provided
-        List<String> terminalsId = List.of(new String[]{network.getBranch(measure.get("BranchID")).getTerminal1().getBusView().getBus().getId(),
-                network.getBranch(measure.get("BranchID")).getTerminal2().getBusView().getBus().getId()});
+        List<String> terminalsId = List.of(new String[]{network.getBranch(measure.get("BranchID")).getTerminal1().getBusView().getConnectableBus().getId(),
+                network.getBranch(measure.get("BranchID")).getTerminal2().getBusView().getConnectableBus().getId()});
         if (!terminalsId.contains(measure.get("FirstBusID"))) {
             throw new IllegalArgumentException("FirstBusID is not the ID of any of the two terminals of the branch provided.");
         }
@@ -239,8 +239,8 @@ public class StateEstimatorKnowledge {
             throw new IllegalArgumentException("The ID of the second bus related to the measurement does not exist in the network.");
         }
         // Check that FirstBusID and SecondBusID are indeed the IDs of the terminals of the branch provided
-        List<String> terminalsId = List.of(new String[]{network.getBranch(measure.get("BranchID")).getTerminal1().getBusView().getBus().getId(),
-                network.getBranch(measure.get("BranchID")).getTerminal2().getBusView().getBus().getId()});
+        List<String> terminalsId = List.of(new String[]{network.getBranch(measure.get("BranchID")).getTerminal1().getBusView().getConnectableBus().getId(),
+                network.getBranch(measure.get("BranchID")).getTerminal2().getBusView().getConnectableBus().getId()});
         if (!terminalsId.contains(measure.get("FirstBusID"))) {
             throw new IllegalArgumentException("FirstBusID is not the ID of any of the two terminals of the branch provided.");
         }
