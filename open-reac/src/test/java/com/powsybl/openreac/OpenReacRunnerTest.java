@@ -94,7 +94,7 @@ class OpenReacRunnerTest {
     }
 
     @Test
-    void testParamAlgoExport() throws IOException {
+    void testModifiedParamAlgoExport() throws IOException {
         Network network = IeeeCdfNetworkFactory.create57();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         OpenReacParameters parameters = new OpenReacParameters()
@@ -105,6 +105,16 @@ class OpenReacRunnerTest {
                 .setMinPlausibleLowVoltageLimit(0.7888)
                 .setMaxPlausibleHighVoltageLimit(1.3455)
                 .setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL)
+                .setActivePowerVariationRate(0.88)
+                .setMinPlausibleActivePowerThreshold(0.45)
+                .setLowImpedanceThreshold(1e-5)
+                .setMinNominalVoltageIgnoredBus(2.)
+                .setMinNominalVoltageIgnoredVoltageBounds(0.75)
+                .setPQMax(3987.76)
+                .setLowActivePowerDefaultLimit(12.32)
+                .setHighActivePowerDefaultLimit(1452.66)
+                .setDefaultQmaxPmaxRatio(0.24)
+                .setDefaultMinimalQPRange(2.)
                 .setDefaultVariableScalingFactor(1.1222)
                 .setDefaultConstraintScalingFactor(0.7889)
                 .setReactiveSlackVariableScalingFactor(0.2)

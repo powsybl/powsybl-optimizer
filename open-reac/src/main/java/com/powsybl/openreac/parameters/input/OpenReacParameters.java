@@ -58,6 +58,46 @@ public class OpenReacParameters {
 
     private ReactiveSlackBusesMode reactiveSlackBusesMode = ReactiveSlackBusesMode.NO_GENERATION;
 
+    private static final String ACTIVE_POWER_VARIATION_RATE_KEY = "coeff_alpha";
+
+    private double activePowerVariationRate = 1; // in [0;1]
+
+    private static final String MIN_PLAUSIBLE_ACTIVE_POWER_THRESHOLD_KEY = "Pnull";
+
+    private double minPlausibleActivePowerThreshold = 0.01; // in MW, for detecting zero value for power
+
+    private static final String LOW_IMPEDANCE_THRESHOLD_KEY = "Znull";
+
+    private double lowImpedanceThreshold = 1e-4; // in p.u., for detecting null impedance branches
+
+    private static final String MIN_NOMINAL_VOLTAGE_IGNORED_BUS_KEY = "epsilon_nominal_voltage";
+
+    private double minNominalVoltageIgnoredBus = 1; // in kV, to ignore buses with Vnom lower than this value
+
+    private static final String MIN_NOMINAL_VOLTAGE_IGNORED_VOLTAGE_BOUNDS_KEY = "ignore_voltage_bounds";
+
+    private double minNominalVoltageIgnoredVoltageBounds = 0; // in kV, to ignore voltage bounds of buses with Vnom lower than this value
+
+    private static final String MAX_PLAUSIBLE_POWER_LIMIT_KEY = "PQmax";
+
+    private double maxPlausiblePowerLimit = 9000; // MW
+
+    private static final String HIGH_ACTIVE_POWER_DEFAULT_LIMIT_KEY = "defaultPmax";
+
+    private double highActivePowerDefaultLimit = 1000; // MW
+
+    private static final String LOW_ACTIVE_POWER_DEFAULT_LIMIT_KEY = "defaultPmin";
+
+    private double lowActivePowerDefaultLimit = 0; // MW
+
+    private static final String DEFAULT_QMAX_PMAX_RATIO_KEY = "defaultQmaxPmaxRatio";
+
+    private double defaultQmaxPmaxRatio = 0.3;
+
+    private static final String DEFAULT_MINIMAL_QP_RANGE_KEY = "minimalQPrange";
+
+    private double defaultMinimalQPRange = 1;
+
     private static final String DEFAULT_VARIABLE_SCALING_FACTOR = "default_variable_scaling_factor";
 
     private double defaultVariableScalingFactor = 1;
@@ -85,6 +125,10 @@ public class OpenReacParameters {
         return this;
     }
 
+    public List<VoltageLimitOverride> getSpecificVoltageLimits() {
+        return specificVoltageLimits;
+    }
+
     /**
      * A list of shunt compensators, which susceptance will be considered as variable by the optimizer.
      * The optimizer computes a continuous value that is rounded when results are stored in {@link com.powsybl.openreac.parameters.output.OpenReacResult}.
@@ -92,6 +136,10 @@ public class OpenReacParameters {
     public OpenReacParameters addVariableShuntCompensators(List<String> shuntsIds) {
         this.variableShuntCompensators.addAll(shuntsIds);
         return this;
+    }
+
+    public List<String> getVariableShuntCompensators() {
+        return variableShuntCompensators;
     }
 
     /**
@@ -102,6 +150,10 @@ public class OpenReacParameters {
         return this;
     }
 
+    public List<String> getConstantQGenerators() {
+        return constantQGenerators;
+    }
+
     /**
      * A list of two windings transformers, which ratio will be considered as variable by the optimizer.
      */
@@ -110,12 +162,20 @@ public class OpenReacParameters {
         return this;
     }
 
+    public List<String> getVariableTwoWindingsTransformers() {
+        return variableTwoWindingsTransformers;
+    }
+
     /**
      * A list of buses, to which reactive slacks variable will be attached by the optimizer.
      */
     public OpenReacParameters addConfiguredReactiveSlackBuses(List<String> busesIds) {
         this.configuredReactiveSlackBuses.addAll(busesIds);
         return this;
+    }
+
+    public List<String> getConfiguredReactiveSlackBuses() {
+        return configuredReactiveSlackBuses;
     }
 
     /**
@@ -233,6 +293,159 @@ public class OpenReacParameters {
     }
 
     /**
+     * @return the weight to favor more/less minimization of active power produced by generators.
+     */
+    public double getActivePowerVariationRate() {
+        return activePowerVariationRate;
+    }
+
+    public OpenReacParameters setActivePowerVariationRate(double activePowerVariationRate) {
+        if (Double.isNaN(activePowerVariationRate) || activePowerVariationRate < 0 || activePowerVariationRate > 1) {
+            throw new IllegalArgumentException("Active power variation rate must be defined and between 0 and 1 to be consistent.");
+        }
+        this.activePowerVariationRate = activePowerVariationRate;
+        return this;
+    }
+
+    /**
+     * @return the threshold of active and reactive power considered as null.
+     */
+    public double getMinPlausibleActivePowerThreshold() {
+        return minPlausibleActivePowerThreshold;
+    }
+
+    public OpenReacParameters setMinPlausibleActivePowerThreshold(double minPlausibleActivePowerThreshold) {
+        if (Double.isNaN(minPlausibleActivePowerThreshold) || minPlausibleActivePowerThreshold < 0) {
+            throw new IllegalArgumentException("Zero power threshold must be defined and >= 0 to be consistent.");
+        }
+        this.minPlausibleActivePowerThreshold = minPlausibleActivePowerThreshold;
+        return this;
+    }
+
+    /**
+     * @return the threshold of impedance considered as null.
+     */
+    public double getLowImpedanceThreshold() {
+        return lowImpedanceThreshold;
+    }
+
+    public OpenReacParameters setLowImpedanceThreshold(double lowImpedanceThreshold) {
+        if (Double.isNaN(lowImpedanceThreshold) || lowImpedanceThreshold < 0) {
+            throw new IllegalArgumentException("Zero impedance threshold must be defined and >= 0 to be consistent.");
+        }
+        this.lowImpedanceThreshold = lowImpedanceThreshold;
+        return this;
+    }
+
+    /**
+     * @return the threshold to ignore voltage levels with nominal voltager lower than it.
+     */
+    public double getMinNominalVoltageIgnoredBus() {
+        return minNominalVoltageIgnoredBus;
+    }
+
+    public OpenReacParameters setMinNominalVoltageIgnoredBus(double minNominalVoltageIgnoredBus) {
+        if (Double.isNaN(minNominalVoltageIgnoredBus) || minNominalVoltageIgnoredBus < 0) {
+            throw new IllegalArgumentException("Nominal threshold for ignored buses must be defined and >= 0 to be consistent.");
+        }
+        this.minNominalVoltageIgnoredBus = minNominalVoltageIgnoredBus;
+        return this;
+    }
+
+    /**
+     * @return the threshold used to replace voltage limits of voltage levels with nominal voltage
+     * than it.
+     */
+    public double getMinNominalVoltageIgnoredVoltageBounds() {
+        return minNominalVoltageIgnoredVoltageBounds;
+    }
+
+    public OpenReacParameters setMinNominalVoltageIgnoredVoltageBounds(double minNominalVoltageIgnoredVoltageBounds) {
+        if (Double.isNaN(minNominalVoltageIgnoredVoltageBounds) || minNominalVoltageIgnoredVoltageBounds < 0) {
+            throw new IllegalArgumentException("Nominal threshold for ignored voltage bounds must be defined and >= 0 to be consistent");
+        }
+        this.minNominalVoltageIgnoredVoltageBounds = minNominalVoltageIgnoredVoltageBounds;
+        return this;
+    }
+
+    /**
+     * @return the threshold for maximum active and reactive power considered in correction of generator limits.
+     */
+    public double getPQMax() {
+        return maxPlausiblePowerLimit;
+    }
+
+    public OpenReacParameters setPQMax(double pQMax) {
+        if (Double.isNaN(pQMax) || pQMax <= 0) {
+            throw new IllegalArgumentException("Maximal consistency value for P and Q must be defined and > 0 to be consistent");
+        }
+        this.maxPlausiblePowerLimit = pQMax;
+        return this;
+    }
+
+    /**
+     * @return the threshold for correction of high active power limit produced by generators.
+     */
+    public double getHighActivePowerDefaultLimit() {
+        return highActivePowerDefaultLimit;
+    }
+
+    public OpenReacParameters setHighActivePowerDefaultLimit(double highActivePowerDefaultLimit) {
+        if (Double.isNaN(highActivePowerDefaultLimit) || highActivePowerDefaultLimit <= 0) {
+            throw new IllegalArgumentException("Default P max value must be defined and > 0 to be consistent.");
+        }
+        this.highActivePowerDefaultLimit = highActivePowerDefaultLimit;
+        return this;
+    }
+
+    /**
+     * @return the threshold for correction of low active power limit produced by generators.
+     */
+    public double getLowActivePowerDefaultLimit() {
+        return lowActivePowerDefaultLimit;
+    }
+
+    public OpenReacParameters setLowActivePowerDefaultLimit(double lowActivePowerDefaultLimit) {
+        if (Double.isNaN(lowActivePowerDefaultLimit) || lowActivePowerDefaultLimit < 0) {
+            throw new IllegalArgumentException("Default P min value must be defined and >= 0 to be consistent.");
+        }
+        this.lowActivePowerDefaultLimit = lowActivePowerDefaultLimit;
+        return this;
+    }
+
+    /**
+     * @return the ratio used to calculate threshold for corrections of high/low reactive power limits.
+     */
+    public double getDefaultQmaxPmaxRatio() {
+        return defaultQmaxPmaxRatio;
+    }
+
+    public OpenReacParameters setDefaultQmaxPmaxRatio(double defaultQmaxPmaxRatio) {
+        // Qmin/Qmax are computed with this value in OpenReac, can not be zero
+        if (Double.isNaN(defaultQmaxPmaxRatio) || defaultQmaxPmaxRatio <= 0) {
+            throw new IllegalArgumentException("Default Qmax and Pmax ratio must be defined and > 0 to be consistent.");
+        }
+        this.defaultQmaxPmaxRatio = defaultQmaxPmaxRatio;
+        return this;
+    }
+
+    /**
+     * @return the threshold to fix active (resp. reactive) power of generators with
+     * active (resp. reactive) power limits that are closer than it.
+     */
+    public double getDefaultMinimalQPRange() {
+        return defaultMinimalQPRange;
+    }
+
+    public OpenReacParameters setDefaultMinimalQPRange(double defaultMinimalQPRange) {
+        if (Double.isNaN(defaultMinimalQPRange) || defaultMinimalQPRange < 0) {
+            throw new IllegalArgumentException("Default minimal QP range must be defined and >= 0 to be consistent.");
+        }
+        this.defaultMinimalQPRange = defaultMinimalQPRange;
+        return this;
+    }
+
+    /**
      * @return the default scaling value of all the variables in ACOPF solving.
      */
     public double getDefaultVariableScalingFactor() {
@@ -292,26 +505,6 @@ public class OpenReacParameters {
         return this;
     }
 
-    public List<String> getVariableShuntCompensators() {
-        return variableShuntCompensators;
-    }
-
-    public List<VoltageLimitOverride> getSpecificVoltageLimits() {
-        return specificVoltageLimits;
-    }
-
-    public List<String> getConstantQGenerators() {
-        return constantQGenerators;
-    }
-
-    public List<String> getVariableTwoWindingsTransformers() {
-        return variableTwoWindingsTransformers;
-    }
-
-    public List<String> getConfiguredReactiveSlackBuses() {
-        return configuredReactiveSlackBuses;
-    }
-
     public List<OpenReacAlgoParam> getAllAlgorithmParams() {
         ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>();
         allAlgoParams.add(objective.toParam());
@@ -323,6 +516,16 @@ public class OpenReacParameters {
         allAlgoParams.add(new OpenReacAlgoParamImpl(MIN_PLAUSIBLE_LOW_VOLTAGE_LIMIT_KEY, Double.toString(minPlausibleLowVoltageLimit)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(MAX_PLAUSIBLE_HIGH_VOLTAGE_LIMIT_KEY, Double.toString(maxPlausibleHighVoltageLimit)));
         allAlgoParams.add(reactiveSlackBusesMode.toParam());
+        allAlgoParams.add(new OpenReacAlgoParamImpl(ACTIVE_POWER_VARIATION_RATE_KEY, Double.toString(activePowerVariationRate)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(MIN_PLAUSIBLE_ACTIVE_POWER_THRESHOLD_KEY, Double.toString(minPlausibleActivePowerThreshold)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(LOW_IMPEDANCE_THRESHOLD_KEY, Double.toString(lowImpedanceThreshold)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(MIN_NOMINAL_VOLTAGE_IGNORED_BUS_KEY, Double.toString(minNominalVoltageIgnoredBus)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(MIN_NOMINAL_VOLTAGE_IGNORED_VOLTAGE_BOUNDS_KEY, Double.toString(minNominalVoltageIgnoredVoltageBounds)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(MAX_PLAUSIBLE_POWER_LIMIT_KEY, Double.toString(maxPlausiblePowerLimit)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(LOW_ACTIVE_POWER_DEFAULT_LIMIT_KEY, Double.toString(lowActivePowerDefaultLimit)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(HIGH_ACTIVE_POWER_DEFAULT_LIMIT_KEY, Double.toString(highActivePowerDefaultLimit)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(DEFAULT_QMAX_PMAX_RATIO_KEY, Double.toString(defaultQmaxPmaxRatio)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(DEFAULT_MINIMAL_QP_RANGE_KEY, Double.toString(defaultMinimalQPRange)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(DEFAULT_VARIABLE_SCALING_FACTOR, Double.toString(defaultVariableScalingFactor)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(DEFAULT_CONSTRAINT_SCALING_FACTOR, Double.toString(defaultConstraintScalingFactor)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(REACTIVE_SLACK_VARIABLE_SCALING_FACTOR, Double.toString(reactiveSlackVariableScalingFactor)));
@@ -393,6 +596,28 @@ public class OpenReacParameters {
         if (minPlausibleLowVoltageLimit > maxPlausibleHighVoltageLimit) {
             LOGGER.warn("Min plausible low voltage limit must be lower than max plausible high voltage limit.");
             integrityAlgorithmParameters = false;
+        }
+
+        if (lowActivePowerDefaultLimit > highActivePowerDefaultLimit) {
+            LOGGER.warn("Default P min = {} must be lower than default P max = {} to be consistent.",
+                    lowActivePowerDefaultLimit, highActivePowerDefaultLimit);
+            integrityAlgorithmParameters = false;
+        }
+
+        if (highActivePowerDefaultLimit > maxPlausiblePowerLimit) {
+            LOGGER.warn("Default P min = {} and default P max = {} must be lower than PQmax value = {} to be consistent.",
+                    lowActivePowerDefaultLimit, highActivePowerDefaultLimit, maxPlausiblePowerLimit);
+            integrityAlgorithmParameters = false;
+        }
+
+        if (highActivePowerDefaultLimit * defaultQmaxPmaxRatio > maxPlausiblePowerLimit) {
+            LOGGER.warn("Default Q max value = {} value must be lower than PQmax value to be consistent.",
+                    highActivePowerDefaultLimit * defaultQmaxPmaxRatio);
+            integrityAlgorithmParameters = false;
+        }
+
+        if (minNominalVoltageIgnoredBus > minNominalVoltageIgnoredVoltageBounds) {
+            LOGGER.warn("Some buses with ignored voltage bounds will be ignored in calculations.");
         }
 
         return integrityAlgorithmParameters;

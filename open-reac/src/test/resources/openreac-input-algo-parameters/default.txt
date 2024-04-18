@@ -4,6 +4,16 @@ log_level_knitro 2
 min_plausible_low_voltage_limit 0.5
 max_plausible_high_voltage_limit 1.5
 buses_with_reactive_slacks NO_GENERATION
+coeff_alpha 1.0
+Pnull 0.01
+Znull 1.0E-4
+epsilon_nominal_voltage 1.0
+ignore_voltage_bounds 0.0
+PQmax 9000.0
+defaultPmin 0.0
+defaultPmax 1000.0
+defaultQmaxPmaxRatio 0.3
+minimalQPrange 1.0
 default_variable_scaling_factor 1.0
 default_constraint_scaling_factor 1.0
 reactive_slack_variable_scaling_factor 0.1

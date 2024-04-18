@@ -91,6 +91,46 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                     parser.nextToken();
                     parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.valueOf(parser.getText()));
                 }
+                case "activePowerVariationRate" -> {
+                    parser.nextToken();
+                    parameters.setActivePowerVariationRate(parser.getValueAsDouble());
+                }
+                case "minPlausibleActivePowerThreshold" -> {
+                    parser.nextToken();
+                    parameters.setMinPlausibleActivePowerThreshold(parser.getValueAsDouble());
+                }
+                case "lowImpedanceThreshold" -> {
+                    parser.nextToken();
+                    parameters.setLowImpedanceThreshold(parser.getValueAsDouble());
+                }
+                case "minNominalVoltageIgnoredBus" -> {
+                    parser.nextToken();
+                    parameters.setMinNominalVoltageIgnoredBus(parser.getValueAsDouble());
+                }
+                case "minNominalVoltageIgnoredVoltageBounds" -> {
+                    parser.nextToken();
+                    parameters.setMinNominalVoltageIgnoredVoltageBounds(parser.getValueAsDouble());
+                }
+                case "maxPlausiblePowerLimit" -> {
+                    parser.nextToken();
+                    parameters.setPQMax(parser.getValueAsDouble());
+                }
+                case "lowActivePowerDefaultLimit" -> {
+                    parser.nextToken();
+                    parameters.setLowActivePowerDefaultLimit(parser.getValueAsDouble());
+                }
+                case "highActivePowerDefaultLimit" -> {
+                    parser.nextToken();
+                    parameters.setHighActivePowerDefaultLimit(parser.getValueAsDouble());
+                }
+                case "defaultQmaxPmaxRatio" -> {
+                    parser.nextToken();
+                    parameters.setDefaultQmaxPmaxRatio(parser.getValueAsDouble());
+                }
+                case "defaultMinimalQPRange" -> {
+                    parser.nextToken();
+                    parameters.setDefaultMinimalQPRange(parser.getValueAsDouble());
+                }
                 case "defaultVariableScalingFactor" -> {
                     parser.nextToken();
                     parameters.setDefaultVariableScalingFactor(parser.readValueAs(Double.class));
