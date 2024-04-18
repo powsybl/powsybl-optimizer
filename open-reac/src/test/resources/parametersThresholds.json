@@ -11,7 +11,7 @@
   "minPlausibleLowVoltageLimit" : 0.755,
   "maxPlausibleHighVoltageLimit" : 1.236,
   "reactiveSlackBusesMode" : "ALL",
-  "alphaCoefficient" : 0.56,
+  "activePowerVariationRate" : 0.56,
   "minPlausibleActivePowerThreshold" : 0.5,
   "lowImpedanceThreshold" : 1.0E-5,
   "minNominalVoltageIgnoredBus" : 10.0,

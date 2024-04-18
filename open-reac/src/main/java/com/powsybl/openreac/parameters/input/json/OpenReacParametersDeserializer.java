@@ -91,9 +91,9 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                     parser.nextToken();
                     parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.valueOf(parser.getText()));
                 }
-                case "alphaCoefficient" -> {
+                case "activePowerVariationRate" -> {
                     parser.nextToken();
-                    parameters.setAlphaCoefficient(parser.getValueAsDouble());
+                    parameters.setActivePowerVariationRate(parser.getValueAsDouble());
                 }
                 case "minPlausibleActivePowerThreshold" -> {
                     parser.nextToken();

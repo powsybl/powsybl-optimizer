@@ -58,9 +58,9 @@ public class OpenReacParameters {
 
     private ReactiveSlackBusesMode reactiveSlackBusesMode = ReactiveSlackBusesMode.NO_GENERATION;
 
-    private static final String ALPHA_COEFFICIENT_KEY = "coeff_alpha";
+    private static final String ACTIVE_POWER_VARIATION_RATE_KEY = "coeff_alpha";
 
-    private double alphaCoefficient = 1; // in [0;1]
+    private double activePowerVariationRate = 1; // in [0;1]
 
     private static final String MIN_PLAUSIBLE_ACTIVE_POWER_THRESHOLD_KEY = "Pnull";
 
@@ -295,15 +295,15 @@ public class OpenReacParameters {
     /**
      * @return the weight to favor more/less minimization of active power produced by generators.
      */
-    public double getAlphaCoefficient() {
-        return alphaCoefficient;
+    public double getActivePowerVariationRate() {
+        return activePowerVariationRate;
     }
 
-    public OpenReacParameters setAlphaCoefficient(double alphaCoefficient) {
-        if (Double.isNaN(alphaCoefficient) || alphaCoefficient < 0 || alphaCoefficient > 1) {
-            throw new IllegalArgumentException("Coefficient alpha parameter must be defined and between 0 and 1 to be consistent.");
+    public OpenReacParameters setActivePowerVariationRate(double activePowerVariationRate) {
+        if (Double.isNaN(activePowerVariationRate) || activePowerVariationRate < 0 || activePowerVariationRate > 1) {
+            throw new IllegalArgumentException("Active power variation rate must be defined and between 0 and 1 to be consistent.");
         }
-        this.alphaCoefficient = alphaCoefficient;
+        this.activePowerVariationRate = activePowerVariationRate;
         return this;
     }
 
@@ -516,7 +516,7 @@ public class OpenReacParameters {
         allAlgoParams.add(new OpenReacAlgoParamImpl(MIN_PLAUSIBLE_LOW_VOLTAGE_LIMIT_KEY, Double.toString(minPlausibleLowVoltageLimit)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(MAX_PLAUSIBLE_HIGH_VOLTAGE_LIMIT_KEY, Double.toString(maxPlausibleHighVoltageLimit)));
         allAlgoParams.add(reactiveSlackBusesMode.toParam());
-        allAlgoParams.add(new OpenReacAlgoParamImpl(ALPHA_COEFFICIENT_KEY, Double.toString(alphaCoefficient)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(ACTIVE_POWER_VARIATION_RATE_KEY, Double.toString(activePowerVariationRate)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(MIN_PLAUSIBLE_ACTIVE_POWER_THRESHOLD_KEY, Double.toString(minPlausibleActivePowerThreshold)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(LOW_IMPEDANCE_THRESHOLD_KEY, Double.toString(lowImpedanceThreshold)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(MIN_NOMINAL_VOLTAGE_IGNORED_BUS_KEY, Double.toString(minNominalVoltageIgnoredBus)));

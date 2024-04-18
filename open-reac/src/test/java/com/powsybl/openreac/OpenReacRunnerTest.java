@@ -105,7 +105,7 @@ class OpenReacRunnerTest {
                 .setMinPlausibleLowVoltageLimit(0.7888)
                 .setMaxPlausibleHighVoltageLimit(1.3455)
                 .setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL)
-                .setAlphaCoefficient(0.88)
+                .setActivePowerVariationRate(0.88)
                 .setMinPlausibleActivePowerThreshold(0.45)
                 .setLowImpedanceThreshold(1e-5)
                 .setMinNominalVoltageIgnoredBus(2.)

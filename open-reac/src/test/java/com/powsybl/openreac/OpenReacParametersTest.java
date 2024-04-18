@@ -116,19 +116,19 @@ public class OpenReacParametersTest {
     }
 
     @Test
-    void testAlphaCoefficientIntegrity() {
+    void testActivePowerVariationRateIntegrity() {
         OpenReacParameters parameters = new OpenReacParameters();
-        parameters.setAlphaCoefficient(0); // min value
-        assertEquals(0., parameters.getAlphaCoefficient());
-        parameters.setAlphaCoefficient(0.445556);
-        assertEquals(0.445556, parameters.getAlphaCoefficient());
+        parameters.setActivePowerVariationRate(0); // min value
+        assertEquals(0., parameters.getActivePowerVariationRate());
+        parameters.setActivePowerVariationRate(0.445556);
+        assertEquals(0.445556, parameters.getActivePowerVariationRate());
 
-        IllegalArgumentException e1 = assertThrows(IllegalArgumentException.class, () -> parameters.setAlphaCoefficient(-1.2));
-        assertEquals("Coefficient alpha parameter must be defined and between 0 and 1 to be consistent.", e1.getMessage());
-        IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class, () -> parameters.setAlphaCoefficient(42));
-        assertEquals("Coefficient alpha parameter must be defined and between 0 and 1 to be consistent.", e2.getMessage());
-        IllegalArgumentException e3 = assertThrows(IllegalArgumentException.class, () -> parameters.setAlphaCoefficient(Double.NaN));
-        assertEquals("Coefficient alpha parameter must be defined and between 0 and 1 to be consistent.", e3.getMessage());
+        IllegalArgumentException e1 = assertThrows(IllegalArgumentException.class, () -> parameters.setActivePowerVariationRate(-1.2));
+        assertEquals("Active power variation rate must be defined and between 0 and 1 to be consistent.", e1.getMessage());
+        IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class, () -> parameters.setActivePowerVariationRate(42));
+        assertEquals("Active power variation rate must be defined and between 0 and 1 to be consistent.", e2.getMessage());
+        IllegalArgumentException e3 = assertThrows(IllegalArgumentException.class, () -> parameters.setActivePowerVariationRate(Double.NaN));
+        assertEquals("Active power variation rate must be defined and between 0 and 1 to be consistent.", e3.getMessage());
         assertTrue(parameters.checkAlgorithmParametersIntegrity());
     }
 
@@ -310,7 +310,7 @@ public class OpenReacParametersTest {
         parameters.setMinPlausibleLowVoltageLimit(0.8);
         parameters.setMaxPlausibleHighVoltageLimit(1.2);
         parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL);
-        parameters.setAlphaCoefficient(0.56);
+        parameters.setActivePowerVariationRate(0.56);
         parameters.setMinPlausibleActivePowerThreshold(0.5);
         parameters.setLowImpedanceThreshold(1e-5);
         parameters.setMinNominalVoltageIgnoredBus(10);
@@ -374,7 +374,7 @@ public class OpenReacParametersTest {
         assertEquals(0.5, parameters.getMinPlausibleLowVoltageLimit());
         assertEquals(1.5, parameters.getMaxPlausibleHighVoltageLimit());
         assertEquals(ReactiveSlackBusesMode.NO_GENERATION, parameters.getReactiveSlackBusesMode());
-        assertEquals(1., parameters.getAlphaCoefficient());
+        assertEquals(1., parameters.getActivePowerVariationRate());
         assertEquals(0.01, parameters.getMinPlausibleActivePowerThreshold());
         assertEquals(1e-4, parameters.getLowImpedanceThreshold());
         assertEquals(1., parameters.getMinNominalVoltageIgnoredBus());
