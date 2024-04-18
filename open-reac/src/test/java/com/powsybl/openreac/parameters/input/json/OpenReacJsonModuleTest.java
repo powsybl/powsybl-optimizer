@@ -14,6 +14,7 @@ import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAmplLogLevel;
 import com.powsybl.openreac.parameters.input.algo.OpenReacSolverLogLevel;
 import com.powsybl.openreac.parameters.input.algo.ReactiveSlackBusesMode;
+import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -29,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class OpenReacJsonModuleTest {
 
     @Test
-    void test() throws IOException {
+    void testOpenReacParametersLists() throws IOException {
         ObjectMapper objectMapper = JsonUtil.createObjectMapper()
                 .registerModule(new OpenReactJsonModule());
         OpenReacParameters parameters = new OpenReacParameters();
@@ -41,23 +42,16 @@ class OpenReacJsonModuleTest {
         vloList1.add(new VoltageLimitOverride("bar", VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, false, 20));
         vloList1.add(new VoltageLimitOverride("bar", VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, false, 26));
 
+        // modify open reac parameters
         parameters.addSpecificVoltageLimits(vloList1);
         parameters.addConstantQGenerators(List.of("g1", "g2"));
         parameters.addVariableTwoWindingsTransformers(List.of("tr1"));
         parameters.addVariableShuntCompensators(List.of("sc1", "sc2"));
-        parameters.setObjectiveDistance(5);
-        parameters.setLogLevelAmpl(OpenReacAmplLogLevel.WARNING);
-        parameters.setLogLevelSolver(OpenReacSolverLogLevel.NOTHING);
-        parameters.setMinPlausibleLowVoltageLimit(0.755);
-        parameters.setMaxPlausibleHighVoltageLimit(1.236);
         parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.CONFIGURED);
-        parameters.setDefaultVariableScalingFactor(0.756);
-        parameters.setDefaultConstraintScalingFactor(0.888);
-        parameters.setReactiveSlackVariableScalingFactor(1e-2);
-        parameters.setTwoWindingTransformerRatioVariableScalingFactor(0.005);
         parameters.addConfiguredReactiveSlackBuses(List.of("bus1", "bus2"));
+
         String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(parameters);
-        ComparisonUtils.compareTxt(Objects.requireNonNull(getClass().getResourceAsStream("/parameters.json")), json);
+        ComparisonUtils.compareTxt(Objects.requireNonNull(getClass().getResourceAsStream("/parametersLists.json")), json);
 
         OpenReacParameters parameters2 = objectMapper.readValue(json, OpenReacParameters.class);
         // List of voltage limit overrides
@@ -70,16 +64,63 @@ class OpenReacJsonModuleTest {
         assertEquals(vloList2, parameters2.getSpecificVoltageLimits());
         assertEquals(List.of("g1", "g2"), parameters2.getConstantQGenerators());
         assertEquals(List.of("tr1"), parameters2.getVariableTwoWindingsTransformers());
+        assertEquals(List.of("sc1", "sc2"), parameters2.getVariableShuntCompensators());
+        assertEquals(ReactiveSlackBusesMode.CONFIGURED, parameters2.getReactiveSlackBusesMode());
+        assertEquals(List.of("bus1", "bus2"), parameters2.getConfiguredReactiveSlackBuses());
+    }
+
+    @Test
+    void testOpenReacParametersThresholds() throws IOException {
+        ObjectMapper objectMapper = JsonUtil.createObjectMapper()
+                .registerModule(new OpenReactJsonModule());
+        OpenReacParameters parameters = new OpenReacParameters();
+
+        // modify open reac parameters
+        parameters.setObjectiveDistance(5);
+        parameters.setLogLevelAmpl(OpenReacAmplLogLevel.WARNING);
+        parameters.setLogLevelSolver(OpenReacSolverLogLevel.NOTHING);
+        parameters.setMinPlausibleLowVoltageLimit(0.755);
+        parameters.setMaxPlausibleHighVoltageLimit(1.236);
+        parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL);
+        parameters.setActivePowerVariationRate(0.56);
+        parameters.setMinPlausibleActivePowerThreshold(0.5);
+        parameters.setLowImpedanceThreshold(1e-5);
+        parameters.setMinNominalVoltageIgnoredBus(10.);
+        parameters.setMinNominalVoltageIgnoredVoltageBounds(5.);
+        parameters.setPQMax(8555.3);
+        parameters.setLowActivePowerDefaultLimit(99.2);
+        parameters.setHighActivePowerDefaultLimit(1144.);
+        parameters.setDefaultQmaxPmaxRatio(0.4);
+        parameters.setDefaultMinimalQPRange(1.1);
+        parameters.setDefaultVariableScalingFactor(0.756);
+        parameters.setDefaultConstraintScalingFactor(0.888);
+        parameters.setReactiveSlackVariableScalingFactor(1e-2);
+        parameters.setTwoWindingTransformerRatioVariableScalingFactor(0.005);
+
+        String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(parameters);
+        ComparisonUtils.compareTxt(Objects.requireNonNull(getClass().getResourceAsStream("/parametersThresholds.json")), json);
+        OpenReacParameters parameters2 = objectMapper.readValue(json, OpenReacParameters.class);
+
         assertEquals(5, parameters2.getObjectiveDistance());
         assertEquals(OpenReacAmplLogLevel.WARNING, parameters2.getLogLevelAmpl());
         assertEquals(OpenReacSolverLogLevel.NOTHING, parameters2.getLogLevelSolver());
         assertEquals(0.755, parameters2.getMinPlausibleLowVoltageLimit());
         assertEquals(1.236, parameters2.getMaxPlausibleHighVoltageLimit());
-        assertEquals(ReactiveSlackBusesMode.CONFIGURED, parameters2.getReactiveSlackBusesMode());
+        assertEquals(ReactiveSlackBusesMode.ALL, parameters2.getReactiveSlackBusesMode());
+        assertEquals(OpenReacOptimisationObjective.MIN_GENERATION, parameters2.getObjective());
+        assertEquals(0.56, parameters2.getActivePowerVariationRate());
+        assertEquals(0.5, parameters2.getMinPlausibleActivePowerThreshold());
+        assertEquals(1e-5, parameters2.getLowImpedanceThreshold());
+        assertEquals(10., parameters2.getMinNominalVoltageIgnoredBus());
+        assertEquals(5., parameters2.getMinNominalVoltageIgnoredVoltageBounds());
+        assertEquals(8555.3, parameters2.getPQMax());
+        assertEquals(99.2, parameters2.getLowActivePowerDefaultLimit());
+        assertEquals(1144., parameters2.getHighActivePowerDefaultLimit());
+        assertEquals(0.4, parameters2.getDefaultQmaxPmaxRatio());
+        assertEquals(1.1, parameters2.getDefaultMinimalQPRange());
         assertEquals(0.756, parameters2.getDefaultVariableScalingFactor());
         assertEquals(0.888, parameters2.getDefaultConstraintScalingFactor());
         assertEquals(1e-2, parameters2.getReactiveSlackVariableScalingFactor());
         assertEquals(0.005, parameters2.getTwoWindingTransformerRatioVariableScalingFactor());
-        assertEquals(List.of("bus1", "bus2"), parameters2.getConfiguredReactiveSlackBuses());
     }
 }
