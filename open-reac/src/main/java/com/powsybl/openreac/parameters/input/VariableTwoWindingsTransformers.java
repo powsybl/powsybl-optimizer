@@ -10,7 +10,7 @@ import com.powsybl.ampl.converter.AmplSubset;
 import java.util.List;
 
 /**
- * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
  *
  * List of transformers of which tap position can be modified by OpenReac.
  */

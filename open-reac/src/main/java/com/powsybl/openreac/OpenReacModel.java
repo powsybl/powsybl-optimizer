@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 import static com.powsybl.ampl.converter.AmplConstants.DEFAULT_VARIANT_INDEX;
 
 /**
- * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
  * OpenReac: a reactive opf to set target tension of the generators.
  * Enumeration to link resources ampl models to java code.
  * It allows to get the list of InputStream of the ampl model resources.

@@ -44,8 +44,8 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
- * @author Nicolas PIERRE <nicolas.pierre at artelys.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
+ * @author Nicolas PIERRE {@literal <nicolas.pierre at artelys.com>}
  */
 class OpenReacRunnerTest {
     protected FileSystem fileSystem;

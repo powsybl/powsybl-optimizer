@@ -13,8 +13,8 @@ import java.util.Objects;
 /**
  * Class to store an override of a voltage level voltage limits.
  *
- * @author Nicolas Pierre <nicolas.pierre at artelys.com>
- * @author Pierre Arvy <pierre.arvy at artelys.com>
+ * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
+ * @author Pierre Arvy {@literal <pierre.arvy at artelys.com>}
  */
 public class VoltageLimitOverride {
 

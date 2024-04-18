@@ -11,7 +11,7 @@ import com.powsybl.commons.report.TypedValue;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 
 /**
- * @author Joris Mancini <joris.mancini_externe at rte-france.com>
+ * @author Joris Mancini {@literal <joris.mancini_externe at rte-france.com>}
  */
 public final class Reports {
 

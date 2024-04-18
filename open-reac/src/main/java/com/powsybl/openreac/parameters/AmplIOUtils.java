@@ -11,7 +11,7 @@ import com.powsybl.commons.PowsyblException;
 import java.util.Objects;
 
 /**
- * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
  */
 public final class AmplIOUtils {
 

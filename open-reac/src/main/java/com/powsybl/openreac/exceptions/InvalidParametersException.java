@@ -9,7 +9,7 @@ package com.powsybl.openreac.exceptions;
 import com.powsybl.commons.PowsyblException;
 
 /**
- * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
  */
 public class InvalidParametersException extends PowsyblException {
     public InvalidParametersException(String message) {

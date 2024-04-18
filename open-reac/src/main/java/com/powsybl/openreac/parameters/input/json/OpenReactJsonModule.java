@@ -12,7 +12,7 @@ import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
 
 /**
- * @author Hugo Marcellin <hugo.marcelin at rte-france.com>
+ * @author Hugo Marcellin {@literal <hugo.marcelin at rte-france.com>}
  */
 
 public class OpenReactJsonModule extends SimpleModule {
