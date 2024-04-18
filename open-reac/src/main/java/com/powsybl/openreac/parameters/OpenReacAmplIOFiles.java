@@ -32,7 +32,7 @@ import java.util.List;
  * However, when adding new inputs (outputs) to OpenReac, one must add {@link AmplInputFile} ({@link AmplOutputFile})
  * here through {@link OpenReacAmplIOFiles#getInputParameters} ({@link OpenReacAmplIOFiles#getOutputParameters})
  *
- * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
  */
 public class OpenReacAmplIOFiles implements AmplParameters {
 

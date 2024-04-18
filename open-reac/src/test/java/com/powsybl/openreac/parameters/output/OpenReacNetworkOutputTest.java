@@ -12,6 +12,9 @@ import java.io.InputStreamReader;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+/**
+ * @author Pierre Arvy {@literal <pierre.arvy at artelys.com>}
+ */
 class OpenReacNetworkOutputTest {
     @Test
     void wrongNumberOfColumnsTest() throws IOException {

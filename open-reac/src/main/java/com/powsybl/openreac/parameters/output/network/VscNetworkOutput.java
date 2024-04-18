@@ -13,7 +13,7 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VscConverterStation;
 
 /**
- * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
  */
 public class VscNetworkOutput extends AbstractNetworkOutput<VscConverterStationModification> {
     private static final String ELEMENT = "vsc_converter_stations";

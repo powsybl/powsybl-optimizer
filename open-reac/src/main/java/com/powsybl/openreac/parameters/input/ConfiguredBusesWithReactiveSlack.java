@@ -11,7 +11,7 @@ import com.powsybl.ampl.converter.AmplSubset;
 import java.util.List;
 
 /**
- * @author Pierre Arvy <pierre.arvy at artelys.com>
+ * @author Pierre Arvy {@literal <pierre.arvy at artelys.com>}
  */
 public class ConfiguredBusesWithReactiveSlack extends AbstractElementsInput {
     public static final String PARAM_BUSES_FILE_NAME = "param_buses_with_reactive_slack.txt";

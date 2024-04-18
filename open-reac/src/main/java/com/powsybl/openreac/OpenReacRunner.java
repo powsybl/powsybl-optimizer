@@ -23,7 +23,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
  */
 public final class OpenReacRunner {
 

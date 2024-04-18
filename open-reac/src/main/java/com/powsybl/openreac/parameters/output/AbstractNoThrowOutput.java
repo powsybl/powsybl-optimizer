@@ -18,7 +18,7 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 /**
- * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
  */
 public abstract class AbstractNoThrowOutput implements NoThrowAmplOutput {
 
