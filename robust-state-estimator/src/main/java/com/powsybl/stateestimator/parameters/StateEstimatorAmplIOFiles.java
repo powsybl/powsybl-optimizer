@@ -84,13 +84,15 @@ public class StateEstimatorAmplIOFiles implements AmplParameters {
         List<AmplOutputFile> list = new ArrayList<>();
 
         // TODO : add runIndicators
+        // TODO : check if it is okay to save results even if hasConverged = false
 
         list.add(networkIndicatorsOutput);
-        if (hasConverged) {
-            list.add(stateVectorEstimateOutput);
-            list.add(networkTopologyEstimateOutput);
-            list.add(measurementEstimatesAndResidualsOutput);
-            list.add(networkPowersEstimateOutput);
+        list.add(stateVectorEstimateOutput);
+        list.add(networkTopologyEstimateOutput);
+        list.add(measurementEstimatesAndResidualsOutput);
+        list.add(networkPowersEstimateOutput);
+        if (!hasConverged) {
+            System.out.println("[WARNING] The state estimator has not converged. StateEstimatorResults will save last found estimates. [WARNING]");
         }
         return list;
     }

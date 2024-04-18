@@ -38,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author Pierre ARVY <pierre.arvy@artelys.com>
  * @author Lucas RIOU <lucas.riou@artelys.com>
  */
-public class Ieee118BusesTests {
+public class Ieee118GeneralTests {
 
     @Test
     void ieee118BusesTests() throws IOException {
@@ -87,7 +87,8 @@ public class Ieee118BusesTests {
                 // Randomly generate measurements out of load flow results using proper seed and Z to N ratio
                 RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
                         Optional.of(seed), Optional.of(ratioTested),
-                        Optional.of(true), Optional.of(true));
+                        Optional.of(true), Optional.of(true),
+                        Optional.empty());
 
                 // Define the solving options for the state estimation
                 StateEstimatorOptions options = new StateEstimatorOptions().setSolvingMode(2).setMaxTimeSolving(30);

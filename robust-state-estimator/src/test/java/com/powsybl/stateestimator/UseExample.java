@@ -53,14 +53,14 @@ public class UseExample {
 
         // Want to introduce a topology change ? Disconnect a line
         // Don't forget to RECONNECT IT before running the state estimation
-        network.getLine("L30-38-1").disconnect();
+        network.getLine("L45-46-1").disconnect();
 
         // Solve the Load Flow problem for the network
         LoadFlowResult loadFlowResult = LoadFlow.run(network, parametersLf);
         assertTrue(loadFlowResult.isFullyConverged());
 
         // IMPORTANT ! Reconnect the line before running the state estimation (line won't be considered in AMPL script otherwise)
-        network.getLine("L30-38-1").connect();
+        network.getLine("L45-46-1").connect();
 
         // Create "knowledge" instance, containing the slackBus (most meshed bus by default)
         // as well as the sets of measurements and suspect branches
@@ -72,8 +72,9 @@ public class UseExample {
         // Randomly generate measurements (useful for test cases) out of load flow results
         //RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, Optional.empty(), Optional.empty(), Optional.empty());
         RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
-                Optional.of(42), Optional.of(4.0),
-                Optional.of(false), Optional.of(true));
+                Optional.of(94), Optional.of(4.0),
+                Optional.of(false), Optional.of(true),
+                Optional.empty());
 
         // We can also add by hand our measurements, and complete them with generated measurements until observability is ensured
         // Note: if some measurements are added after random generation, one might get more measurements than expected
@@ -87,8 +88,6 @@ public class UseExample {
         for (Branch branch: network.getBranches()) {
             knowledge.setSuspectBranch(branch.getId(), true, "PRESUMED CLOSED");
         }
-        //knowledge.setSuspectBranch("L30-38-1", true, "PRESUMED OPENED");
-
 
         // Save "knowledge" object as a JSON
         //knowledge.write(new FileOutputStream("D:/Projet/Tests/knowledge_14bus_seed2.json"));
@@ -96,11 +95,12 @@ public class UseExample {
         //StateEstimatorKnowledge test = StateEstimatorKnowledge.read("D:/Projet/Tests/knowledge_14bus_seed2.json");
 
         // Define the solving options for the state estimation
-        StateEstimatorOptions options = new StateEstimatorOptions().setSolvingMode(2).setMaxTimeSolving(30);
+        StateEstimatorOptions options = new StateEstimatorOptions()
+                .setSolvingMode(2).setMaxTimeSolving(30).setMaxNbTopologyErrors(3);
 
         // Run the state estimation and print the results
         StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
-                knowledge, new StateEstimatorOptions(), new StateEstimatorConfig(true), new LocalComputationManager());
+                knowledge, options, new StateEstimatorConfig(true), new LocalComputationManager());
         results.printAllResultsSi(network);
 
         // Print measurement estimates along with residuals for all measures

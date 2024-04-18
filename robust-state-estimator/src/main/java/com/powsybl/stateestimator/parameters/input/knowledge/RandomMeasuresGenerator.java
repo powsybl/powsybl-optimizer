@@ -6,10 +6,7 @@
  */
 package com.powsybl.stateestimator.parameters.input.knowledge;
 
-import com.powsybl.iidm.network.Branch;
-import com.powsybl.iidm.network.Bus;
-import com.powsybl.iidm.network.Network;
-import com.powsybl.iidm.network.VoltageLevel;
+import com.powsybl.iidm.network.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -71,7 +68,8 @@ public class RandomMeasuresGenerator {
      */
     public static void generateRandomMeasurements(StateEstimatorKnowledge knowledge, Network network,
                                                   Optional<Integer> seed, Optional<Double> ratioMeasuresToBuses,
-                                                  Optional<Boolean> biasTowardsHVNodes, Optional<Boolean> addNoise)
+                                                  Optional<Boolean> biasTowardsHVNodes, Optional<Boolean> addNoise,
+                                                  Optional<String> noPickBranchID)
             throws IllegalArgumentException {
 
         // Compute the number of measurements that must be generated
@@ -96,6 +94,10 @@ public class RandomMeasuresGenerator {
 
         // Initialize lists in which to pick measurement locations (bus or branch) (one list per type of measurement)
         List<Branch> listOfBranchesPfSide1 = new ArrayList<>(network.getBranchStream().toList());
+        // If a "no-pick" branch is given, remove it from these lists
+        if (noPickBranchID.isPresent() && network.getBranchStream().map(Identifiable::getId).toList().contains(noPickBranchID.get())) {
+            listOfBranchesPfSide1.removeIf(branch -> branch.getId().equals(noPickBranchID.get()));
+        }
         List<Branch> listOfBranchesPfSide2 = new ArrayList<>(listOfBranchesPfSide1);
         List<Branch> listOfBranchesQfSide1 = new ArrayList<>(listOfBranchesPfSide1);
         List<Branch> listOfBranchesQfSide2 = new ArrayList<>(listOfBranchesPfSide1);

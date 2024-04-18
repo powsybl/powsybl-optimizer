@@ -437,7 +437,8 @@ public class StateEstimatorKnowledge {
     public StateEstimatorKnowledge setSuspectBranch(String suspectBranchID, boolean isSuspected, String presumedStatus) {
         // Check that the ID of the suspect branch exists in the network (or equivalently, in suspectBranches, as suspectBranches contains all the branches by default)
         if (!suspectBranches.values().stream().map(ArrayList -> ArrayList.get(0)).toList().contains(suspectBranchID)) {
-            throw new IllegalArgumentException("The branch ID provided does not exist in the network.");
+            String messageError = "The branch ID (" + suspectBranchID + ") does not exist in the network.";
+            throw new IllegalArgumentException(messageError);
         }
         if (!presumedStatus.equals("PRESUMED CLOSED") && !presumedStatus.equals("PRESUMED OPENED")) {
             throw new IllegalArgumentException("The assumed status can only be one of the two following values : "+
