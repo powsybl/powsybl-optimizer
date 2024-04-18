@@ -191,6 +191,42 @@ class VoltageLevelLimitsOverrideInputTest {
     }
 
     @Test
+    void testVoltageOverrideWithLowLimitGreaterThanNominalVoltage() {
+        Network network = IeeeCdfNetworkFactory.create57();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
+
+        VoltageLevel vl = network.getVoltageLevels().iterator().next();
+        vl.setHighVoltageLimit(400);
+        vl.setLowVoltageLimit(350);
+        vl.setNominalV(380);
+
+        List<VoltageLimitOverride> voltageLimitsOverride = new ArrayList<>();
+        voltageLimitsOverride.add(new VoltageLimitOverride(vl.getId(), VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, false, 390.));
+
+        // if after override, low limit > nominal voltage, wrong parameters
+        InvalidParametersException e = assertThrows(InvalidParametersException.class, () -> new VoltageLevelLimitsOverrideInput(voltageLimitsOverride, network));
+        assertEquals("Override on voltage level " + vl.getId() + " leads to low voltage limit > nominal voltage.", e.getMessage());
+    }
+
+    @Test
+    void testVoltageOverrideWithHighLimitLessThanNominalVoltage() {
+        Network network = IeeeCdfNetworkFactory.create57();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
+
+        VoltageLevel vl = network.getVoltageLevels().iterator().next();
+        vl.setHighVoltageLimit(400);
+        vl.setLowVoltageLimit(350);
+        vl.setNominalV(380);
+
+        List<VoltageLimitOverride> voltageLimitsOverride = new ArrayList<>();
+        voltageLimitsOverride.add(new VoltageLimitOverride(vl.getId(), VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, false, 360.));
+
+        // if after override, high limit < nominal voltage, wrong parameters
+        InvalidParametersException e = assertThrows(InvalidParametersException.class, () -> new VoltageLevelLimitsOverrideInput(voltageLimitsOverride, network));
+        assertEquals("Override on voltage level " + vl.getId() + " leads to high voltage limit < nominal voltage.", e.getMessage());
+    }
+
+    @Test
     void testVoltageOverrideOnInvalidVoltageLevel() {
         Network network = IeeeCdfNetworkFactory.create57();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
