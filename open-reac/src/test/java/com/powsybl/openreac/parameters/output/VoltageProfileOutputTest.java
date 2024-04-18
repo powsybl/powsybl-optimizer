@@ -11,6 +11,9 @@ import java.io.InputStreamReader;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * @author Pierre Arvy {@literal <pierre.arvy at artelys.com>}
+ */
 class VoltageProfileOutputTest {
 
     @Test
