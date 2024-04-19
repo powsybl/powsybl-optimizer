@@ -8,6 +8,7 @@ package com.powsybl.stateestimator.parameters.input.knowledge;
 
 import com.powsybl.iidm.network.*;
 
+import javax.swing.text.html.Option;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -69,7 +70,7 @@ public class RandomMeasuresGenerator {
     public static void generateRandomMeasurements(StateEstimatorKnowledge knowledge, Network network,
                                                   Optional<Integer> seed, Optional<Double> ratioMeasuresToBuses,
                                                   Optional<Boolean> biasTowardsHVNodes, Optional<Boolean> addNoise,
-                                                  Optional<String> noPickBranchID)
+                                                  Optional<Double> noiseAmplitude, Optional<String> noPickBranchID)
             throws IllegalArgumentException {
 
         // Compute the number of measurements that must be generated
@@ -101,9 +102,16 @@ public class RandomMeasuresGenerator {
         List<Branch> listOfBranchesPfSide2 = new ArrayList<>(listOfBranchesPfSide1);
         List<Branch> listOfBranchesQfSide1 = new ArrayList<>(listOfBranchesPfSide1);
         List<Branch> listOfBranchesQfSide2 = new ArrayList<>(listOfBranchesPfSide1);
-        List<Bus> listOfBusesP = new ArrayList<>(network.getBusView().getBusStream().toList());
-        List<Bus> listOfBusesQ = new ArrayList<>(listOfBusesP);
-        List<Bus> listOfBusesV = new ArrayList<>(listOfBusesP);
+        List<Bus> listOfBusesV = new ArrayList<>(network.getBusView().getBusStream().toList());
+        List<Bus> listOfBusesP = new ArrayList<>();
+        List<Bus> listOfBusesQ = new ArrayList<>();
+        // For active and reactive power injections, remove from the list zero-injection buses (this information is known for sure : it is not a measure associated with uncertainty)
+        for (Bus bus : listOfBusesV) {
+            if (!knowledge.getZeroInjectionBuses().containsValue(bus.getId())) {
+                listOfBusesP.add(bus);
+                listOfBusesQ.add(bus);
+            }
+        }
 
         // Initialize random variables used in the random generation loop
         int randomType;
@@ -121,6 +129,11 @@ public class RandomMeasuresGenerator {
         // and a Random for gaussian noise (use constant seed for repeatability)
         boolean withNoise = addNoise.isPresent() && addNoise.get().equals(true);
         Random noise = new Random(0);
+        // If given, control the size of the interval [-k sigma; +k sigma] in which noise will be picked at random (uniform distribution, sigma : std of measurement)
+        double noiseCoef = 1;
+        if (noiseAmplitude.isPresent() && noiseAmplitude.get() > 0) {
+            noiseCoef = noiseAmplitude.get();
+        }
 
         // Initialize new Random (use the seed if provided) to pick measurements
         Random random = seed.map(Random::new).orElseGet(() -> new Random(System.currentTimeMillis()));
@@ -179,7 +192,7 @@ public class RandomMeasuresGenerator {
                         randomMeasure.put("Variance", String.valueOf(measurementVariance));
                         // Add measurement value (possibly with noise)
                         if (withNoise) {
-                            measurementValue += -Math.sqrt(measurementVariance) + 2 * Math.sqrt(measurementVariance) * noise.nextDouble();
+                            measurementValue += - noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
                         }
                         randomMeasure.put("Value", String.valueOf(measurementValue));
                     } else {
@@ -221,7 +234,7 @@ public class RandomMeasuresGenerator {
                         randomMeasure.put("Variance", String.valueOf(measurementVariance));
                         // Add measurement value (possibly with noise)
                         if (withNoise) {
-                            measurementValue += -Math.sqrt(measurementVariance) + 2 * Math.sqrt(measurementVariance) * noise.nextDouble();
+                            measurementValue += - noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
                         }
                         randomMeasure.put("Value", String.valueOf(measurementValue));
                     } else {
@@ -271,7 +284,7 @@ public class RandomMeasuresGenerator {
                         randomMeasure.put("Variance", String.valueOf(measurementVariance));
                         // Add measurement value (possibly with noise)
                         if (withNoise) {
-                            measurementValue += -Math.sqrt(measurementVariance) + 2 * Math.sqrt(measurementVariance) * noise.nextDouble();
+                            measurementValue += - noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
                         }
                         randomMeasure.put("Value", String.valueOf(measurementValue));
                     } else {
@@ -313,7 +326,7 @@ public class RandomMeasuresGenerator {
                         randomMeasure.put("Variance", String.valueOf(measurementVariance));
                         // Add measurement value (possibly with noise)
                         if (withNoise) {
-                            measurementValue += -Math.sqrt(measurementVariance) + 2 * Math.sqrt(measurementVariance) * noise.nextDouble();
+                            measurementValue += - noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
                         }
                         randomMeasure.put("Value", String.valueOf(measurementValue));
                     } else {
@@ -355,7 +368,7 @@ public class RandomMeasuresGenerator {
                     randomMeasure.put("Variance", String.valueOf(measurementVariance));
                     // Add measurement value (possibly with noise)
                     if (withNoise) {
-                        measurementValue += -Math.sqrt(measurementVariance) + 2 * Math.sqrt(measurementVariance) * noise.nextDouble();
+                        measurementValue += - noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
                     }
                     randomMeasure.put("Value", String.valueOf(measurementValue));
                 } else {
@@ -396,7 +409,7 @@ public class RandomMeasuresGenerator {
 
                     // Add measurement value (possibly with noise)
                     if (withNoise) {
-                        measurementValue += -Math.sqrt(measurementVariance) + 2 * Math.sqrt(measurementVariance) * noise.nextDouble();
+                        measurementValue += - noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
                     }
                     randomMeasure.put("Value", String.valueOf(measurementValue));
                 } else {
@@ -435,7 +448,7 @@ public class RandomMeasuresGenerator {
                     randomMeasure.put("Variance", String.valueOf(measurementVariance));
                     // Add measurement value (possibly with noise)
                     if (withNoise) {
-                        measurementValue += -Math.sqrt(measurementVariance) + 2 * Math.sqrt(measurementVariance) * noise.nextDouble();
+                        measurementValue += - noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
                     }
                     randomMeasure.put("Value", String.valueOf(measurementValue));
                 } else {

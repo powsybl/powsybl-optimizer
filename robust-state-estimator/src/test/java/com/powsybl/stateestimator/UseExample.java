@@ -53,14 +53,14 @@ public class UseExample {
 
         // Want to introduce a topology change ? Disconnect a line
         // Don't forget to RECONNECT IT before running the state estimation
-        network.getLine("L45-46-1").disconnect();
+        //network.getLine("L45-46-1").disconnect();
 
         // Solve the Load Flow problem for the network
         LoadFlowResult loadFlowResult = LoadFlow.run(network, parametersLf);
         assertTrue(loadFlowResult.isFullyConverged());
 
         // IMPORTANT ! Reconnect the line before running the state estimation (line won't be considered in AMPL script otherwise)
-        network.getLine("L45-46-1").connect();
+        //network.getLine("L45-46-1").connect();
 
         // Create "knowledge" instance, containing the slackBus (most meshed bus by default)
         // as well as the sets of measurements and suspect branches
@@ -72,9 +72,9 @@ public class UseExample {
         // Randomly generate measurements (useful for test cases) out of load flow results
         //RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, Optional.empty(), Optional.empty(), Optional.empty());
         RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
-                Optional.of(94), Optional.of(4.0),
-                Optional.of(false), Optional.of(true),
-                Optional.empty());
+                Optional.of(55), Optional.of(5.0),
+                Optional.of(false), Optional.of(false),
+                Optional.empty(), Optional.empty());
 
         // We can also add by hand our measurements, and complete them with generated measurements until observability is ensured
         // Note: if some measurements are added after random generation, one might get more measurements than expected
@@ -85,9 +85,9 @@ public class UseExample {
         System.out.printf("%nTotal number of measurements : %d%n", knowledge.getMeasuresCount());
 
         // Make a branch suspect and change its presumed status
-        for (Branch branch: network.getBranches()) {
-            knowledge.setSuspectBranch(branch.getId(), true, "PRESUMED CLOSED");
-        }
+        //for (Branch branch: network.getBranches()) {
+        //    knowledge.setSuspectBranch(branch.getId(), true, "PRESUMED CLOSED");
+        //}
 
         // Save "knowledge" object as a JSON
         //knowledge.write(new FileOutputStream("D:/Projet/Tests/knowledge_14bus_seed2.json"));
@@ -96,7 +96,7 @@ public class UseExample {
 
         // Define the solving options for the state estimation
         StateEstimatorOptions options = new StateEstimatorOptions()
-                .setSolvingMode(2).setMaxTimeSolving(30).setMaxNbTopologyErrors(3);
+                .setSolvingMode(2).setMaxTimeSolving(30).setMaxNbTopologyErrors(5);
 
         // Run the state estimation and print the results
         StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
@@ -120,6 +120,6 @@ public class UseExample {
         System.out.printf("%nMedian active power flow relative error : %f %% %n", activePowerFlowErrorStats.get(2));
         System.out.printf("%nMedian reactive power flow relative error : %f %% %n", reactivePowerFlowErrorStats.get(2));
         System.out.printf("%nNumber of voltage magnitude measurements : %d%n", knowledge.getVoltageMagnitudeMeasures().size());
-        System.out.println(evaluator.computePerformanceIndex()); // Only if noise added to measures
+        //System.out.println(evaluator.computePerformanceIndex()); // Only if noise added to measures
     }
 }

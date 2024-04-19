@@ -53,8 +53,9 @@ public class Ieee118GeneralTests {
                 "5percentilePfError(%)", "95percentilePfError(%)",
                 "MeanQfError(%)", "StdQfError(%)", "MedianQfError(%)", "MaxQfError(%)",
                 "5percentileQfError(%)", "95percentileQfError(%)",
-                "NbVMeasures","NbPfMeasures","NbQfMeasures","NbPMeasures","NbQMeasures",
-                "PerformanceIndex");
+                "NbVMeasures","NbPfMeasures","NbQfMeasures","NbPMeasures","NbQMeasures");
+        //                "PerformanceIndex");
+
         List<List<String>> data = new ArrayList<>();
 
         Network network = IeeeCdfNetworkFactory.create118();
@@ -87,14 +88,15 @@ public class Ieee118GeneralTests {
                 // Randomly generate measurements out of load flow results using proper seed and Z to N ratio
                 RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
                         Optional.of(seed), Optional.of(ratioTested),
-                        Optional.of(true), Optional.of(true),
-                        Optional.empty());
+                        Optional.of(false), Optional.of(true),
+                        Optional.empty(), Optional.empty());
 
                 // Define the solving options for the state estimation
-                StateEstimatorOptions options = new StateEstimatorOptions().setSolvingMode(2).setMaxTimeSolving(30);
+                StateEstimatorOptions options = new StateEstimatorOptions()
+                        .setSolvingMode(2).setMaxTimeSolving(30).setMaxNbTopologyErrors(5);
                 // Run the state estimation and save the results
                 StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
-                        knowledge, new StateEstimatorOptions(), new StateEstimatorConfig(true), new LocalComputationManager());
+                        knowledge, options, new StateEstimatorConfig(true), new LocalComputationManager());
 
                 // Save statistics on the accuracy of the state estimation w.r.t load flow solution
                 StateEstimatorEvaluator evaluator = new StateEstimatorEvaluator(network, knowledge, results);
@@ -119,14 +121,14 @@ public class Ieee118GeneralTests {
                         String.valueOf(knowledge.getActivePowerFlowMeasures().size()),
                         String.valueOf(knowledge.getReactivePowerFlowMeasures().size()),
                         String.valueOf(knowledge.getActivePowerInjectedMeasures().size()),
-                        String.valueOf(knowledge.getReactivePowerInjectedMeasures().size()),
-                        String.valueOf(evaluator.computePerformanceIndex())
+                        String.valueOf(knowledge.getReactivePowerInjectedMeasures().size())
                         ));
+                        //String.valueOf(evaluator.computePerformanceIndex())));
             }
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("ZtoNratioWithNoiseAndHVbias_test_IEEE118_v2.csv");
+        try (FileWriter fileWriter = new FileWriter("tmp.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 

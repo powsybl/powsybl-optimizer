@@ -54,8 +54,8 @@ public class Ieee118TopologyTests {
                 "5percentilePfError(%)", "95percentilePfError(%)",
                 "MeanQfError(%)", "StdQfError(%)", "MedianQfError(%)", "MaxQfError(%)",
                 "5percentileQfError(%)", "95percentileQfError(%)",
-                "NbVMeasures","NbPfMeasures","NbQfMeasures","NbPMeasures","NbQMeasures",
-                "PerformanceIndex");
+                "NbVMeasures","NbPfMeasures","NbQfMeasures","NbPMeasures","NbQMeasures"
+                ,"PerformanceIndex");
         List<List<String>> data = new ArrayList<>();
 
         Network network = IeeeCdfNetworkFactory.create118();
@@ -96,28 +96,28 @@ public class Ieee118TopologyTests {
                 knowledge.setSlack("VL69_0", network);
 
                 // Make all branches suspects and presumed to be closed
-                for (Branch branch: network.getBranches()) {
-                    knowledge.setSuspectBranch(branch.getId(), true, "PRESUMED CLOSED");
-                }
+                //for (Branch branch: network.getBranches()) {
+                //    knowledge.setSuspectBranch(branch.getId(), true, "PRESUMED CLOSED");
+                //}
 
                 // Make only branches around the erroneous one suspects
-                //List<String> localSuspectBranches = new ArrayList<>(List.of(
-                //        "L45-46-1","L44-45-1", "L45-49-1","L46-48-1","L46-47-1",
-                //        "L47-49-1","L48-49-1","L43-44-1","L47-69-1","L49-69-1"
-                //));
-                //for (String localSuspectBranchID : localSuspectBranches) {
-                //    knowledge.setSuspectBranch(localSuspectBranchID, true, "PRESUMED CLOSED");
-                //}
+                List<String> localSuspectBranches = new ArrayList<>(List.of(
+                        "L45-46-1","L44-45-1", "L45-49-1","L46-48-1","L46-47-1",
+                        "L47-49-1","L48-49-1","L43-44-1","L47-69-1","L49-69-1"
+                ));
+                for (String localSuspectBranchID : localSuspectBranches) {
+                    knowledge.setSuspectBranch(localSuspectBranchID, true, "PRESUMED CLOSED");
+                }
 
                 // Randomly generate measurements out of LF results using proper seed and Z to N ratio
                 RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
                         Optional.of(seed), Optional.of(ratioTested),
                         Optional.empty(), Optional.of(true),
-                        Optional.empty());
+                        Optional.empty(), Optional.empty());
 
                 // Define the solving options for the state estimation
                 StateEstimatorOptions options = new StateEstimatorOptions()
-                        .setSolvingMode(2).setMaxTimeSolving(30).setMaxNbTopologyErrors(5);
+                        .setSolvingMode(2).setMaxTimeSolving(30).setMaxNbTopologyErrors(2);
 
                 // Run the state estimation and save the results
                 StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
@@ -167,12 +167,12 @@ public class Ieee118TopologyTests {
                         String.valueOf(knowledge.getActivePowerInjectedMeasures().size()),
                         String.valueOf(knowledge.getReactivePowerInjectedMeasures().size()),
                         String.valueOf(evaluator.computePerformanceIndex())
-                        ));
+                ));
             }
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("NoTopologyError_AllLinesSuspected_IEEE118_test.csv");
+        try (FileWriter fileWriter = new FileWriter("L45-46_OPENED_WithZeroInjectionBuses_MaxTpgChanges2_10BranchesSuspected_IEEE118_test.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 
