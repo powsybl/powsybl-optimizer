@@ -54,7 +54,7 @@ public class Ieee118GeneralTests {
                 "MeanQfError(%)", "StdQfError(%)", "MedianQfError(%)", "MaxQfError(%)",
                 "5percentileQfError(%)", "95percentileQfError(%)",
                 "NbVMeasures","NbPfMeasures","NbQfMeasures","NbPMeasures","NbQMeasures");
-        //                "PerformanceIndex");
+                //"PerformanceIndex");
 
         List<List<String>> data = new ArrayList<>();
 
@@ -88,7 +88,7 @@ public class Ieee118GeneralTests {
                 // Randomly generate measurements out of load flow results using proper seed and Z to N ratio
                 RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
                         Optional.of(seed), Optional.of(ratioTested),
-                        Optional.of(false), Optional.of(true),
+                        Optional.of(false), Optional.of(false),
                         Optional.empty(), Optional.empty());
 
                 // Define the solving options for the state estimation
@@ -128,7 +128,7 @@ public class Ieee118GeneralTests {
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("tmp.csv");
+        try (FileWriter fileWriter = new FileWriter("vanilla_IEEE118.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 

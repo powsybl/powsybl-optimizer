@@ -74,7 +74,7 @@ printf "Parameter: threshold to detect zero impedance branch Znull:=%Q Ohms\n",Z
 # always check Znull > 0 and Znull < 0.1;
 
 # Tolerance for power balance of zero-injection buses (TODO : use it ?)
-param epsilon_max_power_balance default 1e-4; # in MVA
+param epsilon_max_power_balance default 1e-3; # in MVA
 printf "Parameter: tolerance on power balance of zero-injection buses epsilon_max_power_balance:=%Q MVA\n",epsilon_max_power_balance;
 
 ###############################################################################

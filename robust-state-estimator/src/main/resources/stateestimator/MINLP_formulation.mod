@@ -34,9 +34,9 @@ subject to slack_null_phase{PROBLEM_SE}:
 
 # Consistency for voltage magnitudes
 subject to ctrl_voltage_mag_min{PROBLEM_SE, n in BUSCC}:
-  V[n] >= 0.75;
+    V[n] >= 0.5;
 subject to ctrl_voltage_mag_max{PROBLEM_SE, n in BUSCC}:
-  V[n] <= 1.25;
+    V[n] <= 1.5;
 
 # Consistency for voltage angles
 subject to ctrl_voltage_ang_max{PROBLEM_SE, n in BUSCC}:
@@ -76,7 +76,7 @@ subject to ctrl_zero_injection_buses_act_power{PROBLEM_SE,
       )
       = 0; # <= epsilon_max_power_balance;
 
-        subject to ctrl_zero_injection_buses_rea_power{PROBLEM_SE,
+subject to ctrl_zero_injection_buses_rea_power{PROBLEM_SE,
   (a,b) in BUSCC cross BUS_ZERO_INJECTION : bus_id[1,a] == bus_zero_injection_id[b]}:
       abs(
       # Flows on branches

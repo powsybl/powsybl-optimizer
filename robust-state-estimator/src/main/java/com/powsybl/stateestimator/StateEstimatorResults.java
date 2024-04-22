@@ -40,6 +40,10 @@ public class StateEstimatorResults {
     // Measurement estimates and residuals returned by the state estimation
     Map<Integer, ArrayList<String>> measurementEstimatesAndResiduals;
 
+    // Bounds (p.u.) on voltages used in the state estimation : if one estimate reaches one of these bounds, a warning message is printed
+    private final double MIN_ALLOWED_VOLTAGE = 0.5;
+    private final double MAX_ALLOWED_VOLTAGE = 1.5;
+
     /**
      * @param status      The final status of the state estimation run.
      * @param amplIOFiles A file interface to fetch output file information.
@@ -76,6 +80,17 @@ public class StateEstimatorResults {
 
     public void printStateVectorPu() {
         System.out.println("Printing state estimate : ");
+        // Print a warning message if one of the estimated voltages equals MIN_ALLOWED_VOLTAGE or MAX_ALLOWED_VOLTAGE
+        for (BusStateEstimate busStateEstimate : stateVectorEstimate) {
+            if (busStateEstimate.getV() == MIN_ALLOWED_VOLTAGE) {
+                System.out.printf("%n[WARNING] Estimated voltage at bus %s equals the minimum value allowed by the estimator (%f p.u.).  [WARNING]%n",
+                        busStateEstimate.getBusId(), MIN_ALLOWED_VOLTAGE);
+            }
+            if (busStateEstimate.getV() == MAX_ALLOWED_VOLTAGE) {
+                System.out.printf("%n[WARNING] Estimated voltage at bus %s equals the maximum value allowed by the estimator (%f p.u.).  [WARNING]%n",
+                        busStateEstimate.getBusId(), MAX_ALLOWED_VOLTAGE);
+            }
+        }
         // Print the table header
         System.out.format("%n%-25s%-25s%-25s%n", "BusID", "Estimated V (p.u.)", "Estimated angle (rad)");
         System.out.format("%-25s%-25s%-25s%n", "-----", "------------------", "---------------------");
@@ -105,6 +120,17 @@ public class StateEstimatorResults {
 
     public void printStateVectorSi(Network network) {
         System.out.println("Printing state estimate : ");
+        // Print a warning message if one of the estimated voltages equals MIN_ALLOWED_VOLTAGE or MAX_ALLOWED_VOLTAGE
+        for (BusStateEstimate busStateEstimate : stateVectorEstimate) {
+            if (busStateEstimate.getV() == MIN_ALLOWED_VOLTAGE) {
+                System.out.printf("%n[WARNING] Estimated voltage at bus %s equals the minimum value allowed by the estimator (%f p.u.).  [WARNING]%n",
+                        busStateEstimate.getBusId(), MIN_ALLOWED_VOLTAGE);
+            }
+            if (busStateEstimate.getV() == MAX_ALLOWED_VOLTAGE) {
+                System.out.printf("%n[WARNING] Estimated voltage at bus %s equals the maximum value allowed by the estimator (%f p.u.).  [WARNING]%n",
+                        busStateEstimate.getBusId(), MAX_ALLOWED_VOLTAGE);
+            }
+        }
         // Print the table header
         System.out.format("%n%-25s%-25s%-25s%n", "BusID", "Estimated V (kV)", "Estimated angle (rad)");
         System.out.format("%-25s%-25s%-25s%n", "-----", "----------------", "---------------------");

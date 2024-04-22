@@ -80,7 +80,8 @@ public class Ieee118TopologyTests {
         network.getLine(erroneousLine).connect();
 
         // All MeasuresToBuses ratios to be tested
-        List<Double> ratiosTested = Arrays.asList(1.0, 2.0, 3.0, 4.0, 5.0);
+        //List<Double> ratiosTested = Arrays.asList(1.0, 2.0, 3.0, 4.0, 5.0);
+        List<Double> ratiosTested = Arrays.asList(4.0, 5.0);
 
         for (Double ratioTested : ratiosTested) {
 
@@ -96,18 +97,18 @@ public class Ieee118TopologyTests {
                 knowledge.setSlack("VL69_0", network);
 
                 // Make all branches suspects and presumed to be closed
-                //for (Branch branch: network.getBranches()) {
-                //    knowledge.setSuspectBranch(branch.getId(), true, "PRESUMED CLOSED");
-                //}
+                for (Branch branch: network.getBranches()) {
+                    knowledge.setSuspectBranch(branch.getId(), true, "PRESUMED CLOSED");
+                }
 
                 // Make only branches around the erroneous one suspects
-                List<String> localSuspectBranches = new ArrayList<>(List.of(
-                        "L45-46-1","L44-45-1", "L45-49-1","L46-48-1","L46-47-1",
-                        "L47-49-1","L48-49-1","L43-44-1","L47-69-1","L49-69-1"
-                ));
-                for (String localSuspectBranchID : localSuspectBranches) {
-                    knowledge.setSuspectBranch(localSuspectBranchID, true, "PRESUMED CLOSED");
-                }
+                //List<String> localSuspectBranches = new ArrayList<>(List.of(
+                //        "L45-46-1","L44-45-1", "L45-49-1","L46-48-1","L46-47-1",
+                //        "L47-49-1","L48-49-1","L43-44-1","L47-69-1","L49-69-1"
+                //));
+                //for (String localSuspectBranchID : localSuspectBranches) {
+                //    knowledge.setSuspectBranch(localSuspectBranchID, true, "PRESUMED CLOSED");
+                //}
 
                 // Randomly generate measurements out of LF results using proper seed and Z to N ratio
                 RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
@@ -117,7 +118,7 @@ public class Ieee118TopologyTests {
 
                 // Define the solving options for the state estimation
                 StateEstimatorOptions options = new StateEstimatorOptions()
-                        .setSolvingMode(2).setMaxTimeSolving(30).setMaxNbTopologyErrors(2);
+                        .setSolvingMode(2).setMaxTimeSolving(30).setMaxNbTopologyErrors(5);
 
                 // Run the state estimation and save the results
                 StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
@@ -172,7 +173,7 @@ public class Ieee118TopologyTests {
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("L45-46_OPENED_WithZeroInjectionBuses_MaxTpgChanges2_10BranchesSuspected_IEEE118_test.csv");
+        try (FileWriter fileWriter = new FileWriter("topo_quick_test.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 

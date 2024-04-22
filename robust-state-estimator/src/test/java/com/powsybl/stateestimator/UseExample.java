@@ -41,7 +41,6 @@ public class UseExample {
     void useExample() throws IOException {
 
         // Load your favorite network (IIDM format preferred)
-        //Network network = IeeeCdfNetworkFactory.create14();
         Network network = IeeeCdfNetworkFactory.create118();
 
         // Load Flow parameters (note : we mimic the way the AMPL code deals with zero-impedance branches)
@@ -72,7 +71,7 @@ public class UseExample {
         // Randomly generate measurements (useful for test cases) out of load flow results
         //RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, Optional.empty(), Optional.empty(), Optional.empty());
         RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
-                Optional.of(55), Optional.of(5.0),
+                Optional.of(13), Optional.of(2.5),
                 Optional.of(false), Optional.of(false),
                 Optional.empty(), Optional.empty());
 
