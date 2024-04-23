@@ -23,7 +23,7 @@ public class StateEstimatorOptions {
     public StateEstimatorOptions() {
         setSolvingMode(DEFAULT_SOLVING_MODE);
         setMaxTimeSolving(DEFAULT_MAX_TIME_SOLVING);
-        setMaxNbTopologyErrors(DEFAULT_MAX_TOPOLOGY_CHANGES);
+        setMaxNbTopologyChanges(DEFAULT_MAX_TOPOLOGY_CHANGES);
     }
 
     public HashMap<String, Integer> getSolvingOptions() {
@@ -79,14 +79,14 @@ public class StateEstimatorOptions {
     }
 
     /**
-     * @param maxNbTopologyErrors The maximum number of branches status the solver is allowed to switch
+     * @param maxNbTopologyChanges The maximum number of branches status the solver is allowed to switch
      * @return The object on which the method is applied.
      */
-    public StateEstimatorOptions setMaxNbTopologyErrors(int maxNbTopologyErrors) {
-        if (maxNbTopologyErrors < 0) {
-            throw new IllegalArgumentException("Maximum number of topology errors must be >= 0.");
+    public StateEstimatorOptions setMaxNbTopologyChanges(int maxNbTopologyChanges) {
+        if (maxNbTopologyChanges < 0) {
+            throw new IllegalArgumentException("Maximum number of topology changes must be >= 0.");
         }
-        solvingOptions.put("max_nb_topology_errors", maxNbTopologyErrors);
+        solvingOptions.put("max_nb_topology_changes", maxNbTopologyChanges);
         return this;
     }
 

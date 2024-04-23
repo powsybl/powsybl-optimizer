@@ -38,14 +38,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author Pierre ARVY <pierre.arvy@artelys.com>
  * @author Lucas RIOU <lucas.riou@artelys.com>
  */
-public class Ieee118TopologyTests {
+public class Ieee118CtrlMeasTypeTests {
 
     @Test
     void ieee118BusesTests() throws IOException {
 
         // Initialize the dataframe that will store the results
         List<String> headers = List.of("RatioMeasuresToBuses", "Seed",
-                "FalseLineDetected", "NbTopologyErrors",
                 "MeanVError(%)", "StdVError(%)", "MedianVError(%)", "MaxVError(%)",
                 "5percentileVError(%)", "95percentileVError(%)",
                 "MeanThetaError(deg)", "StdThetaError(deg)", "MedianThetaError(deg)", "MaxThetaError(deg)",
@@ -55,16 +54,11 @@ public class Ieee118TopologyTests {
                 "MeanQfError(%)", "StdQfError(%)", "MedianQfError(%)", "MaxQfError(%)",
                 "5percentileQfError(%)", "95percentileQfError(%)",
                 "NbVMeasures","NbPfMeasures","NbQfMeasures","NbPMeasures","NbQMeasures",
-                "PerformanceIndex"
-        );
+                "PerformanceIndex");
+
         List<List<String>> data = new ArrayList<>();
 
         Network network = IeeeCdfNetworkFactory.create118();
-
-        String erroneousLine = "L45-46-1";
-
-        // Disconnect the erroneous line
-        network.getLine(erroneousLine).disconnect();
 
         // Load Flow parameters (note : we mimic the way the AMPL code deals with zero-impedance branches)
         LoadFlowParameters parametersLf = new LoadFlowParameters();
@@ -73,15 +67,17 @@ public class Ieee118TopologyTests {
                 .setLowImpedanceBranchMode(REPLACE_BY_MIN_IMPEDANCE_LINE)
                 .setLowImpedanceThreshold(1e-4);
 
-        // Solve the Load Flow problem for the network with the disconnected line: use these results as measurements
+        // Solve the Load Flow problem for the network
         LoadFlowResult loadFlowResult = LoadFlow.run(network, parametersLf);
         assertTrue(loadFlowResult.isFullyConverged());
 
-        // Reconnect the erroneous line
-        network.getLine(erroneousLine).connect();
-
-        // All MeasuresToBuses ratios to be tested
-        List<Double> ratiosTested = Arrays.asList(1.0, 2.0, 3.0, 4.0, 5.0);
+        // All ratioForCtrlMeasType to be tested:
+        // For V measurements
+        //List<Double> ratiosTested = Arrays.asList(0.0, 0.05, 0.10, 0.15, 0.20, 0.25);
+        // For P/Q measurements (take the non-measurability of zero-injection buses into account)
+        //List<Double> ratiosTested = Arrays.asList(0.0, 0.04, 0.09, 0.14, 0.19, 0.23);
+        // For Pf/Qf measurements
+        List<Double> ratiosTested = Arrays.asList(0.0, 0.15, 0.30, 0.45, 0.60, 0.75);
 
         for (Double ratioTested : ratiosTested) {
 
@@ -94,51 +90,20 @@ public class Ieee118TopologyTests {
                 // For IEEE 118 bus, slack is "VL69_0": our state estimator must use the same slack
                 knowledge.setSlack("VL69_0", network);
 
-                // Make all branches suspects and presumed to be closed
-                for (Branch branch: network.getBranches()) {
-                    knowledge.setSuspectBranch(branch.getId(), true, "PRESUMED CLOSED");
-                }
-
-                // Make only branches around the erroneous one suspects
-                List<String> localSuspectBranches = new ArrayList<>(List.of(
-                        "L45-46-1","L44-45-1", "L45-49-1","L46-48-1","L46-47-1",
-                        "L47-49-1","L48-49-1","L43-44-1","L47-69-1","L49-69-1"
-                ));
-                for (String localSuspectBranchID : localSuspectBranches) {
-                    knowledge.setSuspectBranch(localSuspectBranchID, true, "PRESUMED CLOSED");
-                }
-
-                // Randomly generate measurements out of LF results using proper seed and Z to N ratio
-                RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
-                        Optional.of(seed), Optional.of(ratioTested),
+                // Randomly generate measurements out of load flow results using proper seed and Z to N ratio
+                RandomMeasuresGenerator.generateRandomMeasurementsWithCtrlMeasureRatio(knowledge, network,
+                        ratioTested, "Qf",
+                        Optional.of(seed), Optional.of(4.0),
                         Optional.empty(), Optional.of(true),
                         Optional.empty(), Optional.empty());
 
                 // Define the solving options for the state estimation
                 StateEstimatorOptions options = new StateEstimatorOptions()
-                        .setSolvingMode(2).setMaxTimeSolving(30).setMaxNbTopologyChanges(10);
+                        .setSolvingMode(2).setMaxTimeSolving(30).setMaxNbTopologyChanges(5);
 
                 // Run the state estimation and save the results
                 StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
                         knowledge, options, new StateEstimatorConfig(true), new LocalComputationManager());
-
-                // Compute the number of topology errors, and find if the erroneous line was given the correct status ("OPENED")
-                int falseLineDetected = 0;
-                int nbTopologyErrors = 0;
-                for (Branch branch : network.getBranches()) {
-                    if (branch.getId().equals(erroneousLine)) {
-                        if (results.getBranchStatusEstimate(erroneousLine).getEstimatedStatus().equals("OPENED")) {
-                            falseLineDetected = 1;
-                        } else {
-                            nbTopologyErrors += 1;
-                        }
-                    }
-                    else {
-                        if (results.getBranchStatusEstimate(branch.getId()).getEstimatedStatus().equals("OPENED")) {
-                            nbTopologyErrors += 1;
-                        }
-                    }
-                }
 
                 // Save statistics on the accuracy of the state estimation w.r.t load flow solution
                 StateEstimatorEvaluator evaluator = new StateEstimatorEvaluator(network, knowledge, results);
@@ -147,7 +112,6 @@ public class Ieee118TopologyTests {
                 List<Double> PfErrorStats = evaluator.computeActivePowerFlowsRelativeErrorsStats();
                 List<Double> QfErrorStats = evaluator.computeReactivePowerFlowsRelativeErrorsStats();
                 data.add(List.of(String.valueOf(ratioTested), String.valueOf(seed),
-                        String.valueOf(falseLineDetected), String.valueOf(nbTopologyErrors),
                         String.valueOf(voltageErrorStats.get(0)), String.valueOf(voltageErrorStats.get(1)),
                         String.valueOf(voltageErrorStats.get(2)), String.valueOf(voltageErrorStats.get(3)),
                         String.valueOf(voltageErrorStats.get(4)), String.valueOf(voltageErrorStats.get(5)),
@@ -165,13 +129,12 @@ public class Ieee118TopologyTests {
                         String.valueOf(knowledge.getReactivePowerFlowMeasures().size()),
                         String.valueOf(knowledge.getActivePowerInjectedMeasures().size()),
                         String.valueOf(knowledge.getReactivePowerInjectedMeasures().size()),
-                        String.valueOf(evaluator.computePerformanceIndex())
-                ));
+                        String.valueOf(evaluator.computePerformanceIndex())));
             }
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("AllLinesSuspects_MaxNbChanges10_WithNoise_L45-46-OPENED_IEEE118.csv");
+        try (FileWriter fileWriter = new FileWriter("Qf_ctrlMeasRatio_IEEE118.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 

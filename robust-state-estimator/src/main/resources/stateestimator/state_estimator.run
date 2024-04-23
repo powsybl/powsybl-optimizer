@@ -62,8 +62,8 @@ if "solving_mode" in SOLVING_OPTIONS_KEYS then let mip_strategy := num(SOLVING_O
 param max_time_solving integer default 120;
 if "max_time_solving" in SOLVING_OPTIONS_KEYS then let max_time_solving := num(SOLVING_OPTIONS_VALUES["max_time_solving"]);
 
-param max_nb_topology_errors integer default 5;
-if "max_nb_topology_errors" in SOLVING_OPTIONS_KEYS then let max_nb_topology_errors := num(SOLVING_OPTIONS_VALUES["max_nb_topology_errors"]);
+param max_nb_topology_changes integer default 5;
+if "max_nb_topology_changes" in SOLVING_OPTIONS_KEYS then let max_nb_topology_changes := num(SOLVING_OPTIONS_VALUES["max_nb_topology_changes"]);
 
 # Absolute parameter : base 100MVA (never change this)
 param base100MVA := 100;

@@ -68,11 +68,16 @@ public class UseExample {
         // For IEEE 118 bus, slack is "VL69_0": our state estimator must use the same slack
         knowledge.setSlack("VL69_0", network);
 
+        // Make all branches suspects and presumed to be closed
+        //for (Branch branch: network.getBranches()) {
+        //    knowledge.setSuspectBranch(branch.getId(), true, "PRESUMED CLOSED");
+        //}
+
         // Randomly generate measurements (useful for test cases) out of load flow results
         //RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, Optional.empty(), Optional.empty(), Optional.empty());
         RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
-                Optional.of(13), Optional.of(2.5),
-                Optional.of(false), Optional.of(false),
+                Optional.of(7), Optional.of(4.0),
+                Optional.of(false), Optional.of(true),
                 Optional.empty(), Optional.empty());
 
         // We can also add by hand our measurements, and complete them with generated measurements until observability is ensured
@@ -95,7 +100,7 @@ public class UseExample {
 
         // Define the solving options for the state estimation
         StateEstimatorOptions options = new StateEstimatorOptions()
-                .setSolvingMode(2).setMaxTimeSolving(30).setMaxNbTopologyErrors(5);
+                .setSolvingMode(2).setMaxTimeSolving(30).setMaxNbTopologyChanges(1);
 
         // Run the state estimation and print the results
         StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
