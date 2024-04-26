@@ -19,6 +19,7 @@ import com.powsybl.stateestimator.StateEstimatorResults;
 import com.powsybl.stateestimator.parameters.input.knowledge.StateEstimatorKnowledge;
 import com.powsybl.stateestimator.parameters.input.knowledge.RandomMeasuresGenerator;
 import com.powsybl.stateestimator.parameters.input.options.StateEstimatorOptions;
+import com.powsybl.stateestimator.parameters.output.estimates.BranchStatusEstimate;
 import org.jgrapht.alg.util.Pair;
 import org.junit.jupiter.api.Test;
 import org.apache.commons.csv.CSVFormat;
@@ -29,6 +30,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.powsybl.openloadflow.OpenLoadFlowParameters.LowImpedanceBranchMode.REPLACE_BY_MIN_IMPEDANCE_LINE;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -46,6 +48,7 @@ public class Ieee118TopologyTests {
         // Initialize the dataframe that will store the results
         List<String> headers = List.of("RatioMeasuresToBuses", "Seed",
                 "FalseLineDetected", "NbTopologyErrors",
+                "FalseLineNearDetection",
                 "MeanVError(%)", "StdVError(%)", "MedianVError(%)", "MaxVError(%)",
                 "5percentileVError(%)", "95percentileVError(%)",
                 "MeanThetaError(deg)", "StdThetaError(deg)", "MedianThetaError(deg)", "MaxThetaError(deg)",
@@ -91,6 +94,7 @@ public class Ieee118TopologyTests {
 
                 // Create "knowledge" instance
                 StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network);
+
                 // For IEEE 118 bus, slack is "VL69_0": our state estimator must use the same slack
                 knowledge.setSlack("VL69_0", network);
 
@@ -100,13 +104,13 @@ public class Ieee118TopologyTests {
                 }
 
                 // Make only branches around the erroneous one suspects
-                List<String> localSuspectBranches = new ArrayList<>(List.of(
-                        "L45-46-1","L44-45-1", "L45-49-1","L46-48-1","L46-47-1",
-                        "L47-49-1","L48-49-1","L43-44-1","L47-69-1","L49-69-1"
-                ));
-                for (String localSuspectBranchID : localSuspectBranches) {
-                    knowledge.setSuspectBranch(localSuspectBranchID, true, "PRESUMED CLOSED");
-                }
+                //List<String> localSuspectBranches = new ArrayList<>(List.of(
+                //        "L45-46-1","L44-45-1", "L45-49-1","L46-48-1","L46-47-1",
+                //        "L47-49-1","L48-49-1","L43-44-1","L47-69-1","L49-69-1"
+                //));
+                //for (String localSuspectBranchID : localSuspectBranches) {
+                //    knowledge.setSuspectBranch(localSuspectBranchID, true, "PRESUMED CLOSED");
+                //}
 
                 // Randomly generate measurements out of LF results using proper seed and Z to N ratio
                 RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
@@ -116,7 +120,7 @@ public class Ieee118TopologyTests {
 
                 // Define the solving options for the state estimation
                 StateEstimatorOptions options = new StateEstimatorOptions()
-                        .setSolvingMode(2).setMaxTimeSolving(30).setMaxNbTopologyChanges(10);
+                        .setSolvingMode(2).setMaxTimeSolving(30).setMaxNbTopologyChanges(5);
 
                 // Run the state estimation and save the results
                 StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
@@ -140,6 +144,29 @@ public class Ieee118TopologyTests {
                     }
                 }
 
+                // Find if the erroneous line is detected or at least is the first neighbour of a changed line
+                int falseLineNearDetection = 0;
+                List<String> changedBranchesID = new ArrayList<>();
+                // Build the list of changed branches
+                for (Branch branch : network.getBranches()) {
+                    BranchStatusEstimate branchEstimate = results.getBranchStatusEstimate(branch.getId());
+                    if (! branchEstimate.getPresumedStatus().equals("PRESUMED " + branchEstimate.getEstimatedStatus())) {
+                        changedBranchesID.add(branch.getId());
+                    }
+                } // Build the list of all neighbouring branches to the erroneous line
+                Bus erroneousLineEnd1 = network.getBranch(erroneousLine).getTerminal1().getBusView().getConnectableBus();
+                Bus erroneousLineEnd2 = network.getBranch(erroneousLine).getTerminal2().getBusView().getConnectableBus();
+                List<String> neighboursIDs = new ArrayList<>(erroneousLineEnd1.getLineStream().map(Identifiable::getId).toList());
+                neighboursIDs.addAll(erroneousLineEnd1.getTwoWindingsTransformerStream().map(Identifiable::getId).toList());
+                neighboursIDs.addAll(erroneousLineEnd2.getLineStream().map(Identifiable::getId).toList());
+                neighboursIDs.addAll(erroneousLineEnd2.getTwoWindingsTransformerStream().map(Identifiable::getId).toList());
+                for (String ID : changedBranchesID) {
+                    if (neighboursIDs.contains(ID)) {
+                        falseLineNearDetection = 1;
+                        break;
+                    }
+                }
+
                 // Save statistics on the accuracy of the state estimation w.r.t load flow solution
                 StateEstimatorEvaluator evaluator = new StateEstimatorEvaluator(network, knowledge, results);
                 List<Double> voltageErrorStats = evaluator.computeVoltageRelativeErrorStats();
@@ -148,6 +175,7 @@ public class Ieee118TopologyTests {
                 List<Double> QfErrorStats = evaluator.computeReactivePowerFlowsRelativeErrorsStats();
                 data.add(List.of(String.valueOf(ratioTested), String.valueOf(seed),
                         String.valueOf(falseLineDetected), String.valueOf(nbTopologyErrors),
+                        String.valueOf(falseLineNearDetection),
                         String.valueOf(voltageErrorStats.get(0)), String.valueOf(voltageErrorStats.get(1)),
                         String.valueOf(voltageErrorStats.get(2)), String.valueOf(voltageErrorStats.get(3)),
                         String.valueOf(voltageErrorStats.get(4)), String.valueOf(voltageErrorStats.get(5)),
@@ -171,7 +199,7 @@ public class Ieee118TopologyTests {
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("AllLinesSuspects_MaxNbChanges10_WithNoise_L45-46-OPENED_IEEE118.csv");
+        try (FileWriter fileWriter = new FileWriter("NearDetection_AllLinesSuspects_MaxNbChanges5_WithNoise_L76-77-OPENED_IEEE118.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 

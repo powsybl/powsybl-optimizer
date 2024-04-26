@@ -58,7 +58,8 @@ public final class StateEstimatorRunner {
         AmplResults run = AmplModelRunner.run(network, variantId, stateEstimation, manager, amplIoInterface);
         return new StateEstimatorResults(run.isSuccess(), amplIoInterface, run.getIndicators());
 
-        // TODO : Add the check of status
-        // TODO : Define status of SE run
+
+
+
     }
 }

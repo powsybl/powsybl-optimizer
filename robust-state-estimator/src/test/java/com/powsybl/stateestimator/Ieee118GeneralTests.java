@@ -85,10 +85,15 @@ public class Ieee118GeneralTests {
                 // For IEEE 118 bus, slack is "VL69_0": our state estimator must use the same slack
                 knowledge.setSlack("VL69_0", network);
 
+                // Add a gross error on measure Pf(VL27 --> VL28) : 80 MW (false) instead of 32.6 MW (true)
+                //Map<String, String> grossMeasure = Map.of("BranchID", "L27-28-1","FirstBusID", "VL27_0",
+                //        "SecondBusID", "VL28_0","Value", "80.0","Variance", "0.1306","Type", "Pf");
+                //knowledge.addMeasure(1, grossMeasure, network);
+
                 // Randomly generate measurements out of load flow results using proper seed and Z to N ratio
                 RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
                         Optional.of(seed), Optional.of(ratioTested),
-                        Optional.of(true), Optional.of(true),
+                        Optional.of(false), Optional.of(true),
                         Optional.empty(), Optional.empty());
 
                 // Define the solving options for the state estimation
@@ -127,7 +132,7 @@ public class Ieee118GeneralTests {
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("WithHVBias_WithNoise1.0_IEEE118.csv");
+        try (FileWriter fileWriter = new FileWriter("WithGrossError_WithNoise1.0_IEEE118.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 

@@ -6,6 +6,8 @@
  */
 package com.powsybl.stateestimator.parameters.input.knowledge;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.powsybl.stateestimator.parameters.input.knowledge.RandomMeasuresGenerator;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,14 +40,14 @@ public class StateEstimatorKnowledge {
         add("V");
     }};
 
-    private final Map<Integer, ArrayList<String>> activePowerFlowMeasures = new HashMap<>();
-    private final Map<Integer, ArrayList<String>> reactivePowerFlowMeasures = new HashMap<>();
-    private final Map<Integer, ArrayList<String>> activePowerInjectedMeasures = new HashMap<>();
-    private final Map<Integer, ArrayList<String>> reactivePowerInjectedMeasures = new HashMap<>();
-    private final Map<Integer, ArrayList<String>> voltageMagnitudeMeasures = new HashMap<>();
-    Map<Integer, ArrayList<String>> suspectBranches = new HashMap<>();
-    String slackBus;
-    Map<Integer, String> zeroInjectionBuses = new HashMap<>();
+    private Map<Integer, ArrayList<String>> activePowerFlowMeasures = new HashMap<>();
+    private Map<Integer, ArrayList<String>> reactivePowerFlowMeasures = new HashMap<>();
+    private Map<Integer, ArrayList<String>> activePowerInjectedMeasures = new HashMap<>();
+    private Map<Integer, ArrayList<String>> reactivePowerInjectedMeasures = new HashMap<>();
+    private Map<Integer, ArrayList<String>> voltageMagnitudeMeasures = new HashMap<>();
+    private Map<Integer, ArrayList<String>> suspectBranches = new HashMap<>();
+    private String slackBus;
+    private Map<Integer, String> zeroInjectionBuses = new HashMap<>();
 
     public StateEstimatorKnowledge(Network network) {
         setSlack(DEFAULT_SLACK_SELECTION_MODE, network)
@@ -57,6 +59,30 @@ public class StateEstimatorKnowledge {
         setSlack(slackBusId, network)
                 .setZeroInjectionBuses(network)
                 .setSuspectBranchesByDefault(network);
+    }
+
+    // Constructor used to deep copy a StateEstimatorKnowledge instance
+    public StateEstimatorKnowledge(StateEstimatorKnowledge knowledge) {
+        this.activePowerFlowMeasures = deepCopy(knowledge.activePowerFlowMeasures);
+        this.reactivePowerFlowMeasures = deepCopy(knowledge.reactivePowerFlowMeasures);
+        this.activePowerInjectedMeasures = deepCopy(knowledge.activePowerInjectedMeasures);
+        this.reactivePowerInjectedMeasures = deepCopy(knowledge.reactivePowerInjectedMeasures);
+        this.voltageMagnitudeMeasures = deepCopy(knowledge.voltageMagnitudeMeasures);
+        this.suspectBranches = deepCopy(knowledge.suspectBranches);
+        this.zeroInjectionBuses =  new HashMap<>(knowledge.zeroInjectionBuses);
+        this.slackBus = knowledge.slackBus;
+    }
+
+    // Auxiliary function used for deep copying
+    public Map<Integer, ArrayList<String>> deepCopy(Map<Integer, ArrayList<String>> originalMap) {
+        Map<Integer, ArrayList<String>> deepCopyMap = new HashMap<>();
+        for (Map.Entry<Integer, ArrayList<String>> entry : originalMap.entrySet()) {
+            Integer key = entry.getKey();
+            ArrayList<String> originalList = entry.getValue();
+            ArrayList<String> deepCopyList = new ArrayList<>(originalList);
+            deepCopyMap.put(key, deepCopyList);
+        }
+        return deepCopyMap;
     }
 
     public int getMeasuresCount() {
@@ -98,12 +124,41 @@ public class StateEstimatorKnowledge {
     }
 
     /**
-     * @param measurementNumber The number of the measurement
+     * @param measurementNumber The number of the measurement, which must be unique within the set of all measurements (all types considered)
+     * @return The measure corresponding to the measurement number, or "null" if no such measure exists
+     */
+    public ArrayList<String> getMeasure(Integer measurementNumber) {
+        if (activePowerFlowMeasures.containsKey(measurementNumber)) {
+            return activePowerFlowMeasures.get(measurementNumber);
+        }
+        if (reactivePowerFlowMeasures.containsKey(measurementNumber)) {
+            return reactivePowerFlowMeasures.get(measurementNumber);
+        }
+        if (activePowerInjectedMeasures.containsKey(measurementNumber)) {
+            return activePowerInjectedMeasures.get(measurementNumber);
+        }
+        if (reactivePowerInjectedMeasures.containsKey(measurementNumber)) {
+            return reactivePowerInjectedMeasures.get(measurementNumber);
+        }
+        if (voltageMagnitudeMeasures.containsKey(measurementNumber)) {
+            return voltageMagnitudeMeasures.get(measurementNumber);
+        }
+        return null;
+    }
+
+    /**
+     * @param measurementNumber The number of the measurement, which must be unique within the set of all measurements (all types considered)
      * @param measure           The measure to be added (contains type, location ID(s), value and variance)
      * @param network           The network to which the measurement is related
      * @return The object on which the method is applied
      */
     public StateEstimatorKnowledge addMeasure(Integer measurementNumber, Map<String, String> measure, Network network) throws IllegalArgumentException {
+        // Check that measurementNumber is unique within the set of all measurements
+        if (this.activePowerFlowMeasures.containsKey(measurementNumber) | this.reactivePowerFlowMeasures.containsKey(measurementNumber)
+        | this.activePowerInjectedMeasures.containsKey(measurementNumber) | this.reactivePowerInjectedMeasures.containsKey(measurementNumber)
+        | this.voltageMagnitudeMeasures.containsKey(measurementNumber)) {
+            throw new IllegalArgumentException("The measurement number provided is not unique within the set of all measurements.");
+        }
         if (measure.get("Type").equals("Pf")) {
             return this.addActivePowerFlowMeasure(measurementNumber, measure, network);
         } else if (measure.get("Type").equals("Qf")) {
@@ -120,12 +175,26 @@ public class StateEstimatorKnowledge {
     }
 
     /**
+     * @param measurementNumberToBeRemoved The number of the measurement, which must be unique within the set of all measurements (all types considered).
+     *                                     If it does not exist, no exception is thrown.
+     * @return The object on which the method is applied
+     */
+    public StateEstimatorKnowledge removeMeasure(Integer measurementNumberToBeRemoved) {
+        this.activePowerFlowMeasures.remove(measurementNumberToBeRemoved);
+        this.reactivePowerFlowMeasures.remove(measurementNumberToBeRemoved);
+        this.activePowerInjectedMeasures.remove(measurementNumberToBeRemoved);
+        this.reactivePowerInjectedMeasures.remove(measurementNumberToBeRemoved);
+        this.voltageMagnitudeMeasures.remove(measurementNumberToBeRemoved);
+        return this;
+    }
+
+    /**
      * @param measurementNumber The number of the measurement for this type
      * @param measure           The active power flow measure to be added (contains location, value and variance)
      * @param network           The network to which the measurement is related
      * @return The object on which the method is applied
      */
-    public StateEstimatorKnowledge addActivePowerFlowMeasure(Integer measurementNumber, Map<String, String> measure, Network network) {
+    private StateEstimatorKnowledge addActivePowerFlowMeasure(Integer measurementNumber, Map<String, String> measure, Network network) {
         // Consistency checks on the measurement provided
         if (measurementNumber < 1) {
             throw new IllegalArgumentException("The measurement number must be a nonzero integer.");
@@ -199,7 +268,7 @@ public class StateEstimatorKnowledge {
      * @param network           The network to which the measurement is related
      * @return The object on which the method is applied.
      */
-    public StateEstimatorKnowledge addReactivePowerFlowMeasure(Integer measurementNumber, Map<String, String> measure, Network network) {
+    private StateEstimatorKnowledge addReactivePowerFlowMeasure(Integer measurementNumber, Map<String, String> measure, Network network) {
         // Consistency checks on the measurement provided
         if (measurementNumber < 1) {
             throw new IllegalArgumentException("The measurement number must be a nonzero integer.");
@@ -273,7 +342,7 @@ public class StateEstimatorKnowledge {
      * @param network           The network to which the measurement is related
      * @return The object on which the method is applied.
      */
-    public StateEstimatorKnowledge addActivePowerInjectedMeasure(Integer measurementNumber, Map<String, String> measure, Network network) {
+    private StateEstimatorKnowledge addActivePowerInjectedMeasure(Integer measurementNumber, Map<String, String> measure, Network network) {
         // Consistency checks on the measurement provided
         if (measurementNumber < 1) {
             throw new IllegalArgumentException("The measurement number must be a nonzero integer.");
@@ -320,7 +389,7 @@ public class StateEstimatorKnowledge {
      * @param network           The network to which the measurement is related
      * @return The object on which the method is applied.
      */
-    public StateEstimatorKnowledge addReactivePowerInjectedMeasure(Integer measurementNumber, Map<String, String> measure, Network network) {
+    private StateEstimatorKnowledge addReactivePowerInjectedMeasure(Integer measurementNumber, Map<String, String> measure, Network network) {
         // Consistency checks on the measurement provided
         if (measurementNumber < 1) {
             throw new IllegalArgumentException("The measurement number must be a nonzero integer.");
@@ -367,7 +436,7 @@ public class StateEstimatorKnowledge {
      * @param network           The network to which the measurement is related
      * @return The object on which the method is applied.
      */
-    public StateEstimatorKnowledge addVoltageMagnitudeMeasure(Integer measurementNumber, Map<String, String> measure, Network network) {
+    private StateEstimatorKnowledge addVoltageMagnitudeMeasure(Integer measurementNumber, Map<String, String> measure, Network network) {
         // Consistency checks on the measurement provided
         if (measurementNumber < 1) {
             throw new IllegalArgumentException("The measurement number must be a nonzero integer.");
@@ -417,6 +486,7 @@ public class StateEstimatorKnowledge {
      */
     public StateEstimatorKnowledge setSuspectBranchesByDefault(Network network) {
         int i = 1;
+        suspectBranches.clear();
         for (Branch branch : network.getBranches()) {
             ArrayList<String> suspectBranch = new ArrayList<>();
             suspectBranch.add(branch.getId());
@@ -478,7 +548,7 @@ public class StateEstimatorKnowledge {
      * @param network The network to which the slack selection is related.
      * @return The object on which the method is applied.
      */
-    public static String selectMostMeshedBus(Network network) {
+    private static String selectMostMeshedBus(Network network) {
         // Map each bus of the network to its nominal voltage
         Map<String, Double> nominalVoltages = network.getBusView().getBusStream().collect(Collectors.toMap(Identifiable::getId, bus -> bus.getVoltageLevel().getNominalV()));
         // Find the maximum nominal voltage in the network
@@ -502,8 +572,9 @@ public class StateEstimatorKnowledge {
      * @param network    The network the zero-injection buses belong to.
      * @return The object on which the method is applied.
      */
-    public StateEstimatorKnowledge setZeroInjectionBuses(Network network) {
+    private StateEstimatorKnowledge setZeroInjectionBuses(Network network) {
         int i = 1;
+        zeroInjectionBuses.clear();
         for (Bus bus: network.getBusView().getBuses()) {
             if (bus.getGeneratorStream().findAny().isEmpty() && bus.getLoadStream().findAny().isEmpty()
                     && bus.getShuntCompensatorStream().findAny().isEmpty() && bus.getStaticVarCompensatorStream().findAny().isEmpty()
@@ -543,12 +614,14 @@ public class StateEstimatorKnowledge {
         new VoltageMagnitudeMeasures(this.getVoltageMagnitudeMeasures()).print();
     }
 
-    // To save and load an instance of StateEstimatorKnowledge
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
+    // TODO : fix deserialization
     // Empty constructor, used only for deserialization
+    @JsonCreator
     public StateEstimatorKnowledge() {
     }
+
+    // To save and load an instance of StateEstimatorKnowledge
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     // Save StateEstimatorKnowledge instance as JSON file
     public void write(FileOutputStream fileOutputStream) {
@@ -565,6 +638,7 @@ public class StateEstimatorKnowledge {
         OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         return OBJECT_MAPPER.readValue(file, StateEstimatorKnowledge.class);
     }
+
 }
 
 

@@ -80,6 +80,10 @@ public class StateEstimatorEvaluator {
         double squaredAngleError = 0;
         for (Bus bus : this.network.getBusView().getBuses()) {
             double tmpAngleError = Math.abs(bus.getAngle() - Math.toDegrees(this.results.getBusStateEstimate(bus.getId()).getTheta()));
+
+            // TODO : remove this
+            //System.out.printf("%nEstimate : %f - True : %f%n", Math.toDegrees(this.results.getBusStateEstimate(bus.getId()).getTheta()), bus.getAngle());
+
             meanAngleErrror += tmpAngleError;
             squaredAngleError += Math.pow(tmpAngleError, 2);
             allErrors.add(tmpAngleError);
@@ -135,6 +139,7 @@ public class StateEstimatorEvaluator {
                                             / (Math.abs(truePfEnd1) + Pf_EPSILON) * 100;
             double tmpPfErrorEnd2 = Math.abs(branchPowersEstimate.getActivePowerEnd2() - truePfEnd2)
                     / (Math.abs(truePfEnd2) + Pf_EPSILON) * 100;
+
             meanPfErrror += tmpPfErrorEnd1 + tmpPfErrorEnd2;
             squaredPfError += Math.pow(tmpPfErrorEnd1, 2) + Math.pow(tmpPfErrorEnd2, 2);
             allErrors.add(tmpPfErrorEnd1);

@@ -42,6 +42,7 @@ public class UseExample {
 
         // Load your favorite network (IIDM format preferred)
         Network network = IeeeCdfNetworkFactory.create118();
+        //Network network = IeeeCdfNetworkFactory.create300();
 
         // Load Flow parameters (note : we mimic the way the AMPL code deals with zero-impedance branches)
         LoadFlowParameters parametersLf = new LoadFlowParameters();
@@ -52,31 +53,37 @@ public class UseExample {
 
         // Want to introduce a topology change ? Disconnect a line
         // Don't forget to RECONNECT IT before running the state estimation
-        //network.getLine("L45-46-1").disconnect();
+        network.getLine("L43-44-1").disconnect();
 
         // Solve the Load Flow problem for the network
         LoadFlowResult loadFlowResult = LoadFlow.run(network, parametersLf);
         assertTrue(loadFlowResult.isFullyConverged());
 
         // IMPORTANT ! Reconnect the line before running the state estimation (line won't be considered in AMPL script otherwise)
-        //network.getLine("L45-46-1").connect();
+        network.getLine("L43-44-1").connect();
 
         // Create "knowledge" instance, containing the slackBus (most meshed bus by default)
         // as well as the sets of measurements and suspect branches
         StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network);
 
         // For IEEE 118 bus, slack is "VL69_0": our state estimator must use the same slack
-        knowledge.setSlack("VL69_0", network);
+        knowledge.setSlack("VL69_0", network); // for IEEE118
+        //knowledge.setSlack("VL7049_0", network); // for IEEE300
 
         // Make all branches suspects and presumed to be closed
-        //for (Branch branch: network.getBranches()) {
-        //    knowledge.setSuspectBranch(branch.getId(), true, "PRESUMED CLOSED");
-        //}
+        for (Branch branch: network.getBranches()) {
+            knowledge.setSuspectBranch(branch.getId(), true, "PRESUMED CLOSED");
+        }
+
+        // Add a gross error on measure Pf(VL27 --> VL28) : 80 MW (false) instead of 32.6 MW (true)
+        //Map<String, String> grossMeasure = Map.of("BranchID","L27-28-1","FirstBusID","VL27_0","SecondBusID","VL28_0",
+        //        "Value","80.0","Variance","0.1306","Type","Pf");
+        //knowledge.addMeasure(1, grossMeasure, network);
 
         // Randomly generate measurements (useful for test cases) out of load flow results
         //RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, Optional.empty(), Optional.empty(), Optional.empty());
         RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
-                Optional.of(7), Optional.of(4.0),
+                Optional.of(10), Optional.of(5.0),
                 Optional.of(false), Optional.of(true),
                 Optional.empty(), Optional.empty());
 
@@ -88,11 +95,6 @@ public class UseExample {
         //knowledge.printAllMeasures();
         System.out.printf("%nTotal number of measurements : %d%n", knowledge.getMeasuresCount());
 
-        // Make a branch suspect and change its presumed status
-        //for (Branch branch: network.getBranches()) {
-        //    knowledge.setSuspectBranch(branch.getId(), true, "PRESUMED CLOSED");
-        //}
-
         // Save "knowledge" object as a JSON
         //knowledge.write(new FileOutputStream("D:/Projet/Tests/knowledge_14bus_seed2.json"));
         // Read the JSON file as an StateEstimatorKnowledge object
@@ -100,7 +102,7 @@ public class UseExample {
 
         // Define the solving options for the state estimation
         StateEstimatorOptions options = new StateEstimatorOptions()
-                .setSolvingMode(2).setMaxTimeSolving(30).setMaxNbTopologyChanges(1);
+                .setSolvingMode(2).setMaxTimeSolving(30).setMaxNbTopologyChanges(3);
 
         // Run the state estimation and print the results
         StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
@@ -123,7 +125,16 @@ public class UseExample {
         System.out.printf("%nMedian angle absolute error : %f degrees %n", angleErrorStats.get(2));
         System.out.printf("%nMedian active power flow relative error : %f %% %n", activePowerFlowErrorStats.get(2));
         System.out.printf("%nMedian reactive power flow relative error : %f %% %n", reactivePowerFlowErrorStats.get(2));
-        System.out.printf("%nNumber of voltage magnitude measurements : %d%n", knowledge.getVoltageMagnitudeMeasures().size());
         //System.out.println(evaluator.computePerformanceIndex()); // Only if noise added to measures
+
+        //List<String> busesUnderStudy = Arrays.asList("VL27_0","VL28_0","VL29_0","VL25_0","VL32_0","VL115_0");
+        //for (String busID : busesUnderStudy) {
+        //    System.out.println(busID);
+        //    System.out.printf("Estimate : %f kV - %f deg %n",
+        //            results.getBusStateEstimate(busID).getV() * network.getBusView().getBus(busID).getVoltageLevel().getNominalV(),
+        //            Math.toDegrees(results.getBusStateEstimate(busID).getTheta()));
+        //    System.out.printf("Truth : %f kV - %f deg %n", network.getBusView().getBus(busID).getV(),
+        //            network.getBusView().getBus(busID).getAngle());
+        //}
     }
 }

@@ -144,9 +144,18 @@ public class RandomMeasuresGenerator {
         // Get maximum nominal voltage in the grid (used for variance scaling)
         double VNomMax = Collections.max(network.getVoltageLevelStream().map(VoltageLevel::getNominalV).toList());
 
+        // Find the starting measurement number, such that no new measure will be given the number of an already existing measure
+        ArrayList<Integer> allExistingMeasNumbers = new ArrayList<Integer>();
+        allExistingMeasNumbers.add(0);
+        allExistingMeasNumbers.addAll(knowledge.getActivePowerInjectedMeasures().keySet());
+        allExistingMeasNumbers.addAll(knowledge.getReactivePowerInjectedMeasures().keySet());
+        allExistingMeasNumbers.addAll(knowledge.getActivePowerFlowMeasures().keySet());
+        allExistingMeasNumbers.addAll(knowledge.getReactivePowerFlowMeasures().keySet());
+        allExistingMeasNumbers.addAll(knowledge.getVoltageMagnitudeMeasures().keySet());
+        int startingMeasurementNumber = Collections.max(allExistingMeasNumbers) + 1;
 
         // For each measurement to be generated, pick a measurement type at random
-        for (int i = 1; i < nbMeasurements + 1; i++) {
+        for (int i = startingMeasurementNumber; i < nbMeasurements + startingMeasurementNumber; i++) {
 
             Map<String, String> randomMeasure = new HashMap<>();
 
@@ -464,8 +473,13 @@ public class RandomMeasuresGenerator {
                 try {
                     knowledge.addMeasure(i, randomMeasure, network);
                 } catch (IllegalArgumentException illegalArgumentException) {
-                    System.out.printf("%nMeasurement n° %d could not be added. Reason :%n", i);
-                    throw illegalArgumentException;
+                    if (illegalArgumentException.getMessage().equals("A measurement already exists for the location and type of the measurement provided. It can not be added.")) {
+                        i = i - 1;
+                    }
+                    else {
+                        System.out.printf("%nMeasurement n° %d could not be added. Reason :%n", i);
+                        throw illegalArgumentException;
+                    }
                 }
             } else { // If measure is null, it is because the list to choose measurement location has become empty (ex : all the buses are already assigned a voltage measure)
                 // In this case, decrease i to get the proper quantity of measurements at the end of the process
@@ -578,8 +592,18 @@ public class RandomMeasuresGenerator {
         // Get maximum nominal voltage in the grid (used for variance scaling)
         double VNomMax = Collections.max(network.getVoltageLevelStream().map(VoltageLevel::getNominalV).toList());
 
+        // Find the starting measurement number, such that no new measure will be given the number of an already existing measure
+        ArrayList<Integer> allExistingMeasNumbers = new ArrayList<>();
+        allExistingMeasNumbers.add(0);
+        allExistingMeasNumbers.addAll(knowledge.getActivePowerInjectedMeasures().keySet());
+        allExistingMeasNumbers.addAll(knowledge.getReactivePowerInjectedMeasures().keySet());
+        allExistingMeasNumbers.addAll(knowledge.getActivePowerFlowMeasures().keySet());
+        allExistingMeasNumbers.addAll(knowledge.getReactivePowerFlowMeasures().keySet());
+        allExistingMeasNumbers.addAll(knowledge.getVoltageMagnitudeMeasures().keySet());
+        int startingMeasurementNumber = Collections.max(allExistingMeasNumbers) + 1;
+
         // For each measurement to be generated, pick a measurement type at random
-        for (int i = 1; i < nbMeasurements + 1; i++) {
+        for (int i = startingMeasurementNumber; i < nbMeasurements + startingMeasurementNumber; i++) {
 
             Map<String, String> randomMeasure = new HashMap<>();
 
@@ -936,8 +960,13 @@ public class RandomMeasuresGenerator {
                 try {
                     knowledge.addMeasure(i, randomMeasure, network);
                 } catch (IllegalArgumentException illegalArgumentException) {
-                    System.out.printf("%nMeasurement n° %d could not be added. Reason :%n", i);
-                    throw illegalArgumentException;
+                    if (illegalArgumentException.getMessage().equals("A measurement already exists for the location and type of the measurement provided. It can not be added.")) {
+                        i = i - 1;
+                    }
+                    else {
+                        System.out.printf("%nMeasurement n° %d could not be added. Reason :%n", i);
+                        throw illegalArgumentException;
+                    }
                 }
             } else { // If measure is null, it is because the list to choose measurement location has become empty (ex : all the buses are already assigned a voltage measure)
                 // In this case, decrease i to get the proper quantity of measurements at the end of the process
