@@ -50,4 +50,12 @@ public final class Reports {
                 .withUntypedValue("size", variableShuntCompensatorsSize)
                 .add();
     }
+
+    public static ReportNode createParametersIntegrityReporter(ReportNode reportNode, String networkId) {
+        return reportNode.newReportNode()
+            .withMessageTemplate("openReacParametersIntegrity", "Open reac parameters integrity on network '${networkId}'")
+            .withUntypedValue("networkId", networkId)
+            .add();
+    }
+
 }

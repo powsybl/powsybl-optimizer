@@ -10,6 +10,7 @@ import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
 import com.powsybl.iidm.network.*;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
+import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAmplLogLevel;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
@@ -26,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Nicolas PIERRE {@literal <nicolas.pierre at artelys.com>}
  * @author Pierre ARVY {@literal <pierre.arvy at artelys.com>}
  */
-public class OpenReacParametersTest {
+class OpenReacParametersTest {
 
     @Test
     void testObjectiveIntegrity() {
@@ -410,6 +411,33 @@ public class OpenReacParametersTest {
         testShuntCompensatorParametersIntegrity(network, wrongId);
         testConstantQGeneratorsParametersIntegrity(network, wrongId);
         testBusesWithReactiveSlacksParametersIntegrity(network, wrongId);
+    }
+
+    @Test
+    void testMissingVoltageLevelsLimitsIntegrity() {
+        Network network = IeeeCdfNetworkFactory.create57();
+        OpenReacParameters parameters = new OpenReacParameters();
+        InvalidParametersException e = assertThrows(InvalidParametersException.class, () -> parameters.checkIntegrity(network));
+        assertEquals("At least one voltage level has an undefined or incorrect voltage limit.", e.getMessage());
+    }
+
+    @Test
+    void testInconsistentVoltageLevelsLimitsIntegrity() {
+        Network network = IeeeCdfNetworkFactory.create57();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
+        VoltageLevel vl = network.getVoltageLevels().iterator().next();
+        OpenReacParameters parameters = new OpenReacParameters();
+
+        // if low relative voltage override leads to low limit < 0, throws exception
+        parameters.addSpecificVoltageLimits(List.of(new VoltageLimitOverride(vl.getId(), VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, true, -2.)));
+        InvalidParametersException e = assertThrows(InvalidParametersException.class, () -> parameters.checkIntegrity(network));
+        assertEquals("At least one voltage limit override is inconsistent.", e.getMessage());
+
+        // if high relative voltage override leads to high limit lower than low limit, throws exception
+        parameters.getSpecificVoltageLimits().clear();
+        parameters.addSpecificVoltageLimits(List.of(new VoltageLimitOverride(vl.getId(), VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, true, -0.5)));
+        InvalidParametersException e1 = assertThrows(InvalidParametersException.class, () -> parameters.checkIntegrity(network));
+        assertEquals("At least one voltage limit override is inconsistent.", e1.getMessage());
     }
 
     void testTwoWindingsTransformersParametersIntegrity(Network network, String wrongId) {

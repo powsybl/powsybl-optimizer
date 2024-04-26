@@ -71,7 +71,7 @@ public final class OpenReacRunner {
      * @return All information  about the run and possible modifications to apply.
      */
     public static OpenReacResult run(Network network, String variantId, OpenReacParameters parameters, OpenReacConfig config, ComputationManager manager, ReportNode reportNode, AmplExportConfig amplExportConfig) {
-        checkParameters(network, variantId, parameters, config, manager, reportNode);
+        checkParameters(network, variantId, parameters, config, manager, Reports.createParametersIntegrityReporter(reportNode, network.getId()));
         AmplModel reactiveOpf = OpenReacModel.buildModel();
         OpenReacAmplIOFiles amplIoInterface = new OpenReacAmplIOFiles(parameters, amplExportConfig, network, config.isDebug(), Reports.createOpenReacReporter(reportNode, network.getId(), parameters.getObjective()));
         AmplResults run = AmplModelRunner.run(network, variantId, reactiveOpf, manager, amplIoInterface);
@@ -118,6 +118,6 @@ public final class OpenReacRunner {
         Objects.requireNonNull(config);
         Objects.requireNonNull(manager);
         Objects.requireNonNull(reportNode);
-        parameters.checkIntegrity(network);
+        parameters.checkIntegrity(network, reportNode);
     }
 }
