@@ -32,7 +32,7 @@ public class RandomMeasuresGenerator {
         put("Qf", 0.022);
         put("P", 0.011);
         put("Q", 0.022);
-        put("V", 0.0051); // TODO : change to 0.0001 ?
+        put("V", 0.0051);
     }};
     // Relative standard deviation values for measurements, see Master Thesis' report
 
