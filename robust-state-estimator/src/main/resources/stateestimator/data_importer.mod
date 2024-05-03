@@ -677,7 +677,7 @@ check {(qq,m,n) in BRANCHCC_FULL}: abs(branch_X_SI[qq,m,n]) >= 0;
 #           Transformers and Phase shifting transformers parameters           #
 ###############################################################################
 
-# TODO : check this !!!
+# TODO : check this !!! ==> OK
 
 # Variable reactance, depending on tap (in SI)
 param branch_Xdeph{(qq,m,n) in BRANCHCC_TRANSFORMER} =
@@ -720,28 +720,23 @@ param branch_Xdeph{(qq,m,n) in BRANCHCC_TRANSFORMER} =
   
   else Znull;
 
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# TODO : check if this still works with branch_R_SI
+
+# TODO : check if this still works with branch_R_SI ==> OK
+
+param branch_Rdeph{(qq,m,n) in BRANCHCC_TRANSFORMER} =
+    branch_R[1,qq,m,n] * substation_Vnomi[1,branch_subex[1,qq,m,n]]^2 / base100MVA;
 
 # Variable resistance, depending on tap (in SI)
 # As we do not have access to true values of R in law tables of transformers, we choose to vary R proportionnaly to X
-param branch_Rdeph{(qq,m,n) in BRANCHCC_TRANSFORMER} =
-  if abs(branch_X_SI[qq,m,n]) >= Znull 
-  then branch_R[1,qq,m,n] * branch_Xdeph[qq,m,n] / branch_X_SI[qq,m,n]
-        * substation_Vnomi[1,branch_subex[1,qq,m,n]]^2 / base100MVA
-  else branch_R[1,qq,m,n]
-        * substation_Vnomi[1,branch_subex[1,qq,m,n]]^2 / base100MVA
-  ;
+#param branch_Rdeph{(qq,m,n) in BRANCHCC_TRANSFORMER} =
+    #if abs(branch_X_SI[qq,m,n]) >= Znull
+    #then branch_R[1,qq,m,n] * branch_Xdeph[qq,m,n] / branch_X_SI[qq,m,n]
+    #      * substation_Vnomi[1,branch_subex[1,qq,m,n]]^2 / base100MVA
+    #else
+    # branch_R[1,qq,m,n] * substation_Vnomi[1,branch_subex[1,qq,m,n]]^2 / base100MVA
+    #;
 
-/* # Set of branches on which we can deduce a cut for theta diff (depending on Fmax)
-set BRANCHCC_DIFF_THETA_CONST := setof {(qq,m,n) in BRANCHCC diff BRANCHCC_3WT: min(branch_patl1[1,qq,m,n], branch_patl2[1,qq,m,n]) > 250 
-                                          and (branch_X_SI[qq,m,n] > 0.05 or ((qq,m,n) in BRANCHCC_TRANSFORMER and branch_Xdeph[qq,m,n] > 0.05))} (qq,m,n); 
-param Fmax{(qq,m,n) in BRANCHCC_DIFF_THETA_CONST} :=
-  1.732 * 0.001
-  * max(substation_Vnomi[1,bus_substation[1,m]]*abs(branch_patl1[1,qq,m,n]),substation_Vnomi[1,bus_substation[1,n]]*abs(branch_patl2[1,qq,m,n]));
- */
-
-check {(qq,m,n) in BRANCHCC_TRANSFORMER}: branch_Rdeph[qq,m,n] > 0;
+check {(qq,m,n) in BRANCHCC_TRANSFORMER}: branch_Rdeph[qq,m,n] >= 0;
 
 ###############################################################################
 #     Additional information on impedances and admittances of the lines       #

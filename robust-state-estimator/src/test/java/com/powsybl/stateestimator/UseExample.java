@@ -6,12 +6,14 @@
  */
 package com.powsybl.stateestimator;
 
+import com.powsybl.commons.datasource.FileDataSource;
 import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
 import com.powsybl.iidm.network.*;
 import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.loadflow.LoadFlowResult;
+import com.powsybl.matpower.converter.MatpowerImporter;
 import com.powsybl.openloadflow.OpenLoadFlowParameters;
 import com.powsybl.stateestimator.StateEstimator;
 import com.powsybl.stateestimator.StateEstimatorConfig;
@@ -27,6 +29,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 
+import static com.powsybl.iidm.network.Network.read;
 import static com.powsybl.openloadflow.OpenLoadFlowParameters.LowImpedanceBranchMode.REPLACE_BY_MIN_IMPEDANCE_LINE;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -41,8 +44,9 @@ public class UseExample {
     void useExample() throws IOException {
 
         // Load your favorite network (IIDM format preferred)
-        Network network = IeeeCdfNetworkFactory.create118();
-        //Network network = IeeeCdfNetworkFactory.create300();
+        //Network network = IeeeCdfNetworkFactory.create118();
+        Network network = IeeeCdfNetworkFactory.create300();
+        //Network network = Network.read(Path.of("D:", "Projet", "Réseaux_tests", "RTE_1888", "pglib_opf_case1888_rte.mat"));
 
         // Load Flow parameters (note : we mimic the way the AMPL code deals with zero-impedance branches)
         LoadFlowParameters parametersLf = new LoadFlowParameters();
@@ -53,26 +57,26 @@ public class UseExample {
 
         // Want to introduce a topology change ? Disconnect a line
         // Don't forget to RECONNECT IT before running the state estimation
-        network.getLine("L43-44-1").disconnect();
+        //network.getLine("L43-44-1").disconnect();
 
         // Solve the Load Flow problem for the network
         LoadFlowResult loadFlowResult = LoadFlow.run(network, parametersLf);
         assertTrue(loadFlowResult.isFullyConverged());
 
         // IMPORTANT ! Reconnect the line before running the state estimation (line won't be considered in AMPL script otherwise)
-        network.getLine("L43-44-1").connect();
+        //network.getLine("L43-44-1").connect();
 
         // Create "knowledge" instance, containing the slackBus (most meshed bus by default)
         // as well as the sets of measurements and suspect branches
         StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network);
 
         // For IEEE 118 bus, slack is "VL69_0": our state estimator must use the same slack
-        knowledge.setSlack("VL69_0", network); // for IEEE118
-        //knowledge.setSlack("VL7049_0", network); // for IEEE300
+        //knowledge.setSlack("VL69_0", network); // for IEEE118
+        knowledge.setSlack("VL7049_0", network); // for IEEE300
 
         // Make all branches suspects and presumed to be closed
         for (Branch branch: network.getBranches()) {
-            knowledge.setSuspectBranch(branch.getId(), true, "PRESUMED CLOSED");
+            knowledge.setSuspectBranch(branch.getId(), false, "PRESUMED CLOSED");
         }
 
         // Add a gross error on measure Pf(VL27 --> VL28) : 80 MW (false) instead of 32.6 MW (true)
@@ -84,7 +88,7 @@ public class UseExample {
         //RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, Optional.empty(), Optional.empty(), Optional.empty());
         RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
                 Optional.of(10), Optional.of(5.0),
-                Optional.of(false), Optional.of(true),
+                Optional.of(false), Optional.of(false),
                 Optional.empty(), Optional.empty());
 
         // We can also add by hand our measurements, and complete them with generated measurements until observability is ensured
