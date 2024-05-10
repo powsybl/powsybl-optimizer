@@ -56,10 +56,10 @@ public class FirstHeuristicTest {
 
         Network network = IeeeCdfNetworkFactory.create118();
 
-        //String erroneousLine = "L24-72-1";
+        String erroneousLine = "L6-7-1";
 
         // Disconnect the erroneous line
-        //network.getLine(erroneousLine).disconnect();
+        network.getLine(erroneousLine).disconnect();
 
         // Load Flow parameters (note : we mimic the way the AMPL code deals with zero-impedance branches)
         LoadFlowParameters parametersLf = new LoadFlowParameters();
@@ -73,7 +73,7 @@ public class FirstHeuristicTest {
         assertTrue(loadFlowResult.isFullyConverged());
 
         // Reconnect the erroneous line, if any
-        //network.getLine(erroneousLine).connect();
+        network.getLine(erroneousLine).connect();
 
         double ratioTested = 5.0;
 
@@ -111,7 +111,7 @@ public class FirstHeuristicTest {
             StateEstimatorKnowledge finalKnowledge = firstHeuristicResults.getSecond();
 
             // TODO : delete if erroneousLine added
-            String erroneousLine = "_";
+            //String erroneousLine = "_";
 
             // Compute the number of topology errors, and find if the erroneous line (if any) was given the correct status ("OPENED")
             int falseLineDetected = 0;
@@ -161,7 +161,7 @@ public class FirstHeuristicTest {
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("Vanilla_WithNoise_NoError_ZtoN5_Heuristic_IEEE118.csv");
+        try (FileWriter fileWriter = new FileWriter("Vanilla_WithNoise_L6_7_OPEN_ZtoN5_Heuristic_IEEE118.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 

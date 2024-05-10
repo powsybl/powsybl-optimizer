@@ -6,25 +6,18 @@
  */
 package com.powsybl.stateestimator;
 
-import com.powsybl.commons.datasource.FileDataSource;
 import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
 import com.powsybl.iidm.network.*;
 import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.loadflow.LoadFlowResult;
-import com.powsybl.matpower.converter.MatpowerImporter;
 import com.powsybl.openloadflow.OpenLoadFlowParameters;
-import com.powsybl.stateestimator.StateEstimator;
-import com.powsybl.stateestimator.StateEstimatorConfig;
-import com.powsybl.stateestimator.StateEstimatorResults;
 import com.powsybl.stateestimator.parameters.input.knowledge.StateEstimatorKnowledge;
 import com.powsybl.stateestimator.parameters.input.knowledge.RandomMeasuresGenerator;
 import com.powsybl.stateestimator.parameters.input.options.StateEstimatorOptions;
-import org.jgrapht.alg.util.Pair;
 import org.junit.jupiter.api.Test;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
@@ -43,17 +36,23 @@ public class UseExample {
     @Test
     void useExample() throws IOException {
 
+        // TODO !!  dans AMPL, round les R et X à 1e-6 ? Attention : round(, 6) garde les 6 premiers digits
+        // Faire : round( mod(x, 1), 6) pour arrondir la partie flottante
+        // Source d'erreur (légère) : car per-unitage puis déper-unitage amène à nombres décimaux avec plus de 6 chiffres après la virgule
+
         // Load your favorite network (IIDM format preferred)
+        //Network network = IeeeCdfNetworkFactory.create30();
         //Network network = IeeeCdfNetworkFactory.create118();
-        Network network = IeeeCdfNetworkFactory.create300();
-        //Network network = Network.read(Path.of("D:", "Projet", "Réseaux_tests", "RTE_1888", "pglib_opf_case1888_rte.mat"));
+        //Network network = IeeeCdfNetworkFactory.create300();
+        Network network = Network.read(Path.of("D:", "Projet", "Réseaux_tests", "IIDM", "pglib_opf_case1354_pegase.xiidm"));
 
         // Load Flow parameters (note : we mimic the way the AMPL code deals with zero-impedance branches)
         LoadFlowParameters parametersLf = new LoadFlowParameters();
         OpenLoadFlowParameters parametersExt = OpenLoadFlowParameters.create(parametersLf);
         parametersExt.setAlwaysUpdateNetwork(true)
                 .setLowImpedanceBranchMode(REPLACE_BY_MIN_IMPEDANCE_LINE)
-                .setLowImpedanceThreshold(1e-4);
+                .setLowImpedanceThreshold(1e-4)
+        ;
 
         // Want to introduce a topology change ? Disconnect a line
         // Don't forget to RECONNECT IT before running the state estimation
@@ -70,9 +69,13 @@ public class UseExample {
         // as well as the sets of measurements and suspect branches
         StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network);
 
+        //System.out.println(knowledge.getZeroInjectionBuses());
+
         // For IEEE 118 bus, slack is "VL69_0": our state estimator must use the same slack
+        //knowledge.setSlack("VL1_0", network); // for IEEE30
         //knowledge.setSlack("VL69_0", network); // for IEEE118
-        knowledge.setSlack("VL7049_0", network); // for IEEE300
+        //knowledge.setSlack("VL7049_0", network); // for IEEE300
+        knowledge.setSlack("VL-4231_0", network); // for case1354_pegase
 
         // Make all branches suspects and presumed to be closed
         for (Branch branch: network.getBranches()) {
@@ -87,8 +90,8 @@ public class UseExample {
         // Randomly generate measurements (useful for test cases) out of load flow results
         //RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, Optional.empty(), Optional.empty(), Optional.empty());
         RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
-                Optional.of(10), Optional.of(5.0),
-                Optional.of(false), Optional.of(false),
+                Optional.of(99), Optional.of(5.0),
+                Optional.of(false), Optional.of(true),
                 Optional.empty(), Optional.empty());
 
         // We can also add by hand our measurements, and complete them with generated measurements until observability is ensured
@@ -106,15 +109,15 @@ public class UseExample {
 
         // Define the solving options for the state estimation
         StateEstimatorOptions options = new StateEstimatorOptions()
-                .setSolvingMode(2).setMaxTimeSolving(30).setMaxNbTopologyChanges(3);
+                .setSolvingMode(2).setMaxTimeSolving(60).setMaxNbTopologyChanges(3);
 
         // Run the state estimation and print the results
         StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
                 knowledge, options, new StateEstimatorConfig(true), new LocalComputationManager());
-        results.printAllResultsSi(network);
+        //results.printAllResultsSi(network);
 
         // Print measurement estimates along with residuals for all measures
-        results.printAllMeasurementEstimatesAndResidualsSi(knowledge);
+        //results.printAllMeasurementEstimatesAndResidualsSi(knowledge);
 
         // In our testing cases, as we know the true values, we can build a StateEstimatorEvaluator
         // to compute statistics on the errors made by the State Estimation
@@ -129,16 +132,12 @@ public class UseExample {
         System.out.printf("%nMedian angle absolute error : %f degrees %n", angleErrorStats.get(2));
         System.out.printf("%nMedian active power flow relative error : %f %% %n", activePowerFlowErrorStats.get(2));
         System.out.printf("%nMedian reactive power flow relative error : %f %% %n", reactivePowerFlowErrorStats.get(2));
-        //System.out.println(evaluator.computePerformanceIndex()); // Only if noise added to measures
-
-        //List<String> busesUnderStudy = Arrays.asList("VL27_0","VL28_0","VL29_0","VL25_0","VL32_0","VL115_0");
-        //for (String busID : busesUnderStudy) {
-        //    System.out.println(busID);
-        //    System.out.printf("Estimate : %f kV - %f deg %n",
-        //            results.getBusStateEstimate(busID).getV() * network.getBusView().getBus(busID).getVoltageLevel().getNominalV(),
-        //            Math.toDegrees(results.getBusStateEstimate(busID).getTheta()));
-        //    System.out.printf("Truth : %f kV - %f deg %n", network.getBusView().getBus(busID).getV(),
-        //            network.getBusView().getBus(busID).getAngle());
-        //}
+        System.out.printf("%nPerformance index : %f %n", evaluator.computePerformanceIndex()); // Only if noise added to measures
+        System.out.printf("%n95th percentile active power flow : %f %% %n", activePowerFlowErrorStats.get(5));
+        System.out.printf("%n95th percentile reactive power flow : %f %% %n", reactivePowerFlowErrorStats.get(5));
+        System.out.printf("%n5th percentile voltage relative error : %f %% %n", voltageErrorStats.get(4));
+        System.out.printf("%n95th percentile voltage relative error : %f %% %n", voltageErrorStats.get(5));
+        System.out.printf("%n5th percentile angle absolute error : %f degrees %n", angleErrorStats.get(4));
+        System.out.printf("%n95th percentile angle absolute error : %f degrees %n", angleErrorStats.get(5));
     }
 }

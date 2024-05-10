@@ -602,9 +602,11 @@ set BRANCHZNULL := {(qq,m,n) in BRANCHCC_FULL: branch_Z[qq,m,n] <= Znull};
 #
 # NB : SHUNTCC are the shunts that are fixed
 set SHUNTCC := {(1,s,n) in SHUNT: n in BUSCC or shunt_possiblebus[1,s,n] in BUSCC}; # We want to be able to reconnect shunts
-set BRANCHCC_REGL := {(qq,m,n) in BRANCHCC_FULL diff BRANCHZNULL: branch_ptrRegl[1,qq,m,n] != -1 }; 
-set BRANCHCC_DEPH := {(qq,m,n) in BRANCHCC_FULL diff BRANCHZNULL: branch_ptrDeph[1,qq,m,n] != -1 };
-set BRANCHCC_TRANSFORMER := BRANCHCC_REGL union BRANCHCC_DEPH;
+# TODO : keep or remove "diff BRANCHZNULL" in the two sets below
+set BRANCHCC_REGL := {(qq,m,n) in BRANCHCC_FULL : branch_ptrRegl[1,qq,m,n] != -1 };
+set BRANCHCC_DEPH := {(qq,m,n) in BRANCHCC_FULL : branch_ptrDeph[1,qq,m,n] != -1 };
+
+        set BRANCHCC_TRANSFORMER := BRANCHCC_REGL union BRANCHCC_DEPH;
 set BRANCHCC_3WT := {(qq,m,n) in BRANCHCC_FULL : branch_3wt[1,qq,m,n] != -1};
 set SVCCC   := setof {(1,svc,n) in SVC: n in BUSCC} (svc,n);
 set BUSCC_3WT := setof {(qq,m,n) in BRANCHCC : branch_3wt[1,qq,m,n] != -1} n;
@@ -677,8 +679,6 @@ check {(qq,m,n) in BRANCHCC_FULL}: abs(branch_X_SI[qq,m,n]) >= 0;
 #           Transformers and Phase shifting transformers parameters           #
 ###############################################################################
 
-# TODO : check this !!! ==> OK
-
 # Variable reactance, depending on tap (in SI)
 param branch_Xdeph{(qq,m,n) in BRANCHCC_TRANSFORMER} =
   if (qq,m,n) in BRANCHCC_DEPH and (qq,m,n) in BRANCHCC_REGL
@@ -721,22 +721,22 @@ param branch_Xdeph{(qq,m,n) in BRANCHCC_TRANSFORMER} =
   else Znull;
 
 
-# TODO : check if this still works with branch_R_SI ==> OK
+# TODO : check this !
 
-param branch_Rdeph{(qq,m,n) in BRANCHCC_TRANSFORMER} =
-    branch_R[1,qq,m,n] * substation_Vnomi[1,branch_subex[1,qq,m,n]]^2 / base100MVA;
+#param branch_Rdeph{(qq,m,n) in BRANCHCC_TRANSFORMER} =
+#    branch_R[1,qq,m,n] * substation_Vnomi[1,branch_subex[1,qq,m,n]]^2 / base100MVA;
 
 # Variable resistance, depending on tap (in SI)
-# As we do not have access to true values of R in law tables of transformers, we choose to vary R proportionnaly to X
-#param branch_Rdeph{(qq,m,n) in BRANCHCC_TRANSFORMER} =
-    #if abs(branch_X_SI[qq,m,n]) >= Znull
-    #then branch_R[1,qq,m,n] * branch_Xdeph[qq,m,n] / branch_X_SI[qq,m,n]
-    #      * substation_Vnomi[1,branch_subex[1,qq,m,n]]^2 / base100MVA
-    #else
-    # branch_R[1,qq,m,n] * substation_Vnomi[1,branch_subex[1,qq,m,n]]^2 / base100MVA
-    #;
+# As we do not have access to true values of R in law tables of transformers, we choose to vary R proportionnaly to X (R_var = R_base x X_var / X_base)
+param branch_Rdeph{(qq,m,n) in BRANCHCC_TRANSFORMER} =
+    if abs(branch_X_SI[qq,m,n]) >= Znull
+    then branch_R[1,qq,m,n] * branch_Xdeph[qq,m,n] / branch_X_SI[qq,m,n]
+    * substation_Vnomi[1,branch_subex[1,qq,m,n]]^2 / base100MVA
+    else
+    branch_R[1,qq,m,n] * substation_Vnomi[1,branch_subex[1,qq,m,n]]^2 / base100MVA
+    ;
 
-check {(qq,m,n) in BRANCHCC_TRANSFORMER}: branch_Rdeph[qq,m,n] >= 0;
+check {(qq,m,n) in BRANCHCC_TRANSFORMER}: branch_Rdeph[qq,m,n] >= 0; # Note : R can be 0 for a transformer
 
 ###############################################################################
 #     Additional information on impedances and admittances of the lines       #

@@ -78,7 +78,7 @@ public class RandomMeasuresGenerator {
             if (ratioMeasuresToBuses.get() <= 0) {
                 throw new IllegalArgumentException("Invalid value for the parameter ratioMeasuresToBuses : should be a positive float");
             }
-            Double maxRatioMeasuresToBuses = (2.0 * network.getBranchCount() + 3.0 * network.getBusView().getBusStream().count())
+            Double maxRatioMeasuresToBuses = (4.0 * network.getBranchCount() + 3.0 * network.getBusView().getBusStream().count())
                                 / network.getBusView().getBusStream().count();
             if (ratioMeasuresToBuses.get() > maxRatioMeasuresToBuses) {
                 throw new IllegalArgumentException(String.format("Provided value for ratioMeasuresToBuses is too large. Should be smaller than %f", maxRatioMeasuresToBuses));
@@ -93,7 +93,23 @@ public class RandomMeasuresGenerator {
         nbMeasurements = Math.max(nbMeasurements - nbAlreadyExistingMeasurements, 0);
 
         // Initialize lists in which to pick measurement locations (bus or branch) (one list per type of measurement)
-        List<Branch> listOfBranchesPfSide1 = new ArrayList<>(network.getBranchStream().toList());
+        List<Branch> listOfBranchesPfSide1 = new ArrayList<>();
+        List<Bus> listOfBusesV = new ArrayList<>();
+        // Add only buses and branches from main connected component (make sure each element is unique)
+        for (Branch branch : network.getBranches()) {
+            Bus b1 = branch.getTerminal1().getBusView().getConnectableBus();
+            Bus b2 = branch.getTerminal2().getBusView().getConnectableBus();
+            if (b1.isInMainConnectedComponent()
+            && b2.isInMainConnectedComponent()) {
+                listOfBranchesPfSide1.add(branch);
+                if (!listOfBusesV.contains(b1)) {
+                    listOfBusesV.add(b1);
+                }
+                if (!listOfBusesV.contains(b2)) {
+                    listOfBusesV.add(b2);
+                }
+            }
+        }
         // If a "no-pick" branch is given, remove it from these lists
         if (noPickBranchID.isPresent() && network.getBranchStream().map(Identifiable::getId).toList().contains(noPickBranchID.get())) {
             listOfBranchesPfSide1.removeIf(branch -> branch.getId().equals(noPickBranchID.get()));
@@ -101,7 +117,6 @@ public class RandomMeasuresGenerator {
         List<Branch> listOfBranchesPfSide2 = new ArrayList<>(listOfBranchesPfSide1);
         List<Branch> listOfBranchesQfSide1 = new ArrayList<>(listOfBranchesPfSide1);
         List<Branch> listOfBranchesQfSide2 = new ArrayList<>(listOfBranchesPfSide1);
-        List<Bus> listOfBusesV = new ArrayList<>(network.getBusView().getBusStream().toList());
         List<Bus> listOfBusesP = new ArrayList<>();
         List<Bus> listOfBusesQ = new ArrayList<>();
         // For active and reactive power injections, remove from the list zero-injection buses (this information is known for sure : it is not a measure associated with uncertainty)
@@ -280,7 +295,7 @@ public class RandomMeasuresGenerator {
                         randomMeasure.put("FirstBusID", randomBranch.getTerminal1().getBusView().getConnectableBus().getId());
                         randomMeasure.put("SecondBusID", randomBranch.getTerminal2().getBusView().getConnectableBus().getId());
                         measurementValue = randomBranch.getTerminal1().getQ();
-                        // If line is disconnected, returned value will be Double.NaN : make it 0
+                        // If line is disconnected but belongs to main connected component, returned value will be Double.NaN : make it 0
                         if (Double.isNaN(measurementValue)) {
                             measurementValue = 0;
                         }
@@ -322,7 +337,7 @@ public class RandomMeasuresGenerator {
                         randomMeasure.put("FirstBusID", randomBranch.getTerminal2().getBusView().getConnectableBus().getId());
                         randomMeasure.put("SecondBusID", randomBranch.getTerminal1().getBusView().getConnectableBus().getId());
                         measurementValue = randomBranch.getTerminal2().getQ();
-                        // If line is disconnected, returned value will be Double.NaN : make it 0
+                        // If line is disconnected but belongs to main connected component, returned value will be Double.NaN : make it 0
                         if (Double.isNaN(measurementValue)) {
                             measurementValue = 0;
                         }
@@ -541,7 +556,23 @@ public class RandomMeasuresGenerator {
         long nbMeasurementsCtrlType = Math.round(nbMeasurements * ratioForCtrlMeasType);
 
         // Initialize lists in which to pick measurement locations (bus or branch) (one list per type of measurement)
-        List<Branch> listOfBranchesPfSide1 = new ArrayList<>(network.getBranchStream().toList());
+        List<Branch> listOfBranchesPfSide1 = new ArrayList<>();
+        List<Bus> listOfBusesV = new ArrayList<>();
+        // Consider only buses and branches from the main connected component (make sure each element is unique)
+        for (Branch branch : network.getBranches()) {
+            Bus b1 = branch.getTerminal1().getBusView().getConnectableBus();
+            Bus b2 = branch.getTerminal2().getBusView().getConnectableBus();
+            if (b1.isInMainConnectedComponent()
+                    && b2.isInMainConnectedComponent()) {
+                listOfBranchesPfSide1.add(branch);
+                if (!listOfBusesV.contains(b1)) {
+                    listOfBusesV.add(b1);
+                }
+                if (!listOfBusesV.contains(b2)) {
+                    listOfBusesV.add(b2);
+                }
+            }
+        }
         // If a "no-pick" branch is given, remove it from these lists
         if (noPickBranchID.isPresent() && network.getBranchStream().map(Identifiable::getId).toList().contains(noPickBranchID.get())) {
             listOfBranchesPfSide1.removeIf(branch -> branch.getId().equals(noPickBranchID.get()));
@@ -549,7 +580,6 @@ public class RandomMeasuresGenerator {
         List<Branch> listOfBranchesPfSide2 = new ArrayList<>(listOfBranchesPfSide1);
         List<Branch> listOfBranchesQfSide1 = new ArrayList<>(listOfBranchesPfSide1);
         List<Branch> listOfBranchesQfSide2 = new ArrayList<>(listOfBranchesPfSide1);
-        List<Bus> listOfBusesV = new ArrayList<>(network.getBusView().getBusStream().toList());
         List<Bus> listOfBusesP = new ArrayList<>();
         List<Bus> listOfBusesQ = new ArrayList<>();
         // For active and reactive power injections, remove from the list zero-injection buses (this information is known for sure : it is not a measure associated with uncertainty)
