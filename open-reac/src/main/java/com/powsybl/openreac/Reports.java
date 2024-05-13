@@ -51,9 +51,9 @@ public final class Reports {
                 .add();
     }
 
-    public static ReportNode createParametersIntegrityReporter(ReportNode reportNode, String networkId) {
+    public static ReportNode createParameterIntegrityReporter(ReportNode reportNode, String networkId) {
         return reportNode.newReportNode()
-            .withMessageTemplate("openReacParametersIntegrity", "Open reac parameters integrity on network '${networkId}'")
+            .withMessageTemplate("openReacParameterIntegrity", "Open reac parameter integrity on network '${networkId}'")
             .withUntypedValue("networkId", networkId)
             .add();
     }
