@@ -57,8 +57,8 @@ public class Ieee118TopologyTests {
                 "5percentilePfError(%)", "95percentilePfError(%)",
                 "MeanQfError(%)", "StdQfError(%)", "MedianQfError(%)", "MaxQfError(%)",
                 "5percentileQfError(%)", "95percentileQfError(%)",
-                "NbVMeasures","NbPfMeasures","NbQfMeasures","NbPMeasures","NbQMeasures",
-                "PerformanceIndex"
+                "NbVMeasures","NbPfMeasures","NbQfMeasures","NbPMeasures","NbQMeasures"
+                //"PerformanceIndex"
         );
         List<List<String>> data = new ArrayList<>();
 
@@ -115,7 +115,7 @@ public class Ieee118TopologyTests {
                 // Randomly generate measurements out of LF results using proper seed and Z to N ratio
                 RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
                         Optional.of(seed), Optional.of(ratioTested),
-                        Optional.empty(), Optional.of(true),
+                        Optional.empty(), Optional.of(false),
                         Optional.empty(), Optional.empty());
 
                 // Define the solving options for the state estimation
@@ -192,14 +192,14 @@ public class Ieee118TopologyTests {
                         String.valueOf(knowledge.getActivePowerFlowMeasures().size()),
                         String.valueOf(knowledge.getReactivePowerFlowMeasures().size()),
                         String.valueOf(knowledge.getActivePowerInjectedMeasures().size()),
-                        String.valueOf(knowledge.getReactivePowerInjectedMeasures().size()),
-                        String.valueOf(evaluator.computePerformanceIndex())
+                        String.valueOf(knowledge.getReactivePowerInjectedMeasures().size())
+                        //String.valueOf(evaluator.computePerformanceIndex())
                 ));
             }
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("NearDetection_AllLinesSuspects_MaxNbChanges5_WithNoise_L76-77-OPENED_IEEE118.csv");
+        try (FileWriter fileWriter = new FileWriter("AllLinesSuspects_NoNoise_L45-46_OPENED_IEEE118.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 

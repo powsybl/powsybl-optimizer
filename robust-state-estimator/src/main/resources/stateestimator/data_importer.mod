@@ -526,7 +526,7 @@ check card(BRANCH) == card(TEST_UNIQUENESS_BRANCH);
 set BRANCH_SUSP dimen 1; # [num]
 param branch_susp_id {BRANCH_SUSP} symbolic; # All branches are present in ampl_suspect_branches.txt
 param is_suspected {BRANCH_SUSP} binary; # If equal to 1, then branch status is suspected to be false. Change of status allowed.
-param y_prior {BRANCH_SUSP} binary; # "A priori" status of the branch
+param y_prior {BRANCH_SUSP} binary; # "A priori" status of the branch : 0 = presumed closed, 1 = presumed opened
 
 # Note : checking that suspect branches IDs are valid is done in Java
 # Same goes with buses/branches IDs related to measurements

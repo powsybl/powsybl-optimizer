@@ -42,9 +42,9 @@ public class UseExample {
 
         // Load your favorite network (IIDM format preferred)
         //Network network = IeeeCdfNetworkFactory.create30();
-        //Network network = IeeeCdfNetworkFactory.create118();
+        Network network = IeeeCdfNetworkFactory.create118();
         //Network network = IeeeCdfNetworkFactory.create300();
-        Network network = Network.read(Path.of("D:", "Projet", "Réseaux_tests", "IIDM", "pglib_opf_case1354_pegase.xiidm"));
+        //Network network = Network.read(Path.of("D:", "Projet", "Réseaux_tests", "IIDM", "pglib_opf_case1354_pegase.xiidm"));
 
         // Load Flow parameters (note : we mimic the way the AMPL code deals with zero-impedance branches)
         LoadFlowParameters parametersLf = new LoadFlowParameters();
@@ -56,30 +56,28 @@ public class UseExample {
 
         // Want to introduce a topology change ? Disconnect a line
         // Don't forget to RECONNECT IT before running the state estimation
-        //network.getLine("L43-44-1").disconnect();
+        //network.getLine("L45-46-1").disconnect();
 
         // Solve the Load Flow problem for the network
         LoadFlowResult loadFlowResult = LoadFlow.run(network, parametersLf);
         assertTrue(loadFlowResult.isFullyConverged());
 
         // IMPORTANT ! Reconnect the line before running the state estimation (line won't be considered in AMPL script otherwise)
-        //network.getLine("L43-44-1").connect();
+        //network.getLine("L45-46-1").connect();
 
         // Create "knowledge" instance, containing the slackBus (most meshed bus by default)
         // as well as the sets of measurements and suspect branches
         StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network);
 
-        //System.out.println(knowledge.getZeroInjectionBuses());
-
         // For IEEE 118 bus, slack is "VL69_0": our state estimator must use the same slack
         //knowledge.setSlack("VL1_0", network); // for IEEE30
-        //knowledge.setSlack("VL69_0", network); // for IEEE118
+        knowledge.setSlack("VL69_0", network); // for IEEE118
         //knowledge.setSlack("VL7049_0", network); // for IEEE300
-        knowledge.setSlack("VL-4231_0", network); // for case1354_pegase
+        //knowledge.setSlack("VL-4231_0", network); // for case1354_pegase
 
         // Make all branches suspects and presumed to be closed
         for (Branch branch: network.getBranches()) {
-            knowledge.setSuspectBranch(branch.getId(), false, "PRESUMED CLOSED");
+            knowledge.setSuspectBranch(branch.getId(), true, "PRESUMED CLOSED");
         }
 
         // Add a gross error on measure Pf(VL27 --> VL28) : 80 MW (false) instead of 32.6 MW (true)
@@ -90,8 +88,8 @@ public class UseExample {
         // Randomly generate measurements (useful for test cases) out of load flow results
         //RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, Optional.empty(), Optional.empty(), Optional.empty());
         RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
-                Optional.of(99), Optional.of(5.0),
-                Optional.of(false), Optional.of(true),
+                Optional.of(1), Optional.of(4.0),
+                Optional.of(false), Optional.of(false),
                 Optional.empty(), Optional.empty());
 
         // We can also add by hand our measurements, and complete them with generated measurements until observability is ensured
@@ -109,12 +107,12 @@ public class UseExample {
 
         // Define the solving options for the state estimation
         StateEstimatorOptions options = new StateEstimatorOptions()
-                .setSolvingMode(2).setMaxTimeSolving(60).setMaxNbTopologyChanges(3);
+                .setSolvingMode(2).setMaxTimeSolving(60).setMaxNbTopologyChanges(5);
 
         // Run the state estimation and print the results
         StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
                 knowledge, options, new StateEstimatorConfig(true), new LocalComputationManager());
-        //results.printAllResultsSi(network);
+        results.printAllResultsSi(network);
 
         // Print measurement estimates along with residuals for all measures
         //results.printAllMeasurementEstimatesAndResidualsSi(knowledge);
@@ -132,7 +130,7 @@ public class UseExample {
         System.out.printf("%nMedian angle absolute error : %f degrees %n", angleErrorStats.get(2));
         System.out.printf("%nMedian active power flow relative error : %f %% %n", activePowerFlowErrorStats.get(2));
         System.out.printf("%nMedian reactive power flow relative error : %f %% %n", reactivePowerFlowErrorStats.get(2));
-        System.out.printf("%nPerformance index : %f %n", evaluator.computePerformanceIndex()); // Only if noise added to measures
+        //System.out.printf("%nPerformance index : %f %n", evaluator.computePerformanceIndex()); // Only if noise added to measures
         System.out.printf("%n95th percentile active power flow : %f %% %n", activePowerFlowErrorStats.get(5));
         System.out.printf("%n95th percentile reactive power flow : %f %% %n", reactivePowerFlowErrorStats.get(5));
         System.out.printf("%n5th percentile voltage relative error : %f %% %n", voltageErrorStats.get(4));

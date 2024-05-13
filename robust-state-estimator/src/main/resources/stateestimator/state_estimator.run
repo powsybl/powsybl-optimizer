@@ -396,7 +396,7 @@ param rea_power_end2{(qq,k,n) in BRANCHCC};
 for{(qq,k,n) in BRANCHCC} {
 
   let act_power_end1[qq,k,n] :=
-  round(y[qq,k,n]) * (
+  (1-round(y[qq,k,n])) * (
     branch_Ror_SI[qq,k,n]^2 * branch_Gor_SI[qq,k,n] * V[k]^2
       * substation_Vnomi[1,bus_substation[1,k]]^2
     + branch_Ror_SI[qq,k,n]^2 * branch_admi_SI[qq,k,n] * V[k]^2 * sin(branch_angper[qq,k,n])
@@ -407,7 +407,7 @@ for{(qq,k,n) in BRANCHCC} {
   );
 
   let act_power_end2[qq,k,n] :=
-  round(y[qq,k,n]) * (
+  (1-round(y[qq,k,n])) * (
     branch_Rex_SI[qq,k,n]^2 * branch_Gex_SI[qq,k,n] * V[n]^2
       * substation_Vnomi[1,bus_substation[1,n]]^2
     + branch_Rex_SI[qq,k,n]^2 * branch_admi_SI[qq,k,n] * V[n]^2 * sin(branch_angper[qq,k,n])
@@ -418,7 +418,7 @@ for{(qq,k,n) in BRANCHCC} {
   );
 
   let rea_power_end1[qq,k,n] :=
-  round(y[qq,k,n]) * (
+  (1-round(y[qq,k,n])) * (
     - branch_Ror_SI[qq,k,n]^2 * branch_Bor_SI[qq,k,n] * V[k]^2
       * substation_Vnomi[1,bus_substation[1,k]]^2
     + branch_Ror_SI[qq,k,n]^2 * branch_admi_SI[qq,k,n] * V[k]^2 * cos(branch_angper[qq,k,n])
@@ -429,7 +429,7 @@ for{(qq,k,n) in BRANCHCC} {
   );
 
   let rea_power_end2[qq,k,n] :=
-  round(y[qq,k,n]) * (
+  (1-round(y[qq,k,n])) * (
     - branch_Rex_SI[qq,k,n]^2 * branch_Bex_SI[qq,k,n] * V[n]^2
       * substation_Vnomi[1,bus_substation[1,n]]^2
     + branch_Rex_SI[qq,k,n]^2 * branch_admi_SI[qq,k,n] * V[n]^2 * cos(branch_angper[qq,k,n])

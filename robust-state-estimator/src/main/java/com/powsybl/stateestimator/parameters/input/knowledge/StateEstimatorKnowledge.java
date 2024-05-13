@@ -491,7 +491,7 @@ public class StateEstimatorKnowledge {
             ArrayList<String> suspectBranch = new ArrayList<>();
             suspectBranch.add(branch.getId());
             suspectBranch.add("0"); // By default, branch is not suspected
-            suspectBranch.add("1"); // By default, branch is presumed to be closed
+            suspectBranch.add("0"); // By default, branch is presumed to be closed
             suspectBranches.put(i, suspectBranch);
             i++;
         }
@@ -521,7 +521,7 @@ public class StateEstimatorKnowledge {
         ArrayList<String> newAssumption = new ArrayList<>();
         newAssumption.add(suspectBranchID);
         newAssumption.add(isSuspected ? "1" : "0");
-        newAssumption.add(presumedStatus.equals("PRESUMED CLOSED") ? "1" : "0");
+        newAssumption.add(presumedStatus.equals("PRESUMED CLOSED") ? "0" : "1");
         suspectBranches.put(suspectBranchNumber, newAssumption);
         return this;
     }
