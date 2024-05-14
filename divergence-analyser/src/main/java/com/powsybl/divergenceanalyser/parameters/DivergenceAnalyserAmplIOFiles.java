@@ -6,6 +6,7 @@
  */
 package com.powsybl.divergenceanalyser.parameters;
 
+import com.powsybl.ampl.converter.AmplExportConfig;
 import com.powsybl.divergenceanalyser.parameters.input.DivergenceAnalyserParameters;
 import com.powsybl.divergenceanalyser.parameters.input.SolvingOptions;
 import com.powsybl.divergenceanalyser.parameters.input.PenalizationOptions;
@@ -37,8 +38,9 @@ public class DivergenceAnalyserAmplIOFiles implements AmplParameters {
     PenalizationIndicatorsOutput penalizationIndicatorsOutput;
 
     boolean debug;
+    private final AmplExportConfig amplExportConfig;
 
-    public DivergenceAnalyserAmplIOFiles(DivergenceAnalyserParameters params, boolean debug) {
+    public DivergenceAnalyserAmplIOFiles(DivergenceAnalyserParameters params, AmplExportConfig amplExportConfig, boolean debug) {
         // Input file for activation of variables in ampl minlp
         this.penalizationOptions = new PenalizationOptions(params.getPenalizationOptions());
         this.solvingOptions = new SolvingOptions(params.getSolvingOptions());
@@ -50,6 +52,7 @@ public class DivergenceAnalyserAmplIOFiles implements AmplParameters {
         this.penalizationIndicatorsOutput = new PenalizationIndicatorsOutput();
 
         this.debug = debug;
+        this.amplExportConfig = amplExportConfig;
     }
 
     @Override
@@ -72,6 +75,11 @@ public class DivergenceAnalyserAmplIOFiles implements AmplParameters {
     @Override
     public boolean isDebug() {
         return debug;
+    }
+
+    @Override
+    public AmplExportConfig getAmplExportConfig() {
+        return amplExportConfig;
     }
 
     // Getters for output files

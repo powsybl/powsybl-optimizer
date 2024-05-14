@@ -49,7 +49,7 @@ public final class DivergenceAnalyserRunner {
         Objects.requireNonNull(config);
         Objects.requireNonNull(manager);
         AmplModel divergenceAnalysis = DivergenceAnalyserModel.buildModel();
-        DivergenceAnalyserAmplIOFiles amplIoInterface = new DivergenceAnalyserAmplIOFiles(parameters, config.isDebug());
+        DivergenceAnalyserAmplIOFiles amplIoInterface = new DivergenceAnalyserAmplIOFiles(parameters, null, config.isDebug());
         AmplResults run = AmplModelRunner.run(network, variantId, divergenceAnalysis, manager, amplIoInterface);
         return new DivergenceAnalyserResults(run.isSuccess(), amplIoInterface, run.getIndicators()); // TODO : Add the check of status // TODO : Define status of DA run
     }
