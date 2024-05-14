@@ -14,7 +14,7 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.TwoWindingsTransformer;
 
 /**
- * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
  */
 public class TapPositionNetworkOutput extends AbstractNetworkOutput<RatioTapPositionModification> {
     private static final String ELEMENT = "rtc";

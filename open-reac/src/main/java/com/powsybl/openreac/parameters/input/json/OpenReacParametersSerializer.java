@@ -15,7 +15,7 @@ import com.powsybl.openreac.parameters.input.algo.ReactiveSlackBusesMode;
 import java.io.IOException;
 
 /**
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 public class OpenReacParametersSerializer extends StdSerializer<OpenReacParameters> {
 
@@ -47,6 +47,20 @@ public class OpenReacParametersSerializer extends StdSerializer<OpenReacParamete
         serializerProvider.defaultSerializeField("minPlausibleLowVoltageLimit", openReacParameters.getMinPlausibleLowVoltageLimit(), jsonGenerator);
         serializerProvider.defaultSerializeField("maxPlausibleHighVoltageLimit", openReacParameters.getMaxPlausibleHighVoltageLimit(), jsonGenerator);
         serializerProvider.defaultSerializeField("reactiveSlackBusesMode", openReacParameters.getReactiveSlackBusesMode().name(), jsonGenerator);
+        serializerProvider.defaultSerializeField("activePowerVariationRate", openReacParameters.getActivePowerVariationRate(), jsonGenerator);
+        serializerProvider.defaultSerializeField("minPlausibleActivePowerThreshold", openReacParameters.getMinPlausibleActivePowerThreshold(), jsonGenerator);
+        serializerProvider.defaultSerializeField("lowImpedanceThreshold", openReacParameters.getLowImpedanceThreshold(), jsonGenerator);
+        serializerProvider.defaultSerializeField("minNominalVoltageIgnoredBus", openReacParameters.getMinNominalVoltageIgnoredBus(), jsonGenerator);
+        serializerProvider.defaultSerializeField("minNominalVoltageIgnoredVoltageBounds", openReacParameters.getMinNominalVoltageIgnoredVoltageBounds(), jsonGenerator);
+        serializerProvider.defaultSerializeField("maxPlausiblePowerLimit", openReacParameters.getPQMax(), jsonGenerator);
+        serializerProvider.defaultSerializeField("lowActivePowerDefaultLimit", openReacParameters.getLowActivePowerDefaultLimit(), jsonGenerator);
+        serializerProvider.defaultSerializeField("highActivePowerDefaultLimit", openReacParameters.getHighActivePowerDefaultLimit(), jsonGenerator);
+        serializerProvider.defaultSerializeField("defaultQmaxPmaxRatio", openReacParameters.getDefaultQmaxPmaxRatio(), jsonGenerator);
+        serializerProvider.defaultSerializeField("defaultMinimalQPRange", openReacParameters.getDefaultMinimalQPRange(), jsonGenerator);
+        serializerProvider.defaultSerializeField("defaultVariableScalingFactor", openReacParameters.getDefaultVariableScalingFactor(), jsonGenerator);
+        serializerProvider.defaultSerializeField("defaultConstraintScalingFactor", openReacParameters.getDefaultConstraintScalingFactor(), jsonGenerator);
+        serializerProvider.defaultSerializeField("reactiveSlackVariableScalingFactor", openReacParameters.getReactiveSlackVariableScalingFactor(), jsonGenerator);
+        serializerProvider.defaultSerializeField("twoWindingTransformerRatioVariableScalingFactor", openReacParameters.getTwoWindingTransformerRatioVariableScalingFactor(), jsonGenerator);
         jsonGenerator.writeEndObject();
     }
 }

@@ -17,7 +17,7 @@ import java.io.IOException;
  * Interface for output ampl files, which changes the behavior of errors during file reading.
  * <p>
  * Removes the contract of {@link AmplOutputFile} to throw IOException.
- * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
  */
 public interface NoThrowAmplOutput extends AmplOutputFile {
     /**

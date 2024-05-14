@@ -17,7 +17,7 @@ import java.util.List;
  * Abstract class that reads output from ampl and generates network modifications
  *
  * @param <T> The type of modification read in the output file
- * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
  */
 public abstract class AbstractNetworkOutput<T extends NetworkModification> extends AbstractNoThrowOutput {
 

@@ -7,7 +7,7 @@
 package com.powsybl.openreac.parameters.input.algo;
 
 /**
- * @author Pierre Arvy <pierre.arvy at artelys.com>
+ * @author Pierre Arvy {@literal <pierre.arvy at artelys.com>}
  */
 public enum OpenReacAmplLogLevel {
 

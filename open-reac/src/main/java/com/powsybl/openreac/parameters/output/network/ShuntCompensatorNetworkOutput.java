@@ -13,7 +13,7 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.ShuntCompensator;
 
 /**
- * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
  */
 public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCompensatorModification> {
     private static final String ELEMENT = "shunts";

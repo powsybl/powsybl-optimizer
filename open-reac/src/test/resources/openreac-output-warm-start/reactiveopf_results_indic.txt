@@ -1,18 +1,18 @@
 final_status OK
 dcopf_status OK
 
-ctime_start 'Thu Jan 11 15:12:16 2024'
+ctime_start 'Mon Apr 01 12:16:18 2024'
 last_solve_result_num 0
 nb_iter_last 5
 nb_iter_total 5
-_ampl_elapsed_time 0.047000
-_total_solve_time 0.031250
+_ampl_elapsed_time 0.031000
+_total_solve_time 0.000000
 total_time 0
 
 operatingSystem windows
 OS 'Windows_NT'
 COMPUTERNAME 'ARTELYS-PC253'
-directory 'C:\Users\parvy\AppData\Local\Temp\ampl_1724309836662612364'
+directory 'C:\Users\parvy\AppData\Local\Temp\ampl_15875136273009914017'
 
 log_level_ampl INFO
 log_level_knitro 2
@@ -33,6 +33,10 @@ defaultQmaxPmaxRatio 0.300000
 defaultQmin -300.000000
 defaultQmax 300.000000
 minimalQPrange 1.000000
+default_variable_scaling_factor 1.000000
+default_constraint_scaling_factor 1.000000
+reactive_slack_variable_scaling_factor 0.100000
+transformer_ratio_variable_scaling_factor 0.001000
 
 nb_substations 3
 nb_bus_in_data_file 3

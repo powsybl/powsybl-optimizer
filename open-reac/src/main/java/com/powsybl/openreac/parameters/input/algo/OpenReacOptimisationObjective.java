@@ -9,7 +9,7 @@ package com.powsybl.openreac.parameters.input.algo;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 
 /**
- * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
  */
 public enum OpenReacOptimisationObjective {
 

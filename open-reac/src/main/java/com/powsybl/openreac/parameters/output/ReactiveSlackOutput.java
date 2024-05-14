@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
  * Reactive slacks in load convention.
  */
 public class ReactiveSlackOutput extends AbstractNoThrowOutput {

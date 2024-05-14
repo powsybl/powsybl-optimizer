@@ -44,8 +44,8 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
- * @author Nicolas PIERRE <nicolas.pierre at artelys.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
+ * @author Nicolas PIERRE {@literal <nicolas.pierre at artelys.com>}
  */
 class OpenReacRunnerTest {
     protected FileSystem fileSystem;
@@ -94,7 +94,7 @@ class OpenReacRunnerTest {
     }
 
     @Test
-    void testParamAlgoExport() throws IOException {
+    void testModifiedParamAlgoExport() throws IOException {
         Network network = IeeeCdfNetworkFactory.create57();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         OpenReacParameters parameters = new OpenReacParameters()
@@ -104,7 +104,21 @@ class OpenReacRunnerTest {
                 .setLogLevelSolver(OpenReacSolverLogLevel.ONLY_RESULTS)
                 .setMinPlausibleLowVoltageLimit(0.7888)
                 .setMaxPlausibleHighVoltageLimit(1.3455)
-                .setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL);
+                .setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL)
+                .setActivePowerVariationRate(0.88)
+                .setMinPlausibleActivePowerThreshold(0.45)
+                .setLowImpedanceThreshold(1e-5)
+                .setMinNominalVoltageIgnoredBus(2.)
+                .setMinNominalVoltageIgnoredVoltageBounds(0.75)
+                .setPQMax(3987.76)
+                .setLowActivePowerDefaultLimit(12.32)
+                .setHighActivePowerDefaultLimit(1452.66)
+                .setDefaultQmaxPmaxRatio(0.24)
+                .setDefaultMinimalQPRange(2.)
+                .setDefaultVariableScalingFactor(1.1222)
+                .setDefaultConstraintScalingFactor(0.7889)
+                .setReactiveSlackVariableScalingFactor(0.2)
+                .setTwoWindingTransformerRatioVariableScalingFactor(0.0045);
 
         LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
                 List.of("empty_case/reactiveopf_results_indic.txt"));
@@ -214,7 +228,7 @@ class OpenReacRunnerTest {
             assertEquals(1, openReacResult.getVscModifications().size());
             assertEquals(7, openReacResult.getGeneratorModifications().size());
             assertEquals(3, openReacResult.getVoltageProfile().size());
-            assertEquals(82, openReacResult.getIndicators().size());
+            assertEquals(86, openReacResult.getIndicators().size());
             assertTrue(openReacResult.getReactiveSlacks().isEmpty());
         }
     }

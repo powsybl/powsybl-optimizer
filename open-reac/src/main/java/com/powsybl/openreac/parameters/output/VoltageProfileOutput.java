@@ -14,7 +14,7 @@ import org.jgrapht.alg.util.Pair;
 import java.util.*;
 
 /**
- * @author Pierre Arvy <pierre.arvy at artelys.com>
+ * @author Pierre Arvy {@literal <pierre.arvy at artelys.com>}
  */
 public class VoltageProfileOutput extends AbstractNoThrowOutput {
 

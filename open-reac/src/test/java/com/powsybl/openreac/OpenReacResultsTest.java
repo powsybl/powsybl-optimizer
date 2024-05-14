@@ -1,5 +1,13 @@
+/**
+ * Copyright (c) 2024, RTE (http://www.rte-france.com)
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * SPDX-License-Identifier: MPL-2.0
+ */
 package com.powsybl.openreac;
 
+import com.powsybl.commons.report.ReportNode;
 import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
 import com.powsybl.iidm.modification.ShuntCompensatorModification;
 import com.powsybl.iidm.modification.tapchanger.RatioTapPositionModification;
@@ -23,6 +31,9 @@ import java.util.HashMap;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+/**
+ * @author Pierre Arvy {@literal <pierre.arvy at artelys.com>}
+ */
 class OpenReacResultsTest {
 
     @Test
@@ -107,7 +118,7 @@ class OpenReacResultsTest {
     }
 
     private OpenReacAmplIOFiles getIOWithMockVoltageProfile(Network network) throws IOException {
-        OpenReacAmplIOFiles io = new OpenReacAmplIOFiles(new OpenReacParameters(), network, true);
+        OpenReacAmplIOFiles io = new OpenReacAmplIOFiles(new OpenReacParameters(), null, network, true, ReportNode.NO_OP);
         try (InputStream input = getClass().getResourceAsStream("/mock_outputs/reactiveopf_results_voltages.csv");
              InputStreamReader in = new InputStreamReader(input);
              BufferedReader reader = new BufferedReader(in)) {

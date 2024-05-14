@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
  */
 public abstract class AbstractElementsInput implements AmplInputFile {
 

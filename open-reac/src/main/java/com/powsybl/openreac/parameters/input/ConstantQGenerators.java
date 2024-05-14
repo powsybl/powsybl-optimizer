@@ -11,7 +11,7 @@ import com.powsybl.ampl.converter.AmplSubset;
 import java.util.List;
 
 /**
- * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
  *
  * List of generators that are not regulating voltage.
  * timestep num bus id

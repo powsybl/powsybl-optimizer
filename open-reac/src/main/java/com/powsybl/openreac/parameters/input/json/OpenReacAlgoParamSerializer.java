@@ -14,7 +14,7 @@ import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
 import java.io.IOException;
 
 /**
- * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at rte-france.com>
+ * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  */
 public class OpenReacAlgoParamSerializer extends StdSerializer<OpenReacAlgoParam> {
 

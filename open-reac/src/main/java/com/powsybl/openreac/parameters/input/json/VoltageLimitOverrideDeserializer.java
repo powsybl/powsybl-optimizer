@@ -16,7 +16,7 @@ import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 import java.io.IOException;
 
 /**
- * @author Hugo Marcellin <hugo.marcelin at rte-france.com>
+ * @author Hugo Marcellin {@literal <hugo.marcelin at rte-france.com>}
  */
 
 public class VoltageLimitOverrideDeserializer extends StdDeserializer<VoltageLimitOverride> {

@@ -12,7 +12,7 @@ import com.powsybl.iidm.modification.GeneratorModification;
 import com.powsybl.iidm.network.Network;
 
 /**
- * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
  */
 public class GeneratorNetworkOutput extends AbstractNetworkOutput<GeneratorModification> {
     private static final String ELEMENT = "generators";

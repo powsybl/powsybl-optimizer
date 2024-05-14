@@ -13,7 +13,7 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.StaticVarCompensator;
 
 /**
- * @author Nicolas Pierre <nicolas.pierre at artelys.com>
+ * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
  */
 public class SvcNetworkOutput extends AbstractNetworkOutput<StaticVarCompensatorModification> {
     private static final String ELEMENT = "static_var_compensators";
