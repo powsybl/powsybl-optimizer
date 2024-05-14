@@ -16,6 +16,7 @@ import com.powsybl.openloadflow.OpenLoadFlowParameters;
 import com.powsybl.stateestimator.parameters.input.knowledge.*;
 import com.powsybl.stateestimator.parameters.input.options.StateEstimatorOptions;
 import com.powsybl.stateestimator.parameters.output.estimates.BranchStatusEstimate;
+import org.jgrapht.alg.util.Pair;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -32,66 +33,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 public class FirstHeuristic {
 
-    @Test
-    void firstHeuristic() throws IOException {
-
-        // Load your favorite network (IIDM format preferred)
-        Network network = IeeeCdfNetworkFactory.create118();
-
-        //String erroneousLine = "L24-72-1";
-
-        // Disconnect the erroneous line
-        //network.getLine(erroneousLine).disconnect();
-
-        // Load Flow parameters (note : we mimic the way the AMPL code deals with zero-impedance branches)
-        LoadFlowParameters parametersLf = new LoadFlowParameters();
-        OpenLoadFlowParameters parametersExt = OpenLoadFlowParameters.create(parametersLf);
-        parametersExt.setAlwaysUpdateNetwork(true)
-                .setLowImpedanceBranchMode(REPLACE_BY_MIN_IMPEDANCE_LINE)
-                .setLowImpedanceThreshold(1e-4);
-
-        // Solve the Load Flow problem for the network
-        LoadFlowResult loadFlowResult = LoadFlow.run(network, parametersLf);
-        assertTrue(loadFlowResult.isFullyConverged());
-
-        // Reconnect the erroneous line
-        //network.getLine(erroneousLine).connect();
-
-        int seed = 7;
-        double ratioTested = 5.0;
-
-        // Create "knowledge" instance
-        StateEstimatorKnowledge knowledgeV1 = new StateEstimatorKnowledge(network);
-
-        // For IEEE 118 bus, slack is "VL69_0": our state estimator must use the same slack
-        knowledgeV1.setSlack("VL69_0", network); // for IEEE118
-
-        // Add a gross error on measure Pf(VL27 --> VL28) : 80 MW (false) instead of 32.6 MW (true)
-        //Map<String, String> grossMeasure1 = Map.of("BranchID","L27-28-1","FirstBusID","VL27_0","SecondBusID","VL28_0",
-        //        "Value","80.0","Variance","0.1306","Type","Pf");
-        //knowledgeV1.addMeasure(1, grossMeasure1, network);
-
-        // Add a gross error on measure V(VL60) : 225 kV (false) instead of 137 kV (true)
-        //Map<String, String> grossMeasure2 = Map.of("BusID","VL60_0",
-        //        "Value","225.0","Variance","0.488","Type","V");
-        //knowledgeV1.addMeasure(2, grossMeasure2, network);
-
-        // Randomly generate measurements (useful for test cases) out of load flow results
-        RandomMeasuresGenerator.generateRandomMeasurements(knowledgeV1, network,
-                Optional.of(seed), Optional.of(ratioTested),
-                Optional.of(false), Optional.of(true),
-                Optional.empty(), Optional.empty());
-
+    Pair<StateEstimatorResults, StateEstimatorKnowledge> firstHeuristic(StateEstimatorKnowledge knowledgeInit, Network network) throws IOException {
 
         // BEGINNING OF THE HEURISTIC PROCESS
 
         // Step 1 : first SE run, NbTopologyChanges = 10, all branches suspected
 
         // Make all branches suspects and presumed to be closed
-        // Save initial status
+        // + Save initial status
         Map<String, String> initialStatus = new HashMap<>();
         for (Branch branch : network.getBranches()) {
-            knowledgeV1.setSuspectBranch(branch.getId(), true, "PRESUMED CLOSED");
+            knowledgeInit.setSuspectBranch(branch.getId(), true, "PRESUMED CLOSED");
             initialStatus.put(branch.getId(), "CLOSED");
         }
         // Define the solving options for the state estimation
@@ -100,38 +52,23 @@ public class FirstHeuristic {
 
         // Run the state estimation
         StateEstimatorResults resultsV1 = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
-                knowledgeV1, optionsV1, new StateEstimatorConfig(true), new LocalComputationManager());
-
-        resultsV1.printNetworkTopology();
-        resultsV1.printAllMeasurementEstimatesAndResidualsSi(knowledgeV1);
-
-        StateEstimatorEvaluator evaluatorV1 = new StateEstimatorEvaluator(network, knowledgeV1, resultsV1);
-
-        // Print some indicators on the accuracy of the state estimation w.r.t load flow solution
-        List<Double> voltageErrorStatsV1 = evaluatorV1.computeVoltageRelativeErrorStats();
-        List<Double> angleErrorStatsV1 = evaluatorV1.computeAngleDegreeErrorStats();
-        List<Double> activePowerFlowErrorStatsV1 = evaluatorV1.computeActivePowerFlowsRelativeErrorsStats();
-        List<Double> reactivePowerFlowErrorStatsV1 = evaluatorV1.computeReactivePowerFlowsRelativeErrorsStats();
-        System.out.printf("%nMean voltage relative error : %f %% %n", voltageErrorStatsV1.get(0));
-        System.out.printf("%nMean angle absolute error : %f degrees %n", angleErrorStatsV1.get(0));
-        System.out.printf("%nMean active power flow relative error : %f %% %n", activePowerFlowErrorStatsV1.get(0));
-        System.out.printf("%nMean reactive power flow relative error : %f %% %n", reactivePowerFlowErrorStatsV1.get(0));
+                knowledgeInit, optionsV1, new StateEstimatorConfig(true), new LocalComputationManager());
 
         // Step 2 : remove measure with LNR and suspect only changed lines and neighbouring lines to changed lines.
         // maxNbTopoChanges = 1 by zone
 
         // Find measure with LNR in step 1
-        List<Map.Entry<Integer, Double>> sortedResiduals = computeAndSortNormalizedResiduals(knowledgeV1, resultsV1, network);
+        List<Map.Entry<Integer, Double>> sortedResiduals = computeAndSortNormalizedResiduals(knowledgeInit, resultsV1);
         int nbMeasureLNR = sortedResiduals.get(0).getKey();
         double LNR = sortedResiduals.get(0).getValue();
 
         // Compute and print objective function value
         double objectiveFunctionValue = sortedResiduals.stream().mapToDouble(e-> Math.pow(e.getValue(),2)).sum();
-        System.out.printf("%nObjective function value : %f %n", objectiveFunctionValue);
+        System.out.printf("Objective function value : %f %n", objectiveFunctionValue);
 
         // Build the list of branches changed during step 1, with and without their neighbours
         Set<String> changedBranches = new HashSet<>();
-        Set<String> step1changedBranchesAndNeighbours = new HashSet<>(); // to avoid duplicates
+        Set<String> step1changedBranchesAndNeighbours = new HashSet<>();
         // Build a map linking each changed branch to itself and its neighbours
         Map<String, Set<String>> neighboursOfChangedBranches = new HashMap<>();
         for (Branch branch : network.getBranches()) {
@@ -194,17 +131,15 @@ public class FirstHeuristic {
             }
         }
 
-        System.out.println();
-        System.out.println("DISJOINT SETS OF SUSPECT BRANCHES");
+        // Make a list of the disjoint sets of suspect branches
         Set<Set<String>> disjointSetsOfSuspectBranches = new HashSet<>(connectedComponentOfChangedBranches.values().stream().toList());
         List<Set<String>> listOfSuspectRegions = new ArrayList<>(disjointSetsOfSuspectBranches);
-        System.out.println(listOfSuspectRegions);
 
         // Prepare iterative loop
-        StateEstimatorKnowledge knowledgeV2 = knowledgeV1;
+        StateEstimatorKnowledge knowledgeV2 = knowledgeInit;
         StateEstimatorResults resultsV2 = resultsV1;
 
-        // Initialize the set of branches that have been inspected and whose status is definite
+        // Initialize the set of branches that have been inspected during the cycle and whose status is fixed for this cycle
         Set<String> inspectedBranches = new HashSet<>();
         // By default, it contains all branches that do not belong to changedBranchesAndNeighbours
         for (Branch branch : network.getBranches()) {
@@ -220,12 +155,13 @@ public class FirstHeuristic {
         // While the Largest Normalized Residual exceeds a given threshold
         while (LNR > 3 && nbIter < nbIterMax) {
 
-            System.out.printf("%n%d%n", nbIter);
+            System.out.printf("%n  Iteration n°%d :%n", nbIter);
+            System.out.println();
 
             // Make a deep copy of knowledgeV1
-            knowledgeV2 = new StateEstimatorKnowledge(knowledgeV1);
+            knowledgeV2 = new StateEstimatorKnowledge(knowledgeInit);
 
-            // For second iteration, remove the measurement of the first iteration with LNR
+            // For current iteration, remove the measurement with LNR of the previous iteration
             // Exception 1 : if LNR < 3, do not remove the LNR measure
             // Exception 2 : if the LNR measure is a power flow and is directly related to a branch that was changed
             // at the previous iteration, do not remove it
@@ -233,25 +169,25 @@ public class FirstHeuristic {
             ArrayList<String> measureLNR =  knowledgeV2.getMeasure(nbMeasureLNR);
             int tmpIndex = 1;
             while(LNR > 3 && tmpIndex < sortedResiduals.size()) {
-                System.out.println(measureLNR);
+                System.out.printf("Measure n°%d has ", nbMeasureLNR);
                 // If LNR measure is directly related to a change of topology, do not remove it...
                 if ((measureLNR.get(0).equals("Pf") | measureLNR.get(0).equals("Qf"))
                         && changedBranches.contains(measureLNR.get(1))) {
-                    System.out.printf("was not removed%n");
+                    System.out.printf("not been removed.%n");
                     // ... and consider the measure with second LNR
                     nbMeasureLNR = sortedResiduals.get(tmpIndex).getKey();
                     LNR = sortedResiduals.get(tmpIndex).getValue();
                     measureLNR =  knowledgeV2.getMeasure(nbMeasureLNR);
                     tmpIndex++;
                 } else {
+                    System.out.printf(" been removed.%n");
                     knowledgeV2.removeMeasure(nbMeasureLNR);
-                    System.out.printf("was removed%n");
                     break;
                 }
             }
 
-            // For second iteration, pick one set of suspect branches ("suspectRegion")
-            // and allow topology changes only for this set of branches.
+            // For current iteration, pick a new set of suspect branches ("suspectRegion")
+            // and allow topology changes (1) only for this set of branches.
             // Done in a cyclic way : if listOfSuspectRegions.size=3, we pick region 1, then region 2, then region 3, then region 1, etc
             Set<String> suspectRegion;
             if (listOfSuspectRegions.isEmpty()) {
@@ -259,8 +195,6 @@ public class FirstHeuristic {
             } else {
                 suspectRegion = listOfSuspectRegions.get(nbIter % listOfSuspectRegions.size());
             }
-            System.out.println("Suspect region : ");
-            System.out.println(suspectRegion);
             for (Branch branch : network.getBranches()) {
                 // If we are in the first cycle:
                 if (nbIter < listOfSuspectRegions.size()) {
@@ -301,34 +235,33 @@ public class FirstHeuristic {
 
             // Define new solving options, with MaxNbTopologyChanges = 1 this time
             StateEstimatorOptions optionsV2 = new StateEstimatorOptions()
-                    .setSolvingMode(2).setMaxTimeSolving(30).setMaxNbTopologyChanges(1);
+                    .setSolvingMode(0).setMaxTimeSolving(30).setMaxNbTopologyChanges(1);
 
             // Run the state estimation again
-            resultsV2 = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
+            StateEstimatorResults resultsTmp = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
                     knowledgeV2, optionsV2, new StateEstimatorConfig(true), new LocalComputationManager());
 
-            resultsV2.printNetworkTopology();
-
             // Make a shallow copy of knowledgeV2, so that next knowledge update will be based on it
-            knowledgeV1 = knowledgeV2;
+            knowledgeInit = knowledgeV2;
 
-            // Update normalized residuals and LNR
-            sortedResiduals = computeAndSortNormalizedResiduals(knowledgeV2, resultsV2, network);
-            nbMeasureLNR = sortedResiduals.get(0).getKey();
-            LNR = sortedResiduals.get(0).getValue();
+            // Compute the Objective Function Value (OFV) obtained
+            List<Map.Entry<Integer, Double>> sortedResidualsTmp = computeAndSortNormalizedResiduals(knowledgeV2, resultsTmp);
+            double objectiveFunctionValueTmp = sortedResidualsTmp.stream().mapToDouble(e-> Math.pow(e.getValue(),2)).sum();
+            System.out.printf("Objective function value : %f %n", objectiveFunctionValueTmp);
 
-            // Print branches changed
-            for (Branch branch : network.getBranches()) {
-                BranchStatusEstimate branchEstimate = resultsV2.getBranchStatusEstimate(branch.getId());
-                if (!branchEstimate.getPresumedStatus().equals("PRESUMED " + branchEstimate.getEstimatedStatus())) {
-                    System.out.printf("%nBranch %s was changed during this iteration.%n", branch.getId());
-                }
+            // Results will be updated only if OFV has decreased
+            if (objectiveFunctionValueTmp > objectiveFunctionValue) {
+                System.out.println("Results of current iteration will not be taken into account : objective function value has not decreased.");
+            }
+            else {
+                objectiveFunctionValue = objectiveFunctionValueTmp;
+                resultsV2 = resultsTmp;
             }
 
-            // Compute and print objective function value
-            objectiveFunctionValue = sortedResiduals.stream().mapToDouble(e-> Math.pow(e.getValue(),2)).sum();
-            System.out.printf("%nObjective function value : %f %n", objectiveFunctionValue);
-
+            // Update normalized residuals and LNR
+            sortedResiduals = computeAndSortNormalizedResiduals(knowledgeV2, resultsV2);
+            nbMeasureLNR = sortedResiduals.get(0).getKey();
+            LNR = sortedResiduals.get(0).getValue();
             // Update changedBranches (w.r.t initial status) with new results obtained
             changedBranches.clear();
             for (Branch branch : network.getBranches()) {
@@ -338,11 +271,12 @@ public class FirstHeuristic {
                 }
             }
 
+
             nbIter++;
 
-            // If we reach the end of a topology cycle (i.e. nbIter = 0 [listOfSuspectRegions.size]),
+            // If we reach the end of a topology cycle (i.e. nbIter = 0 modulo listOfSuspectRegions.size),
             // reset the set of inspected branches
-            if (nbIter % listOfSuspectRegions.size() == 0) {
+            if (!listOfSuspectRegions.isEmpty() && nbIter % listOfSuspectRegions.size() == 0) {
                 inspectedBranches.clear();
                 for (Branch branch : network.getBranches()) {
                     if (!step1changedBranchesAndNeighbours.contains(branch.getId())) {
@@ -352,34 +286,19 @@ public class FirstHeuristic {
             }
         }
 
-        // Print results at the end of the iterative process
-        System.out.printf("%n[END OF THE ITERATIVE PROCESS]%n");
-        resultsV2.printNetworkTopology();
-        resultsV2.printAllMeasurementEstimatesAndResidualsSi(knowledgeV2);
-        StateEstimatorEvaluator evaluatorV2 = new StateEstimatorEvaluator(network, knowledgeV2, resultsV2);
-        // Print some indicators on the accuracy of the state estimation w.r.t load flow solution
-        List<Double> voltageErrorStatsV2 = evaluatorV2.computeVoltageRelativeErrorStats();
-        List<Double> angleErrorStatsV2 = evaluatorV2.computeAngleDegreeErrorStats();
-        List<Double> activePowerFlowErrorStatsV2 = evaluatorV2.computeActivePowerFlowsRelativeErrorsStats();
-        List<Double> reactivePowerFlowErrorStatsV2 = evaluatorV2.computeReactivePowerFlowsRelativeErrorsStats();
-        System.out.printf("%nMean voltage relative error : %f %% %n", voltageErrorStatsV2.get(0));
-        System.out.printf("%nMean angle absolute error : %f degrees %n", angleErrorStatsV2.get(0));
-        System.out.printf("%nMean active power flow relative error : %f %% %n", activePowerFlowErrorStatsV2.get(0));
-        System.out.printf("%nMean reactive power flow relative error : %f %% %n", reactivePowerFlowErrorStatsV2.get(0));
+        // END OF THE ITERATIVE PROCESS
 
-        ArrayList<String> measureLNR =  knowledgeV2.getMeasure(nbMeasureLNR);
-        System.out.println(measureLNR);
-        System.out.println(LNR);
-
-        System.out.printf("%nObjective function value : %f %n", objectiveFunctionValue);
-
+        // Indicate if the process has converged or not
         if (nbIter==nbIterMax) {
             System.out.println("Process has not converged : nbIter = nbIterMax");
         }
+
+        // Return the results and knowledge obtained
+        return Pair.of(resultsV2, knowledgeV2);
+
     }
 
-    List<Map.Entry<Integer,Double>> computeAndSortNormalizedResiduals (StateEstimatorKnowledge knowledge, StateEstimatorResults results, Network
-            network){
+    List<Map.Entry<Integer,Double>> computeAndSortNormalizedResiduals (StateEstimatorKnowledge knowledge, StateEstimatorResults results){
 
         // Store measurement residuals given by the SE results
         ActivePowerFlowMeasures resultsPf = new ActivePowerFlowMeasures(knowledge.getActivePowerFlowMeasures(), results.getMeasurementEstimatesAndResiduals());
@@ -426,52 +345,6 @@ public class FirstHeuristic {
         return measureNumberToNormalizedResidual.entrySet().stream()
                 .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
                 .toList();
-    }
-
-
-    double computeSSR (StateEstimatorKnowledge knowledge, StateEstimatorResults results){
-
-        // Store measurement residuals given by the SE results
-        ActivePowerFlowMeasures resultsPf = new ActivePowerFlowMeasures(knowledge.getActivePowerFlowMeasures(), results.measurementEstimatesAndResiduals);
-        ReactivePowerFlowMeasures resultsQf = new ReactivePowerFlowMeasures(knowledge.getReactivePowerFlowMeasures(), results.measurementEstimatesAndResiduals);
-        ActivePowerInjectedMeasures resultsP = new ActivePowerInjectedMeasures(knowledge.getActivePowerInjectedMeasures(), results.measurementEstimatesAndResiduals);
-        ReactivePowerInjectedMeasures resultsQ = new ReactivePowerInjectedMeasures(knowledge.getReactivePowerInjectedMeasures(), results.measurementEstimatesAndResiduals);
-        VoltageMagnitudeMeasures resultsV = new VoltageMagnitudeMeasures(knowledge.getVoltageMagnitudeMeasures(), results.measurementEstimatesAndResiduals);
-
-        // Compute the value of the Sum of Squared Residuals (SNR)
-        double SSR = 0;
-
-        // Active power flows
-        for (var entry : resultsPf.getMeasuresWithEstimatesAndResiduals().entrySet()) {
-            ArrayList<String> val = entry.getValue();
-            double normalizedResidual = Double.parseDouble(val.get(7)) / Math.sqrt(Double.parseDouble(val.get(5)));
-            SSR += Math.pow(normalizedResidual, 2);
-        }
-        // Reactive power flows
-        for (var entry : resultsQf.getMeasuresWithEstimatesAndResiduals().entrySet()) {
-            ArrayList<String> val = entry.getValue();
-            double normalizedResidual = Double.parseDouble(val.get(7)) / Math.sqrt(Double.parseDouble(val.get(5)));
-            SSR += Math.pow(normalizedResidual, 2);
-        }
-        // Active injected powers
-        for (var entry : resultsP.getMeasuresWithEstimatesAndResiduals().entrySet()) {
-            ArrayList<String> val = entry.getValue();
-            double normalizedResidual = Double.parseDouble(val.get(5)) / Math.sqrt(Double.parseDouble(val.get(3)));
-            SSR += Math.pow(normalizedResidual, 2);
-        }
-        // Reactive injected powers
-        for (var entry : resultsQ.getMeasuresWithEstimatesAndResiduals().entrySet()) {
-            ArrayList<String> val = entry.getValue();
-            double normalizedResidual = Double.parseDouble(val.get(5)) / Math.sqrt(Double.parseDouble(val.get(3)));
-            SSR += Math.pow(normalizedResidual, 2);
-        }
-        // Voltage magnitudes
-        for (var entry : resultsV.getMeasuresWithEstimatesAndResiduals().entrySet()) {
-            ArrayList<String> val = entry.getValue();
-            double normalizedResidual = Double.parseDouble(val.get(5)) / Math.sqrt(Double.parseDouble(val.get(3)));
-            SSR += Math.pow(normalizedResidual, 2);
-        }
-        return (SSR);
     }
 
 

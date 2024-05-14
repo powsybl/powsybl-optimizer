@@ -56,10 +56,10 @@ public class FirstHeuristicTest {
 
         Network network = IeeeCdfNetworkFactory.create118();
 
-        String erroneousLine = "L6-7-1";
+        //String erroneousLine = "L45-46-1";
 
         // Disconnect the erroneous line
-        network.getLine(erroneousLine).disconnect();
+        //network.getLine(erroneousLine).disconnect();
 
         // Load Flow parameters (note : we mimic the way the AMPL code deals with zero-impedance branches)
         LoadFlowParameters parametersLf = new LoadFlowParameters();
@@ -73,9 +73,9 @@ public class FirstHeuristicTest {
         assertTrue(loadFlowResult.isFullyConverged());
 
         // Reconnect the erroneous line, if any
-        network.getLine(erroneousLine).connect();
+        //network.getLine(erroneousLine).connect();
 
-        double ratioTested = 5.0;
+        double ratioTested = 4.0;
 
         for (int seed = 0; seed < 100; seed++) {
 
@@ -101,7 +101,7 @@ public class FirstHeuristicTest {
             // Randomly generate measurements out of load flow results
             RandomMeasuresGenerator.generateRandomMeasurements(knowledgeV1, network,
                     Optional.of(seed), Optional.of(ratioTested),
-                    Optional.of(false), Optional.of(true),
+                    Optional.of(false), Optional.of(false),
                     Optional.empty(), Optional.empty());
 
             // Run heuristic SE on knowledgeV1
@@ -111,7 +111,7 @@ public class FirstHeuristicTest {
             StateEstimatorKnowledge finalKnowledge = firstHeuristicResults.getSecond();
 
             // TODO : delete if erroneousLine added
-            //String erroneousLine = "_";
+            String erroneousLine = "_";
 
             // Compute the number of topology errors, and find if the erroneous line (if any) was given the correct status ("OPENED")
             int falseLineDetected = 0;
@@ -161,7 +161,7 @@ public class FirstHeuristicTest {
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("Vanilla_WithNoise_L6_7_OPEN_ZtoN5_Heuristic_IEEE118.csv");
+        try (FileWriter fileWriter = new FileWriter("NoNoise_NoError_ZN4_Heuristic_IEEE118.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 
@@ -197,8 +197,6 @@ public class FirstHeuristicTest {
         StateEstimatorResults resultsV1 = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
                 knowledgeV1, optionsV1, new StateEstimatorConfig(true), new LocalComputationManager());
 
-        StateEstimatorEvaluator evaluatorV1 = new StateEstimatorEvaluator(network, knowledgeV1, resultsV1);
-
         // Step 2 : remove measure with LNR and suspect only changed lines and neighbouring lines to changed lines.
         // maxNbTopoChanges = 1 by zone
 
@@ -209,7 +207,7 @@ public class FirstHeuristicTest {
 
         // Compute and print objective function value
         double objectiveFunctionValue = sortedResiduals.stream().mapToDouble(e-> Math.pow(e.getValue(),2)).sum();
-        System.out.printf("%nObjective function value : %f %n", objectiveFunctionValue);
+        System.out.printf("Objective function value : %f %n", objectiveFunctionValue);
 
         // Build the list of branches changed during step 1, with and without their neighbours
         Set<String> changedBranches = new HashSet<>();
@@ -300,6 +298,9 @@ public class FirstHeuristicTest {
         // While the Largest Normalized Residual exceeds a given threshold
         while (LNR > 3 && nbIter < nbIterMax) {
 
+            System.out.printf("%n  Iteration n°%d :%n", nbIter);
+            System.out.println();
+
             // Make a deep copy of knowledgeV1
             knowledgeV2 = new StateEstimatorKnowledge(knowledgeV1);
 
@@ -311,21 +312,24 @@ public class FirstHeuristicTest {
             ArrayList<String> measureLNR =  knowledgeV2.getMeasure(nbMeasureLNR);
             int tmpIndex = 1;
             while(LNR > 3 && tmpIndex < sortedResiduals.size()) {
+                System.out.printf("Measure n°%d has ", nbMeasureLNR);
                 // If LNR measure is directly related to a change of topology, do not remove it...
                 if ((measureLNR.get(0).equals("Pf") | measureLNR.get(0).equals("Qf"))
                         && changedBranches.contains(measureLNR.get(1))) {
+                    System.out.printf("not been removed.%n");
                     // ... and consider the measure with second LNR
                     nbMeasureLNR = sortedResiduals.get(tmpIndex).getKey();
                     LNR = sortedResiduals.get(tmpIndex).getValue();
                     measureLNR =  knowledgeV2.getMeasure(nbMeasureLNR);
                     tmpIndex++;
                 } else {
+                    System.out.printf(" been removed.%n");
                     knowledgeV2.removeMeasure(nbMeasureLNR);
                     break;
                 }
             }
 
-            // For current iteration, pick one set of suspect branches ("suspectRegion")
+            // For current iteration, pick a new set of suspect branches ("suspectRegion")
             // and allow topology changes (1) only for this set of branches.
             // Done in a cyclic way : if listOfSuspectRegions.size=3, we pick region 1, then region 2, then region 3, then region 1, etc
             Set<String> suspectRegion;
@@ -374,24 +378,33 @@ public class FirstHeuristicTest {
 
             // Define new solving options, with MaxNbTopologyChanges = 1 this time
             StateEstimatorOptions optionsV2 = new StateEstimatorOptions()
-                    .setSolvingMode(2).setMaxTimeSolving(30).setMaxNbTopologyChanges(1);
+                    .setSolvingMode(0).setMaxTimeSolving(30).setMaxNbTopologyChanges(1);
 
             // Run the state estimation again
-            resultsV2 = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
+            StateEstimatorResults resultsTmp = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
                     knowledgeV2, optionsV2, new StateEstimatorConfig(true), new LocalComputationManager());
 
             // Make a shallow copy of knowledgeV2, so that next knowledge update will be based on it
             knowledgeV1 = knowledgeV2;
 
+            // Compute the Objective Function Value (OFV) obtained
+            List<Map.Entry<Integer, Double>> sortedResidualsTmp = computeAndSortNormalizedResiduals(knowledgeV2, resultsTmp);
+            double objectiveFunctionValueTmp = sortedResidualsTmp.stream().mapToDouble(e-> Math.pow(e.getValue(),2)).sum();
+            System.out.printf("Objective function value : %f %n", objectiveFunctionValueTmp);
+
+            // Results will be updated only if OFV has decreased
+            if (objectiveFunctionValueTmp > objectiveFunctionValue) {
+                System.out.println("Results of current iteration will not be taken into account : objective function value has not decreased.");
+            }
+            else {
+                objectiveFunctionValue = objectiveFunctionValueTmp;
+                resultsV2 = resultsTmp;
+            }
+
             // Update normalized residuals and LNR
             sortedResiduals = computeAndSortNormalizedResiduals(knowledgeV2, resultsV2);
             nbMeasureLNR = sortedResiduals.get(0).getKey();
             LNR = sortedResiduals.get(0).getValue();
-
-            // Compute and print objective function value
-            objectiveFunctionValue = sortedResiduals.stream().mapToDouble(e-> Math.pow(e.getValue(),2)).sum();
-            System.out.printf("%nObjective function value : %f %n", objectiveFunctionValue);
-
             // Update changedBranches (w.r.t initial status) with new results obtained
             changedBranches.clear();
             for (Branch branch : network.getBranches()) {
@@ -400,6 +413,7 @@ public class FirstHeuristicTest {
                     changedBranches.add(branch.getId());
                 }
             }
+
 
             nbIter++;
 
@@ -417,7 +431,7 @@ public class FirstHeuristicTest {
 
         // END OF THE ITERATIVE PROCESS
 
-        // Print indication on the iterative process
+        // Indicate if the process has converged or not
         if (nbIter==nbIterMax) {
             System.out.println("Process has not converged : nbIter = nbIterMax");
         }

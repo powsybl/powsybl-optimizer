@@ -322,7 +322,9 @@ printf "# SE solve: start (%s)\n\n",ctime();
 let tempstr := ctime();
 
 #option knitro_options ("opttol=1 opttolabs=1e-1 feastol=1  ms_enable=0 feastolabs=1e-3 maxit=1500 mip_heuristic_strategy=3 mip_intvar_strategy=" & mip_strategy & " mip_multistart=1 mip_maxtime_real=" & max_time_solving);
-option knitro_options ("opttol=1e-6 opttolabs=1e-3 feastol=1e-6  ms_enable=0 feastolabs=1e-3 maxit=1500 mip_heuristic_strategy=3 mip_intvar_strategy=" & mip_strategy & " mip_multistart=1 mip_maxtime_real=" & max_time_solving);
+#option knitro_options ("opttol=1e-6 opttolabs=1e-3 feastol=1e-6  ms_enable=0 feastolabs=1e-3 maxit=1500 mip_heuristic_strategy=3 mip_intvar_strategy=" & mip_strategy & " mip_multistart=1 mip_maxtime_real=" & max_time_solving);
+option knitro_options ("mip_multistart=1 mip_intvar_strategy=" & mip_strategy & " mip_maxtime_real=" & max_time_solving);
+# Note : mip_multistart=1 only used if mip_strategy=0
 
 # Solve the problem chosen
 solve problem_sum_of_squares_of_residuals;
@@ -396,7 +398,7 @@ param rea_power_end2{(qq,k,n) in BRANCHCC};
 for{(qq,k,n) in BRANCHCC} {
 
   let act_power_end1[qq,k,n] :=
-  (1-round(y[qq,k,n])) * (
+  round(y[qq,k,n]) * (
     branch_Ror_SI[qq,k,n]^2 * branch_Gor_SI[qq,k,n] * V[k]^2
       * substation_Vnomi[1,bus_substation[1,k]]^2
     + branch_Ror_SI[qq,k,n]^2 * branch_admi_SI[qq,k,n] * V[k]^2 * sin(branch_angper[qq,k,n])
@@ -407,7 +409,7 @@ for{(qq,k,n) in BRANCHCC} {
   );
 
   let act_power_end2[qq,k,n] :=
-  (1-round(y[qq,k,n])) * (
+  round(y[qq,k,n]) * (
     branch_Rex_SI[qq,k,n]^2 * branch_Gex_SI[qq,k,n] * V[n]^2
       * substation_Vnomi[1,bus_substation[1,n]]^2
     + branch_Rex_SI[qq,k,n]^2 * branch_admi_SI[qq,k,n] * V[n]^2 * sin(branch_angper[qq,k,n])
@@ -418,7 +420,7 @@ for{(qq,k,n) in BRANCHCC} {
   );
 
   let rea_power_end1[qq,k,n] :=
-  (1-round(y[qq,k,n])) * (
+  round(y[qq,k,n]) * (
     - branch_Ror_SI[qq,k,n]^2 * branch_Bor_SI[qq,k,n] * V[k]^2
       * substation_Vnomi[1,bus_substation[1,k]]^2
     + branch_Ror_SI[qq,k,n]^2 * branch_admi_SI[qq,k,n] * V[k]^2 * cos(branch_angper[qq,k,n])
@@ -429,7 +431,7 @@ for{(qq,k,n) in BRANCHCC} {
   );
 
   let rea_power_end2[qq,k,n] :=
-  (1-round(y[qq,k,n])) * (
+  round(y[qq,k,n]) * (
     - branch_Rex_SI[qq,k,n]^2 * branch_Bex_SI[qq,k,n] * V[n]^2
       * substation_Vnomi[1,bus_substation[1,n]]^2
     + branch_Rex_SI[qq,k,n]^2 * branch_admi_SI[qq,k,n] * V[n]^2 * cos(branch_angper[qq,k,n])

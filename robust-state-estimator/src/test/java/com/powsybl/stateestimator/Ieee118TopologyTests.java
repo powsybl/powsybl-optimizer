@@ -84,7 +84,8 @@ public class Ieee118TopologyTests {
         network.getLine(erroneousLine).connect();
 
         // All MeasuresToBuses ratios to be tested
-        List<Double> ratiosTested = Arrays.asList(1.0, 2.0, 3.0, 4.0, 5.0);
+        //List<Double> ratiosTested = Arrays.asList(1.0, 2.0, 3.0, 4.0, 5.0);
+        List<Double> ratiosTested = Arrays.asList(4.0, 5.0);
 
         for (Double ratioTested : ratiosTested) {
 
@@ -120,7 +121,7 @@ public class Ieee118TopologyTests {
 
                 // Define the solving options for the state estimation
                 StateEstimatorOptions options = new StateEstimatorOptions()
-                        .setSolvingMode(2).setMaxTimeSolving(30).setMaxNbTopologyChanges(5);
+                        .setSolvingMode(0).setMaxTimeSolving(5).setMaxNbTopologyChanges(5);
 
                 // Run the state estimation and save the results
                 StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
@@ -199,7 +200,7 @@ public class Ieee118TopologyTests {
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("AllLinesSuspects_NoNoise_L45-46_OPENED_IEEE118.csv");
+        try (FileWriter fileWriter = new FileWriter("SM0_yNormal_Bilinear_AllLinesSusp_L45-46_OPENED_IEEE118.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 

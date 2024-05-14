@@ -65,14 +65,14 @@ subject to ctrl_zero_injection_buses_act_power{PROBLEM_SE,
       abs(
       # Flows on branches
       sum{(qq,k,n) in BRANCHCC : k == a}
-      (1-y[qq,k,n]) * act_power_dir[qq,k,n]
+      y[qq,k,n] * act_power_dir[qq,k,n]
       + sum{(qq,m,k) in BRANCHCC : k == a}
-      (1-y[qq,m,k]) * act_power_inv[qq,m,k]
+      y[qq,m,k] * act_power_inv[qq,m,k]
       # Flows on branches with one side opened
       + sum{(qq,k,n) in BRANCH_WITH_SIDE_2_OPENED : k == a}
-      (1-y[qq,k,n]) * act_power_bus2_opened[qq,k,n]
+      y[qq,k,n] * act_power_bus2_opened[qq,k,n]
       + sum{(qq,m,k) in BRANCH_WITH_SIDE_1_OPENED : k == a}
-      (1-y[qq,m,k]) * act_power_bus1_opened[qq,m,k]
+      y[qq,m,k] * act_power_bus1_opened[qq,m,k]
       )
       = 0; # <= epsilon_max_power_balance;
 
@@ -81,14 +81,14 @@ subject to ctrl_zero_injection_buses_rea_power{PROBLEM_SE,
       abs(
       # Flows on branches
       sum{(qq,k,n) in BRANCHCC : k == a}
-      (1-y[qq,k,n]) * rea_power_dir[qq,k,n]
+      y[qq,k,n] * rea_power_dir[qq,k,n]
       + sum{(qq,m,k) in BRANCHCC : k == a}
-      (1-y[qq,m,k]) * rea_power_inv[qq,m,k]
+      y[qq,m,k] * rea_power_inv[qq,m,k]
       # Flows on branches with one side opened
       + sum{(qq,k,n) in BRANCH_WITH_SIDE_2_OPENED : k == a}
-      (1-y[qq,k,n]) * rea_power_bus2_opened[qq,k,n]
+      y[qq,k,n] * rea_power_bus2_opened[qq,k,n]
       + sum{(qq,m,k) in BRANCH_WITH_SIDE_1_OPENED : k == a}
-      (1-y[qq,m,k]) * rea_power_bus1_opened[qq,m,k]
+      y[qq,m,k] * rea_power_bus1_opened[qq,m,k]
       )
       = 0; # <= epsilon_max_power_balance;
 
@@ -104,14 +104,14 @@ subject to residual_computation_Pf{PROBLEM_SE, l in MEASURECC_Pf}:
                 - (
                   # Flows on branches (note : only one term is not null over the two sums below)
                   sum{(qq,k,n) in BRANCHCC : qq == Pf_branch[l] and k == Pf_firstbus[l] and n == Pf_secondbus[l]}
-                  (1-y[qq,k,n]) * act_power_dir[qq,k,n]
+                  y[qq,k,n] * act_power_dir[qq,k,n]
                   + sum{(qq,m,k) in BRANCHCC : qq == Pf_branch[l] and k == Pf_firstbus[l] and m == Pf_secondbus[l]}
-                  (1-y[qq,m,k]) * act_power_inv[qq,m,k]
+                  y[qq,m,k] * act_power_inv[qq,m,k]
                   # Flows on branches with one side opened
                   + sum{(qq,k,n) in BRANCH_WITH_SIDE_2_OPENED : qq == Pf_branch[l] and k == Pf_firstbus[l] and n == Pf_secondbus[l]}
-                  (1-y[qq,k,n]) * act_power_bus2_opened[qq,k,n]
+                  y[qq,k,n] * act_power_bus2_opened[qq,k,n]
                   + sum{(qq,m,k) in BRANCH_WITH_SIDE_1_OPENED : qq == Pf_branch[l] and k == Pf_firstbus[l] and m == Pf_secondbus[l]}
-                  (1-y[qq,m,k]) * act_power_bus1_opened[qq,m,k]
+                  y[qq,m,k] * act_power_bus1_opened[qq,m,k]
                 );
 
 # Constraints on residuals for "reactive power flow" measurements (MVar)
@@ -120,14 +120,14 @@ subject to residual_computation_Qf{PROBLEM_SE, l in MEASURECC_Qf}:
                 - (
                   # Flows on branches (note : only ONE term is not null over the two sums below)
                   sum{(qq,k,n) in BRANCHCC : qq == Qf_branch[l] and k == Qf_firstbus[l] and n == Qf_secondbus[l]}
-                  (1-y[qq,k,n]) * rea_power_dir[qq,k,n]
+                  y[qq,k,n] * rea_power_dir[qq,k,n]
                   + sum{(qq,m,k) in BRANCHCC : qq == Qf_branch[l] and k == Qf_firstbus[l] and m == Qf_secondbus[l]}
-                  (1-y[qq,m,k]) * rea_power_inv[qq,m,k]
+                  y[qq,m,k] * rea_power_inv[qq,m,k]
                   # Flows on branches with one side opened
                   + sum{(qq,k,n) in BRANCH_WITH_SIDE_2_OPENED : qq == Qf_branch[l] and k == Qf_firstbus[l] and n == Qf_secondbus[l]}
-                  (1-y[qq,k,n]) * rea_power_bus2_opened[qq,k,n]
+                  y[qq,k,n] * rea_power_bus2_opened[qq,k,n]
                   + sum{(qq,m,k) in BRANCH_WITH_SIDE_1_OPENED : qq == Qf_branch[l] and k == Qf_firstbus[l] and m == Qf_secondbus[l]}
-                  (1-y[qq,m,k]) * rea_power_bus1_opened[qq,m,k]
+                  y[qq,m,k] * rea_power_bus1_opened[qq,m,k]
                 );
 
 # Constraints on residuals for "injected active power" measurements (MW)
@@ -136,14 +136,14 @@ subject to residual_computation_P{PROBLEM_SE, l in MEASURECC_P}:
                 - (
                   # Flows on branches
                   sum{(qq,k,n) in BRANCHCC : k == P_bus[l]}
-                  (1-y[qq,k,n]) * act_power_dir[qq,k,n]
+                  y[qq,k,n] * act_power_dir[qq,k,n]
                   + sum{(qq,m,k) in BRANCHCC : k == P_bus[l]}
-                  (1-y[qq,m,k]) * act_power_inv[qq,m,k]
+                  y[qq,m,k] * act_power_inv[qq,m,k]
                   # Flows on branches with one side opened
                   + sum{(qq,k,n) in BRANCH_WITH_SIDE_2_OPENED : k == P_bus[l]}
-                  (1-y[qq,k,n]) * act_power_bus2_opened[qq,k,n]
+                  y[qq,k,n] * act_power_bus2_opened[qq,k,n]
                   + sum{(qq,m,k) in BRANCH_WITH_SIDE_1_OPENED : k == P_bus[l]}
-                  (1-y[qq,m,k]) * act_power_bus1_opened[qq,m,k]
+                  y[qq,m,k] * act_power_bus1_opened[qq,m,k]
                 );
 
 # Constraints on residuals for "injected reactive power" measurements (MVar)
@@ -152,14 +152,14 @@ subject to residual_computation_Q{PROBLEM_SE, l in MEASURECC_Q}:
                 - (
                   # Flows on branches
                   sum{(qq,k,n) in BRANCHCC : k == Q_bus[l]}
-                  (1-y[qq,k,n]) * rea_power_dir[qq,k,n]
+                  y[qq,k,n] * rea_power_dir[qq,k,n]
                   + sum{(qq,m,k) in BRANCHCC : k == Q_bus[l]}
-                  (1-y[qq,m,k]) * rea_power_inv[qq,m,k]
+                  y[qq,m,k] * rea_power_inv[qq,m,k]
                   # Flows on branches with one side opened
                   + sum{(qq,k,n) in BRANCH_WITH_SIDE_2_OPENED : k == Q_bus[l]}
-                  (1-y[qq,k,n]) * rea_power_bus2_opened[qq,k,n]
+                  y[qq,k,n] * rea_power_bus2_opened[qq,k,n]
                   + sum{(qq,m,k) in BRANCH_WITH_SIDE_1_OPENED : k == Q_bus[l]}
-                  (1-y[qq,m,k]) * rea_power_bus1_opened[qq,m,k]
+                  y[qq,m,k] * rea_power_bus1_opened[qq,m,k]
                 );
 
 # Constraints on residuals for "voltage magnitude" measurements (kV)

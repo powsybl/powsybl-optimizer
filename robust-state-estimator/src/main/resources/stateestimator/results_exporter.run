@@ -32,8 +32,8 @@ printf{(qq,m,n,l) in BRANCHCC_FULL cross BRANCH_SUSP:branch_susp_id[l] == branch
       "%Q;%Q;%Q;%Q\n",
       branch_susp_id[l], 
       if is_suspected[l] == 1 then "YES" else "NO", 
-      if y_prior[l] == 0 then "PRESUMED CLOSED" else "PRESUMED OPENED",
-      if round(y[qq,m,n]) == 0 then "CLOSED" else "OPENED" # rounding is necessary when solving_mode = 2
+      if y_prior[l] == 1 then "PRESUMED CLOSED" else "PRESUMED OPENED",
+      if round(y[qq,m,n]) == 1 then "CLOSED" else "OPENED" # rounding is necessary when solving_mode = 2
       > (fileOut);
 close (fileOut);
 printf "Exportation of se_topology_estimate.csv done.\n";
