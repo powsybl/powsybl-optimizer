@@ -316,7 +316,7 @@ if ignore_voltage_bounds >= epsilon_nominal_voltage
 then printf{LOG_INFO} "Parameter: for all busses with nominal voltage <= ignore_voltage_bounds=%.1f, voltage bounds are ignored and replaced by [%.3f;%.3f]\n",ignore_voltage_bounds,min_plausible_low_voltage_limit,max_plausible_high_voltage_limit;
 check ignore_voltage_bounds >= 0;
 
-param buses_with_reactive_slacks symbolic default "NO_GENERATION";
+param buses_with_reactive_slacks symbolic default "ALL";
 if "buses_with_reactive_slacks" in PARAM_ALGO_KEYS then let buses_with_reactive_slacks := PARAM_ALGO_VALUES["buses_with_reactive_slacks"];
 printf{LOG_INFO} "Parameter: choice for buses with reactive slacks in ACOPF := %Q (%s)\n", buses_with_reactive_slacks,
   if buses_with_reactive_slacks == "ALL" then "every bus in connex component."

@@ -104,7 +104,7 @@ class OpenReacRunnerTest {
                 .setLogLevelSolver(OpenReacSolverLogLevel.ONLY_RESULTS)
                 .setMinPlausibleLowVoltageLimit(0.7888)
                 .setMaxPlausibleHighVoltageLimit(1.3455)
-                .setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL)
+                .setReactiveSlackBusesMode(ReactiveSlackBusesMode.NO_GENERATION)
                 .setActivePowerVariationRate(0.88)
                 .setMinPlausibleActivePowerThreshold(0.45)
                 .setLowImpedanceThreshold(1e-5)

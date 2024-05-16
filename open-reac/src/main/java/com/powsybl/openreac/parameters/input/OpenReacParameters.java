@@ -58,7 +58,7 @@ public class OpenReacParameters {
 
     private double maxPlausibleHighVoltageLimit = 1.5; // in pu
 
-    private ReactiveSlackBusesMode reactiveSlackBusesMode = ReactiveSlackBusesMode.NO_GENERATION;
+    private ReactiveSlackBusesMode reactiveSlackBusesMode = ReactiveSlackBusesMode.ALL;
 
     private static final String ACTIVE_POWER_VARIATION_RATE_KEY = "coeff_alpha";
 

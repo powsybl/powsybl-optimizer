@@ -355,7 +355,7 @@ class OpenReacParametersTest {
     void testBusesWithReactiveSlackConfigIntegrity() {
         OpenReacParameters parameters = new OpenReacParameters();
 
-        assertEquals(ReactiveSlackBusesMode.NO_GENERATION, parameters.getReactiveSlackBusesMode()); // default value
+        assertEquals(ReactiveSlackBusesMode.ALL, parameters.getReactiveSlackBusesMode()); // default value
         assertThrows(NullPointerException.class, () -> parameters.setReactiveSlackBusesMode(null));
         parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.CONFIGURED);
         assertEquals("CONFIGURED", parameters.getReactiveSlackBusesMode().toParam().getValue());
@@ -374,7 +374,7 @@ class OpenReacParametersTest {
         assertEquals(OpenReacSolverLogLevel.EVERYTHING, parameters.getLogLevelSolver());
         assertEquals(0.5, parameters.getMinPlausibleLowVoltageLimit());
         assertEquals(1.5, parameters.getMaxPlausibleHighVoltageLimit());
-        assertEquals(ReactiveSlackBusesMode.NO_GENERATION, parameters.getReactiveSlackBusesMode());
+        assertEquals(ReactiveSlackBusesMode.ALL, parameters.getReactiveSlackBusesMode());
         assertEquals(1., parameters.getActivePowerVariationRate());
         assertEquals(0.01, parameters.getMinPlausibleActivePowerThreshold());
         assertEquals(1e-4, parameters.getLowImpedanceThreshold());
