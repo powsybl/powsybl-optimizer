@@ -118,6 +118,6 @@ public final class OpenReacRunner {
         Objects.requireNonNull(config);
         Objects.requireNonNull(manager);
         Objects.requireNonNull(reportNode);
-        parameters.checkIntegrity(network);
+        parameters.checkIntegrity(network, Reports.createParameterIntegrityReporter(reportNode, network.getId()));
     }
 }
