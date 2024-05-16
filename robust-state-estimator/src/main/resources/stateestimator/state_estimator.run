@@ -73,9 +73,8 @@ param Znull default 1e-4; # in Ohms
 printf "Parameter: threshold to detect zero impedance branch Znull:=%Q Ohms\n",Znull;
 # always check Znull > 0 and Znull < 0.1;
 
-# Tolerance for power balance of zero-injection buses (TODO : use it ?)
+# Tolerance for power balance of zero-injection buses (not used)
 param epsilon_max_power_balance default 1e-3; # in MVA
-printf "Parameter: tolerance on power balance of zero-injection buses epsilon_max_power_balance:=%Q MVA\n",epsilon_max_power_balance;
 
 ###############################################################################
 #     Solver choice and options # TODO : Check if this is what we want        #
@@ -228,7 +227,7 @@ let PROBLEM_CCOMP := {1};
 # Let the other problem be non active
 let PROBLEM_SE := { };
 
-option knitro_options "outlev=0"; # Avoid printing of too much information.
+/* option knitro_options "outlev=0"; # Avoid printing of too much information.
 option presolve 0;
 let tempstr := ctime();
 printf "# CCcomp solve: start (%s)\n\n",tempstr;
@@ -242,13 +241,16 @@ then {
   let final_status := "NOK";
   include results_exit.run; # CC computation did not work ==> Return indications and exit
 }
-printf "# CCcomp solve: end   (%s -> %s)\n\n",tempstr,ctime();
+printf "# CCcomp solve: end   (%s -> %s)\n\n",tempstr,ctime(); */
 
 option presolve 10;
 
-# Once main connex component is computed, define the set of buses in it :
+# TODO : keep this calculation of main Synchronous Component ? Or just consider that SC=CC (if no HVDC lines)
+/* # Once main connex component is computed, define the set of buses in it :
 # here we keep the buses that have been calculated as linked to the slack bus with AC lines
-let BUSCC := {n in BUS2: teta_ccomputation[n].val <= 0.01};
+let BUSCC := {n in BUS2: teta_ccomputation[n].val <= 0.01}; */
+
+let BUSCC := {n in BUS2};
 
 # TODO : change all this to make it simpler
 /* for {n in BUSCC} {

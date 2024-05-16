@@ -156,11 +156,8 @@ public class RandomMeasuresGenerator {
         double measurementValue;
         double measurementVariance;
 
-        // Get maximum nominal voltage in the grid (used for variance scaling)
-        double VNomMax = Collections.max(network.getVoltageLevelStream().map(VoltageLevel::getNominalV).toList());
-
         // Find the starting measurement number, such that no new measure will be given the number of an already existing measure
-        ArrayList<Integer> allExistingMeasNumbers = new ArrayList<Integer>();
+        ArrayList<Integer> allExistingMeasNumbers = new ArrayList<>();
         allExistingMeasNumbers.add(0);
         allExistingMeasNumbers.addAll(knowledge.getActivePowerInjectedMeasures().keySet());
         allExistingMeasNumbers.addAll(knowledge.getReactivePowerInjectedMeasures().keySet());
@@ -507,7 +504,9 @@ public class RandomMeasuresGenerator {
     /**
      * This method generates random measurements out of the Load Flow results obtained on a network.
      * The measurements generated are added to the "knowledge" instance.
-     * The number of measurement generated is large by default (4 times the number of buses) and distributed enough to ensure network observability.
+     * This variant of the random measurement generator involves the possibility of controlling the number of measurements
+     * for one specified measurement type.
+     * The number of measurement generated is large by default (4 times the number of buses) and distributed enough to ensure at best the network's observability.
      * It is possible to skew the distribution to pick more often buses with higher voltages ("double roll, pick better" method),
      * to emulate the fact that it is more likely to have measurement devices on the biggest nodes than on the smallest ones.
      * <p>
@@ -518,6 +517,8 @@ public class RandomMeasuresGenerator {
      *
      * @param knowledge The knowledge object that will store the random measurements generated
      * @param network The network (LF run previously) for which random measurements must be generated
+     * @param ratioForCtrlMeasType The ratio "nb of measurements for the specified measurement type" / "total number of measurements"
+     * @param ctrlMeasType The measurement type whose ratio is being controlled.
      * @param seed (optional) The seed used by the random generator
      * @param ratioMeasuresToBuses (optional) The ratio "number of measures"/"number of buses in the network" used to compute the number of measures generated
      * @param biasTowardsHVNodes (optional) If "true", a bias towards HV nodes, making them more likely to be picked as the locations of generated measurements
@@ -618,9 +619,6 @@ public class RandomMeasuresGenerator {
         // Initialize measurement value and variance
         double measurementValue;
         double measurementVariance;
-
-        // Get maximum nominal voltage in the grid (used for variance scaling)
-        double VNomMax = Collections.max(network.getVoltageLevelStream().map(VoltageLevel::getNominalV).toList());
 
         // Find the starting measurement number, such that no new measure will be given the number of an already existing measure
         ArrayList<Integer> allExistingMeasNumbers = new ArrayList<>();

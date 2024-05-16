@@ -93,6 +93,7 @@ public class StateEstimatorAmplIOFiles implements AmplParameters {
         list.add(networkPowersEstimateOutput);
         if (!hasConverged) {
             System.out.println("[WARNING] The state estimator has not converged. StateEstimatorResults will save last found estimates. [WARNING]");
+            System.out.println();
         }
         return list;
     }

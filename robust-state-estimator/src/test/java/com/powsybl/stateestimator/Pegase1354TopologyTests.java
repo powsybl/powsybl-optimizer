@@ -40,10 +40,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author Pierre ARVY <pierre.arvy@artelys.com>
  * @author Lucas RIOU <lucas.riou@artelys.com>
  */
-public class Ieee118TopologyTests {
+public class Pegase1354TopologyTests {
 
     @Test
-    void ieee118BusesTests() throws IOException {
+    void pegase1354BusesTests() throws IOException {
 
         // Initialize the dataframe that will store the results
         List<String> headers = List.of("RatioMeasuresToBuses", "Seed",
@@ -62,9 +62,9 @@ public class Ieee118TopologyTests {
         );
         List<List<String>> data = new ArrayList<>();
 
-        Network network = IeeeCdfNetworkFactory.create118();
+        Network network = Network.read(Path.of("D:", "Projet", "Réseaux_tests", "IIDM", "pglib_opf_case1354_pegase.xiidm"));
 
-        String erroneousLine = "L45-46-1";
+        String erroneousLine = "LINE-6757-6036";
 
         // Disconnect the erroneous line
         network.getLine(erroneousLine).disconnect();
@@ -85,43 +85,32 @@ public class Ieee118TopologyTests {
 
         // All MeasuresToBuses ratios to be tested
         //List<Double> ratiosTested = Arrays.asList(1.0, 2.0, 3.0, 4.0, 5.0);
-        List<Double> ratiosTested = Arrays.asList(4.0, 5.0);
+        List<Double> ratiosTested = Arrays.asList(5.0);
 
         for (Double ratioTested : ratiosTested) {
 
             System.out.println(ratioTested);
 
-            for (int seed = 0; seed < 100; seed++) {
+            for (int seed = 0; seed < 10; seed++) {
 
-                // Create "knowledge" instance
-                StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network);
-
-                // For IEEE 118 bus, slack is "VL69_0": our state estimator must use the same slack
-                knowledge.setSlack("VL69_0", network);
+                // Create "knowledge" instance and indicate slack bus
+                StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network, "VL-4231_0");
 
                 // Make all branches suspects and presumed to be closed
                 for (Branch branch: network.getBranches()) {
                     knowledge.setSuspectBranch(branch.getId(), true, "PRESUMED CLOSED");
                 }
 
-                // Make only branches around the erroneous one suspects
-                //List<String> localSuspectBranches = new ArrayList<>(List.of(
-                //        "L45-46-1","L44-45-1", "L45-49-1","L46-48-1","L46-47-1",
-                //        "L47-49-1","L48-49-1","L43-44-1","L47-69-1","L49-69-1"
-                //));
-                //for (String localSuspectBranchID : localSuspectBranches) {
-                //    knowledge.setSuspectBranch(localSuspectBranchID, true, "PRESUMED CLOSED");
-                //}
-
-                // Randomly generate measurements out of LF results using proper seed and Z to N ratio
-                RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
+                // Randomly generate measurements out of load flow results, with all P measures (ensure observability)
+                RandomMeasuresGenerator.generateRandomMeasurementsWithCtrlMeasureRatio(knowledge, network,
+                        0.1991137371, "P",
                         Optional.of(seed), Optional.of(ratioTested),
                         Optional.empty(), Optional.of(false),
                         Optional.empty(), Optional.empty());
 
                 // Define the solving options for the state estimation
                 StateEstimatorOptions options = new StateEstimatorOptions()
-                        .setSolvingMode(0).setMaxTimeSolving(5).setMaxNbTopologyChanges(5);
+                        .setSolvingMode(2).setMaxTimeSolving(60).setMaxNbTopologyChanges(5);
 
                 // Run the state estimation and save the results
                 StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
@@ -172,7 +161,7 @@ public class Ieee118TopologyTests {
                 }
 
                 // TODO : delete if erroneousLine specified
-                //erroneousLine = "L45-46-1";
+                //erroneousLine = "LINE-6757-6036";
 
                 // Save statistics on the accuracy of the state estimation w.r.t load flow solution
                 StateEstimatorEvaluator evaluator = new StateEstimatorEvaluator(network, knowledge, results);
@@ -206,7 +195,7 @@ public class Ieee118TopologyTests {
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("SM0_AllLinesSuspect_NoNoise_L45-46-OPENED_IEEE118.csv");
+        try (FileWriter fileWriter = new FileWriter("SM2_5NbTopoChanges_ZN5_AllLinesSuspect_NoNoise_L6757-6036-OPENED_Pegase1354.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 

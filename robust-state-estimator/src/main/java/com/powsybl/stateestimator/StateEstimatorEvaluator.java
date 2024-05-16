@@ -102,7 +102,7 @@ public class StateEstimatorEvaluator {
      */
     public List<Double> computeActivePowerFlowsRelativeErrorsStats() {
         // Define the threshold for minimal tolerated error on power flows
-        double Pf_EPSILON = 1e-3;
+        double Pf_EPSILON = 1e-1;
         // Get number of active/reactive power flows (two sides for each branch)
         int nbPowerFlows = this.network.getBranchCount() * 2;
         // Initialize a list containing all errors
@@ -135,17 +135,12 @@ public class StateEstimatorEvaluator {
             double tmpPfErrorEnd2Absolute = Math.abs(branchPowersEstimate.getActivePowerEnd2() - truePfEnd2);
             double tmpPfErrorEnd2 = tmpPfErrorEnd2Absolute / (Math.abs(truePfEnd2) + Pf_EPSILON) * 100;
 
-            // TODO : check if it is OK to only consider the relative error if absolute error is above Pf_EPSILON
-            if (tmpPfErrorEnd1Absolute > Pf_EPSILON) {
-                meanPfErrror += tmpPfErrorEnd1;
-                squaredPfError += Math.pow(tmpPfErrorEnd1, 2);
-                allErrors.add(tmpPfErrorEnd1);
-            }
-            if (tmpPfErrorEnd2Absolute > Pf_EPSILON) {
-                meanPfErrror += tmpPfErrorEnd2;
-                squaredPfError += Math.pow(tmpPfErrorEnd2, 2);
-                allErrors.add(tmpPfErrorEnd2);
-            }
+            meanPfErrror += tmpPfErrorEnd1;
+            squaredPfError += Math.pow(tmpPfErrorEnd1, 2);
+            allErrors.add(tmpPfErrorEnd1);
+            meanPfErrror += tmpPfErrorEnd2;
+            squaredPfError += Math.pow(tmpPfErrorEnd2, 2);
+            allErrors.add(tmpPfErrorEnd2);
         }
         meanPfErrror = meanPfErrror / nbPowerFlows;
         double stdPfError = Math.sqrt(squaredPfError/nbPowerFlows - Math.pow(meanPfErrror, 2));
@@ -165,7 +160,7 @@ public class StateEstimatorEvaluator {
      */
     public List<Double> computeReactivePowerFlowsRelativeErrorsStats() {
         // Define the threshold for minimal tolerated error on power flows
-        double Qf_EPSILON = 1e-3;
+        double Qf_EPSILON = 1e-1;
         // Get number of active/reactive power flows (two sides for each branch)
         int nbPowerFlows = this.network.getBranchCount() * 2;
         // Initialize a list containing all errors
@@ -198,17 +193,12 @@ public class StateEstimatorEvaluator {
             double tmpQfErrorEnd2Absolute = Math.abs(branchPowersEstimate.getReactivePowerEnd2() - trueQfEnd2);
             double tmpQfErrorEnd2 = tmpQfErrorEnd2Absolute / (Math.abs(trueQfEnd2) + Qf_EPSILON) * 100;
 
-            // TODO : check if it is OK to only consider the relative error if absolute error is above Qf_EPSILON
-            if (tmpQfErrorEnd1Absolute > Qf_EPSILON) {
-                meanQfErrror += tmpQfErrorEnd1;
-                squaredQfError += Math.pow(tmpQfErrorEnd1, 2);
-                allErrors.add(tmpQfErrorEnd1);
-            }
-            if (tmpQfErrorEnd2Absolute > Qf_EPSILON) {
-                meanQfErrror += tmpQfErrorEnd2;
-                squaredQfError += Math.pow(tmpQfErrorEnd2, 2);
-                allErrors.add(tmpQfErrorEnd2);
-            }
+            meanQfErrror += tmpQfErrorEnd1;
+            squaredQfError += Math.pow(tmpQfErrorEnd1, 2);
+            allErrors.add(tmpQfErrorEnd1);
+            meanQfErrror += tmpQfErrorEnd2;
+            squaredQfError += Math.pow(tmpQfErrorEnd2, 2);
+            allErrors.add(tmpQfErrorEnd2);
         }
         meanQfErrror = meanQfErrror / nbPowerFlows;
         double stdQfError = Math.sqrt(squaredQfError/nbPowerFlows - Math.pow(meanQfErrror, 2));

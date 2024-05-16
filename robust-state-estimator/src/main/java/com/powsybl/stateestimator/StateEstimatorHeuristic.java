@@ -7,33 +7,22 @@
 package com.powsybl.stateestimator;
 
 import com.powsybl.computation.local.LocalComputationManager;
-import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
 import com.powsybl.iidm.network.*;
-import com.powsybl.loadflow.LoadFlow;
-import com.powsybl.loadflow.LoadFlowParameters;
-import com.powsybl.loadflow.LoadFlowResult;
-import com.powsybl.openloadflow.OpenLoadFlowParameters;
 import com.powsybl.stateestimator.parameters.input.knowledge.*;
 import com.powsybl.stateestimator.parameters.input.options.StateEstimatorOptions;
 import com.powsybl.stateestimator.parameters.output.estimates.BranchStatusEstimate;
 import org.jgrapht.alg.util.Pair;
-import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Stream;
-
-import static com.powsybl.openloadflow.OpenLoadFlowParameters.LowImpedanceBranchMode.REPLACE_BY_MIN_IMPEDANCE_LINE;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Pierre ARVY <pierre.arvy@artelys.com>
  * @author Lucas RIOU <lucas.riou@artelys.com>
  */
-public class FirstHeuristic {
+public class StateEstimatorHeuristic {
 
-    Pair<StateEstimatorResults, StateEstimatorKnowledge> firstHeuristic(StateEstimatorKnowledge knowledgeInit, Network network) throws IOException {
+    static Pair<StateEstimatorResults, StateEstimatorKnowledge> firstHeuristic(StateEstimatorKnowledge knowledgeInit, Network network) throws IOException {
 
         // BEGINNING OF THE HEURISTIC PROCESS
 
@@ -47,6 +36,7 @@ public class FirstHeuristic {
             initialStatus.put(branch.getId(), "CLOSED");
         }
         // Define the solving options for the state estimation
+        // TODO : solvingMode 0 or 2 ? What max number of topo changes ?
         StateEstimatorOptions optionsV1 = new StateEstimatorOptions()
                 .setSolvingMode(2).setMaxTimeSolving(30).setMaxNbTopologyChanges(10);
 
@@ -96,6 +86,11 @@ public class FirstHeuristic {
             }
         }
 
+        // TODO : remove
+        System.out.println("List of branches changed at first iteration");
+        System.out.println(changedBranches);
+
+
         // Find all the disjoint sets of suspect branches
         Map<String, Set<String>> connectedComponentOfChangedBranches = new HashMap<>();
         // Initialize the connected component of each changed branch (by default, equals the changed branch and its neighbours)
@@ -135,6 +130,26 @@ public class FirstHeuristic {
         Set<Set<String>> disjointSetsOfSuspectBranches = new HashSet<>(connectedComponentOfChangedBranches.values().stream().toList());
         List<Set<String>> listOfSuspectRegions = new ArrayList<>(disjointSetsOfSuspectBranches);
 
+        // TODO : check this !
+        // Note : even if maxNbTopoChanges = 10 at step 1, it is possible to have more than 10 suspect regions
+        // if the solver has not converged at this step.
+        // We do not want more than 10 suspect regions. To ensure this, we merge the regions between them as long as needed.
+        if (listOfSuspectRegions.size() > 10) {
+            boolean keepMerging = true;
+            int tmp = 0;
+            while (keepMerging) {
+                int listSize = listOfSuspectRegions.size();
+                Set<String> firstMergedRegion = listOfSuspectRegions.get(tmp % listSize);
+                Set<String> secondMergedRegion = listOfSuspectRegions.remove((tmp+1) % listSize);
+                firstMergedRegion.addAll(secondMergedRegion);
+                listOfSuspectRegions.set(tmp % listSize, firstMergedRegion);
+                tmp += 2;
+                if (listOfSuspectRegions.size() <= 10) {
+                    keepMerging = false;
+                }
+            }
+        }
+
         // Prepare iterative loop
         StateEstimatorKnowledge knowledgeV2 = knowledgeInit;
         StateEstimatorResults resultsV2 = resultsV1;
@@ -148,17 +163,27 @@ public class FirstHeuristic {
             }
         }
 
+        // TODO : remove this !
+        System.out.printf("%nNumber of suspect regions: %d%n",listOfSuspectRegions.size());
+        System.out.println(listOfSuspectRegions);
+
         // Define the maximum number of iterations
         int nbIter = 0;
-        int nbIterMax = 3 + 2 * listOfSuspectRegions.size(); // At least 3 iterations + 2 cycles of "topology inspection"
+        int nbIterMax = 2 + 2 * listOfSuspectRegions.size(); // At least 2 iterations + 2 cycles of "topology inspection"
 
+
+        System.out.printf("%nMax number of iterations : %d %n", nbIterMax);
+        System.out.printf("%nLNR : %f%n", LNR);
+
+        boolean allowMeasureRemoval = true;
+        
         // While the Largest Normalized Residual exceeds a given threshold
         while (LNR > 3 && nbIter < nbIterMax) {
 
-            System.out.printf("%n  Iteration n°%d :%n", nbIter);
+            System.out.printf("%n  Iteration n°%d (max. number of iterations : %d) :%n", nbIter, nbIterMax);
             System.out.println();
 
-            // Make a deep copy of knowledgeV1
+            // Make a deep copy of knowledgeInit
             knowledgeV2 = new StateEstimatorKnowledge(knowledgeInit);
 
             // For current iteration, remove the measurement with LNR of the previous iteration
@@ -168,7 +193,7 @@ public class FirstHeuristic {
             // ==> At most 1 measurement can be removed at each iteration
             ArrayList<String> measureLNR =  knowledgeV2.getMeasure(nbMeasureLNR);
             int tmpIndex = 1;
-            while(LNR > 3 && tmpIndex < sortedResiduals.size()) {
+            while(allowMeasureRemoval && LNR > 3 && tmpIndex < sortedResiduals.size()) {
                 System.out.printf("Measure n°%d has ", nbMeasureLNR);
                 // If LNR measure is directly related to a change of topology, do not remove it...
                 if ((measureLNR.get(0).equals("Pf") | measureLNR.get(0).equals("Qf"))
@@ -233,6 +258,7 @@ public class FirstHeuristic {
             // Update the set of inspected branches
             inspectedBranches.addAll(suspectRegion);
 
+            // TODO : which solving mode ?
             // Define new solving options, with MaxNbTopologyChanges = 1 this time
             StateEstimatorOptions optionsV2 = new StateEstimatorOptions()
                     .setSolvingMode(0).setMaxTimeSolving(30).setMaxNbTopologyChanges(1);
@@ -252,25 +278,29 @@ public class FirstHeuristic {
             // Results will be updated only if OFV has decreased
             if (objectiveFunctionValueTmp > objectiveFunctionValue) {
                 System.out.println("Results of current iteration will not be taken into account : objective function value has not decreased.");
+                // If OFV has not decreased, no measure will be removed at next iteration : only a new suspect region will be inspected
+                allowMeasureRemoval = false;
+                // As a result, there is no need to update residuals and changedBranches
             }
             else {
+                // Update OFV and results
                 objectiveFunctionValue = objectiveFunctionValueTmp;
                 resultsV2 = resultsTmp;
-            }
-
-            // Update normalized residuals and LNR
-            sortedResiduals = computeAndSortNormalizedResiduals(knowledgeV2, resultsV2);
-            nbMeasureLNR = sortedResiduals.get(0).getKey();
-            LNR = sortedResiduals.get(0).getValue();
-            // Update changedBranches (w.r.t initial status) with new results obtained
-            changedBranches.clear();
-            for (Branch branch : network.getBranches()) {
-                BranchStatusEstimate branchEstimate = resultsV2.getBranchStatusEstimate(branch.getId());
-                if (!branchEstimate.getEstimatedStatus().equals(initialStatus.get(branch.getId()))) {
-                    changedBranches.add(branch.getId());
+                // ALlow measurement removal at next iteration
+                allowMeasureRemoval = true;
+                // Update normalized residuals and LNR
+                sortedResiduals = computeAndSortNormalizedResiduals(knowledgeV2, resultsV2);
+                nbMeasureLNR = sortedResiduals.get(0).getKey();
+                LNR = sortedResiduals.get(0).getValue();
+                // Update changedBranches (w.r.t initial status) with new results obtained
+                changedBranches.clear();
+                for (Branch branch : network.getBranches()) {
+                    BranchStatusEstimate branchEstimate = resultsV2.getBranchStatusEstimate(branch.getId());
+                    if (!branchEstimate.getEstimatedStatus().equals(initialStatus.get(branch.getId()))) {
+                        changedBranches.add(branch.getId());
+                    }
                 }
             }
-
 
             nbIter++;
 
@@ -293,12 +323,16 @@ public class FirstHeuristic {
             System.out.println("Process has not converged : nbIter = nbIterMax");
         }
 
+        // TODO : remove this
+        System.out.println("Final topology changes made :");
+        System.out.println(changedBranches);
+
         // Return the results and knowledge obtained
         return Pair.of(resultsV2, knowledgeV2);
 
     }
 
-    List<Map.Entry<Integer,Double>> computeAndSortNormalizedResiduals (StateEstimatorKnowledge knowledge, StateEstimatorResults results){
+    static List<Map.Entry<Integer,Double>> computeAndSortNormalizedResiduals (StateEstimatorKnowledge knowledge, StateEstimatorResults results){
 
         // Store measurement residuals given by the SE results
         ActivePowerFlowMeasures resultsPf = new ActivePowerFlowMeasures(knowledge.getActivePowerFlowMeasures(), results.getMeasurementEstimatesAndResiduals());
