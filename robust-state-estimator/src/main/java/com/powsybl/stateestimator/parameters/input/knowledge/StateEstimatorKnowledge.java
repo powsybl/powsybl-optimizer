@@ -223,6 +223,10 @@ public class StateEstimatorKnowledge {
         if (measure.size() != 6) {
             throw new IllegalArgumentException("Unexpected number of indications (expected 6) given relative to the measurement.");
         }
+        // Check that the variance provided is positive
+        if (Double.parseDouble(measure.get("Variance")) < 0) {
+            throw new IllegalArgumentException("The variance provided must be non-negative.");
+        }
         // Check that IDs related to the measurement exist in the network
         if (!network.getBranchStream().map(Identifiable::getId).toList().contains(measure.get("BranchID"))) {
             throw new IllegalArgumentException("The branch ID related to the measurement does not exist in the network.");
@@ -297,6 +301,10 @@ public class StateEstimatorKnowledge {
         if (measure.size() != 6) {
             throw new IllegalArgumentException("Unexpected number of indications (expected 6) given relative to the measurement.");
         }
+        // Check that the variance provided is positive
+        if (Double.parseDouble(measure.get("Variance")) < 0) {
+            throw new IllegalArgumentException("The variance provided must be non-negative.");
+        }
         // Check that IDs related to the measurement exist in the network
         if (!network.getBranchStream().map(Identifiable::getId).toList().contains(measure.get("BranchID"))) {
             throw new IllegalArgumentException("The branch ID related to the measurement does not exist in the network.");
@@ -365,6 +373,10 @@ public class StateEstimatorKnowledge {
         if (measure.size() != 4) {
             throw new IllegalArgumentException("Unexpected number of indications (expected 4) given relative to the measurement.");
         }
+        // Check that the variance provided is positive
+        if (Double.parseDouble(measure.get("Variance")) < 0) {
+            throw new IllegalArgumentException("The variance provided must be non-negative.");
+        }
         // Check that ID related to the measurement exist in the network
         if (!network.getBusView().getBusStream().map(Identifiable::getId).toList().contains(measure.get("BusID"))) {
             throw new IllegalArgumentException("The ID of the bus related to the measurement does not exist in the network.");
@@ -411,6 +423,10 @@ public class StateEstimatorKnowledge {
         }
         if (measure.size() != 4) {
             throw new IllegalArgumentException("Unexpected number of indications (expected 4) given relative to the measurement.");
+        }
+        // Check that the variance provided is positive
+        if (Double.parseDouble(measure.get("Variance")) < 0) {
+            throw new IllegalArgumentException("The variance provided must be non-negative.");
         }
         // Check that ID related to the measurement exist in the network
         if (!network.getBusView().getBusStream().map(Identifiable::getId).toList().contains(measure.get("BusID"))) {
@@ -461,6 +477,10 @@ public class StateEstimatorKnowledge {
         }
         if (measure.size() != 4) {
             throw new IllegalArgumentException("Unexpected number of indications (expected 4) given relative to the measurement.");
+        }
+        // Check that the variance provided is positive
+        if (Double.parseDouble(measure.get("Variance")) < 0) {
+            throw new IllegalArgumentException("The variance provided must be non-negative.");
         }
         // Check that ID related to the measurement exist in the network
         if (!network.getBusView().getBusStream().map(Identifiable::getId).toList().contains(measure.get("BusID"))) {

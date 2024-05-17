@@ -35,12 +35,13 @@ public class FirstHeuristicTest {
     void unitTest() throws IOException {
 
         Network network = Network.read(Path.of("D:", "Projet", "Réseaux_tests", "IIDM", "pglib_opf_case1354_pegase.xiidm"));
+
         LoadFlowParameters parametersLf = new LoadFlowParameters();
         OpenLoadFlowParameters parametersExt = OpenLoadFlowParameters.create(parametersLf);
         parametersExt.setAlwaysUpdateNetwork(true)
                 .setLowImpedanceBranchMode(REPLACE_BY_MIN_IMPEDANCE_LINE)
-                .setLowImpedanceThreshold(1e-4)
-        ;
+                .setLowImpedanceThreshold(1e-4);
+
         network.getLine("LINE-6757-6036").disconnect(); // for case1354_pegase
         LoadFlowResult loadFlowResult = LoadFlow.run(network, parametersLf);
         assertTrue(loadFlowResult.isFullyConverged());
@@ -52,8 +53,8 @@ public class FirstHeuristicTest {
         }
         RandomMeasuresGenerator.generateRandomMeasurementsWithCtrlMeasureRatio(knowledge, network,
                 0.1991137371, "P",
-                Optional.of(33), Optional.of(5.0),
-                Optional.empty(), Optional.of(false),
+                Optional.of(41), Optional.of(5.0),
+                Optional.empty(), Optional.of(true),
                 Optional.empty(), Optional.empty());
 
         Pair<StateEstimatorResults, StateEstimatorKnowledge> firstHeuristicResults = StateEstimatorHeuristic.firstHeuristic(knowledge, network);
@@ -66,6 +67,8 @@ public class FirstHeuristicTest {
 
     @Test
     void test() throws IOException {
+
+        // TODO : don't forget to change solving modes in StateEstimatorHeuristic before launching the test
 
         // Initialize the dataframe that will store the results
         List<String> headers = List.of("RatioMeasuresToBuses", "Seed",
@@ -85,12 +88,12 @@ public class FirstHeuristicTest {
 
         Network network = IeeeCdfNetworkFactory.create118();
 
-        //String erroneousLine = "L45-46-1";
+        String erroneousLine = "L45-46-1";
         // TODO : delete if erroneousLine added
-        String erroneousLine = "_";
+        //String erroneousLine = "_";
 
         // Disconnect the erroneous line
-        //network.getLine(erroneousLine).disconnect();
+        network.getLine(erroneousLine).disconnect();
 
         // Load Flow parameters (note : we mimic the way the AMPL code deals with zero-impedance branches)
         LoadFlowParameters parametersLf = new LoadFlowParameters();
@@ -104,7 +107,7 @@ public class FirstHeuristicTest {
         assertTrue(loadFlowResult.isFullyConverged());
 
         // Reconnect the erroneous line, if any
-        //network.getLine(erroneousLine).connect();
+        network.getLine(erroneousLine).connect();
 
         double ratioTested = 5.0;
 
@@ -113,16 +116,13 @@ public class FirstHeuristicTest {
             System.out.println();
             System.out.println(seed);
 
-            // Create "knowledge" instance
-            StateEstimatorKnowledge knowledgeV1 = new StateEstimatorKnowledge(network);
-
-            // For IEEE 118 bus, the slack is "VL69_0": our state estimator must use the same slack
-            knowledgeV1.setSlack("VL69_0", network);
+            // Create "knowledge" instance : for IEEE 118 bus, the slack is "VL69_0"
+            StateEstimatorKnowledge knowledgeV1 = new StateEstimatorKnowledge(network, "VL69_0");
 
             // Add a gross error on measure Pf(VL27 --> VL28) : 80 MW (false) instead of 32.6 MW (true)
-            //Map<String, String> grossMeasure1 = Map.of("BranchID", "L27-28-1", "FirstBusID", "VL27_0", "SecondBusID", "VL28_0",
-            //        "Value", "80.0", "Variance", "0.1306", "Type", "Pf");
-            //knowledgeV1.addMeasure(1, grossMeasure1, network);
+            Map<String, String> grossMeasure1 = Map.of("BranchID", "L27-28-1", "FirstBusID", "VL27_0", "SecondBusID", "VL28_0",
+                    "Value", "80.0", "Variance", "0.1306", "Type", "Pf");
+            knowledgeV1.addMeasure(1, grossMeasure1, network);
 
             // Add a gross error on measure V(VL60) : 225 kV (false) instead of 137 kV (true)
             //Map<String, String> grossMeasure2 = Map.of("BusID", "VL60_0",
@@ -189,7 +189,7 @@ public class FirstHeuristicTest {
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("WithNoise_NoError_ZN4_Heuristic_IEEE118.csv");
+        try (FileWriter fileWriter = new FileWriter("WithNoise_Pf-27-28_WithTopoError_ZN5_Heuristic_IEEE118.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 

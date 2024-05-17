@@ -33,6 +33,7 @@ public class VoltageMagnitudeMeasures implements AmplInputFile {
     }
 
     public VoltageMagnitudeMeasures(Map<Integer, ArrayList<String>> measures, Map<Integer, ArrayList<String>> estimatesAndResiduals) {
+        // Measure : <Number, <Type, BusID, Value, Variance, Estimate, Residual>>
         this.measuresWithEstimatesAndResiduals = new HashMap<>();
         for (Integer measurementNumber : measures.keySet()) {
             for (Integer residualNumber : estimatesAndResiduals.keySet()) {

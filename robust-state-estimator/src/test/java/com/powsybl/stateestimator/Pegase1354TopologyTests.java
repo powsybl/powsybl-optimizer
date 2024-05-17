@@ -91,7 +91,7 @@ public class Pegase1354TopologyTests {
 
             System.out.println(ratioTested);
 
-            for (int seed = 0; seed < 10; seed++) {
+            for (int seed = 20; seed < 50; seed++) {
 
                 // Create "knowledge" instance and indicate slack bus
                 StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network, "VL-4231_0");
@@ -101,7 +101,8 @@ public class Pegase1354TopologyTests {
                     knowledge.setSuspectBranch(branch.getId(), true, "PRESUMED CLOSED");
                 }
 
-                // Randomly generate measurements out of load flow results, with all P measures (ensure observability)
+                // TODO : change ratioForCtrlMeasType depending on ratioTested !
+                // Randomly generate measurements out of load flow results, with all P measures given to ensure observability
                 RandomMeasuresGenerator.generateRandomMeasurementsWithCtrlMeasureRatio(knowledge, network,
                         0.1991137371, "P",
                         Optional.of(seed), Optional.of(ratioTested),
@@ -195,7 +196,7 @@ public class Pegase1354TopologyTests {
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("SM2_5NbTopoChanges_ZN5_AllLinesSuspect_NoNoise_L6757-6036-OPENED_Pegase1354.csv");
+        try (FileWriter fileWriter = new FileWriter("(part2)SM2_60sec_5NbTopoChanges_ZN5_AllLinesSuspect_NoNoise_L6757-6036-OPENED_Pegase1354.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 

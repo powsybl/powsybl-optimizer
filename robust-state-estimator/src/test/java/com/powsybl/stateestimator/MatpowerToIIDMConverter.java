@@ -50,9 +50,9 @@ public class MatpowerToIIDMConverter {
         // We want base voltages to be taken into account
         properties.put("matpower.import.ignore-base-voltage", false);
         Network network = new MatpowerImporter().importData(
-                new FileDataSource(Path.of("D:", "Projet", "Réseaux_tests", "Goc2000"), "pglib_opf_case2000_goc"),
+                new FileDataSource(Path.of("D:", "Projet", "Réseaux_tests", "Texas6717"), "Texas7k_20210804"),
                 NetworkFactory.findDefault(), properties);
 
-        network.write("XIIDM", new Properties(), Path.of("D:", "Projet", "Réseaux_tests", "Goc2000", "pglib_opf_case2000_goc"));
+        network.write("XIIDM", new Properties(), Path.of("D:", "Projet", "Réseaux_tests", "Texas6717", "Texas7k_20210804"));
     }
 }

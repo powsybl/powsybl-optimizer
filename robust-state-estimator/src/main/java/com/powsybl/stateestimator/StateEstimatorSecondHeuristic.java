@@ -20,9 +20,9 @@ import java.util.*;
  * @author Pierre ARVY <pierre.arvy@artelys.com>
  * @author Lucas RIOU <lucas.riou@artelys.com>
  */
-public class StateEstimatorHeuristic {
+public class StateEstimatorSecondHeuristic {
 
-    static Pair<StateEstimatorResults, StateEstimatorKnowledge> firstHeuristic(StateEstimatorKnowledge knowledgeInit, Network network) throws IOException {
+    static Pair<StateEstimatorResults, StateEstimatorKnowledge> secondHeuristic(StateEstimatorKnowledge knowledgeInit, Network network) throws IOException {
 
         // BEGINNING OF THE HEURISTIC PROCESS
 

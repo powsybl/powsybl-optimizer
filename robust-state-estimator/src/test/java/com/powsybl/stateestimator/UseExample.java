@@ -57,7 +57,7 @@ public class UseExample {
 
         // Want to introduce a topology change ? Disconnect a line (don't forget to RECONNECT IT before running the state estimation)
         //network.getLine("L45-46-1").disconnect(); // for IEEE118
-        network.getLine("LINE-6757-6036").disconnect(); // for case1354_pegase
+        //network.getLine("LINE-6757-6036").disconnect(); // for case1354_pegase
 
         // Solve the Load Flow problem for the network
         LoadFlowResult loadFlowResult = LoadFlow.run(network, parametersLf);
@@ -65,7 +65,9 @@ public class UseExample {
 
         // Reconnect the line before running the state estimation (line won't be considered in AMPL script otherwise)
         //network.getLine("L45-46-1").connect();
-        network.getLine("LINE-6757-6036").connect();
+        //network.getLine("LINE-6757-6036").connect();
+
+        long startTime = System.nanoTime();
 
         // Create "knowledge" instance, containing the slackBus (most meshed bus by default)
         // as well as the sets of measurements and suspect branches
@@ -78,27 +80,40 @@ public class UseExample {
         knowledge.setSlack("VL-4231_0", network); // for case1354_pegase
 
         // Make all branches suspects and presumed to be closed
-        for (Branch branch: network.getBranches()) {
-            knowledge.setSuspectBranch(branch.getId(), true, "PRESUMED CLOSED");
-        }
+        //for (Branch branch: network.getBranches()) {
+        //    knowledge.setSuspectBranch(branch.getId(), true, "PRESUMED CLOSED");
+        //}
 
         // Add a gross error on measure Pf(VL27 --> VL28) : 80 MW (false) instead of 32.6 MW (true)
         //Map<String, String> grossMeasure = Map.of("BranchID","L27-28-1","FirstBusID","VL27_0","SecondBusID","VL28_0",
         //        "Value","80.0","Variance","0.1306","Type","Pf");
         //knowledge.addMeasure(1, grossMeasure, network);
+        // Add a gross error on measure Pf(VL45 --> VL46) : 0 MW (false) instead of -36,32 MW (true)
+        //Map<String, String> grossMeasure = Map.of("BranchID","L45-46-1","FirstBusID","VL45_0","SecondBusID","VL46_0",
+        //        "Value","0.0","Variance","0.1596","Type","Pf");
+        //knowledge.addMeasure(1, grossMeasure, network);
+        // Add a gross error on measure V(VL45) : 200 kV (false) instead of 136,16 kV (true)
+        //Map<String, String> grossMeasure = Map.of("BusID","VL45_0","Value","200.0","Variance","0.4822","Type","V");
+        //knowledge.addMeasure(1, grossMeasure, network);
 
         // Randomly generate measurements (useful for test cases) out of load flow results
-        //RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
-        //        Optional.of(3), Optional.of(5.0),
-        //        Optional.of(false), Optional.of(false),
-        //        Optional.empty(), Optional.empty());
+        RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
+                Optional.of(1), Optional.of(5.0),
+                Optional.of(false), Optional.of(true),
+                Optional.empty(), Optional.empty());
+
+
+        long endTime   = System.nanoTime();
+        long totalTime = endTime - startTime;
+        System.out.println("Time to generate measurements :");
+        System.out.println(totalTime / 1e9);
 
         // Or randomly generate measurements out of load flow results, with a controlled number of measurements for a given measurement type
-        RandomMeasuresGenerator.generateRandomMeasurementsWithCtrlMeasureRatio(knowledge, network,
-                0.1991137371, "P",
-                Optional.of(1), Optional.of(5.0),
-                Optional.empty(), Optional.of(false),
-                Optional.empty(), Optional.empty());
+        //RandomMeasuresGenerator.generateRandomMeasurementsWithCtrlMeasureRatio(knowledge, network,
+        //        0.1991137371, "P",
+        //        Optional.of(1), Optional.of(5.0),
+        //        Optional.empty(), Optional.of(false),
+        //        Optional.empty(), Optional.empty());
 
         // We can also add by hand our measurements, and complete them with generated measurements until observability is ensured
         // Note: if some measurements are added after random generation, one might get more measurements than expected
@@ -123,7 +138,8 @@ public class UseExample {
         results.printAllResultsSi(network);
 
         // Print measurement estimates along with residuals for all measures
-        //results.printAllMeasurementEstimatesAndResidualsSi(knowledge);
+        results.printAllMeasurementEstimatesAndResidualsSi(knowledge);
+        results.exportAllMeasurementEstimatesAndResidualsSi(knowledge);
 
         // In our testing cases, as we know the true values, we can build a StateEstimatorEvaluator
         // to compute statistics on the errors made by the State Estimation

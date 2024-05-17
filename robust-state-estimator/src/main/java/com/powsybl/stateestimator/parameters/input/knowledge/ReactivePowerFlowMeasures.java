@@ -33,6 +33,7 @@ public class ReactivePowerFlowMeasures implements AmplInputFile {
     }
 
     public ReactivePowerFlowMeasures(Map<Integer, ArrayList<String>> measures, Map<Integer, ArrayList<String>> estimatesAndResiduals) {
+        // Measure : <Number, <Type, BranchID, FirstBusID, SecondBusID, Value, Variance, Estimate, Residual>>
         this.measuresWithEstimatesAndResiduals = new HashMap<>();
         for (Integer measurementNumber : measures.keySet()) {
             for (Integer residualNumber : estimatesAndResiduals.keySet()) {

@@ -17,8 +17,12 @@ import com.powsybl.stateestimator.parameters.output.estimates.BranchPowersEstima
 import com.powsybl.stateestimator.parameters.output.estimates.BranchStatusEstimate;
 import com.powsybl.stateestimator.parameters.output.estimates.BusStateEstimate;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.jgrapht.alg.util.Pair;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -178,6 +182,89 @@ public class StateEstimatorResults {
                 .printWithEstimatesAndResiduals();
         new VoltageMagnitudeMeasures(knowledge.getVoltageMagnitudeMeasures(), this.measurementEstimatesAndResiduals)
                 .printWithEstimatesAndResiduals();
+    }
+
+    /**
+     * Export in a CSV file all estimates, residuals and normalized residuals (in SI) for all measurements
+     * @param knowledge The knowledge object from which was performed the state estimation
+     */
+    public void exportAllMeasurementEstimatesAndResidualsSi(StateEstimatorKnowledge knowledge) {
+        ActivePowerFlowMeasures activePowerFlowMeasures = new ActivePowerFlowMeasures(knowledge.getActivePowerFlowMeasures(), this.measurementEstimatesAndResiduals);
+        ReactivePowerFlowMeasures reactivePowerFlowMeasures = new ReactivePowerFlowMeasures(knowledge.getReactivePowerFlowMeasures(), this.measurementEstimatesAndResiduals);
+        ActivePowerInjectedMeasures activePowerInjectedMeasures = new ActivePowerInjectedMeasures(knowledge.getActivePowerInjectedMeasures(), this.measurementEstimatesAndResiduals);
+        ReactivePowerInjectedMeasures reactivePowerInjectedMeasures = new ReactivePowerInjectedMeasures(knowledge.getReactivePowerInjectedMeasures(), this.measurementEstimatesAndResiduals);
+        VoltageMagnitudeMeasures voltageMagnitudeMeasures = new VoltageMagnitudeMeasures(knowledge.getVoltageMagnitudeMeasures(), this.measurementEstimatesAndResiduals);
+
+        // Initialize the dataframe that will store the results
+        List<String> headers = List.of("MeasurementNumber", "MeasurementLocation",
+                "Residual", "Normalized residual"
+        );
+        List<List<String>> data = new ArrayList<>();
+        // Add a line for each measure
+        for (var measure : activePowerFlowMeasures.getMeasuresWithEstimatesAndResiduals().entrySet()) {
+            int measurementNumber = measure.getKey();
+            String measurementLocation = measure.getValue().get(1);
+            double residual = Math.abs(Double.parseDouble(measure.getValue().get(7)));
+            double standardDeviation = Math.sqrt(Double.parseDouble(measure.getValue().get(5)));
+            double normalizedResidual = residual / standardDeviation;
+            data.add(List.of(String.valueOf(measurementNumber), String.valueOf(measurementLocation),
+                    String.valueOf(residual), String.valueOf(normalizedResidual)
+            ));
+        }
+        for (var measure : reactivePowerFlowMeasures.getMeasuresWithEstimatesAndResiduals().entrySet()) {
+            int measurementNumber = measure.getKey();
+            String measurementLocation = measure.getValue().get(1);
+            double residual = Math.abs(Double.parseDouble(measure.getValue().get(7)));
+            double standardDeviation = Math.sqrt(Double.parseDouble(measure.getValue().get(5)));
+            double normalizedResidual = residual / standardDeviation;
+            data.add(List.of(String.valueOf(measurementNumber), String.valueOf(measurementLocation),
+                    String.valueOf(residual), String.valueOf(normalizedResidual)
+            ));
+        }
+        for (var measure : activePowerInjectedMeasures.getMeasuresWithEstimatesAndResiduals().entrySet()) {
+            int measurementNumber = measure.getKey();
+            String measurementLocation = measure.getValue().get(1);
+            double residual = Math.abs(Double.parseDouble(measure.getValue().get(5)));
+            double standardDeviation = Math.sqrt(Double.parseDouble(measure.getValue().get(3)));
+            double normalizedResidual = residual / standardDeviation;
+            data.add(List.of(String.valueOf(measurementNumber), String.valueOf(measurementLocation),
+                    String.valueOf(residual), String.valueOf(normalizedResidual)
+            ));
+        }
+        for (var measure : reactivePowerInjectedMeasures.getMeasuresWithEstimatesAndResiduals().entrySet()) {
+            int measurementNumber = measure.getKey();
+            String measurementLocation = measure.getValue().get(1);
+            double residual = Math.abs(Double.parseDouble(measure.getValue().get(5)));
+            double standardDeviation = Math.sqrt(Double.parseDouble(measure.getValue().get(3)));
+            double normalizedResidual = residual / standardDeviation;
+            data.add(List.of(String.valueOf(measurementNumber), String.valueOf(measurementLocation),
+                    String.valueOf(residual), String.valueOf(normalizedResidual)
+            ));
+        }
+        for (var measure : voltageMagnitudeMeasures.getMeasuresWithEstimatesAndResiduals().entrySet()) {
+            int measurementNumber = measure.getKey();
+            String measurementLocation = measure.getValue().get(1);
+            double residual = Math.abs(Double.parseDouble(measure.getValue().get(5)));
+            double standardDeviation = Math.sqrt(Double.parseDouble(measure.getValue().get(3)));
+            double normalizedResidual = residual / standardDeviation;
+            data.add(List.of(String.valueOf(measurementNumber), String.valueOf(measurementLocation),
+                    String.valueOf(residual), String.valueOf(normalizedResidual)
+            ));
+        }
+        // Export the results in a CSV file
+        try (FileWriter fileWriter = new FileWriter("EstimatesAndResiduals_Export.csv");
+             CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
+            csvPrinter.printRecord(headers);
+
+            for (List<String> row : data) {
+                csvPrinter.printRecord(row);
+            }
+
+            System.out.println("CSV file has been created successfully!");
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
