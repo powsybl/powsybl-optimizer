@@ -7,10 +7,18 @@
 package com.powsybl.openreac.parameters.output.network;
 
 import com.powsybl.ampl.converter.AmplSubset;
+import com.powsybl.commons.report.ReportNode;
+import com.powsybl.commons.report.TypedValue;
 import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.iidm.modification.ShuntCompensatorModification;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.ShuntCompensator;
+
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
@@ -21,9 +29,13 @@ public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCo
     private static final int ID_COLUMN_INDEX = 1;
     private static final int B_COLUMN_INDEX = 3;
     private static final int BUS_COLUMN_INDEX = 2;
+    private final List<ReportNode> reports = new ArrayList<>();
+    private final double shuntCompensatorActivationAlertThreshold;
+    private static final DecimalFormat REACTIVE_VALUE_FORMAT = new DecimalFormat("0.0", DecimalFormatSymbols.getInstance(Locale.ROOT));
 
-    public ShuntCompensatorNetworkOutput(Network network) {
+    public ShuntCompensatorNetworkOutput(Network network, double shuntCompensatorActivationAlertThreshold) {
         super(network);
+        this.shuntCompensatorActivationAlertThreshold = shuntCompensatorActivationAlertThreshold;
     }
 
     @Override
@@ -64,6 +76,22 @@ public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCo
                 sectionCount = i;
             }
         }
+        double optimalReactiveValue = Math.abs(b * Math.pow(sc.getTerminal().getVoltageLevel().getNominalV(), 2));
+        double discretizedReactiveValue = Math.abs(sc.getB(sectionCount) * Math.pow(sc.getTerminal().getVoltageLevel().getNominalV(), 2));
+        if (Math.abs(discretizedReactiveValue - optimalReactiveValue) > shuntCompensatorActivationAlertThreshold) {
+            reports.add(ReportNode.newRootReportNode()
+                .withMessageTemplate("shuntCompensatorDeltaDiscretizedOptimizedOverThreshold", "After discretization, shunt compensator ${shuntCompensatorId} with ${maxSectionCount} available section(s) has been set to ${discretizedValue} MVar (optimal value : ${optimalValue} MVar)")
+                .withUntypedValue("shuntCompensatorId", sc.getId())
+                .withUntypedValue("maxSectionCount", sc.getMaximumSectionCount())
+                .withUntypedValue("discretizedValue", REACTIVE_VALUE_FORMAT.format(discretizedReactiveValue))
+                .withUntypedValue("optimalValue", REACTIVE_VALUE_FORMAT.format(optimalReactiveValue))
+                .withSeverity(TypedValue.TRACE_SEVERITY)
+                .build());
+        }
         return sectionCount;
+    }
+
+    public List<ReportNode> getReports() {
+        return reports;
     }
 }

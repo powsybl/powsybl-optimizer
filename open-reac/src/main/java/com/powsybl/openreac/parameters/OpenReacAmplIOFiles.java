@@ -61,7 +61,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
 
         //outputs
         this.reactiveSlackOutput = new ReactiveSlackOutput();
-        this.networkModifications = new NetworkModifications(network);
+        this.networkModifications = new NetworkModifications(network, params.getShuntCompensatorActivationAlertThreshold());
         this.voltageProfileOutput = new VoltageProfileOutput();
 
         this.debug = debug;

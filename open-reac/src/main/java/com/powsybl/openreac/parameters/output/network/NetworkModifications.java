@@ -7,6 +7,7 @@
 package com.powsybl.openreac.parameters.output.network;
 
 import com.powsybl.ampl.executor.AmplOutputFile;
+import com.powsybl.commons.report.ReportNode;
 import com.powsybl.iidm.modification.GeneratorModification;
 import com.powsybl.iidm.modification.ShuntCompensatorModification;
 import com.powsybl.iidm.modification.StaticVarCompensatorModification;
@@ -28,9 +29,9 @@ public class NetworkModifications {
     private final SvcNetworkOutput svcOutput;
     private final TapPositionNetworkOutput tapPositionOutput;
 
-    public NetworkModifications(Network network) {
+    public NetworkModifications(Network network, double shuntCompensatorActivationAlertThreshold) {
         generatorNetworkOutput = new GeneratorNetworkOutput(network);
-        shuntsOutput = new ShuntCompensatorNetworkOutput(network);
+        shuntsOutput = new ShuntCompensatorNetworkOutput(network, shuntCompensatorActivationAlertThreshold);
         vscOutput = new VscNetworkOutput(network);
         svcOutput = new SvcNetworkOutput(network);
         tapPositionOutput = new TapPositionNetworkOutput(network);
@@ -46,6 +47,10 @@ public class NetworkModifications {
 
     public List<ShuntCompensatorModification> getShuntModifications() {
         return shuntsOutput.getModifications();
+    }
+
+    public List<ReportNode> getShuntModificationsReportNodes() {
+        return shuntsOutput.getReports();
     }
 
     public List<VscConverterStationModification> getVscModifications() {
