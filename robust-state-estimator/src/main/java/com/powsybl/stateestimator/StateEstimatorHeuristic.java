@@ -182,7 +182,7 @@ public class StateEstimatorHeuristic {
         // While the Largest Normalized Residual exceeds a given threshold
         while (LNR > 3 && nbIter < nbIterMax) {
 
-            System.out.printf("%n  Iteration n°%d (max. number of iterations : %d) :%n", nbIter, nbIterMax);
+            System.out.printf("%n  Iteration n°%d (max. number of iterations : %d) :%n", nbIter+2, nbIterMax);
             System.out.println();
 
             // Make a deep copy of knowledgeInit

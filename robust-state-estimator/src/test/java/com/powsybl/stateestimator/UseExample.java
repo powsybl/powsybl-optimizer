@@ -43,17 +43,16 @@ public class UseExample {
 
         // Load your favorite network (IIDM format preferred)
         //Network network = IeeeCdfNetworkFactory.create30();
-        //Network network = IeeeCdfNetworkFactory.create118();
+        Network network = IeeeCdfNetworkFactory.create118();
         //Network network = IeeeCdfNetworkFactory.create300();
-        Network network = Network.read(Path.of("D:", "Projet", "Réseaux_tests", "IIDM", "pglib_opf_case1354_pegase.xiidm"));
+        //Network network = Network.read(Path.of("D:", "Projet", "Réseaux_tests", "IIDM", "pglib_opf_case1354_pegase.xiidm"));
 
         // Load Flow parameters (note : we mimic the way the AMPL code deals with zero-impedance branches)
         LoadFlowParameters parametersLf = new LoadFlowParameters();
         OpenLoadFlowParameters parametersExt = OpenLoadFlowParameters.create(parametersLf);
         parametersExt.setAlwaysUpdateNetwork(true)
                 .setLowImpedanceBranchMode(REPLACE_BY_MIN_IMPEDANCE_LINE)
-                .setLowImpedanceThreshold(1e-4)
-        ;
+                .setLowImpedanceThreshold(1e-4);
 
         // Want to introduce a topology change ? Disconnect a line (don't forget to RECONNECT IT before running the state estimation)
         //network.getLine("L45-46-1").disconnect(); // for IEEE118
@@ -75,14 +74,14 @@ public class UseExample {
 
         // Make sure the state estimator and OpenLoadFlow use the same slack bus
         //knowledge.setSlack("VL1_0", network); // for IEEE30
-        //knowledge.setSlack("VL69_0", network); // for IEEE118
+        knowledge.setSlack("VL69_0", network); // for IEEE118
         //knowledge.setSlack("VL7049_0", network); // for IEEE300
-        knowledge.setSlack("VL-4231_0", network); // for case1354_pegase
+        //knowledge.setSlack("VL-4231_0", network); // for case1354_pegase
 
         // Make all branches suspects and presumed to be closed
-        //for (Branch branch: network.getBranches()) {
-        //    knowledge.setSuspectBranch(branch.getId(), true, "PRESUMED CLOSED");
-        //}
+        for (Branch branch: network.getBranches()) {
+            knowledge.setSuspectBranch(branch.getId(), false, "PRESUMED CLOSED");
+        }
 
         // Add a gross error on measure Pf(VL27 --> VL28) : 80 MW (false) instead of 32.6 MW (true)
         //Map<String, String> grossMeasure = Map.of("BranchID","L27-28-1","FirstBusID","VL27_0","SecondBusID","VL28_0",
@@ -95,6 +94,9 @@ public class UseExample {
         // Add a gross error on measure V(VL45) : 200 kV (false) instead of 136,16 kV (true)
         //Map<String, String> grossMeasure = Map.of("BusID","VL45_0","Value","200.0","Variance","0.4822","Type","V");
         //knowledge.addMeasure(1, grossMeasure, network);
+        // Add a gross error on measure P(VL45) : 100 MW (false) instead of -53 MW (true)
+        Map<String, String> grossMeasure = Map.of("BusID","VL45_0","Value","100.0","Variance","0.34","Type","P");
+        knowledge.addMeasure(1, grossMeasure, network);
 
         // Randomly generate measurements (useful for test cases) out of load flow results
         RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
