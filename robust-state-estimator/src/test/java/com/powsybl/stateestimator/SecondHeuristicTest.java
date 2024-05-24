@@ -42,7 +42,7 @@ public class SecondHeuristicTest {
                 .setLowImpedanceBranchMode(REPLACE_BY_MIN_IMPEDANCE_LINE)
                 .setLowImpedanceThreshold(1e-4);
 
-        // Beware : do not disconnect a line on the border of the network
+        // Careful : do not disconnect a line on the border of the network
         String erroneousLine = "LINE-2426-5533";
 
         network.getLine(erroneousLine).disconnect(); // for case1354_pegase
@@ -52,18 +52,29 @@ public class SecondHeuristicTest {
 
         StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network, "VL-4231_0"); // for case1354_pegase
 
+        // Add measurement error : Active power flow P at VL-4141_0 for branch LINE-4141-1311 : 102,488691 (true)
+        Map<String, String> grossMeasure = Map.of("BranchID", "LINE-4141-1311", "FirstBusID", "VL-4141_0", "SecondBusID", "VL-1311_0",
+                "Value", "300.0", "Variance", "1.269", "Type", "Pf");
+        knowledge.addMeasure(1, grossMeasure, network);
+
         RandomMeasuresGenerator.generateRandomMeasurementsWithCtrlMeasureRatio(knowledge, network,
                 0.1991137371, "P",
-                Optional.of(5), Optional.of(5.0),
+                Optional.of(2), Optional.of(5.0),
                 Optional.empty(), Optional.of(true),
                 Optional.empty(), Optional.empty());
 
+        long startTime = System.nanoTime();
+
         Pair<StateEstimatorResults, StateEstimatorKnowledge> secondHeuristicResults = StateEstimatorSecondHeuristic.secondHeuristic(knowledge, network);
+
+        long endTime   = System.nanoTime();
 
         StateEstimatorResults finalResults = secondHeuristicResults.getFirst();
         StateEstimatorKnowledge finalKnowledge = secondHeuristicResults.getSecond();
 
         finalResults.printNetworkTopology();
+
+        System.out.printf("%nTime to solve problem : %f s %n", (endTime-startTime) / 1e9);
     }
 
     @Test
@@ -81,18 +92,19 @@ public class SecondHeuristicTest {
                 "MeanQfError(%)", "StdQfError(%)", "MedianQfError(%)", "MaxQfError(%)",
                 "5percentileQfError(%)", "95percentileQfError(%)",
                 "NbVMeasures","NbPfMeasures","NbQfMeasures","NbPMeasures","NbQMeasures",
+                "ObjectiveFunctionValue",
                 "PerformanceIndex"
         );
         List<List<String>> data = new ArrayList<>();
 
         Network network = IeeeCdfNetworkFactory.create118();
 
-        //String erroneousLine = "L45-46-1";
+        String erroneousLine = "L45-46-1";
         // TODO : delete if erroneousLine added
-        String erroneousLine = "_";
+        //String erroneousLine = "_";
 
         // Disconnect the erroneous line
-        //network.getLine(erroneousLine).disconnect();
+        network.getLine(erroneousLine).disconnect();
 
         // Load Flow parameters (note : we mimic the way the AMPL code deals with zero-impedance branches)
         LoadFlowParameters parametersLf = new LoadFlowParameters();
@@ -106,14 +118,17 @@ public class SecondHeuristicTest {
         assertTrue(loadFlowResult.isFullyConverged());
 
         // Reconnect the erroneous line, if any
-        //network.getLine(erroneousLine).connect();
+        network.getLine(erroneousLine).connect();
 
         double ratioTested = 5.0;
 
         for (int seed = 0; seed < 100; seed++) {
 
             System.out.println();
-            System.out.println(seed);
+            System.out.println();
+            System.out.println();
+            System.out.printf("Test with seed n°%d%n", seed);
+            System.out.println();
 
             // Create "knowledge" instance : for IEEE 118 bus, the slack is "VL69_0"
             StateEstimatorKnowledge knowledgeV1 = new StateEstimatorKnowledge(network, "VL69_0");
@@ -183,6 +198,7 @@ public class SecondHeuristicTest {
                     String.valueOf(finalKnowledge.getReactivePowerFlowMeasures().size()),
                     String.valueOf(finalKnowledge.getActivePowerInjectedMeasures().size()),
                     String.valueOf(finalKnowledge.getReactivePowerInjectedMeasures().size()),
+                    String.valueOf(finalResults.getObjectiveFunctionValue()),
                     String.valueOf(evaluator.computePerformanceIndex())
             ));
         }

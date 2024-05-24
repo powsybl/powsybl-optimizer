@@ -7,11 +7,8 @@
 package com.powsybl.stateestimator.parameters.input.knowledge;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.powsybl.stateestimator.parameters.input.knowledge.RandomMeasuresGenerator;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.core.ObjectCodec; // Keep this, even if marked as unused!
 import com.powsybl.iidm.network.Branch;
 import com.powsybl.iidm.network.Bus;
 import com.powsybl.iidm.network.Identifiable;
@@ -19,7 +16,6 @@ import com.powsybl.iidm.network.Network;
 import org.jgrapht.alg.util.Pair;
 
 import java.io.*;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -48,17 +44,27 @@ public class StateEstimatorKnowledge {
     private Map<Integer, ArrayList<String>> suspectBranches = new HashMap<>();
     private String slackBus;
     private Map<Integer, String> zeroInjectionBuses = new HashMap<>();
+    private Map<Integer, ArrayList<String>> stateVectorStartingPoint = new HashMap<>();
 
     public StateEstimatorKnowledge(Network network) {
         setSlack(DEFAULT_SLACK_SELECTION_MODE, network)
                 .setZeroInjectionBuses(network)
-                .setSuspectBranchesByDefault(network);
+                .setSuspectBranchesByDefault(network)
+                .setStateVectorStartingPoint(null, network);
     }
 
     public StateEstimatorKnowledge(Network network, String slackBusId) {
         setSlack(slackBusId, network)
                 .setZeroInjectionBuses(network)
-                .setSuspectBranchesByDefault(network);
+                .setSuspectBranchesByDefault(network)
+                .setStateVectorStartingPoint(null, network);
+    }
+
+    public StateEstimatorKnowledge(Network network, String slackBusId, Map<String, Pair<Double, Double>> startingPoint) {
+        setSlack(slackBusId, network)
+                .setZeroInjectionBuses(network)
+                .setSuspectBranchesByDefault(network)
+                .setStateVectorStartingPoint(startingPoint, network);
     }
 
     // Constructor used to deep copy a StateEstimatorKnowledge instance
@@ -71,6 +77,8 @@ public class StateEstimatorKnowledge {
         this.suspectBranches = deepCopy(knowledge.suspectBranches);
         this.zeroInjectionBuses =  new HashMap<>(knowledge.zeroInjectionBuses);
         this.slackBus = knowledge.slackBus;
+        this.stateVectorStartingPoint = deepCopy(knowledge.stateVectorStartingPoint);
+        ;
     }
 
     // Auxiliary function used for deep copying
@@ -122,6 +130,9 @@ public class StateEstimatorKnowledge {
     public Map<Integer, String> getZeroInjectionBuses() {
         return zeroInjectionBuses;
     }
+
+    public Map<Integer, ArrayList<String>> getStateVectorStartingPoint() {
+        return stateVectorStartingPoint;}
 
     /**
      * @param measurementNumber The number of the measurement, which must be unique within the set of all measurements (all types considered)
@@ -606,6 +617,58 @@ public class StateEstimatorKnowledge {
         return this;
     }
 
+    /**
+     * @param startingPoint A map containing initial conditions for buses (V [pu], theta [rad]), that will be used by the estimator
+     * @param network (not modified) The network on which the estimation will be performed
+     * @return The object on which the method is applied.
+     * <p>
+     * Note 1 : if startingPoint is null then a "flat-start" is chosen by default.
+     * Note 2 : it is allowed to provide initial conditions only for certain buses in the network
+     * </p>
+     */
+    public StateEstimatorKnowledge setStateVectorStartingPoint(Map<String, Pair<Double, Double>> startingPoint , Network network) {
+
+        Map<Integer, ArrayList<String>> fullStartingPoint = new HashMap<>();
+
+        // If no initial conditions are provided, apply a "flat-start"
+        if (startingPoint == null) {
+            System.out.println("[WARNING] No starting point provided : the state estimator will use a \"flat start\".");
+            int i = 1;
+            for (Bus bus : network.getBusView().getBuses()) {
+                ArrayList<String> busStartingPoint = new ArrayList<>();
+                busStartingPoint.add(bus.getId());
+                busStartingPoint.add(String.valueOf(1.0));
+                busStartingPoint.add(String.valueOf(0.0));
+                fullStartingPoint.put(i, busStartingPoint);
+                i++;
+            }
+        }
+        else {
+            System.out.println("[WARNING] A starting point for the state estimator is being provided : make sure that buses voltages (first term) are in p.u. and buses angles (second term) in radians.");
+            Set<String> allBusesWithStartingPoints = startingPoint.keySet();
+            int i = 1;
+            for (Bus bus : network.getBusView().getBuses()) {
+                String busID = bus.getId();
+                ArrayList<String> busStartingPoint = new ArrayList<>();
+                busStartingPoint.add(busID);
+                // If an initial point is provided for the bus at hand, use it
+                if (allBusesWithStartingPoints.contains(busID)) {
+                    busStartingPoint.add(String.valueOf(startingPoint.get(busID).getFirst()));
+                    busStartingPoint.add(String.valueOf(startingPoint.get(busID).getSecond()));
+                }
+                // Else, write a "flat start" for the bus
+                else {
+                    busStartingPoint.add(String.valueOf(1.));
+                    busStartingPoint.add(String.valueOf(0.));
+                }
+                fullStartingPoint.put(i, busStartingPoint);
+                i++;
+            }
+        }
+        this.stateVectorStartingPoint = fullStartingPoint;
+        return this;
+    }
+
     public void printAllMeasures() {
         this.printActivePowerFlowMeasures();
         this.printReactivePowerFlowMeasures();
@@ -633,6 +696,9 @@ public class StateEstimatorKnowledge {
     public void printVoltageMagnitudeMeasures() {
         new VoltageMagnitudeMeasures(this.getVoltageMagnitudeMeasures()).print();
     }
+
+
+
 
     // TODO : fix deserialization
     // Empty constructor, used only for deserialization

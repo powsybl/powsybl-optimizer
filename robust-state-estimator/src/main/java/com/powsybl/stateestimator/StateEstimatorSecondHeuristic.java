@@ -11,6 +11,7 @@ import com.powsybl.iidm.network.*;
 import com.powsybl.stateestimator.parameters.input.knowledge.*;
 import com.powsybl.stateestimator.parameters.input.options.StateEstimatorOptions;
 import com.powsybl.stateestimator.parameters.output.estimates.BranchStatusEstimate;
+import com.powsybl.stateestimator.parameters.output.estimates.BusStateEstimate;
 import gnu.trove.set.hash.THashSet;
 import org.jgrapht.alg.util.Pair;
 
@@ -60,6 +61,15 @@ public class StateEstimatorSecondHeuristic {
         StateEstimatorKnowledge knowledgeV2 = knowledgeV1;
         StateEstimatorResults resultsV2 = resultsV1;
         Set<String> branchesNotToBeTestedAgain = new HashSet<>();
+
+        // TODO : use of new starting point
+        // Save last estimates as new starting point
+        Map<String, Pair<Double, Double>> newStartingPoint = new HashMap<>();
+        for (BusStateEstimate busStateEstimate : resultsV1.getStateVectorEstimate()) {
+            newStartingPoint.put(busStateEstimate.getBusId(),
+                    Pair.of(busStateEstimate.getV(), busStateEstimate.getTheta()));
+        }
+        knowledgeV2.setStateVectorStartingPoint(newStartingPoint, network);
 
         // Define the maximum number of iterations
         int nbIter = 0;
@@ -118,6 +128,14 @@ public class StateEstimatorSecondHeuristic {
                         nbMeasureLNR = sortedNormalizedResiduals.get(0).getKey();
                         LNR = sortedNormalizedResiduals.get(0).getValue();
                         objectiveFunctionValue = objectiveFunctionValueTmp;
+                        // TODO : use of new starting point
+                        // Save last estimates as new starting point
+                        newStartingPoint = new HashMap<>();
+                        for (BusStateEstimate busStateEstimate : resultsV2.getStateVectorEstimate()) {
+                            newStartingPoint.put(busStateEstimate.getBusId(),
+                                    Pair.of(busStateEstimate.getV(), busStateEstimate.getTheta()));
+                        }
+                        knowledgeV2.setStateVectorStartingPoint(newStartingPoint, network);
                         System.out.println("Current LNR due to gross measurement error : measurement was removed.");
                     }
                     else {
@@ -174,7 +192,7 @@ public class StateEstimatorSecondHeuristic {
                     // Make a priority queue, to first pick branches that are the most suspicious (order based on decreasing maxResidual, then decreasing meanResidual)
                     List<String> orderedSuspectBranches = orderByDegreeOfDistrust(suspectBranches, sortedNormalizedResiduals, knowledgeV2, network);
 
-                    // TODO : try only 5 first branches, then change mode of inspection (mode measurement error) ???
+                    // TODO : try only 5 (3 ?) first branches, then change mode of inspection (mode measurement error) ???
                     orderedSuspectBranches = orderedSuspectBranches.stream().limit(5).toList();
 
                     // Pick a suspect branch in the given order
@@ -201,22 +219,7 @@ public class StateEstimatorSecondHeuristic {
                         double objectiveFunctionValueTmp = sortedNormalizedResidualsTmp.stream().mapToDouble(e -> Math.pow(e.getValue(), 2)).sum();
                         boolean check1 = objectiveFunctionValueTmp < objectiveFunctionValue;
 
-                        // Check n°2 : is the new LNR away from the region defined by the current suspect branches ? (meaning the problem has not just been transferred)
-                        // TODO : remove this ?? Redundant with check n°3
-                        double LNRTmp = sortedNormalizedResidualsTmp.get(0).getValue();
-                        ArrayList<String> measureLNRTmp = knowledgeTmp.getMeasure(sortedNormalizedResidualsTmp.get(0).getKey());
-                        // Find the bus (or two buses) linked to the LNR measure
-                        Set<String> busesRelatedToLNRTmp = new HashSet<>();
-                        if (measureLNRTmp.get(0).equals("Pf") | measureLNRTmp.get(0).equals("Qf")) {
-                            busesRelatedToLNRTmp.add(measureLNRTmp.get(2));
-                            busesRelatedToLNRTmp.add(measureLNRTmp.get(3));
-                        } else {
-                            busesRelatedToLNRTmp.add(measureLNRTmp.get(1));
-                        }
-                        boolean check2 = ((LNRTmp > 3) && Collections.disjoint(busesRelatedToLNRTmp, busesRelatedToSuspectBranches))
-                                        | (LNRTmp <= 3);
-
-                        // Check n°3 : is there still a large normalized residual (not necessarily the LNR) close to the changed branch ?
+                        // Check n°2 : is there still a large normalized residual (not necessarily the LNR) close to the changed branch ?
                         List<Double> localNormalizedResiduals = new ArrayList<>();
                         localNormalizedResiduals.add(0.);
                         Set<String> localBuses = new HashSet<>();
@@ -237,11 +240,11 @@ public class StateEstimatorSecondHeuristic {
                             }
                         }
                         // Then find the largest residual among these local residuals, and check if it is below a certain threshold
-                        // TODO : choose value for the threshold : 10 ?
-                        boolean check3 = Collections.max(localNormalizedResiduals) < 10;
+                        // TODO : choose value for the threshold : 10 ? Leaves space for the possibility of another error at intermediate distance
+                        boolean check2 = Collections.max(localNormalizedResiduals) < 10;
 
 
-                        if (check1 && check3) {
+                        if (check1 && check2) {
                             // Topology change was a success : save it and move on
                             keepInvestigating = false;
                             checkMeasurementError = false;
@@ -252,6 +255,14 @@ public class StateEstimatorSecondHeuristic {
                             nbMeasureLNR = sortedNormalizedResiduals.get(0).getKey();
                             LNR = sortedNormalizedResiduals.get(0).getValue();
                             objectiveFunctionValue = objectiveFunctionValueTmp;
+                            // TODO : use of new starting point
+                            // Save last estimates as new starting point
+                            newStartingPoint = new HashMap<>();
+                            for (BusStateEstimate busStateEstimate : resultsV2.getStateVectorEstimate()) {
+                                newStartingPoint.put(busStateEstimate.getBusId(),
+                                        Pair.of(busStateEstimate.getV(), busStateEstimate.getTheta()));
+                            }
+                            knowledgeV2.setStateVectorStartingPoint(newStartingPoint, network);
                             System.out.printf("%nCurrent LNR due to topology error : status of branch %s was changed.%n", changedBranch);
                             break;
                         }
@@ -333,112 +344,6 @@ public class StateEstimatorSecondHeuristic {
         return measureNumberToNormalizedResidual.entrySet().stream()
                 .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
                 .toList();
-    }
-
-    static double computeHarmonicMeanOfResidualsAround(Integer measurementNumber, List<Map.Entry<Integer, Double>> normalizedResidualsList, StateEstimatorKnowledge knowledge, Network network) {
-
-        // Compute harmonic mean of normalized residuals (positive numbers) around the measurement whose number is given
-        // Goal : Determine if LNR is most likely due to a gross measurement error or a topology error
-
-        ArrayList<String> measureLNR =  knowledge.getMeasure(measurementNumber);
-        String typeLNR = measureLNR.get(0);
-
-        // Make a map <MeasurementNumber, NormalizedResidual> out of the list of residuals given as input
-        Map<Integer, Double> normalizedResiduals = new HashMap<>();
-        for (Map.Entry<Integer, Double> residual : normalizedResidualsList) {
-            normalizedResiduals.put(residual.getKey(), residual.getValue());
-        }
-
-        ArrayList<Double> residualsAround = new ArrayList<>();
-
-        Set<String> relatedBuses = new HashSet<>();
-
-        // Residuals considered for the harmonic mean depend on whether measurement is at a node or a branch
-
-        // Find all neighbouring buses to the location of the LNR measure
-        // If LNR measure is on a branch :
-        if (typeLNR.equals("Pf") | typeLNR.equals("Qf")) {
-            // Find the buses related to LNR measure
-            Bus bus1 = network.getBusView().getBus(measureLNR.get(2));
-            Bus bus2 = network.getBusView().getBus(measureLNR.get(3));
-            relatedBuses.add(bus1.getId());
-            relatedBuses.add(bus2.getId());
-            for (Line line : bus1.getLines()) {
-                relatedBuses.add(line.getTerminal1().getBusView().getConnectableBus().getId());
-                relatedBuses.add(line.getTerminal2().getBusView().getConnectableBus().getId());
-            }
-            for (TwoWindingsTransformer twt : bus1.getTwoWindingsTransformers()) {
-                relatedBuses.add(twt.getTerminal1().getBusView().getConnectableBus().getId());
-                relatedBuses.add(twt.getTerminal2().getBusView().getConnectableBus().getId());
-            }
-            for (Line line : bus2.getLines()) {
-                relatedBuses.add(line.getTerminal1().getBusView().getConnectableBus().getId());
-                relatedBuses.add(line.getTerminal2().getBusView().getConnectableBus().getId());
-            }
-            for (TwoWindingsTransformer twt : bus2.getTwoWindingsTransformers()) {
-                relatedBuses.add(twt.getTerminal1().getBusView().getConnectableBus().getId());
-                relatedBuses.add(twt.getTerminal2().getBusView().getConnectableBus().getId());
-            }
-        } else {
-            // Find the bus related to LNR measure
-            Bus bus = network.getBusView().getBus(measureLNR.get(1));
-            relatedBuses.add(bus.getId());
-            for (Line line : bus.getLines()) {
-                relatedBuses.add(line.getTerminal1().getBusView().getConnectableBus().getId());
-                relatedBuses.add(line.getTerminal2().getBusView().getConnectableBus().getId());
-            }
-            for (TwoWindingsTransformer twt : bus.getTwoWindingsTransformers()) {
-                relatedBuses.add(twt.getTerminal1().getBusView().getConnectableBus().getId());
-                relatedBuses.add(twt.getTerminal2().getBusView().getConnectableBus().getId());
-            }
-        }
-
-        // Find residuals of measurements linked to related buses
-        for (var measure : knowledge.getActivePowerFlowMeasures().entrySet()) {
-            if (relatedBuses.contains(measure.getValue().get(2))
-            | relatedBuses.contains(measure.getValue().get(3))) {
-                residualsAround.add(normalizedResiduals.get(measure.getKey()));
-            }
-        }
-        for (var measure : knowledge.getReactivePowerFlowMeasures().entrySet()) {
-            if (relatedBuses.contains(measure.getValue().get(2))
-                    | relatedBuses.contains(measure.getValue().get(3))) {
-                residualsAround.add(normalizedResiduals.get(measure.getKey()));
-            }
-        }
-        for (var measure : knowledge.getActivePowerInjectedMeasures().entrySet()) {
-            if (relatedBuses.contains(measure.getValue().get(1))) {
-                residualsAround.add(normalizedResiduals.get(measure.getKey()));
-            }
-        }
-        for (var measure : knowledge.getReactivePowerInjectedMeasures().entrySet()) {
-            if (relatedBuses.contains(measure.getValue().get(1))) {
-                residualsAround.add(normalizedResiduals.get(measure.getKey()));
-            }
-        }
-        for (var measure : knowledge.getVoltageMagnitudeMeasures().entrySet()) {
-            if (relatedBuses.contains(measure.getValue().get(1))) {
-                residualsAround.add(normalizedResiduals.get(measure.getKey()));
-            }
-        }
-
-        // Once all related residuals are found, sort them in decreasing order and keep the first 30 values
-        List<Double> sortedResiduals = residualsAround.stream()
-                .sorted(Collections.reverseOrder()).limit(30)
-                .filter(residual -> residual > 1).toList();
-
-        double tmpSum = 0;
-        for (double residual : sortedResiduals) {
-            tmpSum += 1 / residual;
-        }
-
-        // TODO : compute threshold based on number of residuals ?
-        //double averageDegree = (double) (2 * network.getBranchCount()) / network.getBusView().getBusStream().count();
-
-        System.out.printf("%nNumber of residuals considered : %d%n", sortedResiduals.size());
-        System.out.println(sortedResiduals);
-
-        return (sortedResiduals.size() / tmpSum);
     }
 
     static double computeResidualsDecayIndex(Integer measurementNumber, List<Map.Entry<Integer, Double>> normalizedResidualsList, StateEstimatorKnowledge knowledge, Network network) {
@@ -547,10 +452,6 @@ public class StateEstimatorSecondHeuristic {
             denominator += Math.log(i+1);
         }
 
-        // TODO : remove
-        System.out.printf("%nNumber of residuals considered : %d%n", sortedResiduals.size());
-        System.out.println(sortedResiduals);
-
         return - numerator / denominator;
 
     }
@@ -612,8 +513,7 @@ public class StateEstimatorSecondHeuristic {
                 .sorted(byMaxResidual.thenComparing(byMeanResidual))
                 .map(Map.Entry::getKey).toList();
 
-        System.out.println("Degrees of distrust for suspect branches (UNORDERED) : ");
-        System.out.println(degreesOfDistrust);
+
         System.out.println("Degrees of distrust for suspect branches (ORDERED) : ");
         System.out.println(orderedSuspectBranchesAsList);
 

@@ -82,6 +82,7 @@ public class FirstHeuristicTest {
                 "MeanQfError(%)", "StdQfError(%)", "MedianQfError(%)", "MaxQfError(%)",
                 "5percentileQfError(%)", "95percentileQfError(%)",
                 "NbVMeasures","NbPfMeasures","NbQfMeasures","NbPMeasures","NbQMeasures",
+                "ObjectiveFunctionValue",
                 "PerformanceIndex"
         );
         List<List<String>> data = new ArrayList<>();
@@ -184,6 +185,7 @@ public class FirstHeuristicTest {
                     String.valueOf(finalKnowledge.getReactivePowerFlowMeasures().size()),
                     String.valueOf(finalKnowledge.getActivePowerInjectedMeasures().size()),
                     String.valueOf(finalKnowledge.getReactivePowerInjectedMeasures().size()),
+                    String.valueOf(finalResults.getObjectiveFunctionValue()),
                     String.valueOf(evaluator.computePerformanceIndex())
             ));
         }

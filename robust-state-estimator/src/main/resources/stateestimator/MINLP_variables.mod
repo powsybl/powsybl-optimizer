@@ -21,8 +21,8 @@
 ###########################################################
 
 # Magnitude (p.u.) and Angle (rad) for the voltage of each bus
-var V{n in BUSCC};
-var theta{n in BUSCC};
+var V{n in BUSCC} default 1;
+var theta{n in BUSCC} default 0;
 
 # Status (opened/closed) of each branch
 var y{(qq,k,n) in BRANCHCC_FULL} binary;

@@ -155,8 +155,8 @@ check 1 in TIME;
 set BUS dimen 2 ; # [variant, bus]
 param bus_substation{BUS} integer;
 param bus_CC        {BUS} integer; # num of connex component. Computation only in CC number 0 (=main connex component)
-param bus_V0        {BUS}; # (unused in SE)
-param bus_angl0     {BUS}; # (unused in SE)
+param bus_V0        {BUS}; # (not used as starting point in SE)
+param bus_angl0     {BUS}; # (not used as starting point in SE)
 param bus_injA      {BUS};
 param bus_injR      {BUS};
 param bus_fault     {BUS};
@@ -513,7 +513,6 @@ check {(t,qq,m,n) in BRANCH}: (t,branch_ptrDeph[t,qq,m,n]) in DEPH union {(1,-1)
 set TEST_UNIQUENESS_BRANCH := setof{(1,qq,m,n) in BRANCH} branch_id[1,qq,m,n];
 check card(BRANCH) == card(TEST_UNIQUENESS_BRANCH);
 
-# 
 
 ###############################################################################
 #                        ADDITIONAL KNOWLEDGE                                 #
@@ -538,6 +537,14 @@ param y_prior {BRANCH_SUSP} binary; # "A priori" status of the branch : 1 = pres
 set BUS_ZERO_INJECTION dimen 1; # [num]
 param bus_zero_injection_id {BUS_ZERO_INJECTION} symbolic;
 
+###############################################################################
+#              Starting point of SE (ampl_starting_point.txt)                 #
+###############################################################################
+
+set BUS_STARTING_POINT dimen 1; # [num]
+param bus_sp_id {BUS_STARTING_POINT} symbolic;
+param bus_sp_V0 {BUS_STARTING_POINT};
+param bus_sp_theta0 {BUS_STARTING_POINT};
 
 
 #####################################################################################################

@@ -54,6 +54,7 @@ public class Ieee118CtrlMeasTypeTests {
                 "MeanQfError(%)", "StdQfError(%)", "MedianQfError(%)", "MaxQfError(%)",
                 "5percentileQfError(%)", "95percentileQfError(%)",
                 "NbVMeasures","NbPfMeasures","NbQfMeasures","NbPMeasures","NbQMeasures",
+                "ObjectiveFunctionValue",
                 "PerformanceIndex");
 
         List<List<String>> data = new ArrayList<>();
@@ -129,6 +130,7 @@ public class Ieee118CtrlMeasTypeTests {
                         String.valueOf(knowledge.getReactivePowerFlowMeasures().size()),
                         String.valueOf(knowledge.getActivePowerInjectedMeasures().size()),
                         String.valueOf(knowledge.getReactivePowerInjectedMeasures().size()),
+                        String.valueOf(results.getObjectiveFunctionValue()),
                         String.valueOf(evaluator.computePerformanceIndex())));
             }
         }

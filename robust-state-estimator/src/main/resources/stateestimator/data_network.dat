@@ -57,6 +57,13 @@ param: BRANCH_SUSP: branch_susp_id is_suspected y_prior := include ampl_suspect_
 # "num" "bus_zero_injection_id"
 param: BUS_ZERO_INJECTION: bus_zero_injection_id := include ampl_zero_injection_buses.txt;
 
+###############################################################################
+#                            STARTING POINT                                   #
+###############################################################################
+
+# ampl_starting_point.txt;
+# "num" "bus_id" "V (pu)" "theta (rad)"
+param: BUS_STARTING_POINT: bus_sp_id bus_sp_V0 bus_sp_theta0 := include ampl_starting_point.txt;
 
 ###############################################################################
 #                              NETWORK                                        #

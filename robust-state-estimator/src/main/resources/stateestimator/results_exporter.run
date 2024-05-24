@@ -83,6 +83,7 @@ printf "se_begin %Q\n", ctime_start                                     > (fileO
 printf "se_end %Q\n", ctime()                                           > (fileOut);
 printf "total_solve_time %.5f\n", _total_solve_time                     > (fileOut);
 printf "knitro_mode %s\n", mip_strategy                                 > (fileOut);
+printf "final_objective_function_value %.5f\n", problem_sum_of_squares_of_residuals > (fileOut);
 close(fileOut);
 printf "Exportation of se_indic.txt done.\n";
 

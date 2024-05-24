@@ -15,8 +15,8 @@ import com.powsybl.iidm.network.Network;
 public class BusStateEstimate {
 
     String busId;
-    double V;
-    double theta;
+    double V; // in p.u.
+    double theta; // in radians
 
     public BusStateEstimate(String busId, double V, double theta) {
         this.busId = busId;

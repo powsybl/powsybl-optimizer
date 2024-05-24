@@ -61,8 +61,6 @@ public class StateEstimatorResults {
         this.networkPowersEstimate = amplIOFiles.getNetworkPowersEstimateOutput().getNetworkPowersEstimate();
         this.networkIndicators = amplIOFiles.getNetworkIndicatorsOutput().getIndicators();
         this.measurementEstimatesAndResiduals = amplIOFiles.getMeasurementEstimatesAndResidualsOutput().getMeasurementEstimatesAndResiduals();
-
-        // TODO : change code about runIndicators, to use ours (se_run_indic.txt) and not those returned by AMPL/Java interface
         Objects.requireNonNull(runIndicators);
         this.runIndicators = new ArrayList<>();
         for (Map.Entry<String, String> entry : runIndicators.entrySet()) {
@@ -72,6 +70,14 @@ public class StateEstimatorResults {
 
     public boolean getStatus() {
         return status;
+    }
+
+    public double getObjectiveFunctionValue() {
+        Map<String, String> runIndicatorsMap = new HashMap<>();
+        for (Pair<String, String> entry : this.runIndicators) {
+            runIndicatorsMap.put(entry.getFirst(), entry.getSecond());
+        }
+        return Double.parseDouble(runIndicatorsMap.get("final_objective_function_value"));
     }
 
     /**

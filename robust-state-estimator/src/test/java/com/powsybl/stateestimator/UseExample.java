@@ -58,7 +58,7 @@ public class UseExample {
         //network.getLine("L45-46-1").disconnect(); // for IEEE118
         //network.getLine("LINE-6757-6036").disconnect(); // for case1354_pegase
 
-        // Solve the Load Flow problem for the network
+        // Solve the Load Flow problem for the network and the referenceNetwork
         LoadFlowResult loadFlowResult = LoadFlow.run(network, parametersLf);
         assertTrue(loadFlowResult.isFullyConverged());
 
@@ -89,14 +89,14 @@ public class UseExample {
         //knowledge.addMeasure(1, grossMeasure, network);
         // Add a gross error on measure Pf(VL45 --> VL46) : 0 MW (false) instead of -36,32 MW (true)
         //Map<String, String> grossMeasure = Map.of("BranchID","L45-46-1","FirstBusID","VL45_0","SecondBusID","VL46_0",
-        //        "Value","0.0","Variance","0.1596","Type","Pf");
+        //        "Value","30.0","Variance","0.1596","Type","Pf");
         //knowledge.addMeasure(1, grossMeasure, network);
         // Add a gross error on measure V(VL45) : 200 kV (false) instead of 136,16 kV (true)
         //Map<String, String> grossMeasure = Map.of("BusID","VL45_0","Value","200.0","Variance","0.4822","Type","V");
         //knowledge.addMeasure(1, grossMeasure, network);
         // Add a gross error on measure P(VL45) : 100 MW (false) instead of -53 MW (true)
-        Map<String, String> grossMeasure = Map.of("BusID","VL45_0","Value","100.0","Variance","0.34","Type","P");
-        knowledge.addMeasure(1, grossMeasure, network);
+        //Map<String, String> grossMeasure = Map.of("BusID","VL45_0","Value","100.0","Variance","0.34","Type","P");
+        //knowledge.addMeasure(1, grossMeasure, network);
 
         // Randomly generate measurements (useful for test cases) out of load flow results
         RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
@@ -139,9 +139,11 @@ public class UseExample {
                 knowledge, options, new StateEstimatorConfig(true), new LocalComputationManager());
         results.printAllResultsSi(network);
 
+        results.printIndicators();
+
         // Print measurement estimates along with residuals for all measures
         results.printAllMeasurementEstimatesAndResidualsSi(knowledge);
-        results.exportAllMeasurementEstimatesAndResidualsSi(knowledge);
+        //results.exportAllMeasurementEstimatesAndResidualsSi(knowledge);
 
         // In our testing cases, as we know the true values, we can build a StateEstimatorEvaluator
         // to compute statistics on the errors made by the State Estimation
@@ -163,5 +165,6 @@ public class UseExample {
         System.out.printf("%n95th percentile voltage relative error : %f %% %n", voltageErrorStats.get(5));
         System.out.printf("%n5th percentile angle absolute error : %f degrees %n", angleErrorStats.get(4));
         System.out.printf("%n95th percentile angle absolute error : %f degrees %n", angleErrorStats.get(5));
+        System.out.printf("%nObjective function value : %f %n", results.getObjectiveFunctionValue());
     }
 }

@@ -34,6 +34,7 @@ public class StateEstimatorAmplIOFiles implements AmplParameters {
     SuspectBranches suspectBranches;
     SlackBus slackBus;
     ZeroInjectionBuses zeroInjectionBuses;
+    StateVectorStartingPoint stateVectorStartingPoint;
 
     // Output files
     NetworkIndicatorsOutput networkIndicatorsOutput;
@@ -61,6 +62,8 @@ public class StateEstimatorAmplIOFiles implements AmplParameters {
         this.slackBus = new SlackBus(knowledge.getSlackBus());
         // Set of zero-injection buses
         this.zeroInjectionBuses = new ZeroInjectionBuses(knowledge.getZeroInjectionBuses());
+        // Starting points for buses state variables
+        this.stateVectorStartingPoint = new StateVectorStartingPoint(knowledge.getStateVectorStartingPoint());
 
         // Output files
         this.networkIndicatorsOutput = new NetworkIndicatorsOutput();
@@ -76,7 +79,7 @@ public class StateEstimatorAmplIOFiles implements AmplParameters {
     public Collection<AmplInputFile> getInputParameters() {
         return List.of(solvingOptions, activePowerFlowMeasures, reactivePowerFlowMeasures,
                 activePowerInjectedMeasures, reactivePowerInjectedMeasures, voltageMagnitudeMeasures,
-                suspectBranches, slackBus, zeroInjectionBuses);
+                suspectBranches, slackBus, zeroInjectionBuses, stateVectorStartingPoint);
     }
 
     @Override
