@@ -59,7 +59,7 @@ public class Ieee118TopologyTests {
                 "5percentileQfError(%)", "95percentileQfError(%)",
                 "NbVMeasures","NbPfMeasures","NbQfMeasures","NbPMeasures","NbQMeasures",
                 "ObjectiveFunctionValue"
-                //"PerformanceIndex"
+                ,"PerformanceIndex"
         );
         List<List<String>> data = new ArrayList<>();
 
@@ -86,7 +86,7 @@ public class Ieee118TopologyTests {
 
         // All MeasuresToBuses ratios to be tested
         //List<Double> ratiosTested = Arrays.asList(1.0, 2.0, 3.0, 4.0, 5.0);
-        List<Double> ratiosTested = Arrays.asList(4.0, 5.0);
+        List<Double> ratiosTested = Arrays.asList(3.0, 4.0, 5.0);
 
         for (Double ratioTested : ratiosTested) {
 
@@ -117,8 +117,9 @@ public class Ieee118TopologyTests {
                 // Randomly generate measurements out of LF results using proper seed and Z to N ratio
                 RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
                         Optional.of(seed), Optional.of(ratioTested),
-                        Optional.empty(), Optional.of(false),
-                        Optional.empty(), Optional.empty());
+                        Optional.empty(), Optional.of(true),
+                        Optional.empty(), Optional.empty(),
+                        Optional.of(true));
 
                 // Define the solving options for the state estimation
                 StateEstimatorOptions options = new StateEstimatorOptions()
@@ -173,7 +174,7 @@ public class Ieee118TopologyTests {
                 }
 
                 // TODO : delete if erroneousLine specified
-                //erroneousLine = "L45-46-1";
+                erroneousLine = "L45-46-1";
 
                 // Save statistics on the accuracy of the state estimation w.r.t load flow solution
                 StateEstimatorEvaluator evaluator = new StateEstimatorEvaluator(network, knowledge, results);
@@ -202,13 +203,13 @@ public class Ieee118TopologyTests {
                         String.valueOf(knowledge.getActivePowerInjectedMeasures().size()),
                         String.valueOf(knowledge.getReactivePowerInjectedMeasures().size()),
                         String.valueOf(results.getObjectiveFunctionValue())
-                        //String.valueOf(evaluator.computePerformanceIndex())
+                        ,String.valueOf(evaluator.computePerformanceIndex())
                 ));
             }
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("SM0_AllLinesSuspect_NoNoise_L45-46-OPENED_IEEE118.csv");
+        try (FileWriter fileWriter = new FileWriter("EnsureObservability_SM0_AllLinesSuspect_WithNoise1.0_L45-46-OPENED_IEEE118.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 

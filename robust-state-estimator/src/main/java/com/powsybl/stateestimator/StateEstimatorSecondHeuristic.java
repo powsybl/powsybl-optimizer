@@ -348,6 +348,7 @@ public class StateEstimatorSecondHeuristic {
 
     static double computeResidualsDecayIndex(Integer measurementNumber, List<Map.Entry<Integer, Double>> normalizedResidualsList, StateEstimatorKnowledge knowledge, Network network) {
 
+        // TODO : adjust decay index computation so that it works with Z/N=4
         // Goal : Determine if LNR is most likely due to a gross measurement error or a topology error
 
         ArrayList<String> measureLNR =  knowledge.getMeasure(measurementNumber);

@@ -134,7 +134,8 @@ public class FirstHeuristicTest {
             RandomMeasuresGenerator.generateRandomMeasurements(knowledgeV1, network,
                     Optional.of(seed), Optional.of(ratioTested),
                     Optional.of(false), Optional.of(true),
-                    Optional.empty(), Optional.empty());
+                    Optional.empty(), Optional.empty(),
+                    Optional.of(false));
 
             // Run heuristic SE on knowledgeV1
             Pair<StateEstimatorResults, StateEstimatorKnowledge> firstHeuristicResults = StateEstimatorHeuristic.firstHeuristic(knowledgeV1, network);

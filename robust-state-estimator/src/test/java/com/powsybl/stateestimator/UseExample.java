@@ -42,10 +42,10 @@ public class UseExample {
         // Source d'erreur (légère) : car per-unitage puis déper-unitage amène à nombres décimaux avec plus de 6 chiffres après la virgule
 
         // Load your favorite network (IIDM format preferred)
-        //Network network = IeeeCdfNetworkFactory.create30();
-        Network network = IeeeCdfNetworkFactory.create118();
+        //Network network = IeeeCdfNetworkFactory.create14();
+        //Network network = IeeeCdfNetworkFactory.create118();
         //Network network = IeeeCdfNetworkFactory.create300();
-        //Network network = Network.read(Path.of("D:", "Projet", "Réseaux_tests", "IIDM", "pglib_opf_case1354_pegase.xiidm"));
+        Network network = Network.read(Path.of("D:", "Projet", "Réseaux_tests", "IIDM", "pglib_opf_case1354_pegase.xiidm"));
 
         // Load Flow parameters (note : we mimic the way the AMPL code deals with zero-impedance branches)
         LoadFlowParameters parametersLf = new LoadFlowParameters();
@@ -73,10 +73,10 @@ public class UseExample {
         StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network);
 
         // Make sure the state estimator and OpenLoadFlow use the same slack bus
-        //knowledge.setSlack("VL1_0", network); // for IEEE30
-        knowledge.setSlack("VL69_0", network); // for IEEE118
+        //knowledge.setSlack("VL1_0", network); // for IEEE14
+        //knowledge.setSlack("VL69_0", network); // for IEEE118
         //knowledge.setSlack("VL7049_0", network); // for IEEE300
-        //knowledge.setSlack("VL-4231_0", network); // for case1354_pegase
+        knowledge.setSlack("VL-4231_0", network); // for case1354_pegase
 
         // Make all branches suspects and presumed to be closed
         for (Branch branch: network.getBranches()) {
@@ -100,9 +100,10 @@ public class UseExample {
 
         // Randomly generate measurements (useful for test cases) out of load flow results
         RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
-                Optional.of(1), Optional.of(5.0),
-                Optional.of(false), Optional.of(true),
-                Optional.empty(), Optional.empty());
+                Optional.of(11), Optional.of(4.),
+                Optional.of(false), Optional.of(false),
+                Optional.empty(), Optional.empty(),
+                Optional.of(true));
 
 
         long endTime   = System.nanoTime();
@@ -137,12 +138,11 @@ public class UseExample {
         // Run the state estimation and print the results
         StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
                 knowledge, options, new StateEstimatorConfig(true), new LocalComputationManager());
-        results.printAllResultsSi(network);
-
-        results.printIndicators();
+        //results.printAllResultsSi(network);
+        //results.printIndicators();
 
         // Print measurement estimates along with residuals for all measures
-        results.printAllMeasurementEstimatesAndResidualsSi(knowledge);
+        //results.printAllMeasurementEstimatesAndResidualsSi(knowledge);
         //results.exportAllMeasurementEstimatesAndResidualsSi(knowledge);
 
         // In our testing cases, as we know the true values, we can build a StateEstimatorEvaluator
@@ -159,12 +159,12 @@ public class UseExample {
         System.out.printf("%nMedian active power flow relative error : %f %% %n", activePowerFlowErrorStats.get(2));
         System.out.printf("%nMedian reactive power flow relative error : %f %% %n", reactivePowerFlowErrorStats.get(2));
         //System.out.printf("%nPerformance index : %f %n", evaluator.computePerformanceIndex()); // Only if noise added to measures
+        System.out.printf("%n95th percentile voltage relative error : %f %% %n", voltageErrorStats.get(5));
+        System.out.printf("%n95th percentile angle absolute error : %f degrees %n", angleErrorStats.get(5));
         System.out.printf("%n95th percentile active power flow : %f %% %n", activePowerFlowErrorStats.get(5));
         System.out.printf("%n95th percentile reactive power flow : %f %% %n", reactivePowerFlowErrorStats.get(5));
-        System.out.printf("%n5th percentile voltage relative error : %f %% %n", voltageErrorStats.get(4));
-        System.out.printf("%n95th percentile voltage relative error : %f %% %n", voltageErrorStats.get(5));
-        System.out.printf("%n5th percentile angle absolute error : %f degrees %n", angleErrorStats.get(4));
-        System.out.printf("%n95th percentile angle absolute error : %f degrees %n", angleErrorStats.get(5));
         System.out.printf("%nObjective function value : %f %n", results.getObjectiveFunctionValue());
+        System.out.printf("%nMax active power flow error : %f %% %n", activePowerFlowErrorStats.get(3));
+        System.out.printf("%nMax reactive power flow error : %f %% %n", reactivePowerFlowErrorStats.get(3));
     }
 }

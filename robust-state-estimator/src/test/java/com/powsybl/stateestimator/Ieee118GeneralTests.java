@@ -54,8 +54,9 @@ public class Ieee118GeneralTests {
                 "MeanQfError(%)", "StdQfError(%)", "MedianQfError(%)", "MaxQfError(%)",
                 "5percentileQfError(%)", "95percentileQfError(%)",
                 "NbVMeasures","NbPfMeasures","NbQfMeasures","NbPMeasures","NbQMeasures",
-                "ObjectiveFunctionValue",
-                "PerformanceIndex");
+                "ObjectiveFunctionValue"
+                ,"PerformanceIndex"
+                );
 
         List<List<String>> data = new ArrayList<>();
 
@@ -73,7 +74,8 @@ public class Ieee118GeneralTests {
         assertTrue(loadFlowResult.isFullyConverged());
 
         // All MeasuresToBuses ratios to be tested
-        List<Double> ratiosTested = Arrays.asList(1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0);
+        //List<Double> ratiosTested = Arrays.asList(1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0);
+        List<Double> ratiosTested = Arrays.asList(3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0);
 
         for (Double ratioTested : ratiosTested) {
 
@@ -95,11 +97,12 @@ public class Ieee118GeneralTests {
                 RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
                         Optional.of(seed), Optional.of(ratioTested),
                         Optional.of(false), Optional.of(true),
-                        Optional.empty(), Optional.empty());
+                        Optional.of(0.5), Optional.empty(),
+                        Optional.of(true));
 
                 // Define the solving options for the state estimation
                 StateEstimatorOptions options = new StateEstimatorOptions()
-                        .setSolvingMode(2).setMaxTimeSolving(30).setMaxNbTopologyChanges(5);
+                        .setSolvingMode(0).setMaxTimeSolving(30).setMaxNbTopologyChanges(5);
                 // Run the state estimation and save the results
                 StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
                         knowledge, options, new StateEstimatorConfig(true), new LocalComputationManager());
@@ -128,13 +131,14 @@ public class Ieee118GeneralTests {
                         String.valueOf(knowledge.getReactivePowerFlowMeasures().size()),
                         String.valueOf(knowledge.getActivePowerInjectedMeasures().size()),
                         String.valueOf(knowledge.getReactivePowerInjectedMeasures().size()),
-                        String.valueOf(results.getObjectiveFunctionValue()),
-                        String.valueOf(evaluator.computePerformanceIndex())));
+                        String.valueOf(results.getObjectiveFunctionValue())
+                        ,String.valueOf(evaluator.computePerformanceIndex())
+                        ));
             }
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("WithGrossError_WithNoise1.0_IEEE118.csv");
+        try (FileWriter fileWriter = new FileWriter("EnsureObservability_WithNoise0.5_IEEE118.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 
