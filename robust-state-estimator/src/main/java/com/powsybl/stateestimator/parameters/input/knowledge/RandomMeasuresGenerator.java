@@ -274,13 +274,10 @@ public class RandomMeasuresGenerator {
 
                         // Update listOfBusesV, listOfBranchesPf and listOfBranchesQf
                         listOfBusesV.removeIf(bus -> bus.getId().equals(busID));
-                        if (isBusTerminal1) {
-                            listOfBranchesPfSide1.removeIf(b -> b.getId().equals(branchID));
-                            listOfBranchesQfSide1.removeIf(b -> b.getId().equals(branchID));
-                        } else {
-                            listOfBranchesPfSide2.removeIf(b -> b.getId().equals(branchID));
-                            listOfBranchesQfSide2.removeIf(b -> b.getId().equals(branchID));
-                        }
+                        listOfBranchesPfSide1.removeIf(b -> b.getId().equals(branchID));
+                        listOfBranchesPfSide2.removeIf(b -> b.getId().equals(branchID));
+                        listOfBranchesQfSide1.removeIf(b -> b.getId().equals(branchID));
+                        listOfBranchesQfSide2.removeIf(b -> b.getId().equals(branchID));
                     }
                 }
             }

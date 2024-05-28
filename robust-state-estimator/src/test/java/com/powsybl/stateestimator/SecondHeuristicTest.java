@@ -93,7 +93,7 @@ public class SecondHeuristicTest {
                 "5percentileQfError(%)", "95percentileQfError(%)",
                 "NbVMeasures","NbPfMeasures","NbQfMeasures","NbPMeasures","NbQMeasures",
                 "ObjectiveFunctionValue"
-                ,"PerformanceIndex"
+                //,"PerformanceIndex"
         );
         List<List<String>> data = new ArrayList<>();
 
@@ -150,8 +150,6 @@ public class SecondHeuristicTest {
                     Optional.empty(), Optional.empty(),
                     Optional.of(true));
 
-            System.out.printf("%nNumber of measurements : %d%n", knowledgeV1.getMeasuresCount());
-
             // Run heuristic SE on knowledgeV1
             Pair<StateEstimatorResults, StateEstimatorKnowledge> secondHeuristicResults = StateEstimatorSecondHeuristic.secondHeuristic(knowledgeV1, network);
 
@@ -202,12 +200,12 @@ public class SecondHeuristicTest {
                     String.valueOf(finalKnowledge.getActivePowerInjectedMeasures().size()),
                     String.valueOf(finalKnowledge.getReactivePowerInjectedMeasures().size()),
                     String.valueOf(finalResults.getObjectiveFunctionValue())
-                    ,String.valueOf(evaluator.computePerformanceIndex())
+                    //,String.valueOf(evaluator.computePerformanceIndex())
             ));
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("EnsureObservability_WithNoise_L45-46-OPENED_ZN5_SecondHeuristic_IEEE118.csv");
+        try (FileWriter fileWriter = new FileWriter("NewEO_MaxPuisMean_NoExtendedSelection_NoNoise_ZN5.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 

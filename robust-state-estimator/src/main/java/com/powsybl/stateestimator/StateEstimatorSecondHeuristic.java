@@ -10,14 +10,11 @@ import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.iidm.network.*;
 import com.powsybl.stateestimator.parameters.input.knowledge.*;
 import com.powsybl.stateestimator.parameters.input.options.StateEstimatorOptions;
-import com.powsybl.stateestimator.parameters.output.estimates.BranchStatusEstimate;
 import com.powsybl.stateestimator.parameters.output.estimates.BusStateEstimate;
-import gnu.trove.set.hash.THashSet;
 import org.jgrapht.alg.util.Pair;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author Pierre ARVY <pierre.arvy@artelys.com>
@@ -31,14 +28,14 @@ public class StateEstimatorSecondHeuristic {
 
         // Step 1 : first SE run, no topology changes, all branches are fixed
 
-        // TODO : change this ==> Use initial presumed status, not "closed" status by default
-        // Fix all branches statuses (presumed to be closed)
-        // + Save initial status
-        Map<String, String> initialStatus = new HashMap<>();
-        for (Branch branch : network.getBranches()) {
-            knowledgeV1.setSuspectBranch(branch.getId(), false, "PRESUMED CLOSED");
-            initialStatus.put(branch.getId(), "CLOSED");
+        // TODO : Use initial presumed status, not "closed" status by default ==> OK
+        // Fix each branch to its initial presumed status + not suspected
+        for (var entry : knowledgeV1.getSuspectBranches().entrySet()) {
+            String branchID = entry.getValue().get(0);
+            String initialPresumedStatus = entry.getValue().get(2).equals("1") ? "PRESUMED CLOSED" : "PRESUMED OPENED";
+            knowledgeV1.setSuspectBranch(branchID, false, initialPresumedStatus);
         }
+
         // Define the solving options for the state estimation
         StateEstimatorOptions options = new StateEstimatorOptions()
                 .setSolvingMode(0).setMaxTimeSolving(30).setMaxNbTopologyChanges(0);
@@ -61,10 +58,10 @@ public class StateEstimatorSecondHeuristic {
         StateEstimatorKnowledge knowledgeV2 = knowledgeV1;
         StateEstimatorResults resultsV2 = resultsV1;
         Set<String> branchesNotToBeTestedAgain = new HashSet<>();
+        Map<String, Pair<Double, Double>> newStartingPoint = new HashMap<>();
 
         // TODO : use of new starting point at first iteration ??
         // Save last estimates as new starting point
-        Map<String, Pair<Double, Double>> newStartingPoint = new HashMap<>();
         for (BusStateEstimate busStateEstimate : resultsV1.getStateVectorEstimate()) {
             newStartingPoint.put(busStateEstimate.getBusId(),
                     Pair.of(busStateEstimate.getV(), busStateEstimate.getTheta()));
@@ -118,6 +115,7 @@ public class StateEstimatorSecondHeuristic {
                     // Check if the objective function value has decreased by an amount equal to the square of the LNR
                     List<Map.Entry<Integer, Double>> sortedNormalizedResidualsTmp = computeAndSortNormalizedResiduals(knowledgeTmp, resultsTmp);
                     double objectiveFunctionValueTmp = sortedNormalizedResidualsTmp.stream().mapToDouble(e -> Math.pow(e.getValue(), 2)).sum();
+                    // TODO : add another check ?
                     if (objectiveFunctionValueTmp < objectiveFunctionValue - Math.pow(LNR, 2)) {
                         // Measurement removal was a success : save the change and move on
                         keepInvestigating = false;
@@ -128,7 +126,6 @@ public class StateEstimatorSecondHeuristic {
                         nbMeasureLNR = sortedNormalizedResiduals.get(0).getKey();
                         LNR = sortedNormalizedResiduals.get(0).getValue();
                         objectiveFunctionValue = objectiveFunctionValueTmp;
-                        // TODO : use of new starting point
                         // Save last estimates as new starting point
                         newStartingPoint = new HashMap<>();
                         for (BusStateEstimate busStateEstimate : resultsV2.getStateVectorEstimate()) {
@@ -137,6 +134,9 @@ public class StateEstimatorSecondHeuristic {
                         }
                         knowledgeV2.setStateVectorStartingPoint(newStartingPoint, network);
                         System.out.println("Current LNR due to gross measurement error : measurement was removed.");
+                        // TODO : improve this
+                        // Change value (false) of decay index so that topology investigation will not be launched after
+                        decayIndexLNR = 1000.;
                     }
                     else {
                         if (checkMeasurementError) {
@@ -157,8 +157,8 @@ public class StateEstimatorSecondHeuristic {
                     if (measureLNR.get(0).equals("Pf") | measureLNR.get(0).equals("Qf")) {
                         String branchID = measureLNR.get(1);
                         suspectBranches.add(branchID);
-                        Bus end1 = network.getBranch(branchID).getTerminal1().getBusView().getBus();
-                        Bus end2 = network.getBranch(branchID).getTerminal2().getBusView().getBus();
+                        Bus end1 = network.getBranch(branchID).getTerminal1().getBusView().getConnectableBus();
+                        Bus end2 = network.getBranch(branchID).getTerminal2().getBusView().getConnectableBus();
                         suspectBranches.addAll(end1.getLineStream().map(Identifiable::getId).toList());
                         suspectBranches.addAll(end1.getTwoWindingsTransformerStream().map(Identifiable::getId).toList());
                         suspectBranches.addAll(end2.getLineStream().map(Identifiable::getId).toList());
@@ -179,20 +179,16 @@ public class StateEstimatorSecondHeuristic {
                         }
                         // TODO : add code lines to take into account other type of lines !!!
                     }
+
                     // Remove branches already tested
                     suspectBranches.removeAll(branchesNotToBeTestedAgain);
-                    // Build the list of all buses linked to suspect branches
-                    Set<String> busesRelatedToSuspectBranches = new HashSet<>();
-                    for (String suspectBranch : suspectBranches) {
-                        busesRelatedToSuspectBranches.add(network.getBranch(suspectBranch).getTerminal1().getBusView().getConnectableBus().getId());
-                        busesRelatedToSuspectBranches.add(network.getBranch(suspectBranch).getTerminal2().getBusView().getConnectableBus().getId());
-                    }
+
                     // Initialize a boolean indicating if one of the topology changes has worked
                     boolean isTopologyInspectionSuccessful = false;
                     // Make a priority queue, to first pick branches that are the most suspicious (order based on decreasing maxResidual, then decreasing meanResidual)
                     List<String> orderedSuspectBranches = orderByDegreeOfDistrust(suspectBranches, sortedNormalizedResiduals, knowledgeV2, network);
 
-                    // TODO : try only 5 (3 ?) first branches, then change mode of inspection (mode measurement error) ???
+                    // TODO : try only 5 first branches, then change mode of inspection (mode measurement error) ???
                     orderedSuspectBranches = orderedSuspectBranches.stream().limit(5).toList();
 
                     // Pick a suspect branch in the given order
@@ -494,6 +490,10 @@ public class StateEstimatorSecondHeuristic {
                 }
             }
         }
+
+        // TODO : remove
+        System.out.println("List of residuals for distrust degree computation");
+        System.out.println(listOfResiduals);
 
         // Compute two degrees of distrust for each branch : <maximum residual>, <mean of residuals>
         Map<String, Pair<Double, Double>> degreesOfDistrust = new HashMap<>();
