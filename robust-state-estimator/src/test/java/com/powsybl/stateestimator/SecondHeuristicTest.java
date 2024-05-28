@@ -150,6 +150,8 @@ public class SecondHeuristicTest {
                     Optional.empty(), Optional.empty(),
                     Optional.of(true));
 
+            System.out.printf("%nNumber of measurements : %d%n", knowledgeV1.getMeasuresCount());
+
             // Run heuristic SE on knowledgeV1
             Pair<StateEstimatorResults, StateEstimatorKnowledge> secondHeuristicResults = StateEstimatorSecondHeuristic.secondHeuristic(knowledgeV1, network);
 

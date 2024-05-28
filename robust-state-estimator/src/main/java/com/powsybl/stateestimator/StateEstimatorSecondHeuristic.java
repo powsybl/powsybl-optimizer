@@ -62,7 +62,7 @@ public class StateEstimatorSecondHeuristic {
         StateEstimatorResults resultsV2 = resultsV1;
         Set<String> branchesNotToBeTestedAgain = new HashSet<>();
 
-        // TODO : use of new starting point
+        // TODO : use of new starting point at first iteration ??
         // Save last estimates as new starting point
         Map<String, Pair<Double, Double>> newStartingPoint = new HashMap<>();
         for (BusStateEstimate busStateEstimate : resultsV1.getStateVectorEstimate()) {
@@ -84,7 +84,7 @@ public class StateEstimatorSecondHeuristic {
             System.out.printf("%n%n  ITERATION N°%d (max. number of iterations : %d) :%n", nbIter+1, nbIterMax);
             System.out.println();
 
-            // Get the measure under investigation
+            // Display the measure under investigation
             ArrayList<String> measureLNR = knowledgeV2.getMeasure(nbMeasureLNR);
             System.out.println("Measurement under investigation (LNR) : ");
             System.out.printf("%s at %s - Normalized residual = %f %n", measureLNR.get(0),  measureLNR.get(1), LNR);
@@ -121,7 +121,7 @@ public class StateEstimatorSecondHeuristic {
                     if (objectiveFunctionValueTmp < objectiveFunctionValue - Math.pow(LNR, 2)) {
                         // Measurement removal was a success : save the change and move on
                         keepInvestigating = false;
-                        checkTopologyError = false;
+                        checkMeasurementError = false;
                         knowledgeV2 = knowledgeTmp;
                         resultsV2 = resultsTmp;
                         sortedNormalizedResiduals = sortedNormalizedResidualsTmp;
@@ -247,7 +247,7 @@ public class StateEstimatorSecondHeuristic {
                         if (check1 && check2) {
                             // Topology change was a success : save it and move on
                             keepInvestigating = false;
-                            checkMeasurementError = false;
+                            checkTopologyError = false;
                             isTopologyInspectionSuccessful = true;
                             knowledgeV2 = knowledgeTmp;
                             resultsV2 = resultsTmp;
@@ -348,7 +348,7 @@ public class StateEstimatorSecondHeuristic {
 
     static double computeResidualsDecayIndex(Integer measurementNumber, List<Map.Entry<Integer, Double>> normalizedResidualsList, StateEstimatorKnowledge knowledge, Network network) {
 
-        // TODO : adjust decay index computation so that it works with Z/N=4
+        // TODO : adjust decay index computation so that it works with any Z/N ratio (especially, Z/N=4) !
         // Goal : Determine if LNR is most likely due to a gross measurement error or a topology error
 
         ArrayList<String> measureLNR =  knowledge.getMeasure(measurementNumber);

@@ -123,7 +123,7 @@ public class RandomMeasuresGenerator {
         }
 
         // If ensureObservability = true, do:
-        // For each bus b1, build the list L(b1) of branches linked to it.
+        // For each bus b1, build the list L(b1) of branches linked to it + "injection" branch
         // For each bus b1:
         //      - pick branch b1-b2 at random from L(b1)
         //      - add measures V(b1), Pf(b1->b2) and Qf(b1->b2)
@@ -134,6 +134,9 @@ public class RandomMeasuresGenerator {
             Map<String, List<String>> adjacencyList = new HashMap<>();
             for (Bus bus1 : network.getBusView().getBuses()) {
                 Set<String> linkedBranches = new HashSet<>();
+                if (!knowledge.getZeroInjectionBuses().containsValue(bus1.getId())) {
+                    linkedBranches.add("MeasuresP/Q");
+                }
                 for (Line l : bus1.getLines()) {
                     linkedBranches.add(l.getId());
                 }
@@ -143,90 +146,141 @@ public class RandomMeasuresGenerator {
                 // TODO : add other types of branches (three windings transformers, dangling lines, etc)
                 adjacencyList.put(bus1.getId(), List.copyOf(linkedBranches));
             }
-            // For each bus b1, pick a branch b1-b2 at random and add measures
+            // Shuffle the list of buses in adjacency list (based on seed provided)
+            List<String> allBusesShuffled = new ArrayList<>(adjacencyList.keySet().stream().toList());
+            Collections.shuffle(allBusesShuffled, random);
+            // For each bus b1 (following previous random order), pick a branch b1-b2 at random and add measures
             int measureNumber = 1;
-            for (String busID : adjacencyList.keySet()) {
+            for (String busID : allBusesShuffled) {
+
+                // Add measure V(b1)
+                Map<String, String> measureV = new HashMap<>();
+                measureV.put("Type", "V");
+                measureV.put("BusID", busID);
+                double measureVValue = network.getBusView().getBus(busID).getV();
+                double measureVVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("V")
+                                * Math.max(Math.abs(measureVValue), MIN_VOLTAGE_KV)
+                        , 2);
+                measureV.put("Variance", String.valueOf(measureVVariance));
+                if (withNoise) {
+                    measureVValue += -noiseCoef * Math.sqrt(measureVVariance) + 2 * noiseCoef * Math.sqrt(measureVVariance) * noise.nextDouble();
+                }
+                measureV.put("Value", String.valueOf(measureVValue));
+                knowledge.addMeasure(measureNumber++, measureV, network);
+
+                // Pick a branch at random
                 int nbOfBranches = adjacencyList.get(busID).size();
                 if (nbOfBranches > 0) {
                     int randomIndex = random.nextInt(nbOfBranches);
                     String branchID = adjacencyList.get(busID).get(randomIndex);
-                    Branch branch = network.getBranch(branchID);
-                    boolean isBusTerminal1 = branch.getTerminal1().getBusView().getConnectableBus().getId().equals(busID);
-                    String otherBusID = isBusTerminal1 ?
-                            branch.getTerminal2().getBusView().getConnectableBus().getId() :
-                            branch.getTerminal1().getBusView().getConnectableBus().getId();
 
-                    // Add measure V(b1)
-                    Map<String, String> measureV = new HashMap<>();
-                    measureV.put("Type", "V");
-                    measureV.put("BusID", busID);
-                    double measureVValue = network.getBusView().getBus(busID).getV();
-                    double measureVVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("V")
-                                    * Math.max(Math.abs(measureVValue), MIN_VOLTAGE_KV)
-                            , 2);
-                    measureV.put("Variance", String.valueOf(measureVVariance));
-                    if (withNoise) {
-                        measureVValue += -noiseCoef * Math.sqrt(measureVVariance) + 2 * noiseCoef * Math.sqrt(measureVVariance) * noise.nextDouble();
-                    }
-                    measureV.put("Value", String.valueOf(measureVValue));
-                    knowledge.addMeasure(measureNumber++, measureV, network);
+                    // Special case "MeasuresP/Q" : add power net injection measures, not power flow measures
+                    if (branchID.equals("MeasuresP/Q")) {
 
-                    // Add measure Pf(b1->b2)
-                    Map<String, String> measurePf = new HashMap<>();
-                    measurePf.put("Type", "Pf");
-                    measurePf.put("BranchID", branchID);
-                    measurePf.put("FirstBusID", busID);
-                    measurePf.put("SecondBusID", otherBusID);
-                    double measurePfValue = isBusTerminal1 ? branch.getTerminal1().getP() : branch.getTerminal2().getP();
-                    if (Double.isNaN(measurePfValue)) {
-                        measurePfValue = 0;
-                    }
-                    double measurePfVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("Pf")
-                                    * Math.max(Math.abs(measurePfValue), MIN_ACTIVE_POWER_MW)
-                            , 2);
-                    measurePf.put("Variance", String.valueOf(measurePfVariance));
-                    if (withNoise) {
-                        measurePfValue += -noiseCoef * Math.sqrt(measurePfVariance) + 2 * noiseCoef * Math.sqrt(measurePfVariance) * noise.nextDouble();
-                    }
-                    measurePf.put("Value", String.valueOf(measurePfValue));
-                    knowledge.addMeasure(measureNumber++, measurePf, network);
+                        // Add measure P(b1) (do not forget "-" sign)
+                        Map<String, String> measureP = new HashMap<>();
+                        measureP.put("Type", "P");
+                        measureP.put("BusID", busID);
+                        double measurePValue = -1. * network.getBusView().getBus(busID).getP();
+                        double measurePVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("P")
+                                        * Math.max(Math.abs(measurePValue), MIN_ACTIVE_POWER_MW)
+                                , 2);
+                        measureP.put("Variance", String.valueOf(measurePVariance));
+                        if (withNoise) {
+                            measurePValue += -noiseCoef * Math.sqrt(measurePVariance) + 2 * noiseCoef * Math.sqrt(measurePVariance) * noise.nextDouble();
+                        }
+                        measureP.put("Value", String.valueOf(measurePValue));
+                        knowledge.addMeasure(measureNumber++, measureP, network);
 
-                    // Add measure Qf(b1->b2)
-                    Map<String, String> measureQf = new HashMap<>();
-                    measureQf.put("Type", "Qf");
-                    measureQf.put("BranchID", branchID);
-                    measureQf.put("FirstBusID", busID);
-                    measureQf.put("SecondBusID", otherBusID);
-                    double measureQfValue = isBusTerminal1 ? branch.getTerminal1().getQ() : branch.getTerminal2().getQ();
-                    if (Double.isNaN(measureQfValue)) {
-                        measureQfValue = 0;
-                    }
-                    double measureQfVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("Qf")
-                                    * Math.max(Math.abs(measureQfValue), MIN_REACTIVE_POWER_MVAR)
-                            , 2);
-                    measureQf.put("Variance", String.valueOf(measureQfVariance));
-                    if (withNoise) {
-                        measureQfValue += -noiseCoef * Math.sqrt(measureQfVariance) + 2 * noiseCoef * Math.sqrt(measureQfVariance) * noise.nextDouble();
-                    }
-                    measureQf.put("Value", String.valueOf(measureQfValue));
-                    knowledge.addMeasure(measureNumber++, measureQf, network);
+                        // Add measure Q(b1) (do not forget "-" sign)
+                        Map<String, String> measureQ = new HashMap<>();
+                        measureQ.put("Type", "Q");
+                        measureQ.put("BusID", busID);
+                        double measureQValue = -1. * network.getBusView().getBus(busID).getQ();
+                        double measureQVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("Q")
+                                        * Math.max(Math.abs(measureQValue), MIN_REACTIVE_POWER_MVAR)
+                                , 2);
+                        measureQ.put("Variance", String.valueOf(measureQVariance));
+                        if (withNoise) {
+                            measureQValue += -noiseCoef * Math.sqrt(measureQVariance) + 2 * noiseCoef * Math.sqrt(measureQVariance) * noise.nextDouble();
+                        }
+                        measureQ.put("Value", String.valueOf(measureQValue));
+                        knowledge.addMeasure(measureNumber++, measureQ, network);
 
-                    // Remove the branch b1-b2 from the lists of branches of b1 and b2
-                    List<String> linkedBranchesToBus = new ArrayList<>(List.copyOf(adjacencyList.get(busID)));
-                    List<String> linkedBranchesToOtherBus = new ArrayList<>(List.copyOf(adjacencyList.get(otherBusID)));
-                    linkedBranchesToBus.remove(branchID);
-                    linkedBranchesToOtherBus.remove(branchID);
-                    adjacencyList.put(busID, linkedBranchesToBus);
-                    adjacencyList.put(otherBusID, linkedBranchesToOtherBus);
+                        // Remove the value "MeasuresP/Q" from the adjacency list of b1
+                        List<String> linkedBranchesToBus = new ArrayList<>(List.copyOf(adjacencyList.get(busID)));
+                        linkedBranchesToBus.remove(branchID);
+                        adjacencyList.put(busID, linkedBranchesToBus);
 
-                    // Update listOfBusesV, listOfBusesPf and listOfBusesQf
-                    listOfBusesV.removeIf(bus -> bus.getId().equals(busID));
-                    if (isBusTerminal1) {
-                        listOfBranchesPfSide1.removeIf(b -> b.getId().equals(branchID));
-                        listOfBranchesQfSide1.removeIf(b -> b.getId().equals(branchID));
-                    } else {
-                        listOfBranchesPfSide2.removeIf(b -> b.getId().equals(branchID));
-                        listOfBranchesQfSide2.removeIf(b -> b.getId().equals(branchID));
+                        // Update listOfBusesV, listOfBusesP and listOfBusesQ
+                        listOfBusesV.removeIf(bus -> bus.getId().equals(busID));
+                        listOfBusesP.removeIf(bus -> bus.getId().equals(busID));
+                        listOfBusesQ.removeIf(bus -> bus.getId().equals(busID));
+                    }
+                    else { // Add power flow measures on branch picked
+                        Branch branch = network.getBranch(branchID);
+                        boolean isBusTerminal1 = branch.getTerminal1().getBusView().getConnectableBus().getId().equals(busID);
+                        String otherBusID = isBusTerminal1 ?
+                                branch.getTerminal2().getBusView().getConnectableBus().getId() :
+                                branch.getTerminal1().getBusView().getConnectableBus().getId();
+
+                        // Add measure Pf(b1->b2)
+                        Map<String, String> measurePf = new HashMap<>();
+                        measurePf.put("Type", "Pf");
+                        measurePf.put("BranchID", branchID);
+                        measurePf.put("FirstBusID", busID);
+                        measurePf.put("SecondBusID", otherBusID);
+                        double measurePfValue = isBusTerminal1 ? branch.getTerminal1().getP() : branch.getTerminal2().getP();
+                        if (Double.isNaN(measurePfValue)) {
+                            measurePfValue = 0;
+                        }
+                        double measurePfVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("Pf")
+                                        * Math.max(Math.abs(measurePfValue), MIN_ACTIVE_POWER_MW)
+                                , 2);
+                        measurePf.put("Variance", String.valueOf(measurePfVariance));
+                        if (withNoise) {
+                            measurePfValue += -noiseCoef * Math.sqrt(measurePfVariance) + 2 * noiseCoef * Math.sqrt(measurePfVariance) * noise.nextDouble();
+                        }
+                        measurePf.put("Value", String.valueOf(measurePfValue));
+                        knowledge.addMeasure(measureNumber++, measurePf, network);
+
+                        // Add measure Qf(b1->b2)
+                        Map<String, String> measureQf = new HashMap<>();
+                        measureQf.put("Type", "Qf");
+                        measureQf.put("BranchID", branchID);
+                        measureQf.put("FirstBusID", busID);
+                        measureQf.put("SecondBusID", otherBusID);
+                        double measureQfValue = isBusTerminal1 ? branch.getTerminal1().getQ() : branch.getTerminal2().getQ();
+                        if (Double.isNaN(measureQfValue)) {
+                            measureQfValue = 0;
+                        }
+                        double measureQfVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("Qf")
+                                        * Math.max(Math.abs(measureQfValue), MIN_REACTIVE_POWER_MVAR)
+                                , 2);
+                        measureQf.put("Variance", String.valueOf(measureQfVariance));
+                        if (withNoise) {
+                            measureQfValue += -noiseCoef * Math.sqrt(measureQfVariance) + 2 * noiseCoef * Math.sqrt(measureQfVariance) * noise.nextDouble();
+                        }
+                        measureQf.put("Value", String.valueOf(measureQfValue));
+                        knowledge.addMeasure(measureNumber++, measureQf, network);
+
+                        // Remove the branch b1-b2 from the lists of branches of b1 and b2
+                        List<String> linkedBranchesToBus = new ArrayList<>(List.copyOf(adjacencyList.get(busID)));
+                        List<String> linkedBranchesToOtherBus = new ArrayList<>(List.copyOf(adjacencyList.get(otherBusID)));
+                        linkedBranchesToBus.remove(branchID);
+                        linkedBranchesToOtherBus.remove(branchID);
+                        adjacencyList.put(busID, linkedBranchesToBus);
+                        adjacencyList.put(otherBusID, linkedBranchesToOtherBus);
+
+                        // Update listOfBusesV, listOfBranchesPf and listOfBranchesQf
+                        listOfBusesV.removeIf(bus -> bus.getId().equals(busID));
+                        if (isBusTerminal1) {
+                            listOfBranchesPfSide1.removeIf(b -> b.getId().equals(branchID));
+                            listOfBranchesQfSide1.removeIf(b -> b.getId().equals(branchID));
+                        } else {
+                            listOfBranchesPfSide2.removeIf(b -> b.getId().equals(branchID));
+                            listOfBranchesQfSide2.removeIf(b -> b.getId().equals(branchID));
+                        }
                     }
                 }
             }
@@ -239,7 +293,7 @@ public class RandomMeasuresGenerator {
             if (ratioZtoN <= 0) {
                 throw new IllegalArgumentException("Invalid value for the parameter ratioMeasuresToBuses : should be a positive float");
             }
-            Double maxRatioMeasuresToBuses = (4.0 * network.getBranchCount() + 3.0 * network.getBusView().getBusStream().count())
+            double maxRatioMeasuresToBuses = (4.0 * network.getBranchCount() + 3.0 * network.getBusView().getBusStream().count())
                     / network.getBusView().getBusStream().count();
             if (ratioZtoN > maxRatioMeasuresToBuses) {
                 throw new IllegalArgumentException(String.format("Provided value for ratioMeasuresToBuses is too large. Should be smaller than %f", maxRatioMeasuresToBuses));
