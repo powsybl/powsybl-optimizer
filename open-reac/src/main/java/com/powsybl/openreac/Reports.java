@@ -6,14 +6,15 @@
  */
 package com.powsybl.openreac;
 
-import com.powsybl.commons.report.ReportConstants;
 import com.powsybl.commons.report.ReportNode;
-import com.powsybl.commons.report.ReportNodeAdder;
 import com.powsybl.commons.report.TypedValue;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
+import com.powsybl.openreac.parameters.output.network.ShuntCompensatorNetworkOutput;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.List;
-import java.util.Map;
+import java.util.Locale;
 
 /**
  * @author Joris Mancini {@literal <joris.mancini_externe at rte-france.com>}
@@ -21,6 +22,7 @@ import java.util.Map;
 public final class Reports {
 
     private static final String NETWORK_ID = "networkId";
+    private static final DecimalFormat REACTIVE_VALUE_FORMAT = new DecimalFormat("0.0", DecimalFormatSymbols.getInstance(Locale.ROOT));
 
     private Reports() {
         // Should not be instantiated
@@ -65,30 +67,27 @@ public final class Reports {
             .add();
     }
 
-    private static void insertReportNode(ReportNode parent, ReportNode child) {
-        ReportNodeAdder adder = parent.newReportNode().withMessageTemplate(child.getMessageKey(), child.getMessageTemplate());
-        for (Map.Entry<String, TypedValue> valueEntry : child.getValues().entrySet()) {
-            adder.withUntypedValue(valueEntry.getKey(), valueEntry.getValue().toString());
-        }
-        child.getValue(ReportConstants.REPORT_SEVERITY_KEY).ifPresent(adder::withSeverity);
-        ReportNode insertedChild = adder.add();
-        if (child.getChildren() != null) {
-            child.getChildren().forEach(grandChild -> insertReportNode(insertedChild, grandChild));
-        }
-    }
-
-    public static void createShuntModificationsReporter(ReportNode reportNode, String networkId, List<ReportNode> reports) {
-        if (!reports.isEmpty()) {
+    public static void createShuntModificationsReporter(ReportNode reportNode, String networkId, List<ShuntCompensatorNetworkOutput.ShuntWithDeltaDiscreteOptimalOverThrehold> shuntsWithDeltaDiscreteOptimalOverThreholds) {
+        if (!shuntsWithDeltaDiscreteOptimalOverThreholds.isEmpty()) {
             ReportNode reportShunts = reportNode.newReportNode()
                 .withMessageTemplate("shuntCompensatorDeltaOverThreshold", "Shunt compensator reactive delta over threshold")
                 .withUntypedValue(NETWORK_ID, networkId)
                 .add();
             reportShunts.newReportNode()
                 .withMessageTemplate("shuntCompensatorDeltaOverThresholdCount", "For ${shuntsCount} shunt compensators, there is a significant difference between the updated discretized reactive power value and the theoretical optimal reactive power value.")
-                .withUntypedValue("shuntsCount", reports.size())
+                .withUntypedValue("shuntsCount", shuntsWithDeltaDiscreteOptimalOverThreholds.size())
                 .withSeverity(TypedValue.INFO_SEVERITY)
                 .add();
-            reports.forEach(report -> insertReportNode(reportShunts, report));
+
+            shuntsWithDeltaDiscreteOptimalOverThreholds.forEach(shunt ->
+                reportShunts.newReportNode()
+                    .withMessageTemplate("shuntCompensatorDeltaDiscretizedOptimizedOverThreshold", "After discretization, shunt compensator ${shuntCompensatorId} with ${maxSectionCount} available section(s) has been set to ${discretizedValue} MVar (optimal value : ${optimalValue} MVar)")
+                    .withUntypedValue("shuntCompensatorId", shunt.id())
+                    .withUntypedValue("maxSectionCount", shunt.maximumSectionCount())
+                    .withUntypedValue("discretizedValue", REACTIVE_VALUE_FORMAT.format(shunt.discretizedReactiveValue()))
+                    .withUntypedValue("optimalValue", REACTIVE_VALUE_FORMAT.format(shunt.optimalReactiveValue()))
+                    .withSeverity(TypedValue.TRACE_SEVERITY)
+                    .add());
         }
     }
 }

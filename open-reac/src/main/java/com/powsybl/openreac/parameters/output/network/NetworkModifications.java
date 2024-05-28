@@ -7,7 +7,6 @@
 package com.powsybl.openreac.parameters.output.network;
 
 import com.powsybl.ampl.executor.AmplOutputFile;
-import com.powsybl.commons.report.ReportNode;
 import com.powsybl.iidm.modification.GeneratorModification;
 import com.powsybl.iidm.modification.ShuntCompensatorModification;
 import com.powsybl.iidm.modification.StaticVarCompensatorModification;
@@ -49,8 +48,8 @@ public class NetworkModifications {
         return shuntsOutput.getModifications();
     }
 
-    public List<ReportNode> getShuntModificationsReportNodes() {
-        return shuntsOutput.getReports();
+    public List<ShuntCompensatorNetworkOutput.ShuntWithDeltaDiscreteOptimalOverThrehold> getShuntsWithDeltaDiscreteOptimalOverThrehold() {
+        return shuntsOutput.getShuntsWithDeltaDiscreteOptimalOverThreholds();
     }
 
     public List<VscConverterStationModification> getVscModifications() {
