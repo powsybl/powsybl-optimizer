@@ -50,9 +50,9 @@ public class Ieee118GeneralTests {
                 "MeanThetaError(deg)", "StdThetaError(deg)", "MedianThetaError(deg)", "MaxThetaError(deg)",
                 "5percentileThetaError(deg)", "95percentileThetaError(deg)",
                 "MeanPfError(%)", "StdPfError(%)", "MedianPfError(%)", "MaxPfError(%)",
-                "5percentilePfError(%)", "95percentilePfError(%)",
+                "5percentilePfError(%)", "95percentilePfError(%)", "MaxPfAbsoluteError(MW)",
                 "MeanQfError(%)", "StdQfError(%)", "MedianQfError(%)", "MaxQfError(%)",
-                "5percentileQfError(%)", "95percentileQfError(%)",
+                "5percentileQfError(%)", "95percentileQfError(%)", "MaxQfAbsoluteError(MVar)",
                 "NbVMeasures","NbPfMeasures","NbQfMeasures","NbPMeasures","NbQMeasures",
                 "ObjectiveFunctionValue"
                 ,"PerformanceIndex"
@@ -75,7 +75,7 @@ public class Ieee118GeneralTests {
 
         // All MeasuresToBuses ratios to be tested
         //List<Double> ratiosTested = Arrays.asList(1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0);
-        List<Double> ratiosTested = Arrays.asList(3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0);
+        List<Double> ratiosTested = Arrays.asList(3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0); // if ensureObservability = true
 
         for (Double ratioTested : ratiosTested) {
 
@@ -97,8 +97,8 @@ public class Ieee118GeneralTests {
                 RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
                         Optional.of(seed), Optional.of(ratioTested),
                         Optional.of(false), Optional.of(true),
-                        Optional.of(0.5), Optional.empty(),
-                        Optional.of(true));
+                        Optional.empty(), Optional.empty(),
+                        Optional.of(false));
 
                 // Define the solving options for the state estimation
                 StateEstimatorOptions options = new StateEstimatorOptions()
@@ -123,9 +123,11 @@ public class Ieee118GeneralTests {
                         String.valueOf(PfErrorStats.get(0)), String.valueOf(PfErrorStats.get(1)),
                         String.valueOf(PfErrorStats.get(2)), String.valueOf(PfErrorStats.get(3)),
                         String.valueOf(PfErrorStats.get(4)), String.valueOf(PfErrorStats.get(5)),
+                        String.valueOf(PfErrorStats.get(6)),
                         String.valueOf(QfErrorStats.get(0)), String.valueOf(QfErrorStats.get(1)),
                         String.valueOf(QfErrorStats.get(2)), String.valueOf(QfErrorStats.get(3)),
                         String.valueOf(QfErrorStats.get(4)), String.valueOf(QfErrorStats.get(5)),
+                        String.valueOf(QfErrorStats.get(6)),
                         String.valueOf(knowledge.getVoltageMagnitudeMeasures().size()),
                         String.valueOf(knowledge.getActivePowerFlowMeasures().size()),
                         String.valueOf(knowledge.getReactivePowerFlowMeasures().size()),
@@ -138,7 +140,7 @@ public class Ieee118GeneralTests {
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("EnsureObservability_WithNoise0.5_IEEE118.csv");
+        try (FileWriter fileWriter = new FileWriter("WithNoise1.0_IEEE118.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 

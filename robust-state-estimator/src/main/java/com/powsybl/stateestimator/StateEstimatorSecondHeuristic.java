@@ -28,7 +28,6 @@ public class StateEstimatorSecondHeuristic {
 
         // Step 1 : first SE run, no topology changes, all branches are fixed
 
-        // TODO : Use initial presumed status, not "closed" status by default ==> OK
         // Fix each branch to its initial presumed status + not suspected
         for (var entry : knowledgeV1.getSuspectBranches().entrySet()) {
             String branchID = entry.getValue().get(0);
@@ -71,6 +70,8 @@ public class StateEstimatorSecondHeuristic {
         // Define the maximum number of iterations
         int nbIter = 0;
         int nbIterMax = 5;
+
+        // STEP 2 : fix issues iteratively (measure/topology) until no large residual remains
 
         // While the Largest Normalized Residual computed exceeds a given threshold
         while (LNR > 3 && nbIter < nbIterMax) {
@@ -251,7 +252,6 @@ public class StateEstimatorSecondHeuristic {
                             nbMeasureLNR = sortedNormalizedResiduals.get(0).getKey();
                             LNR = sortedNormalizedResiduals.get(0).getValue();
                             objectiveFunctionValue = objectiveFunctionValueTmp;
-                            // TODO : use of new starting point
                             // Save last estimates as new starting point
                             newStartingPoint = new HashMap<>();
                             for (BusStateEstimate busStateEstimate : resultsV2.getStateVectorEstimate()) {
@@ -490,10 +490,6 @@ public class StateEstimatorSecondHeuristic {
                 }
             }
         }
-
-        // TODO : remove
-        System.out.println("List of residuals for distrust degree computation");
-        System.out.println(listOfResiduals);
 
         // Compute two degrees of distrust for each branch : <maximum residual>, <mean of residuals>
         Map<String, Pair<Double, Double>> degreesOfDistrust = new HashMap<>();

@@ -54,12 +54,12 @@ public class Ieee118TopologyTests {
                 "MeanThetaError(deg)", "StdThetaError(deg)", "MedianThetaError(deg)", "MaxThetaError(deg)",
                 "5percentileThetaError(deg)", "95percentileThetaError(deg)",
                 "MeanPfError(%)", "StdPfError(%)", "MedianPfError(%)", "MaxPfError(%)",
-                "5percentilePfError(%)", "95percentilePfError(%)",
+                "5percentilePfError(%)", "95percentilePfError(%)", "MaxPfAbsoluteError(MW)",
                 "MeanQfError(%)", "StdQfError(%)", "MedianQfError(%)", "MaxQfError(%)",
-                "5percentileQfError(%)", "95percentileQfError(%)",
+                "5percentileQfError(%)", "95percentileQfError(%)", "MaxQfAbsoluteError(MVar)",
                 "NbVMeasures","NbPfMeasures","NbQfMeasures","NbPMeasures","NbQMeasures",
                 "ObjectiveFunctionValue"
-                ,"PerformanceIndex"
+                //,"PerformanceIndex"
         );
         List<List<String>> data = new ArrayList<>();
 
@@ -117,13 +117,13 @@ public class Ieee118TopologyTests {
                 // Randomly generate measurements out of LF results using proper seed and Z to N ratio
                 RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
                         Optional.of(seed), Optional.of(ratioTested),
-                        Optional.empty(), Optional.of(true),
+                        Optional.empty(), Optional.of(false),
                         Optional.empty(), Optional.empty(),
                         Optional.of(true));
 
                 // Define the solving options for the state estimation
                 StateEstimatorOptions options = new StateEstimatorOptions()
-                        .setSolvingMode(0).setMaxTimeSolving(5).setMaxNbTopologyChanges(5);
+                        .setSolvingMode(2).setMaxTimeSolving(5).setMaxNbTopologyChanges(5);
 
                 // Run the state estimation and save the results
                 StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
@@ -194,22 +194,24 @@ public class Ieee118TopologyTests {
                         String.valueOf(PfErrorStats.get(0)), String.valueOf(PfErrorStats.get(1)),
                         String.valueOf(PfErrorStats.get(2)), String.valueOf(PfErrorStats.get(3)),
                         String.valueOf(PfErrorStats.get(4)), String.valueOf(PfErrorStats.get(5)),
+                        String.valueOf(PfErrorStats.get(6)),
                         String.valueOf(QfErrorStats.get(0)), String.valueOf(QfErrorStats.get(1)),
                         String.valueOf(QfErrorStats.get(2)), String.valueOf(QfErrorStats.get(3)),
                         String.valueOf(QfErrorStats.get(4)), String.valueOf(QfErrorStats.get(5)),
+                        String.valueOf(QfErrorStats.get(6)),
                         String.valueOf(knowledge.getVoltageMagnitudeMeasures().size()),
                         String.valueOf(knowledge.getActivePowerFlowMeasures().size()),
                         String.valueOf(knowledge.getReactivePowerFlowMeasures().size()),
                         String.valueOf(knowledge.getActivePowerInjectedMeasures().size()),
                         String.valueOf(knowledge.getReactivePowerInjectedMeasures().size()),
                         String.valueOf(results.getObjectiveFunctionValue())
-                        ,String.valueOf(evaluator.computePerformanceIndex())
+                        //,String.valueOf(evaluator.computePerformanceIndex())
                 ));
             }
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("EnsureObservability_SM0_AllLinesSuspect_WithNoise1.0_L45-46-OPENED_IEEE118.csv");
+        try (FileWriter fileWriter = new FileWriter("EnsureObservability_SM2_AllLinesSuspect_NoNoise_L45-46-OPENED_IEEE118.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 

@@ -88,12 +88,12 @@ public class SecondHeuristicTest {
                 "MeanThetaError(deg)", "StdThetaError(deg)", "MedianThetaError(deg)", "MaxThetaError(deg)",
                 "5percentileThetaError(deg)", "95percentileThetaError(deg)",
                 "MeanPfError(%)", "StdPfError(%)", "MedianPfError(%)", "MaxPfError(%)",
-                "5percentilePfError(%)", "95percentilePfError(%)",
+                "5percentilePfError(%)", "95percentilePfError(%)", "MaxPfAbsoluteError(MW)",
                 "MeanQfError(%)", "StdQfError(%)", "MedianQfError(%)", "MaxQfError(%)",
-                "5percentileQfError(%)", "95percentileQfError(%)",
+                "5percentileQfError(%)", "95percentileQfError(%)", "MaxQfAbsoluteError(MVar)",
                 "NbVMeasures","NbPfMeasures","NbQfMeasures","NbPMeasures","NbQMeasures",
                 "ObjectiveFunctionValue"
-                //,"PerformanceIndex"
+                ,"PerformanceIndex"
         );
         List<List<String>> data = new ArrayList<>();
 
@@ -191,21 +191,23 @@ public class SecondHeuristicTest {
                     String.valueOf(PfErrorStats.get(0)), String.valueOf(PfErrorStats.get(1)),
                     String.valueOf(PfErrorStats.get(2)), String.valueOf(PfErrorStats.get(3)),
                     String.valueOf(PfErrorStats.get(4)), String.valueOf(PfErrorStats.get(5)),
+                    String.valueOf(PfErrorStats.get(6)),
                     String.valueOf(QfErrorStats.get(0)), String.valueOf(QfErrorStats.get(1)),
                     String.valueOf(QfErrorStats.get(2)), String.valueOf(QfErrorStats.get(3)),
                     String.valueOf(QfErrorStats.get(4)), String.valueOf(QfErrorStats.get(5)),
+                    String.valueOf(QfErrorStats.get(6)),
                     String.valueOf(finalKnowledge.getVoltageMagnitudeMeasures().size()),
                     String.valueOf(finalKnowledge.getActivePowerFlowMeasures().size()),
                     String.valueOf(finalKnowledge.getReactivePowerFlowMeasures().size()),
                     String.valueOf(finalKnowledge.getActivePowerInjectedMeasures().size()),
                     String.valueOf(finalKnowledge.getReactivePowerInjectedMeasures().size()),
                     String.valueOf(finalResults.getObjectiveFunctionValue())
-                    //,String.valueOf(evaluator.computePerformanceIndex())
+                    ,String.valueOf(evaluator.computePerformanceIndex())
             ));
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("NewEO_MaxPuisMean_NoExtendedSelection_NoNoise_ZN5.csv");
+        try (FileWriter fileWriter = new FileWriter("EnsureObservability_WithNoise_L45-46-OPENED_ZN5_SecondHeuristic_IEEE118.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 
