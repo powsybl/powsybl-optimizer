@@ -69,7 +69,7 @@ public class StateEstimatorSecondHeuristic {
 
         // Define the maximum number of iterations
         int nbIter = 0;
-        int nbIterMax = 5;
+        int nbIterMax = 5; // TODO : make the number of iterations correspond to the real number of SE runs wanted at most
 
         // STEP 2 : fix issues iteratively (measure/topology) until no large residual remains
 

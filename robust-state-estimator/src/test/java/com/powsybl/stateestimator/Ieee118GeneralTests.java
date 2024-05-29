@@ -74,8 +74,8 @@ public class Ieee118GeneralTests {
         assertTrue(loadFlowResult.isFullyConverged());
 
         // All MeasuresToBuses ratios to be tested
-        //List<Double> ratiosTested = Arrays.asList(1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0);
-        List<Double> ratiosTested = Arrays.asList(3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0); // if ensureObservability = true
+        List<Double> ratiosTested = Arrays.asList(1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0);
+        //List<Double> ratiosTested = Arrays.asList(3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0); // if ensureObservability = true
 
         for (Double ratioTested : ratiosTested) {
 
@@ -140,7 +140,7 @@ public class Ieee118GeneralTests {
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("WithNoise1.0_IEEE118.csv");
+        try (FileWriter fileWriter = new FileWriter("WithNoise1.0_FullScaleZN_IEEE118.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 

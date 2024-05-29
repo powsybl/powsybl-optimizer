@@ -57,11 +57,17 @@ public class SecondHeuristicTest {
                 "Value", "300.0", "Variance", "1.269", "Type", "Pf");
         knowledge.addMeasure(1, grossMeasure, network);
 
-        RandomMeasuresGenerator.generateRandomMeasurementsWithCtrlMeasureRatio(knowledge, network,
-                0.1991137371, "P",
-                Optional.of(2), Optional.of(5.0),
+        //RandomMeasuresGenerator.generateRandomMeasurementsWithCtrlMeasureRatio(knowledge, network,
+        //        0.1991137371, "P",
+        //        Optional.of(2), Optional.of(5.0),
+        //        Optional.empty(), Optional.of(true),
+        //        Optional.empty(), Optional.empty());
+
+        RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
+                Optional.of(2), Optional.of(5.),
                 Optional.empty(), Optional.of(true),
-                Optional.empty(), Optional.empty());
+                Optional.empty(), Optional.empty(),
+                Optional.of(true));
 
         long startTime = System.nanoTime();
 
@@ -134,14 +140,14 @@ public class SecondHeuristicTest {
             StateEstimatorKnowledge knowledgeV1 = new StateEstimatorKnowledge(network, "VL69_0");
 
             // Add a gross error on measure Pf(VL27 --> VL28) : 80 MW (false) instead of 32.6 MW (true)
-            //Map<String, String> grossMeasure1 = Map.of("BranchID", "L27-28-1", "FirstBusID", "VL27_0", "SecondBusID", "VL28_0",
-            //        "Value", "80.0", "Variance", "0.1306", "Type", "Pf");
-            //knowledgeV1.addMeasure(1, grossMeasure1, network);
+            Map<String, String> grossMeasure1 = Map.of("BranchID", "L27-28-1", "FirstBusID", "VL27_0", "SecondBusID", "VL28_0",
+                    "Value", "80.0", "Variance", "0.1306", "Type", "Pf");
+            knowledgeV1.addMeasure(1, grossMeasure1, network);
 
             // Add a gross error on measure V(VL60) : 225 kV (false) instead of 137 kV (true)
-            //Map<String, String> grossMeasure2 = Map.of("BusID", "VL60_0",
-            //       "Value", "225.0", "Variance", "0.488", "Type", "V");
-            //knowledgeV1.addMeasure(2, grossMeasure2, network);
+            Map<String, String> grossMeasure2 = Map.of("BusID", "VL60_0",
+                   "Value", "225.0", "Variance", "0.488", "Type", "V");
+            knowledgeV1.addMeasure(2, grossMeasure2, network);
 
             // Randomly generate measurements out of load flow results
             RandomMeasuresGenerator.generateRandomMeasurements(knowledgeV1, network,
@@ -207,7 +213,7 @@ public class SecondHeuristicTest {
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("EnsureObservability_WithNoise_L45-46-OPENED_ZN5_SecondHeuristic_IEEE118.csv");
+        try (FileWriter fileWriter = new FileWriter("EnsureObservability_WithNoise_2GrossMeasureErrors_L45-46-OPENED_ZN5_SecondHeuristic_IEEE118.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 

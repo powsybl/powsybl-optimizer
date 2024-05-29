@@ -122,6 +122,16 @@ public class RandomMeasuresGenerator {
             }
         }
 
+        // Find the starting measurement number, such that no new measure created here will be given the number of an already existing measure
+        ArrayList<Integer> allExistingMeasNumbers = new ArrayList<>();
+        allExistingMeasNumbers.add(0);
+        allExistingMeasNumbers.addAll(knowledge.getActivePowerInjectedMeasures().keySet());
+        allExistingMeasNumbers.addAll(knowledge.getReactivePowerInjectedMeasures().keySet());
+        allExistingMeasNumbers.addAll(knowledge.getActivePowerFlowMeasures().keySet());
+        allExistingMeasNumbers.addAll(knowledge.getReactivePowerFlowMeasures().keySet());
+        allExistingMeasNumbers.addAll(knowledge.getVoltageMagnitudeMeasures().keySet());
+        int startingMeasurementNumber = Collections.max(allExistingMeasNumbers) + 1;
+
         // If ensureObservability = true, do:
         // For each bus b1, build the list L(b1) of branches linked to it + "injection" branch
         // For each bus b1:
@@ -150,10 +160,9 @@ public class RandomMeasuresGenerator {
             List<String> allBusesShuffled = new ArrayList<>(adjacencyList.keySet().stream().toList());
             Collections.shuffle(allBusesShuffled, random);
             // For each bus b1 (following previous random order), pick a branch b1-b2 at random and add measures
-            int measureNumber = 1;
             for (String busID : allBusesShuffled) {
 
-                // Add measure V(b1)
+                // Try to add measure V(b1) (might already exist)
                 Map<String, String> measureV = new HashMap<>();
                 measureV.put("Type", "V");
                 measureV.put("BusID", busID);
@@ -166,7 +175,11 @@ public class RandomMeasuresGenerator {
                     measureVValue += -noiseCoef * Math.sqrt(measureVVariance) + 2 * noiseCoef * Math.sqrt(measureVVariance) * noise.nextDouble();
                 }
                 measureV.put("Value", String.valueOf(measureVValue));
-                knowledge.addMeasure(measureNumber++, measureV, network);
+                try {
+                    knowledge.addMeasure(startingMeasurementNumber++, measureV, network);
+                } catch (IllegalArgumentException illegalArgumentException) {
+                    continue;
+                }
 
                 // Pick a branch at random
                 int nbOfBranches = adjacencyList.get(busID).size();
@@ -177,7 +190,7 @@ public class RandomMeasuresGenerator {
                     // Special case "MeasuresP/Q" : add power net injection measures, not power flow measures
                     if (branchID.equals("MeasuresP/Q")) {
 
-                        // Add measure P(b1) (do not forget "-" sign)
+                        // Try to add measure P(b1) (do not forget "-" sign)
                         Map<String, String> measureP = new HashMap<>();
                         measureP.put("Type", "P");
                         measureP.put("BusID", busID);
@@ -190,9 +203,13 @@ public class RandomMeasuresGenerator {
                             measurePValue += -noiseCoef * Math.sqrt(measurePVariance) + 2 * noiseCoef * Math.sqrt(measurePVariance) * noise.nextDouble();
                         }
                         measureP.put("Value", String.valueOf(measurePValue));
-                        knowledge.addMeasure(measureNumber++, measureP, network);
+                        try{
+                            knowledge.addMeasure(startingMeasurementNumber++, measureP, network);
+                        } catch (IllegalArgumentException illegalArgumentException) {
+                            continue;
+                        }
 
-                        // Add measure Q(b1) (do not forget "-" sign)
+                        // Try to add measure Q(b1) (do not forget "-" sign)
                         Map<String, String> measureQ = new HashMap<>();
                         measureQ.put("Type", "Q");
                         measureQ.put("BusID", busID);
@@ -205,7 +222,11 @@ public class RandomMeasuresGenerator {
                             measureQValue += -noiseCoef * Math.sqrt(measureQVariance) + 2 * noiseCoef * Math.sqrt(measureQVariance) * noise.nextDouble();
                         }
                         measureQ.put("Value", String.valueOf(measureQValue));
-                        knowledge.addMeasure(measureNumber++, measureQ, network);
+                        try{
+                            knowledge.addMeasure(startingMeasurementNumber++, measureQ, network);
+                        } catch (IllegalArgumentException illegalArgumentException) {
+                            continue;
+                        }
 
                         // Remove the value "MeasuresP/Q" from the adjacency list of b1
                         List<String> linkedBranchesToBus = new ArrayList<>(List.copyOf(adjacencyList.get(busID)));
@@ -224,7 +245,7 @@ public class RandomMeasuresGenerator {
                                 branch.getTerminal2().getBusView().getConnectableBus().getId() :
                                 branch.getTerminal1().getBusView().getConnectableBus().getId();
 
-                        // Add measure Pf(b1->b2)
+                        // Try to add measure Pf(b1->b2)
                         Map<String, String> measurePf = new HashMap<>();
                         measurePf.put("Type", "Pf");
                         measurePf.put("BranchID", branchID);
@@ -242,9 +263,13 @@ public class RandomMeasuresGenerator {
                             measurePfValue += -noiseCoef * Math.sqrt(measurePfVariance) + 2 * noiseCoef * Math.sqrt(measurePfVariance) * noise.nextDouble();
                         }
                         measurePf.put("Value", String.valueOf(measurePfValue));
-                        knowledge.addMeasure(measureNumber++, measurePf, network);
+                        try {
+                            knowledge.addMeasure(startingMeasurementNumber++, measurePf, network);
+                        } catch (IllegalArgumentException illegalArgumentException) {
+                            continue;
+                        }
 
-                        // Add measure Qf(b1->b2)
+                        // Try to add measure Qf(b1->b2)
                         Map<String, String> measureQf = new HashMap<>();
                         measureQf.put("Type", "Qf");
                         measureQf.put("BranchID", branchID);
@@ -262,7 +287,11 @@ public class RandomMeasuresGenerator {
                             measureQfValue += -noiseCoef * Math.sqrt(measureQfVariance) + 2 * noiseCoef * Math.sqrt(measureQfVariance) * noise.nextDouble();
                         }
                         measureQf.put("Value", String.valueOf(measureQfValue));
-                        knowledge.addMeasure(measureNumber++, measureQf, network);
+                        try {
+                            knowledge.addMeasure(startingMeasurementNumber++, measureQf, network);
+                        } catch (IllegalArgumentException illegalArgumentException) {
+                            continue;
+                        }
 
                         // Remove the branch b1-b2 from the lists of branches of b1 and b2
                         List<String> linkedBranchesToBus = new ArrayList<>(List.copyOf(adjacencyList.get(busID)));
@@ -323,16 +352,6 @@ public class RandomMeasuresGenerator {
         // Initialize measurement value and variance
         double measurementValue;
         double measurementVariance;
-
-        // Find the starting measurement number, such that no new measure will be given the number of an already existing measure
-        ArrayList<Integer> allExistingMeasNumbers = new ArrayList<>();
-        allExistingMeasNumbers.add(0);
-        allExistingMeasNumbers.addAll(knowledge.getActivePowerInjectedMeasures().keySet());
-        allExistingMeasNumbers.addAll(knowledge.getReactivePowerInjectedMeasures().keySet());
-        allExistingMeasNumbers.addAll(knowledge.getActivePowerFlowMeasures().keySet());
-        allExistingMeasNumbers.addAll(knowledge.getReactivePowerFlowMeasures().keySet());
-        allExistingMeasNumbers.addAll(knowledge.getVoltageMagnitudeMeasures().keySet());
-        int startingMeasurementNumber = Collections.max(allExistingMeasNumbers) + 1;
 
         // For each measurement to be generated, pick a measurement type at random
         for (int i = startingMeasurementNumber; i < nbMeasurements + startingMeasurementNumber; i++) {
