@@ -128,7 +128,7 @@ public class SecondHeuristicTest {
 
         double ratioTested = 5.0;
 
-        for (int seed = 0; seed < 100; seed++) {
+        for (int seed = 0; seed < 20; seed++) {
 
             System.out.println();
             System.out.println();

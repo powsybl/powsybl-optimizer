@@ -94,15 +94,12 @@ public class Ieee118TopologyTests {
 
             for (int seed = 0; seed < 100; seed++) {
 
-                // Create "knowledge" instance
-                StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network);
-
-                // For IEEE 118 bus, slack is "VL69_0": our state estimator must use the same slack
-                knowledge.setSlack("VL69_0", network);
+                // Create "knowledge" instance : for IEEE 118 bus, slack is "VL69_0": our state estimator must use the same slack
+                StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network, "VL69_0");
 
                 // Make all branches suspects and presumed to be closed
                 for (Branch branch: network.getBranches()) {
-                    knowledge.setSuspectBranch(branch.getId(), true, "PRESUMED CLOSED");
+                    knowledge.setSuspectBranch(branch.getId(), false, "PRESUMED CLOSED");
                 }
 
                 // Make only branches around the erroneous one suspects
@@ -211,7 +208,7 @@ public class Ieee118TopologyTests {
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("EnsureObservability_SM2_AllLinesSuspect_NoNoise_L45-46-OPENED_IEEE118.csv");
+        try (FileWriter fileWriter = new FileWriter("EnsureObservability_SM2_NoLinesSuspect_NoNoise_L45-46-OPENED_IEEE118.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 
