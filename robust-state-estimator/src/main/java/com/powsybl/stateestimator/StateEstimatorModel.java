@@ -53,7 +53,6 @@ public class StateEstimatorModel implements AmplModel {
                     List.of("data_network.dat",
                             "data_importer.mod",
                             "state_estimator.mod",
-                            "cc_computation.mod",
                             "MINLP_formulation.mod",
                             "MINLP_variables.mod",
                             "results_exit.run",

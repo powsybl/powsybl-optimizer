@@ -17,9 +17,6 @@
 # Data import and create sets/params
 include "data_importer.mod";
 
-# teta_ccomputation model for CC computation
-include "cc_computation.mod";
-
 # Variables for the state estimation problem
 include "MINLP_variables.mod";
 

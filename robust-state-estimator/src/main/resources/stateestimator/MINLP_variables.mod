@@ -21,8 +21,8 @@
 ###########################################################
 
 # Magnitude (p.u.) and Angle (rad) for the voltage of each bus
-var V{n in BUSCC} default 1;
-var theta{n in BUSCC} default 0;
+var V{n in BUSCC};
+var theta{n in BUSCC};
 
 # Status (opened/closed) of each branch
 var y{(qq,k,n) in BRANCHCC_FULL} binary;
@@ -39,14 +39,15 @@ var resid_V{l in MEASURECC_V};
 
 # Full lines
 
-var act_power_dir{(qq,k,n) in BRANCHCC} =
+var act_power_dir{(qq,k,n) in BRANCHCC} = 
   branch_Ror_SI[qq,k,n]^2 * branch_Gor_SI[qq,k,n] * V[k]^2 
     * substation_Vnomi[1,bus_substation[1,k]]^2
   + branch_Ror_SI[qq,k,n]^2 * branch_admi_SI[qq,k,n] * V[k]^2 * sin(branch_angper[qq,k,n])
      * substation_Vnomi[1,bus_substation[1,k]]^2
   - branch_Ror_SI[qq,k,n] * branch_Rex_SI[qq,k,n] * branch_admi_SI[qq,k,n] * V[k] * V[n] 
     * sin(branch_angper[qq,k,n] - branch_dephor[qq,k,n] + theta[n] - theta[k])
-    * substation_Vnomi[1,bus_substation[1,k]] * substation_Vnomi[1,bus_substation[1,n]];
+    * substation_Vnomi[1,bus_substation[1,k]] * substation_Vnomi[1,bus_substation[1,n]]
+  ;
 
 var act_power_inv{(qq,n,k) in BRANCHCC} =
   branch_Rex_SI[qq,n,k]^2 * branch_Gex_SI[qq,n,k] * V[k]^2 
@@ -55,16 +56,18 @@ var act_power_inv{(qq,n,k) in BRANCHCC} =
      * substation_Vnomi[1,bus_substation[1,k]]^2
   - branch_Rex_SI[qq,n,k] * branch_Ror_SI[qq,n,k] * branch_admi_SI[qq,n,k] * V[k] * V[n] 
     * sin(branch_angper[qq,n,k] + branch_dephor[qq,n,k] + theta[n] - theta[k])
-    * substation_Vnomi[1,bus_substation[1,k]] * substation_Vnomi[1,bus_substation[1,n]];
+    * substation_Vnomi[1,bus_substation[1,k]] * substation_Vnomi[1,bus_substation[1,n]]
+  ;
 
-var rea_power_dir{(qq,k,n) in BRANCHCC} = 
+var rea_power_dir{(qq,k,n) in BRANCHCC} =
   - branch_Ror_SI[qq,k,n]^2 * branch_Bor_SI[qq,k,n] * V[k]^2
     * substation_Vnomi[1,bus_substation[1,k]]^2
   + branch_Ror_SI[qq,k,n]^2 * branch_admi_SI[qq,k,n] * V[k]^2 * cos(branch_angper[qq,k,n])
     * substation_Vnomi[1,bus_substation[1,k]]^2
   - branch_Ror_SI[qq,k,n] * branch_Rex_SI[qq,k,n] * branch_admi_SI[qq,k,n] * V[k] * V[n]
     * cos(theta[k] - theta[n] + branch_dephor[qq,k,n] - branch_angper[qq,k,n])
-    * substation_Vnomi[1,bus_substation[1,k]] * substation_Vnomi[1,bus_substation[1,n]];
+    * substation_Vnomi[1,bus_substation[1,k]] * substation_Vnomi[1,bus_substation[1,n]]
+  ;
 
 var rea_power_inv{(qq,n,k) in BRANCHCC} =
   - branch_Rex_SI[qq,n,k]^2 * branch_Bex_SI[qq,n,k] * V[k]^2
@@ -73,7 +76,8 @@ var rea_power_inv{(qq,n,k) in BRANCHCC} =
     * substation_Vnomi[1,bus_substation[1,k]]^2
   - branch_Ror_SI[qq,n,k] * branch_Rex_SI[qq,n,k] * branch_admi_SI[qq,n,k] * V[k] * V[n]
     * cos(theta[k] - theta[n] - branch_dephor[qq,n,k] - branch_angper[qq,n,k])
-    * substation_Vnomi[1,bus_substation[1,k]] * substation_Vnomi[1,bus_substation[1,n]];
+    * substation_Vnomi[1,bus_substation[1,k]] * substation_Vnomi[1,bus_substation[1,n]]
+  ;
 
 # Lines with one side opened
 
@@ -97,7 +101,7 @@ var act_power_bus1_opened{(qq,n,k) in BRANCH_WITH_SIDE_1_OPENED} =
     ) # Shunt
   );
 
-var act_power_bus2_opened{(qq,k,n) in BRANCH_WITH_SIDE_2_OPENED} =
+var act_power_bus2_opened{(qq,k,n) in BRANCH_WITH_SIDE_2_OPENED} = 
   branch_Ror_SI[qq,k,n]^2 * V[k]^2 * substation_Vnomi[1,bus_substation[1,k]]^2
   * (
     branch_Gor_SI[qq,k,n] 
@@ -115,7 +119,7 @@ var act_power_bus2_opened{(qq,k,n) in BRANCH_WITH_SIDE_2_OPENED} =
     ) # Shunt
   );
 
-var rea_power_bus1_opened{(qq,n,k) in BRANCH_WITH_SIDE_1_OPENED} = 
+var rea_power_bus1_opened{(qq,n,k) in BRANCH_WITH_SIDE_1_OPENED} =
   - V[k]^2 * substation_Vnomi[1,bus_substation[1,k]]^2
   * (
     branch_Bex_SI[qq,n,k] 
@@ -134,7 +138,7 @@ var rea_power_bus1_opened{(qq,n,k) in BRANCH_WITH_SIDE_1_OPENED} =
     ) # Shunt
   );
 
-var rea_power_bus2_opened{(qq,k,n) in BRANCH_WITH_SIDE_2_OPENED} = 
+var rea_power_bus2_opened{(qq,k,n) in BRANCH_WITH_SIDE_2_OPENED} =
   - branch_Ror_SI[qq,k,n]^2 * V[k]^2 * substation_Vnomi[1,bus_substation[1,k]]^2
   * (
     branch_Bor_SI[qq,k,n] 

@@ -10,20 +10,7 @@ import com.powsybl.commons.datasource.FileDataSource;
 import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
 import com.powsybl.iidm.network.*;
-import com.powsybl.loadflow.LoadFlow;
-import com.powsybl.loadflow.LoadFlowParameters;
-import com.powsybl.loadflow.LoadFlowResult;
 import com.powsybl.matpower.converter.MatpowerImporter;
-import com.powsybl.openloadflow.OpenLoadFlowParameters;
-import com.powsybl.openloadflow.network.SlackBusSelectionMode;
-import com.powsybl.openloadflow.network.impl.Transformers;
-import com.powsybl.stateestimator.StateEstimator;
-import com.powsybl.stateestimator.StateEstimatorConfig;
-import com.powsybl.stateestimator.StateEstimatorResults;
-import com.powsybl.stateestimator.parameters.input.knowledge.StateEstimatorKnowledge;
-import com.powsybl.stateestimator.parameters.input.knowledge.RandomMeasuresGenerator;
-import com.powsybl.stateestimator.parameters.input.options.StateEstimatorOptions;
-import org.jgrapht.alg.util.Pair;
 import org.junit.jupiter.api.Test;
 
 import java.io.FileOutputStream;
@@ -31,10 +18,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 
-import static com.powsybl.iidm.network.Network.read;
-import static com.powsybl.openloadflow.OpenLoadFlowParameters.LowImpedanceBranchMode.REPLACE_BY_MIN_IMPEDANCE_LINE;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Pierre ARVY <pierre.arvy@artelys.com>
