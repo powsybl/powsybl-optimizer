@@ -92,7 +92,7 @@ public class Ieee118TopologyTests {
 
             System.out.println(ratioTested);
 
-            for (int seed = 0; seed < 20; seed++) {
+            for (int seed = 0; seed < 100; seed++) {
 
                 // Create "knowledge" instance : for IEEE 118 bus, slack is "VL69_0": our state estimator must use the same slack
                 StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network, "VL69_0");
@@ -120,7 +120,7 @@ public class Ieee118TopologyTests {
 
                 // Define the solving options for the state estimation
                 StateEstimatorOptions options = new StateEstimatorOptions()
-                        .setSolvingMode(0).setMaxTimeSolving(5).setMaxNbTopologyChanges(5);
+                        .setSolvingMode(0).setMaxTimeSolving(30).setMaxNbTopologyChanges(5);
 
                 // Run the state estimation and save the results
                 StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
@@ -208,7 +208,7 @@ public class Ieee118TopologyTests {
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("EnsureObservability_LinCons_SM2_200TopoChange_AllLinesSuspect_WithNoise_L45-46-OPENED_IEEE118.csv");
+        try (FileWriter fileWriter = new FileWriter("WithMinimizationTopoChanges_NoMultistart_30secMax_EnsureObservability_NoIntermedVar_SM0_5TopoChangeMax_AllLinesSuspect_NoNoise_L45-46-OPENED_IEEE118.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 

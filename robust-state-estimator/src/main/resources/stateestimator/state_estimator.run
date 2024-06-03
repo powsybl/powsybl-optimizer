@@ -425,7 +425,7 @@ for{(qq,k,n) in BRANCH_WITH_SIDE_2_OPENED} {
   );
 } */
 
-# Measurement residuals
+/* # Measurement residuals
 for{l in MEASURECC_Pf} {
   let resid_Pf[l] := Pf_value[l] 
                     - (
@@ -492,7 +492,7 @@ for{l in MEASURECC_Q} {
 
 for{l in MEASURECC_V} {
   let resid_V[l] := V_value[l] - V[V_bus[l]] * substation_Vnomi[1,bus_substation[1,V_bus[l]]];
-}
+} */
 
 ###############################################################################
 #                                                                             #
@@ -514,7 +514,7 @@ let tempstr := ctime();
 
 #option knitro_options ("opttol=1 opttolabs=1e-1 feastol=1  ms_enable=0 feastolabs=1e-3 maxit=1500 mip_heuristic_strategy=3 mip_intvar_strategy=" & mip_strategy & " mip_multistart=1 mip_maxtime_real=" & max_time_solving);
 #option knitro_options ("opttol=1e-6 opttolabs=1e-3 feastol=1e-6  ms_enable=0 feastolabs=1e-3 maxit=1500 mip_heuristic_strategy=3 mip_intvar_strategy=" & mip_strategy & " mip_multistart=1 mip_maxtime_real=" & max_time_solving);
-option knitro_options ("mip_multistart=1 mip_intvar_strategy=" & mip_strategy & " mip_maxtime_real=" & max_time_solving);
+option knitro_options ("mip_intvar_strategy=" & mip_strategy & " mip_maxtime_real=" & max_time_solving);
 # Note : mip_multistart=1 only used if mip_strategy=0
 
 # Solve the problem chosen
