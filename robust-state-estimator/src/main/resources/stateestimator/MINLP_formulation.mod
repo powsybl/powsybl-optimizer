@@ -63,7 +63,7 @@ subject to ctrl_nb_topology_changes{PROBLEM_SE}:
 #                                                         #
 ###########################################################
 
-/* subject to ctrl_zero_injection_buses_act_power{PROBLEM_SE,
+subject to ctrl_zero_injection_buses_act_power{PROBLEM_SE,
   (a,b) in BUSCC cross BUS_ZERO_INJECTION : bus_id[1,a] == bus_zero_injection_id[b]}:
       # Flows on branches
 
@@ -213,8 +213,8 @@ subject to ctrl_zero_injection_buses_rea_power{PROBLEM_SE,
         )
       )
 
-      = 0; 
- */
+      = 0;
+
 ###########################################################
 #                                                         #
 #             Measurement residuals (in SI)               #

@@ -47,6 +47,12 @@ public class UseExample {
         //Network network = IeeeCdfNetworkFactory.create300();
         //Network network = Network.read(Path.of("D:", "Projet", "Réseaux_tests", "IIDM", "pglib_opf_case1354_pegase.xiidm"));
 
+        // Make sure lines disconnected on one side are fully disconnected
+        // TODO : make this automatically
+        network.getLineStream()
+                .filter(line -> line.getTerminal1().isConnected() ^ line.getTerminal2().isConnected())
+                .forEach(Connectable::disconnect);
+
         // Load Flow parameters (note : we mimic the way the AMPL code deals with zero-impedance branches)
         LoadFlowParameters parametersLf = new LoadFlowParameters();
         OpenLoadFlowParameters parametersExt = OpenLoadFlowParameters.create(parametersLf);
@@ -101,7 +107,7 @@ public class UseExample {
 
         // Randomly generate measurements (useful for test cases) out of load flow results
         RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
-                Optional.of(13), Optional.of(5.),
+                Optional.of(6), Optional.of(5.),
                 Optional.of(false), Optional.of(false),
                 Optional.empty(), Optional.empty(),
                 Optional.of(true));
@@ -134,7 +140,7 @@ public class UseExample {
 
         // Define the solving options for the state estimation
         StateEstimatorOptions options = new StateEstimatorOptions()
-                .setSolvingMode(0).setMaxTimeSolving(30).setMaxNbTopologyChanges(1);
+                .setSolvingMode(0).setMaxTimeSolving(30).setMaxNbTopologyChanges(5);
 
         // Run the state estimation and print the results
         StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),

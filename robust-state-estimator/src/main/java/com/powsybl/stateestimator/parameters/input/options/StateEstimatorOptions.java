@@ -15,7 +15,7 @@ import java.util.HashMap;
 public class StateEstimatorOptions {
 
     // About MINLP options
-    public static final int DEFAULT_SOLVING_MODE = 2; //0;
+    public static final int DEFAULT_SOLVING_MODE = 0;
     public static final int DEFAULT_MAX_TIME_SOLVING = 120;
     public static final int DEFAULT_MAX_TOPOLOGY_CHANGES = 5;
     HashMap<String, Integer> solvingOptions = new HashMap<>();
