@@ -44,14 +44,7 @@ public class UseExample {
         // Load your favorite network (IIDM format preferred)
         //Network network = IeeeCdfNetworkFactory.create14();
         Network network = IeeeCdfNetworkFactory.create118();
-        //Network network = IeeeCdfNetworkFactory.create300();
         //Network network = Network.read(Path.of("D:", "Projet", "Réseaux_tests", "IIDM", "pglib_opf_case1354_pegase.xiidm"));
-
-        // Make sure lines disconnected on one side are fully disconnected
-        // TODO : make this automatically
-        network.getLineStream()
-                .filter(line -> line.getTerminal1().isConnected() ^ line.getTerminal2().isConnected())
-                .forEach(Connectable::disconnect);
 
         // Load Flow parameters (note : we mimic the way the AMPL code deals with zero-impedance branches)
         LoadFlowParameters parametersLf = new LoadFlowParameters();
@@ -61,7 +54,7 @@ public class UseExample {
                 .setLowImpedanceThreshold(1e-4);
 
         // Want to introduce a topology change ? Disconnect a line (don't forget to RECONNECT IT before running the state estimation)
-        network.getLine("L45-46-1").disconnect(); // for IEEE118
+        //network.getLine("L45-46-1").disconnect(); // for IEEE118
         //network.getLine("LINE-6757-6036").disconnect(); // for case1354_pegase
 
         // Solve the Load Flow problem for the network and the referenceNetwork
@@ -69,7 +62,7 @@ public class UseExample {
         assertTrue(loadFlowResult.isFullyConverged());
 
         // Reconnect the line before running the state estimation (line won't be considered in AMPL script otherwise)
-        network.getLine("L45-46-1").connect();
+        //network.getLine("L45-46-1").connect();
         //network.getLine("LINE-6757-6036").connect();
 
         long startTime = System.nanoTime();
@@ -81,12 +74,11 @@ public class UseExample {
         // Make sure the state estimator and OpenLoadFlow use the same slack bus
         //knowledge.setSlack("VL1_0", network); // for IEEE14
         knowledge.setSlack("VL69_0", network); // for IEEE118
-        //knowledge.setSlack("VL7049_0", network); // for IEEE300
         //knowledge.setSlack("VL-4231_0", network); // for case1354_pegase
 
         // Make all branches suspects and presumed to be closed
         for (Branch branch: network.getBranches()) {
-            knowledge.setSuspectBranch(branch.getId(), true, "PRESUMED CLOSED");
+            knowledge.setSuspectBranch(branch.getId(), false, "PRESUMED CLOSED");
         }
         //knowledge.setSuspectBranch("L45-46-1", true, "PRESUMED OPENED");
 
