@@ -99,7 +99,7 @@ public class ThirdHeuristicTest {
                 "5percentileQfError(%)", "95percentileQfError(%)", "MaxQfAbsoluteError(MVar)",
                 "NbVMeasures","NbPfMeasures","NbQfMeasures","NbPMeasures","NbQMeasures",
                 "ObjectiveFunctionValue"
-                ,"PerformanceIndex"
+                //,"PerformanceIndex"
         );
         List<List<String>> data = new ArrayList<>();
 
@@ -152,7 +152,7 @@ public class ThirdHeuristicTest {
             // Randomly generate measurements out of load flow results
             RandomMeasuresGenerator.generateRandomMeasurements(knowledgeV1, network,
                     Optional.of(seed), Optional.of(ratioTested),
-                    Optional.of(false), Optional.of(true),
+                    Optional.of(false), Optional.of(false),
                     Optional.empty(), Optional.empty(),
                     Optional.of(true));
 
@@ -208,12 +208,12 @@ public class ThirdHeuristicTest {
                     String.valueOf(finalKnowledge.getActivePowerInjectedMeasures().size()),
                     String.valueOf(finalKnowledge.getReactivePowerInjectedMeasures().size()),
                     String.valueOf(finalResults.getObjectiveFunctionValue())
-                    ,String.valueOf(evaluator.computePerformanceIndex())
+                    //,String.valueOf(evaluator.computePerformanceIndex())
             ));
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("deleteAfter_EnsObs_WithNoise_1MeasError_L45-46-OPENED_ZN5_ThirdHeuristic_IEEE118.csv");
+        try (FileWriter fileWriter = new FileWriter("2_EnsObs_NoNoise_L45-46-OPENED_ZN5_ThirdHeuristic_IEEE118.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 

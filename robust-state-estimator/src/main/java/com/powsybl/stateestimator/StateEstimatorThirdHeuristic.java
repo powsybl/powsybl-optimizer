@@ -23,6 +23,10 @@ import java.util.*;
  */
 public class StateEstimatorThirdHeuristic {
 
+    public static double DECAY_INDEX_THRESHOLD = 1.3;
+
+    public static int NB_ITER_MAX = 8;
+
     static Pair<StateEstimatorResults, StateEstimatorKnowledge> thirdHeuristic(StateEstimatorKnowledge knowledgeV1, Network network) throws IOException {
 
         // BEGINNING OF THE HEURISTIC PROCESS
@@ -70,15 +74,12 @@ public class StateEstimatorThirdHeuristic {
 
         // Define the maximum number of iterations
         int nbIter = 0;
-        int nbIterMax = 5; // TODO : make the number of iterations correspond to the real number of SE runs wanted at most
+        int nbIterMax = NB_ITER_MAX;
 
         // STEP 2 : fix issues iteratively (measure/topology) until no large residual remains
 
         // While the Largest Normalized Residual computed exceeds a given threshold
         while (LNR > 3 && nbIter < nbIterMax) {
-
-            boolean checkTopologyError = false;
-            boolean checkMeasurementError = false;
 
             System.out.printf("%n%n  ITERATION N°%d (max. number of iterations : %d) :%n", nbIter+1, nbIterMax);
             System.out.println();
@@ -88,23 +89,28 @@ public class StateEstimatorThirdHeuristic {
             System.out.println("Measurement under investigation (LNR) : ");
             System.out.printf("%s at %s - Normalized residual = %f %n", measureLNR.get(0),  measureLNR.get(1), LNR);
 
-            // Determine if LNR is most likely due to a gross measurement error or a topology error
-            // ==> Observe distribution of residuals around the location of the LNR measure
-
+            // Determine if LNR is most likely due to a gross measurement error or a topology error:
             // decayIndexLNR corresponds to the coefficient of the power law of the sequence of decreasing residuals
             double decayIndexLNR = computeResidualsDecayIndex(nbMeasureLNR,
                     sortedNormalizedResiduals, knowledgeV2, network);
 
             System.out.printf("Decay index : %f%n%n", decayIndexLNR);
 
+            boolean caseA = decayIndexLNR > DECAY_INDEX_THRESHOLD;
+            boolean caseB = !caseA;
+            boolean caseC = false;
+            boolean caseD = false;
+
             boolean keepInvestigating = true;
 
             while (keepInvestigating) {
 
-                if (decayIndexLNR > 1.15 | checkMeasurementError) {
+                if (caseA) {
+
+                    nbIter++;
 
                     // Gross measurement error is likely:
-                    System.out.println("TESTING : GROSS MEASUREMENT ERROR ?");
+                    System.out.println("TESTING CASE A : GROSS MEASUREMENT ERROR ?");
 
                     // Make a deep copy of "knowledgeV2"
                     StateEstimatorKnowledge knowledgeTmp = new StateEstimatorKnowledge(knowledgeV2);
@@ -132,11 +138,39 @@ public class StateEstimatorThirdHeuristic {
                     boolean check1 = objectiveFunctionValueTmp < objectiveFunctionValue - Math.pow(LNR, 2);
 
                     // TODO : check n°2 ? Like no large residual in the zone
+                    // Check n°2 : is there still a large normalized residual (not necessarily the LNR) in the suspect region ?
+                    List<Double> localNormalizedResiduals = new ArrayList<>();
+                    localNormalizedResiduals.add(0.);
+                    Set<String> busesOfMeasureLNR = new HashSet<>();
+                    // Find buses of LNR measure
+                    if (measureLNR.get(0).equals("Pf") | measureLNR.get(0).equals("Qf")) {
+                        busesOfMeasureLNR.add(measureLNR.get(2));
+                        busesOfMeasureLNR.add(measureLNR.get(3));
+                    }
+                    else {
+                        busesOfMeasureLNR.add(measureLNR.get(1));
+                    }
+                    // Find residuals directly linked to buses of LNR measure
+                    for (var normalizedResidual : sortedNormalizedResidualsTmp) {
+                        ArrayList<String> measure = knowledgeTmp.getMeasure(normalizedResidual.getKey());
+                        if (measure.get(0).equals("Pf") | measure.get(0).equals("Qf")) {
+                            if (busesOfMeasureLNR.contains(measure.get(2))
+                                | busesOfMeasureLNR.contains(measure.get(3))) {
+                                localNormalizedResiduals.add(normalizedResidual.getValue());
+                            }
+                        }
+                        else {
+                            if (busesOfMeasureLNR.contains(measure.get(1))) {
+                                localNormalizedResiduals.add(normalizedResidual.getValue());
+                            }
+                        }
+                    }
+                    // Then find the largest residual among these local residuals, and check if it is below a certain threshold
+                    boolean check2 = Collections.max(localNormalizedResiduals) < 10;
 
-                    if (check1) {
+                    if (check1 && check2) {
                         // Measurement removal was a success : save the change and move on
                         keepInvestigating = false;
-                        checkMeasurementError = false;
                         knowledgeV2 = knowledgeTmp;
                         resultsV2 = resultsTmp;
                         sortedNormalizedResiduals = sortedNormalizedResidualsTmp;
@@ -152,27 +186,29 @@ public class StateEstimatorThirdHeuristic {
                         knowledgeV2.setStateVectorStartingPoint(newStartingPoint, network);
                         // Print some verbatim
                         System.out.println("Current LNR due to gross measurement error : measurement was removed.");
-                        // Change value (false) of decay index so that topology investigation will not be launched after
-                        decayIndexLNR = 1000.;
-                        // TODO : decayIndexLNR = decayIndexTreshold + 1;
+                        // Make sure following cases are not investigated
+                        caseB = false;
                     }
                     else {
                         // If deleting the measure has not worked, two cases:
-                        if (checkMeasurementError) {
-                            // The end of the heuristic procedure has been reached without finding a way (topology/measurement errors) to reduce the OFV
-                            System.out.println("[WARNING] Heuristic process has not converged.");
-                            return Pair.of(resultsV2, knowledgeV2);
+                        if (caseB) {
+                            // If coming from case B, switch to case D
+                            caseA = false;
+                            caseB = false;
+                            caseD = true;
                         } else {
-                            // Check if it is a topology error
-                            checkTopologyError = true;
+                            // Else, switch to case B (keep caseA = true so that caseB knows we come from caseA)
+                            caseB = true;
                         }
                     }
                 }
 
-                if (decayIndexLNR <= 1.15 | checkTopologyError) {
+                if (caseB) {
+
+                    nbIter++;
 
                     // Topology error is likely:
-                    System.out.println("TESTING : TOPOLOGY ERROR ?");
+                    System.out.println("TESTING CASE B : TOPOLOGY ERROR ?");
 
                     // Find all branches and buses closely related to the LNR measurement
                     Set<String> suspectBranches = new HashSet<>();
@@ -259,7 +295,6 @@ public class StateEstimatorThirdHeuristic {
                     if (check1 && check2) {
                         // Topology change was a success : save it and move on
                         keepInvestigating = false;
-                        checkTopologyError = false;
                         knowledgeV2 = knowledgeTmp;
                         resultsV2 = resultsTmp;
                         sortedNormalizedResiduals = sortedNormalizedResidualsTmp;
@@ -286,31 +321,247 @@ public class StateEstimatorThirdHeuristic {
                     }
                     // If the topology correction has not worked, two cases:
                     else {
-                        if (checkTopologyError) {
-                            // The end of the heuristic procedure has been reached without finding a way to reduce the OFV
-                            System.out.println("[WARNING] Heuristic process has not converged.");
-                            return Pair.of(resultsV2, knowledgeV2);
+                        if (caseA) {
+                            // If coming from case A, switch to case C
+                            caseA = false;
+                            caseB = false;
+                            caseC = true;
                         } else {
-                            checkMeasurementError = true;
+                            // Else, switch to case A (keep caseB = true)
+                            caseA = true;
                         }
                     }
                 }
+
+                if (caseC) {
+
+                    nbIter++;
+
+                    // Gross measurement error is likely: investigate but remove check n°2 from case A
+                    System.out.println("TESTING CASE C : GROSS MEASUREMENT ERROR ? (check n°2 removed)");
+
+                    // Make a deep copy of "knowledgeV2"
+                    StateEstimatorKnowledge knowledgeTmp = new StateEstimatorKnowledge(knowledgeV2);
+
+                    // Delete LNR measure from knowledgeTmp
+                    knowledgeTmp.removeMeasure(nbMeasureLNR);
+
+                    // Make sure suspicion status for each branch is set to "false"
+                    for (Branch branch : network.getBranches()) {
+                        String branchID = branch.getId();
+                        // Use last found status (OPENED/CLOSED) as new presumed status
+                        String presumedStatus = "PRESUMED " + resultsV2.getBranchStatusEstimate(branchID).getEstimatedStatus();
+                        knowledgeTmp.setSuspectBranch(branchID, false, presumedStatus);
+                    }
+
+                    options.setSolvingMode(0).setMaxTimeSolving(30).setMaxNbTopologyChanges(2);
+
+                    // Run the SE with this knowledge
+                    StateEstimatorResults resultsTmp = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
+                            knowledgeTmp, options, new StateEstimatorConfig(true), new LocalComputationManager());
+
+                    // Check if the objective function value has decreased by an amount equal to the square of the LNR
+                    List<Map.Entry<Integer, Double>> sortedNormalizedResidualsTmp = computeAndSortNormalizedResiduals(knowledgeTmp, resultsTmp);
+                    double objectiveFunctionValueTmp = sortedNormalizedResidualsTmp.stream().mapToDouble(e -> Math.pow(e.getValue(), 2)).sum();
+                    boolean check1 = objectiveFunctionValueTmp < objectiveFunctionValue - Math.pow(LNR, 2);
+
+                    if (check1) {
+                        // Measurement removal was a success : save the change and move on
+                        keepInvestigating = false;
+                        knowledgeV2 = knowledgeTmp;
+                        resultsV2 = resultsTmp;
+                        sortedNormalizedResiduals = sortedNormalizedResidualsTmp;
+                        nbMeasureLNR = sortedNormalizedResiduals.get(0).getKey();
+                        LNR = sortedNormalizedResiduals.get(0).getValue();
+                        objectiveFunctionValue = objectiveFunctionValueTmp;
+                        // Save last estimates as new starting point
+                        newStartingPoint = new HashMap<>();
+                        for (BusStateEstimate busStateEstimate : resultsV2.getStateVectorEstimate()) {
+                            newStartingPoint.put(busStateEstimate.getBusId(),
+                                    Pair.of(busStateEstimate.getV(), busStateEstimate.getTheta()));
+                        }
+                        knowledgeV2.setStateVectorStartingPoint(newStartingPoint, network);
+                        // Print some verbatim
+                        System.out.println("Current LNR due to gross measurement error : measurement was removed.");
+                        // Make sure following cases are not investigated
+                        caseD = false;
+                    }
+                    else {
+                        // If the measurement removal has not worked, two cases:
+                        if (caseD) {
+                            // All options have been tried without finding a way to correct the error detected : end of the process
+                            System.out.println("[WARNING] Heuristic process has failed to correct detected error : last found estimates returned.");
+                            return Pair.of(resultsV2, knowledgeV2);
+                        }
+                        else {
+                            // Switch to case D (keep caseC = true)
+                            caseD = true;
+                        }
+
+                    }
+                }
+
+                if (caseD) {
+
+                    nbIter++;
+
+                    // Topology error is likely: investigate while extending the set of suspect branches (as defined in case B)
+                    System.out.println("TESTING CASE D : TOPOLOGY ERROR ? (suspect region extended)");
+
+                    // Find all branches and buses closely related to the LNR measurement
+                    Set<String> suspectBranches = new HashSet<>();
+                    Set<String> busesOfSuspectBranches = new HashSet<>();
+                    // ... with two different cases, depending on whether LRN measurement is located on a branch or a bus
+                    // TODO : add code lines to take into account other type of lines !
+                    if (measureLNR.get(0).equals("Pf") | measureLNR.get(0).equals("Qf")) {
+                        String branchID = measureLNR.get(1);
+                        suspectBranches.add(branchID);
+                        Bus end1 = network.getBranch(branchID).getTerminal1().getBusView().getConnectableBus();
+                        Bus end2 = network.getBranch(branchID).getTerminal2().getBusView().getConnectableBus();
+                        suspectBranches.addAll(end1.getLineStream().map(Identifiable::getId).toList());
+                        suspectBranches.addAll(end1.getTwoWindingsTransformerStream().map(Identifiable::getId).toList());
+                        suspectBranches.addAll(end2.getLineStream().map(Identifiable::getId).toList());
+                        suspectBranches.addAll(end2.getTwoWindingsTransformerStream().map(Identifiable::getId).toList());
+                        for (String suspectBranch : suspectBranches) {
+                            busesOfSuspectBranches.add(network.getBranch(suspectBranch).getTerminal1().getBusView().getConnectableBus().getId());
+                            busesOfSuspectBranches.add(network.getBranch(suspectBranch).getTerminal2().getBusView().getConnectableBus().getId());
+                        }
+                    }
+                    else {
+                        Bus bus = network.getBusView().getBus(measureLNR.get(1));
+                        suspectBranches.addAll(bus.getLineStream().map(Identifiable::getId).toList());
+                        suspectBranches.addAll(bus.getTwoWindingsTransformerStream().map(Identifiable::getId).toList());
+                        for (String suspectBranch : suspectBranches) {
+                            busesOfSuspectBranches.add(network.getBranch(suspectBranch).getTerminal1().getBusView().getConnectableBus().getId());
+                            busesOfSuspectBranches.add(network.getBranch(suspectBranch).getTerminal2().getBusView().getConnectableBus().getId());
+                        }
+                        for (String busTmpID : busesOfSuspectBranches) {
+                            Bus busTmp = network.getBusView().getBus(busTmpID);
+                            suspectBranches.addAll(busTmp.getLineStream().map(Identifiable::getId).toList());
+                            suspectBranches.addAll(busTmp.getTwoWindingsTransformerStream().map(Identifiable::getId).toList());
+                        }
+                    }
+                    // Extend suspect region
+                    Set<String> extendedSuspectBranches = new HashSet<>();
+                    for (String suspectBranchID : suspectBranches) {
+                        Branch suspectBranch = network.getBranch(suspectBranchID);
+                        extendedSuspectBranches.addAll(suspectBranch.getTerminal1().getBusView().getConnectableBus()
+                                .getLineStream().map(Identifiable::getId).toList());
+                        extendedSuspectBranches.addAll(suspectBranch.getTerminal1().getBusView().getConnectableBus()
+                                .getTwoWindingsTransformerStream().map(Identifiable::getId).toList());
+                        extendedSuspectBranches.addAll(suspectBranch.getTerminal2().getBusView().getConnectableBus()
+                                .getLineStream().map(Identifiable::getId).toList());
+                        extendedSuspectBranches.addAll(suspectBranch.getTerminal2().getBusView().getConnectableBus()
+                                .getTwoWindingsTransformerStream().map(Identifiable::getId).toList());
+                    }
+                    // Remove from extendedSuspectBranches all branches contained in suspectBranches (already inspected in case B)
+                    extendedSuspectBranches.removeAll(suspectBranches);
+
+
+                    System.out.println("Suspect branches : ");
+                    System.out.println(extendedSuspectBranches);
+
+                    // Make a copy of "knowledgeV2"
+                    StateEstimatorKnowledge knowledgeTmp = new StateEstimatorKnowledge(knowledgeV2);
+
+                    // Changed suspicion status to "true" for branches in extendedSuspectBranches and to "false" otherwise
+                    for (Branch branch : network.getBranches()) {
+                        String branchID = branch.getId();
+                        // Use last found status (OPENED/CLOSED) as new presumed status
+                        String presumedStatus = "PRESUMED " + resultsV2.getBranchStatusEstimate(branchID).getEstimatedStatus();
+                        knowledgeTmp.setSuspectBranch(branchID, extendedSuspectBranches.contains(branchID), presumedStatus);
+                    }
+
+                    options.setMaxNbTopologyChanges(2).setSolvingMode(0).setMaxTimeSolving(60);
+
+                    // Run the SE with this knowledge
+                    StateEstimatorResults resultsTmp = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
+                            knowledgeTmp, options, new StateEstimatorConfig(true), new LocalComputationManager());
+
+                    // Check n°1 : has the objective function value decreased ?
+                    List<Map.Entry<Integer, Double>> sortedNormalizedResidualsTmp = computeAndSortNormalizedResiduals(knowledgeTmp, resultsTmp);
+                    double objectiveFunctionValueTmp = sortedNormalizedResidualsTmp.stream().mapToDouble(e -> Math.pow(e.getValue(), 2)).sum();
+                    boolean check1 = objectiveFunctionValueTmp < objectiveFunctionValue;
+
+                    // Check n°2 : is there still a large normalized residual (not necessarily the LNR) in the region defined by suspectBranches ?
+                    List<Double> localNormalizedResiduals = new ArrayList<>();
+                    localNormalizedResiduals.add(0.);
+                    // Find residuals directly linked to one of the buses of the changed branch
+                    for (var normalizedResidual : sortedNormalizedResidualsTmp) {
+                        ArrayList<String> measure = knowledgeTmp.getMeasure(normalizedResidual.getKey());
+                        if (measure.get(0).equals("Pf") | measure.get(0).equals("Qf")) {
+                            // If measured branch is in suspectBranches, add residual
+                            if (suspectBranches.contains(measure.get(1))) {
+                                localNormalizedResiduals.add(normalizedResidual.getValue());
+                            }
+                        }
+                        else {
+                            // If measured bus is in busesOfSuspectBranches, add residual
+                            if (busesOfSuspectBranches.contains(measure.get(1))) {
+                                localNormalizedResiduals.add(normalizedResidual.getValue());
+                            }
+                        }
+                    }
+                    // Then find the largest residual among these local residuals, and check if it is below a certain threshold
+                    boolean check2 = Collections.max(localNormalizedResiduals) < 10;
+
+
+                    if (check1 && check2) {
+                        // Topology change was a success : save it and move on
+                        keepInvestigating = false;
+                        knowledgeV2 = knowledgeTmp;
+                        resultsV2 = resultsTmp;
+                        sortedNormalizedResiduals = sortedNormalizedResidualsTmp;
+                        nbMeasureLNR = sortedNormalizedResiduals.get(0).getKey();
+                        LNR = sortedNormalizedResiduals.get(0).getValue();
+                        objectiveFunctionValue = objectiveFunctionValueTmp;
+                        // Save last estimates as new starting point
+                        newStartingPoint = new HashMap<>();
+                        for (BusStateEstimate busStateEstimate : resultsV2.getStateVectorEstimate()) {
+                            newStartingPoint.put(busStateEstimate.getBusId(),
+                                    Pair.of(busStateEstimate.getV(), busStateEstimate.getTheta()));
+                        }
+                        knowledgeV2.setStateVectorStartingPoint(newStartingPoint, network);
+                        // Print some verbatim
+                        System.out.println("Current LNR due to topology error. Status of following branch(es) were changed:");
+                        for (Branch branch : network.getBranches()) {
+                            BranchStatusEstimate branchStatusEstimate = resultsV2.getBranchStatusEstimate(branch.getId());
+                            if (!branchStatusEstimate.getPresumedStatus().equals(
+                                    "PRESUMED " + branchStatusEstimate.getEstimatedStatus())
+                            ) {
+                                System.out.println(branchStatusEstimate.getBranchId());
+                            }
+                        }
+                    }
+                    // If the topology correction has not worked, two cases:
+                    else {
+                        if (caseC) {
+                            // All options have been tried without finding a way to correct the error detected : end of the process
+                            System.out.println("[WARNING] Heuristic process is out of solutions to correct errors detected and has ended : last found estimates returned.");
+                            return Pair.of(resultsV2, knowledgeV2);
+                        }
+                        else {
+                            // Else, switch to case C (keep caseD = true)
+                            caseC = true;
+                        }
+                    }
+                }
+
             }
 
             System.out.printf("%nObjective function value : %f%n", objectiveFunctionValue);
-
-            nbIter ++;
         }
+
 
         // END OF THE ITERATIVE PROCESS
 
         // Indicate if the process has converged or not
         if (nbIter==nbIterMax && LNR > 3) {
-            System.out.println("[WARNING] Process has not converged (nbIter = nbIterMax)");
+            System.out.println("[WARNING] Heuristic process has not converged (nbIter = nbIterMax)");
         }
 
         else{
-            System.out.println("The heuristic process has converged.");
+            System.out.println("[INFO] The heuristic process has converged.");
         }
 
         // Return the results and knowledge obtained
@@ -455,23 +706,31 @@ public class StateEstimatorThirdHeuristic {
         }
 
         // Once all related residuals are found, sort them in decreasing order and keep the first 30 values
+        // TODO : check maxSize and filter used
         List<Double> sortedResiduals = residualsAround.stream()
-                .sorted(Collections.reverseOrder()).limit(30)
-                .filter(res -> res>=1)
+                .sorted(Collections.reverseOrder()).limit(5)
+                //.filter(res -> res>=3)
                 .toList();
 
         // If not enough valuable residuals found, return a value leading to measurement removal (easiest solution)
         if (sortedResiduals.size() <= 1) {
-            return 10;
+            return DECAY_INDEX_THRESHOLD + 1;
         }
 
         double maxResidual = sortedResiduals.get(0);
 
+        // Define Z/N ratios (reference value and current value)
+        double referenceZN = 5.0;
+        double currentZN = (double) knowledge.getMeasuresCount() / network.getBusView().getBusStream().count();
+
         double numerator = 0;
         double denominator = 0;
         for (int i = 0; i < sortedResiduals.size(); i++) {
-            numerator += Math.log(sortedResiduals.get(i) / maxResidual);
-            denominator += Math.log(i+1);
+            //numerator += Math.log(sortedResiduals.get(i) / maxResidual);
+            //denominator += Math.log(i+1);
+            //denominator += Math.log(1+referenceZN/currentZN*i);
+            numerator += Math.log(i+1) * Math.log(sortedResiduals.get(i)/maxResidual);
+            denominator += Math.pow(Math.log(i+1), 2);
         }
 
         return - numerator / denominator;
