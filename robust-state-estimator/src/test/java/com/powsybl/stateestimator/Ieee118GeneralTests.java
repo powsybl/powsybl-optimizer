@@ -96,8 +96,7 @@ public class Ieee118GeneralTests {
                 // Randomly generate measurements out of load flow results using proper seed and Z to N ratio
                 RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
                         Optional.of(seed), Optional.of(ratioTested),
-                        Optional.of(false), Optional.of(true),
-                        Optional.empty(), Optional.empty(),
+                        Optional.of(true), Optional.empty(), Optional.empty(),
                         Optional.of(true));
 
                 // Define the solving options for the state estimation

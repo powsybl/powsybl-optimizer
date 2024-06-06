@@ -54,8 +54,8 @@ public class FirstHeuristicTest {
         RandomMeasuresGenerator.generateRandomMeasurementsWithCtrlMeasureRatio(knowledge, network,
                 0.1991137371, "P",
                 Optional.of(41), Optional.of(5.0),
-                Optional.empty(), Optional.of(true),
-                Optional.empty(), Optional.empty());
+                Optional.of(true), Optional.empty(),
+                Optional.empty());
 
         Pair<StateEstimatorResults, StateEstimatorKnowledge> firstHeuristicResults = StateEstimatorHeuristic.firstHeuristic(knowledge, network);
 
@@ -133,9 +133,8 @@ public class FirstHeuristicTest {
             // Randomly generate measurements out of load flow results
             RandomMeasuresGenerator.generateRandomMeasurements(knowledgeV1, network,
                     Optional.of(seed), Optional.of(ratioTested),
-                    Optional.of(false), Optional.of(true),
-                    Optional.empty(), Optional.empty(),
-                    Optional.of(false));
+                    Optional.of(false), Optional.empty(),
+                    Optional.empty(), Optional.of(false));
 
             // Run heuristic SE on knowledgeV1
             Pair<StateEstimatorResults, StateEstimatorKnowledge> firstHeuristicResults = StateEstimatorHeuristic.firstHeuristic(knowledgeV1, network);

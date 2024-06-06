@@ -100,9 +100,8 @@ public class UseExample {
         // Randomly generate measurements (useful for test cases) out of load flow results
         RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
                 Optional.of(6), Optional.of(5.),
-                Optional.of(false), Optional.of(false),
-                Optional.empty(), Optional.empty(),
-                Optional.of(true));
+                Optional.of(false), Optional.empty(),
+                Optional.empty(), Optional.of(true));
 
 
         long endTime   = System.nanoTime();

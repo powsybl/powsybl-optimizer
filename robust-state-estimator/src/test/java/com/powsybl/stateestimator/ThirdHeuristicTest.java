@@ -65,9 +65,8 @@ public class ThirdHeuristicTest {
 
         RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
                 Optional.of(2), Optional.of(5.),
-                Optional.empty(), Optional.of(true),
-                Optional.empty(), Optional.empty(),
-                Optional.of(true));
+                Optional.of(true), Optional.empty(),
+                Optional.empty(), Optional.of(true));
 
         long startTime = System.nanoTime();
 
@@ -98,7 +97,7 @@ public class ThirdHeuristicTest {
                 "MeanQfError(%)", "StdQfError(%)", "MedianQfError(%)", "MaxQfError(%)",
                 "5percentileQfError(%)", "95percentileQfError(%)", "MaxQfAbsoluteError(MVar)",
                 "NbVMeasures","NbPfMeasures","NbQfMeasures","NbPMeasures","NbQMeasures",
-                "ObjectiveFunctionValue"
+                "ObjectiveFunctionValue", "LinesChanged"
                 //,"PerformanceIndex"
         );
         List<List<String>> data = new ArrayList<>();
@@ -141,7 +140,7 @@ public class ThirdHeuristicTest {
 
             // Add a gross error on measure Pf(VL27 --> VL28) : 80 MW (false) instead of 32.6 MW (true)
             //Map<String, String> grossMeasure1 = Map.of("BranchID", "L27-28-1", "FirstBusID", "VL27_0", "SecondBusID", "VL28_0",
-            //        "Value", "80.0", "Variance", "0.1306", "Type", "Pf");
+            //        "Value", "50.0", "Variance", "0.1306", "Type", "Pf");
             //knowledgeV1.addMeasure(1, grossMeasure1, network);
 
             // Add a gross error on measure V(VL60) : 225 kV (false) instead of 137 kV (true)
@@ -151,10 +150,9 @@ public class ThirdHeuristicTest {
 
             // Randomly generate measurements out of load flow results
             RandomMeasuresGenerator.generateRandomMeasurements(knowledgeV1, network,
-                    Optional.of(seed), Optional.of(ratioTested),
-                    Optional.of(false), Optional.of(false),
-                    Optional.empty(), Optional.empty(),
-                    Optional.of(true));
+                    Optional.of(seed), Optional.of(9.),
+                    Optional.of(false), Optional.empty(),
+                    Optional.empty(), Optional.of(false));
 
             // Run heuristic SE on knowledgeV1
             Pair<StateEstimatorResults, StateEstimatorKnowledge> thirdHeuristicResults = StateEstimatorThirdHeuristic.thirdHeuristic(knowledgeV1, network);
@@ -165,10 +163,12 @@ public class ThirdHeuristicTest {
             // Compute the number of topology errors, and find if the erroneous line (if any) was given the correct status ("OPENED")
             int falseLineDetected = 0;
             int nbTopologyErrors = 0;
+            Set<String> linesChanged = new HashSet<>();
             for (Branch branch : network.getBranches()) {
                 if (branch.getId().equals(erroneousLine)) {
                     if (finalResults.getBranchStatusEstimate(erroneousLine).getEstimatedStatus().equals("OPENED")) {
                         falseLineDetected = 1;
+                        linesChanged.add(branch.getId());
                     } else {
                         nbTopologyErrors += 1;
                     }
@@ -176,6 +176,7 @@ public class ThirdHeuristicTest {
                 else {
                     if (finalResults.getBranchStatusEstimate(branch.getId()).getEstimatedStatus().equals("OPENED")) {
                         nbTopologyErrors += 1;
+                        linesChanged.add(branch.getId());
                     }
                 }
             }
@@ -207,13 +208,14 @@ public class ThirdHeuristicTest {
                     String.valueOf(finalKnowledge.getReactivePowerFlowMeasures().size()),
                     String.valueOf(finalKnowledge.getActivePowerInjectedMeasures().size()),
                     String.valueOf(finalKnowledge.getReactivePowerInjectedMeasures().size()),
-                    String.valueOf(finalResults.getObjectiveFunctionValue())
+                    String.valueOf(finalResults.getObjectiveFunctionValue()),
+                    String.join(" & ", linesChanged)
                     //,String.valueOf(evaluator.computePerformanceIndex())
             ));
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("2_EnsObs_NoNoise_L45-46-OPENED_ZN5_ThirdHeuristic_IEEE118.csv");
+        try (FileWriter fileWriter = new FileWriter("ZN9_test_EnsObs_NoNoise_Pf27-28-error_ZN5_ThirdHeuristic_IEEE118.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 

@@ -8,12 +8,9 @@ package com.powsybl.stateestimator.parameters.input.knowledge;
 
 import com.powsybl.iidm.network.*;
 
-import javax.swing.text.html.Option;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
- * @author Pierre ARVY <pierre.arvy@artelys.com>
  * @author Lucas RIOU <lucas.riou@artelys.com>
  */
 public class RandomMeasuresGenerator {
@@ -61,7 +58,6 @@ public class RandomMeasuresGenerator {
      * @param network The network (LF run previously) for which random measurements must be generated
      * @param seed (optional) The seed used by the random generator
      * @param ratioMeasuresToBuses (optional) The ratio "number of measures"/"number of buses in the network" used to compute the number of measures generated
-     * @param biasTowardsHVNodes (optional) If "true", a bias towards HV nodes, making them more likely to be picked as the locations of generated measurements
      * @param addNoise (optional) If "true", add gaussian noise (based on measurement type's variance) to the measurement value
      * @param noiseAmplitude (optional) A number k (default 1) defining noise amplitude : noise will be pick in [-K x sigma + measValue; K x sigma + measValue]
      * @param noPickBranchID (optional) The ID of a branch for which no Pf nor Qf measurements will be picked
@@ -69,9 +65,8 @@ public class RandomMeasuresGenerator {
      */
     public static void generateRandomMeasurements(StateEstimatorKnowledge knowledge, Network network,
                                                   Optional<Integer> seed, Optional<Double> ratioMeasuresToBuses,
-                                                  Optional<Boolean> biasTowardsHVNodes, Optional<Boolean> addNoise,
-                                                  Optional<Double> noiseAmplitude, Optional<String> noPickBranchID,
-                                                  Optional<Boolean> ensureRealisticObservability)
+                                                  Optional<Boolean> addNoise, Optional<Double> noiseAmplitude,
+                                                  Optional<String> noPickBranchID, Optional<Boolean> ensureRealisticObservability)
             throws IllegalArgumentException {
 
         // Initialize new Random (use the seed if provided) to pick measurements
@@ -140,7 +135,7 @@ public class RandomMeasuresGenerator {
         //      - remove branch b1-b2 from L(b1) and L(b2)
         boolean ensureObservability = ensureRealisticObservability.isPresent() && ensureRealisticObservability.get().equals(true);
         if (ensureObservability) {
-            // Build "adjacency list": find for each bus the list of linked branches (one occurence in the list)
+            // Build "adjacency list": find for each bus the list of linked branches (one occurrence in the list)
             Map<String, List<String>> adjacencyList = new HashMap<>();
             for (Bus bus1 : network.getBusView().getBuses()) {
                 Set<String> linkedBranches = new HashSet<>();
@@ -312,15 +307,22 @@ public class RandomMeasuresGenerator {
             }
         }
 
-        // Compute the number of measurements that must be generated randomly : find the number demanded by the Z/N ratio
+        // Compute the number of measurements that remain to be generated randomly : find the number demanded by the Z/N ratio
         long nbMeasurements;
         if (ratioMeasuresToBuses.isPresent()) {
             double ratioZtoN = ratioMeasuresToBuses.get();
             if (ratioZtoN <= 0) {
                 throw new IllegalArgumentException("Invalid value for the parameter ratioMeasuresToBuses : should be a positive float");
             }
-            double maxRatioMeasuresToBuses = (4.0 * network.getBranchCount() + 3.0 * network.getBusView().getBusStream().count())
-                    / network.getBusView().getBusStream().count();
+            // Compute maximum ratio possible (note : if ensureObservability = true, power flows measures on both sides of a line are forbidden)
+            double maxRatioMeasuresToBuses = ensureObservability ?
+                    (2.0 * network.getBranchCount() + 3.0 * network.getBusView().getBusStream().count()
+                    - 2.0 * knowledge.getZeroInjectionBuses().size())
+                     / network.getBusView().getBusStream().count()
+                    :
+                    (4.0 * network.getBranchCount() + 3.0 * network.getBusView().getBusStream().count()
+                            - 2.0 * knowledge.getZeroInjectionBuses().size())
+                            / network.getBusView().getBusStream().count();
             if (ratioZtoN > maxRatioMeasuresToBuses) {
                 throw new IllegalArgumentException(String.format("Provided value for ratioMeasuresToBuses is too large. Should be smaller than %f", maxRatioMeasuresToBuses));
             }
@@ -343,12 +345,6 @@ public class RandomMeasuresGenerator {
         int randomSide;
         Bus randomBus;
 
-        // The following variables will be used only if bias towards HV nodes is activated
-        boolean withBias = biasTowardsHVNodes.isPresent() && biasTowardsHVNodes.get().equals(true);
-        Branch randomBranchSecondPick;
-        Bus randomBusSecondPick;
-        double tmpVNomi;
-
         // Initialize measurement value and variance
         double measurementValue;
         double measurementVariance;
@@ -369,19 +365,6 @@ public class RandomMeasuresGenerator {
                     // Pick a branch at random and remove it from the list of potential choices for next measurement (if some branches are still to be picked)
                     if (!listOfBranchesPfSide1.isEmpty()) {
                         randomBranch = listOfBranchesPfSide1.remove(random.nextInt(listOfBranchesPfSide1.size()));
-                        // If bias towards HV nodes activated, pick 2 branches at random and keep the one connected to the highest voltage level
-                        if (withBias && !listOfBranchesPfSide1.isEmpty()) {
-                            tmpVNomi = Math.max(randomBranch.getTerminal1().getVoltageLevel().getNominalV(), randomBranch.getTerminal2().getVoltageLevel().getNominalV());
-                            randomBranchSecondPick = listOfBranchesPfSide1.remove(random.nextInt(listOfBranchesPfSide1.size()));
-                            if (tmpVNomi < Math.max(randomBranchSecondPick.getTerminal1().getVoltageLevel().getNominalV(), randomBranchSecondPick.getTerminal2().getVoltageLevel().getNominalV())) {
-                                // Put back the first pick in the list of branches and keep the second pick
-                                listOfBranchesPfSide1.add(randomBranch);
-                                randomBranch = randomBranchSecondPick;
-                            } // Else, put back the second pick and keep the first pick
-                            else {
-                                listOfBranchesPfSide1.add(randomBranchSecondPick);
-                            }
-                        }
                         // Get location IDs and the corresponding value (in SI), as given by the Load Flow solution
                         randomMeasure.put("BranchID", randomBranch.getId());
                         randomMeasure.put("FirstBusID", randomBranch.getTerminal1().getBusView().getConnectableBus().getId());
@@ -408,19 +391,6 @@ public class RandomMeasuresGenerator {
                     // Pick a branch at random and remove it from the list of potential choices for next measurement (if some branches are still to be picked)
                     if (!listOfBranchesPfSide2.isEmpty()) {
                         randomBranch = listOfBranchesPfSide2.remove(random.nextInt(listOfBranchesPfSide2.size()));
-                        // If bias towards HV nodes activated, pick 2 branches at random and keep the one connected to the highest voltage level
-                        if (withBias && !listOfBranchesPfSide2.isEmpty()) {
-                            tmpVNomi = Math.max(randomBranch.getTerminal1().getVoltageLevel().getNominalV(), randomBranch.getTerminal2().getVoltageLevel().getNominalV());
-                            randomBranchSecondPick = listOfBranchesPfSide2.remove(random.nextInt(listOfBranchesPfSide2.size()));
-                            if (tmpVNomi < Math.max(randomBranchSecondPick.getTerminal1().getVoltageLevel().getNominalV(), randomBranchSecondPick.getTerminal2().getVoltageLevel().getNominalV())) {
-                                // Put back the first pick in the list of branches and keep the second pick
-                                listOfBranchesPfSide2.add(randomBranch);
-                                randomBranch = randomBranchSecondPick;
-                            } // Else, put back the second pick and keep the first pick
-                            else {
-                                listOfBranchesPfSide2.add(randomBranchSecondPick);
-                            }
-                        }
                         // Get location IDs and the corresponding measurement value (in SI), as given by the Load Flow solution
                         randomMeasure.put("BranchID", randomBranch.getId());
                         randomMeasure.put("FirstBusID", randomBranch.getTerminal2().getBusView().getConnectableBus().getId());
@@ -455,19 +425,6 @@ public class RandomMeasuresGenerator {
                     // Pick a branch at random and remove it from the list of potential choices for next measurement (if some branches are still to be picked)
                     if (!listOfBranchesQfSide1.isEmpty()) {
                         randomBranch = listOfBranchesQfSide1.remove(random.nextInt(listOfBranchesQfSide1.size()));
-                        // If bias towards HV nodes activated, pick 2 branches at random and keep the one connected to the highest voltage level
-                        if (withBias && !listOfBranchesQfSide1.isEmpty()) {
-                            tmpVNomi = Math.max(randomBranch.getTerminal1().getVoltageLevel().getNominalV(), randomBranch.getTerminal2().getVoltageLevel().getNominalV());
-                            randomBranchSecondPick = listOfBranchesQfSide1.remove(random.nextInt(listOfBranchesQfSide1.size()));
-                            if (tmpVNomi < Math.max(randomBranchSecondPick.getTerminal1().getVoltageLevel().getNominalV(), randomBranchSecondPick.getTerminal2().getVoltageLevel().getNominalV())) {
-                                // Put back the first pick in the list of branches and keep the second pick
-                                listOfBranchesQfSide1.add(randomBranch);
-                                randomBranch = randomBranchSecondPick;
-                            } // Else, put back the second pick and keep the first pick
-                            else {
-                                listOfBranchesQfSide1.add(randomBranchSecondPick);
-                            }
-                        }
                         // Get location IDs and the corresponding value (in SI), as given by the Load Flow solution
                         randomMeasure.put("BranchID", randomBranch.getId());
                         randomMeasure.put("FirstBusID", randomBranch.getTerminal1().getBusView().getConnectableBus().getId());
@@ -494,19 +451,6 @@ public class RandomMeasuresGenerator {
                     // Pick a branch at random and remove it from the list of potential choices for next measurement (if some branches are still to be picked)
                     if (!listOfBranchesQfSide2.isEmpty()) {
                         randomBranch = listOfBranchesQfSide2.remove(random.nextInt(listOfBranchesQfSide2.size()));
-                        // If bias towards HV nodes activated, pick 2 branches at random and keep the one connected to the highest voltage level
-                        if (withBias && !listOfBranchesQfSide2.isEmpty()) {
-                            tmpVNomi = Math.max(randomBranch.getTerminal1().getVoltageLevel().getNominalV(), randomBranch.getTerminal2().getVoltageLevel().getNominalV());
-                            randomBranchSecondPick = listOfBranchesQfSide2.remove(random.nextInt(listOfBranchesQfSide2.size()));
-                            if (tmpVNomi < Math.max(randomBranchSecondPick.getTerminal1().getVoltageLevel().getNominalV(), randomBranchSecondPick.getTerminal2().getVoltageLevel().getNominalV())) {
-                                // Put back the first pick in the list of branches and keep the second pick
-                                listOfBranchesQfSide2.add(randomBranch);
-                                randomBranch = randomBranchSecondPick;
-                            } // Else, put back the second pick and keep the first pick
-                            else {
-                                listOfBranchesQfSide2.add(randomBranchSecondPick);
-                            }
-                        }
                         // Get location IDs and the corresponding value (in SI), as given by the Load Flow solution
                         randomMeasure.put("BranchID", randomBranch.getId());
                         randomMeasure.put("FirstBusID", randomBranch.getTerminal2().getBusView().getConnectableBus().getId());
@@ -538,19 +482,6 @@ public class RandomMeasuresGenerator {
                 // Pick a bus at random and remove it from the list (if some buses are still to be picked)
                 if (!listOfBusesP.isEmpty()) {
                     randomBus = listOfBusesP.remove(random.nextInt(listOfBusesP.size()));
-                    // If bias towards HV nodes activated, pick 2 buses at random and keep the one with the highest voltage level
-                    if (withBias && !listOfBusesP.isEmpty()) {
-                        tmpVNomi = randomBus.getVoltageLevel().getNominalV();
-                        randomBusSecondPick = listOfBusesP.remove(random.nextInt(listOfBusesP.size()));
-                        if (tmpVNomi < randomBusSecondPick.getVoltageLevel().getNominalV()) {
-                            // Put back the first pick in the list of buses and keep the second pick
-                            listOfBusesP.add(randomBus);
-                            randomBus = randomBusSecondPick;
-                        } // Else, put back the second pick in the list and keep the first pick
-                        else {
-                            listOfBusesP.add(randomBusSecondPick);
-                        }
-                    }
                     // Get bus ID
                     randomMeasure.put("BusID", randomBus.getId());
                     // Get measurement value (in SI), as given by the Load Flow solution
@@ -575,19 +506,6 @@ public class RandomMeasuresGenerator {
                 // Pick a bus at random and remove it from the list (if some buses are still to be picked)
                 if (!listOfBusesQ.isEmpty()) {
                     randomBus = listOfBusesQ.remove(random.nextInt(listOfBusesQ.size()));
-                    // If bias towards HV nodes activated, pick 2 buses at random and keep the one with the highest voltage level
-                    if (withBias && !listOfBusesQ.isEmpty()) {
-                        tmpVNomi = randomBus.getVoltageLevel().getNominalV();
-                        randomBusSecondPick = listOfBusesQ.remove(random.nextInt(listOfBusesQ.size()));
-                        if (tmpVNomi < randomBusSecondPick.getVoltageLevel().getNominalV()) {
-                            // Put back the first pick in the list of buses and keep the second pick
-                            listOfBusesQ.add(randomBus);
-                            randomBus = randomBusSecondPick;
-                        } // Else, put back the second pick in the list and keep the first pick
-                        else {
-                            listOfBusesQ.add(randomBusSecondPick);
-                        }
-                    }
                     // Get bus ID
                     randomMeasure.put("BusID", randomBus.getId());
                     // Get measurement value (in SI), as given by the Load Flow solution
@@ -614,19 +532,6 @@ public class RandomMeasuresGenerator {
                 // Pick a bus at random and remove it from the list (if some buses are still to be picked)
                 if (!listOfBusesV.isEmpty()) {
                     randomBus = listOfBusesV.remove(random.nextInt(listOfBusesV.size()));
-                    // If bias towards HV nodes activated, pick 2 buses at random and keep the one with the highest voltage level
-                    if (withBias && !listOfBusesV.isEmpty()) {
-                        tmpVNomi = randomBus.getVoltageLevel().getNominalV();
-                        randomBusSecondPick = listOfBusesV.remove(random.nextInt(listOfBusesV.size()));
-                        if (tmpVNomi < randomBusSecondPick.getVoltageLevel().getNominalV()) {
-                            // Put back the first pick in the list of buses and keep the second pick
-                            listOfBusesV.add(randomBus);
-                            randomBus = randomBusSecondPick;
-                        } // Else, put back the second pick in the list and keep the first pick
-                        else {
-                            listOfBusesV.add(randomBusSecondPick);
-                        }
-                    }
                     // Get bus ID
                     randomMeasure.put("BusID", randomBus.getId());
                     // Get measurement value (in SI), as given by the Load Flow solution
@@ -689,7 +594,6 @@ public class RandomMeasuresGenerator {
      * @param ctrlMeasType The measurement type whose ratio is being controlled.
      * @param seed (optional) The seed used by the random generator
      * @param ratioMeasuresToBuses (optional) The ratio "number of measures"/"number of buses in the network" used to compute the number of measures generated
-     * @param biasTowardsHVNodes (optional) If "true", a bias towards HV nodes, making them more likely to be picked as the locations of generated measurements
      * @param addNoise (optional) If "true", add gaussian noise (based on measurement type's variance) to the measurement value
      * @param noiseAmplitude (optional) A number k (default 1) defining noise amplitude : noise will be pick in [-K x sigma + measValue; K x sigma + measValue]
      * @param noPickBranchID (optional) The ID of a branch for which no Pf nor Qf measurements will be picked
@@ -697,8 +601,7 @@ public class RandomMeasuresGenerator {
     public static void generateRandomMeasurementsWithCtrlMeasureRatio(StateEstimatorKnowledge knowledge, Network network,
                                                   Double ratioForCtrlMeasType, String ctrlMeasType,
                                                   Optional<Integer> seed, Optional<Double> ratioMeasuresToBuses,
-                                                  Optional<Boolean> biasTowardsHVNodes, Optional<Boolean> addNoise,
-                                                  Optional<Double> noiseAmplitude, Optional<String> noPickBranchID)
+                                                  Optional<Boolean> addNoise, Optional<Double> noiseAmplitude, Optional<String> noPickBranchID)
             throws IllegalArgumentException {
 
         // Compute the number of measurements that must be generated
@@ -764,12 +667,6 @@ public class RandomMeasuresGenerator {
         Branch randomBranch;
         int randomSide;
         Bus randomBus;
-
-        // The following variables will be used only if bias towards HV nodes is activated
-        boolean withBias = biasTowardsHVNodes.isPresent() && biasTowardsHVNodes.get().equals(true);
-        Branch randomBranchSecondPick;
-        Bus randomBusSecondPick;
-        double tmpVNomi;
 
         // Initialize a boolean stating if noise must be added to measurements,
         // and a Random for gaussian noise (use constant seed for repeatability)
@@ -853,19 +750,6 @@ public class RandomMeasuresGenerator {
                     // Pick a branch at random and remove it from the list of potential choices for next measurement (if some branches are still to be picked)
                     if (!listOfBranchesPfSide1.isEmpty()) {
                         randomBranch = listOfBranchesPfSide1.remove(random.nextInt(listOfBranchesPfSide1.size()));
-                        // If bias towards HV nodes activated, pick 2 branches at random and keep the one connected to the highest voltage level
-                        if (withBias && !listOfBranchesPfSide1.isEmpty()) {
-                            tmpVNomi = Math.max(randomBranch.getTerminal1().getVoltageLevel().getNominalV(), randomBranch.getTerminal2().getVoltageLevel().getNominalV());
-                            randomBranchSecondPick = listOfBranchesPfSide1.remove(random.nextInt(listOfBranchesPfSide1.size()));
-                            if (tmpVNomi < Math.max(randomBranchSecondPick.getTerminal1().getVoltageLevel().getNominalV(), randomBranchSecondPick.getTerminal2().getVoltageLevel().getNominalV())) {
-                                // Put back the first pick in the list of branches and keep the second pick
-                                listOfBranchesPfSide1.add(randomBranch);
-                                randomBranch = randomBranchSecondPick;
-                            } // Else, put back the second pick and keep the first pick
-                            else {
-                                listOfBranchesPfSide1.add(randomBranchSecondPick);
-                            }
-                        }
                         // Get location IDs and the corresponding value (in SI), as given by the Load Flow solution
                         randomMeasure.put("BranchID", randomBranch.getId());
                         randomMeasure.put("FirstBusID", randomBranch.getTerminal1().getBusView().getConnectableBus().getId());
@@ -875,8 +759,6 @@ public class RandomMeasuresGenerator {
                         if (Double.isNaN(measurementValue)) {
                             measurementValue = 0;
                         }
-
-                        // TODO : modifier le scaling de la variance
                         // Get and add measurement variance (in SI^2)
                         measurementVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("Pf")
                                         * Math.max(Math.abs(measurementValue), MIN_ACTIVE_POWER_MW)
@@ -895,19 +777,6 @@ public class RandomMeasuresGenerator {
                     // Pick a branch at random and remove it from the list of potential choices for next measurement (if some branches are still to be picked)
                     if (!listOfBranchesPfSide2.isEmpty()) {
                         randomBranch = listOfBranchesPfSide2.remove(random.nextInt(listOfBranchesPfSide2.size()));
-                        // If bias towards HV nodes activated, pick 2 branches at random and keep the one connected to the highest voltage level
-                        if (withBias && !listOfBranchesPfSide2.isEmpty()) {
-                            tmpVNomi = Math.max(randomBranch.getTerminal1().getVoltageLevel().getNominalV(), randomBranch.getTerminal2().getVoltageLevel().getNominalV());
-                            randomBranchSecondPick = listOfBranchesPfSide2.remove(random.nextInt(listOfBranchesPfSide2.size()));
-                            if (tmpVNomi < Math.max(randomBranchSecondPick.getTerminal1().getVoltageLevel().getNominalV(), randomBranchSecondPick.getTerminal2().getVoltageLevel().getNominalV())) {
-                                // Put back the first pick in the list of branches and keep the second pick
-                                listOfBranchesPfSide2.add(randomBranch);
-                                randomBranch = randomBranchSecondPick;
-                            } // Else, put back the second pick and keep the first pick
-                            else {
-                                listOfBranchesPfSide2.add(randomBranchSecondPick);
-                            }
-                        }
                         // Get location IDs and the corresponding measurement value (in SI), as given by the Load Flow solution
                         randomMeasure.put("BranchID", randomBranch.getId());
                         randomMeasure.put("FirstBusID", randomBranch.getTerminal2().getBusView().getConnectableBus().getId());
@@ -917,8 +786,6 @@ public class RandomMeasuresGenerator {
                         if (Double.isNaN(measurementValue)) {
                             measurementValue = 0;
                         }
-
-                        // TODO : modifier le scaling de la variance
                         // Get and add measurement variance (in SI^2)
                         measurementVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("Pf")
                                         * Math.max(Math.abs(measurementValue), MIN_ACTIVE_POWER_MW)
@@ -945,19 +812,6 @@ public class RandomMeasuresGenerator {
                     // Pick a branch at random and remove it from the list of potential choices for next measurement (if some branches are still to be picked)
                     if (!listOfBranchesQfSide1.isEmpty()) {
                         randomBranch = listOfBranchesQfSide1.remove(random.nextInt(listOfBranchesQfSide1.size()));
-                        // If bias towards HV nodes activated, pick 2 branches at random and keep the one connected to the highest voltage level
-                        if (withBias && !listOfBranchesQfSide1.isEmpty()) {
-                            tmpVNomi = Math.max(randomBranch.getTerminal1().getVoltageLevel().getNominalV(), randomBranch.getTerminal2().getVoltageLevel().getNominalV());
-                            randomBranchSecondPick = listOfBranchesQfSide1.remove(random.nextInt(listOfBranchesQfSide1.size()));
-                            if (tmpVNomi < Math.max(randomBranchSecondPick.getTerminal1().getVoltageLevel().getNominalV(), randomBranchSecondPick.getTerminal2().getVoltageLevel().getNominalV())) {
-                                // Put back the first pick in the list of branches and keep the second pick
-                                listOfBranchesQfSide1.add(randomBranch);
-                                randomBranch = randomBranchSecondPick;
-                            } // Else, put back the second pick and keep the first pick
-                            else {
-                                listOfBranchesQfSide1.add(randomBranchSecondPick);
-                            }
-                        }
                         // Get location IDs and the corresponding value (in SI), as given by the Load Flow solution
                         randomMeasure.put("BranchID", randomBranch.getId());
                         randomMeasure.put("FirstBusID", randomBranch.getTerminal1().getBusView().getConnectableBus().getId());
@@ -967,8 +821,6 @@ public class RandomMeasuresGenerator {
                         if (Double.isNaN(measurementValue)) {
                             measurementValue = 0;
                         }
-
-                        // TODO : modifier le scaling de la variance
                         // Get and add measurement variance (in SI^2)
                         measurementVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("Qf")
                                         * Math.max(Math.abs(measurementValue), MIN_REACTIVE_POWER_MVAR)
@@ -987,19 +839,6 @@ public class RandomMeasuresGenerator {
                     // Pick a branch at random and remove it from the list of potential choices for next measurement (if some branches are still to be picked)
                     if (!listOfBranchesQfSide2.isEmpty()) {
                         randomBranch = listOfBranchesQfSide2.remove(random.nextInt(listOfBranchesQfSide2.size()));
-                        // If bias towards HV nodes activated, pick 2 branches at random and keep the one connected to the highest voltage level
-                        if (withBias && !listOfBranchesQfSide2.isEmpty()) {
-                            tmpVNomi = Math.max(randomBranch.getTerminal1().getVoltageLevel().getNominalV(), randomBranch.getTerminal2().getVoltageLevel().getNominalV());
-                            randomBranchSecondPick = listOfBranchesQfSide2.remove(random.nextInt(listOfBranchesQfSide2.size()));
-                            if (tmpVNomi < Math.max(randomBranchSecondPick.getTerminal1().getVoltageLevel().getNominalV(), randomBranchSecondPick.getTerminal2().getVoltageLevel().getNominalV())) {
-                                // Put back the first pick in the list of branches and keep the second pick
-                                listOfBranchesQfSide2.add(randomBranch);
-                                randomBranch = randomBranchSecondPick;
-                            } // Else, put back the second pick and keep the first pick
-                            else {
-                                listOfBranchesQfSide2.add(randomBranchSecondPick);
-                            }
-                        }
                         // Get location IDs and the corresponding value (in SI), as given by the Load Flow solution
                         randomMeasure.put("BranchID", randomBranch.getId());
                         randomMeasure.put("FirstBusID", randomBranch.getTerminal2().getBusView().getConnectableBus().getId());
@@ -1009,8 +848,6 @@ public class RandomMeasuresGenerator {
                         if (Double.isNaN(measurementValue)) {
                             measurementValue = 0;
                         }
-
-                        // TODO : modifier le scaling de la variance
                         // Get and add measurement variance (in SI^2)
                         measurementVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("Qf")
                                         * Math.max(Math.abs(measurementValue), MIN_REACTIVE_POWER_MVAR)
@@ -1034,25 +871,10 @@ public class RandomMeasuresGenerator {
                 // Pick a bus at random and remove it from the list (if some buses are still to be picked)
                 if (!listOfBusesP.isEmpty()) {
                     randomBus = listOfBusesP.remove(random.nextInt(listOfBusesP.size()));
-                    // If bias towards HV nodes activated, pick 2 buses at random and keep the one with the highest voltage level
-                    if (withBias && !listOfBusesP.isEmpty()) {
-                        tmpVNomi = randomBus.getVoltageLevel().getNominalV();
-                        randomBusSecondPick = listOfBusesP.remove(random.nextInt(listOfBusesP.size()));
-                        if (tmpVNomi < randomBusSecondPick.getVoltageLevel().getNominalV()) {
-                            // Put back the first pick in the list of buses and keep the second pick
-                            listOfBusesP.add(randomBus);
-                            randomBus = randomBusSecondPick;
-                        } // Else, put back the second pick in the list and keep the first pick
-                        else {
-                            listOfBusesP.add(randomBusSecondPick);
-                        }
-                    }
                     // Get bus ID
                     randomMeasure.put("BusID", randomBus.getId());
                     // Get measurement value (in SI), as given by the Load Flow solution
                     measurementValue = -1 * randomBus.getP();
-
-                    // TODO : modifier le scaling de la variance
                     // Get and add measurement variance (in SI^2)
                     measurementVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("P")
                                     * Math.max(Math.abs(measurementValue), MIN_ACTIVE_POWER_MW)
@@ -1074,19 +896,6 @@ public class RandomMeasuresGenerator {
                 // Pick a bus at random and remove it from the list (if some buses are still to be picked)
                 if (!listOfBusesQ.isEmpty()) {
                     randomBus = listOfBusesQ.remove(random.nextInt(listOfBusesQ.size()));
-                    // If bias towards HV nodes activated, pick 2 buses at random and keep the one with the highest voltage level
-                    if (withBias && !listOfBusesQ.isEmpty()) {
-                        tmpVNomi = randomBus.getVoltageLevel().getNominalV();
-                        randomBusSecondPick = listOfBusesQ.remove(random.nextInt(listOfBusesQ.size()));
-                        if (tmpVNomi < randomBusSecondPick.getVoltageLevel().getNominalV()) {
-                            // Put back the first pick in the list of buses and keep the second pick
-                            listOfBusesQ.add(randomBus);
-                            randomBus = randomBusSecondPick;
-                        } // Else, put back the second pick in the list and keep the first pick
-                        else {
-                            listOfBusesQ.add(randomBusSecondPick);
-                        }
-                    }
                     // Get bus ID
                     randomMeasure.put("BusID", randomBus.getId());
                     // Get measurement value (in SI), as given by the Load Flow solution
@@ -1116,19 +925,6 @@ public class RandomMeasuresGenerator {
                 // Pick a bus at random and remove it from the list (if some buses are still to be picked)
                 if (!listOfBusesV.isEmpty()) {
                     randomBus = listOfBusesV.remove(random.nextInt(listOfBusesV.size()));
-                    // If bias towards HV nodes activated, pick 2 buses at random and keep the one with the highest voltage level
-                    if (withBias && !listOfBusesV.isEmpty()) {
-                        tmpVNomi = randomBus.getVoltageLevel().getNominalV();
-                        randomBusSecondPick = listOfBusesV.remove(random.nextInt(listOfBusesV.size()));
-                        if (tmpVNomi < randomBusSecondPick.getVoltageLevel().getNominalV()) {
-                            // Put back the first pick in the list of buses and keep the second pick
-                            listOfBusesV.add(randomBus);
-                            randomBus = randomBusSecondPick;
-                        } // Else, put back the second pick in the list and keep the first pick
-                        else {
-                            listOfBusesV.add(randomBusSecondPick);
-                        }
-                    }
                     // Get bus ID
                     randomMeasure.put("BusID", randomBus.getId());
                     // Get measurement value (in SI), as given by the Load Flow solution
@@ -1170,9 +966,4 @@ public class RandomMeasuresGenerator {
             }
         }
     }
-
-
 }
-
-
-

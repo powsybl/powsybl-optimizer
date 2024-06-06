@@ -18,20 +18,18 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- * @author Pierre ARVY <pierre.arvy@artelys.com>
  * @author Lucas RIOU <lucas.riou@artelys.com>
  */
 public class StateEstimatorThirdHeuristic {
 
-    public static double DECAY_INDEX_THRESHOLD = 1.3;
+    // TODO : valeur à ajuster à Z/N local
+    public static double DECAY_INDEX_THRESHOLD = 1.15;
 
     public static int NB_ITER_MAX = 8;
 
     static Pair<StateEstimatorResults, StateEstimatorKnowledge> thirdHeuristic(StateEstimatorKnowledge knowledgeV1, Network network) throws IOException {
 
         // BEGINNING OF THE HEURISTIC PROCESS
-
-        // TODO : enlarge suspect region when topological inspection is not working the first time ?
 
         // Step 1 : first SE run, no topology changes, all branches are fixed
 
@@ -42,7 +40,7 @@ public class StateEstimatorThirdHeuristic {
             knowledgeV1.setSuspectBranch(branchID, false, initialPresumedStatus);
         }
 
-        // Define the solving options for the state estimation
+        // Define the solving options for the state estimation (default values)
         StateEstimatorOptions options = new StateEstimatorOptions()
                 .setSolvingMode(0).setMaxTimeSolving(30);
 
@@ -126,7 +124,7 @@ public class StateEstimatorThirdHeuristic {
                         knowledgeTmp.setSuspectBranch(branchID, false, presumedStatus);
                     }
 
-                    options.setSolvingMode(0).setMaxTimeSolving(30).setMaxNbTopologyChanges(2);
+                    options.setMaxTimeSolving(30);
 
                     // Run the SE with this knowledge
                     StateEstimatorResults resultsTmp = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
@@ -137,7 +135,6 @@ public class StateEstimatorThirdHeuristic {
                     double objectiveFunctionValueTmp = sortedNormalizedResidualsTmp.stream().mapToDouble(e -> Math.pow(e.getValue(), 2)).sum();
                     boolean check1 = objectiveFunctionValueTmp < objectiveFunctionValue - Math.pow(LNR, 2);
 
-                    // TODO : check n°2 ? Like no large residual in the zone
                     // Check n°2 : is there still a large normalized residual (not necessarily the LNR) in the suspect region ?
                     List<Double> localNormalizedResiduals = new ArrayList<>();
                     localNormalizedResiduals.add(0.);
@@ -258,7 +255,7 @@ public class StateEstimatorThirdHeuristic {
                         knowledgeTmp.setSuspectBranch(branchID, suspectBranches.contains(branchID), presumedStatus);
                     }
 
-                    options.setMaxNbTopologyChanges(2).setSolvingMode(0).setMaxTimeSolving(60);
+                    options.setSolvingMode(0).setMaxTimeSolving(60).setMaxNbTopologyChanges(2);
 
                     // Run the SE with this knowledge
                     StateEstimatorResults resultsTmp = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
@@ -338,7 +335,7 @@ public class StateEstimatorThirdHeuristic {
                     nbIter++;
 
                     // Gross measurement error is likely: investigate but remove check n°2 from case A
-                    System.out.println("TESTING CASE C : GROSS MEASUREMENT ERROR ? (check n°2 removed)");
+                    System.out.println("TESTING CASE C : GROSS MEASUREMENT ERROR ? (similar to case A but check n°2 removed)");
 
                     // Make a deep copy of "knowledgeV2"
                     StateEstimatorKnowledge knowledgeTmp = new StateEstimatorKnowledge(knowledgeV2);
@@ -354,7 +351,7 @@ public class StateEstimatorThirdHeuristic {
                         knowledgeTmp.setSuspectBranch(branchID, false, presumedStatus);
                     }
 
-                    options.setSolvingMode(0).setMaxTimeSolving(30).setMaxNbTopologyChanges(2);
+                    options.setMaxTimeSolving(30);
 
                     // Run the SE with this knowledge
                     StateEstimatorResults resultsTmp = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
@@ -389,7 +386,7 @@ public class StateEstimatorThirdHeuristic {
                     else {
                         // If the measurement removal has not worked, two cases:
                         if (caseD) {
-                            // All options have been tried without finding a way to correct the error detected : end of the process
+                            // All options have been tested without finding a way to correct the error detected : end of the process
                             System.out.println("[WARNING] Heuristic process has failed to correct detected error : last found estimates returned.");
                             return Pair.of(resultsV2, knowledgeV2);
                         }
@@ -405,8 +402,8 @@ public class StateEstimatorThirdHeuristic {
 
                     nbIter++;
 
-                    // Topology error is likely: investigate while extending the set of suspect branches (as defined in case B)
-                    System.out.println("TESTING CASE D : TOPOLOGY ERROR ? (suspect region extended)");
+                    // Topology error is likely: investigate an extended set of suspect branches (w.r.t. what is defined in case B)
+                    System.out.println("TESTING CASE D : TOPOLOGY ERROR ? (similar to case B but suspect region extended)");
 
                     // Find all branches and buses closely related to the LNR measurement
                     Set<String> suspectBranches = new HashSet<>();
@@ -454,11 +451,8 @@ public class StateEstimatorThirdHeuristic {
                         extendedSuspectBranches.addAll(suspectBranch.getTerminal2().getBusView().getConnectableBus()
                                 .getTwoWindingsTransformerStream().map(Identifiable::getId).toList());
                     }
-                    // Remove from extendedSuspectBranches all branches contained in suspectBranches (already inspected in case B)
-                    extendedSuspectBranches.removeAll(suspectBranches);
 
-
-                    System.out.println("Suspect branches : ");
+                    System.out.println("Suspect branches (extended) : ");
                     System.out.println(extendedSuspectBranches);
 
                     // Make a copy of "knowledgeV2"
@@ -486,7 +480,7 @@ public class StateEstimatorThirdHeuristic {
                     // Check n°2 : is there still a large normalized residual (not necessarily the LNR) in the region defined by suspectBranches ?
                     List<Double> localNormalizedResiduals = new ArrayList<>();
                     localNormalizedResiduals.add(0.);
-                    // Find residuals directly linked to one of the buses of the changed branch
+                    // Find residuals directly linked to suspectBranches
                     for (var normalizedResidual : sortedNormalizedResidualsTmp) {
                         ArrayList<String> measure = knowledgeTmp.getMeasure(normalizedResidual.getKey());
                         if (measure.get(0).equals("Pf") | measure.get(0).equals("Qf")) {
@@ -504,7 +498,6 @@ public class StateEstimatorThirdHeuristic {
                     }
                     // Then find the largest residual among these local residuals, and check if it is below a certain threshold
                     boolean check2 = Collections.max(localNormalizedResiduals) < 10;
-
 
                     if (check1 && check2) {
                         // Topology change was a success : save it and move on
@@ -536,7 +529,7 @@ public class StateEstimatorThirdHeuristic {
                     // If the topology correction has not worked, two cases:
                     else {
                         if (caseC) {
-                            // All options have been tried without finding a way to correct the error detected : end of the process
+                            // All options have been tested without finding a way to correct the error detected : end of the process
                             System.out.println("[WARNING] Heuristic process is out of solutions to correct errors detected and has ended : last found estimates returned.");
                             return Pair.of(resultsV2, knowledgeV2);
                         }
@@ -556,7 +549,7 @@ public class StateEstimatorThirdHeuristic {
         // END OF THE ITERATIVE PROCESS
 
         // Indicate if the process has converged or not
-        if (nbIter==nbIterMax && LNR > 3) {
+        if (nbIter>=nbIterMax && LNR > 3) {
             System.out.println("[WARNING] Heuristic process has not converged (nbIter = nbIterMax)");
         }
 

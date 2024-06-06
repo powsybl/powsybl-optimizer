@@ -95,8 +95,8 @@ public class Ieee118CtrlMeasTypeTests {
                 RandomMeasuresGenerator.generateRandomMeasurementsWithCtrlMeasureRatio(knowledge, network,
                         ratioTested, "Qf",
                         Optional.of(seed), Optional.of(4.0),
-                        Optional.empty(), Optional.of(true),
-                        Optional.empty(), Optional.empty());
+                        Optional.of(true), Optional.empty(),
+                        Optional.empty());
 
                 // Define the solving options for the state estimation
                 StateEstimatorOptions options = new StateEstimatorOptions()

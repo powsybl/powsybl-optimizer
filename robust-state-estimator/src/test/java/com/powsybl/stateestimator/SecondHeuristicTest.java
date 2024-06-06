@@ -65,9 +65,8 @@ public class SecondHeuristicTest {
 
         RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
                 Optional.of(2), Optional.of(5.),
-                Optional.empty(), Optional.of(true),
-                Optional.empty(), Optional.empty(),
-                Optional.of(true));
+                Optional.of(true), Optional.empty(),
+                Optional.empty(), Optional.of(true));
 
         long startTime = System.nanoTime();
 
@@ -152,9 +151,8 @@ public class SecondHeuristicTest {
             // Randomly generate measurements out of load flow results
             RandomMeasuresGenerator.generateRandomMeasurements(knowledgeV1, network,
                     Optional.of(seed), Optional.of(ratioTested),
-                    Optional.of(false), Optional.of(true),
-                    Optional.empty(), Optional.empty(),
-                    Optional.of(true));
+                    Optional.of(true), Optional.empty(),
+                    Optional.empty(), Optional.of(true));
 
             // Run heuristic SE on knowledgeV1
             Pair<StateEstimatorResults, StateEstimatorKnowledge> secondHeuristicResults = StateEstimatorSecondHeuristic.secondHeuristic(knowledgeV1, network);

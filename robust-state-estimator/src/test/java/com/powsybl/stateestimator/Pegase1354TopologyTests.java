@@ -107,8 +107,8 @@ public class Pegase1354TopologyTests {
                 RandomMeasuresGenerator.generateRandomMeasurementsWithCtrlMeasureRatio(knowledge, network,
                         0.1991137371, "P",
                         Optional.of(seed), Optional.of(ratioTested),
-                        Optional.empty(), Optional.of(false),
-                        Optional.empty(), Optional.empty());
+                        Optional.of(false), Optional.empty(),
+                        Optional.empty());
 
                 // Define the solving options for the state estimation
                 StateEstimatorOptions options = new StateEstimatorOptions()

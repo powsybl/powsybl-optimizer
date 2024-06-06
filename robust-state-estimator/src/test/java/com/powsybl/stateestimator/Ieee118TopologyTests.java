@@ -115,9 +115,8 @@ public class Ieee118TopologyTests {
                 // Randomly generate measurements out of LF results using proper seed and Z to N ratio
                 RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
                         Optional.of(seed), Optional.of(ratioTested),
-                        Optional.empty(), Optional.of(false),
-                        Optional.empty(), Optional.empty(),
-                        Optional.of(true));
+                        Optional.of(false), Optional.empty(),
+                        Optional.empty(), Optional.of(true));
 
                 //RandomMeasuresGenerator.generateRandomMeasurementsWithCtrlMeasureRatio(knowledge, network,
                 //        0.18644067796, "P",

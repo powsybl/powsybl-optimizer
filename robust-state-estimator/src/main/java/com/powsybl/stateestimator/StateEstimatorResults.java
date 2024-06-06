@@ -274,7 +274,7 @@ public class StateEstimatorResults {
     }
 
     /**
-     * Print all the indicators of the state estimation.
+     * Print the main indicators on the state estimation.
      */
     public void printIndicators() {
         printIndicator(runIndicators);
@@ -285,7 +285,7 @@ public class StateEstimatorResults {
      * Print the given indicators in a beautiful box.
      * @param indicators The list of indicator to print.
      */
-    public void printIndicator(List<Pair<String, String>> indicators) {
+    private void printIndicator(List<Pair<String, String>> indicators) {
         String nameColumn1 = "Indicators";
         String nameColumn2 = "Values";
 
