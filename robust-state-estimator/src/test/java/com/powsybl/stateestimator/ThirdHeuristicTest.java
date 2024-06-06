@@ -70,12 +70,13 @@ public class ThirdHeuristicTest {
 
         long startTime = System.nanoTime();
 
-        Pair<StateEstimatorResults, StateEstimatorKnowledge> thirdHeuristicResults = StateEstimatorThirdHeuristic.thirdHeuristic(knowledge, network);
+        HashMap<String, Object> thirdHeuristicResults = StateEstimatorThirdHeuristic.thirdHeuristic(knowledge, network);
 
         long endTime   = System.nanoTime();
 
-        StateEstimatorResults finalResults = thirdHeuristicResults.getFirst();
-        StateEstimatorKnowledge finalKnowledge = thirdHeuristicResults.getSecond();
+        StateEstimatorResults finalResults = (StateEstimatorResults) thirdHeuristicResults.get("Results");
+        StateEstimatorKnowledge finalKnowledge = (StateEstimatorKnowledge) thirdHeuristicResults.get("Knowledge");
+        int nbIter = (int) thirdHeuristicResults.get("NbIter");
 
         finalResults.printNetworkTopology();
 
@@ -97,8 +98,8 @@ public class ThirdHeuristicTest {
                 "MeanQfError(%)", "StdQfError(%)", "MedianQfError(%)", "MaxQfError(%)",
                 "5percentileQfError(%)", "95percentileQfError(%)", "MaxQfAbsoluteError(MVar)",
                 "NbVMeasures","NbPfMeasures","NbQfMeasures","NbPMeasures","NbQMeasures",
-                "ObjectiveFunctionValue", "LinesChanged"
-                //,"PerformanceIndex"
+                "ObjectiveFunctionValue", "LinesChanged", "NbIter"
+                ,"PerformanceIndex"
         );
         List<List<String>> data = new ArrayList<>();
 
@@ -125,7 +126,7 @@ public class ThirdHeuristicTest {
         // Reconnect the erroneous line, if any
         network.getLine(erroneousLine).connect();
 
-        double ratioTested = 5.0;
+        double ratioTested = 4.0;
 
         for (int seed = 0; seed < 100; seed++) {
 
@@ -136,29 +137,30 @@ public class ThirdHeuristicTest {
             System.out.println();
 
             // Create "knowledge" instance : for IEEE 118 bus, the slack is "VL69_0"
-            StateEstimatorKnowledge knowledgeV1 = new StateEstimatorKnowledge(network, "VL69_0");
+            StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network, "VL69_0");
 
             // Add a gross error on measure Pf(VL27 --> VL28) : 80 MW (false) instead of 32.6 MW (true)
             //Map<String, String> grossMeasure1 = Map.of("BranchID", "L27-28-1", "FirstBusID", "VL27_0", "SecondBusID", "VL28_0",
-            //        "Value", "50.0", "Variance", "0.1306", "Type", "Pf");
-            //knowledgeV1.addMeasure(1, grossMeasure1, network);
+            //        "Value", "80.0", "Variance", "0.1306", "Type", "Pf");
+            //knowledge.addMeasure(1, grossMeasure1, network);
 
             // Add a gross error on measure V(VL60) : 225 kV (false) instead of 137 kV (true)
             //Map<String, String> grossMeasure2 = Map.of("BusID", "VL60_0",
             //       "Value", "225.0", "Variance", "0.488", "Type", "V");
-            //knowledgeV1.addMeasure(2, grossMeasure2, network);
+            //knowledge.addMeasure(2, grossMeasure2, network);
 
             // Randomly generate measurements out of load flow results
-            RandomMeasuresGenerator.generateRandomMeasurements(knowledgeV1, network,
-                    Optional.of(seed), Optional.of(9.),
-                    Optional.of(false), Optional.empty(),
-                    Optional.empty(), Optional.of(false));
+            RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
+                    Optional.of(seed), Optional.of(ratioTested),
+                    Optional.of(true), Optional.empty(),
+                    Optional.empty(), Optional.of(true));
 
             // Run heuristic SE on knowledgeV1
-            Pair<StateEstimatorResults, StateEstimatorKnowledge> thirdHeuristicResults = StateEstimatorThirdHeuristic.thirdHeuristic(knowledgeV1, network);
+            HashMap<String, Object> thirdHeuristicResults = StateEstimatorThirdHeuristic.thirdHeuristic(knowledge, network);
 
-            StateEstimatorResults finalResults = thirdHeuristicResults.getFirst();
-            StateEstimatorKnowledge finalKnowledge = thirdHeuristicResults.getSecond();
+            StateEstimatorResults finalResults = (StateEstimatorResults) thirdHeuristicResults.get("Results");
+            StateEstimatorKnowledge finalKnowledge = (StateEstimatorKnowledge) thirdHeuristicResults.get("Knowledge");
+            int nbIter = (int) thirdHeuristicResults.get("NbIter");
 
             // Compute the number of topology errors, and find if the erroneous line (if any) was given the correct status ("OPENED")
             int falseLineDetected = 0;
@@ -209,13 +211,14 @@ public class ThirdHeuristicTest {
                     String.valueOf(finalKnowledge.getActivePowerInjectedMeasures().size()),
                     String.valueOf(finalKnowledge.getReactivePowerInjectedMeasures().size()),
                     String.valueOf(finalResults.getObjectiveFunctionValue()),
-                    String.join(" & ", linesChanged)
-                    //,String.valueOf(evaluator.computePerformanceIndex())
+                    String.join(" & ", linesChanged),
+                    String.valueOf(nbIter)
+                    ,String.valueOf(evaluator.computePerformanceIndex())
             ));
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("ZN9_test_EnsObs_NoNoise_Pf27-28-error_ZN5_ThirdHeuristic_IEEE118.csv");
+        try (FileWriter fileWriter = new FileWriter("WithNoise_L45-46-OPEN_ZN4_1.15Thresh_8Iter_EnsObs_Heuristic3_IEEE118.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 
