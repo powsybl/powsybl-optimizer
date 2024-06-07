@@ -53,9 +53,9 @@ public class ThirdHeuristicTest {
         StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network, "VL-4231_0"); // for case1354_pegase
 
         // Add measurement error : Active power flow P at VL-4141_0 for branch LINE-4141-1311 : 102,488691 (true)
-        //Map<String, String> grossMeasure = Map.of("BranchID", "LINE-4141-1311", "FirstBusID", "VL-4141_0", "SecondBusID", "VL-1311_0",
-        //        "Value", "300.0", "Variance", "1.269", "Type", "Pf");
-        //knowledge.addMeasure(1, grossMeasure, network);
+        Map<String, String> grossMeasure = Map.of("BranchID", "LINE-4141-1311", "FirstBusID", "VL-4141_0", "SecondBusID", "VL-1311_0",
+                "Value", "300.0", "Variance", "1.269", "Type", "Pf");
+        knowledge.addMeasure(1, grossMeasure, network);
 
         //RandomMeasuresGenerator.generateRandomMeasurementsWithCtrlMeasureRatio(knowledge, network,
         //        0.1991137371, "P",
@@ -78,9 +78,7 @@ public class ThirdHeuristicTest {
         StateEstimatorKnowledge finalKnowledge = (StateEstimatorKnowledge) thirdHeuristicResults.get("Knowledge");
         int nbIter = (int) thirdHeuristicResults.get("NbIter");
 
-        finalResults.printNetworkTopology();
-
-        System.out.printf("%nTime to solve problem : %f s %n", (endTime-startTime) / 1e9);
+        System.out.printf("%nTime to run heuristic process : %f s %n", (endTime-startTime) / 1e9);
     }
 
     @Test
@@ -126,7 +124,7 @@ public class ThirdHeuristicTest {
         // Reconnect the erroneous line, if any
         network.getLine(erroneousLine).connect();
 
-        double ratioTested = 4.0;
+        double ratioTested = 5.0;
 
         for (int seed = 0; seed < 100; seed++) {
 
@@ -140,9 +138,9 @@ public class ThirdHeuristicTest {
             StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network, "VL69_0");
 
             // Add a gross error on measure Pf(VL27 --> VL28) : 80 MW (false) instead of 32.6 MW (true)
-            //Map<String, String> grossMeasure1 = Map.of("BranchID", "L27-28-1", "FirstBusID", "VL27_0", "SecondBusID", "VL28_0",
-            //        "Value", "80.0", "Variance", "0.1306", "Type", "Pf");
-            //knowledge.addMeasure(1, grossMeasure1, network);
+            Map<String, String> grossMeasure1 = Map.of("BranchID", "L27-28-1", "FirstBusID", "VL27_0", "SecondBusID", "VL28_0",
+                    "Value", "80.0", "Variance", "0.1306", "Type", "Pf");
+            knowledge.addMeasure(1, grossMeasure1, network);
 
             // Add a gross error on measure V(VL60) : 225 kV (false) instead of 137 kV (true)
             //Map<String, String> grossMeasure2 = Map.of("BusID", "VL60_0",

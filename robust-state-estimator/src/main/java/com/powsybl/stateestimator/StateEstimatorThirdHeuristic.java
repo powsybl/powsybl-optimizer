@@ -55,7 +55,8 @@ public class StateEstimatorThirdHeuristic {
         // Compute and print objective function value
         double objectiveFunctionValue = sortedNormalizedResiduals.stream().mapToDouble(e-> Math.pow(e.getValue(),2)).sum();
         System.out.println("ROOT NODE (STATE ESTIMATION n°0) :");
-        System.out.printf("Objective function value : %f %n", objectiveFunctionValue);
+        System.out.printf("Objective function value normalized by number of measurements : %f %n",
+                objectiveFunctionValue / sortedNormalizedResiduals.size());
 
         // Prepare the heuristic search tree
         StateEstimatorKnowledge knowledgeV2 = knowledgeV1;
@@ -94,6 +95,12 @@ public class StateEstimatorThirdHeuristic {
             boolean caseB = !caseA;
             boolean caseC = false;
             boolean caseD = false;
+
+            // Initialize variables to save results from case A if ever reaching case C (no need to run the SE again)
+            boolean check1ForCaseC = false;
+            StateEstimatorResults resultsTmpForCaseC = null;
+            List<Map.Entry<Integer, Double>> sortedNormalizedResidualsTmpForCaseC = null;
+            double objectiveFunctionValueTmpForCaseC = 0.; // value without any importance
 
             boolean keepInvestigating = true;
 
@@ -194,6 +201,11 @@ public class StateEstimatorThirdHeuristic {
                             // Else, switch to case B (keep caseA = true so that caseB knows we come from caseA)
                             caseB = true;
                         }
+                        // Save results for case C, so that there is no need to run SE again when reaching case C
+                        check1ForCaseC = check1;
+                        resultsTmpForCaseC = resultsTmp;
+                        sortedNormalizedResidualsTmpForCaseC = sortedNormalizedResidualsTmp;
+                        objectiveFunctionValueTmpForCaseC = objectiveFunctionValueTmp;
                     }
                 }
 
@@ -239,7 +251,7 @@ public class StateEstimatorThirdHeuristic {
                         }
                     }
 
-                    System.out.println("Suspect branches : ");
+                    System.out.printf("%nSuspect branches (%d) : %n", suspectBranches.size());
                     System.out.println(suspectBranches);
 
                     // Make a copy of "knowledgeV2"
@@ -330,10 +342,10 @@ public class StateEstimatorThirdHeuristic {
 
                 if (caseC) {
 
-                    nbIter++;
+                    // Note : nbIter is not incremented as no SE run is made in case C
 
                     // Gross measurement error is likely: investigate but remove check n°2 from case A
-                    System.out.printf("%nTESTING CASE C : GROSS MEASUREMENT ERROR ? (case A with check n°2 removed) (SE n°%d/%d)%n",
+                    System.out.printf("%nTESTING CASE C : GROSS MEASUREMENT ERROR ? (case A with check n°2 removed, no SE run) (SE n°%d/%d)%n",
                                         nbIter, nbIterMax);
 
                     // Make a deep copy of "knowledgeV2"
@@ -350,26 +362,15 @@ public class StateEstimatorThirdHeuristic {
                         knowledgeTmp.setSuspectBranch(branchID, false, presumedStatus);
                     }
 
-                    options.setMaxTimeSolving(30);
-
-                    // Run the SE with this knowledge
-                    StateEstimatorResults resultsTmp = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
-                            knowledgeTmp, options, new StateEstimatorConfig(true), new LocalComputationManager());
-
-                    // Check if the objective function value has decreased by an amount equal to the square of the LNR
-                    List<Map.Entry<Integer, Double>> sortedNormalizedResidualsTmp = computeAndSortNormalizedResiduals(knowledgeTmp, resultsTmp);
-                    double objectiveFunctionValueTmp = sortedNormalizedResidualsTmp.stream().mapToDouble(e -> Math.pow(e.getValue(), 2)).sum();
-                    boolean check1 = objectiveFunctionValueTmp < objectiveFunctionValue - Math.pow(LNR, 2);
-
-                    if (check1) {
+                    if (check1ForCaseC) {
                         // Measurement removal was a success : save the change and move on
                         keepInvestigating = false;
                         knowledgeV2 = knowledgeTmp;
-                        resultsV2 = resultsTmp;
-                        sortedNormalizedResiduals = sortedNormalizedResidualsTmp;
+                        resultsV2 = resultsTmpForCaseC;
+                        sortedNormalizedResiduals = sortedNormalizedResidualsTmpForCaseC;
                         nbMeasureLNR = sortedNormalizedResiduals.get(0).getKey();
                         LNR = sortedNormalizedResiduals.get(0).getValue();
-                        objectiveFunctionValue = objectiveFunctionValueTmp;
+                        objectiveFunctionValue = objectiveFunctionValueTmpForCaseC;
                         // Save last estimates as new starting point
                         newStartingPoint = new HashMap<>();
                         for (BusStateEstimate busStateEstimate : resultsV2.getStateVectorEstimate()) {
@@ -387,7 +388,7 @@ public class StateEstimatorThirdHeuristic {
                         if (caseD) {
                             // All options have been tested without finding a way to correct the error detected : end of the process
                             System.out.println("[WARNING] Heuristic process has failed to correct detected error : last found estimates returned.");
-                            HashMap<String, Object> functionReturns = new HashMap<String,Object>();
+                            HashMap<String, Object> functionReturns = new HashMap<>();
                             functionReturns.put("Results", resultsV2);
                             functionReturns.put("Knowledge", knowledgeV2);
                             functionReturns.put("NbIter", -1);
@@ -550,7 +551,8 @@ public class StateEstimatorThirdHeuristic {
 
             }
 
-            System.out.printf("%nNew objective function value : %f%n", objectiveFunctionValue);
+            System.out.printf("%nObjective function value normalized by number of measurements : %f %n",
+                    objectiveFunctionValue / sortedNormalizedResiduals.size());
         }
 
 
