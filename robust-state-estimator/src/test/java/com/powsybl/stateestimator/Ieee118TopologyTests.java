@@ -94,13 +94,12 @@ public class Ieee118TopologyTests {
 
             for (int seed = 0; seed < 100; seed++) {
 
-                // Create "knowledge" instance : for IEEE 118 bus, slack is "VL69_0": our state estimator must use the same slack
                 StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network, "VL69_0");
 
                 // Make all branches suspects and presumed to be closed
-                for (Branch branch: network.getBranches()) {
-                    knowledge.setSuspectBranch(branch.getId(), false, "PRESUMED CLOSED");
-                }
+                //for (Branch branch: network.getBranches()) {
+                //    knowledge.setSuspectBranch(branch.getId(), true, "PRESUMED CLOSED");
+                //}
 
                 // Make only branches around the erroneous one suspects
                 List<String> localSuspectBranches = new ArrayList<>(List.of(
@@ -126,7 +125,7 @@ public class Ieee118TopologyTests {
 
                 // Define the solving options for the state estimation
                 StateEstimatorOptions options = new StateEstimatorOptions()
-                        .setSolvingMode(0).setMaxTimeSolving(120).setMaxNbTopologyChanges(2);
+                        .setSolvingMode(0).setMaxTimeSolving(30).setMaxNbTopologyChanges(1);
 
                 // Run the state estimation and save the results
                 StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
@@ -214,7 +213,7 @@ public class Ieee118TopologyTests {
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("ZN5_InjBus_MinimizTopoChanges_NoMS_120secMax_EnsObs_NoInterVar_SM0_2TopoMax_11Lines_NoNoise_L45-46.csv");
+        try (FileWriter fileWriter = new FileWriter("ZN5_1TopoChMax_MS_30NodesMax_30secMax_EnsObs_SM0_11LinesSusp_NoNoise_L45-46.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 

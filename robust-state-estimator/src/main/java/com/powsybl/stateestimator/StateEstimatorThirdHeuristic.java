@@ -22,9 +22,11 @@ import java.util.*;
  */
 public class StateEstimatorThirdHeuristic {
 
-    public static double DECAY_INDEX_THRESHOLD = 1.15;
+    public static double DECAY_INDEX_THRESHOLD = 1.15; // default value : 1.15
 
-    public static int NB_ITER_MAX = 8;
+    public static int NB_ITER_MAX = 8; // default value : 8
+
+    public static double RESIDUAL_REMOVAL_THRESHOLD = 10.0; // default value : 10
 
     static HashMap<String, Object> thirdHeuristic(StateEstimatorKnowledge knowledgeV1, Network network) throws IOException {
 
@@ -167,7 +169,7 @@ public class StateEstimatorThirdHeuristic {
                         }
                     }
                     // Then find the largest residual among these local residuals, and check if it is below a certain threshold
-                    boolean check2 = Collections.max(localNormalizedResiduals) < 10;
+                    boolean check2 = Collections.max(localNormalizedResiduals) < Math.min(RESIDUAL_REMOVAL_THRESHOLD, LNR);
 
                     if (check1 && check2) {
                         // Measurement removal was a success : save the change and move on
@@ -251,7 +253,7 @@ public class StateEstimatorThirdHeuristic {
                         }
                     }
 
-                    System.out.printf("%nSuspect branches (%d) : %n", suspectBranches.size());
+                    System.out.printf("Suspect branches (%d) : %n", suspectBranches.size());
                     System.out.println(suspectBranches);
 
                     // Make a copy of "knowledgeV2"
@@ -296,7 +298,7 @@ public class StateEstimatorThirdHeuristic {
                         }
                     }
                     // Then find the largest residual among these local residuals, and check if it is below a certain threshold
-                    boolean check2 = Collections.max(localNormalizedResiduals) < 10;
+                    boolean check2 = Collections.max(localNormalizedResiduals) < Math.min(RESIDUAL_REMOVAL_THRESHOLD, LNR);
 
 
                     if (check1 && check2) {
@@ -457,7 +459,7 @@ public class StateEstimatorThirdHeuristic {
                                 .getTwoWindingsTransformerStream().map(Identifiable::getId).toList());
                     }
 
-                    System.out.println("Suspect branches (extended) : ");
+                    System.out.printf("Suspect branches - Extended (%d) : %n", extendedSuspectBranches.size());
                     System.out.println(extendedSuspectBranches);
 
                     // Make a copy of "knowledgeV2"
@@ -502,7 +504,7 @@ public class StateEstimatorThirdHeuristic {
                         }
                     }
                     // Then find the largest residual among these local residuals, and check if it is below a certain threshold
-                    boolean check2 = Collections.max(localNormalizedResiduals) < 10;
+                    boolean check2 = Collections.max(localNormalizedResiduals) < Math.min(RESIDUAL_REMOVAL_THRESHOLD, LNR);
 
                     if (check1 && check2) {
                         // Topology change was a success : save it and move on
