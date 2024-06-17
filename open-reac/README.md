@@ -57,8 +57,11 @@ each serving a specific function:
 - `reactiveopf.dat` defines the network data files imported (files with
   *ampl_* prefix), and the files used to configure the run (files with *param_* prefix).
   Refer to section [3](#3-input).
-- `reactiveopf.mod` defines the sets, parameters and optimization problems (CC, DCOPF, ACOPF) solved in `reactiveopf.run`. 
-  Refer to sections [5](#5-slack-bus--main-connex-component), [6](#6-direct-current-optimal-power-flow) and [7](#7-alternative-current-optimal-power-flow).
+- `iidm_importer.mod`, `or_param_importer.mod` and `commons.mod` defines the sets and parameters of the optimization.
+- `connected_component.mod`, `dcopf.mod` and `acopf.mod` defines the optimization problems solved in `reactiveopf.run`. 
+  Refer to sections [5](#5-slack-bus--main-connex-component), [6](#6-direct-current-optimal-power-flow) and [7](#7-alternative-current-optimal-power-flow),
+  respectively.
+- `connected_component.run`, `dcopf.run`, `acopf_preprocessing.run` and `acopf.run` orchestrate the optimization and their post-process.
 - `reactiveopfoutput.mod` exports result files if the execution of `reactiveopf.run` is successful. 
   Refer to section [8.1](#81-in-case-of-convergence).
 - `reactiveopfexit.run` contains the code executed when the process fails. 
