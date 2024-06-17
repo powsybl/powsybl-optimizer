@@ -38,6 +38,8 @@ public class OpenReacParameters {
 
     private final List<String> configuredReactiveSlackBuses = new ArrayList<>();
 
+    private static final String NOT_FOUND_IN_NETWORK = " not found in the network.";
+
     // Algo parameters
 
     private OpenReacOptimisationObjective objective = OpenReacOptimisationObjective.MIN_GENERATION;
@@ -115,6 +117,11 @@ public class OpenReacParameters {
     private static final String TWO_WINDING_TRANSFORMER_RATIO_VARIABLE_SCALING_FACTOR = "transformer_ratio_variable_scaling_factor";
 
     private double twoWindingTransformerRatioVariableScalingFactor = 1e-3;
+
+    // Shunt compensator alert threshold
+    // (to help reporting the shunt compensators with a delta between optimized and discretized reactive value over this threshold in MVar)
+
+    private double shuntCompensatorActivationAlertThreshold;
 
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.
@@ -507,6 +514,21 @@ public class OpenReacParameters {
         return this;
     }
 
+    /**
+     * @return the shunt compensator activation alert threshold
+     */
+    public double getShuntCompensatorActivationAlertThreshold() {
+        return shuntCompensatorActivationAlertThreshold;
+    }
+
+    public OpenReacParameters setShuntCompensatorActivationAlertThreshold(double shuntCompensatorActivationAlertThreshold) {
+        if (shuntCompensatorActivationAlertThreshold < 0 || Double.isNaN(shuntCompensatorActivationAlertThreshold)) {
+            throw new IllegalArgumentException("The shunt compensator activation alert threshold must be >= 0 and defined to be consistent.");
+        }
+        this.shuntCompensatorActivationAlertThreshold = shuntCompensatorActivationAlertThreshold;
+        return this;
+    }
+
     public List<OpenReacAlgoParam> getAllAlgorithmParams() {
         ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>();
         allAlgoParams.add(objective.toParam());
@@ -600,22 +622,22 @@ public class OpenReacParameters {
 
         for (String shuntId : getVariableShuntCompensators()) {
             if (network.getShuntCompensator(shuntId) == null) {
-                throw new InvalidParametersException("Shunt " + shuntId + " not found in the network.");
+                throw new InvalidParametersException("Shunt " + shuntId + NOT_FOUND_IN_NETWORK);
             }
         }
         for (String genId : getConstantQGenerators()) {
             if (network.getGenerator(genId) == null) {
-                throw new InvalidParametersException("Generator " + genId + " not found in the network.");
+                throw new InvalidParametersException("Generator " + genId + NOT_FOUND_IN_NETWORK);
             }
         }
         for (String transformerId : getVariableTwoWindingsTransformers()) {
             if (network.getTwoWindingsTransformer(transformerId) == null) {
-                throw new InvalidParametersException("Two windings transformer " + transformerId + " not found in the network.");
+                throw new InvalidParametersException("Two windings transformer " + transformerId + NOT_FOUND_IN_NETWORK);
             }
         }
         for (String busId : getConfiguredReactiveSlackBuses()) {
             if (network.getBusView().getBus(busId) == null) {
-                throw new InvalidParametersException("Bus " + busId + " not found in the network.");
+                throw new InvalidParametersException("Bus " + busId + NOT_FOUND_IN_NETWORK);
             }
         }
 

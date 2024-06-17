@@ -12,6 +12,9 @@ import com.powsybl.iidm.modification.ShuntCompensatorModification;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.ShuntCompensator;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
  */
@@ -21,9 +24,14 @@ public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCo
     private static final int ID_COLUMN_INDEX = 1;
     private static final int B_COLUMN_INDEX = 3;
     private static final int BUS_COLUMN_INDEX = 2;
+    private final List<ShuntWithDeltaDiscreteOptimalOverThreshold> shuntWithDeltaDiscreteOptimalOverThresholds = new ArrayList<>();
+    private final double shuntCompensatorActivationAlertThreshold;
 
-    public ShuntCompensatorNetworkOutput(Network network) {
+    public record ShuntWithDeltaDiscreteOptimalOverThreshold(String id, int maximumSectionCount, double discretizedReactiveValue, double optimalReactiveValue) { }
+
+    public ShuntCompensatorNetworkOutput(Network network, double shuntCompensatorActivationAlertThreshold) {
         super(network);
+        this.shuntCompensatorActivationAlertThreshold = shuntCompensatorActivationAlertThreshold;
     }
 
     @Override
@@ -64,6 +72,15 @@ public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCo
                 sectionCount = i;
             }
         }
+        double optimalReactiveValue = Math.abs(b * Math.pow(sc.getTerminal().getVoltageLevel().getNominalV(), 2));
+        double discretizedReactiveValue = Math.abs(sc.getB(sectionCount) * Math.pow(sc.getTerminal().getVoltageLevel().getNominalV(), 2));
+        if (Math.abs(discretizedReactiveValue - optimalReactiveValue) > shuntCompensatorActivationAlertThreshold) {
+            shuntWithDeltaDiscreteOptimalOverThresholds.add(new ShuntWithDeltaDiscreteOptimalOverThreshold(sc.getId(), sc.getMaximumSectionCount(), discretizedReactiveValue, optimalReactiveValue));
+        }
         return sectionCount;
+    }
+
+    public List<ShuntWithDeltaDiscreteOptimalOverThreshold> getShuntsWithDeltaDiscreteOptimalOverThresholds() {
+        return shuntWithDeltaDiscreteOptimalOverThresholds;
     }
 }
