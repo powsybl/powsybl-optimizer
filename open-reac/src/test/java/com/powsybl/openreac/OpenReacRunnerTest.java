@@ -265,7 +265,7 @@ class OpenReacRunnerTest {
     private void testAllModifAndLoadFlow(Network network, String subFolder, OpenReacParameters parameters, ReportNode reportNode) throws IOException {
         runAndApplyAllModifications(network, subFolder, parameters, true, reportNode);
         LoadFlowResult loadFlowResult = LoadFlow.run(network);
-        assertTrue(loadFlowResult.isOk());
+        assertTrue(loadFlowResult.isFullyConverged());
     }
 
     @Test
