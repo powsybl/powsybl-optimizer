@@ -24,10 +24,10 @@ public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCo
     private static final int ID_COLUMN_INDEX = 1;
     private static final int B_COLUMN_INDEX = 3;
     private static final int BUS_COLUMN_INDEX = 2;
-    private final List<ShuntWithDeltaDiscreteOptimalOverThrehold> shuntWithDeltaDiscreteOptimalOverThreholds = new ArrayList<>();
+    private final List<ShuntWithDeltaDiscreteOptimalOverThreshold> shuntWithDeltaDiscreteOptimalOverThresholds = new ArrayList<>();
     private final double shuntCompensatorActivationAlertThreshold;
 
-    public record ShuntWithDeltaDiscreteOptimalOverThrehold(String id, int maximumSectionCount, double discretizedReactiveValue, double optimalReactiveValue) { }
+    public record ShuntWithDeltaDiscreteOptimalOverThreshold(String id, int maximumSectionCount, double discretizedReactiveValue, double optimalReactiveValue) { }
 
     public ShuntCompensatorNetworkOutput(Network network, double shuntCompensatorActivationAlertThreshold) {
         super(network);
@@ -75,12 +75,12 @@ public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCo
         double optimalReactiveValue = Math.abs(b * Math.pow(sc.getTerminal().getVoltageLevel().getNominalV(), 2));
         double discretizedReactiveValue = Math.abs(sc.getB(sectionCount) * Math.pow(sc.getTerminal().getVoltageLevel().getNominalV(), 2));
         if (Math.abs(discretizedReactiveValue - optimalReactiveValue) > shuntCompensatorActivationAlertThreshold) {
-            shuntWithDeltaDiscreteOptimalOverThreholds.add(new ShuntWithDeltaDiscreteOptimalOverThrehold(sc.getId(), sc.getMaximumSectionCount(), discretizedReactiveValue, optimalReactiveValue));
+            shuntWithDeltaDiscreteOptimalOverThresholds.add(new ShuntWithDeltaDiscreteOptimalOverThreshold(sc.getId(), sc.getMaximumSectionCount(), discretizedReactiveValue, optimalReactiveValue));
         }
         return sectionCount;
     }
 
-    public List<ShuntWithDeltaDiscreteOptimalOverThrehold> getShuntsWithDeltaDiscreteOptimalOverThreholds() {
-        return shuntWithDeltaDiscreteOptimalOverThreholds;
+    public List<ShuntWithDeltaDiscreteOptimalOverThreshold> getShuntsWithDeltaDiscreteOptimalOverThresholds() {
+        return shuntWithDeltaDiscreteOptimalOverThresholds;
     }
 }

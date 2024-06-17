@@ -48,8 +48,8 @@ public class NetworkModifications {
         return shuntsOutput.getModifications();
     }
 
-    public List<ShuntCompensatorNetworkOutput.ShuntWithDeltaDiscreteOptimalOverThrehold> getShuntsWithDeltaDiscreteOptimalOverThrehold() {
-        return shuntsOutput.getShuntsWithDeltaDiscreteOptimalOverThreholds();
+    public List<ShuntCompensatorNetworkOutput.ShuntWithDeltaDiscreteOptimalOverThreshold> getShuntsWithDeltaDiscreteOptimalOverThreshold() {
+        return shuntsOutput.getShuntsWithDeltaDiscreteOptimalOverThresholds();
     }
 
     public List<VscConverterStationModification> getVscModifications() {

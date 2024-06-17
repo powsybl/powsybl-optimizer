@@ -67,19 +67,19 @@ public final class Reports {
             .add();
     }
 
-    public static void createShuntModificationsReporter(ReportNode reportNode, String networkId, List<ShuntCompensatorNetworkOutput.ShuntWithDeltaDiscreteOptimalOverThrehold> shuntsWithDeltaDiscreteOptimalOverThreholds) {
-        if (!shuntsWithDeltaDiscreteOptimalOverThreholds.isEmpty()) {
+    public static void createShuntModificationsReporter(ReportNode reportNode, String networkId, List<ShuntCompensatorNetworkOutput.ShuntWithDeltaDiscreteOptimalOverThreshold> shuntsWithDeltaDiscreteOptimalOverThresholds) {
+        if (!shuntsWithDeltaDiscreteOptimalOverThresholds.isEmpty()) {
             ReportNode reportShunts = reportNode.newReportNode()
                 .withMessageTemplate("shuntCompensatorDeltaOverThreshold", "Shunt compensator reactive delta over threshold")
                 .withUntypedValue(NETWORK_ID, networkId)
                 .add();
             reportShunts.newReportNode()
                 .withMessageTemplate("shuntCompensatorDeltaOverThresholdCount", "For ${shuntsCount} shunt compensators, there is a significant difference between the updated discretized reactive power value and the theoretical optimal reactive power value.")
-                .withUntypedValue("shuntsCount", shuntsWithDeltaDiscreteOptimalOverThreholds.size())
+                .withUntypedValue("shuntsCount", shuntsWithDeltaDiscreteOptimalOverThresholds.size())
                 .withSeverity(TypedValue.INFO_SEVERITY)
                 .add();
 
-            shuntsWithDeltaDiscreteOptimalOverThreholds.forEach(shunt ->
+            shuntsWithDeltaDiscreteOptimalOverThresholds.forEach(shunt ->
                 reportShunts.newReportNode()
                     .withMessageTemplate("shuntCompensatorDeltaDiscretizedOptimizedOverThreshold", "After discretization, shunt compensator ${shuntCompensatorId} with ${maxSectionCount} available section(s) has been set to ${discretizedValue} MVar (optimal value : ${optimalValue} MVar)")
                     .withUntypedValue("shuntCompensatorId", shunt.id())
