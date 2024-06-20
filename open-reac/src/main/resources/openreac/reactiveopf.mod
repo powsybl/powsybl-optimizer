@@ -954,8 +954,8 @@ subject to ctr_balance_P{PROBLEM_ACOPF,k in BUSCC}:
 set BUSCC_SLACK := if buses_with_reactive_slacks == "ALL" then BUSCC
                     else if buses_with_reactive_slacks == "NO_GENERATION" then {n in BUSCC: (card{(g,n) in UNITON: (g,n) not in UNIT_FIXQ}==0 and card{(svc,n) in SVCON}==0 and card{(vscconv,n) in VSCCONVON}==0)}
                     else BUSCC inter PARAM_BUSES_WITH_REACTIVE_SLACK; # if = "CONFIGURED", buses given as parameter but in connex component
-var slack1_balance_Q{BUSCC_SLACK} >=0;
-var slack2_balance_Q{BUSCC_SLACK} >=0;
+var slack1_shunt_B{BUSCC_SLACK} >= 0;
+var slack2_shunt_B{BUSCC_SLACK} >= 0;
 #subject to ctr_compl_slack_Q{PROBLEM_ACOPF,k in BUSCC_SLACK}: slack1_balance_Q[k] >= 0 complements slack2_balance_Q[k] >= 0;
 
 subject to ctr_balance_Q{PROBLEM_ACOPF,k in BUSCC}:
@@ -980,8 +980,8 @@ subject to ctr_balance_Q{PROBLEM_ACOPF,k in BUSCC}:
   + sum{(l,k) in LCCCONVON} lccconv_Q0[1,l,k] # Fixed value
   # Slack variables
   + if k in BUSCC_SLACK then
-  (- slack1_balance_Q[k]  # Homogeneous to a generation of reactive power (condensator)
-   + slack2_balance_Q[k]) # homogeneous to a reactive load (self)
+  (- base100MVA * V[k]^2 * slack1_shunt_B[k]  # Homogeneous to a generation of reactive power (condensator)
+   + base100MVA * V[k]^2 * slack2_shunt_B[k]) # homogeneous to a reactive load (self)
   = 0;
 
 
@@ -1013,8 +1013,8 @@ param penalty_voltage_target_low  := 0.01;
 
 minimize problem_acopf_objective:
   sum{n in BUSCC_SLACK} (
-      penalty_invest_rea_pos * slack1_balance_Q[n]
-    + penalty_invest_rea_neg * slack2_balance_Q[n]
+      penalty_invest_rea_pos * base100MVA * slack1_shunt_B[n]
+    + penalty_invest_rea_neg * base100MVA * slack2_shunt_B[n]
     )
 
   # coeff_alpha == 1 : minimize sum of generation, all generating units vary with 1 unique variable alpha

@@ -25,7 +25,7 @@ epsilon_nominal_voltage 1.000000
 min_plausible_low_voltage_limit 0.500000
 max_plausible_high_voltage_limit 1.500000
 ignore_voltage_bounds 0.000000
-buses_with_reactive_slacks NO_GENERATION
+buses_with_reactive_slacks ALL
 PQmax 9000.000000
 defaultPmax 1000.000000
 defaultPmin 0.000000
@@ -44,8 +44,8 @@ nb_bus_in_ACDC_CC 14
 nb_bus_in_AC_CC 14
 nb_bus_in_ACDC_but_out_AC_CC 0
 nb_bus_with_voltage_value 14
-nb_bus_with_reactive_slacks 12
-nb_bus_without_reactive_slacks 2
+nb_bus_with_reactive_slacks 14
+nb_bus_without_reactive_slacks 0
 nb_branch_in_data_file 20
 nb_branch_in_AC_CC 20
 nb_branch_with_nonsmall_impedance 20
