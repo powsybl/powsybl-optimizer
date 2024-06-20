@@ -147,6 +147,10 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                     parser.nextToken();
                     parameters.setTwoWindingTransformerRatioVariableScalingFactor(parser.readValueAs(Double.class));
                 }
+                case "shuntVariableScalingFactor" -> {
+                    parser.nextToken();
+                    parameters.setShuntVariableScalingFactor(parser.readValueAs(Double.class));
+                }
                 default -> throw new IllegalStateException("Unexpected field: " + parser.getCurrentName());
             }
         }

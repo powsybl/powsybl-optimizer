@@ -1,18 +1,18 @@
 final_status OK
 dcopf_status OK
 
-ctime_start 'Mon Apr 01 12:21:04 2024'
+ctime_start 'Thu Jun 20 14:40:34 2024'
 last_solve_result_num 0
 nb_iter_last 6
 nb_iter_total 6
 _ampl_elapsed_time 0.047000
-_total_solve_time 0.046875
+_total_solve_time 0.015625
 total_time 0
 
 operatingSystem windows
 OS 'Windows_NT'
 COMPUTERNAME 'ARTELYS-PC253'
-directory 'C:\Users\parvy\AppData\Local\Temp\ampl_10447832462844756764'
+directory 'C:\Users\parvy\AppData\Local\Temp\ampl_11839740265781623806'
 
 log_level_ampl INFO
 log_level_knitro 2
@@ -37,6 +37,7 @@ default_variable_scaling_factor 1.000000
 default_constraint_scaling_factor 1.000000
 reactive_slack_variable_scaling_factor 0.100000
 transformer_ratio_variable_scaling_factor 0.001000
+shunt_variable_scaling_factor 0.100000
 
 nb_substations 2
 nb_bus_in_data_file 2

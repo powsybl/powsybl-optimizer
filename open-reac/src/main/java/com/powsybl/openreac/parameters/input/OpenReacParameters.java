@@ -116,6 +116,10 @@ public class OpenReacParameters {
 
     private double twoWindingTransformerRatioVariableScalingFactor = 1e-3;
 
+    private static final String SHUNT_VARIABLE_SCALING_FACTOR_KEY = "shunt_variable_scaling_factor";
+
+    private double shuntVariableScalingFactor = 1e-1;
+
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.
      * <p>
@@ -507,6 +511,21 @@ public class OpenReacParameters {
         return this;
     }
 
+    /**
+     * @return the scaling value of shunt variables in ACOPF.
+     */
+    public double getShuntVariableScalingFactor() {
+        return shuntVariableScalingFactor;
+    }
+
+    public OpenReacParameters setShuntVariableScalingFactor(double shuntVariableScalingFactor) {
+        if (shuntVariableScalingFactor <= 0 || Double.isNaN(shuntVariableScalingFactor)) {
+            throw new IllegalArgumentException("Scaling factor for shunt variables must be > 0 and defined to be consistent.");
+        }
+        this.shuntVariableScalingFactor = shuntVariableScalingFactor;
+        return this;
+    }
+
     public List<OpenReacAlgoParam> getAllAlgorithmParams() {
         ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>();
         allAlgoParams.add(objective.toParam());
@@ -532,6 +551,7 @@ public class OpenReacParameters {
         allAlgoParams.add(new OpenReacAlgoParamImpl(DEFAULT_CONSTRAINT_SCALING_FACTOR, Double.toString(defaultConstraintScalingFactor)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(REACTIVE_SLACK_VARIABLE_SCALING_FACTOR, Double.toString(reactiveSlackVariableScalingFactor)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(TWO_WINDING_TRANSFORMER_RATIO_VARIABLE_SCALING_FACTOR, Double.toString(twoWindingTransformerRatioVariableScalingFactor)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(SHUNT_VARIABLE_SCALING_FACTOR_KEY, Double.toString(shuntVariableScalingFactor)));
         return allAlgoParams;
     }
 

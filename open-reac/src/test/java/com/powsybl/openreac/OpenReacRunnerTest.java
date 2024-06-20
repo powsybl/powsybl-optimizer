@@ -118,7 +118,8 @@ class OpenReacRunnerTest {
                 .setDefaultVariableScalingFactor(1.1222)
                 .setDefaultConstraintScalingFactor(0.7889)
                 .setReactiveSlackVariableScalingFactor(0.2)
-                .setTwoWindingTransformerRatioVariableScalingFactor(0.0045);
+                .setTwoWindingTransformerRatioVariableScalingFactor(0.0045)
+                .setShuntVariableScalingFactor(0.101);
 
         LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
                 List.of("empty_case/reactiveopf_results_indic.txt"));
@@ -228,7 +229,7 @@ class OpenReacRunnerTest {
             assertEquals(1, openReacResult.getVscModifications().size());
             assertEquals(7, openReacResult.getGeneratorModifications().size());
             assertEquals(3, openReacResult.getVoltageProfile().size());
-            assertEquals(86, openReacResult.getIndicators().size());
+            assertEquals(87, openReacResult.getIndicators().size());
             assertTrue(openReacResult.getReactiveSlacks().isEmpty());
         }
     }
@@ -248,9 +249,9 @@ class OpenReacRunnerTest {
                         subFolder + "/reactiveopf_results_vsc_converter_stations.csv",
                         subFolder + "/reactiveopf_results_voltages.csv"));
         // To really run open reac, use the commented line below. Be sure that open-reac/src/test/resources/com/powsybl/config/test/config.yml contains your ampl path
-        try (ComputationManager computationManager = new LocalComputationManager()) {
-//        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
-//                localCommandExecutor, ForkJoinPool.commonPool())) {
+//        try (ComputationManager computationManager = new LocalComputationManager()) {
+        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
+                localCommandExecutor, ForkJoinPool.commonPool())) {
             CompletableFuture<OpenReacResult> openReacResults = OpenReacRunner.runAsync(network,
                     network.getVariantManager().getWorkingVariantId(), parameters, new OpenReacConfig(true),
                     computationManager);
@@ -370,9 +371,9 @@ class OpenReacRunnerTest {
                         subFolder + "/reactiveopf_results_vsc_converter_stations.csv",
                         subFolder + "/reactiveopf_results_voltages.csv"));
         // To really run open reac, use the commentede line below. Be sure that open-reac/src/test/resources/com/powsybl/config/test/config.yml contains your ampl path
-        try (ComputationManager computationManager = new LocalComputationManager()) {
-//        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
-//                localCommandExecutor, ForkJoinPool.commonPool())) {
+//        try (ComputationManager computationManager = new LocalComputationManager()) {
+        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
+                localCommandExecutor, ForkJoinPool.commonPool())) {
             OpenReacResult openReacResult = OpenReacRunner.run(network,
                     network.getVariantManager().getWorkingVariantId(), parameters,
                     new OpenReacConfig(true), computationManager);

@@ -37,6 +37,7 @@ default_variable_scaling_factor 1.000000
 default_constraint_scaling_factor 1.000000
 reactive_slack_variable_scaling_factor 0.100000
 transformer_ratio_variable_scaling_factor 0.001000
+shunt_variable_scaling_factor 0.100000
 
 nb_substations 42
 nb_bus_in_data_file 58
