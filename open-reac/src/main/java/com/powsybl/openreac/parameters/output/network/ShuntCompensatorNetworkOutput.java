@@ -15,6 +15,7 @@ import com.powsybl.iidm.network.ShuntCompensator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
@@ -49,14 +50,17 @@ public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCo
     protected void readLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
         String id = stringToIntMapper.getId(AmplSubset.SHUNT, Integer.parseInt(tokens[ID_COLUMN_INDEX]));
         ShuntCompensator shuntCompensator = network.getShuntCompensator(id);
-        double b = readDouble(tokens[B_COLUMN_INDEX]) * AmplConstants.SB / Math.pow(shuntCompensator.getTerminal().getVoltageLevel().getNominalV(), 2);
-        String busId = stringToIntMapper.getId(AmplSubset.BUS, Integer.parseInt(tokens[BUS_COLUMN_INDEX]));
-        Boolean reconnect = null;
-        if (busId != null && shuntCompensator != null && busId.equals(
-            shuntCompensator.getTerminal().getBusView().getConnectableBus().getId())) {
-            reconnect = true;
+        if (Objects.isNull(shuntCompensator)) {
+            modifications.add(new ShuntCompensatorModification(id, null, null));
+        } else {
+            double b = readDouble(tokens[B_COLUMN_INDEX]) * AmplConstants.SB / Math.pow(shuntCompensator.getTerminal().getVoltageLevel().getNominalV(), 2);
+            String busId = stringToIntMapper.getId(AmplSubset.BUS, Integer.parseInt(tokens[BUS_COLUMN_INDEX]));
+            Boolean reconnect = null;
+            if (busId != null && busId.equals(shuntCompensator.getTerminal().getBusView().getConnectableBus().getId())) {
+                reconnect = true;
+            }
+            modifications.add(new ShuntCompensatorModification(id, reconnect, findSectionCount(shuntCompensator, b)));
         }
-        modifications.add(new ShuntCompensatorModification(id, reconnect, shuntCompensator == null ? null : findSectionCount(shuntCompensator, b)));
     }
 
     /**
