@@ -19,28 +19,71 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 import static com.powsybl.openreac.network.ShuntNetworkFactory.create;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Pierre Arvy {@literal <pierre.arvy at artelys.com>}
  */
 class ShuntCompensatorNetworkOutputTest {
-
     @Test
-    void readTestNullShunt() throws IOException {
+    void read() throws IOException {
         Network network = create();
         ShuntCompensatorNetworkOutput output = new ShuntCompensatorNetworkOutput(network, 0);
         StringToIntMapper<AmplSubset> mapper = new StringToIntMapper<>(AmplSubset.class);
-        mapper.newInt(AmplSubset.SHUNT, "shuntId");
+        mapper.newInt(AmplSubset.SHUNT, "SHUNT");
+        for (int i = 0; i < 7; i++) {
+            mapper.newInt(AmplSubset.BUS, "BUS" + i);
+        }
         try (InputStream input = getClass().getResourceAsStream("/mock_outputs/reactiveopf_results_shunts.csv");
              InputStreamReader in = new InputStreamReader(input);
              BufferedReader reader = new BufferedReader(in)) {
             output.read(reader, mapper);
             assertEquals(1, output.getModifications().size());
-            assertEquals("shuntId", output.getModifications().get(0).getShuntCompensatorId());
+            assertEquals("SHUNT", output.getModifications().get(0).getShuntCompensatorId());
             assertNull(output.getModifications().get(0).getConnect());
-            assertNull(output.getModifications().get(0).getSectionCount());
+            assertEquals(0, output.getModifications().get(0).getSectionCount());
+        }
+    }
+
+    @Test
+    void readNullShuntCompensator() throws IOException {
+        Network network = create();
+        ShuntCompensatorNetworkOutput output = new ShuntCompensatorNetworkOutput(network, 0);
+        StringToIntMapper<AmplSubset> mapper = new StringToIntMapper<>(AmplSubset.class);
+        mapper.newInt(AmplSubset.SHUNT, "wrongId");
+        for (int i = 0; i < 7; i++) {
+            mapper.newInt(AmplSubset.BUS, "BUS" + i);
+        }
+        try (InputStream input = getClass().getResourceAsStream("/mock_outputs/reactiveopf_results_shunts.csv");
+             InputStreamReader in = new InputStreamReader(input);
+             BufferedReader reader = new BufferedReader(in)) {
+            output.read(reader, mapper);
+            assertEquals(0, output.getModifications().size());
+        }
+    }
+
+    @Test
+    void noShuntNumberInMapper() throws IOException {
+        Network network = create();
+        ShuntCompensatorNetworkOutput output = new ShuntCompensatorNetworkOutput(network, 0);
+        StringToIntMapper<AmplSubset> mapper = new StringToIntMapper<>(AmplSubset.class);
+        try (InputStream input = getClass().getResourceAsStream("/mock_outputs/reactiveopf_results_shunts.csv");
+             InputStreamReader in = new InputStreamReader(input);
+             BufferedReader reader = new BufferedReader(in)) {
+            assertThrows(IllegalArgumentException.class, () -> output.read(reader, mapper));
+        }
+    }
+
+    @Test
+    void noBusNumberInMapper() throws IOException {
+        Network network = create();
+        ShuntCompensatorNetworkOutput output = new ShuntCompensatorNetworkOutput(network, 0);
+        StringToIntMapper<AmplSubset> mapper = new StringToIntMapper<>(AmplSubset.class);
+        mapper.newInt(AmplSubset.SHUNT, "SHUNT");
+        try (InputStream input = getClass().getResourceAsStream("/mock_outputs/reactiveopf_results_shunts.csv");
+             InputStreamReader in = new InputStreamReader(input);
+             BufferedReader reader = new BufferedReader(in)) {
+            assertThrows(IllegalArgumentException.class, () -> output.read(reader, mapper));
         }
     }
 

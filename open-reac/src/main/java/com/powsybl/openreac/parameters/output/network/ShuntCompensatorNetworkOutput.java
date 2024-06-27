@@ -12,6 +12,8 @@ import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.iidm.modification.ShuntCompensatorModification;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.ShuntCompensator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +23,8 @@ import java.util.Objects;
  * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
  */
 public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCompensatorModification> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ShuntCompensatorNetworkOutput.class);
     private static final String ELEMENT = "shunts";
     public static final int EXPECTED_COLS = 6;
     private static final int ID_COLUMN_INDEX = 1;
@@ -50,9 +54,7 @@ public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCo
     protected void readLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
         String id = stringToIntMapper.getId(AmplSubset.SHUNT, Integer.parseInt(tokens[ID_COLUMN_INDEX]));
         ShuntCompensator shuntCompensator = network.getShuntCompensator(id);
-        if (Objects.isNull(shuntCompensator)) {
-            modifications.add(new ShuntCompensatorModification(id, null, null));
-        } else {
+        if (!Objects.isNull(shuntCompensator)) {
             double b = readDouble(tokens[B_COLUMN_INDEX]) * AmplConstants.SB / Math.pow(shuntCompensator.getTerminal().getVoltageLevel().getNominalV(), 2);
             String busId = stringToIntMapper.getId(AmplSubset.BUS, Integer.parseInt(tokens[BUS_COLUMN_INDEX]));
             Boolean reconnect = null;
@@ -60,6 +62,8 @@ public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCo
                 reconnect = true;
             }
             modifications.add(new ShuntCompensatorModification(id, reconnect, findSectionCount(shuntCompensator, b)));
+        } else {
+            LOGGER.warn("Shunt compensator with id {} not found in the network", id);
         }
     }
 
