@@ -322,8 +322,8 @@ class OpenReacRunnerTest {
         values = reportShunts.getChildren().get(1).getValues();
         assertEquals("SHUNT", values.get("shuntCompensatorId").toString());
         assertEquals("25", values.get("maxSectionCount").toString());
-        assertEquals("2080.0", values.get("discretizedValue").toString());
-        assertEquals("2128.0", values.get("optimalValue").toString());
+        assertEquals("160.0", values.get("discretizedValue").toString());
+        assertEquals("123.4", values.get("optimalValue").toString());
         assertEquals(TypedValue.TRACE_SEVERITY.getValue(), values.get("reportSeverity").toString());
 
         assertTrue(shunt.getTerminal().isConnected()); // shunt has been reconnected
