@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 /**
  * @author Pierre Arvy {@literal <pierre.arvy at artelys.com>}
  */
-public class ShuntCompensatorNetworkOutputTest {
+class ShuntCompensatorNetworkOutputTest {
 
     @Test
     void readTestNullShunt() throws IOException {
