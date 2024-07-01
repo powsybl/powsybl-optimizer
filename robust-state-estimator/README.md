@@ -109,16 +109,16 @@ results.getBusStateEstimate("Bus-1"); // nodal voltage
 results.getBranchStatusEstimate("Line-1-2"); // branch status estimate
 ```
 
-Instead of using the straightforward version of the state estimator with the ``runStateEstimation`` method from the [StateEstimator](https://github.com/powsybl/powsybl-optimizer/blob/robust-state-estimator/robust-state-estimator/src/main/java/com/powsybl/stateestimator/StateEstimator.java) class (meaning the WLS SE problem is solved only once), the user is advised to use the run method ``thirdHeuristic`` from the [StateEstimatorThirdHeuristic]() class. This method employs a heuristic algorithm that solves the WLS SE problem multiple times, analyzing the results obtained at each resolution in order to detect and correct any error in the data provided. **In particular, if the data may contain a gross measurement error or a topology error, the user is strongly advised to use this heuristic algorithm.** The object returned contains three components:
+Instead of using the straightforward version of the state estimator with the ``runStateEstimation`` method from the [StateEstimator](https://github.com/powsybl/powsybl-optimizer/blob/robust-state-estimator/robust-state-estimator/src/main/java/com/powsybl/stateestimator/StateEstimator.java) class (meaning the WLS SE problem is solved only once), the user is advised to use the run method ``runHeuristic`` from the [StateEstimatorHeuristic](https://github.com/powsybl/powsybl-optimizer/blob/robust-state-estimator/robust-state-estimator/src/main/java/com/powsybl/stateestimator/StateEstimatorHeuristic.java) class. This method employs a heuristic algorithm that solves the WLS SE problem multiple times, analyzing the results obtained at each resolution in order to detect and correct any error in the data provided. **In particular, if the data may contain a gross measurement error or a topology error, the user is strongly advised to use this heuristic algorithm.** The object returned contains three components:
 1. The final results/estimates obtained, in the form of a ``StateEstimatorResults`` object.
 2. The final set of inputs used by the algorithm at its last iteration (= WLS SE resolution), in the form of a ``StateEstimatorKnowledge`` object. For instance, if the algorithm has detected and removed a gross measurement error, the set of measurements in the final ''knowledge'' will not contain it, unlike the initial ``StateEstimatorKnowledge`` instance provided by the user at the beginning.
 3. The number of iterations (=WLS SE resolutions) performed by the algorithm.
 ```java
 // Run SE heuristic algorithm with "initialKnowledge"
-HashMap<String, Object> thirdHeuristicResults = StateEstimatorThirdHeuristic.thirdHeuristic(initialKnowledge, network);
-StateEstimatorResults finalResults = (StateEstimatorResults) thirdHeuristicResults.get("Results");
-StateEstimatorKnowledge finalKnowledge = (StateEstimatorKnowledge) thirdHeuristicResults.get("Knowledge");
-int nbIter = (int) thirdHeuristicResults.get("NbIter");
+HashMap<String, Object> heuristicResults = StateEstimatorHeuristic.runHeuristic(initialKnowledge, network);
+StateEstimatorResults finalResults = (StateEstimatorResults) heuristicResults.get("Results");
+StateEstimatorKnowledge finalKnowledge = (StateEstimatorKnowledge) heuristicResults.get("Knowledge");
+int nbIter = (int) heuristicResults.get("NbIter");
 ```
 
 Finally, note that when the user has generated randomly the set of measurements for testing purposes, he can use the methods of the [StateEstimatorEvaluator](https://github.com/powsybl/powsybl-optimizer/blob/robust-state-estimator/robust-state-estimator/src/main/java/com/powsybl/stateestimator/StateEstimatorEvaluator.java) class to compute various statistics based on the errors between estimated values (as returned by the state estimator) and true values (as returned by the Load Flow resolution):
