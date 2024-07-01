@@ -14,7 +14,6 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 /**
- * @author Pierre ARVY <pierre.arvy@artelys.com>
  * @author Lucas RIOU <lucas.riou@artelys.com>
  */
 public abstract class AbstractStateEstimatorEstimateOutput implements AmplOutputFile {

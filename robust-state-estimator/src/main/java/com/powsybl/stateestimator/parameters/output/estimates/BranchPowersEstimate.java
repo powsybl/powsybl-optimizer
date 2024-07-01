@@ -6,10 +6,7 @@
  */
 package com.powsybl.stateestimator.parameters.output.estimates;
 
-import com.powsybl.iidm.network.Network;
-
 /**
- * @author Pierre ARVY <pierre.arvy@artelys.com>
  * @author Lucas RIOU <lucas.riou@artelys.com>
  */
 public class BranchPowersEstimate {

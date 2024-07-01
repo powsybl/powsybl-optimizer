@@ -135,6 +135,11 @@ public class RandomMeasuresGenerator {
         //      - remove branch b1-b2 from L(b1) and L(b2)
         boolean ensureObservability = ensureRealisticObservability.isPresent() && ensureRealisticObservability.get().equals(true);
         if (ensureObservability) {
+            // Take into account noPickBranchID
+            String noPickBranch = "";
+            if (noPickBranchID.isPresent()) {
+                noPickBranch = noPickBranchID.get();
+            }
             // Build "adjacency list": find for each bus the list of linked branches (one occurrence in the list)
             Map<String, List<String>> adjacencyList = new HashMap<>();
             for (Bus bus1 : network.getBusView().getBuses()) {
@@ -148,6 +153,8 @@ public class RandomMeasuresGenerator {
                 for (TwoWindingsTransformer twt : bus1.getTwoWindingsTransformers()) {
                     linkedBranches.add(twt.getId());
                 }
+                // Remove noPickBranchID (if provided)
+                linkedBranches.remove(noPickBranch);
                 // TODO : add other types of branches (three windings transformers, dangling lines, etc)
                 adjacencyList.put(bus1.getId(), List.copyOf(linkedBranches));
             }

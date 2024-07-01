@@ -6,11 +6,7 @@
  */
 package com.powsybl.stateestimator;
 
-import com.powsybl.iidm.network.Branch;
-import com.powsybl.iidm.network.Bus;
 import com.powsybl.stateestimator.parameters.StateEstimatorAmplIOFiles;
-//import main.java.com.powsybl.stateestimator.parameters.output.modifications.StateBus;
-//import main.java.com.powsybl.stateestimator.parameters.output.modifications.NetworkTopology;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.stateestimator.parameters.input.knowledge.*;
 import com.powsybl.stateestimator.parameters.output.estimates.BranchPowersEstimate;
@@ -26,7 +22,6 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- * @author Pierre ARVY <pierre.arvy@artelys.com>
  * @author Lucas RIOU <lucas.riou@artelys.com>
  */
 public class StateEstimatorResults {

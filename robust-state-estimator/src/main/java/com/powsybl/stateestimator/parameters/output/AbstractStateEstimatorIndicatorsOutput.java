@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author Pierre ARVY <pierre.arvy@artelys.com>
  * @author Lucas RIOU <lucas.riou@artelys.com>
  */
 public abstract class AbstractStateEstimatorIndicatorsOutput extends AbstractStateEstimatorEstimateOutput {

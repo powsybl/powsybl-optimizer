@@ -22,7 +22,6 @@ import org.jgrapht.alg.util.Pair;
 import java.util.*;
 
 /**
- * @author Pierre ARVY <pierre.arvy@artelys.com>
  * @author Lucas RIOU <lucas.riou@artelys.com>
  */
 public class StateEstimatorEvaluator {
@@ -136,13 +135,6 @@ public class StateEstimatorEvaluator {
             double tmpPfErrorEnd1 = tmpPfErrorEnd1Absolute / Math.max(Math.abs(truePfEnd1), Pf_EPSILON) * 100;
             double tmpPfErrorEnd2Absolute = Math.abs(branchPowersEstimate.getActivePowerEnd2() - truePfEnd2);
             double tmpPfErrorEnd2 = tmpPfErrorEnd2Absolute / Math.max(Math.abs(truePfEnd2), Pf_EPSILON) * 100;
-
-            //if (tmpPfErrorEnd1 > 10) {
-            //    System.out.printf("%nBranch %s%n", branch.getId());
-            //    System.out.printf("True Pf : %f MW%n", truePfEnd1);
-            //    System.out.printf("Estimate Pf : %f MW%n", branchPowersEstimate.getActivePowerEnd1());
-            //    System.out.printf("Relative error : %f %% %n", tmpPfErrorEnd1);
-            //}
 
             meanPfErrror += tmpPfErrorEnd1;
             squaredPfError += Math.pow(tmpPfErrorEnd1, 2);

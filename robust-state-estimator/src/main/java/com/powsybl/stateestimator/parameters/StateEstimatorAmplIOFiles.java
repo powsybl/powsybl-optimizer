@@ -19,7 +19,6 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * @author Pierre ARVY <pierre.arvy@artelys.com>
  * @author Lucas RIOU <lucas.riou@artelys.com>
  */
 public class StateEstimatorAmplIOFiles implements AmplParameters {

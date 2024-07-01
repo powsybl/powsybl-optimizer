@@ -6,7 +6,6 @@
  */
 package com.powsybl.stateestimator.parameters.output;
 
-import com.powsybl.ampl.converter.AmplConstants;
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.util.StringToIntMapper;
@@ -18,7 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author Pierre ARVY <pierre.arvy@artelys.com>
  * @author Lucas RIOU <lucas.riou@artelys.com>
  */
 public class NetworkTopologyEstimateOutput extends AbstractStateEstimatorEstimateOutput {

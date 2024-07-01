@@ -7,7 +7,6 @@
 package com.powsybl.stateestimator.parameters.output;
 
 /**
- * @author Pierre ARVY <pierre.arvy@artelys.com>
  * @author Lucas RIOU <lucas.riou@artelys.com>
  */
 public class NetworkIndicatorsOutput extends AbstractStateEstimatorIndicatorsOutput {

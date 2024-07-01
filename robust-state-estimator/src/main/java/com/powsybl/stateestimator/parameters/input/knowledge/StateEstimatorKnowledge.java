@@ -20,7 +20,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * @author Pierre ARVY <pierre.arvy@artelys.com>
  * @author Lucas RIOU <lucas.riou@artelys.com>
  */
 public class StateEstimatorKnowledge {

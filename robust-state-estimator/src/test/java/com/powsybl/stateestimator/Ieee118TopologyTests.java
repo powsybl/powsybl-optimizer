@@ -59,7 +59,7 @@ public class Ieee118TopologyTests {
                 "5percentileQfError(%)", "95percentileQfError(%)", "MaxQfAbsoluteError(MVar)",
                 "NbVMeasures","NbPfMeasures","NbQfMeasures","NbPMeasures","NbQMeasures",
                 "ObjectiveFunctionValue"
-                //,"PerformanceIndex"
+                ,"PerformanceIndex"
         );
         List<List<String>> data = new ArrayList<>();
 
@@ -86,7 +86,7 @@ public class Ieee118TopologyTests {
 
         // All MeasuresToBuses ratios to be tested
         //List<Double> ratiosTested = Arrays.asList(1.0, 2.0, 3.0, 4.0, 5.0);
-        List<Double> ratiosTested = Arrays.asList(5.0);
+        List<Double> ratiosTested = Arrays.asList(4.0, 5.0, 6.0);
 
         for (Double ratioTested : ratiosTested) {
 
@@ -97,9 +97,9 @@ public class Ieee118TopologyTests {
                 StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network, "VL69_0");
 
                 // Make all branches suspects and presumed to be closed
-                //for (Branch branch: network.getBranches()) {
-                //    knowledge.setSuspectBranch(branch.getId(), true, "PRESUMED CLOSED");
-                //}
+                for (Branch branch: network.getBranches()) {
+                    knowledge.setSuspectBranch(branch.getId(), false, "PRESUMED CLOSED");
+                }
 
                 // Make only branches around the erroneous one suspects
                 List<String> localSuspectBranches = new ArrayList<>(List.of(
@@ -114,18 +114,12 @@ public class Ieee118TopologyTests {
                 // Randomly generate measurements out of LF results using proper seed and Z to N ratio
                 RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
                         Optional.of(seed), Optional.of(ratioTested),
-                        Optional.of(false), Optional.empty(),
+                        Optional.of(true), Optional.empty(),
                         Optional.empty(), Optional.of(true));
-
-                //RandomMeasuresGenerator.generateRandomMeasurementsWithCtrlMeasureRatio(knowledge, network,
-                //        0.18644067796, "P",
-                //        Optional.of(seed), Optional.of(ratioTested),
-                //        Optional.empty(), Optional.of(false),
-                //        Optional.empty(), Optional.empty());
 
                 // Define the solving options for the state estimation
                 StateEstimatorOptions options = new StateEstimatorOptions()
-                        .setSolvingMode(0).setMaxTimeSolving(30).setMaxNbTopologyChanges(1);
+                        .setSolvingMode(0).setMaxTimeSolving(30).setMaxNbTopologyChanges(5);
 
                 // Run the state estimation and save the results
                 StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
@@ -140,7 +134,8 @@ public class Ieee118TopologyTests {
                     if (! branchEstimate.getPresumedStatus().equals("PRESUMED " + branchEstimate.getEstimatedStatus())) {
                         changedBranchesID.add(branch.getId());
                     }
-                } // Build the list of all neighbouring branches to the erroneous line
+                }
+                // Build the list of all neighbouring branches to the erroneous line
                 Bus erroneousLineEnd1 = network.getBranch(erroneousLine).getTerminal1().getBusView().getConnectableBus();
                 Bus erroneousLineEnd2 = network.getBranch(erroneousLine).getTerminal2().getBusView().getConnectableBus();
                 List<String> neighboursIDs = new ArrayList<>(erroneousLineEnd1.getLineStream().map(Identifiable::getId).toList());
@@ -207,13 +202,13 @@ public class Ieee118TopologyTests {
                         String.valueOf(knowledge.getActivePowerInjectedMeasures().size()),
                         String.valueOf(knowledge.getReactivePowerInjectedMeasures().size()),
                         String.valueOf(results.getObjectiveFunctionValue())
-                        //,String.valueOf(evaluator.computePerformanceIndex())
+                        ,String.valueOf(evaluator.computePerformanceIndex())
                 ));
             }
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("ZN5_1TopoChMax_MS_30NodesMax_30secMax_EnsObs_SM0_11LinesSusp_NoNoise_L45-46.csv");
+        try (FileWriter fileWriter = new FileWriter("11LinesSusp_WithNoise_L45-46_EnsObs_SM0_5TopoMax_30secMax.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 

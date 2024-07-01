@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * @author Pierre ARVY <pierre.arvy@artelys.com>
  * @author Lucas RIOU <lucas.riou@artelys.com>
  */
 public class ZeroInjectionBuses implements AmplInputFile {

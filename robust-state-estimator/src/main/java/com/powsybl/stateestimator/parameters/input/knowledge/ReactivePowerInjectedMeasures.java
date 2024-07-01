@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @author Pierre ARVY <pierre.arvy@artelys.com>
  * @author Lucas RIOU <lucas.riou@artelys.com>
  */
 public class ReactivePowerInjectedMeasures implements AmplInputFile {

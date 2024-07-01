@@ -217,7 +217,7 @@ subject to ctrl_zero_injection_buses_rea_power{PROBLEM_SE,
 
 ###########################################################
 #                                                         #
-#             Measurement residuals (in SI)               #
+#             Measurement residuals (in SI)  (dead code)             #
 #                                                         #
 ###########################################################
 

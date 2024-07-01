@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- * @author Pierre ARVY <pierre.arvy@artelys.com>
  * @author Lucas RIOU <lucas.riou@artelys.com>
  */
 public class StateVectorStartingPoint implements AmplInputFile {

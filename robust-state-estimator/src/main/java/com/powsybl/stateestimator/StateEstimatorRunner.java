@@ -21,7 +21,6 @@ import com.powsybl.iidm.network.Network;
 import java.util.Objects;
 
 /**
- * @author Pierre ARVY <pierre.arvy@artelys.com>
  * @author Lucas RIOU <lucas.riou@artelys.com>
  */
 public final class StateEstimatorRunner {

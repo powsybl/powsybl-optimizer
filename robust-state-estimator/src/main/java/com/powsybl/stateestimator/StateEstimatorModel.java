@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 import static com.powsybl.ampl.converter.AmplConstants.DEFAULT_VARIANT_INDEX;
 
 /**
- * @author Pierre ARVY <pierre.arvy@artelys.com>
  * @author Lucas RIOU <lucas.riou@artelys.com>
  */
 public class StateEstimatorModel implements AmplModel {

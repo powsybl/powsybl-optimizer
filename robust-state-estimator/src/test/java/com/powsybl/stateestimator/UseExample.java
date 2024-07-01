@@ -29,7 +29,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * @author Pierre ARVY <pierre.arvy@artelys.com>
  * @author Lucas RIOU <lucas.riou@artelys.com>
  */
 public class UseExample {
@@ -37,14 +36,10 @@ public class UseExample {
     @Test
     void useExample() throws IOException {
 
-        // TODO !!  dans AMPL, round les R et X à 1e-6 ? Attention : round(, 6) garde les 6 premiers digits
-        // Faire : round( mod(x, 1), 6) pour arrondir la partie flottante
-        // Source d'erreur (légère) : car per-unitage puis déper-unitage amène à nombres décimaux avec plus de 6 chiffres après la virgule
-
         // Load your favorite network (IIDM format preferred)
-        //Network network = IeeeCdfNetworkFactory.create14();
         Network network = IeeeCdfNetworkFactory.create118();
         //Network network = Network.read(Path.of("D:", "Projet", "Réseaux_tests", "IIDM", "pglib_opf_case1354_pegase.xiidm"));
+        //Network network = Network.read(Path.of("D:", "Projet", "Réseaux_tests", "IIDM", "pglib_opf_case8387_pegase.xiidm"));
 
         // Load Flow parameters (note : we mimic the way the AMPL code deals with zero-impedance branches)
         LoadFlowParameters parametersLf = new LoadFlowParameters();
@@ -72,9 +67,9 @@ public class UseExample {
         StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network);
 
         // Make sure the state estimator and OpenLoadFlow use the same slack bus
-        //knowledge.setSlack("VL1_0", network); // for IEEE14
         knowledge.setSlack("VL69_0", network); // for IEEE118
         //knowledge.setSlack("VL-4231_0", network); // for case1354_pegase
+        //knowledge.setSlack("VL-3853_0", network); // for case8387_pegase
 
         // Make all branches suspects and presumed to be closed
         for (Branch branch: network.getBranches()) {
@@ -99,7 +94,7 @@ public class UseExample {
 
         // Randomly generate measurements (useful for test cases) out of load flow results
         RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
-                Optional.of(6), Optional.of(5.),
+                Optional.of(1), Optional.of(4.),
                 Optional.of(false), Optional.empty(),
                 Optional.empty(), Optional.of(true));
 

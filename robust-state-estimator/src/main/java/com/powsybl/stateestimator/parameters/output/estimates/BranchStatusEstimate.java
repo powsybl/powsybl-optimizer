@@ -6,10 +6,7 @@
  */
 package com.powsybl.stateestimator.parameters.output.estimates;
 
-import java.util.ArrayList;
-
 /**
- * @author Pierre ARVY <pierre.arvy@artelys.com>
  * @author Lucas RIOU <lucas.riou@artelys.com>
  */
 public class BranchStatusEstimate {

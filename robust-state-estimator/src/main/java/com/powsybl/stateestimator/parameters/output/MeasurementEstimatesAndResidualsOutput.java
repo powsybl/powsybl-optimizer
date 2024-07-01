@@ -6,21 +6,17 @@
  */
 package com.powsybl.stateestimator.parameters.output;
 
-import com.powsybl.ampl.converter.AmplConstants;
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.util.StringToIntMapper;
-import com.powsybl.stateestimator.parameters.output.estimates.BusStateEstimate;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
- * @author Pierre ARVY <pierre.arvy@artelys.com>
  * @author Lucas RIOU <lucas.riou@artelys.com>
  */
 public class MeasurementEstimatesAndResidualsOutput extends AbstractStateEstimatorEstimateOutput {
