@@ -364,12 +364,12 @@ if "default_constraint_scaling_factor" in PARAM_ALGO_KEYS then let default_const
 printf{LOG_INFO} "Parameter: default scaling factor for constraints := %.3f\n",default_constraint_scaling_factor;
 check default_constraint_scaling_factor >= 0;
 
-param reactive_slack_variable_scaling_factor default 1e-1;
+param reactive_slack_variable_scaling_factor default 1;
 if "reactive_slack_variable_scaling_factor" in PARAM_ALGO_KEYS then let reactive_slack_variable_scaling_factor := num(PARAM_ALGO_VALUES["reactive_slack_variable_scaling_factor"]);
 printf{LOG_INFO} "Parameter: scaling factor for reactive slack variables := %.3f\n",reactive_slack_variable_scaling_factor;
 check reactive_slack_variable_scaling_factor > 0;
 
-param transformer_ratio_variable_scaling_factor default 1e-1;
+param transformer_ratio_variable_scaling_factor default 1;
 if "transformer_ratio_variable_scaling_factor" in PARAM_ALGO_KEYS then let transformer_ratio_variable_scaling_factor := num(PARAM_ALGO_VALUES["transformer_ratio_variable_scaling_factor"]);
 printf{LOG_INFO} "Parameter: scaling factor for tranformer ratio variables := %.3f\n",transformer_ratio_variable_scaling_factor;
 check transformer_ratio_variable_scaling_factor > 0;
