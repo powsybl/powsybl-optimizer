@@ -17,12 +17,15 @@ public class StateEstimatorOptions {
     public static final int DEFAULT_SOLVING_MODE = 0;
     public static final int DEFAULT_MAX_TIME_SOLVING = 120;
     public static final int DEFAULT_MAX_TOPOLOGY_CHANGES = 5;
+    public static final int DEFAULT_MIP_MULTISTART = 0;
     HashMap<String, Integer> solvingOptions = new HashMap<>();
 
     public StateEstimatorOptions() {
         setSolvingMode(DEFAULT_SOLVING_MODE);
         setMaxTimeSolving(DEFAULT_MAX_TIME_SOLVING);
         setMaxNbTopologyChanges(DEFAULT_MAX_TOPOLOGY_CHANGES);
+        setMipMultistart(DEFAULT_MIP_MULTISTART);
+
     }
 
     public HashMap<String, Integer> getSolvingOptions() {
@@ -30,7 +33,7 @@ public class StateEstimatorOptions {
     }
 
     /**
-     * @param solvingMode The solving mode of the solver used for the state estimation (corresponds to Knitro "mip_intvar_strategy")
+     * @param solvingMode The solving mode of the solver used for the state estimation (corresponds to Knitro "mip_intvar_strategy").
      * @return The object on which the method is applied.
      */
     public StateEstimatorOptions setSolvingMode(int solvingMode) {
@@ -42,7 +45,7 @@ public class StateEstimatorOptions {
     }
 
     /**
-     * Put solving mode to 2
+     * Put solving mode to 2.
      * @return The object on which the method is applied.
      */
     public StateEstimatorOptions setResolutionMPEC() {
@@ -78,7 +81,7 @@ public class StateEstimatorOptions {
     }
 
     /**
-     * @param maxNbTopologyChanges The maximum number of branches status the solver is allowed to switch
+     * @param maxNbTopologyChanges The maximum number of branches status the solver is allowed to switch.
      * @return The object on which the method is applied.
      */
     public StateEstimatorOptions setMaxNbTopologyChanges(int maxNbTopologyChanges) {
@@ -86,6 +89,18 @@ public class StateEstimatorOptions {
             throw new IllegalArgumentException("Maximum number of topology changes must be >= 0.");
         }
         solvingOptions.put("max_nb_topology_changes", maxNbTopologyChanges);
+        return this;
+    }
+
+    /**
+     * @param mipMultistart The mode enabling (=1) or not (=0) the solver Knitro to use the multistart functionnality.
+     * @return The object on which the method is applied.
+     */
+    public StateEstimatorOptions setMipMultistart(int mipMultistart) {
+        if (mipMultistart < 0 || mipMultistart > 1) {
+            throw new IllegalArgumentException("MIP_multistart value must either be 0 or 1.");
+        }
+        solvingOptions.put("mip_multistart", mipMultistart);
         return this;
     }
 

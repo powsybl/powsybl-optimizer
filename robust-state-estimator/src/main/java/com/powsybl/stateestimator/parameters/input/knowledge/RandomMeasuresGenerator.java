@@ -908,7 +908,6 @@ public class RandomMeasuresGenerator {
                     // Get measurement value (in SI), as given by the Load Flow solution
                     measurementValue = -1 * randomBus.getQ();
 
-                    // TODO : modifier le scaling de la variance
                     // Get and add measurement variance (in SI^2)
                     measurementVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("Q")
                                     * Math.max(Math.abs(measurementValue), MIN_REACTIVE_POWER_MVAR)
@@ -936,7 +935,6 @@ public class RandomMeasuresGenerator {
                     randomMeasure.put("BusID", randomBus.getId());
                     // Get measurement value (in SI), as given by the Load Flow solution
                     measurementValue = randomBus.getV();
-                    // TODO
                     // Get and add measurement variance (in SI^2)
                     measurementVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("V")
                                     * Math.max(Math.abs(measurementValue), MIN_VOLTAGE_KV)

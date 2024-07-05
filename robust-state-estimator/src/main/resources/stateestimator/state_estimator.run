@@ -54,7 +54,7 @@ display SOLVING_OPTIONS_VALUES;
 
 # Solving options for MINLP
 
-# "mip_strategy" specifies the value to KNITRO option mip_intvar_strategy
+# "mip_strategy" specifies the value for KNITRO option "mip_intvar_strategy"
 # This specifies how to handle integer variables : 0 = No special treatment, 1 = Relax all integer variables, 2 = Convert all binary variables to complementarity constraints
 param mip_strategy integer default 2; 
 if "solving_mode" in SOLVING_OPTIONS_KEYS then let mip_strategy := num(SOLVING_OPTIONS_VALUES["solving_mode"]);
@@ -64,6 +64,9 @@ if "max_time_solving" in SOLVING_OPTIONS_KEYS then let max_time_solving := num(S
 
 param max_nb_topology_changes integer default 5;
 if "max_nb_topology_changes" in SOLVING_OPTIONS_KEYS then let max_nb_topology_changes := num(SOLVING_OPTIONS_VALUES["max_nb_topology_changes"]);
+
+param mip_multistart default 0;
+if "mip_multistart" in SOLVING_OPTIONS_KEYS then let mip_multistart := num(SOLVING_OPTIONS_VALUES["mip_multistart"]);
 
 # Absolute parameter : base 100MVA (never change this)
 param base100MVA := 100;
@@ -162,6 +165,7 @@ for {(1,qq,m,n) in BRANCH} {
 #      Relate locations (IDs) of measurements to buses/branches numbers       #
 ###############################################################################
 
+# TODO : non-optimized code (dictionnaire dispo en AMPL ?)
 # "P_bus" is not loaded from data, but is assigned the bus number (see ampl_network_buses.txt) that relates to "P_bus_id" (unique identifier)
 for {l in MEASURES_P} {
   for {(t,n) in BUS} {
@@ -512,9 +516,7 @@ printf "\n######################################################################
 printf "# SE solve: start (%s)\n\n",ctime();
 let tempstr := ctime();
 
-#option knitro_options ("opttol=1 opttolabs=1e-1 feastol=1  ms_enable=0 feastolabs=1e-3 maxit=1500 mip_heuristic_strategy=3 mip_intvar_strategy=" & mip_strategy & " mip_multistart=1 mip_maxtime_real=" & max_time_solving);
-#option knitro_options ("opttol=1e-6 opttolabs=1e-3 feastol=1e-6  ms_enable=0 feastolabs=1e-3 maxit=1500 mip_heuristic_strategy=3 mip_intvar_strategy=" & mip_strategy & " mip_multistart=1 mip_maxtime_real=" & max_time_solving);
-option knitro_options ("mip_multistart=1 mip_maxnodes=50 mip_intvar_strategy=" & mip_strategy & " mip_maxtime_real=" & max_time_solving);
+option knitro_options ("mip_multistart=" & mip_multistart & " mip_maxnodes=50 mip_intvar_strategy=" & mip_strategy & " mip_maxtime_real=" & max_time_solving);
 # Note : mip_multistart=1 only used when mip_strategy=0. mip_maxnodes=50 as a stopping criterion.
 
 # Solve the problem chosen

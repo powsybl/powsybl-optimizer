@@ -43,7 +43,7 @@ public class StateEstimatorHeuristic {
 
         // Define the solving options for the state estimation (default values)
         StateEstimatorOptions options = new StateEstimatorOptions()
-                .setSolvingMode(0).setMaxTimeSolving(30);
+                .setSolvingMode(0).setMaxTimeSolving(30).setMipMultistart(0);
 
         // Run the state estimation
         StateEstimatorResults resultsV1 = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
@@ -130,7 +130,7 @@ public class StateEstimatorHeuristic {
                         knowledgeTmp.setSuspectBranch(branchID, false, presumedStatus);
                     }
 
-                    options.setMaxTimeSolving(30);
+                    options.setMaxTimeSolving(30).setMipMultistart(0);
 
                     // Run the SE with this knowledge
                     StateEstimatorResults resultsTmp = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
@@ -267,7 +267,7 @@ public class StateEstimatorHeuristic {
                         knowledgeTmp.setSuspectBranch(branchID, suspectBranches.contains(branchID), presumedStatus);
                     }
 
-                    options.setSolvingMode(0).setMaxTimeSolving(60).setMaxNbTopologyChanges(2);
+                    options.setSolvingMode(0).setMaxTimeSolving(60).setMaxNbTopologyChanges(2).setMipMultistart(1);
 
                     // Run the SE with this knowledge
                     StateEstimatorResults resultsTmp = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
@@ -473,7 +473,7 @@ public class StateEstimatorHeuristic {
                         knowledgeTmp.setSuspectBranch(branchID, extendedSuspectBranches.contains(branchID), presumedStatus);
                     }
 
-                    options.setMaxNbTopologyChanges(2).setSolvingMode(0).setMaxTimeSolving(60);
+                    options.setMaxNbTopologyChanges(2).setSolvingMode(0).setMaxTimeSolving(60).setMipMultistart(1);
 
                     // Run the SE with this knowledge
                     StateEstimatorResults resultsTmp = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),

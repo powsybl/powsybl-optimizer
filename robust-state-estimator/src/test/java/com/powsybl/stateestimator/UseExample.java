@@ -39,7 +39,6 @@ public class UseExample {
         // Load your favorite network (IIDM format preferred)
         Network network = IeeeCdfNetworkFactory.create118();
         //Network network = Network.read(Path.of("D:", "Projet", "Réseaux_tests", "IIDM", "pglib_opf_case1354_pegase.xiidm"));
-        //Network network = Network.read(Path.of("D:", "Projet", "Réseaux_tests", "IIDM", "pglib_opf_case8387_pegase.xiidm"));
 
         // Load Flow parameters (note : we mimic the way the AMPL code deals with zero-impedance branches)
         LoadFlowParameters parametersLf = new LoadFlowParameters();
@@ -62,8 +61,8 @@ public class UseExample {
 
         long startTime = System.nanoTime();
 
-        // Create "knowledge" instance, containing the slackBus (most meshed bus by default)
-        // as well as the sets of measurements and suspect branches
+        // Create "knowledge" instance, containing all priori knowledge on the network
+        // (reference bus, measurements, zero injection buses, presumed topology, state vector starting point)
         StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network);
 
         // Make sure the state estimator and OpenLoadFlow use the same slack bus
@@ -78,9 +77,9 @@ public class UseExample {
         //knowledge.setSuspectBranch("L45-46-1", true, "PRESUMED OPENED");
 
         // Add a gross error on measure Pf(VL27 --> VL28) : 80 MW (false) instead of 32.6 MW (true)
-        //Map<String, String> grossMeasure = Map.of("BranchID","L27-28-1","FirstBusID","VL27_0","SecondBusID","VL28_0",
-        //        "Value","80.0","Variance","0.1306","Type","Pf");
-        //knowledge.addMeasure(1, grossMeasure, network);
+        Map<String, String> grossMeasure = Map.of("BranchID","L27-28-1","FirstBusID","VL27_0","SecondBusID","VL28_0",
+                "Value","80.0","Variance","0.1306","Type","Pf");
+        knowledge.addMeasure(1, grossMeasure, network);
         // Add a gross error on measure Pf(VL45 --> VL46) : 0 MW (false) instead of -36,32 MW (true)
         //Map<String, String> grossMeasure = Map.of("BranchID","L45-46-1","FirstBusID","VL45_0","SecondBusID","VL46_0",
         //        "Value","30.0","Variance","0.1596","Type","Pf");
@@ -118,11 +117,6 @@ public class UseExample {
         // Print all the measurements
         //knowledge.printAllMeasures();
         System.out.printf("%nTotal number of measurements : %d%n", knowledge.getMeasuresCount());
-
-        // Save "knowledge" object as a JSON
-        //knowledge.write(new FileOutputStream("D:/Projet/Tests/knowledge_14bus_seed2.json"));
-        // Read the JSON file as an StateEstimatorKnowledge object
-        //StateEstimatorKnowledge test = StateEstimatorKnowledge.read("D:/Projet/Tests/knowledge_14bus_seed2.json");
 
         // Define the solving options for the state estimation
         StateEstimatorOptions options = new StateEstimatorOptions()

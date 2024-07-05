@@ -617,7 +617,7 @@ public class StateEstimatorKnowledge {
     }
 
     /**
-     * @param startingPoint A map containing initial conditions for buses (V [pu], theta [rad]), that will be used by the estimator
+     * @param startingPoint A map containing initial conditions for buses (V [pu], theta [rad]), that will be used by the estimator. Beware of units !
      * @param network (not modified) The network on which the estimation will be performed
      * @return The object on which the method is applied.
      * <p>
@@ -631,8 +631,6 @@ public class StateEstimatorKnowledge {
 
         // If no initial conditions are provided, apply a "flat-start"
         if (startingPoint == null) {
-            // TODO : keep or remove message ?
-            //System.out.println("[WARNING] No starting point provided : the state estimator will use a \"flat start\".");
             int i = 1;
             for (Bus bus : network.getBusView().getBuses()) {
                 ArrayList<String> busStartingPoint = new ArrayList<>();
@@ -644,8 +642,6 @@ public class StateEstimatorKnowledge {
             }
         }
         else {
-            // TODO : keep or remove message ?
-            //System.out.println("[WARNING] A starting point for the state estimator is being provided : make sure that buses voltages (first term) are in p.u. and buses angles (second term) in radians.");
             Set<String> allBusesWithStartingPoints = startingPoint.keySet();
             int i = 1;
             for (Bus bus : network.getBusView().getBuses()) {

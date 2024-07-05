@@ -50,9 +50,9 @@ public class Ieee118CtrlMeasTypeTests {
                 "MeanThetaError(deg)", "StdThetaError(deg)", "MedianThetaError(deg)", "MaxThetaError(deg)",
                 "5percentileThetaError(deg)", "95percentileThetaError(deg)",
                 "MeanPfError(%)", "StdPfError(%)", "MedianPfError(%)", "MaxPfError(%)",
-                "5percentilePfError(%)", "95percentilePfError(%)",
+                "5percentilePfError(%)", "95percentilePfError(%)", "MaxPfAbsoluteError(MW)",
                 "MeanQfError(%)", "StdQfError(%)", "MedianQfError(%)", "MaxQfError(%)",
-                "5percentileQfError(%)", "95percentileQfError(%)",
+                "5percentileQfError(%)", "95percentileQfError(%)", "MaxQfAbsoluteError(MVar)",
                 "NbVMeasures","NbPfMeasures","NbQfMeasures","NbPMeasures","NbQMeasures",
                 "ObjectiveFunctionValue",
                 "PerformanceIndex");
@@ -74,11 +74,11 @@ public class Ieee118CtrlMeasTypeTests {
 
         // All ratioForCtrlMeasType to be tested:
         // For V measurements
-        //List<Double> ratiosTested = Arrays.asList(0.0, 0.05, 0.10, 0.15, 0.20, 0.25);
+        List<Double> ratiosTested = Arrays.asList(0.0, 0.05, 0.10, 0.15, 0.20, 0.25);
         // For P/Q measurements (take the non-measurability of zero-injection buses into account)
         //List<Double> ratiosTested = Arrays.asList(0.0, 0.04, 0.09, 0.14, 0.19, 0.23);
         // For Pf/Qf measurements
-        List<Double> ratiosTested = Arrays.asList(0.0, 0.15, 0.30, 0.45, 0.60, 0.75);
+        //List<Double> ratiosTested = Arrays.asList(0.0, 0.15, 0.30, 0.45, 0.60, 0.75);
 
         for (Double ratioTested : ratiosTested) {
 
@@ -93,14 +93,14 @@ public class Ieee118CtrlMeasTypeTests {
 
                 // Randomly generate measurements out of load flow results using proper seed and Z to N ratio
                 RandomMeasuresGenerator.generateRandomMeasurementsWithCtrlMeasureRatio(knowledge, network,
-                        ratioTested, "Qf",
+                        ratioTested, "V",
                         Optional.of(seed), Optional.of(4.0),
                         Optional.of(true), Optional.empty(),
                         Optional.empty());
 
                 // Define the solving options for the state estimation
                 StateEstimatorOptions options = new StateEstimatorOptions()
-                        .setSolvingMode(2).setMaxTimeSolving(30).setMaxNbTopologyChanges(5);
+                        .setSolvingMode(0).setMaxTimeSolving(30).setMaxNbTopologyChanges(5);
 
                 // Run the state estimation and save the results
                 StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
@@ -122,9 +122,11 @@ public class Ieee118CtrlMeasTypeTests {
                         String.valueOf(PfErrorStats.get(0)), String.valueOf(PfErrorStats.get(1)),
                         String.valueOf(PfErrorStats.get(2)), String.valueOf(PfErrorStats.get(3)),
                         String.valueOf(PfErrorStats.get(4)), String.valueOf(PfErrorStats.get(5)),
+                        String.valueOf(PfErrorStats.get(6)),
                         String.valueOf(QfErrorStats.get(0)), String.valueOf(QfErrorStats.get(1)),
                         String.valueOf(QfErrorStats.get(2)), String.valueOf(QfErrorStats.get(3)),
                         String.valueOf(QfErrorStats.get(4)), String.valueOf(QfErrorStats.get(5)),
+                        String.valueOf(QfErrorStats.get(6)),
                         String.valueOf(knowledge.getVoltageMagnitudeMeasures().size()),
                         String.valueOf(knowledge.getActivePowerFlowMeasures().size()),
                         String.valueOf(knowledge.getReactivePowerFlowMeasures().size()),
@@ -136,7 +138,7 @@ public class Ieee118CtrlMeasTypeTests {
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("Qf_ctrlMeasRatio_IEEE118.csv");
+        try (FileWriter fileWriter = new FileWriter("V_ctrlMeasRatio_ZN4_IEEE118.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 
