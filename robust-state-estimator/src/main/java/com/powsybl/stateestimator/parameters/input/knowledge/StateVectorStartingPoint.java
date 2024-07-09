@@ -9,8 +9,6 @@ package com.powsybl.stateestimator.parameters.input.knowledge;
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.commons.util.StringToIntMapper;
-import com.powsybl.iidm.network.Network;
-import org.jgrapht.alg.util.Pair;
 
 import java.io.BufferedWriter;
 import java.io.IOException;

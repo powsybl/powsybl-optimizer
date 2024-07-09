@@ -120,7 +120,7 @@ public class UseExample {
 
         // Define the solving options for the state estimation
         StateEstimatorOptions options = new StateEstimatorOptions()
-                .setSolvingMode(0).setMaxTimeSolving(30).setMaxNbTopologyChanges(5);
+                .setSolvingMode(0).setMaxTimeSolving(30).setMaxNbTopologyChanges(5).setMipMultistart(0);
 
         // Run the state estimation and print the results
         StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),

@@ -75,11 +75,11 @@ LoadFlowResult loadFlowResult = LoadFlow.run(network, parametersLf);
 RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, Optional.of(seedNumber), Optional.of(ratioZ/N), Optional.of(addNoiseBoolean), Optional.empty(noiseLevel), Optional.empty(noPickBranchID), Optional.of(ensureObservabilityBoolean));
  ```
 
- The user must also define the solving options for the state estimator. When the WLS SE problem is a MINLP (binary variables activated for branch statuses), he can choose the solving mode employed by Knitro (integer, non-linear relaxation or MPEC. See [Knitro documentation](https://www.artelys.com/app/docs/knitro/3_referenceManual.html)). He can also choose the maximum resolution time (in seconds) and the maximum number of branch statuses the solver is allowed to make.
+ The user must also define the solving options for the state estimator in a [StateEstimationOptions](https://github.com/powsybl/powsybl-optimizer/blob/robust-state-estimator/robust-state-estimator/src/main/java/com/powsybl/stateestimator/parameters/input/options/StateEstimatorOptions.java) object. When the WLS SE problem is a MINLP (binary variables activated for branch statuses), he can choose the solving mode employed by Knitro (integer, non-linear relaxation or MPEC. See [Knitro documentation](https://www.artelys.com/app/docs/knitro/3_referenceManual.html)). He can also choose the maximum resolution time (in seconds), the maximum number of branch statuses the solver is allowed to make, and decide whether Knitro is allowed to use its "multistart" option.
 ```java
 // Define options for the state estimation
 StateEstimatorOptions options = new StateEstimatorOptions();
-options.setSolvingMode(0).setMaxTimeSolving(30).setMaxNbTopologyChanges(5);
+options.setSolvingMode(0).setMaxTimeSolving(30).setMaxNbTopologyChanges(5).setMipMultistart(0);
 ```
 
 Once the user has provided all the desired inputs, the state estimator can be run. Results are stored in a [StateEstimatorResults](https://github.com/powsybl/powsybl-optimizer/blob/robust-state-estimator/robust-state-estimator/src/main/java/com/powsybl/stateestimator/StateEstimatorResults.java) object.

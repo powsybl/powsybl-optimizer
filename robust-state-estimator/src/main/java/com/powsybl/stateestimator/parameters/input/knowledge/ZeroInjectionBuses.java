@@ -12,8 +12,6 @@ import com.powsybl.commons.util.StringToIntMapper;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 
 /**

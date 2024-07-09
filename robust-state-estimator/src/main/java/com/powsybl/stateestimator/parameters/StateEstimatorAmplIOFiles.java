@@ -94,6 +94,8 @@ public class StateEstimatorAmplIOFiles implements AmplParameters {
         list.add(measurementEstimatesAndResidualsOutput);
         list.add(networkPowersEstimateOutput);
         if (!hasConverged) {
+            // TODO changr les system.out en LOGGER.warn
+            // Exemple: LOGGER.warn("Regulating terminal of element {} is null.", elementId);
             System.out.println("[WARNING] The state estimator has not converged. StateEstimatorResults will save last found estimates. [WARNING]");
             System.out.println();
         }

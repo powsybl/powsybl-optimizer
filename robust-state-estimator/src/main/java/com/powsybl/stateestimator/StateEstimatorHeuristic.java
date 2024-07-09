@@ -719,19 +719,30 @@ public class StateEstimatorHeuristic {
 
         // If only 1 residual remains, return a value leading to measurement removal (easiest solution)
         if (sortedResiduals.size() <= 1) {
-            return DECAY_INDEX_THRESHOLD + 1;
+            // TODO : put back code
+            return 0; //DECAY_INDEX_THRESHOLD + 1;
         }
 
         double maxResidual = sortedResiduals.get(0);
 
         double numerator = 0;
         double denominator = 0;
-        for (int i = 0; i < sortedResiduals.size(); i++) {
-            numerator += Math.log(i+1) * Math.log(sortedResiduals.get(i)/maxResidual);
-            denominator += Math.pow(Math.log(i+1), 2);
-        }
 
-        return - numerator / denominator;
+        // TODO : put back the code
+        //for (int i = 0; i < sortedResiduals.size(); i++) {
+        //    numerator += Math.log(i+1) * Math.log(sortedResiduals.get(i)/maxResidual);
+        //    denominator += Math.pow(Math.log(i+1), 2);
+        //}
+        //return - numerator / denominator;
+
+        for (int i = 0; i < sortedResiduals.size(); i++) {
+            numerator += sortedResiduals.get(i);
+            denominator += (maxResidual - sortedResiduals.get(i));
+        }
+        if (denominator == 0) {
+            denominator += 0.001;
+        }
+        return numerator/denominator;
 
     }
 

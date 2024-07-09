@@ -694,34 +694,6 @@ public class StateEstimatorKnowledge {
         new VoltageMagnitudeMeasures(this.getVoltageMagnitudeMeasures()).print();
     }
 
-
-
-
-    // TODO : fix deserialization
-    // Empty constructor, used only for deserialization
-    @JsonCreator
-    public StateEstimatorKnowledge() {
-    }
-
-    // To save and load an instance of StateEstimatorKnowledge
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
-    // Save StateEstimatorKnowledge instance as JSON file
-    public void write(FileOutputStream fileOutputStream) {
-        try {
-            OBJECT_MAPPER.writeValue(fileOutputStream, this);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    // Build a StateEstimatorKnowledge instance from a JSON file
-    public static StateEstimatorKnowledge read(String pathToFile) throws IOException {
-        File file = new File(pathToFile);
-        OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        return OBJECT_MAPPER.readValue(file, StateEstimatorKnowledge.class);
-    }
-
 }
 
 

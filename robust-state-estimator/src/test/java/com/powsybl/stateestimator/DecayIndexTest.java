@@ -425,7 +425,7 @@ public class DecayIndexTest {
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("ZN6_20sigma_seed0_AllMeasErr_WithNoise_EnsObs_DECAYINDEX.csv");
+        try (FileWriter fileWriter = new FileWriter("V2_ZN6_20sigma_seed0_AllMeasErr_WithNoise_EnsObs_DECAYINDEX.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 
@@ -459,7 +459,6 @@ public class DecayIndexTest {
         int seed = 0;
 
         double ratioTested = 4.0;
-
 
         // A) Test topology error type : "is presumed open but is in fact closed"
 
@@ -614,7 +613,7 @@ public class DecayIndexTest {
 
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("ZN4_seed0_AllTopoErr_NoPickBranchCaseA_WithNoise_EnsObs_DECAYINDEX.csv");
+        try (FileWriter fileWriter = new FileWriter("V2_ZN4_seed0_AllTopoErr_NoPickBranchCaseA_WithNoise_EnsObs_DECAYINDEX.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 

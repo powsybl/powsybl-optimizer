@@ -42,6 +42,8 @@ public class RandomMeasuresGenerator {
     // By default, the number of measurements generated will be 4 times the number of buses in the network (ensure observability)
     public static final double DEFAULT_RATIO_MEASURES_TO_BUSES = 4.0;
 
+//    public record NomATrouver();
+
     /**
      * This method generates random measurements out of the Load Flow results obtained on a network.
      * The measurements generated are added to the "knowledge" instance.
