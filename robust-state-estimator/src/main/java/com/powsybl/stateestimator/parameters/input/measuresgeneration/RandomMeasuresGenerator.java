@@ -126,7 +126,7 @@ public class RandomMeasuresGenerator {
 
         // Initialize a boolean stating if noise must be added to measurements,
         // and a Random for gaussian noise (use constant seed for repeatability)
-        boolean withNoise = parameters.addNoise.equals(true);
+        boolean withNoise = parameters.addNoise != null && parameters.addNoise;
         Random noise = new Random(0);
         // If given, control the size of the interval [-k sigma; +k sigma] in which noise will be picked at random (uniform distribution, sigma : std of measurement)
         double noiseCoef = 1;
@@ -184,7 +184,7 @@ public class RandomMeasuresGenerator {
         //      - pick branch b1-b2 at random from L(b1)
         //      - add measures V(b1), Pf(b1->b2) and Qf(b1->b2)
         //      - remove branch b1-b2 from L(b1) and L(b2)
-        boolean ensureObservability = parameters.ensureObservability.equals(true);
+        boolean ensureObservability = parameters.ensureObservability != null && parameters.ensureObservability;
         if (ensureObservability) {
             // Take into account noPickBranchID
             String noPickBranch = "";
@@ -712,7 +712,7 @@ public class RandomMeasuresGenerator {
 
         // Initialize a boolean stating if noise must be added to measurements,
         // and a Random for gaussian noise (use constant seed for repeatability)
-        boolean withNoise = parameters.addNoise.equals(true);
+        boolean withNoise = parameters.addNoise != null && parameters.addNoise;
         Random noise = new Random(0);
         // If given, control the size of the interval [-k sigma; +k sigma] in which noise will be picked at random (uniform distribution, sigma : std of measurement)
         double noiseCoef = 1;

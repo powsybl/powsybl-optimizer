@@ -66,7 +66,6 @@ public class UseExample {
         // Make sure the state estimator and OpenLoadFlow use the same slack bus
         knowledge.setSlack("VL69_0", network); // for IEEE118
         //knowledge.setSlack("VL-4231_0", network); // for case1354_pegase
-        //knowledge.setSlack("VL-3853_0", network); // for case8387_pegase
 
         // Make all branches suspects and presumed to be closed
         for (Branch branch: network.getBranches()) {
@@ -75,9 +74,9 @@ public class UseExample {
         //knowledge.setSuspectBranch("L45-46-1", true, "PRESUMED OPENED");
 
         // Add a gross error on measure Pf(VL27 --> VL28) : 80 MW (false) instead of 32.6 MW (true)
-        Map<String, String> grossMeasure = Map.of("BranchID","L27-28-1","FirstBusID","VL27_0","SecondBusID","VL28_0",
-                "Value","80.0","Variance","0.1306","Type","Pf");
-        knowledge.addMeasure(1, grossMeasure, network);
+        //Map<String, String> grossMeasure = Map.of("BranchID","L27-28-1","FirstBusID","VL27_0","SecondBusID","VL28_0",
+        //        "Value","80.0","Variance","0.1306","Type","Pf");
+        //knowledge.addMeasure(1, grossMeasure, network);
         // Add a gross error on measure Pf(VL45 --> VL46) : 0 MW (false) instead of -36,32 MW (true)
         //Map<String, String> grossMeasure = Map.of("BranchID","L45-46-1","FirstBusID","VL45_0","SecondBusID","VL46_0",
         //        "Value","30.0","Variance","0.1596","Type","Pf");
@@ -91,7 +90,7 @@ public class UseExample {
 
         // Randomly generate measurements (useful for test cases) out of load flow results
         var parameters = new RandomMeasuresGenerator.RandomMeasuresGeneratorParameters();
-        parameters.withSeed(1).withRatioMeasuresToBuses(4.0)
+        parameters.withSeed(1).withRatioMeasuresToBuses(5.0)
                 .withEnsureObservability(true);
         RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, parameters);
 
