@@ -39,6 +39,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
@@ -67,7 +68,7 @@ class OpenReacRunnerTest {
 
     private void assertEqualsToRef(Path p, String refFileName) throws IOException {
         try (InputStream actual = Files.newInputStream(p)) {
-            ComparisonUtils.compareTxt(getClass().getResourceAsStream(refFileName), actual);
+            ComparisonUtils.assertTxtEquals(Objects.requireNonNull(getClass().getResourceAsStream(refFileName)), actual);
         }
     }
 
