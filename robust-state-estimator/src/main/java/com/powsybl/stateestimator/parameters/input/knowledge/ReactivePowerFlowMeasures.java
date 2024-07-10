@@ -91,8 +91,8 @@ public class ReactivePowerFlowMeasures implements AmplInputFile {
     public void printWithEstimatesAndResiduals() {
         System.out.println("Printing reactive power flow measurements : ");
         // Print the table header
-        System.out.format("%n%-15s%-15s%-15s%-15s%-15s%-20s%-15s%-15s%n", "Type", "BranchID", "FirstBusID", "SecondBusID", "Value (MVar)", "Variance (MVar^2)",     "Estimate (MVar)", "Residual (MVar)");
-        System.out.format("%-15s%-15s%-15s%-15s%-15s%-20s%-15s%-15s%n",        "----", "--------", "----------", "-----------", "------------", "-----------------","---------------", "--------------");
+        System.out.format("%n%-15s%-15s%-15s%-15s%-15s%-20s%-15s%-15s%n", "Type", "BranchID", "FirstBusID", "SecondBusID", "Value (MVar)", "Variance (MVar^2)", "Estimate (MVar)", "Residual (MVar)");
+        System.out.format("%-15s%-15s%-15s%-15s%-15s%-20s%-15s%-15s%n", "----", "--------", "----------", "-----------", "------------", "-----------------", "---------------", "--------------");
         // Print each measurement
         for (var measureWithEstimateAndResidual : measuresWithEstimatesAndResiduals.entrySet()) {
             System.out.format("%-15s%-15s%-15s%-15s%-15s%-20s%-15s%-15s%n",

@@ -92,7 +92,7 @@ public class ActivePowerInjectedMeasures implements AmplInputFile {
         System.out.println("Printing active power injected measurements : ");
         // Print the table header
         System.out.format("%n%-15s%-15s%-15s%-20s%-15s%-15s%n", "Type", "BusID", "Value (MW)", "Variance (MW^2)", "Estimate (MW)", "Residual (MW)");
-        System.out.format("%-15s%-15s%-15s%-20s%-15s%-15s%n",   "----", "-----", "----------", "---------------", "-------------", "-------------");
+        System.out.format("%-15s%-15s%-15s%-20s%-15s%-15s%n", "----", "-----", "----------", "---------------", "-------------", "-------------");
         // Print each measurement
         for (var measureWithEstimateAndResidual : measuresWithEstimatesAndResiduals.entrySet()) {
             System.out.format("%-15s%-15s%-15s%-20s%-15s%-15s%n",

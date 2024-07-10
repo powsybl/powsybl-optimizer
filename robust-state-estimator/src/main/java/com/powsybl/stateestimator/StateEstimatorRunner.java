@@ -9,7 +9,7 @@ package com.powsybl.stateestimator;
 import com.powsybl.iidm.network.Connectable;
 import com.powsybl.iidm.network.TwoWindingsTransformer;
 import com.powsybl.stateestimator.parameters.StateEstimatorAmplIOFiles;
-import com.powsybl.stateestimator.parameters.input.knowledge.StateEstimatorKnowledge;
+import com.powsybl.stateestimator.parameters.input.knowledge.*;
 import com.powsybl.stateestimator.parameters.input.options.StateEstimatorOptions;
 import com.powsybl.ampl.executor.AmplModel;
 import com.powsybl.ampl.executor.AmplModelRunner;
@@ -74,6 +74,13 @@ public final class StateEstimatorRunner {
         AmplModel stateEstimation = StateEstimatorModel.buildModel(); // Only AMPL files (.dat,.mod,.run) that never change should be given during this step
         StateEstimatorAmplIOFiles amplIoInterface = new StateEstimatorAmplIOFiles(knowledge, options, config.isDebug());
         AmplResults run = AmplModelRunner.run(network, variantId, stateEstimation, manager, amplIoInterface);
-        return new StateEstimatorResults(run.isSuccess(), amplIoInterface, run.getIndicators());
+        StateEstimatorResults stateEstimatorResults = new StateEstimatorResults(run.isSuccess(), amplIoInterface, run.getIndicators());
+        // Complete attributes of StateEstimatorResults (measurements extended with estimates and residuals returned by the state estimation)
+        stateEstimatorResults.setActivePowerFlowMeasuresExtended(new ActivePowerFlowMeasures(knowledge.getActivePowerFlowMeasures(), stateEstimatorResults.measurementEstimatesAndResiduals));
+        stateEstimatorResults.setReactivePowerFlowMeasuresExtended(new ReactivePowerFlowMeasures(knowledge.getReactivePowerFlowMeasures(), stateEstimatorResults.measurementEstimatesAndResiduals));
+        stateEstimatorResults.setActivePowerInjectedMeasuresExtended(new ActivePowerInjectedMeasures(knowledge.getActivePowerInjectedMeasures(), stateEstimatorResults.measurementEstimatesAndResiduals));
+        stateEstimatorResults.setReactivePowerInjectedMeasuresExtended(new ReactivePowerInjectedMeasures(knowledge.getReactivePowerInjectedMeasures(), stateEstimatorResults.measurementEstimatesAndResiduals));
+        stateEstimatorResults.setVoltageMagnitudeMeasuresExtended(new VoltageMagnitudeMeasures(knowledge.getVoltageMagnitudeMeasures(), stateEstimatorResults.measurementEstimatesAndResiduals));
+        return stateEstimatorResults;
     }
 }

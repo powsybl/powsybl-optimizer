@@ -66,8 +66,7 @@ public class NetworkTopologyEstimateOutput extends AbstractStateEstimatorEstimat
             String assumedStatus = tokens[COL_ASSUMED_STATUS].replaceAll("'", "");
             String estimatedStatus = tokens[COL_ESTIMATED_STATUS].replaceAll("'", "");
             networkTopologyEstimate.add(new BranchStatusEstimate(branchId, isSuspected, assumedStatus, estimatedStatus));
-        }
-        else {
+        } else {
             throw new PowsyblException("Status indicated for the branch is not valid. Only 'CLOSED' or 'OPENED' are accepted.");
         }
 

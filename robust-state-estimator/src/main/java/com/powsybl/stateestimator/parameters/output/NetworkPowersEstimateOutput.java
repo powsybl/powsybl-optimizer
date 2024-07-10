@@ -11,7 +11,6 @@ import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.stateestimator.parameters.output.estimates.BranchPowersEstimate;
-import com.powsybl.stateestimator.parameters.output.estimates.BusStateEstimate;
 
 import java.io.BufferedReader;
 import java.io.IOException;

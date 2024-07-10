@@ -14,13 +14,11 @@ import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.loadflow.LoadFlowResult;
 import com.powsybl.openloadflow.OpenLoadFlowParameters;
 import com.powsybl.stateestimator.parameters.input.knowledge.StateEstimatorKnowledge;
-import com.powsybl.stateestimator.parameters.input.knowledge.RandomMeasuresGenerator;
+import com.powsybl.stateestimator.parameters.input.measuresgeneration.RandomMeasuresGenerator;
 import com.powsybl.stateestimator.parameters.input.options.StateEstimatorOptions;
-import org.jgrapht.alg.util.Pair;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.*;
 
 import static com.powsybl.iidm.network.Network.read;
@@ -92,11 +90,10 @@ public class UseExample {
         //knowledge.addMeasure(1, grossMeasure, network);
 
         // Randomly generate measurements (useful for test cases) out of load flow results
-        RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
-                Optional.of(1), Optional.of(4.),
-                Optional.of(false), Optional.empty(),
-                Optional.empty(), Optional.of(true));
-
+        var parameters = new RandomMeasuresGenerator.RandomMeasuresGeneratorParameters();
+        parameters.withSeed(1).withRatioMeasuresToBuses(4.0)
+                .withEnsureObservability(true);
+        RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, parameters);
 
         long endTime   = System.nanoTime();
         long totalTime = endTime - startTime;

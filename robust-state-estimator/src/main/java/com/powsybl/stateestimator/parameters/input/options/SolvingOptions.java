@@ -12,16 +12,16 @@ import com.powsybl.commons.util.StringToIntMapper;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Lucas RIOU <lucas.riou@artelys.com>
  */
 public class SolvingOptions implements AmplInputFile {
 
-    HashMap<String, Integer> options;
+    Map<String, Integer> options;
 
-    public SolvingOptions(HashMap<String, Integer> options) {
+    public SolvingOptions(Map<String, Integer> options) {
         this.options = options;
     }
 

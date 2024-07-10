@@ -72,7 +72,7 @@ public class VoltageMagnitudeMeasures implements AmplInputFile {
         System.out.println("Printing voltage magnitude measurements : ");
         // Print the table header
         System.out.format("%n%-15s%-15s%-15s%-15s%n", "Type", "BusID", "Value (kV)", "Variance (kV^2)");
-        System.out.format("%-15s%-15s%-15s%-15s%n",   "----", "-----", "----------", "---------------");
+        System.out.format("%-15s%-15s%-15s%-15s%n", "----", "-----", "----------", "---------------");
         // Print each measurement
         for (var measure : measures.entrySet()) {
             System.out.format("%-15s%-15s%-15s%-15s%n",
@@ -92,7 +92,7 @@ public class VoltageMagnitudeMeasures implements AmplInputFile {
         System.out.println("Printing voltage magnitude measurements : ");
         // Print the table header
         System.out.format("%n%-15s%-15s%-15s%-20s%-15s%-15s%n", "Type", "BusID", "Value (kV)", "Variance (kV^2)", "Estimate (kV)", "Residual (kV)");
-        System.out.format("%-15s%-15s%-15s%-20s%-15s%-15s%n",   "----", "-----", "----------", "---------------", "-------------", "-------------");
+        System.out.format("%-15s%-15s%-15s%-20s%-15s%-15s%n", "----", "-----", "----------", "---------------", "-------------", "-------------");
         // Print each measurement
         for (var measureWithEstimateAndResidual : measuresWithEstimatesAndResiduals.entrySet()) {
             System.out.format("%-15s%-15s%-15s%-20s%-15s%-15s%n",

@@ -14,12 +14,12 @@ import com.powsybl.iidm.network.Network;
 public class BusStateEstimate {
 
     String busId;
-    double V; // in p.u.
+    double v; // in p.u.
     double theta; // in radians
 
-    public BusStateEstimate(String busId, double V, double theta) {
+    public BusStateEstimate(String busId, double v, double theta) {
         this.busId = busId;
-        this.V = V;
+        this.v = v;
         this.theta = theta;
     }
 
@@ -29,7 +29,7 @@ public class BusStateEstimate {
     }
 
     public void printSi(Network network) {
-        double  nomV = network.getBusView().getBus(this.getBusId()).getVoltageLevel().getNominalV();
+        double nomV = network.getBusView().getBus(this.getBusId()).getVoltageLevel().getNominalV();
         System.out.println("\nState estimation for bus " + this.getBusId() + " : ");
         System.out.println("V = " + this.getV() * nomV + " kV , theta = " + this.getTheta() + " rad");
     }
@@ -39,7 +39,7 @@ public class BusStateEstimate {
     }
 
     public double getV() {
-        return V;
+        return v;
     }
 
     public double getTheta() {

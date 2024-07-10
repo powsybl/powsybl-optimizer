@@ -14,6 +14,7 @@ import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.loadflow.LoadFlowResult;
 import com.powsybl.openloadflow.OpenLoadFlowParameters;
 import com.powsybl.stateestimator.parameters.input.knowledge.*;
+import com.powsybl.stateestimator.parameters.input.measuresgeneration.RandomMeasuresGenerator;
 import com.powsybl.stateestimator.parameters.input.options.StateEstimatorOptions;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -21,7 +22,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.*;
 
 import static com.powsybl.openloadflow.OpenLoadFlowParameters.LowImpedanceBranchMode.REPLACE_BY_MIN_IMPEDANCE_LINE;
@@ -77,8 +77,7 @@ public class DecayIndexTest {
 
             // Add a gross error on measure at hand
             double variance = Math.pow(RandomMeasuresGenerator.RELATIVE_STD_BY_MEAS_TYPE.get("V")
-                            * Math.max(Math.abs(bus.getV()), RandomMeasuresGenerator.MIN_VOLTAGE_KV)
-                    , 2);
+                            * Math.max(Math.abs(bus.getV()), RandomMeasuresGenerator.MIN_VOLTAGE_KV), 2);
             double error = grossErrorMagnitude * Math.sqrt(variance);
             Map<String, String> grossMeasure = Map.of(
                     "Type", "V",
@@ -92,21 +91,21 @@ public class DecayIndexTest {
             String grossMeasureID = "V_" + bus.getId();
 
             // Randomly generate measurements out of load flow results
-            RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
-                    Optional.of(seed), Optional.of(ratioTested),
-                    Optional.of(true), Optional.empty(),
-                    Optional.empty(), Optional.of(true));
+            var parameters = new RandomMeasuresGenerator.RandomMeasuresGeneratorParameters();
+            parameters.withSeed(seed).withRatioMeasuresToBuses(ratioTested)
+                    .withAddNoise(true).withEnsureObservability(true);
+            RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, parameters);
 
             // Run SE
             StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
                     knowledge, options, new StateEstimatorConfig(true), new LocalComputationManager());
 
-            // Compute normalized residuals
-            List<Map.Entry<Integer, Double>> normalizedResiduals = StateEstimatorHeuristic.computeAndSortNormalizedResiduals(knowledge, results);
+            // Compute weighted residuals
+            List<Map.Entry<Integer, Double>> weightedResiduals = StateEstimatorHeuristic.computeAndSortWeightedResiduals(results);
 
             // Compute decay index for gross error
             double decayIndex = StateEstimatorHeuristic.computeResidualsDecayIndex(1,
-                    normalizedResiduals, knowledge, network);
+                    weightedResiduals, knowledge, network);
 
             data.add(List.of(
                     String.valueOf(seed), String.valueOf(ratioTested),
@@ -128,14 +127,13 @@ public class DecayIndexTest {
 
                 // Add a gross error on measure at hand
                 double variance = Math.pow(RandomMeasuresGenerator.RELATIVE_STD_BY_MEAS_TYPE.get("P")
-                                * Math.max(Math.abs(bus.getP()), RandomMeasuresGenerator.MIN_ACTIVE_POWER_MW)
-                        , 2);
+                                * Math.max(Math.abs(bus.getP()), RandomMeasuresGenerator.MIN_ACTIVE_POWER_MW), 2);
                 double error = grossErrorMagnitude * Math.sqrt(variance);
                 Map<String, String> grossMeasure = Map.of(
                         "Type", "P",
                         "BusID", bus.getId(),
                         "Variance", String.valueOf(variance),
-                        "Value", String.valueOf(-bus.getP()>0 ? -bus.getP() + error : -bus.getP() - error)
+                        "Value", String.valueOf(-bus.getP() > 0 ? -bus.getP() + error : -bus.getP() - error)
                 );
                 knowledge.addMeasure(1, grossMeasure, network);
 
@@ -143,21 +141,21 @@ public class DecayIndexTest {
                 String grossMeasureID = "P_" + bus.getId();
 
                 // Randomly generate measurements out of load flow results
-                RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
-                        Optional.of(seed), Optional.of(ratioTested),
-                        Optional.of(true), Optional.empty(),
-                        Optional.empty(), Optional.of(true));
+                var parameters = new RandomMeasuresGenerator.RandomMeasuresGeneratorParameters();
+                parameters.withSeed(seed).withRatioMeasuresToBuses(ratioTested)
+                        .withAddNoise(true).withEnsureObservability(true);
+                RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, parameters);
 
                 // Run SE
                 StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
                         knowledge, options, new StateEstimatorConfig(true), new LocalComputationManager());
 
-                // Compute normalized residuals
-                List<Map.Entry<Integer, Double>> normalizedResiduals = StateEstimatorHeuristic.computeAndSortNormalizedResiduals(knowledge, results);
+                // Compute weighted residuals
+                List<Map.Entry<Integer, Double>> weightedResiduals = StateEstimatorHeuristic.computeAndSortWeightedResiduals(results);
 
                 // Compute decay index for gross error
                 double decayIndex = StateEstimatorHeuristic.computeResidualsDecayIndex(1,
-                        normalizedResiduals, knowledge, network);
+                        weightedResiduals, knowledge, network);
 
                 data.add(List.of(
                         String.valueOf(seed), String.valueOf(ratioTested),
@@ -180,14 +178,13 @@ public class DecayIndexTest {
 
                 // Add a gross error on measure at hand
                 double variance = Math.pow(RandomMeasuresGenerator.RELATIVE_STD_BY_MEAS_TYPE.get("Q")
-                                * Math.max(Math.abs(bus.getQ()), RandomMeasuresGenerator.MIN_REACTIVE_POWER_MVAR)
-                        , 2);
+                                * Math.max(Math.abs(bus.getQ()), RandomMeasuresGenerator.MIN_REACTIVE_POWER_MVAR), 2);
                 double error = grossErrorMagnitude * Math.sqrt(variance);
                 Map<String, String> grossMeasure = Map.of(
                         "Type", "Q",
                         "BusID", bus.getId(),
                         "Variance", String.valueOf(variance),
-                        "Value", String.valueOf(-bus.getQ()>0 ? -bus.getQ() + error : -bus.getQ() - error)
+                        "Value", String.valueOf(-bus.getQ() > 0 ? -bus.getQ() + error : -bus.getQ() - error)
                 );
                 knowledge.addMeasure(1, grossMeasure, network);
 
@@ -195,21 +192,21 @@ public class DecayIndexTest {
                 String grossMeasureID = "Q_" + bus.getId();
 
                 // Randomly generate measurements out of load flow results
-                RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
-                        Optional.of(seed), Optional.of(ratioTested),
-                        Optional.of(true), Optional.empty(),
-                        Optional.empty(), Optional.of(true));
+                var parameters = new RandomMeasuresGenerator.RandomMeasuresGeneratorParameters();
+                parameters.withSeed(seed).withRatioMeasuresToBuses(ratioTested)
+                        .withAddNoise(true).withEnsureObservability(true);
+                RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, parameters);
 
                 // Run SE
                 StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
                         knowledge, options, new StateEstimatorConfig(true), new LocalComputationManager());
 
-                // Compute normalized residuals
-                List<Map.Entry<Integer, Double>> normalizedResiduals = StateEstimatorHeuristic.computeAndSortNormalizedResiduals(knowledge, results);
+                // Compute weighted residuals
+                List<Map.Entry<Integer, Double>> weightedResiduals = StateEstimatorHeuristic.computeAndSortWeightedResiduals(results);
 
                 // Compute decay index for gross error
                 double decayIndex = StateEstimatorHeuristic.computeResidualsDecayIndex(1,
-                        normalizedResiduals, knowledge, network);
+                        weightedResiduals, knowledge, network);
 
                 data.add(List.of(
                         String.valueOf(seed), String.valueOf(ratioTested),
@@ -230,8 +227,7 @@ public class DecayIndexTest {
 
             // Add a gross error on measure at hand
             double variance = Math.pow(RandomMeasuresGenerator.RELATIVE_STD_BY_MEAS_TYPE.get("Pf")
-                            * Math.max(Math.abs(branch.getTerminal1().getP()), RandomMeasuresGenerator.MIN_ACTIVE_POWER_MW)
-                    , 2);
+                            * Math.max(Math.abs(branch.getTerminal1().getP()), RandomMeasuresGenerator.MIN_ACTIVE_POWER_MW), 2);
             double error = grossErrorMagnitude * Math.sqrt(variance);
             Map<String, String> grossMeasure = Map.of(
                     "Type", "Pf",
@@ -239,7 +235,7 @@ public class DecayIndexTest {
                     "FirstBusID", branch.getTerminal1().getBusView().getBus().getId(),
                     "SecondBusID", branch.getTerminal2().getBusView().getBus().getId(),
                     "Variance", String.valueOf(variance),
-                    "Value", String.valueOf(branch.getTerminal1().getP()>0 ? branch.getTerminal1().getP() + error : branch.getTerminal1().getP() - error)
+                    "Value", String.valueOf(branch.getTerminal1().getP() > 0 ? branch.getTerminal1().getP() + error : branch.getTerminal1().getP() - error)
             );
             knowledge.addMeasure(1, grossMeasure, network);
 
@@ -247,21 +243,21 @@ public class DecayIndexTest {
             String grossMeasureID = "Pf_" + branch.getId() + "_" + branch.getTerminal1().getBusView().getBus().getId();
 
             // Randomly generate measurements out of load flow results
-            RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
-                    Optional.of(seed), Optional.of(ratioTested),
-                    Optional.of(true), Optional.empty(),
-                    Optional.empty(), Optional.of(true));
+            var parameters = new RandomMeasuresGenerator.RandomMeasuresGeneratorParameters();
+            parameters.withSeed(seed).withRatioMeasuresToBuses(ratioTested)
+                    .withAddNoise(true).withEnsureObservability(true);
+            RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, parameters);
 
             // Run SE
             StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
                     knowledge, options, new StateEstimatorConfig(true), new LocalComputationManager());
 
-            // Compute normalized residuals
-            List<Map.Entry<Integer, Double>> normalizedResiduals = StateEstimatorHeuristic.computeAndSortNormalizedResiduals(knowledge, results);
+            // Compute weighted residuals
+            List<Map.Entry<Integer, Double>> weightedResiduals = StateEstimatorHeuristic.computeAndSortWeightedResiduals(results);
 
             // Compute decay index for gross error
             double decayIndex = StateEstimatorHeuristic.computeResidualsDecayIndex(1,
-                    normalizedResiduals, knowledge, network);
+                    weightedResiduals, knowledge, network);
 
             data.add(List.of(
                     String.valueOf(seed), String.valueOf(ratioTested),
@@ -281,8 +277,7 @@ public class DecayIndexTest {
 
             // Add a gross error on measure at hand
             double variance = Math.pow(RandomMeasuresGenerator.RELATIVE_STD_BY_MEAS_TYPE.get("Pf")
-                            * Math.max(Math.abs(branch.getTerminal2().getP()), RandomMeasuresGenerator.MIN_ACTIVE_POWER_MW)
-                    , 2);
+                            * Math.max(Math.abs(branch.getTerminal2().getP()), RandomMeasuresGenerator.MIN_ACTIVE_POWER_MW), 2);
             double error = grossErrorMagnitude * Math.sqrt(variance);
             Map<String, String> grossMeasure = Map.of(
                     "Type", "Pf",
@@ -290,7 +285,7 @@ public class DecayIndexTest {
                     "FirstBusID", branch.getTerminal2().getBusView().getBus().getId(),
                     "SecondBusID", branch.getTerminal1().getBusView().getBus().getId(),
                     "Variance", String.valueOf(variance),
-                    "Value", String.valueOf(branch.getTerminal2().getP()>0 ? branch.getTerminal2().getP() + error : branch.getTerminal2().getP() - error)
+                    "Value", String.valueOf(branch.getTerminal2().getP() > 0 ? branch.getTerminal2().getP() + error : branch.getTerminal2().getP() - error)
             );
             knowledge.addMeasure(1, grossMeasure, network);
 
@@ -298,21 +293,21 @@ public class DecayIndexTest {
             String grossMeasureID = "Pf_" + branch.getId() + "_" + branch.getTerminal2().getBusView().getBus().getId();
 
             // Randomly generate measurements out of load flow results
-            RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
-                    Optional.of(seed), Optional.of(ratioTested),
-                    Optional.of(true), Optional.empty(),
-                    Optional.empty(), Optional.of(true));
+            var parameters = new RandomMeasuresGenerator.RandomMeasuresGeneratorParameters();
+            parameters.withSeed(seed).withRatioMeasuresToBuses(ratioTested)
+                    .withAddNoise(true).withEnsureObservability(true);
+            RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, parameters);
 
             // Run SE
             StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
                     knowledge, options, new StateEstimatorConfig(true), new LocalComputationManager());
 
-            // Compute normalized residuals
-            List<Map.Entry<Integer, Double>> normalizedResiduals = StateEstimatorHeuristic.computeAndSortNormalizedResiduals(knowledge, results);
+            // Compute weighted residuals
+            List<Map.Entry<Integer, Double>> weightedResiduals = StateEstimatorHeuristic.computeAndSortWeightedResiduals(results);
 
             // Compute decay index for gross error
             double decayIndex = StateEstimatorHeuristic.computeResidualsDecayIndex(1,
-                    normalizedResiduals, knowledge, network);
+                    weightedResiduals, knowledge, network);
 
             data.add(List.of(
                     String.valueOf(seed), String.valueOf(ratioTested),
@@ -332,8 +327,7 @@ public class DecayIndexTest {
 
             // Add a gross error on measure at hand
             double variance = Math.pow(RandomMeasuresGenerator.RELATIVE_STD_BY_MEAS_TYPE.get("Qf")
-                            * Math.max(Math.abs(branch.getTerminal1().getQ()), RandomMeasuresGenerator.MIN_REACTIVE_POWER_MVAR)
-                    , 2);
+                            * Math.max(Math.abs(branch.getTerminal1().getQ()), RandomMeasuresGenerator.MIN_REACTIVE_POWER_MVAR), 2);
             double error = grossErrorMagnitude * Math.sqrt(variance);
             Map<String, String> grossMeasure = Map.of(
                     "Type", "Qf",
@@ -341,7 +335,7 @@ public class DecayIndexTest {
                     "FirstBusID", branch.getTerminal1().getBusView().getBus().getId(),
                     "SecondBusID", branch.getTerminal2().getBusView().getBus().getId(),
                     "Variance", String.valueOf(variance),
-                    "Value", String.valueOf(branch.getTerminal1().getQ()>0 ? branch.getTerminal1().getQ() + error : branch.getTerminal1().getQ() - error)
+                    "Value", String.valueOf(branch.getTerminal1().getQ() > 0 ? branch.getTerminal1().getQ() + error : branch.getTerminal1().getQ() - error)
             );
             knowledge.addMeasure(1, grossMeasure, network);
 
@@ -349,21 +343,21 @@ public class DecayIndexTest {
             String grossMeasureID = "Qf_" + branch.getId() + "_" + branch.getTerminal1().getBusView().getBus().getId();
 
             // Randomly generate measurements out of load flow results
-            RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
-                    Optional.of(seed), Optional.of(ratioTested),
-                    Optional.of(true), Optional.empty(),
-                    Optional.empty(), Optional.of(true));
+            var parameters = new RandomMeasuresGenerator.RandomMeasuresGeneratorParameters();
+            parameters.withSeed(seed).withRatioMeasuresToBuses(ratioTested)
+                    .withAddNoise(true).withEnsureObservability(true);
+            RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, parameters);
 
             // Run SE
             StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
                     knowledge, options, new StateEstimatorConfig(true), new LocalComputationManager());
 
-            // Compute normalized residuals
-            List<Map.Entry<Integer, Double>> normalizedResiduals = StateEstimatorHeuristic.computeAndSortNormalizedResiduals(knowledge, results);
+            // Compute weighted residuals
+            List<Map.Entry<Integer, Double>> weightedResiduals = StateEstimatorHeuristic.computeAndSortWeightedResiduals(results);
 
             // Compute decay index for gross error
             double decayIndex = StateEstimatorHeuristic.computeResidualsDecayIndex(1,
-                    normalizedResiduals, knowledge, network);
+                    weightedResiduals, knowledge, network);
 
             data.add(List.of(
                     String.valueOf(seed), String.valueOf(ratioTested),
@@ -383,8 +377,7 @@ public class DecayIndexTest {
 
             // Add a gross error on measure at hand
             double variance = Math.pow(RandomMeasuresGenerator.RELATIVE_STD_BY_MEAS_TYPE.get("Qf")
-                            * Math.max(Math.abs(branch.getTerminal2().getQ()), RandomMeasuresGenerator.MIN_REACTIVE_POWER_MVAR)
-                    , 2);
+                            * Math.max(Math.abs(branch.getTerminal2().getQ()), RandomMeasuresGenerator.MIN_REACTIVE_POWER_MVAR), 2);
             double error = grossErrorMagnitude * Math.sqrt(variance);
             Map<String, String> grossMeasure = Map.of(
                     "Type", "Qf",
@@ -392,7 +385,7 @@ public class DecayIndexTest {
                     "FirstBusID", branch.getTerminal2().getBusView().getBus().getId(),
                     "SecondBusID", branch.getTerminal1().getBusView().getBus().getId(),
                     "Variance", String.valueOf(variance),
-                    "Value", String.valueOf(branch.getTerminal2().getQ()>0 ? branch.getTerminal2().getQ() + error : branch.getTerminal2().getQ() - error)
+                    "Value", String.valueOf(branch.getTerminal2().getQ() > 0 ? branch.getTerminal2().getQ() + error : branch.getTerminal2().getQ() - error)
             );
             knowledge.addMeasure(1, grossMeasure, network);
 
@@ -400,21 +393,21 @@ public class DecayIndexTest {
             String grossMeasureID = "Qf_" + branch.getId() + "_" + branch.getTerminal2().getBusView().getBus().getId();
 
             // Randomly generate measurements out of load flow results
-            RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
-                    Optional.of(seed), Optional.of(ratioTested),
-                    Optional.of(true), Optional.empty(),
-                    Optional.empty(), Optional.of(true));
+            var parameters = new RandomMeasuresGenerator.RandomMeasuresGeneratorParameters();
+            parameters.withSeed(seed).withRatioMeasuresToBuses(ratioTested)
+                    .withAddNoise(true).withEnsureObservability(true);
+            RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, parameters);
 
             // Run SE
             StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
                     knowledge, options, new StateEstimatorConfig(true), new LocalComputationManager());
 
-            // Compute normalized residuals
-            List<Map.Entry<Integer, Double>> normalizedResiduals = StateEstimatorHeuristic.computeAndSortNormalizedResiduals(knowledge, results);
+            // Compute weighted residuals
+            List<Map.Entry<Integer, Double>> weightedResiduals = StateEstimatorHeuristic.computeAndSortWeightedResiduals(results);
 
             // Compute decay index for gross error
             double decayIndex = StateEstimatorHeuristic.computeResidualsDecayIndex(1,
-                    normalizedResiduals, knowledge, network);
+                    weightedResiduals, knowledge, network);
 
             data.add(List.of(
                     String.valueOf(seed), String.valueOf(ratioTested),
@@ -486,8 +479,7 @@ public class DecayIndexTest {
 
             // Add V measure on selected line
             double variance = Math.pow(RandomMeasuresGenerator.RELATIVE_STD_BY_MEAS_TYPE.get("V")
-                            * Math.max(Math.abs(relatedBus.getV()), RandomMeasuresGenerator.MIN_VOLTAGE_KV)
-                    , 2);
+                            * Math.max(Math.abs(relatedBus.getV()), RandomMeasuresGenerator.MIN_VOLTAGE_KV), 2);
             Map<String, String> measure = Map.of(
                     "Type", "V",
                     "BusID", relatedBus.getId(),
@@ -496,11 +488,12 @@ public class DecayIndexTest {
             );
             knowledge.addMeasure(1, measure, network);
 
-            // Randomly generate measurements out of load flow results
-            RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
-                    Optional.of(seed), Optional.of(ratioTested),
-                    Optional.of(true), Optional.empty(),
-                    Optional.of(line.getId()), Optional.of(true));
+            // Randomly generate measurements out of load flow results (no measurement on erroneous line)
+            var parameters = new RandomMeasuresGenerator.RandomMeasuresGeneratorParameters();
+            parameters.withSeed(seed).withRatioMeasuresToBuses(ratioTested)
+                    .withAddNoise(true).withEnsureObservability(true)
+                    .withNoPickBranchID(line.getId());
+            RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, parameters);
 
             // Introduce topology error
             knowledge.setSuspectBranch(line.getId(), false, "PRESUMED OPENED");
@@ -512,12 +505,12 @@ public class DecayIndexTest {
             // Cancel topology error
             knowledge.setSuspectBranch(line.getId(), false, "PRESUMED CLOSED");
 
-            // Compute normalized residuals
-            List<Map.Entry<Integer, Double>> normalizedResiduals = StateEstimatorHeuristic.computeAndSortNormalizedResiduals(knowledge, results);
+            // Compute weighted residuals
+            List<Map.Entry<Integer, Double>> weightedResiduals = StateEstimatorHeuristic.computeAndSortWeightedResiduals(results);
 
             // Compute decay index for V measure (second bus) of selected line
             double decayIndex = StateEstimatorHeuristic.computeResidualsDecayIndex(1,
-                    normalizedResiduals, knowledge, network);
+                    weightedResiduals, knowledge, network);
 
             data.add(List.of(
                     String.valueOf(seed), String.valueOf(ratioTested),
@@ -525,7 +518,6 @@ public class DecayIndexTest {
                     relatedBus.getId(), String.valueOf(decayIndex)
             ));
         }
-
 
         // B) Test topology error type : "is presumed closed but is in fact open"
 
@@ -535,8 +527,9 @@ public class DecayIndexTest {
         for (Line line : network.getLines()) {
             allTestLines.add(line.getId());
         }
-        List.of("L8-9-1","L9-10-1","L68-116-1","L71-73-1","L110-112-1",
-                "L85-86-1","L86-87-1","L110-111-1","L12-117-1")
+        // Remove from set of tested lines the lines that lead to disconnected buses from main component when open
+        List.of("L8-9-1", "L9-10-1", "L68-116-1", "L71-73-1", "L110-112-1",
+                        "L85-86-1", "L86-87-1", "L110-111-1", "L12-117-1")
                 .forEach(allTestLines::remove);
 
         for (String lineID : allTestLines) {
@@ -576,8 +569,7 @@ public class DecayIndexTest {
 
             // Add V measure on selected line
             double variance = Math.pow(RandomMeasuresGenerator.RELATIVE_STD_BY_MEAS_TYPE.get("V")
-                            * Math.max(Math.abs(measureValue), RandomMeasuresGenerator.MIN_VOLTAGE_KV)
-                    , 2);
+                            * Math.max(Math.abs(measureValue), RandomMeasuresGenerator.MIN_VOLTAGE_KV), 2);
             Map<String, String> measure = Map.of(
                     "Type", "V",
                     "BusID", relatedBus.getId(),
@@ -587,30 +579,28 @@ public class DecayIndexTest {
             knowledge.addMeasure(1, measure, network);
 
             // Randomly generate measurements out of load flow results
-            RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
-                    Optional.of(seed), Optional.of(ratioTested),
-                    Optional.of(true), Optional.empty(),
-                    Optional.empty(), Optional.of(true));
+            var parameters = new RandomMeasuresGenerator.RandomMeasuresGeneratorParameters();
+            parameters.withSeed(seed).withRatioMeasuresToBuses(ratioTested)
+                    .withAddNoise(true).withEnsureObservability(true);
+            RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, parameters);
 
             // Run SE (erroneous branch is not suspected and presumed closed by default)
             StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
                     knowledge, options, new StateEstimatorConfig(true), new LocalComputationManager());
 
-            // Compute normalized residuals
-            List<Map.Entry<Integer, Double>> normalizedResiduals = StateEstimatorHeuristic.computeAndSortNormalizedResiduals(knowledge, results);
+            // Compute weighted residuals
+            List<Map.Entry<Integer, Double>> weightedResiduals = StateEstimatorHeuristic.computeAndSortWeightedResiduals(results);
 
             // Compute decay index for V measure of selected line (second bus)
             double decayIndex = StateEstimatorHeuristic.computeResidualsDecayIndex(1,
-                    normalizedResiduals, knowledge, network);
+                    weightedResiduals, knowledge, network);
 
             data.add(List.of(
                     String.valueOf(seed), String.valueOf(ratioTested),
                     lineID, "PRESUMED_CLOSED",
                     relatedBus.getId(), String.valueOf(decayIndex)
             ));
-
         }
-
 
         // Export the results in a CSV file
         try (FileWriter fileWriter = new FileWriter("V2_ZN4_seed0_AllTopoErr_NoPickBranchCaseA_WithNoise_EnsObs_DECAYINDEX.csv");

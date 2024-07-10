@@ -27,7 +27,6 @@ public class BranchStatusEstimate {
         System.out.println("\nEstimated state of branch " + getBranchId() + " : " + getEstimatedStatus());
     }
 
-
     public String getBranchId() {
         return branchId;
     }

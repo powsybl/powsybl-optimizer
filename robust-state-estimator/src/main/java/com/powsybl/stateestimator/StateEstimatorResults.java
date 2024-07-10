@@ -36,12 +36,19 @@ public class StateEstimatorResults {
     private final List<Pair<String, String>> runIndicators;
     private final List<Pair<String, String>> networkIndicators;
 
-    // Measurement estimates and residuals returned by the state estimation
+    // Estimates and residuals returned by the state estimation
     Map<Integer, ArrayList<String>> measurementEstimatesAndResiduals;
 
-    // Bounds (p.u.) on voltages used in the state estimation : if one estimate reaches one of these bounds, a warning message is printed
-    private final double MIN_ALLOWED_VOLTAGE = 0.5;
-    private final double MAX_ALLOWED_VOLTAGE = 1.5;
+    // Measures (from StateEstimatorKnowledge) extended with estimates and residuals returned by the state estimation
+    private ActivePowerFlowMeasures activePowerFlowMeasuresExtended;
+    private ActivePowerInjectedMeasures activePowerInjectedMeasuresExtended;
+    private ReactivePowerFlowMeasures reactivePowerFlowMeasuresExtended;
+    private ReactivePowerInjectedMeasures reactivePowerInjectedMeasuresExtended;
+    private VoltageMagnitudeMeasures voltageMagnitudeMeasuresExtended;
+
+    // Bounds (p.u.) on voltages used in the state estimation (AMPL code) : if one estimate reaches one of these bounds, a warning message is printed
+    private final double minAllowedVoltage = 0.5;
+    private final double maxAllowedVoltage = 1.5;
 
     /**
      * @param status      The final status of the state estimation run.
@@ -61,6 +68,26 @@ public class StateEstimatorResults {
         for (Map.Entry<String, String> entry : runIndicators.entrySet()) {
             this.runIndicators.add(Pair.of(entry.getKey(), entry.getValue()));
         }
+    }
+
+    public void setActivePowerFlowMeasuresExtended(ActivePowerFlowMeasures activePowerFlowMeasuresExtended) {
+        this.activePowerFlowMeasuresExtended = activePowerFlowMeasuresExtended;
+    }
+
+    public void setReactivePowerFlowMeasuresExtended(ReactivePowerFlowMeasures reactivePowerFlowMeasuresExtended) {
+        this.reactivePowerFlowMeasuresExtended = reactivePowerFlowMeasuresExtended;
+    }
+
+    public void setActivePowerInjectedMeasuresExtended(ActivePowerInjectedMeasures activePowerInjectedMeasuresExtended) {
+        this.activePowerInjectedMeasuresExtended = activePowerInjectedMeasuresExtended;
+    }
+
+    public void setReactivePowerInjectedMeasuresExtended(ReactivePowerInjectedMeasures reactivePowerInjectedMeasuresExtended) {
+        this.reactivePowerInjectedMeasuresExtended = reactivePowerInjectedMeasuresExtended;
+    }
+
+    public void setVoltageMagnitudeMeasuresExtended(VoltageMagnitudeMeasures voltageMagnitudeMeasuresExtended) {
+        this.voltageMagnitudeMeasuresExtended = voltageMagnitudeMeasuresExtended;
     }
 
     public boolean getStatus() {
@@ -87,13 +114,13 @@ public class StateEstimatorResults {
         System.out.println("Printing state estimate : ");
         // Print a warning message if one of the estimated voltages equals MIN_ALLOWED_VOLTAGE or MAX_ALLOWED_VOLTAGE
         for (BusStateEstimate busStateEstimate : stateVectorEstimate) {
-            if (busStateEstimate.getV() == MIN_ALLOWED_VOLTAGE) {
+            if (busStateEstimate.getV() <= 1.01 * minAllowedVoltage) {
                 System.out.printf("%n[WARNING] Estimated voltage at bus %s equals the minimum value allowed by the estimator (%f p.u.).  [WARNING]%n",
-                        busStateEstimate.getBusId(), MIN_ALLOWED_VOLTAGE);
+                        busStateEstimate.getBusId(), minAllowedVoltage);
             }
-            if (busStateEstimate.getV() == MAX_ALLOWED_VOLTAGE) {
+            if (busStateEstimate.getV() >= 0.99 * maxAllowedVoltage) {
                 System.out.printf("%n[WARNING] Estimated voltage at bus %s equals the maximum value allowed by the estimator (%f p.u.).  [WARNING]%n",
-                        busStateEstimate.getBusId(), MAX_ALLOWED_VOLTAGE);
+                        busStateEstimate.getBusId(), maxAllowedVoltage);
             }
         }
         // Print the table header
@@ -101,15 +128,15 @@ public class StateEstimatorResults {
         System.out.format("%-25s%-25s%-25s%n", "-----", "------------------", "---------------------");
         // Print state estimation for each bus
         for (BusStateEstimate busStateEstimate : stateVectorEstimate) {
-            String V = String.valueOf(busStateEstimate.getV());
+            String v = String.valueOf(busStateEstimate.getV());
             String theta = String.valueOf(busStateEstimate.getTheta());
-            if (V.length() > 12) {
-                V = V.substring(0, 6) + "..." + V.substring(V.length() - 3);
+            if (v.length() > 12) {
+                v = v.substring(0, 6) + "..." + v.substring(v.length() - 3);
             }
             if (theta.length() > 12) {
                 theta = theta.substring(0, 6) + "..." + theta.substring(theta.length() - 3);
             }
-            System.out.format("%-25s%-25s%-25s%n", busStateEstimate.getBusId(), V, theta);
+            System.out.format("%-25s%-25s%-25s%n", busStateEstimate.getBusId(), v, theta);
         }
         System.out.println();
     }
@@ -127,13 +154,13 @@ public class StateEstimatorResults {
         System.out.println("Printing state estimate : ");
         // Print a warning message if one of the estimated voltages equals MIN_ALLOWED_VOLTAGE or MAX_ALLOWED_VOLTAGE
         for (BusStateEstimate busStateEstimate : stateVectorEstimate) {
-            if (busStateEstimate.getV() == MIN_ALLOWED_VOLTAGE) {
+            if (busStateEstimate.getV() <= 1.01 * minAllowedVoltage) {
                 System.out.printf("%n[WARNING] Estimated voltage at bus %s equals the minimum value allowed by the estimator (%f p.u.).  [WARNING]%n",
-                        busStateEstimate.getBusId(), MIN_ALLOWED_VOLTAGE);
+                        busStateEstimate.getBusId(), minAllowedVoltage);
             }
-            if (busStateEstimate.getV() == MAX_ALLOWED_VOLTAGE) {
+            if (busStateEstimate.getV() >= 0.99 * maxAllowedVoltage) {
                 System.out.printf("%n[WARNING] Estimated voltage at bus %s equals the maximum value allowed by the estimator (%f p.u.).  [WARNING]%n",
-                        busStateEstimate.getBusId(), MAX_ALLOWED_VOLTAGE);
+                        busStateEstimate.getBusId(), maxAllowedVoltage);
             }
         }
         // Print the table header
@@ -141,16 +168,16 @@ public class StateEstimatorResults {
         System.out.format("%-25s%-25s%-25s%n", "-----", "----------------", "---------------------");
         // Print state estimation for each bus
         for (BusStateEstimate busStateEstimate : stateVectorEstimate) {
-            String V = String.valueOf(busStateEstimate.getV()
+            String v = String.valueOf(busStateEstimate.getV()
                     * network.getBusView().getBus(busStateEstimate.getBusId()).getVoltageLevel().getNominalV());
             String theta = String.valueOf(busStateEstimate.getTheta());
-            if (V.length() > 12) {
-                V = V.substring(0, 6) + "..." + V.substring(V.length() - 3);
+            if (v.length() > 12) {
+                v = v.substring(0, 6) + "..." + v.substring(v.length() - 3);
             }
             if (theta.length() > 12) {
                 theta = theta.substring(0, 6) + "..." + theta.substring(theta.length() - 3);
             }
-            System.out.format("%-25s%-25s%-25s%n", busStateEstimate.getBusId(), V, theta);
+            System.out.format("%-25s%-25s%-25s%n", busStateEstimate.getBusId(), v, theta);
         }
         System.out.println();
     }
@@ -159,7 +186,7 @@ public class StateEstimatorResults {
         System.out.println("Printing network topology estimate : ");
         // Print the table header
         System.out.format("%n%-20s%-20s%-20s%-20s%n", "BranchID", "Was suspected", "Presumed status", "Estimated status");
-        System.out.format("%-20s%-20s%-20s%-20s%n",   "--------", "-------------", "--------------", "----------------");
+        System.out.format("%-20s%-20s%-20s%-20s%n", "--------", "-------------", "--------------", "----------------");
         // Print state estimation for each branch
         for (BranchStatusEstimate branchStatusEstimate : networkTopologyEstimate) {
             System.out.format("%-20s%-20s%-20s%-20s%n", branchStatusEstimate.getBranchId(), branchStatusEstimate.getIsSuspected(),
@@ -173,16 +200,11 @@ public class StateEstimatorResults {
      * @param knowledge The knowledge object from which was performed the state estimation
      */
     public void printAllMeasurementEstimatesAndResidualsSi(StateEstimatorKnowledge knowledge) {
-        new ActivePowerFlowMeasures(knowledge.getActivePowerFlowMeasures(), this.measurementEstimatesAndResiduals)
-                .printWithEstimatesAndResiduals();
-        new ReactivePowerFlowMeasures(knowledge.getReactivePowerFlowMeasures(), this.measurementEstimatesAndResiduals)
-                .printWithEstimatesAndResiduals();
-        new ActivePowerInjectedMeasures(knowledge.getActivePowerInjectedMeasures(), this.measurementEstimatesAndResiduals)
-                .printWithEstimatesAndResiduals();
-        new ReactivePowerInjectedMeasures(knowledge.getReactivePowerInjectedMeasures(), this.measurementEstimatesAndResiduals)
-                .printWithEstimatesAndResiduals();
-        new VoltageMagnitudeMeasures(knowledge.getVoltageMagnitudeMeasures(), this.measurementEstimatesAndResiduals)
-                .printWithEstimatesAndResiduals();
+        this.activePowerFlowMeasuresExtended.printWithEstimatesAndResiduals();
+        this.reactivePowerFlowMeasuresExtended.printWithEstimatesAndResiduals();
+        this.activePowerInjectedMeasuresExtended.printWithEstimatesAndResiduals();
+        this.reactivePowerInjectedMeasuresExtended.printWithEstimatesAndResiduals();
+        this.voltageMagnitudeMeasuresExtended.printWithEstimatesAndResiduals();
     }
 
     /**
@@ -190,11 +212,11 @@ public class StateEstimatorResults {
      * @param knowledge The knowledge object from which was performed the state estimation
      */
     public void exportAllMeasurementEstimatesAndResidualsSi(StateEstimatorKnowledge knowledge) {
-        ActivePowerFlowMeasures activePowerFlowMeasures = new ActivePowerFlowMeasures(knowledge.getActivePowerFlowMeasures(), this.measurementEstimatesAndResiduals);
-        ReactivePowerFlowMeasures reactivePowerFlowMeasures = new ReactivePowerFlowMeasures(knowledge.getReactivePowerFlowMeasures(), this.measurementEstimatesAndResiduals);
-        ActivePowerInjectedMeasures activePowerInjectedMeasures = new ActivePowerInjectedMeasures(knowledge.getActivePowerInjectedMeasures(), this.measurementEstimatesAndResiduals);
-        ReactivePowerInjectedMeasures reactivePowerInjectedMeasures = new ReactivePowerInjectedMeasures(knowledge.getReactivePowerInjectedMeasures(), this.measurementEstimatesAndResiduals);
-        VoltageMagnitudeMeasures voltageMagnitudeMeasures = new VoltageMagnitudeMeasures(knowledge.getVoltageMagnitudeMeasures(), this.measurementEstimatesAndResiduals);
+        ActivePowerFlowMeasures activePowerFlowMeasures = this.activePowerFlowMeasuresExtended;
+        ReactivePowerFlowMeasures reactivePowerFlowMeasures = this.reactivePowerFlowMeasuresExtended;
+        ActivePowerInjectedMeasures activePowerInjectedMeasures = this.activePowerInjectedMeasuresExtended;
+        ReactivePowerInjectedMeasures reactivePowerInjectedMeasures = this.reactivePowerInjectedMeasuresExtended;
+        VoltageMagnitudeMeasures voltageMagnitudeMeasures = this.voltageMagnitudeMeasuresExtended;
 
         // Initialize the dataframe that will store the results
         List<String> headers = List.of("MeasurementNumber", "MeasurementLocation",
@@ -310,7 +332,6 @@ public class StateEstimatorResults {
         System.out.println("╚" + separator + "╝");
     }
 
-
     // Getters
     public List<BusStateEstimate> getStateVectorEstimate() {
         return stateVectorEstimate;
@@ -363,5 +384,24 @@ public class StateEstimatorResults {
         return measurementEstimatesAndResiduals;
     }
 
+    public ActivePowerFlowMeasures getActivePowerFlowMeasuresExtended() {
+        return activePowerFlowMeasuresExtended;
+    }
+
+    public ReactivePowerFlowMeasures getReactivePowerFlowMeasuresExtended() {
+        return reactivePowerFlowMeasuresExtended;
+    }
+
+    public ActivePowerInjectedMeasures getActivePowerInjectedMeasuresExtended() {
+        return activePowerInjectedMeasuresExtended;
+    }
+
+    public ReactivePowerInjectedMeasures getReactivePowerInjectedMeasuresExtended() {
+        return reactivePowerInjectedMeasuresExtended;
+    }
+
+    public VoltageMagnitudeMeasures getVoltageMagnitudeMeasuresExtended() {
+        return voltageMagnitudeMeasuresExtended;
+    }
 }
 

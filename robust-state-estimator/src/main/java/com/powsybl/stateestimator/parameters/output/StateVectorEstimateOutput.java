@@ -58,9 +58,9 @@ public class StateVectorEstimateOutput extends AbstractStateEstimatorEstimateOut
 
     void readLine(String[] tokens, StringToIntMapper<AmplSubset> amplMapper) {
         String busId = tokens[COL_BUS_ID].replaceAll("'", "");
-        double V = readDouble(tokens[COL_V_ESTIMATED]);
+        double v = readDouble(tokens[COL_V_ESTIMATED]);
         double theta = readDouble(tokens[COL_THETA_ESTIMATED]);
-        stateVectorEstimate.add(new BusStateEstimate(busId, V, theta));
+        stateVectorEstimate.add(new BusStateEstimate(busId, v, theta));
     }
 
     private double readDouble(String d) {

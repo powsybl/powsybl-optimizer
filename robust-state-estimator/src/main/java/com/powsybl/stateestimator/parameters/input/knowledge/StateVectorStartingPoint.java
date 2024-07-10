@@ -21,11 +21,9 @@ public class StateVectorStartingPoint implements AmplInputFile {
 
     Map<Integer, ArrayList<String>> stateVectorStartingPoint;
 
-
     public StateVectorStartingPoint(Map<Integer, ArrayList<String>> stateVectorStartingPoint) {
         this.stateVectorStartingPoint = stateVectorStartingPoint;
     }
-
 
     @Override
     public String getFileName() {

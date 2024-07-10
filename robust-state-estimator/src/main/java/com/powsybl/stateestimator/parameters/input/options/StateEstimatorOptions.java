@@ -7,6 +7,7 @@
 package com.powsybl.stateestimator.parameters.input.options;
 
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Lucas RIOU <lucas.riou@artelys.com>
@@ -18,7 +19,7 @@ public class StateEstimatorOptions {
     public static final int DEFAULT_MAX_TIME_SOLVING = 120;
     public static final int DEFAULT_MAX_TOPOLOGY_CHANGES = 5;
     public static final int DEFAULT_MIP_MULTISTART = 0;
-    HashMap<String, Integer> solvingOptions = new HashMap<>();
+    Map<String, Integer> solvingOptions = new HashMap<>();
 
     public StateEstimatorOptions() {
         setSolvingMode(DEFAULT_SOLVING_MODE);
@@ -28,7 +29,7 @@ public class StateEstimatorOptions {
 
     }
 
-    public HashMap<String, Integer> getSolvingOptions() {
+    public Map<String, Integer> getSolvingOptions() {
         return solvingOptions;
     }
 

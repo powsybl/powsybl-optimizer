@@ -13,6 +13,8 @@ import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.ampl.executor.AmplOutputFile;
 import com.powsybl.ampl.executor.AmplParameters;
 import com.powsybl.stateestimator.parameters.output.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,6 +24,8 @@ import java.util.List;
  * @author Lucas RIOU <lucas.riou@artelys.com>
  */
 public class StateEstimatorAmplIOFiles implements AmplParameters {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(StateEstimatorAmplIOFiles.class);
 
     // Input files
     SolvingOptions solvingOptions;
@@ -41,7 +45,6 @@ public class StateEstimatorAmplIOFiles implements AmplParameters {
     NetworkTopologyEstimateOutput networkTopologyEstimateOutput;
     MeasurementEstimatesAndResidualsOutput measurementEstimatesAndResidualsOutput;
     NetworkPowersEstimateOutput networkPowersEstimateOutput;
-
 
     boolean debug;
 
@@ -86,7 +89,6 @@ public class StateEstimatorAmplIOFiles implements AmplParameters {
         List<AmplOutputFile> list = new ArrayList<>();
 
         // TODO : add runIndicators
-        // TODO : check if it is okay to save results even if hasConverged = false
 
         list.add(networkIndicatorsOutput);
         list.add(stateVectorEstimateOutput);
@@ -94,10 +96,7 @@ public class StateEstimatorAmplIOFiles implements AmplParameters {
         list.add(measurementEstimatesAndResidualsOutput);
         list.add(networkPowersEstimateOutput);
         if (!hasConverged) {
-            // TODO changr les system.out en LOGGER.warn
-            // Exemple: LOGGER.warn("Regulating terminal of element {} is null.", elementId);
-            System.out.println("[WARNING] The state estimator has not converged. StateEstimatorResults will save last found estimates. [WARNING]");
-            System.out.println();
+            LOGGER.warn("The state estimator has not converged. StateEstimatorResults will save last found estimates.");
         }
         return list;
     }
@@ -120,7 +119,9 @@ public class StateEstimatorAmplIOFiles implements AmplParameters {
         return networkTopologyEstimateOutput;
     }
 
-    public MeasurementEstimatesAndResidualsOutput getMeasurementEstimatesAndResidualsOutput() {return measurementEstimatesAndResidualsOutput;}
+    public MeasurementEstimatesAndResidualsOutput getMeasurementEstimatesAndResidualsOutput() {
+        return measurementEstimatesAndResidualsOutput;
+    }
 
     public NetworkPowersEstimateOutput getNetworkPowersEstimateOutput() {
         return networkPowersEstimateOutput;

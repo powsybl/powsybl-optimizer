@@ -13,9 +13,9 @@ import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.loadflow.LoadFlowResult;
 import com.powsybl.openloadflow.OpenLoadFlowParameters;
 import com.powsybl.stateestimator.parameters.input.knowledge.*;
+import com.powsybl.stateestimator.parameters.input.measuresgeneration.RandomMeasuresGenerator;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
-import org.jgrapht.alg.util.Pair;
 import org.junit.jupiter.api.Test;
 
 import java.io.FileWriter;
@@ -63,14 +63,15 @@ public class HeuristicTest {
         //        Optional.empty(), Optional.of(true),
         //        Optional.empty(), Optional.empty());
 
+        var parameters = new RandomMeasuresGenerator.RandomMeasuresGeneratorParameters();
+        parameters.withSeed(2).withRatioMeasuresToBuses(5.0)
+                .withAddNoise(true).withEnsureObservability(true);
         RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
-                Optional.of(2), Optional.of(5.),
-                Optional.of(true), Optional.empty(),
-                Optional.empty(), Optional.of(true));
+                parameters);
 
         long startTime = System.nanoTime();
 
-        HashMap<String, Object> heuristicResults = StateEstimatorHeuristic.runHeuristic(knowledge, network);
+        Map<String, Object> heuristicResults = StateEstimatorHeuristic.runHeuristic(knowledge, network);
 
         long endTime   = System.nanoTime();
 
@@ -101,10 +102,10 @@ public class HeuristicTest {
         );
         List<List<String>> data = new ArrayList<>();
 
-        //Network network = IeeeCdfNetworkFactory.create118();
-        Network network = Network.read(Path.of("D:", "Projet", "Réseaux_tests", "IIDM", "pglib_opf_case1354_pegase.xiidm"));
+        Network network = IeeeCdfNetworkFactory.create118();
+        //Network network = Network.read(Path.of("D:", "Projet", "Réseaux_tests", "IIDM", "pglib_opf_case1354_pegase.xiidm"));
 
-        String erroneousLine = "LINE-9180-3133"; //"L82-96-1"; //"L45-46-1"; //"LINE-9180-3133";
+        String erroneousLine = "L82-96-1"; //"L45-46-1"; //"LINE-9180-3133";
         // TODO : delete if erroneousLine added
         //String erroneousLine = "_";
 
@@ -136,13 +137,13 @@ public class HeuristicTest {
             System.out.println();
 
             // Create "knowledge" instance : for IEEE 118 bus, the slack is "VL69_0"
-            //StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network, "VL69_0");
-            StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network, "VL-4231_0");
+            StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network, "VL69_0");
+            //StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network, "VL-4231_0");
 
             // Add a gross error on measure Pf(VL27 --> VL28) : 80 MW (false) instead of 32.6 MW (true)
-            //Map<String, String> grossMeasure1 = Map.of("BranchID", "L27-28-1", "FirstBusID", "VL27_0", "SecondBusID", "VL28_0",
-            //        "Value", "80.0", "Variance", "0.1306", "Type", "Pf");
-            //knowledge.addMeasure(1, grossMeasure1, network);
+            Map<String, String> grossMeasure1 = Map.of("BranchID", "L27-28-1", "FirstBusID", "VL27_0", "SecondBusID", "VL28_0",
+                    "Value", "80.0", "Variance", "0.1306", "Type", "Pf");
+            knowledge.addMeasure(1, grossMeasure1, network);
 
             // Add a gross error on measure V(VL60) : 225 kV (false) instead of 137 kV (true)
             //Map<String, String> grossMeasure2 = Map.of("BusID", "VL60_0",
@@ -150,18 +151,18 @@ public class HeuristicTest {
             //knowledge.addMeasure(2, grossMeasure2, network);
 
             // Add measurement error : Active power flow P at VL-4141_0 for branch LINE-4141-1311 : 102,488691 (true)
-            Map<String, String> grossMeasure = Map.of("BranchID", "LINE-4141-1311", "FirstBusID", "VL-4141_0", "SecondBusID", "VL-1311_0",
-                    "Value", "300.0", "Variance", "1.269", "Type", "Pf");
-            knowledge.addMeasure(1, grossMeasure, network);
+            //Map<String, String> grossMeasure = Map.of("BranchID", "LINE-4141-1311", "FirstBusID", "VL-4141_0", "SecondBusID", "VL-1311_0",
+            //        "Value", "300.0", "Variance", "1.269", "Type", "Pf");
+            //knowledge.addMeasure(1, grossMeasure, network);
 
-            // Randomly generate measurements out of load flow results
-            RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network,
-                    Optional.of(seed), Optional.of(ratioTested),
-                    Optional.of(true), Optional.empty(),
-                    Optional.empty(), Optional.of(true));
+            // Randomly generate other measurements out of load flow results
+            var parameters = new RandomMeasuresGenerator.RandomMeasuresGeneratorParameters();
+            parameters.withSeed(seed).withRatioMeasuresToBuses(ratioTested)
+                    .withAddNoise(true).withEnsureObservability(true);
+            RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, parameters);
 
             // Run heuristic SE on knowledgeV1
-            HashMap<String, Object> heuristicResults = StateEstimatorHeuristic.runHeuristic(knowledge, network);
+            Map<String, Object> heuristicResults = StateEstimatorHeuristic.runHeuristic(knowledge, network);
 
             StateEstimatorResults finalResults = (StateEstimatorResults) heuristicResults.get("Results");
             StateEstimatorKnowledge finalKnowledge = (StateEstimatorKnowledge) heuristicResults.get("Knowledge");

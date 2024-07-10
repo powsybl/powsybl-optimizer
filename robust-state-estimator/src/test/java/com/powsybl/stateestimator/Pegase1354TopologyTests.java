@@ -7,30 +7,23 @@
 package com.powsybl.stateestimator;
 
 import com.powsybl.computation.local.LocalComputationManager;
-import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
 import com.powsybl.iidm.network.*;
 import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.loadflow.LoadFlowResult;
 import com.powsybl.openloadflow.OpenLoadFlowParameters;
-import com.powsybl.stateestimator.StateEstimator;
-import com.powsybl.stateestimator.StateEstimatorConfig;
-import com.powsybl.stateestimator.StateEstimatorResults;
 import com.powsybl.stateestimator.parameters.input.knowledge.StateEstimatorKnowledge;
-import com.powsybl.stateestimator.parameters.input.knowledge.RandomMeasuresGenerator;
+import com.powsybl.stateestimator.parameters.input.measuresgeneration.RandomMeasuresGenerator;
 import com.powsybl.stateestimator.parameters.input.options.StateEstimatorOptions;
 import com.powsybl.stateestimator.parameters.output.estimates.BranchStatusEstimate;
-import org.jgrapht.alg.util.Pair;
 import org.junit.jupiter.api.Test;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.powsybl.openloadflow.OpenLoadFlowParameters.LowImpedanceBranchMode.REPLACE_BY_MIN_IMPEDANCE_LINE;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -104,11 +97,10 @@ public class Pegase1354TopologyTests {
 
                 // TODO : change ratioForCtrlMeasType depending on ratioTested !
                 // Randomly generate measurements out of load flow results, with all P measures given to ensure observability
+                var parameters = new RandomMeasuresGenerator.RandomMeasuresGeneratorParameters();
+                parameters.withSeed(seed).withRatioMeasuresToBuses(ratioTested);
                 RandomMeasuresGenerator.generateRandomMeasurementsWithCtrlMeasureRatio(knowledge, network,
-                        0.1991137371, "P",
-                        Optional.of(seed), Optional.of(ratioTested),
-                        Optional.of(false), Optional.empty(),
-                        Optional.empty());
+                        0.1991137371, "P", parameters);
 
                 // Define the solving options for the state estimation
                 StateEstimatorOptions options = new StateEstimatorOptions()

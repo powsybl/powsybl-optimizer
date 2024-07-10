@@ -91,8 +91,8 @@ public class ActivePowerFlowMeasures implements AmplInputFile {
     public void printWithEstimatesAndResiduals() {
         System.out.println("Printing active power flow measurements : ");
         // Print the table header
-        System.out.format("%n%-15s%-15s%-15s%-15s%-15s%-20s%-15s%-15s%n", "Type", "BranchID", "FirstBusID", "SecondBusID", "Value (MW)", "Variance (MW^2)",     "Estimate (MW)", "Residual (MW)");
-        System.out.format("%-15s%-15s%-15s%-15s%-15s%-20s%-15s%-15s%n",        "----", "--------", "----------", "-----------", "----------", "---------------","-------------", "-------------");
+        System.out.format("%n%-15s%-15s%-15s%-15s%-15s%-20s%-15s%-15s%n", "Type", "BranchID", "FirstBusID", "SecondBusID", "Value (MW)", "Variance (MW^2)", "Estimate (MW)", "Residual (MW)");
+        System.out.format("%-15s%-15s%-15s%-15s%-15s%-20s%-15s%-15s%n", "----", "--------", "----------", "-----------", "----------", "---------------", "-------------", "-------------");
         // Print each measurement
         for (var measureWithEstimateAndResidual : measuresWithEstimatesAndResiduals.entrySet()) {
             System.out.format("%-15s%-15s%-15s%-15s%-15s%-20s%-15s%-15s%n",

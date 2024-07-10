@@ -4,9 +4,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package com.powsybl.stateestimator.parameters.input.knowledge;
+package com.powsybl.stateestimator.parameters.input.measuresgeneration;
 
 import com.powsybl.iidm.network.*;
+import com.powsybl.stateestimator.parameters.input.knowledge.StateEstimatorKnowledge;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -15,34 +18,88 @@ import java.util.*;
  */
 public class RandomMeasuresGenerator {
 
-    public static final ArrayList<String> ALL_MEASUREMENT_TYPES = new ArrayList<>() {{
-        add("PfSide1");
-        add("PfSide2");
-        add("QfSide1");
-        add("QfSide2");
-        add("P");
-        add("Q");
-        add("V");
-    }};
-    public static final Map<String, Double> RELATIVE_STD_BY_MEAS_TYPE = new HashMap<>() {{
-        put("Pf", 0.011);
-        put("Qf", 0.022);
-        put("P", 0.011);
-        put("Q", 0.022);
-        put("V", 0.0051);
-    }};
-    // Relative standard deviation values for measurements, see Master Thesis' report
+    private static final Logger LOGGER = LoggerFactory.getLogger(RandomMeasuresGenerator.class);
+
+    public static final ArrayList<String> ALL_MEASUREMENT_TYPES = new ArrayList<>() {
+        {
+            add("PfSide1");
+            add("PfSide2");
+            add("QfSide1");
+            add("QfSide2");
+            add("P");
+            add("Q");
+            add("V");
+        }
+    };
+
+    public static final Map<String, Double> RELATIVE_STD_BY_MEAS_TYPE = new HashMap<>() {
+        { // Relative standard deviation values for measurements, see Master Thesis' report
+            put("Pf", 0.011);
+            put("Qf", 0.022);
+            put("P", 0.011);
+            put("Q", 0.022);
+            put("V", 0.0051);
+        }
+    };
 
     // Thresholds used for computation of measurement variances
     public static final double MIN_ACTIVE_POWER_MW = 1; // in MW
     public static final double MIN_REACTIVE_POWER_MVAR = 1; // in MVar
     public static final double MIN_VOLTAGE_KV = 1; // in kV
 
-
     // By default, the number of measurements generated will be 4 times the number of buses in the network (ensure observability)
     public static final double DEFAULT_RATIO_MEASURES_TO_BUSES = 4.0;
 
-//    public record NomATrouver();
+    /**
+     * seed (optional) The seed used by the random generator
+     * ratioMeasuresToBuses (optional) The ratio "number of measures"/"number of buses in the network" used to compute the number of measures generated
+     * addNoise (optional) If "true", add gaussian noise (based on measurement type's variance) to the measurement value
+     * noiseAmplitude (optional) A number k (default 1) defining noise amplitude : noise will be pick in [-K x sigma + measValue; K x sigma + measValue]
+     * noPickBranchID (optional) The ID of a branch for which no Pf nor Qf measurements will be picked
+     * ensureRealisticObservability (optional) Mode of placement of measures, where every node has V measure and Pf/Qf measures on one of its lines, but one line can not have Pf/Qf on both sides
+    */
+    public static class RandomMeasuresGeneratorParameters {
+        Integer seed;
+        Double ratioMeasuresToBuses;
+        Boolean addNoise;
+        Double noiseAmplitude;
+        String noPickBranchID;
+        Boolean ensureObservability;
+
+        public RandomMeasuresGeneratorParameters() {
+            // Empty constructor
+        }
+
+        public RandomMeasuresGeneratorParameters withSeed(Integer seed) {
+            this.seed = seed;
+            return this;
+        }
+
+        public RandomMeasuresGeneratorParameters withRatioMeasuresToBuses(Double ratioMeasuresToBuses) {
+            this.ratioMeasuresToBuses = ratioMeasuresToBuses;
+            return this;
+        }
+
+        public RandomMeasuresGeneratorParameters withAddNoise(Boolean addNoise) {
+            this.addNoise = addNoise;
+            return this;
+        }
+
+        public RandomMeasuresGeneratorParameters withNoiseAmplitude(Double noiseAmplitude) {
+            this.noiseAmplitude = noiseAmplitude;
+            return this;
+        }
+
+        public RandomMeasuresGeneratorParameters withNoPickBranchID(String noPickBranchID) {
+            this.noPickBranchID = noPickBranchID;
+            return this;
+        }
+
+        public RandomMeasuresGeneratorParameters withEnsureObservability(Boolean ensureObservability) {
+            this.ensureObservability = ensureObservability;
+            return this;
+        }
+    }
 
     /**
      * This method generates random measurements out of the Load Flow results obtained on a network.
@@ -58,30 +115,23 @@ public class RandomMeasuresGenerator {
      *
      * @param knowledge The knowledge object that will store the random measurements generated
      * @param network The network (LF run previously) for which random measurements must be generated
-     * @param seed (optional) The seed used by the random generator
-     * @param ratioMeasuresToBuses (optional) The ratio "number of measures"/"number of buses in the network" used to compute the number of measures generated
-     * @param addNoise (optional) If "true", add gaussian noise (based on measurement type's variance) to the measurement value
-     * @param noiseAmplitude (optional) A number k (default 1) defining noise amplitude : noise will be pick in [-K x sigma + measValue; K x sigma + measValue]
-     * @param noPickBranchID (optional) The ID of a branch for which no Pf nor Qf measurements will be picked
-     * @param ensureRealisticObservability (optional) Mode of placement of measures, where every node has V measure and Pf/Qf measures on one of its lines, but one line can not have Pf/Qf on both sides
+
      */
     public static void generateRandomMeasurements(StateEstimatorKnowledge knowledge, Network network,
-                                                  Optional<Integer> seed, Optional<Double> ratioMeasuresToBuses,
-                                                  Optional<Boolean> addNoise, Optional<Double> noiseAmplitude,
-                                                  Optional<String> noPickBranchID, Optional<Boolean> ensureRealisticObservability)
+                                                  RandomMeasuresGeneratorParameters parameters)
             throws IllegalArgumentException {
 
         // Initialize new Random (use the seed if provided) to pick measurements
-        Random random = seed.map(Random::new).orElseGet(() -> new Random(System.currentTimeMillis()));
+        Random random = parameters.seed == null ? new Random(System.currentTimeMillis()) : new Random(parameters.seed);
 
         // Initialize a boolean stating if noise must be added to measurements,
         // and a Random for gaussian noise (use constant seed for repeatability)
-        boolean withNoise = addNoise.isPresent() && addNoise.get().equals(true);
+        boolean withNoise = parameters.addNoise.equals(true);
         Random noise = new Random(0);
         // If given, control the size of the interval [-k sigma; +k sigma] in which noise will be picked at random (uniform distribution, sigma : std of measurement)
         double noiseCoef = 1;
-        if (noiseAmplitude.isPresent() && noiseAmplitude.get() > 0) {
-            noiseCoef = noiseAmplitude.get();
+        if (parameters.noiseAmplitude != null && parameters.noiseAmplitude > 0) {
+            noiseCoef = parameters.noiseAmplitude;
         }
 
         // Initialize lists in which to pick measurement locations (bus or branch) (one list per type of measurement)
@@ -91,8 +141,7 @@ public class RandomMeasuresGenerator {
         for (Branch branch : network.getBranches()) {
             Bus b1 = branch.getTerminal1().getBusView().getConnectableBus();
             Bus b2 = branch.getTerminal2().getBusView().getConnectableBus();
-            if (b1.isInMainConnectedComponent()
-            && b2.isInMainConnectedComponent()) {
+            if (b1.isInMainConnectedComponent() && b2.isInMainConnectedComponent()) {
                 listOfBranchesPfSide1.add(branch);
                 if (!listOfBusesV.contains(b1)) {
                     listOfBusesV.add(b1);
@@ -103,8 +152,8 @@ public class RandomMeasuresGenerator {
             }
         }
         // If a "no-pick" branch is given, remove it from these lists
-        if (noPickBranchID.isPresent() && network.getBranchStream().map(Identifiable::getId).toList().contains(noPickBranchID.get())) {
-            listOfBranchesPfSide1.removeIf(branch -> branch.getId().equals(noPickBranchID.get()));
+        if (parameters.noPickBranchID != null && network.getBranchStream().anyMatch(branch -> Objects.equals(branch.getId(), parameters.noPickBranchID))) {
+            listOfBranchesPfSide1.removeIf(branch -> branch.getId().equals(parameters.noPickBranchID));
         }
         List<Branch> listOfBranchesPfSide2 = new ArrayList<>(listOfBranchesPfSide1);
         List<Branch> listOfBranchesQfSide1 = new ArrayList<>(listOfBranchesPfSide1);
@@ -135,12 +184,12 @@ public class RandomMeasuresGenerator {
         //      - pick branch b1-b2 at random from L(b1)
         //      - add measures V(b1), Pf(b1->b2) and Qf(b1->b2)
         //      - remove branch b1-b2 from L(b1) and L(b2)
-        boolean ensureObservability = ensureRealisticObservability.isPresent() && ensureRealisticObservability.get().equals(true);
+        boolean ensureObservability = parameters.ensureObservability.equals(true);
         if (ensureObservability) {
             // Take into account noPickBranchID
             String noPickBranch = "";
-            if (noPickBranchID.isPresent()) {
-                noPickBranch = noPickBranchID.get();
+            if (parameters.noPickBranchID != null) {
+                noPickBranch = parameters.noPickBranchID;
             }
             // Build "adjacency list": find for each bus the list of linked branches (one occurrence in the list)
             Map<String, List<String>> adjacencyList = new HashMap<>();
@@ -155,9 +204,14 @@ public class RandomMeasuresGenerator {
                 for (TwoWindingsTransformer twt : bus1.getTwoWindingsTransformers()) {
                     linkedBranches.add(twt.getId());
                 }
+                for (ThreeWindingsTransformer twt : bus1.getThreeWindingsTransformers()) {
+                    linkedBranches.add(twt.getId());
+                }
+                for (DanglingLine l : bus1.getDanglingLines()) {
+                    linkedBranches.add(l.getId());
+                }
                 // Remove noPickBranchID (if provided)
                 linkedBranches.remove(noPickBranch);
-                // TODO : add other types of branches (three windings transformers, dangling lines, etc)
                 adjacencyList.put(bus1.getId(), List.copyOf(linkedBranches));
             }
             // Shuffle the list of buses in adjacency list (based on seed provided)
@@ -172,8 +226,7 @@ public class RandomMeasuresGenerator {
                 measureV.put("BusID", busID);
                 double measureVValue = network.getBusView().getBus(busID).getV();
                 double measureVVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("V")
-                                * Math.max(Math.abs(measureVValue), MIN_VOLTAGE_KV)
-                        , 2);
+                                * Math.max(Math.abs(measureVValue), MIN_VOLTAGE_KV), 2);
                 measureV.put("Variance", String.valueOf(measureVVariance));
                 if (withNoise) {
                     measureVValue += -noiseCoef * Math.sqrt(measureVVariance) + 2 * noiseCoef * Math.sqrt(measureVVariance) * noise.nextDouble();
@@ -200,14 +253,13 @@ public class RandomMeasuresGenerator {
                         measureP.put("BusID", busID);
                         double measurePValue = -1. * network.getBusView().getBus(busID).getP();
                         double measurePVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("P")
-                                        * Math.max(Math.abs(measurePValue), MIN_ACTIVE_POWER_MW)
-                                , 2);
+                                        * Math.max(Math.abs(measurePValue), MIN_ACTIVE_POWER_MW), 2);
                         measureP.put("Variance", String.valueOf(measurePVariance));
                         if (withNoise) {
                             measurePValue += -noiseCoef * Math.sqrt(measurePVariance) + 2 * noiseCoef * Math.sqrt(measurePVariance) * noise.nextDouble();
                         }
                         measureP.put("Value", String.valueOf(measurePValue));
-                        try{
+                        try {
                             knowledge.addMeasure(startingMeasurementNumber++, measureP, network);
                         } catch (IllegalArgumentException illegalArgumentException) {
                             continue;
@@ -219,14 +271,13 @@ public class RandomMeasuresGenerator {
                         measureQ.put("BusID", busID);
                         double measureQValue = -1. * network.getBusView().getBus(busID).getQ();
                         double measureQVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("Q")
-                                        * Math.max(Math.abs(measureQValue), MIN_REACTIVE_POWER_MVAR)
-                                , 2);
+                                        * Math.max(Math.abs(measureQValue), MIN_REACTIVE_POWER_MVAR), 2);
                         measureQ.put("Variance", String.valueOf(measureQVariance));
                         if (withNoise) {
                             measureQValue += -noiseCoef * Math.sqrt(measureQVariance) + 2 * noiseCoef * Math.sqrt(measureQVariance) * noise.nextDouble();
                         }
                         measureQ.put("Value", String.valueOf(measureQValue));
-                        try{
+                        try {
                             knowledge.addMeasure(startingMeasurementNumber++, measureQ, network);
                         } catch (IllegalArgumentException illegalArgumentException) {
                             continue;
@@ -241,8 +292,7 @@ public class RandomMeasuresGenerator {
                         listOfBusesV.removeIf(bus -> bus.getId().equals(busID));
                         listOfBusesP.removeIf(bus -> bus.getId().equals(busID));
                         listOfBusesQ.removeIf(bus -> bus.getId().equals(busID));
-                    }
-                    else { // Add power flow measures on branch picked
+                    } else { // Add power flow measures on branch picked
                         Branch branch = network.getBranch(branchID);
                         boolean isBusTerminal1 = branch.getTerminal1().getBusView().getConnectableBus().getId().equals(busID);
                         String otherBusID = isBusTerminal1 ?
@@ -260,8 +310,7 @@ public class RandomMeasuresGenerator {
                             measurePfValue = 0;
                         }
                         double measurePfVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("Pf")
-                                        * Math.max(Math.abs(measurePfValue), MIN_ACTIVE_POWER_MW)
-                                , 2);
+                                        * Math.max(Math.abs(measurePfValue), MIN_ACTIVE_POWER_MW), 2);
                         measurePf.put("Variance", String.valueOf(measurePfVariance));
                         if (withNoise) {
                             measurePfValue += -noiseCoef * Math.sqrt(measurePfVariance) + 2 * noiseCoef * Math.sqrt(measurePfVariance) * noise.nextDouble();
@@ -284,8 +333,7 @@ public class RandomMeasuresGenerator {
                             measureQfValue = 0;
                         }
                         double measureQfVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("Qf")
-                                        * Math.max(Math.abs(measureQfValue), MIN_REACTIVE_POWER_MVAR)
-                                , 2);
+                                        * Math.max(Math.abs(measureQfValue), MIN_REACTIVE_POWER_MVAR), 2);
                         measureQf.put("Variance", String.valueOf(measureQfVariance));
                         if (withNoise) {
                             measureQfValue += -noiseCoef * Math.sqrt(measureQfVariance) + 2 * noiseCoef * Math.sqrt(measureQfVariance) * noise.nextDouble();
@@ -318,8 +366,8 @@ public class RandomMeasuresGenerator {
 
         // Compute the number of measurements that remain to be generated randomly : find the number demanded by the Z/N ratio
         long nbMeasurements;
-        if (ratioMeasuresToBuses.isPresent()) {
-            double ratioZtoN = ratioMeasuresToBuses.get();
+        if (parameters.ratioMeasuresToBuses != null) {
+            double ratioZtoN = parameters.ratioMeasuresToBuses;
             if (ratioZtoN <= 0) {
                 throw new IllegalArgumentException("Invalid value for the parameter ratioMeasuresToBuses : should be a positive float");
             }
@@ -336,12 +384,11 @@ public class RandomMeasuresGenerator {
                 throw new IllegalArgumentException(String.format("Provided value for ratioMeasuresToBuses is too large. Should be smaller than %f", maxRatioMeasuresToBuses));
             }
             if (ratioZtoN < 3 && ensureObservability) {
-                System.out.println("[WARNING] Parameter ratioMeasuresToBuses has a lower value than what is needed to ensure observability (should be > 3) :" +
-                        " it will likely not be respected." );
+                LOGGER.warn("Parameter ratioMeasuresToBuses has a lower value than what is needed to ensure observability (should be > 3) :" +
+                        " it will likely not be respected.");
             }
             nbMeasurements = Math.round(ratioZtoN * network.getBusView().getBusStream().count());
-        }
-        else {
+        } else {
             nbMeasurements = Math.round(DEFAULT_RATIO_MEASURES_TO_BUSES * network.getBusView().getBusStream().count());
         }
         // Remove from it the number of measurements that already exist
@@ -385,12 +432,11 @@ public class RandomMeasuresGenerator {
                         }
                         // Get and add measurement variance (in SI^2)
                         measurementVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("Pf")
-                                        * Math.max(Math.abs(measurementValue), MIN_ACTIVE_POWER_MW)
-                                , 2);
+                                        * Math.max(Math.abs(measurementValue), MIN_ACTIVE_POWER_MW), 2);
                         randomMeasure.put("Variance", String.valueOf(measurementVariance));
                         // Add measurement value (possibly with noise)
                         if (withNoise) {
-                            measurementValue += - noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
+                            measurementValue += -noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
                         }
                         randomMeasure.put("Value", String.valueOf(measurementValue));
                     } else {
@@ -411,12 +457,11 @@ public class RandomMeasuresGenerator {
                         }
                         // Get and add measurement variance (in SI^2)
                         measurementVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("Pf")
-                                        * Math.max(Math.abs(measurementValue), MIN_ACTIVE_POWER_MW)
-                                , 2);
+                                        * Math.max(Math.abs(measurementValue), MIN_ACTIVE_POWER_MW), 2);
                         randomMeasure.put("Variance", String.valueOf(measurementVariance));
                         // Add measurement value (possibly with noise)
                         if (withNoise) {
-                            measurementValue += - noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
+                            measurementValue += -noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
                         }
                         randomMeasure.put("Value", String.valueOf(measurementValue));
                     } else {
@@ -445,12 +490,11 @@ public class RandomMeasuresGenerator {
                         }
                         // Get and add measurement variance (in SI^2)
                         measurementVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("Qf")
-                                        * Math.max(Math.abs(measurementValue), MIN_REACTIVE_POWER_MVAR)
-                                , 2);
+                                        * Math.max(Math.abs(measurementValue), MIN_REACTIVE_POWER_MVAR), 2);
                         randomMeasure.put("Variance", String.valueOf(measurementVariance));
                         // Add measurement value (possibly with noise)
                         if (withNoise) {
-                            measurementValue += - noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
+                            measurementValue += -noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
                         }
                         randomMeasure.put("Value", String.valueOf(measurementValue));
                     } else {
@@ -471,12 +515,11 @@ public class RandomMeasuresGenerator {
                         }
                         // Get and add measurement variance (in SI^2)
                         measurementVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("Qf")
-                                        * Math.max(Math.abs(measurementValue), MIN_REACTIVE_POWER_MVAR)
-                                , 2);
+                                        * Math.max(Math.abs(measurementValue), MIN_REACTIVE_POWER_MVAR), 2);
                         randomMeasure.put("Variance", String.valueOf(measurementVariance));
                         // Add measurement value (possibly with noise)
                         if (withNoise) {
-                            measurementValue += - noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
+                            measurementValue += -noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
                         }
                         randomMeasure.put("Value", String.valueOf(measurementValue));
                     } else {
@@ -497,12 +540,11 @@ public class RandomMeasuresGenerator {
                     measurementValue = -1 * randomBus.getP();
                     // Get and add measurement variance (in SI^2)
                     measurementVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("P")
-                                    * Math.max(Math.abs(measurementValue), MIN_ACTIVE_POWER_MW)
-                            , 2);
+                                    * Math.max(Math.abs(measurementValue), MIN_ACTIVE_POWER_MW), 2);
                     randomMeasure.put("Variance", String.valueOf(measurementVariance));
                     // Add measurement value (possibly with noise)
                     if (withNoise) {
-                        measurementValue += - noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
+                        measurementValue += -noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
                     }
                     randomMeasure.put("Value", String.valueOf(measurementValue));
                 } else {
@@ -521,13 +563,12 @@ public class RandomMeasuresGenerator {
                     measurementValue = -1 * randomBus.getQ();
                     // Get and add measurement variance (in SI^2)
                     measurementVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("Q")
-                                    * Math.max(Math.abs(measurementValue), MIN_REACTIVE_POWER_MVAR)
-                            , 2);
+                                    * Math.max(Math.abs(measurementValue), MIN_REACTIVE_POWER_MVAR), 2);
                     randomMeasure.put("Variance", String.valueOf(measurementVariance));
 
                     // Add measurement value (possibly with noise)
                     if (withNoise) {
-                        measurementValue += - noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
+                        measurementValue += -noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
                     }
                     randomMeasure.put("Value", String.valueOf(measurementValue));
                 } else {
@@ -547,12 +588,11 @@ public class RandomMeasuresGenerator {
                     measurementValue = randomBus.getV();
                     // Get and add measurement variance (in SI^2)
                     measurementVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("V")
-                                    * Math.max(Math.abs(measurementValue), MIN_VOLTAGE_KV)
-                            , 2);
+                                    * Math.max(Math.abs(measurementValue), MIN_VOLTAGE_KV), 2);
                     randomMeasure.put("Variance", String.valueOf(measurementVariance));
                     // Add measurement value (possibly with noise)
                     if (withNoise) {
-                        measurementValue += - noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
+                        measurementValue += -noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
                     }
                     randomMeasure.put("Value", String.valueOf(measurementValue));
                 } else {
@@ -569,9 +609,8 @@ public class RandomMeasuresGenerator {
                 } catch (IllegalArgumentException illegalArgumentException) {
                     if (illegalArgumentException.getMessage().equals("A measurement already exists for the location and type of the measurement provided. It can not be added.")) {
                         i = i - 1;
-                    }
-                    else {
-                        System.out.printf("%nMeasurement n° %d could not be added. Reason :%n", i);
+                    } else {
+                        LOGGER.warn("%nMeasurement n° {} could not be added. Reason :%n", i);
                         throw illegalArgumentException;
                     }
                 }
@@ -581,7 +620,6 @@ public class RandomMeasuresGenerator {
             }
         }
     }
-
 
     /**
      * This method generates random measurements out of the Load Flow results obtained on a network.
@@ -597,36 +635,31 @@ public class RandomMeasuresGenerator {
      * Note 3 : variance for measurements is given by (std_MeasType_% x |measurementValue|)^2
      * </p>
      *
-     * @param knowledge The knowledge object that will store the random measurements generated
-     * @param network The network (LF run previously) for which random measurements must be generated
-     * @param ratioForCtrlMeasType The ratio "nb of measurements for the specified measurement type" / "total number of measurements"
+     * @param knowledge The knowledge object that will store the random measurements generated.
+     * @param network The network (LF run previously) for which random measurements must be generated.
+     * @param ratioForCtrlMeasType The ratio "nb of measurements for the specified measurement type" / "total number of measurements".
      * @param ctrlMeasType The measurement type whose ratio is being controlled.
-     * @param seed (optional) The seed used by the random generator
-     * @param ratioMeasuresToBuses (optional) The ratio "number of measures"/"number of buses in the network" used to compute the number of measures generated
-     * @param addNoise (optional) If "true", add gaussian noise (based on measurement type's variance) to the measurement value
-     * @param noiseAmplitude (optional) A number k (default 1) defining noise amplitude : noise will be pick in [-K x sigma + measValue; K x sigma + measValue]
-     * @param noPickBranchID (optional) The ID of a branch for which no Pf nor Qf measurements will be picked
+     * @param parameters (optional) Various parameters (seed, Z/N ratio, noise amplitude, etc) to be specified in RandomMeasuresGeneratorParameters object.
      */
     public static void generateRandomMeasurementsWithCtrlMeasureRatio(StateEstimatorKnowledge knowledge, Network network,
                                                   Double ratioForCtrlMeasType, String ctrlMeasType,
-                                                  Optional<Integer> seed, Optional<Double> ratioMeasuresToBuses,
-                                                  Optional<Boolean> addNoise, Optional<Double> noiseAmplitude, Optional<String> noPickBranchID)
+                                                  RandomMeasuresGeneratorParameters parameters)
             throws IllegalArgumentException {
 
         // Compute the number of measurements that must be generated
         long nbMeasurements;
-        if (ratioMeasuresToBuses.isPresent()) {
-            if (ratioMeasuresToBuses.get() <= 0) {
+        if (parameters.ratioMeasuresToBuses != null) {
+            double ratioZtoN = parameters.ratioMeasuresToBuses;
+            if (ratioZtoN <= 0) {
                 throw new IllegalArgumentException("Invalid value for the parameter ratioMeasuresToBuses : should be a positive float");
             }
             Double maxRatioMeasuresToBuses = (2.0 * network.getBranchCount() + 3.0 * network.getBusView().getBusStream().count())
                     / network.getBusView().getBusStream().count();
-            if (ratioMeasuresToBuses.get() > maxRatioMeasuresToBuses) {
+            if (ratioZtoN > maxRatioMeasuresToBuses) {
                 throw new IllegalArgumentException(String.format("Provided value for ratioMeasuresToBuses is too large. Should be smaller than %f", maxRatioMeasuresToBuses));
             }
-            nbMeasurements = Math.round(ratioMeasuresToBuses.get() * network.getBusView().getBusStream().count());
-        }
-        else {
+            nbMeasurements = Math.round(ratioZtoN * network.getBusView().getBusStream().count());
+        } else {
             nbMeasurements = Math.round(DEFAULT_RATIO_MEASURES_TO_BUSES * network.getBusView().getBusStream().count());
         }
         // Remove from it the number of measurements that already exist
@@ -655,8 +688,8 @@ public class RandomMeasuresGenerator {
             }
         }
         // If a "no-pick" branch is given, remove it from these lists
-        if (noPickBranchID.isPresent() && network.getBranchStream().map(Identifiable::getId).toList().contains(noPickBranchID.get())) {
-            listOfBranchesPfSide1.removeIf(branch -> branch.getId().equals(noPickBranchID.get()));
+        if (parameters.noPickBranchID != null && network.getBranchStream().anyMatch(branch -> branch.getId().equals(parameters.noPickBranchID))) {
+            listOfBranchesPfSide1.removeIf(branch -> branch.getId().equals(parameters.noPickBranchID));
         }
         List<Branch> listOfBranchesPfSide2 = new ArrayList<>(listOfBranchesPfSide1);
         List<Branch> listOfBranchesQfSide1 = new ArrayList<>(listOfBranchesPfSide1);
@@ -679,16 +712,16 @@ public class RandomMeasuresGenerator {
 
         // Initialize a boolean stating if noise must be added to measurements,
         // and a Random for gaussian noise (use constant seed for repeatability)
-        boolean withNoise = addNoise.isPresent() && addNoise.get().equals(true);
+        boolean withNoise = parameters.addNoise.equals(true);
         Random noise = new Random(0);
         // If given, control the size of the interval [-k sigma; +k sigma] in which noise will be picked at random (uniform distribution, sigma : std of measurement)
         double noiseCoef = 1;
-        if (noiseAmplitude.isPresent() && noiseAmplitude.get() > 0) {
-            noiseCoef = noiseAmplitude.get();
+        if (parameters.noiseAmplitude != null && parameters.noiseAmplitude > 0) {
+            noiseCoef = parameters.noiseAmplitude;
         }
 
         // Initialize new Random (use the seed if provided) to pick measurements
-        Random random = seed.map(Random::new).orElseGet(() -> new Random(System.currentTimeMillis()));
+        Random random = parameters.seed == null ? new Random(System.currentTimeMillis()) : new Random(parameters.seed);
 
         // Initialize measurement value and variance
         double measurementValue;
@@ -728,12 +761,11 @@ public class RandomMeasuresGenerator {
                 if (ctrlMeasType.equals("V")) {
                     randomType = 6;
                 }
-            }
-            else {
-                if (ctrlMeasType.equals("Pf") && (randomType == 0 | randomType == 1 )) {
+            } else {
+                if (ctrlMeasType.equals("Pf") && (randomType == 0 || randomType == 1)) {
                     randomType = random.nextInt(5) + 2;
                 }
-                if (ctrlMeasType.equals("Qf") && (randomType == 2 | randomType == 3 )) {
+                if (ctrlMeasType.equals("Qf") && (randomType == 2 || randomType == 3)) {
                     randomType = random.nextInt(5);
                     randomType = randomType > 1 ? randomType + 2 : randomType;
                 }
@@ -770,13 +802,12 @@ public class RandomMeasuresGenerator {
                         }
                         // Get and add measurement variance (in SI^2)
                         measurementVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("Pf")
-                                        * Math.max(Math.abs(measurementValue), MIN_ACTIVE_POWER_MW)
-                                , 2);
+                                        * Math.max(Math.abs(measurementValue), MIN_ACTIVE_POWER_MW), 2);
 
                         randomMeasure.put("Variance", String.valueOf(measurementVariance));
                         // Add measurement value (possibly with noise)
                         if (withNoise) {
-                            measurementValue += - noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
+                            measurementValue += -noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
                         }
                         randomMeasure.put("Value", String.valueOf(measurementValue));
                     } else {
@@ -797,13 +828,12 @@ public class RandomMeasuresGenerator {
                         }
                         // Get and add measurement variance (in SI^2)
                         measurementVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("Pf")
-                                        * Math.max(Math.abs(measurementValue), MIN_ACTIVE_POWER_MW)
-                                , 2);
+                                        * Math.max(Math.abs(measurementValue), MIN_ACTIVE_POWER_MW), 2);
 
                         randomMeasure.put("Variance", String.valueOf(measurementVariance));
                         // Add measurement value (possibly with noise)
                         if (withNoise) {
-                            measurementValue += - noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
+                            measurementValue += -noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
                         }
                         randomMeasure.put("Value", String.valueOf(measurementValue));
                     } else {
@@ -832,13 +862,12 @@ public class RandomMeasuresGenerator {
                         }
                         // Get and add measurement variance (in SI^2)
                         measurementVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("Qf")
-                                        * Math.max(Math.abs(measurementValue), MIN_REACTIVE_POWER_MVAR)
-                                , 2);
+                                        * Math.max(Math.abs(measurementValue), MIN_REACTIVE_POWER_MVAR), 2);
 
                         randomMeasure.put("Variance", String.valueOf(measurementVariance));
                         // Add measurement value (possibly with noise)
                         if (withNoise) {
-                            measurementValue += - noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
+                            measurementValue += -noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
                         }
                         randomMeasure.put("Value", String.valueOf(measurementValue));
                     } else {
@@ -859,13 +888,12 @@ public class RandomMeasuresGenerator {
                         }
                         // Get and add measurement variance (in SI^2)
                         measurementVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("Qf")
-                                        * Math.max(Math.abs(measurementValue), MIN_REACTIVE_POWER_MVAR)
-                                , 2);
+                                        * Math.max(Math.abs(measurementValue), MIN_REACTIVE_POWER_MVAR), 2);
 
                         randomMeasure.put("Variance", String.valueOf(measurementVariance));
                         // Add measurement value (possibly with noise)
                         if (withNoise) {
-                            measurementValue += - noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
+                            measurementValue += -noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
                         }
                         randomMeasure.put("Value", String.valueOf(measurementValue));
                     } else {
@@ -886,13 +914,12 @@ public class RandomMeasuresGenerator {
                     measurementValue = -1 * randomBus.getP();
                     // Get and add measurement variance (in SI^2)
                     measurementVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("P")
-                                    * Math.max(Math.abs(measurementValue), MIN_ACTIVE_POWER_MW)
-                            , 2);
+                                    * Math.max(Math.abs(measurementValue), MIN_ACTIVE_POWER_MW), 2);
 
                     randomMeasure.put("Variance", String.valueOf(measurementVariance));
                     // Add measurement value (possibly with noise)
                     if (withNoise) {
-                        measurementValue += - noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
+                        measurementValue += -noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
                     }
                     randomMeasure.put("Value", String.valueOf(measurementValue));
                 } else {
@@ -912,14 +939,13 @@ public class RandomMeasuresGenerator {
 
                     // Get and add measurement variance (in SI^2)
                     measurementVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("Q")
-                                    * Math.max(Math.abs(measurementValue), MIN_REACTIVE_POWER_MVAR)
-                            , 2);
+                                    * Math.max(Math.abs(measurementValue), MIN_REACTIVE_POWER_MVAR), 2);
 
                     randomMeasure.put("Variance", String.valueOf(measurementVariance));
 
                     // Add measurement value (possibly with noise)
                     if (withNoise) {
-                        measurementValue += - noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
+                        measurementValue += -noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
                     }
                     randomMeasure.put("Value", String.valueOf(measurementValue));
                 } else {
@@ -939,12 +965,11 @@ public class RandomMeasuresGenerator {
                     measurementValue = randomBus.getV();
                     // Get and add measurement variance (in SI^2)
                     measurementVariance = Math.pow(RELATIVE_STD_BY_MEAS_TYPE.get("V")
-                                    * Math.max(Math.abs(measurementValue), MIN_VOLTAGE_KV)
-                            , 2);
+                                    * Math.max(Math.abs(measurementValue), MIN_VOLTAGE_KV), 2);
                     randomMeasure.put("Variance", String.valueOf(measurementVariance));
                     // Add measurement value (possibly with noise)
                     if (withNoise) {
-                        measurementValue += - noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
+                        measurementValue += -noiseCoef * Math.sqrt(measurementVariance) + 2 * noiseCoef * Math.sqrt(measurementVariance) * noise.nextDouble();
                     }
                     randomMeasure.put("Value", String.valueOf(measurementValue));
                 } else {
@@ -961,9 +986,8 @@ public class RandomMeasuresGenerator {
                 } catch (IllegalArgumentException illegalArgumentException) {
                     if (illegalArgumentException.getMessage().equals("A measurement already exists for the location and type of the measurement provided. It can not be added.")) {
                         i = i - 1;
-                    }
-                    else {
-                        System.out.printf("%nMeasurement n° %d could not be added. Reason :%n", i);
+                    } else {
+                        LOGGER.warn("%nMeasurement n° {} could not be added. Reason :%n", i);
                         throw illegalArgumentException;
                     }
                 }

@@ -72,7 +72,7 @@ public class ReactivePowerInjectedMeasures implements AmplInputFile {
         System.out.println("Printing reactive power injected measurements : ");
         // Print the table header
         System.out.format("%n%-15s%-15s%-15s%-20s%n", "Type", "BusID", "Value (MVar)", "Variance (MVar^2)");
-        System.out.format("%-15s%-15s%-15s%-20s%n",   "----", "-----", "------------", "-----------------");
+        System.out.format("%-15s%-15s%-15s%-20s%n", "----", "-----", "------------", "-----------------");
         // Print each measurement
         for (var measure : measures.entrySet()) {
             System.out.format("%-15s%-15s%-15s%-15s%n",
@@ -92,7 +92,7 @@ public class ReactivePowerInjectedMeasures implements AmplInputFile {
         System.out.println("Printing reactive power injected measurements : ");
         // Print the table header
         System.out.format("%n%-15s%-15s%-15s%-20s%-15s%-15s%n", "Type", "BusID", "Value (MVar)", "Variance (MVar^2)", "Estimate (MVar)", "Residual (MVar)");
-        System.out.format("%-15s%-15s%-15s%-20s%-15s%-15s%n",   "----", "-----", "------------", "-----------------", "---------------", "---------------");
+        System.out.format("%-15s%-15s%-15s%-20s%-15s%-15s%n", "----", "-----", "------------", "-----------------", "---------------", "---------------");
         // Print each measurement
         for (var measureWithEstimateAndResidual : measuresWithEstimatesAndResiduals.entrySet()) {
             System.out.format("%-15s%-15s%-15s%-20s%-15s%-15s%n",
