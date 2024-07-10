@@ -392,7 +392,7 @@ public class StateEstimatorHeuristic {
                         if (caseD) {
                             // All options have been tested without finding a way to correct the error detected : end of the process
                             LOGGER.warn("Heuristic process has failed to correct detected error : last found estimates returned.");
-                            HashMap<String, Object> functionReturns = new HashMap<>();
+                            Map<String, Object> functionReturns = new HashMap<>();
                             functionReturns.put("Results", resultsV2);
                             functionReturns.put("Knowledge", knowledgeV2);
                             functionReturns.put("NbIter", nbIter);

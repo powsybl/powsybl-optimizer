@@ -19,6 +19,7 @@ import com.powsybl.stateestimator.parameters.input.options.StateEstimatorOptions
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 
 import static com.powsybl.iidm.network.Network.read;
@@ -35,8 +36,8 @@ public class UseExample {
     void useExample() throws IOException {
 
         // Load your favorite network (IIDM format preferred)
-        Network network = IeeeCdfNetworkFactory.create118();
-        //Network network = Network.read(Path.of("D:", "Projet", "Réseaux_tests", "IIDM", "pglib_opf_case1354_pegase.xiidm"));
+        //Network network = IeeeCdfNetworkFactory.create118();
+        Network network = Network.read(Path.of("D:", "Projet", "Réseaux_tests", "IIDM", "Texas7k_20210804.xiidm"));
 
         // Load Flow parameters (note : we mimic the way the AMPL code deals with zero-impedance branches)
         LoadFlowParameters parametersLf = new LoadFlowParameters();
@@ -64,14 +65,14 @@ public class UseExample {
         StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network);
 
         // Make sure the state estimator and OpenLoadFlow use the same slack bus
-        knowledge.setSlack("VL69_0", network); // for IEEE118
-        //knowledge.setSlack("VL-4231_0", network); // for case1354_pegase
+        //knowledge.setSlack("VL69_0", network); // for IEEE118
+        knowledge.setSlack("VL-4231_0", network); // for case1354_pegase
+        knowledge.setSlack("VL-4231_0", network); // for case4020_goc
 
         // Make all branches suspects and presumed to be closed
         for (Branch branch: network.getBranches()) {
             knowledge.setSuspectBranch(branch.getId(), false, "PRESUMED CLOSED");
         }
-        //knowledge.setSuspectBranch("L45-46-1", true, "PRESUMED OPENED");
 
         // Add a gross error on measure Pf(VL27 --> VL28) : 80 MW (false) instead of 32.6 MW (true)
         //Map<String, String> grossMeasure = Map.of("BranchID","L27-28-1","FirstBusID","VL27_0","SecondBusID","VL28_0",
@@ -91,7 +92,7 @@ public class UseExample {
         // Randomly generate measurements (useful for test cases) out of load flow results
         var parameters = new RandomMeasuresGenerator.RandomMeasuresGeneratorParameters();
         parameters.withSeed(1).withRatioMeasuresToBuses(5.0)
-                .withEnsureObservability(true);
+                .withAddNoise(true).withEnsureObservability(true);
         RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, parameters);
 
         long endTime   = System.nanoTime();
@@ -126,8 +127,8 @@ public class UseExample {
         results.printNetworkTopology();
 
         // Print measurement estimates along with residuals for all measures
-        //results.printAllMeasurementEstimatesAndResidualsSi(knowledge);
-        //results.exportAllMeasurementEstimatesAndResidualsSi(knowledge);
+        //results.printAllMeasurementEstimatesAndResidualsSi();
+        //results.exportAllMeasurementEstimatesAndResidualsSi();
 
         // In our testing cases, as we know the true values, we can build a StateEstimatorEvaluator
         // to compute statistics on the errors made by the State Estimation

@@ -71,8 +71,10 @@ knowledge.addMeasure(measurement);
 // Solve the Load Flow problem (results are stored in "network")
 LoadFlowParameters parametersLf = new LoadFlowParameters();
 LoadFlowResult loadFlowResult = LoadFlow.run(network, parametersLf);
-// Randomly generate measurements out of Load Flow results
-RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, Optional.of(seedNumber), Optional.of(ratioZ/N), Optional.of(addNoiseBoolean), Optional.empty(noiseLevel), Optional.empty(noPickBranchID), Optional.of(ensureObservabilityBoolean));
+// Randomly generate measurements (useful for test cases) out of Load Flow results
+var parameters = new RandomMeasuresGenerator.RandomMeasuresGeneratorParameters();
+parameters.withSeed(seedNumber).withRatioMeasuresToBuses(ratioZtoN).withAddNoise(true).withEnsureObservability(true);
+RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, parameters);
  ```
 
  The user must also define the solving options for the state estimator in a [StateEstimationOptions](https://github.com/powsybl/powsybl-optimizer/blob/robust-state-estimator/robust-state-estimator/src/main/java/com/powsybl/stateestimator/parameters/input/options/StateEstimatorOptions.java) object. When the WLS SE problem is a MINLP (binary variables activated for branch statuses), he can choose the solving mode employed by Knitro (integer, non-linear relaxation or MPEC. See [Knitro documentation](https://www.artelys.com/app/docs/knitro/3_referenceManual.html)). He can also choose the maximum resolution time (in seconds), the maximum number of branch statuses the solver is allowed to make, and decide whether Knitro is allowed to use its "multistart" option.
@@ -99,8 +101,9 @@ results.printStateVectorSi(network);
 results.printStateVectorPu();
 // Print only network topology estimate
 results.printNetworkTopology();
-// Print all measurements along with their estimated values and residuals
-results.printAllMeasurementEstimatesAndResidualsSi(knowledge);
+// Print/export all measurements along with their estimated values and residuals
+results.printAllMeasurementEstimatesAndResidualsSi();
+results.exportAllMeasurementEstimatesAndResidualsSi();
 // Print some indicators on the Knitro resolution and the network studied
 results.printIndicators();
 // Estimated values for specific variables can also be obtained
@@ -115,7 +118,7 @@ Instead of using the straightforward version of the state estimator with the ``r
 3. The number of iterations (=WLS SE resolutions) performed by the algorithm.
 ```java
 // Run SE heuristic algorithm with "initialKnowledge"
-HashMap<String, Object> heuristicResults = StateEstimatorHeuristic.runHeuristic(initialKnowledge, network);
+Map<String, Object> heuristicResults = StateEstimatorHeuristic.runHeuristic(initialKnowledge, network);
 StateEstimatorResults finalResults = (StateEstimatorResults) heuristicResults.get("Results");
 StateEstimatorKnowledge finalKnowledge = (StateEstimatorKnowledge) heuristicResults.get("Knowledge");
 int nbIter = (int) heuristicResults.get("NbIter");

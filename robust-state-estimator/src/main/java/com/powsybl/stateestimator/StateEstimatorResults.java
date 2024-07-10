@@ -197,9 +197,8 @@ public class StateEstimatorResults {
 
     /**
      * Print all estimates and residuals (in SI) for all measurements
-     * @param knowledge The knowledge object from which was performed the state estimation
      */
-    public void printAllMeasurementEstimatesAndResidualsSi(StateEstimatorKnowledge knowledge) {
+    public void printAllMeasurementEstimatesAndResidualsSi() {
         this.activePowerFlowMeasuresExtended.printWithEstimatesAndResiduals();
         this.reactivePowerFlowMeasuresExtended.printWithEstimatesAndResiduals();
         this.activePowerInjectedMeasuresExtended.printWithEstimatesAndResiduals();
@@ -209,9 +208,8 @@ public class StateEstimatorResults {
 
     /**
      * Export in a CSV file all estimates, residuals and normalized residuals (in SI) for all measurements
-     * @param knowledge The knowledge object from which was performed the state estimation
      */
-    public void exportAllMeasurementEstimatesAndResidualsSi(StateEstimatorKnowledge knowledge) {
+    public void exportAllMeasurementEstimatesAndResidualsSi() {
         ActivePowerFlowMeasures activePowerFlowMeasures = this.activePowerFlowMeasuresExtended;
         ReactivePowerFlowMeasures reactivePowerFlowMeasures = this.reactivePowerFlowMeasuresExtended;
         ActivePowerInjectedMeasures activePowerInjectedMeasures = this.activePowerInjectedMeasuresExtended;

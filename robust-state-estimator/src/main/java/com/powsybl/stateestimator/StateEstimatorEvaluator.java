@@ -308,19 +308,19 @@ public class StateEstimatorEvaluator {
             ArrayList<String> values = measure.getValue();
             // If power flow measure is on side 1
             if (this.network.getBranch(values.get(1)).getTerminal1().getBusView().getConnectableBus().getId().equals(values.get(2))) {
-                double noisyPfEnd1 = this.network.getBranch(values.get(1)).getTerminal1().getP();
-                if (Double.isNaN(noisyPfEnd1)) {
-                    noisyPfEnd1 = 0;
+                double truePfEnd1 = this.network.getBranch(values.get(1)).getTerminal1().getP();
+                if (Double.isNaN(truePfEnd1)) {
+                    truePfEnd1 = 0;
                 }
-                denominator += Math.pow(noisyPfEnd1 - Double.parseDouble(values.get(4)), 2);
+                denominator += Math.pow(truePfEnd1 - Double.parseDouble(values.get(4)), 2);
             }
             // If power flow measure is on side 2
             else if (this.network.getBranch(values.get(1)).getTerminal2().getBusView().getConnectableBus().getId().equals(values.get(2))) {
-                double noisyPfEnd2 = this.network.getBranch(values.get(1)).getTerminal2().getP();
-                if (Double.isNaN(noisyPfEnd2)) {
-                    noisyPfEnd2 = 0;
+                double truePfEnd2 = this.network.getBranch(values.get(1)).getTerminal2().getP();
+                if (Double.isNaN(truePfEnd2)) {
+                    truePfEnd2 = 0;
                 }
-                denominator += Math.pow(noisyPfEnd2 - Double.parseDouble(values.get(4)), 2);
+                denominator += Math.pow(truePfEnd2 - Double.parseDouble(values.get(4)), 2);
             }
             else {
                 throw new IllegalArgumentException(String.format("Measure %d can not be valid.", measure.getKey()));
@@ -330,19 +330,19 @@ public class StateEstimatorEvaluator {
             ArrayList<String> values = measure.getValue();
             // If power flow measure is on side 1
             if (this.network.getBranch(values.get(1)).getTerminal1().getBusView().getConnectableBus().getId().equals(values.get(2))) {
-                double noisyQfEnd1 = this.network.getBranch(values.get(1)).getTerminal1().getQ();
-                if (Double.isNaN(noisyQfEnd1)) {
-                    noisyQfEnd1 = 0;
+                double trueQfEnd1 = this.network.getBranch(values.get(1)).getTerminal1().getQ();
+                if (Double.isNaN(trueQfEnd1)) {
+                    trueQfEnd1 = 0;
                 }
-                denominator += Math.pow(noisyQfEnd1 - Double.parseDouble(values.get(4)), 2);
+                denominator += Math.pow(trueQfEnd1 - Double.parseDouble(values.get(4)), 2);
             }
             // If power flow measure is on side 2
             else if (this.network.getBranch(values.get(1)).getTerminal2().getBusView().getConnectableBus().getId().equals(values.get(2))) {
-                double noisyQfEnd2 = this.network.getBranch(values.get(1)).getTerminal2().getQ();
-                if (Double.isNaN(noisyQfEnd2)) {
-                    noisyQfEnd2 = 0;
+                double trueQfEnd2 = this.network.getBranch(values.get(1)).getTerminal2().getQ();
+                if (Double.isNaN(trueQfEnd2)) {
+                    trueQfEnd2 = 0;
                 }
-                denominator += Math.pow(noisyQfEnd2 - Double.parseDouble(values.get(4)), 2);
+                denominator += Math.pow(trueQfEnd2 - Double.parseDouble(values.get(4)), 2);
             }
             else {
                 throw new IllegalArgumentException(String.format("Measure %d can not be valid.", measure.getKey()));

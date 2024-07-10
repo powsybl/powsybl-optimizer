@@ -166,10 +166,12 @@ param bus_id        {BUS} symbolic;
 check{(t,n) in BUS}: t in TIME;
 check{(t,n) in BUS}: n >= -1;
 check{(t,n) in BUS}: (t,bus_substation[t,n]) in SUBSTATIONS;
-# Check uniqueness of buses IDs
-set TEST_UNIQUENESS_BUS := setof{(1,n) in BUS} bus_id[1,n];
-check card(BUS) == card(TEST_UNIQUENESS_BUS);
 
+# Check uniqueness of bus IDs
+set ALL_BUSES_ID := setof{(1,n) in BUS} bus_id[1,n];
+check card(BUS) == card(ALL_BUSES_ID);
+# To map each bus ID to its key in set BUS : mapping = <bus_id, key in BUS>
+param mapping_for_bus{ALL_BUSES_ID};
 
 ###############################################################################
 #                           Slack (slack_bus.txt)                             #
@@ -485,10 +487,11 @@ check {(t,qq,m,n) in BRANCH}:
 check {(t,qq,m,n) in BRANCH}: (t,branch_ptrRegl[t,qq,m,n]) in REGL union {(1,-1)};
 check {(t,qq,m,n) in BRANCH}: (t,branch_ptrDeph[t,qq,m,n]) in DEPH union {(1,-1)};
 
-# Check uniqueness of branches IDs
-set TEST_UNIQUENESS_BRANCH := setof{(1,qq,m,n) in BRANCH} branch_id[1,qq,m,n];
-check card(BRANCH) == card(TEST_UNIQUENESS_BRANCH);
-
+# Check uniqueness of branch IDs
+set ALL_BRANCHES_ID := setof{(1,qq,m,n) in BRANCH} branch_id[1,qq,m,n];
+check card(BRANCH) == card(ALL_BRANCHES_ID);
+# To map each branch ID to its key in set BRANCH : mapping = <branch_id, key in BRANCH>
+param mapping_for_branch{ALL_BRANCHES_ID};
 
 ###############################################################################
 #                        ADDITIONAL KNOWLEDGE                                 #
