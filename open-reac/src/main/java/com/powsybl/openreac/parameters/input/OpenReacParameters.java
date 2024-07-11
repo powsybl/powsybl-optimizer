@@ -60,7 +60,7 @@ public class OpenReacParameters {
 
     private double maxPlausibleHighVoltageLimit = 1.5; // in pu
 
-    private ReactiveSlackBusesMode reactiveSlackBusesMode = ReactiveSlackBusesMode.NO_GENERATION;
+    private ReactiveSlackBusesMode reactiveSlackBusesMode = ReactiveSlackBusesMode.ALL;
 
     private static final String ACTIVE_POWER_VARIATION_RATE_KEY = "coeff_alpha";
 
@@ -117,6 +117,10 @@ public class OpenReacParameters {
     private static final String TWO_WINDING_TRANSFORMER_RATIO_VARIABLE_SCALING_FACTOR = "transformer_ratio_variable_scaling_factor";
 
     private double twoWindingTransformerRatioVariableScalingFactor = 1e-3;
+
+    private static final String SHUNT_VARIABLE_SCALING_FACTOR_KEY = "shunt_variable_scaling_factor";
+
+    private double shuntVariableScalingFactor = 1e-1;
 
     // Shunt compensator alert threshold
     // (to help reporting the shunt compensators with a delta between optimized and discretized reactive value over this threshold in MVar)
@@ -515,6 +519,21 @@ public class OpenReacParameters {
     }
 
     /**
+     * @return the scaling value of shunt variables in ACOPF.
+     */
+    public double getShuntVariableScalingFactor() {
+        return shuntVariableScalingFactor;
+    }
+
+    public OpenReacParameters setShuntVariableScalingFactor(double shuntVariableScalingFactor) {
+        if (shuntVariableScalingFactor <= 0 || Double.isNaN(shuntVariableScalingFactor)) {
+            throw new IllegalArgumentException("Scaling factor for shunt variables must be > 0 and defined to be consistent.");
+        }
+        this.shuntVariableScalingFactor = shuntVariableScalingFactor;
+        return this;
+    }
+
+    /**
      * @return the shunt compensator activation alert threshold
      */
     public double getShuntCompensatorActivationAlertThreshold() {
@@ -554,6 +573,7 @@ public class OpenReacParameters {
         allAlgoParams.add(new OpenReacAlgoParamImpl(DEFAULT_CONSTRAINT_SCALING_FACTOR, Double.toString(defaultConstraintScalingFactor)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(REACTIVE_SLACK_VARIABLE_SCALING_FACTOR, Double.toString(reactiveSlackVariableScalingFactor)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(TWO_WINDING_TRANSFORMER_RATIO_VARIABLE_SCALING_FACTOR, Double.toString(twoWindingTransformerRatioVariableScalingFactor)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(SHUNT_VARIABLE_SCALING_FACTOR_KEY, Double.toString(shuntVariableScalingFactor)));
         return allAlgoParams;
     }
 

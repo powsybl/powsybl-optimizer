@@ -1,18 +1,18 @@
 final_status OK
 dcopf_status OK
 
-ctime_start 'Mon Apr 01 12:21:43 2024'
+ctime_start 'Thu Jun 20 14:38:57 2024'
 last_solve_result_num 0
 nb_iter_last 6
 nb_iter_total 6
-_ampl_elapsed_time 0.063000
-_total_solve_time 0.015625
+_ampl_elapsed_time 0.047000
+_total_solve_time 0.031250
 total_time 0
 
 operatingSystem windows
 OS 'Windows_NT'
 COMPUTERNAME 'ARTELYS-PC253'
-directory 'C:\Users\parvy\AppData\Local\Temp\ampl_8140062921975933350'
+directory 'C:\Users\parvy\AppData\Local\Temp\ampl_4294773797099927510'
 
 log_level_ampl INFO
 log_level_knitro 2
@@ -25,7 +25,7 @@ epsilon_nominal_voltage 1.000000
 min_plausible_low_voltage_limit 0.500000
 max_plausible_high_voltage_limit 1.500000
 ignore_voltage_bounds 0.000000
-buses_with_reactive_slacks NO_GENERATION
+buses_with_reactive_slacks ALL
 PQmax 9000.000000
 defaultPmax 1000.000000
 defaultPmin 0.000000
@@ -37,6 +37,7 @@ default_variable_scaling_factor 1.000000
 default_constraint_scaling_factor 1.000000
 reactive_slack_variable_scaling_factor 0.100000
 transformer_ratio_variable_scaling_factor 0.001000
+shunt_variable_scaling_factor 0.100000
 
 nb_substations 6
 nb_bus_in_data_file 6
@@ -44,8 +45,8 @@ nb_bus_in_ACDC_CC 6
 nb_bus_in_AC_CC 6
 nb_bus_in_ACDC_but_out_AC_CC 0
 nb_bus_with_voltage_value 0
-nb_bus_with_reactive_slacks 0
-nb_bus_without_reactive_slacks 6
+nb_bus_with_reactive_slacks 6
+nb_bus_without_reactive_slacks 0
 nb_branch_in_data_file 7
 nb_branch_in_AC_CC 7
 nb_branch_with_nonsmall_impedance 7
@@ -81,9 +82,9 @@ min_teta_dc -0.20
 min_teta_ac -0.93
 teta_min -3.20
 max_delta_teta_dc 0.066667
-max_delta_teta_ac 0.220225
+max_delta_teta_ac 0.220224
 min_delta_teta_dc -0.200000
-min_delta_teta_ac -0.927212
+min_delta_teta_ac -0.927179
 
 nb_reactive_slacks 0
 nb_slacks_condensator 0

@@ -316,7 +316,7 @@ if ignore_voltage_bounds >= epsilon_nominal_voltage
 then printf{LOG_INFO} "Parameter: for all busses with nominal voltage <= ignore_voltage_bounds=%.1f, voltage bounds are ignored and replaced by [%.3f;%.3f]\n",ignore_voltage_bounds,min_plausible_low_voltage_limit,max_plausible_high_voltage_limit;
 check ignore_voltage_bounds >= 0;
 
-param buses_with_reactive_slacks symbolic default "NO_GENERATION";
+param buses_with_reactive_slacks symbolic default "ALL";
 if "buses_with_reactive_slacks" in PARAM_ALGO_KEYS then let buses_with_reactive_slacks := PARAM_ALGO_VALUES["buses_with_reactive_slacks"];
 printf{LOG_INFO} "Parameter: choice for buses with reactive slacks in ACOPF := %Q (%s)\n", buses_with_reactive_slacks,
   if buses_with_reactive_slacks == "ALL" then "every bus in connex component."
@@ -374,6 +374,10 @@ if "transformer_ratio_variable_scaling_factor" in PARAM_ALGO_KEYS then let trans
 printf{LOG_INFO} "Parameter: scaling factor for tranformer ratio variables := %.3f\n",transformer_ratio_variable_scaling_factor;
 check transformer_ratio_variable_scaling_factor > 0;
 
+param shunt_variable_scaling_factor default 1e-1;
+if "shunt_variable_scaling_factor" in PARAM_ALGO_KEYS then let shunt_variable_scaling_factor := num(PARAM_ALGO_VALUES["shunt_variable_scaling_factor"]);
+printf{LOG_INFO} "Parameter: scaling factor for shunt variables := %.3f\n",shunt_variable_scaling_factor;
+check shunt_variable_scaling_factor > 0;
 
 ###############################################################################
 # Solver choice and options
@@ -971,8 +975,8 @@ let {n in BUSVV}            V[n] := bus_V0[1,n];
 let {n in BUSCC diff BUSVV} V[n] := voltage_lower_bound[1,bus_substation[1,n]]
   + 0.8 *(voltage_upper_bound[1,bus_substation[1,n]] - voltage_lower_bound[1,bus_substation[1,n]]);
 
-let {n in BUSCC_SLACK} slack1_balance_Q[n] := 0;
-let {n in BUSCC_SLACK} slack2_balance_Q[n] := 0;
+let {n in BUSCC_SLACK} slack1_shunt_B[n] := 0;
+let {n in BUSCC_SLACK} slack2_shunt_B[n] := 0;
 let alpha := 0.01;
 let {(g,n) in UNITON} P_bounded[g,n] := max(P_dcopf[g,n],unit_Pc[1,g,n]);
 let {(g,n) in UNITON} Q[g,n] := 0.5*(corrected_unit_Qmax[g,n] + corrected_unit_Qmin[g,n]);
@@ -989,15 +993,17 @@ let tempstr := ctime();
 printf{LOG_KNITRO} "\n######################################################################\n";
 printf{LOG_KNITRO} "** ACopf solve: start (%s)\n\n",ctime();
 
-option knitro_options ("opttol=1 opttolabs=1e-1 feastol=1 feastolabs=1e-3 maxit=200 outlev=3");
+option knitro_options ("opttol=1 opttolabs=1e-1 feastol=1 feastolabs=1e-3 maxit=300 outlev=3");
 
 let {i in 1.._nvars} _var[i].xscalefactor := default_variable_scaling_factor;
 let {i in 1.._ncons} _con[i].cscalefactor := default_constraint_scaling_factor;
 
-let {n in BUSCC_SLACK} slack1_balance_Q[n].xscalefactor := reactive_slack_variable_scaling_factor;
-let {n in BUSCC_SLACK} slack2_balance_Q[n].xscalefactor := reactive_slack_variable_scaling_factor;
+let {n in BUSCC_SLACK} slack1_shunt_B[n].xscalefactor := reactive_slack_variable_scaling_factor;
+let {n in BUSCC_SLACK} slack2_shunt_B[n].xscalefactor := reactive_slack_variable_scaling_factor;
 
 let {(qq,m,n) in BRANCHCC_REGL_VAR} branch_Ror_var[qq,m,n].xscalefactor := transformer_ratio_variable_scaling_factor;
+
+let {(shunt,n) in SHUNT_VAR} shunt_var[shunt,n].xscalefactor := shunt_variable_scaling_factor;
 
 # solve acopf and avoid knitro printing if user asks
 if (log_level_knitro <= 1) then {
@@ -1012,6 +1018,13 @@ let nb_iter_total := nb_iter_total + nb_iter_last;
 printf{LOG_KNITRO} "\n** ACopf solve: end   (%s -> %s)\n",tempstr,ctime();
 printf{LOG_KNITRO} "######################################################################\n\n";
 
+
+param slack1_balance_Q{n in BUSCC_SLACK};
+param slack2_balance_Q{n in BUSCC_SLACK};
+for {n in BUSCC_SLACK} {
+  let slack1_balance_Q[n] := base100MVA * V[n]^2 * slack1_shunt_B[n].val;
+  let slack2_balance_Q[n] := base100MVA * V[n]^2 * slack2_shunt_B[n].val;
+}
 
 ###############################################################################
 # Analysis of solve_result_num
