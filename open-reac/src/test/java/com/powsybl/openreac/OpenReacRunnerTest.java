@@ -252,7 +252,7 @@ class OpenReacRunnerTest {
                         subFolder + "/reactiveopf_results_vsc_converter_stations.csv",
                         subFolder + "/reactiveopf_results_voltages.csv"));
         // To really run open reac, use the commented line below. Be sure that open-reac/src/test/resources/com/powsybl/config/test/config.yml contains your ampl path
-//        try (ComputationManager computationManager = new LocalComputationManager()) {
+//         try (ComputationManager computationManager = new LocalComputationManager()) {
         try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
                 localCommandExecutor, ForkJoinPool.commonPool())) {
             CompletableFuture<OpenReacResult> openReacResults = OpenReacRunner.runAsync(network,
