@@ -108,7 +108,7 @@ class OpenReacRunnerTest {
                 .setLogLevelSolver(OpenReacSolverLogLevel.ONLY_RESULTS)
                 .setMinPlausibleLowVoltageLimit(0.7888)
                 .setMaxPlausibleHighVoltageLimit(1.3455)
-                .setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL)
+                .setReactiveSlackBusesMode(ReactiveSlackBusesMode.NO_GENERATION)
                 .setActivePowerVariationRate(0.88)
                 .setMinPlausibleActivePowerThreshold(0.45)
                 .setLowImpedanceThreshold(1e-5)
@@ -122,7 +122,8 @@ class OpenReacRunnerTest {
                 .setDefaultVariableScalingFactor(1.1222)
                 .setDefaultConstraintScalingFactor(0.7889)
                 .setReactiveSlackVariableScalingFactor(0.2)
-                .setTwoWindingTransformerRatioVariableScalingFactor(0.0045);
+                .setTwoWindingTransformerRatioVariableScalingFactor(0.0045)
+                .setShuntVariableScalingFactor(0.101);
 
         LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
                 List.of("empty_case/reactiveopf_results_indic.txt"));
@@ -232,7 +233,7 @@ class OpenReacRunnerTest {
             assertEquals(1, openReacResult.getVscModifications().size());
             assertEquals(7, openReacResult.getGeneratorModifications().size());
             assertEquals(3, openReacResult.getVoltageProfile().size());
-            assertEquals(86, openReacResult.getIndicators().size());
+            assertEquals(87, openReacResult.getIndicators().size());
             assertTrue(openReacResult.getReactiveSlacks().isEmpty());
         }
     }
