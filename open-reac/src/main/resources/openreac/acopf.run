@@ -26,8 +26,8 @@ let {n in BUSVV}            V[n] := bus_V0[1,n];
 let {n in BUSCC diff BUSVV} V[n] := voltage_lower_bound[1,bus_substation[1,n]]
   + 0.8 *(voltage_upper_bound[1,bus_substation[1,n]] - voltage_lower_bound[1,bus_substation[1,n]]);
 
-let {n in BUSCC_SLACK} slack1_balance_Q[n] := 0;
-let {n in BUSCC_SLACK} slack2_balance_Q[n] := 0;
+let {n in BUSCC_SLACK} slack1_shunt_B[n] := 0;
+let {n in BUSCC_SLACK} slack2_shunt_B[n] := 0;
 let alpha := 0.01;
 let {(g,n) in UNITON} P_bounded[g,n] := max(P_dcopf[g,n],unit_Pc[1,g,n]);
 let {(g,n) in UNITON} Q[g,n] := 0.5*(corrected_unit_Qmax[g,n] + corrected_unit_Qmin[g,n]);
@@ -46,15 +46,17 @@ let tempstr := ctime();
 printf{LOG_KNITRO} "\n######################################################################\n";
 printf{LOG_KNITRO} "** ACopf solve: start (%s)\n\n",ctime();
 
-option knitro_options ("opttol=1 opttolabs=1e-1 feastol=1 feastolabs=1e-3 maxit=200 outlev=3");
+option knitro_options ("opttol=1 opttolabs=1e-1 feastol=1 feastolabs=1e-3 maxit=300 outlev=3");
 
 let {i in 1.._nvars} _var[i].xscalefactor := default_variable_scaling_factor;
 let {i in 1.._ncons} _con[i].cscalefactor := default_constraint_scaling_factor;
 
-let {n in BUSCC_SLACK} slack1_balance_Q[n].xscalefactor := reactive_slack_variable_scaling_factor;
-let {n in BUSCC_SLACK} slack2_balance_Q[n].xscalefactor := reactive_slack_variable_scaling_factor;
+let {n in BUSCC_SLACK} slack1_shunt_B[n].xscalefactor := reactive_slack_variable_scaling_factor;
+let {n in BUSCC_SLACK} slack2_shunt_B[n].xscalefactor := reactive_slack_variable_scaling_factor;
 
 let {(qq,m,n) in BRANCHCC_REGL_VAR} branch_Ror_var[qq,m,n].xscalefactor := transformer_ratio_variable_scaling_factor;
+
+let {(shunt,n) in SHUNT_VAR} shunt_var[shunt,n].xscalefactor := shunt_variable_scaling_factor;
 
 # solve acopf and avoid knitro printing if user asks
 if (log_level_knitro <= 1) then {
@@ -70,6 +72,12 @@ let nb_iter_total := nb_iter_total + nb_iter_last;
 printf{LOG_KNITRO} "\n** ACopf solve: end   (%s -> %s)\n",tempstr,ctime();
 printf{LOG_KNITRO} "######################################################################\n\n";
 
+param slack1_balance_Q{n in BUSCC_SLACK};
+param slack2_balance_Q{n in BUSCC_SLACK};
+for {n in BUSCC_SLACK} {
+  let slack1_balance_Q[n] := base100MVA * V[n]^2 * slack1_shunt_B[n].val;
+  let slack2_balance_Q[n] := base100MVA * V[n]^2 * slack2_shunt_B[n].val;
+}
 
 ###############################################################################
 # Analysis of solve_result_num
