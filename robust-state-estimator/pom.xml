@@ -14,8 +14,8 @@
     <name>State Estimator</name>
 
     <properties>
-        <powsybl-core.version>6.2.0</powsybl-core.version>
-        <powsybl-open-loadflow.version>1.7.0</powsybl-open-loadflow.version>
+        <powsybl-core.version>6.4.1</powsybl-core.version>
+        <powsybl-open-loadflow.version>1.12.2</powsybl-open-loadflow.version>
     </properties>
 
     <developers>

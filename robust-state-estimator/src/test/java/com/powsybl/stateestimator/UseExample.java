@@ -36,8 +36,8 @@ public class UseExample {
     void useExample() throws IOException {
 
         // Load your favorite network (IIDM format preferred)
-        //Network network = IeeeCdfNetworkFactory.create118();
-        Network network = Network.read(Path.of("D:", "Projet", "Réseaux_tests", "IIDM", "Texas7k_20210804.xiidm"));
+        Network network = IeeeCdfNetworkFactory.create118();
+        //Network network = Network.read(Path.of("D:", "Projet", "Réseaux_tests", "IIDM", "Texas7k_20210804.xiidm"));
 
         // Load Flow parameters (note : we mimic the way the AMPL code deals with zero-impedance branches)
         LoadFlowParameters parametersLf = new LoadFlowParameters();
@@ -65,9 +65,9 @@ public class UseExample {
         StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network);
 
         // Make sure the state estimator and OpenLoadFlow use the same slack bus
-        //knowledge.setSlack("VL69_0", network); // for IEEE118
+        knowledge.setSlack("VL69_0", network); // for IEEE118
         //knowledge.setSlack("VL-4231_0", network); // for case1354_pegase
-        knowledge.setSlack("VL-111333_0", network); // for texas7k
+        //knowledge.setSlack("VL-111333_0", network); // for texas7k
 
         // Make all branches suspects and presumed to be closed
         for (Branch branch: network.getBranches()) {
@@ -91,7 +91,7 @@ public class UseExample {
 
         // Randomly generate measurements (useful for test cases) out of load flow results
         var parameters = new RandomMeasuresGenerator.RandomMeasuresGeneratorParameters();
-        parameters.withSeed(1).withRatioMeasuresToBuses(4.0)
+        parameters.withSeed(1).withRatioMeasuresToBuses(5.0)
                 .withAddNoise(true).withEnsureObservability(true);
         RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, parameters);
 

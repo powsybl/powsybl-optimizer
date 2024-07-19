@@ -6,6 +6,7 @@
  */
 package com.powsybl.stateestimator;
 
+import com.powsybl.ampl.converter.AmplExportConfig;
 import com.powsybl.iidm.network.Connectable;
 import com.powsybl.iidm.network.TwoWindingsTransformer;
 import com.powsybl.stateestimator.parameters.StateEstimatorAmplIOFiles;
@@ -70,9 +71,13 @@ public final class StateEstimatorRunner {
         network.getLineStream()
                 .filter(line -> line.getTerminal1().isConnected() ^ line.getTerminal2().isConnected())
                 .forEach(Connectable::disconnect);
+
+        // TODO : check the line below
+        AmplExportConfig amplExportConfig = new AmplExportConfig(AmplExportConfig.ExportScope.ALL, true, AmplExportConfig.ExportActionType.CURATIVE);
+
         // Build AMPL interface and run
         AmplModel stateEstimation = StateEstimatorModel.buildModel(); // Only AMPL files (.dat,.mod,.run) that never change should be given during this step
-        StateEstimatorAmplIOFiles amplIoInterface = new StateEstimatorAmplIOFiles(knowledge, options, config.isDebug());
+        StateEstimatorAmplIOFiles amplIoInterface = new StateEstimatorAmplIOFiles(knowledge, options, config.isDebug(), amplExportConfig);
         AmplResults run = AmplModelRunner.run(network, variantId, stateEstimation, manager, amplIoInterface);
         StateEstimatorResults stateEstimatorResults = new StateEstimatorResults(run.isSuccess(), amplIoInterface, run.getIndicators());
         // Complete attributes of StateEstimatorResults (measurements extended with estimates and residuals returned by the state estimation)

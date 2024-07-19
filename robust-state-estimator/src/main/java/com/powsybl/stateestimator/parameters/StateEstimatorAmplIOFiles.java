@@ -6,6 +6,7 @@
  */
 package com.powsybl.stateestimator.parameters;
 
+import com.powsybl.ampl.converter.AmplExportConfig;
 import com.powsybl.stateestimator.parameters.input.knowledge.*;
 import com.powsybl.stateestimator.parameters.input.options.StateEstimatorOptions;
 import com.powsybl.stateestimator.parameters.input.options.SolvingOptions;
@@ -47,8 +48,9 @@ public class StateEstimatorAmplIOFiles implements AmplParameters {
     NetworkPowersEstimateOutput networkPowersEstimateOutput;
 
     boolean debug;
+    AmplExportConfig amplExportConfig;
 
-    public StateEstimatorAmplIOFiles(StateEstimatorKnowledge knowledge, StateEstimatorOptions options, boolean debug) {
+    public StateEstimatorAmplIOFiles(StateEstimatorKnowledge knowledge, StateEstimatorOptions options, boolean debug, AmplExportConfig amplExportConfig) {
         // Input files
         // Solver options
         this.solvingOptions = new SolvingOptions(options.getSolvingOptions());
@@ -75,6 +77,9 @@ public class StateEstimatorAmplIOFiles implements AmplParameters {
         this.networkPowersEstimateOutput = new NetworkPowersEstimateOutput();
 
         this.debug = debug;
+
+        // TODO : check this
+        this.amplExportConfig = amplExportConfig;
     }
 
     @Override
@@ -105,6 +110,9 @@ public class StateEstimatorAmplIOFiles implements AmplParameters {
     public boolean isDebug() {
         return debug;
     }
+
+    public AmplExportConfig getAmplExportConfig() {
+        return amplExportConfig;}
 
     // Getters for output files
     public NetworkIndicatorsOutput getNetworkIndicatorsOutput() {

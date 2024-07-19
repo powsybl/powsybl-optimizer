@@ -314,8 +314,6 @@ check {(t,b,n) in BATTERY} : (t,n) in BUS union {(t,-1)};
 check {(t,b,n) in BATTERY} : (t,battery_substation[t,b,n]) in SUBSTATIONS;
 check {(t,b,n) in BATTERY: (t,n) in BUS} : battery_substation[t,b,n] == bus_substation[t,n];
 
-# Tap seems to be transformers
-
 ###############################################################################
 #                   Tables of taps (ampl_network_tct.txt)                     #
 ###############################################################################
@@ -561,10 +559,14 @@ set BRANCHCC_TRULY_SUSP := setof{(qq,m,n,l) in BRANCHCC_FULL cross BRANCH_SUSP:
 #            Deal with "zero"-impedance branches (first step)                 #
 ###############################################################################
 
-# Compute module of Z in SI (use only base voltage of terminal 1 !)
+# Compute module of Z in SI (use base voltages of terminals 1 and 2 !)
 param branch_Z{(qq,m,n) in BRANCHCC_FULL} := 
-  sqrt((branch_R[1,qq,m,n] * substation_Vnomi[1,branch_subor[1,qq,m,n]]^2 / base100MVA)^2
-  + (branch_X[1,qq,m,n] * substation_Vnomi[1,branch_subor[1,qq,m,n]]^2 / base100MVA)^2);
+  sqrt(
+    (branch_R[1,qq,m,n] * substation_Vnomi[1,branch_subor[1,qq,m,n]]
+    * substation_Vnomi[1, branch_subex[1,qq,m,n]] / base100MVA)^2
+  + (branch_X[1,qq,m,n] * substation_Vnomi[1,branch_subor[1,qq,m,n]]
+    * substation_Vnomi[1, branch_subex[1,qq,m,n]] / base100MVA)^2
+  );
 check {(qq,m,n) in BRANCHCC_FULL}: branch_Z[qq,m,n] >= 0;
 
 # Define set BRANCHZNULL (used later)
@@ -605,7 +607,6 @@ set LCCCONVON := setof{(t,l,n) in LCCCONV} (l,n);
 # In view of AMPLExporter methods (see Java), different cases must be considered when converting back from p.u to SI
 
 # Compute R in SI and correct its value if the branch has "zero impedance"
-
 param branch_R_SI{(qq,m,n) in BRANCHCC_FULL} :=
 
   if (branch_Z[qq,m,n] == 0) 
@@ -618,14 +619,15 @@ param branch_R_SI{(qq,m,n) in BRANCHCC_FULL} :=
   then branch_R[1,qq,m,n] * substation_Vnomi[1,branch_subex[1,qq,m,n]]^2 / base100MVA
 
   else if (branch_Z[qq,m,n] <= Znull) 
-  then branch_R[1,qq,m,n] * Znull / branch_Z[qq,m,n] * substation_Vnomi[1,branch_subor[1,qq,m,n]]^2 / base100MVA
+  then branch_R[1,qq,m,n] * Znull / branch_Z[qq,m,n] 
+      * substation_Vnomi[1,branch_subor[1,qq,m,n]] * substation_Vnomi[1,branch_subex[1,qq,m,n]] / base100MVA
 
-  else branch_R[1,qq,m,n] * substation_Vnomi[1,branch_subor[1,qq,m,n]]^2 / base100MVA;
+  else branch_R[1,qq,m,n] 
+      * substation_Vnomi[1,branch_subor[1,qq,m,n]] * substation_Vnomi[1,branch_subex[1,qq,m,n]] / base100MVA;
 
 check {(qq,m,n) in BRANCHCC_FULL}: branch_R_SI[qq,m,n] >= 0;
 
 # Compute X in SI and correct its value if the branch has "zero impedance"
-
 param branch_X_SI{(qq,m,n) in BRANCHCC_FULL} :=
 
   if (branch_Z[qq,m,n] == 0) 
@@ -638,11 +640,20 @@ param branch_X_SI{(qq,m,n) in BRANCHCC_FULL} :=
   then branch_X[1,qq,m,n] * substation_Vnomi[1,branch_subex[1,qq,m,n]]^2 / base100MVA
 
   else if (branch_Z[qq,m,n] <= Znull) 
-  then branch_X[1,qq,m,n] * Znull / branch_Z[qq,m,n] * substation_Vnomi[1,branch_subor[1,qq,m,n]]^2 / base100MVA
+  then branch_X[1,qq,m,n] * Znull / branch_Z[qq,m,n] 
+      * substation_Vnomi[1,branch_subor[1,qq,m,n]] * substation_Vnomi[1,branch_subex[1,qq,m,n]] / base100MVA
 
-  else branch_X[1,qq,m,n] * substation_Vnomi[1,branch_subor[1,qq,m,n]]^2 / base100MVA;
+  else branch_X[1,qq,m,n] 
+      * substation_Vnomi[1,branch_subor[1,qq,m,n]] * substation_Vnomi[1,branch_subex[1,qq,m,n]] / base100MVA;
 
 check {(qq,m,n) in BRANCHCC_FULL}: abs(branch_X_SI[qq,m,n]) >= 0;
+
+# Compute G and B (related to series impedance) in SI : used later to deper-unit shunt admittances
+param branch_G_SI{(qq,m,n) in BRANCHCC} :=
+  branch_R_SI[qq,m,n] / (branch_R_SI[qq,m,n]^2 + branch_X_SI[qq,m,n]^2);
+
+param branch_B_SI{(qq,m,n) in BRANCHCC} :=
+  - branch_X_SI[qq,m,n] / (branch_R_SI[qq,m,n]^2 + branch_X_SI[qq,m,n]^2);
 
 ###############################################################################
 #           Transformers and Phase shifting transformers parameters           #
@@ -689,12 +700,6 @@ param branch_Xdeph{(qq,m,n) in BRANCHCC_TRANSFORMER} =
   
   else Znull;
 
-
-# TODO : check this !
-
-#param branch_Rdeph{(qq,m,n) in BRANCHCC_TRANSFORMER} =
-#    branch_R[1,qq,m,n] * substation_Vnomi[1,branch_subex[1,qq,m,n]]^2 / base100MVA;
-
 # Variable resistance, depending on tap (in SI)
 # As we do not have access to true values of R in law tables of transformers, we choose to vary R proportionnaly to X (R_var = R_base x X_var / X_base)
 param branch_Rdeph{(qq,m,n) in BRANCHCC_TRANSFORMER} =
@@ -726,22 +731,30 @@ param branch_admi_SI{(qq,m,n) in BRANCHCC_FULL} =
 param branch_Gor_SI{(qq,m,n) in BRANCHCC_FULL} = 
   if (qq,m,n) in BRANCHCC_TRANSFORMER or (qq,m,n) in BRANCHCC_3WT or (qq,m,n) in BRANCHCC_TRANSFO_AS_LINES
   then branch_Gor[1,qq,m,n] / (substation_Vnomi[1,branch_subex[1,qq,m,n]]^2 / base100MVA)
-  else branch_Gor[1,qq,m,n] / (substation_Vnomi[1,branch_subor[1,qq,m,n]]^2 / base100MVA);
+  else branch_Gor[1,qq,m,n] * base100MVA / substation_Vnomi[1,branch_subor[1,qq,m,n]]^2
+      - branch_G_SI[qq,m,n] 
+      * (1 - substation_Vnomi[1,branch_subex[1,qq,m,n]] / substation_Vnomi[1,branch_subor[1,qq,m,n]]);
 
 param branch_Gex_SI{(qq,m,n) in BRANCHCC_FULL} = 
   if (qq,m,n) in BRANCHCC_TRANSFORMER or (qq,m,n) in BRANCHCC_3WT or (qq,m,n) in BRANCHCC_TRANSFO_AS_LINES
   then branch_Gex[1,qq,m,n] / (substation_Vnomi[1,branch_subex[1,qq,m,n]]^2 / base100MVA)
-  else branch_Gex[1,qq,m,n] / (substation_Vnomi[1,branch_subor[1,qq,m,n]]^2 / base100MVA);
+  else branch_Gex[1,qq,m,n] * base100MVA / substation_Vnomi[1,branch_subex[1,qq,m,n]]^2
+      - branch_G_SI[qq,m,n] 
+      * (1 - substation_Vnomi[1,branch_subor[1,qq,m,n]] / substation_Vnomi[1,branch_subex[1,qq,m,n]]);
 
 param branch_Bor_SI{(qq,m,n) in BRANCHCC_FULL} = 
   if (qq,m,n) in BRANCHCC_TRANSFORMER or (qq,m,n) in BRANCHCC_3WT or (qq,m,n) in BRANCHCC_TRANSFO_AS_LINES
   then branch_Bor[1,qq,m,n] / (substation_Vnomi[1,branch_subex[1,qq,m,n]]^2 / base100MVA)
-  else branch_Bor[1,qq,m,n] / (substation_Vnomi[1,branch_subor[1,qq,m,n]]^2 / base100MVA);
+  else branch_Bor[1,qq,m,n] * base100MVA / substation_Vnomi[1,branch_subor[1,qq,m,n]]^2
+      - branch_B_SI[qq,m,n] 
+      * (1 - substation_Vnomi[1,branch_subex[1,qq,m,n]] / substation_Vnomi[1,branch_subor[1,qq,m,n]]);
 
 param branch_Bex_SI{(qq,m,n) in BRANCHCC_FULL} = 
   if (qq,m,n) in BRANCHCC_TRANSFORMER or (qq,m,n) in BRANCHCC_3WT or (qq,m,n) in BRANCHCC_TRANSFO_AS_LINES
   then branch_Bex[1,qq,m,n] / (substation_Vnomi[1,branch_subex[1,qq,m,n]]^2 / base100MVA)
-  else branch_Bex[1,qq,m,n] / (substation_Vnomi[1,branch_subor[1,qq,m,n]]^2 / base100MVA);
+  else branch_Bex[1,qq,m,n] * base100MVA / substation_Vnomi[1,branch_subex[1,qq,m,n]]^2
+      - branch_B_SI[qq,m,n] 
+      * (1 - substation_Vnomi[1,branch_subor[1,qq,m,n]] / substation_Vnomi[1,branch_subex[1,qq,m,n]]);
 
 ###############################################################################
 #         Additional information on rho and alpha of transformers             #
