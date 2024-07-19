@@ -193,55 +193,15 @@ for{n in BUS2 : bus_id[1,n] == slack_bus_id[1]}{
 }
 
 ###############################################################################
-#                                Connexity checks                             #
+#                           Connexity checks (not performed)                  #
 ###############################################################################
-
-
-/* option knitro_options "outlev=0"; # Avoid printing of too much information.
-option presolve 0;
-let tempstr := ctime();
-printf "# CCcomp solve: start (%s)\n\n",tempstr;
-solve cccomputation_objective;
-if solve_result_num > 103 or card({n in BUS2: teta_ccomputation[n].val > 0.01 and teta_ccomputation[n].val < 0.99})>0 
-then {
-  # First return codes of knitro :
-  # See https://www.artelys.com/docs/knitro/3_referenceManual/knitroamplReference.html#return-codes
-  #   0 Locally optimal or satisfactory solution.
-  let errorMessage := "Optimization for connex component computation failed";
-  let final_status := "NOK";
-  include results_exit.run; # CC computation did not work ==> Return indications and exit
-}
-printf "# CCcomp solve: end   (%s -> %s)\n\n",tempstr,ctime(); */
 
 option presolve 10;
 
-# TODO : keep this calculation of main Synchronous Component ? Or just consider that SC=CC (if no HVDC lines)
-/* # Once main connex component is computed, define the set of buses in it :
-# here we keep the buses that have been calculated as linked to the slack bus with AC lines
-let BUSCC := {n in BUS2: teta_ccomputation[n].val <= 0.01}; */
+# TODO : no calculation of main Synchronous Component performed (unlike divergence analyzer): we considered that SC=CC (OK if no HVDC lines)
 
 let BUSCC := {n in BUS2};
 
-/* printf "\n\n*** Connexity computation\n";
-for{n in BUS2 diff BUSCC}
-  printf "Bus %Q in substation %Q (Vnomi=%.2fkV, country=%Q) is out of main AC CC\n",
-    bus_id[1,n], substation_id[1,bus_substation[1,n]],
-    substation_Vnomi[1,bus_substation[1,n]], substation_country[1,bus_substation[1,n]];
-printf "Nb of busses in AC CC: %i\n",card(BUS2); 
-printf "Nb of busses in CC of slack bus %Q: %i\n",bus_id[1,null_phase_bus],card(BUSCC);
-printf "Nb of busses in other CCs: %Q\n",card(BUS2)-card(BUSCC);
-printf "Nb of V measurements discarded as they were not related to main AC CC: %i\n", 
-  card(MEASURES_V)-card(MEASURECC_V);
-printf "Nb of P measurements discarded as they were not related to main AC CC: %i\n", 
-  card(MEASURES_P)-card(MEASURECC_P);
-printf "Nb of Q measurements discarded as they were not related to main AC CC: %i\n", 
-  card(MEASURES_Q)-card(MEASURECC_Q);
-printf "Nb of Pf measurements discarded as they were not related to main AC CC: %i\n", 
-  card(MEASURES_Pf)-card(MEASURECC_Pf);
-printf "Nb of Qf measurements discarded as they were not related to main AC CC: %i\n", 
-  card(MEASURES_Qf)-card(MEASURECC_Qf);
-printf "Nb of suspect branches out of main AC CC: %i\n", card(BRANCH_TRULY_SUSP)-card(BRANCHCC_TRULY_SUSP);
-printf "\n"; */
 
 ###############################################################################
 #                                                                             #
@@ -271,203 +231,6 @@ for {(qq,m,n,l) in BRANCHCC_FULL cross BRANCH_SUSP: branch_susp_id[l] == branch_
   let y[qq,m,n] := y_prior[l];
 }
 
-/* # Branch power flows taking their status OPENED/CLOSED into account
-for{(qq,k,n) in BRANCHCC} {
-  let act_power_dir[qq,k,n] := round(y[qq,k,n]) * (
-    branch_Ror_SI[qq,k,n]^2 * branch_Gor_SI[qq,k,n] * V[k]^2 
-      * substation_Vnomi[1,bus_substation[1,k]]^2
-    + branch_Ror_SI[qq,k,n]^2 * branch_admi_SI[qq,k,n] * V[k]^2 * sin(branch_angper[qq,k,n])
-      * substation_Vnomi[1,bus_substation[1,k]]^2
-    - branch_Ror_SI[qq,k,n] * branch_Rex_SI[qq,k,n] * branch_admi_SI[qq,k,n] * V[k] * V[n] 
-      * sin(branch_angper[qq,k,n] - branch_dephor[qq,k,n] + theta[n] - theta[k])
-      * substation_Vnomi[1,bus_substation[1,k]] * substation_Vnomi[1,bus_substation[1,n]]
-  );
-
-  let rea_power_dir[qq,k,n] := round(y[qq,k,n]) * (
-    - branch_Ror_SI[qq,k,n]^2 * branch_Bor_SI[qq,k,n] * V[k]^2
-      * substation_Vnomi[1,bus_substation[1,k]]^2
-    + branch_Ror_SI[qq,k,n]^2 * branch_admi_SI[qq,k,n] * V[k]^2 * cos(branch_angper[qq,k,n])
-      * substation_Vnomi[1,bus_substation[1,k]]^2
-    - branch_Ror_SI[qq,k,n] * branch_Rex_SI[qq,k,n] * branch_admi_SI[qq,k,n] * V[k] * V[n]
-      * cos(theta[k] - theta[n] + branch_dephor[qq,k,n] - branch_angper[qq,k,n])
-      * substation_Vnomi[1,bus_substation[1,k]] * substation_Vnomi[1,bus_substation[1,n]]
-  );
-}
-
-for{(qq,n,k) in BRANCHCC} {
-  let act_power_inv[qq,n,k] := round(y[qq,n,k]) * (
-  branch_Rex_SI[qq,n,k]^2 * branch_Gex_SI[qq,n,k] * V[k]^2 
-    * substation_Vnomi[1,bus_substation[1,k]]^2
-  + branch_Rex_SI[qq,n,k]^2 * branch_admi_SI[qq,n,k] * V[k]^2 * sin(branch_angper[qq,n,k])
-     * substation_Vnomi[1,bus_substation[1,k]]^2
-  - branch_Rex_SI[qq,n,k] * branch_Ror_SI[qq,n,k] * branch_admi_SI[qq,n,k] * V[k] * V[n] 
-    * sin(branch_angper[qq,n,k] + branch_dephor[qq,n,k] + theta[n] - theta[k])
-    * substation_Vnomi[1,bus_substation[1,k]] * substation_Vnomi[1,bus_substation[1,n]]
-  );
-
-  let rea_power_inv[qq,n,k] := round(y[qq,n,k]) * (
-  - branch_Rex_SI[qq,n,k]^2 * branch_Bex_SI[qq,n,k] * V[k]^2
-    * substation_Vnomi[1,bus_substation[1,k]]^2
-  + branch_Rex_SI[qq,n,k]^2 * branch_admi_SI[qq,n,k] * V[k]^2 * cos(branch_angper[qq,n,k])
-    * substation_Vnomi[1,bus_substation[1,k]]^2
-  - branch_Ror_SI[qq,n,k] * branch_Rex_SI[qq,n,k] * branch_admi_SI[qq,n,k] * V[k] * V[n]
-    * cos(theta[k] - theta[n] - branch_dephor[qq,n,k] - branch_angper[qq,n,k])
-    * substation_Vnomi[1,bus_substation[1,k]] * substation_Vnomi[1,bus_substation[1,n]]
-  );
-}
-
-for{(qq,n,k) in BRANCH_WITH_SIDE_1_OPENED} {
-  let act_power_bus1_opened[qq,n,k] := round(y[qq,n,k]) * (
-    V[k]^2 * substation_Vnomi[1,bus_substation[1,k]]^2
-    * (
-      branch_Gex_SI[qq,n,k] 
-      + branch_admi_SI[qq,n,k]^2 
-      * branch_Gor_SI[qq,n,k] 
-      / (
-        (branch_Gor_SI[qq,n,k] + branch_admi_SI[qq,n,k] * sin(branch_angper[qq,n,k]))^2 
-        + (- branch_Bor_SI[qq,n,k] + branch_admi_SI[qq,n,k] * cos(branch_angper[qq,n,k]))^2 
-      ) # Shunt
-      + (
-        branch_Bor_SI[qq,n,k]^2 + branch_Gor_SI[qq,n,k]^2
-      ) 
-      * branch_admi_SI[qq,n,k] * sin(branch_angper[qq,n,k])
-      / (
-        (branch_Gor_SI[qq,n,k] + branch_admi_SI[qq,n,k] * sin(branch_angper[qq,n,k]))^2 
-        + (- branch_Bor_SI[qq,n,k] + branch_admi_SI[qq,n,k] * cos(branch_angper[qq,n,k]))^2 
-      ) # Shunt
-    )
-  );
-
-  let rea_power_bus1_opened[qq,n,k] := round(y[qq,n,k]) * (
-    - V[k]^2 * substation_Vnomi[1,bus_substation[1,k]]^2
-    * (
-      branch_Bex_SI[qq,n,k] 
-      + branch_admi_SI[qq,n,k]^2 * branch_Bor_SI[qq,n,k]
-      / (
-        (branch_Gor_SI[qq,n,k] + branch_admi_SI[qq,n,k] * sin(branch_angper[qq,n,k]))^2 
-        + (- branch_Bor_SI[qq,n,k] + branch_admi_SI[qq,n,k] * cos(branch_angper[qq,n,k]))^2
-      ) # Shunt
-      - (
-        branch_Bor_SI[qq,n,k]^2 + branch_Gor_SI[qq,n,k]^2
-      ) 
-      * branch_admi_SI[qq,n,k] * cos(branch_angper[qq,n,k])
-      / (
-        (branch_Gor_SI[qq,n,k] + branch_admi_SI[qq,n,k] * sin(branch_angper[qq,n,k]))^2 
-        + (- branch_Bor_SI[qq,n,k] + branch_admi_SI[qq,n,k] * cos(branch_angper[qq,n,k]))^2
-      ) # Shunt
-    )
-  );
-}
-
-for{(qq,k,n) in BRANCH_WITH_SIDE_2_OPENED} {
-  let act_power_bus2_opened[qq,k,n] := round(y[qq,k,n]) * (
-    branch_Ror_SI[qq,k,n]^2 * V[k]^2 * substation_Vnomi[1,bus_substation[1,k]]^2
-    * (
-      branch_Gor_SI[qq,k,n] 
-      + branch_admi_SI[qq,k,n]^2 * branch_Gex_SI[qq,k,n] 
-      / (
-        (branch_Gex_SI[qq,k,n] + branch_admi_SI[qq,k,n] * sin(branch_angper[qq,k,n]))^2 
-        + (- branch_Bex_SI[qq,k,n] + branch_admi_SI[qq,k,n] * cos(branch_angper[qq,k,n]))^2 
-      ) # Shunt
-      + (
-        branch_Bex_SI[qq,k,n]^2 + branch_Gex_SI[qq,k,n]^2
-      ) * branch_admi_SI[qq,k,n] * sin(branch_angper[qq,k,n])
-      / (
-        (branch_Gex_SI[qq,k,n] + branch_admi_SI[qq,k,n] * sin(branch_angper[qq,k,n]))^2 
-        + (- branch_Bex_SI[qq,k,n] + branch_admi_SI[qq,k,n] * cos(branch_angper[qq,k,n]))^2 
-      ) # Shunt
-    )
-  );
-
-  let rea_power_bus2_opened[qq,k,n] := round(y[qq,k,n]) * (
-    - branch_Ror_SI[qq,k,n]^2 * V[k]^2 * substation_Vnomi[1,bus_substation[1,k]]^2
-    * (
-      branch_Bor_SI[qq,k,n] 
-      + branch_admi_SI[qq,k,n]^2 * branch_Bex_SI[qq,k,n]
-      / (
-        (branch_Gex_SI[qq,k,n] + branch_admi_SI[qq,k,n] * sin(branch_angper[qq,k,n]))^2 
-        + (- branch_Bex_SI[qq,k,n] + branch_admi_SI[qq,k,n] * cos(branch_angper[qq,k,n]))^2 
-      ) # Shunt
-      - (
-        branch_Bex_SI[qq,k,n]^2 + branch_Gex_SI[qq,k,n]^2
-      ) 
-      * branch_admi_SI[qq,k,n] * cos(branch_angper[qq,k,n])
-      / (
-        (branch_Gex_SI[qq,k,n] + branch_admi_SI[qq,k,n] * sin(branch_angper[qq,k,n]))^2 
-        + (-branch_Bex_SI[qq,k,n] + branch_admi_SI[qq,k,n] * cos(branch_angper[qq,k,n]))^2
-      ) # Shunt
-    )
-  );
-} */
-
-/* # Measurement residuals
-for{l in MEASURECC_Pf} {
-  let resid_Pf[l] := Pf_value[l] 
-                    - (
-                      # Flows on branches (note : only one term is not null over the two sums below)
-                      sum{(qq,k,n) in BRANCHCC : qq == Pf_branch[l] and k == Pf_firstbus[l] and n == Pf_secondbus[l]}
-                      y[qq,k,n] * act_power_dir[qq,k,n]
-                      + sum{(qq,m,k) in BRANCHCC : qq == Pf_branch[l] and k == Pf_firstbus[l] and m == Pf_secondbus[l]}
-                      y[qq,m,k] * act_power_inv[qq,m,k]
-                      # Flows on branches with one side opened
-                      + sum{(qq,k,n) in BRANCH_WITH_SIDE_2_OPENED : qq == Pf_branch[l] and k == Pf_firstbus[l] and n == Pf_secondbus[l]}
-                      y[qq,k,n] * act_power_bus2_opened[qq,k,n]
-                      + sum{(qq,m,k) in BRANCH_WITH_SIDE_1_OPENED : qq == Pf_branch[l] and k == Pf_firstbus[l] and m == Pf_secondbus[l]}
-                      y[qq,m,k] * act_power_bus1_opened[qq,m,k]
-                    );
-}
-
-for{l in MEASURECC_Qf} {
-  let resid_Qf[l] := Qf_value[l] 
-                    - (
-                      # Flows on branches (note : only ONE term is not null over the two sums below)
-                      sum{(qq,k,n) in BRANCHCC : qq == Qf_branch[l] and k == Qf_firstbus[l] and n == Qf_secondbus[l]}
-                      y[qq,k,n] * rea_power_dir[qq,k,n]
-                      + sum{(qq,m,k) in BRANCHCC : qq == Qf_branch[l] and k == Qf_firstbus[l] and m == Qf_secondbus[l]}
-                      y[qq,m,k] * rea_power_inv[qq,m,k]
-                      # Flows on branches with one side opened
-                      + sum{(qq,k,n) in BRANCH_WITH_SIDE_2_OPENED : qq == Qf_branch[l] and k == Qf_firstbus[l] and n == Qf_secondbus[l]}
-                      y[qq,k,n] * rea_power_bus2_opened[qq,k,n]
-                      + sum{(qq,m,k) in BRANCH_WITH_SIDE_1_OPENED : qq == Qf_branch[l] and k == Qf_firstbus[l] and m == Qf_secondbus[l]}
-                      y[qq,m,k] * rea_power_bus1_opened[qq,m,k]
-                    );
-}
-
-for{l in MEASURECC_P} {
-  let resid_P[l] := P_value[l] 
-                    - (
-                      # Flows on branches
-                      sum{(qq,k,n) in BRANCHCC : k == P_bus[l]}
-                      y[qq,k,n] * act_power_dir[qq,k,n]
-                      + sum{(qq,m,k) in BRANCHCC : k == P_bus[l]}
-                      y[qq,m,k] * act_power_inv[qq,m,k]
-                      # Flows on branches with one side opened
-                      + sum{(qq,k,n) in BRANCH_WITH_SIDE_2_OPENED : k == P_bus[l]}
-                      y[qq,k,n] * act_power_bus2_opened[qq,k,n]
-                      + sum{(qq,m,k) in BRANCH_WITH_SIDE_1_OPENED : k == P_bus[l]}
-                      y[qq,m,k] * act_power_bus1_opened[qq,m,k]
-                    );
-}
-
-for{l in MEASURECC_Q} {
-  let resid_Q[l] := Q_value[l] 
-                    - (
-                      # Flows on branches
-                      sum{(qq,k,n) in BRANCHCC : k == Q_bus[l]}
-                      y[qq,k,n] * rea_power_dir[qq,k,n]
-                      + sum{(qq,m,k) in BRANCHCC : k == Q_bus[l]}
-                      y[qq,m,k] * rea_power_inv[qq,m,k]
-                      # Flows on branches with one side opened
-                      + sum{(qq,k,n) in BRANCH_WITH_SIDE_2_OPENED : k == Q_bus[l]}
-                      y[qq,k,n] * rea_power_bus2_opened[qq,k,n]
-                      + sum{(qq,m,k) in BRANCH_WITH_SIDE_1_OPENED : k == Q_bus[l]}
-                      y[qq,m,k] * rea_power_bus1_opened[qq,m,k]
-                    );
-}
-
-for{l in MEASURECC_V} {
-  let resid_V[l] := V_value[l] - V[V_bus[l]] * substation_Vnomi[1,bus_substation[1,V_bus[l]]];
-} */
 
 ###############################################################################
 #                                                                             #
@@ -550,9 +313,7 @@ if (card({(1,qq,m,n) in BRANCH : branch_3wt[1,qq,m,n] != -1}) == 0) then printf 
 #                   Computing power flows estimates                           #
 ###############################################################################
 
-# As a solution (V, theta) has been found, compute power flow values (in SI) based on this solution.
-# Note that this step might be redundant (already done in the optimization process), but we want to make sure
-# that power flows estimates are updated with the solution for ALL branches (not just branches related to the set of measurements)
+# After a solution (V, theta) has been found, compute power flow estimates (in SI) based on this solution.
 
 param act_power_end1{(qq,k,n) in BRANCHCC};
 param act_power_end2{(qq,k,n) in BRANCHCC};
@@ -610,7 +371,7 @@ for{(qq,k,n) in BRANCHCC} {
 #                   Computing measurements estimates                          #
 ###############################################################################
 
-# Compute measurements estimates (in SI) as given by the solution found : z_est = z_given - residual
+# Compute measurement estimates (in SI) as given by the solution found : z_est = z_given - residual
 
 param estimate_Pf{l in MEASURECC_Pf};
 param estimate_Qf{l in MEASURECC_Qf};

@@ -15,7 +15,6 @@
 ###############################################################################
 
 
-
 ###############################################################################
 #                             MEASUREMENTS                                    #
 ###############################################################################
@@ -117,7 +116,7 @@ param V_bus {l in MEASURES_V} symbolic;
 ###############################################################################
 
 # In 'ampl_network' files, parameters are given in per unit
-# Great care must be taken when choosing base voltages to revert to SI units(see Ampl Exporter in powsybl-core)
+# Great care must be taken when choosing base voltages to revert to SI units (see Ampl Exporter in powsybl-core)
 
 ###############################################################################
 #               Substations (ampl_network_substations.txt)                    #
@@ -170,7 +169,7 @@ check{(t,n) in BUS}: (t,bus_substation[t,n]) in SUBSTATIONS;
 # Check uniqueness of bus IDs
 set ALL_BUSES_ID := setof{(1,n) in BUS} bus_id[1,n];
 check card(BUS) == card(ALL_BUSES_ID);
-# To map each bus ID to its key in set BUS : mapping = <bus_id, key in BUS>
+# To map each bus ID to its key in set BUS : mapping_for_bus = <bus_id, key in BUS>
 param mapping_for_bus{ALL_BUSES_ID};
 
 ###############################################################################
@@ -182,7 +181,7 @@ param slack_bus_id{SLACK} symbolic;
 param null_phase_bus;
 
 ###############################################################################
-#              Generating units (ampl_network_generators.txt)                 #  useless ?
+#              Generating units (ampl_network_generators.txt)                 #  (unused)
 ###############################################################################
 
 set UNIT dimen 3; # [variant, unit, bus]
@@ -219,7 +218,7 @@ check {(t,g,n) in UNIT}: (t,unit_substation[t,g,n]) in SUBSTATIONS;
 param global_initial_losses_ratio default 0.02; # Typical value for transmission
 
 ###############################################################################
-#                       Loads (ampl_network_loads.txt)                        # useless ?
+#                       Loads (ampl_network_loads.txt)                        # (unused)
 ###############################################################################
 
 set LOAD dimen 3; # [variant, load, bus]
@@ -264,7 +263,7 @@ check {(t,s,-1) in SHUNT}: (t,shunt_possiblebus[t,s,-1]) in BUS or shunt_possibl
 check {(t,s,n)  in SHUNT}: (t,shunt_substation[t,s,n]) in SUBSTATIONS;
 
 ###############################################################################
-#     Static Var Compensator (ampl_network_static_var_compensators.txt)       # useless ?
+#     Static Var Compensator (ampl_network_static_var_compensators.txt)       # (unused)
 ###############################################################################
 
 set SVC dimen 3; # [variant, svc, bus]
@@ -287,7 +286,7 @@ check {(t,svc,n) in SVC}: (t,n) in BUS or n==-1;
 check {(t,svc,n) in SVC}: (t,svc_substation[t,svc,n]) in SUBSTATIONS;
 
 ###############################################################################
-#                   Batteries (ampl_network_batteries.txt)                    # useless ?
+#                   Batteries (ampl_network_batteries.txt)                    # (unused)
 ###############################################################################
 
 set BATTERY dimen 3; # [variant, battery, bus]
@@ -318,7 +317,7 @@ check {(t,b,n) in BATTERY: (t,n) in BUS} : battery_substation[t,b,n] == bus_subs
 # Tap seems to be transformers
 
 ###############################################################################
-#                   Tables of taps (ampl_network_tct.txt)                     # useless
+#                   Tables of taps (ampl_network_tct.txt)                     #
 ###############################################################################
 
 # Data in these tables are used for both ratio tap changers and phase taps changers
@@ -370,7 +369,7 @@ check {(t,d) in DEPH}: deph_table[t,d] in TAPTABLES;
 check {(t,d) in DEPH}: (t,deph_table[t,d], deph_tap0[t,d]) in TAPS;
 
 ###############################################################################
-#   VSC converter station data (ampl_network_vsc_converter_stations.txt)      # useless 
+#   VSC converter station data (ampl_network_vsc_converter_stations.txt)      # (unused)
 ###############################################################################
 
 set VSCCONV dimen 3; # [variant, num, bus]
@@ -400,7 +399,7 @@ check {(t,cs,n) in VSCCONV}: (t,n)  in BUS union {(1,-1)};
 check {(t,cs,n) in VSCCONV}: (t,vscconv_substation[t,cs,n]) in SUBSTATIONS;
 
 ###############################################################################
-#     LCC converter station data (ampl_network_lcc_converter_stations.txt)    # useless
+#     LCC converter station data (ampl_network_lcc_converter_stations.txt)    # (unused)
 ###############################################################################
 
 #"variant" "num" "bus" "con. bus" "substation" "lossFactor (%PDC)" "powerFactor" "fault" "curative" "id" "description" "P (MW)" "Q (MVar)"
@@ -418,7 +417,7 @@ param lccconv_P0          {LCCCONV};
 param lccconv_Q0          {LCCCONV};
 
 ###############################################################################
-#                          HVDC (ampl_network_hvdc.txt)                       # useless
+#                          HVDC (ampl_network_hvdc.txt)                       # (unused)
 ###############################################################################
 
 set HVDC dimen 2; # [variant, num]
@@ -490,11 +489,11 @@ check {(t,qq,m,n) in BRANCH}: (t,branch_ptrDeph[t,qq,m,n]) in DEPH union {(1,-1)
 # Check uniqueness of branch IDs
 set ALL_BRANCHES_ID := setof{(1,qq,m,n) in BRANCH} branch_id[1,qq,m,n];
 check card(BRANCH) == card(ALL_BRANCHES_ID);
-# To map each branch ID to its key in set BRANCH : mapping = <branch_id, key in BRANCH>
+# To map each branch ID to its key in set BRANCH : mapping_for_branch = <branch_id, key in BRANCH>
 param mapping_for_branch{ALL_BRANCHES_ID};
 
 ###############################################################################
-#                        ADDITIONAL KNOWLEDGE                                 #
+#             ADDITIONAL KNOWLEDGE FOR STATE ESTIMATION                       #
 ###############################################################################
 
 ###############################################################################
@@ -504,7 +503,7 @@ param mapping_for_branch{ALL_BRANCHES_ID};
 set BRANCH_SUSP dimen 1; # [num]
 param branch_susp_id {BRANCH_SUSP} symbolic; # All branches are present in ampl_suspect_branches.txt
 param is_suspected {BRANCH_SUSP} binary; # If equal to 1, then branch status is suspected to be false. Change of status allowed.
-param y_prior {BRANCH_SUSP} binary; # "A priori" status of the branch : 1 = presumed closed, 0 = presumed opened
+param y_prior {BRANCH_SUSP} binary; # "A priori" status of the branch : 1 = presumed closed, 0 = presumed open
 
 # Note : checking that suspect branches IDs are valid is done in Java
 # Same goes with buses/branches IDs related to measurements
@@ -524,7 +523,6 @@ set BUS_STARTING_POINT dimen 1; # [num]
 param bus_sp_id {BUS_STARTING_POINT} symbolic;
 param bus_sp_V0 {BUS_STARTING_POINT};
 param bus_sp_theta0 {BUS_STARTING_POINT};
-
 
 #####################################################################################################
 #                     Build the sets of equipments present in the main CC                           #
@@ -560,7 +558,7 @@ set BRANCHCC_TRULY_SUSP := setof{(qq,m,n,l) in BRANCHCC_FULL cross BRANCH_SUSP:
     branch_susp_id[l] == branch_id[1,qq,m,n] and is_suspected[l] == 1} (qq,m,n);
 
 ###############################################################################
-#        Deal with "zero"-impedance branches (first step)                     #
+#            Deal with "zero"-impedance branches (first step)                 #
 ###############################################################################
 
 # Compute module of Z in SI (use only base voltage of terminal 1 !)
@@ -763,7 +761,7 @@ param branch_Ror_SI {(qq,m,n) in BRANCHCC_FULL} =
             * substation_Vnomi[1,branch_subex[1,qq,m,n]] / substation_Vnomi[1,branch_subor[1,qq,m,n]]
       else 1.0
     )
-  * ( if ((qq,m,n) in BRANCHCC_DEPH) # TODO : Shouldn't be diff BRANCHCC_REGL ??
+  * ( if ((qq,m,n) in BRANCHCC_DEPH) 
       then tap_ratio[1,deph_table[1,branch_ptrDeph[1,qq,m,n]],deph_tap0[1,branch_ptrDeph[1,qq,m,n]]]
             * substation_Vnomi[1,branch_subex[1,qq,m,n]] / substation_Vnomi[1,branch_subor[1,qq,m,n]]
       else 1.0

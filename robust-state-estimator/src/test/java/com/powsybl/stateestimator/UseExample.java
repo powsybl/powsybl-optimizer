@@ -66,8 +66,8 @@ public class UseExample {
 
         // Make sure the state estimator and OpenLoadFlow use the same slack bus
         //knowledge.setSlack("VL69_0", network); // for IEEE118
-        knowledge.setSlack("VL-4231_0", network); // for case1354_pegase
-        knowledge.setSlack("VL-4231_0", network); // for case4020_goc
+        //knowledge.setSlack("VL-4231_0", network); // for case1354_pegase
+        knowledge.setSlack("VL-111333_0", network); // for texas7k
 
         // Make all branches suspects and presumed to be closed
         for (Branch branch: network.getBranches()) {
@@ -91,7 +91,7 @@ public class UseExample {
 
         // Randomly generate measurements (useful for test cases) out of load flow results
         var parameters = new RandomMeasuresGenerator.RandomMeasuresGeneratorParameters();
-        parameters.withSeed(1).withRatioMeasuresToBuses(5.0)
+        parameters.withSeed(1).withRatioMeasuresToBuses(4.0)
                 .withAddNoise(true).withEnsureObservability(true);
         RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, parameters);
 
@@ -124,7 +124,7 @@ public class UseExample {
                 knowledge, options, new StateEstimatorConfig(true), new LocalComputationManager());
         //results.printAllResultsSi(network);
         results.printIndicators();
-        results.printNetworkTopology();
+        //results.printNetworkTopology();
 
         // Print measurement estimates along with residuals for all measures
         //results.printAllMeasurementEstimatesAndResidualsSi();
