@@ -1,0 +1,167 @@
+###############################################################################
+#
+# Copyright (c) 2022 2023 2024, RTE (http://www.rte-france.com)
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# SPDX-License-Identifier: MPL-2.0
+#
+###############################################################################
+
+###############################################################################
+# Reactive OPF
+# Author:  Jean Maeght 2022 2023
+# Author:  Manuel Ruiz 2023 2024
+###############################################################################
+
+
+###############################################################################
+# Initial values of the solving
+###############################################################################
+
+# DC values used as initialization for phases
+let {n in BUSCC} teta[n] := teta_dc[n];
+
+# Voltages
+let {n in BUSVV}            V[n] := bus_V0[1,n];
+let {n in BUSCC diff BUSVV} V[n] := voltage_lower_bound[1,bus_substation[1,n]]
+  + 0.8 *(voltage_upper_bound[1,bus_substation[1,n]] - voltage_lower_bound[1,bus_substation[1,n]]);
+
+let {n in BUSCC_SLACK} slack1_shunt_B[n] := 0;
+let {n in BUSCC_SLACK} slack2_shunt_B[n] := 0;
+let alpha := 0.01;
+let {(g,n) in UNITON} P_bounded[g,n] := max(P_dcopf[g,n],unit_Pc[1,g,n]);
+let {(g,n) in UNITON} Q[g,n] := 0.5*(corrected_unit_Qmax[g,n] + corrected_unit_Qmin[g,n]);
+let {(shunt,n) in SHUNT_VAR} shunt_var[shunt,n] := min{(1,shunt,k) in SHUNT} shunt_valnom[1,shunt,k];
+let {(svc,n) in SVCON} svc_qvar[svc,n] := 0.1;
+let {(v,n) in VSCCONVON} vscconv_qvar[v,n] := if abs(vscconv_targetQ[1,v,n]) < PQmax then vscconv_targetQ[1,v,n] else 0;
+let {(qq,m,n) in BRANCHCC_REGL_VAR} branch_Ror_var[qq,m,n] := branch_Ror[qq,m,n];
+
+
+###############################################################################
+# Solve
+###############################################################################
+
+let PROBLEM_ACOPF := {1};
+let tempstr := ctime();
+printf{LOG_KNITRO} "\n######################################################################\n";
+printf{LOG_KNITRO} "** ACopf solve: start (%s)\n\n",ctime();
+
+option knitro_options ("opttol=1 opttolabs=1e-1 feastol=1 feastolabs=1e-3 maxit=300 outlev=3");
+
+let {i in 1.._nvars} _var[i].xscalefactor := default_variable_scaling_factor;
+let {i in 1.._ncons} _con[i].cscalefactor := default_constraint_scaling_factor;
+
+let {n in BUSCC_SLACK} slack1_shunt_B[n].xscalefactor := reactive_slack_variable_scaling_factor;
+let {n in BUSCC_SLACK} slack2_shunt_B[n].xscalefactor := reactive_slack_variable_scaling_factor;
+
+let {(qq,m,n) in BRANCHCC_REGL_VAR} branch_Ror_var[qq,m,n].xscalefactor := transformer_ratio_variable_scaling_factor;
+
+let {(shunt,n) in SHUNT_VAR} shunt_var[shunt,n].xscalefactor := shunt_variable_scaling_factor;
+
+# solve acopf and avoid knitro printing if user asks
+if (log_level_knitro <= 1) then {
+  solve problem_acopf_objective > (nullDevice);
+} else {
+  solve problem_acopf_objective;
+}
+
+
+let nb_iter_last := problem_acopf_objective.numiters;
+let nb_iter_total := nb_iter_total + nb_iter_last;
+
+printf{LOG_KNITRO} "\n** ACopf solve: end   (%s -> %s)\n",tempstr,ctime();
+printf{LOG_KNITRO} "######################################################################\n\n";
+
+param slack1_balance_Q{n in BUSCC_SLACK};
+param slack2_balance_Q{n in BUSCC_SLACK};
+for {n in BUSCC_SLACK} {
+  let slack1_balance_Q[n] := base100MVA * V[n]^2 * slack1_shunt_B[n].val;
+  let slack2_balance_Q[n] := base100MVA * V[n]^2 * slack2_shunt_B[n].val;
+}
+
+###############################################################################
+# Analysis of solve_result_num
+###############################################################################
+
+# <= 103 : feasible
+# 200 convergence to unfeasible
+# > 200 : failure
+if solve_result_num == 200
+then {
+  let output_results := 0;
+  let messageInfo := "Acopf optimization was ***not*** successfull - Convergence to an infeasible solution";
+  printf{LOG_ERROR} "%s\n", messageInfo;
+  let messagesInfo := messagesInfo union {messageInfo};
+  let final_status := "NOK";
+}
+else if solve_result_num > 103
+then {
+  let output_results := 0;
+  let messageInfo := "Acopf optimization was ***not*** successfull - no solution found";
+  printf{LOG_ERROR} "%s\n", messageInfo;
+  let messagesInfo := messagesInfo union {messageInfo};
+  let final_status := "NOK";
+}
+else {
+  let output_results := 1;
+  let final_status := "OK";
+}
+
+
+###############################################################################
+# Displays after solving
+###############################################################################
+
+printf{LOG_INFO} "\n######################################################################\n";
+printf{LOG_INFO} "** ACopf results\n";
+if 1 in LOG_INFO then display
+  nb_iter_last,nb_iter_total,
+  max({(qq,m,n) in BRANCHCC} branch_R[1,qq,m,n]),max({(qq,m,n) in BRANCHCC} branch_X[1,qq,m,n]),
+  teta_max, max({n in BUSCC} teta[n]), max({n in BUSCC} teta_dc[n]),
+  teta_min, min({n in BUSCC} teta[n]), min({n in BUSCC} teta_dc[n]),
+  max({(qq,m,n) in BRANCHCC} (teta[m]-teta[n])), max({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[n])),
+  min({(qq,m,n) in BRANCHCC} (teta[m]-teta[n])), min({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[n])),
+  min({n in BUSCC}V[n]),max({n in BUSCC}V[n])
+  ;
+
+let temp1 := max({(qq,m,n) in BRANCHCC} (teta[m]-teta[n]));
+let temp2 := min({(qq,m,n) in BRANCHCC} (teta[m]-teta[n]));
+
+for {(qq,m,n) in BRANCHCC: (teta[m]-teta[n])>temp1*0.99 or (teta[m]-teta[n])<temp2*0.99} {
+  printf{LOG_INFO} "%Q R=%.3f X=%.3f delta=%.2f Vm=%.3f %.2f Vn=%.3f %.2f ",
+  branch_id[1,qq,m,n],branch_R[1,qq,m,n],branch_X[1,qq,m,n],teta[m]-teta[n],V[m],teta[m],V[n],teta[n];
+  if m in BUSCC_SLACK then printf{LOG_INFO} "sQm %.2f %.2f ",
+    max(slack1_balance_Q[m]-slack2_balance_Q[m],0),max(slack2_balance_Q[m]-slack1_balance_Q[m],0);
+  if n in BUSCC_SLACK then printf{LOG_INFO} "sQn %.2f %.2f ",
+    max(slack1_balance_Q[n]-slack2_balance_Q[n],0),max(slack2_balance_Q[n]-slack1_balance_Q[n],0);
+  printf{LOG_INFO} "P1=%.1f Q1=%.1f ",base100MVA*V[m]*Red_Tran_Act_Dir[qq,m,n],base100MVA*V[m]*Red_Tran_Rea_Dir[qq,m,n];
+  printf{LOG_INFO} "P2=%.1f Q2=%.1f ",base100MVA*V[m]*Red_Tran_Act_Inv[qq,m,n],base100MVA*V[m]*Red_Tran_Rea_Inv[qq,m,n];
+  printf"\n";
+  }
+
+# Ouput reactive slack values and voltages
+printf "\n";
+if 1 in LOG_INFO then display card(BUSCC_SLACK),
+                              card(BUSCC diff BUSCC_SLACK);
+if (sum{n in BUSCC_SLACK} slack1_balance_Q[n])+(sum{n in BUSCC_SLACK} slack2_balance_Q[n]) > Pnull
+then {
+
+  if 1 in LOG_INFO then
+  display
+    sum{n in BUSCC_SLACK} slack1_balance_Q[n],
+    sum{n in BUSCC_SLACK} slack2_balance_Q[n],
+    max{n in BUSCC_SLACK} slack1_balance_Q[n],
+    max{n in BUSCC_SLACK} slack2_balance_Q[n],
+    card({n in BUSCC_SLACK: slack2_balance_Q[n]+slack1_balance_Q[n]>Pnull});
+
+  if output_results > 0 then
+    if card({n in BUSCC_SLACK: slack1_balance_Q[n]+slack2_balance_Q[n] > Pnull}) > 0 then printf{LOG_WARNING} "WARNING buses with non zero reactive slack :\n";
+    for {n in BUSCC_SLACK: slack1_balance_Q[n]+slack2_balance_Q[n] > Pnull}
+      printf{LOG_WARNING} "Bus %Q in substation %Q (%ikV) has non zero reactive slacks %.1f %.1f, Vmin=%.3f Vopt=%.3f Vmax=%.3f \n",
+        bus_id[1,n],substation_id[1,bus_substation[1,n]],substation_Vnomi[1,bus_substation[1,n]],
+        slack1_balance_Q[n],slack2_balance_Q[n],
+        voltage_lower_bound[1,bus_substation[1,n]],V[n],voltage_upper_bound[1,bus_substation[1,n]];
+}
+
+let PROBLEM_ACOPF := { };

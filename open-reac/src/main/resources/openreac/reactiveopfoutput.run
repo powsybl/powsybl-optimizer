@@ -1,9 +1,10 @@
 ###############################################################################
 #
-# Copyright (c) 2022 2023, RTE (http://www.rte-france.com)
+# Copyright (c) 2022 2023 2024, RTE (http://www.rte-france.com)
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# SPDX-License-Identifier: MPL-2.0
 #
 ###############################################################################
 
@@ -339,4 +340,39 @@ if card(messagesInfo) > 0 then {
     let temp1:=temp1+1;
   }
 }
+close (fileOut);
+
+# Write voltage information in debug file
+let fileOut := "debug_bus.csv";
+printf{LOG_DEBUG} "#bus_id;Vnom;V;Vlb;Vub;Vmin_mod;Vmax_mod;Vmin_OK;Vmax_OK;Vmin_ori;Vmax_ori;sQ1;sQ2;\n" > (fileOut);
+for {n in BUSCC}
+  printf{LOG_DEBUG} "%s;%i;%.4f;%.4f;%.4f;%.4f;%.4f;%s;%s;%.4f;%.4f;%.2f;%.2f;\n",
+    '"' & bus_id[1,n] & '"',
+    substation_Vnomi[1,bus_substation[1,n]],
+    V[n],V[n].lb,V[n].ub,
+    voltage_lower_bound[1,bus_substation[1,n]],
+    voltage_upper_bound[1,bus_substation[1,n]],
+    if V[n]<voltage_lower_bound[1,bus_substation[1,n]] then "NOK" else "OK",
+    if V[n]>voltage_upper_bound[1,bus_substation[1,n]] then "NOK" else "OK",
+    substation_Vmin[1,bus_substation[1,n]],substation_Vmax[1,bus_substation[1,n]],
+    if n in BUSCC_SLACK then max(slack1_balance_Q[n]-slack2_balance_Q[n],0) else -1,
+    if n in BUSCC_SLACK then max(slack2_balance_Q[n]-slack1_balance_Q[n],0) else -1
+    > (fileOut);
+close (fileOut);
+
+# Write units which are not in uniton (debug only)
+let fileOut := "reactiveopf_results_generators_Pnull.csv";
+printf{LOG_DEBUG} "#variant;num;bus;vRegul;V(pu);targetP(MW);targetQ(Mvar);P(MW);Q(MW);id;bus_id;\n" > (fileOut);
+for {(g,n) in UNITCC diff UNITON}
+  printf{LOG_DEBUG} "%i;%i;%i;%Q;%.3f;%.3f;%.3f;%.3f;%.3f;%s;%s;\n",
+    1,g,n,
+    unit_vregul[1,g,n],
+    V[n],
+    unit_Pc[1,g,n],
+    unit_Qc[1,g,n],
+    unit_P0[1,g,n],
+    unit_Q0[1,g,n],
+    '"' & unit_id[1,g,n] & '"',
+    '"' & bus_id[1,n] & '"'
+    > (fileOut);
 close (fileOut);

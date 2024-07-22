@@ -1,9 +1,10 @@
 ###############################################################################
 #
-# Copyright (c) 2022 2023, RTE (http://www.rte-france.com)
+# Copyright (c) 2022 2023 2024, RTE (http://www.rte-france.com)
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# SPDX-License-Identifier: MPL-2.0
 #
 ###############################################################################
 
@@ -72,6 +73,7 @@ printf "%s %f\n","default_constraint_scaling_factor",default_constraint_scaling_
 printf "%s %f\n","reactive_slack_variable_scaling_factor",reactive_slack_variable_scaling_factor > (fileOut);
 printf "%s %f\n","transformer_ratio_variable_scaling_factor",transformer_ratio_variable_scaling_factor > (fileOut);
 printf "%s %f\n","shunt_variable_scaling_factor",shunt_variable_scaling_factor > (fileOut);
+
 close (fileOut);
 
 printf   "\n*** End of file reactiveopfexit.run : %s\n",ctime();
