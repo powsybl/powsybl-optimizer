@@ -1,0 +1,255 @@
+###############################################################################
+#
+# Copyright (c) 2022 2023 2024, RTE (http://www.rte-france.com)
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# SPDX-License-Identifier: MPL-2.0
+#
+###############################################################################
+
+###############################################################################
+# Reactive OPF
+# Author:  Jean Maeght 2022 2023
+# Author:  Manuel Ruiz 2023 2024
+###############################################################################
+
+
+###############################################################################
+# Voltage bounds that will really been ussed
+###############################################################################
+
+# Voltage bounds
+let temp1 := min{(t,s) in SUBSTATIONS: substation_Vmin[t,s] > 0} substation_Vmin[t,s];
+for {(t,s) in SUBSTATIONS: substation_Vmin[t,s] > 0 and substation_Vmin[t,s] <= temp1*1.01}
+  printf{LOG_INFO} "Substations %Q with lowest  voltage lower bound Vnom=%ikV Vmin=%.3fpu\n",substation_id[t,s],substation_Vnomi[t,s],substation_Vmin[t,s];
+let temp1 := max{(t,s) in SUBSTATIONS: substation_Vmax[t,s] > 0} substation_Vmax[t,s];
+for {(t,s) in SUBSTATIONS: substation_Vmax[t,s] > 0 and substation_Vmax[t,s] >= temp1*0.99}
+  printf{LOG_INFO} "Substations %Q with highest voltage upper bound Vnom=%ikV Vmax=%.3fpu\n",substation_id[t,s],substation_Vnomi[t,s],substation_Vmax[t,s];
+printf{LOG_INFO} "If voltage lower bounds are missing or too small, they are set to %.3fpu\n",minimal_voltage_lower_bound;
+printf{LOG_INFO} "If voltage upper bounds are missing or too high,  they are set to %.3fpu\n",maximal_voltage_upper_bound;
+let temp1 := card({n in BUSCC: substation_Vnomi[1,bus_substation[1,n]] <= ignore_voltage_bounds});
+if temp1 > 0 then
+printf{LOG_WARNING} "Voltage bounds for substations with nominal voltage <= %ikV are set to [%.3fpu;%.3fpu] (%i busses)\n",
+  ignore_voltage_bounds,minimal_voltage_lower_bound,maximal_voltage_upper_bound,temp1;
+printf{LOG_INFO} "Maximal diameter of voltage interval: %.3f\n",max({(t,s) in SUBSTATIONS}(voltage_upper_bound[t,s] - voltage_lower_bound[t,s]));
+printf{LOG_INFO} "Minimal diameter of voltage interval: %.3f\n",min({(t,s) in SUBSTATIONS}(voltage_upper_bound[t,s] - voltage_lower_bound[t,s]));
+
+
+###############################################################################
+# Consistency of transformers ratios
+###############################################################################
+
+let temp1 := min{(t,r) in REGL} regl_ratio_min[1,r];
+let temp2 := max{(t,r) in REGL} regl_ratio_max[1,r];
+printf{LOG_INFO} "Minimal transformer ratio : %.3f\n",temp1;
+printf{LOG_INFO} "Maximal transformer ratio : %.3f\n",temp2;
+for {(qq,m,n) in BRANCHCC_REGL: qq in PARAM_TRANSFORMERS_RATIO_VARIABLE
+  and not regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]] < regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]]}
+{
+  let messageInfo := sprintf (
+    "Transformer %Q %Q(%ikV)->%Q(%ikV) cstratio=%.3f ratio_min=%.3f ratio_max=%.3f should have variable ratio but min and max are equal",
+    branch_id[1,qq,m,n],
+    substation_id[1,bus_substation[1,m]],substation_Vnomi[1,bus_substation[1,m]],
+    substation_id[1,bus_substation[1,n]],substation_Vnomi[1,bus_substation[1,n]],
+    branch_cstratio[1,qq,m,n],
+    regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]],regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]]);
+  printf{LOG_WARNING} "%s\n",messageInfo;
+  let messagesInfo := messagesInfo union {messageInfo};
+}
+for {(qq,m,n) in BRANCHCC_REGL: regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]] <= temp1 * 1.01
+  or regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]] >= temp2 * 0.99 }
+{
+  printf{LOG_INFO} "Transformer %Q ratio_min=%.3f ratio_max=%.3f\n",
+  branch_id[1,qq,m,n],
+  regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]],
+  regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]]
+}
+# Looking for unconsistencies
+let tempo := 0; # If non zero, major inconsistency detected
+for {(qq,m,n) in BRANCHCC_REGL: substation_Vnomi[1,bus_substation[1,m]] > 30 and substation_Vnomi[1,bus_substation[1,n]] > 30 and 1=0} {
+  let temp1 := regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]];
+  let temp2 := regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]];
+  if voltage_lower_bound[1,bus_substation[1,m]]*temp1*branch_cstratio[1,qq,m,n] > voltage_upper_bound[1,bus_substation[1,n]]
+  then {
+    if substation_Vnomi[1,bus_substation[1,m]] > ignore_voltage_bounds
+      and substation_Vnomi[1,bus_substation[1,n]] > ignore_voltage_bounds
+      then let tempo := 1;
+    let messageInfo := sprintf (
+    "ERROR INFEASIBLE transformer %Q %Q(%ikV)->%Q(%ikV) cstratio=%.3f ratio_min=%.3f ratio_max=%.3f : Vmin1=%.3f * ratio_min > Vmax2=%.3f",
+    branch_id[1,qq,m,n],
+    substation_id[1,bus_substation[1,m]],substation_Vnomi[1,bus_substation[1,m]],
+    substation_id[1,bus_substation[1,n]],substation_Vnomi[1,bus_substation[1,n]],
+    branch_cstratio[1,qq,m,n],temp1,temp2,
+    voltage_lower_bound[1,bus_substation[1,m]],
+    voltage_upper_bound[1,bus_substation[1,n]]);
+    printf{LOG_ERROR} "%s\n",messageInfo;
+    let messagesInfo := messagesInfo union {messageInfo};
+  }
+  if voltage_upper_bound[1,bus_substation[1,m]]*temp2*branch_cstratio[1,qq,m,n] < voltage_lower_bound[1,bus_substation[1,n]]
+  then {
+    if substation_Vnomi[1,bus_substation[1,m]] > ignore_voltage_bounds
+      and substation_Vnomi[1,bus_substation[1,n]] > ignore_voltage_bounds
+      then let tempo := 1;
+    let messageInfo := sprintf (
+    "ERROR INFEASIBLE transformer %Q %Q(%ikV)->%Q(%ikV) cstratio=%.3f ratio_min=%.3f ratio_max=%.3f : Vmax1=%.3f * ratio_max < Vmin2=%.3f",
+    branch_id[1,qq,m,n],
+    substation_id[1,bus_substation[1,m]],substation_Vnomi[1,bus_substation[1,m]],
+    substation_id[1,bus_substation[1,n]],substation_Vnomi[1,bus_substation[1,n]],
+    branch_cstratio[1,qq,m,n],temp1,temp2,
+    voltage_upper_bound[1,bus_substation[1,m]],
+    voltage_lower_bound[1,bus_substation[1,n]]);
+    printf{LOG_ERROR} "%s\n",messageInfo;
+    let messagesInfo := messagesInfo union {messageInfo};
+  }
+}
+# Consistency for transformers with fixed ratio
+for {(qq,m,n) in BRANCHCC_REGL_FIX: substation_Vnomi[1,bus_substation[1,m]] > 30 and substation_Vnomi[1,bus_substation[1,n]] > 30 and 1=0} {
+  let temp1 := tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]];
+  if voltage_lower_bound[1,bus_substation[1,m]]*temp1*branch_cstratio[1,qq,m,n] > voltage_upper_bound[1,bus_substation[1,n]]
+  then {
+    if substation_Vnomi[1,bus_substation[1,m]] > ignore_voltage_bounds
+      and substation_Vnomi[1,bus_substation[1,n]] > ignore_voltage_bounds
+      then let tempo := 1;
+    let messageInfo := sprintf (
+    "ERROR INFEASIBLE transformer %Q %Q(%ikV)->%Q(%ikV) cstratio=%.3f fixed_ratio=%.3f : Vmin1=%.3f * ratio > Vmax2=%.3f",
+    branch_id[1,qq,m,n],
+    substation_id[1,bus_substation[1,m]],substation_Vnomi[1,bus_substation[1,m]],
+    substation_id[1,bus_substation[1,n]],substation_Vnomi[1,bus_substation[1,n]],
+    branch_cstratio[1,qq,m,n],temp1,
+    voltage_lower_bound[1,bus_substation[1,m]],
+    voltage_upper_bound[1,bus_substation[1,n]]);
+    printf{LOG_ERROR} "%s\n",messageInfo;
+    let messagesInfo := messagesInfo union {messageInfo};
+  }
+  if voltage_upper_bound[1,bus_substation[1,m]]*temp1*branch_cstratio[1,qq,m,n] < voltage_lower_bound[1,bus_substation[1,n]]
+  then {
+    if substation_Vnomi[1,bus_substation[1,m]] > ignore_voltage_bounds
+      and substation_Vnomi[1,bus_substation[1,n]] > ignore_voltage_bounds
+      then let tempo := 1;
+    let messageInfo := sprintf (
+    "ERROR INFEASIBLE transformer %Q %Q(%ikV)->%Q(%ikV) cstratio=%.3f fixed_ratio=%.3f : Vmax1=%.3f * ratio < Vmin2=%.3f",
+    branch_id[1,qq,m,n],
+    substation_id[1,bus_substation[1,m]],substation_Vnomi[1,bus_substation[1,m]],
+    substation_id[1,bus_substation[1,n]],substation_Vnomi[1,bus_substation[1,n]],
+    branch_cstratio[1,qq,m,n],temp1,
+    voltage_upper_bound[1,bus_substation[1,m]],
+    voltage_lower_bound[1,bus_substation[1,n]]);
+    printf{LOG_ERROR} "%s\n",messageInfo;
+    let messagesInfo := messagesInfo union {messageInfo};
+  }
+}
+if tempo > 0.5 then {
+  let errorMessage := "ERROR INFEASIBLE some voltages bounds and not feasible with transformers ratios";
+  let final_status := "NOK";
+  include reactiveopfexit.run;
+}
+
+
+
+###############################################################################
+# Correction of units' P and Q domains
+###############################################################################
+
+printf{LOG_WARNING} "\nWARNING Correction of P/Q units domains:\n";
+for {(g,n) in UNITON} {
+
+  if abs(unit_Pmax[1,g,n]) >= PQmax then {
+    let corrected_unit_Pmax[g,n] := max(defaultPmax,unit_Pc[1,g,n]);
+    printf{LOG_WARNING} "%Q for %Q is %Q -> corrected to %Q\n","unit_Pmax",unit_id[1,g,n],unit_Pmax[1,g,n],corrected_unit_Pmax[g,n];
+  }
+  else let corrected_unit_Pmax[g,n] := unit_Pmax[1,g,n];
+
+  if abs(unit_Pmin[1,g,n]) >= PQmax then {
+    let corrected_unit_Pmin[g,n] := min(defaultPmin,unit_Pc[1,g,n]);
+    printf{LOG_WARNING} "%Q for %Q is %Q -> corrected to %Q\n","unit_Pmin",unit_id[1,g,n],unit_Pmin[1,g,n],corrected_unit_Pmin[g,n];
+  }
+  else let corrected_unit_Pmin[g,n] := unit_Pmin[1,g,n];
+
+  if abs(corrected_unit_Pmax[g,n]-corrected_unit_Pmin[g,n]) <= minimalQPrange then {
+    if abs(unit_Pc[1,g,n]) > 1 then
+      printf{LOG_WARNING} "Unit %Q has Pmin=%.1f and Pmax=%.1f too close -> we set Pmin=Pmax=Pc=%Q\n",
+      unit_id[1,g,n],corrected_unit_Pmin[g,n],corrected_unit_Pmax[g,n],unit_Pc[1,g,n];
+    let corrected_unit_Pmin[g,n] := unit_Pc[1,g,n];
+    let corrected_unit_Pmax[g,n] := unit_Pc[1,g,n];
+  }
+
+  if abs(unit_qp[1,g,n]) >= PQmax then {
+    let corrected_unit_qp[g,n] := -defaultQmaxPmaxRatio * corrected_unit_Pmax[g,n];
+    printf{LOG_DEBUG} "%Q for %Q is %Q -> corrected to %Q\n","unit_qp",unit_id[1,g,n],unit_qp[1,g,n],corrected_unit_qp[g,n];
+  }
+  else let corrected_unit_qp[g,n] := unit_qp[1,g,n];
+
+  if abs(unit_qP[1,g,n]) >= PQmax then {
+    let corrected_unit_qP[g,n] := -defaultQmaxPmaxRatio * corrected_unit_Pmax[g,n];
+    printf{LOG_DEBUG} "%Q for %Q is %Q -> corrected to %Q\n","unit_qP",unit_id[1,g,n],unit_qP[1,g,n],corrected_unit_qP[g,n];
+  }
+  else let corrected_unit_qP[g,n] := unit_qP[1,g,n];
+
+  if abs(unit_Qp[1,g,n]) >= PQmax then {
+    let corrected_unit_Qp[g,n] := defaultQmaxPmaxRatio * corrected_unit_Pmax[g,n];
+    printf{LOG_DEBUG} "%Q for %Q is %Q -> corrected to %Q\n","unit_Qp",unit_id[1,g,n],unit_Qp[1,g,n],corrected_unit_Qp[g,n];
+  }
+  else let corrected_unit_Qp[g,n] := unit_Qp[1,g,n];
+
+  if abs(unit_QP[1,g,n]) >= PQmax then {
+    let corrected_unit_QP[g,n] := defaultQmaxPmaxRatio * corrected_unit_Pmax[g,n];
+    printf{LOG_DEBUG} "%Q for %Q is %Q -> corrected to %Q\n","unit_QP",unit_id[1,g,n],unit_QP[1,g,n],corrected_unit_QP[g,n];
+  }
+  else let corrected_unit_QP[g,n] := unit_QP[1,g,n];
+
+  if corrected_unit_qp[g,n] > corrected_unit_Qp[g,n] then {
+    printf{LOG_WARNING} "Warning unit %Q : unit_qp > unit_Qp -> we invert them",unit_id[1,g,n];
+    let tempo := corrected_unit_qp[g,n];
+    let corrected_unit_qp[g,n] := corrected_unit_Qp[g,n];
+    let corrected_unit_Qp[g,n] := tempo;
+  }
+
+  if corrected_unit_qP[g,n] > corrected_unit_QP[g,n] then {
+    printf{LOG_WARNING} "Warning unit %Q : unit_qP > unit_QP -> we invert them",unit_id[1,g,n];
+    let tempo := corrected_unit_qP[g,n];
+    let corrected_unit_qP[g,n] := corrected_unit_QP[g,n];
+    let corrected_unit_QP[g,n] := tempo;
+  }
+
+  if    abs(corrected_unit_qP[g,n]-corrected_unit_QP[g,n]) <= minimalQPrange
+    and abs(corrected_unit_qp[g,n]-corrected_unit_Qp[g,n]) <= minimalQPrange
+    and abs(corrected_unit_QP[g,n]-corrected_unit_qp[g,n]) <= minimalQPrange
+  then {
+    let tempo := 0.25*(corrected_unit_qP[g,n]+corrected_unit_QP[g,n]+corrected_unit_qp[g,n]+corrected_unit_Qp[g,n]);
+    printf{LOG_DEBUG} "Unit %Q has reactive diagram too small -> we set qp=qP=Qp=QP=%Q (Pc=%Q)\n",
+      unit_id[1,g,n],tempo,unit_Pc[1,g,n];
+    let corrected_unit_qP[g,n] := tempo;
+    let corrected_unit_QP[g,n] := tempo;
+    let corrected_unit_qp[g,n] := tempo;
+    let corrected_unit_Qp[g,n] := tempo;
+  }
+
+  let corrected_unit_Qmin[g,n] := min(corrected_unit_qP[g,n],corrected_unit_qp[g,n]);
+  let corrected_unit_Qmax[g,n] := min(corrected_unit_QP[g,n],corrected_unit_Qp[g,n]);
+
+  if unit_Pc[1,g,n] > corrected_unit_Pmax[g,n] or unit_Pc[1,g,n] < corrected_unit_Pmin[g,n]
+  then printf{LOG_WARNING} "Warning unit %Q Pc=%Q not in bounds [ Pmin=%Q ; Pmax=%Q ]\n",
+    unit_id[1,g,n],unit_Pc[1,g,n],corrected_unit_Pmin[g,n],corrected_unit_Pmax[g,n];
+
+  if abs(corrected_unit_Qmin[g,n] - corrected_unit_Qmax[g,n]) >= minimalQPrange
+     and ( corrected_unit_Qmin[g,n] > 0 or corrected_unit_Qmax[g,n] < 0 )
+  then printf{LOG_WARNING} "Warning unit %Q: 0 not in bounds [ Qmin=%Q ; Qmax=%Q ]\n",
+    unit_id[1,g,n],corrected_unit_Qmin[g,n],corrected_unit_Qmax[g,n];
+}
+
+printf{LOG_INFO} "\nFew information on P/Q units domains:\n";
+printf{LOG_INFO} "Raw extremal values: %Q <= %Q <= %Q\n",min({(g,n) in UNITON} unit_Pmin[1,g,n]),"unit_Pmin",max({(g,n) in UNITON} unit_Pmin[1,g,n]);
+printf{LOG_INFO} "Active generation:   %Q <= %Q <= %Q\n",min({(g,n) in UNITON} unit_Pc[1,g,n]),  "unit_Pc",  max({(g,n) in UNITON} unit_Pc[1,g,n]);
+printf{LOG_INFO} "Raw extremal values: %Q <= %Q <= %Q\n",min({(g,n) in UNITON} unit_Pmax[1,g,n]),"unit_Pmax",max({(g,n) in UNITON} unit_Pmax[1,g,n]);
+printf{LOG_INFO} "Raw extremal values: %Q <= %Q <= %Q\n",min({(g,n) in UNITON} unit_qP[1,g,n]),  "unit_qP",  max({(g,n) in UNITON} unit_qP[1,g,n]);
+printf{LOG_INFO} "Raw extremal values: %Q <= %Q <= %Q\n",min({(g,n) in UNITON} unit_qp[1,g,n]),  "unit_qp",  max({(g,n) in UNITON} unit_qp[1,g,n]);
+printf{LOG_INFO} "Raw extremal values: %Q <= %Q <= %Q\n",min({(g,n) in UNITON} unit_QP[1,g,n]),  "unit_QP",  max({(g,n) in UNITON} unit_QP[1,g,n]);
+printf{LOG_INFO} "Raw extremal values: %Q <= %Q <= %Q\n",min({(g,n) in UNITON} unit_Qp[1,g,n]),  "unit_Qp",  max({(g,n) in UNITON} unit_Qp[1,g,n]);
+
+printf{LOG_INFO} "Corrected extremal values: %Q <= %Q <= %Q\n",min({(g,n) in UNITON} corrected_unit_Pmin[g,n]),"corrected_unit_Pmin",max({(g,n) in UNITON} corrected_unit_Pmin[g,n]);
+printf{LOG_INFO} "Corrected extremal values: %Q <= %Q <= %Q\n",min({(g,n) in UNITON} corrected_unit_Pmax[g,n]),"corrected_unit_Pmax",max({(g,n) in UNITON} corrected_unit_Pmax[g,n]);
+printf{LOG_INFO} "Corrected extremal values: %Q <= %Q <= %Q\n",min({(g,n) in UNITON} corrected_unit_qP[g,n]),  "corrected_unit_qP",  max({(g,n) in UNITON} corrected_unit_qP[g,n]);
+printf{LOG_INFO} "Corrected extremal values: %Q <= %Q <= %Q\n",min({(g,n) in UNITON} corrected_unit_qp[g,n]),  "corrected_unit_qp",  max({(g,n) in UNITON} corrected_unit_qp[g,n]);
+printf{LOG_INFO} "Corrected extremal values: %Q <= %Q <= %Q\n",min({(g,n) in UNITON} corrected_unit_QP[g,n]),  "corrected_unit_QP",  max({(g,n) in UNITON} corrected_unit_QP[g,n]);
+printf{LOG_INFO} "Corrected extremal values: %Q <= %Q <= %Q\n",min({(g,n) in UNITON} corrected_unit_Qp[g,n]),  "corrected_unit_Qp",  max({(g,n) in UNITON} corrected_unit_Qp[g,n]);
