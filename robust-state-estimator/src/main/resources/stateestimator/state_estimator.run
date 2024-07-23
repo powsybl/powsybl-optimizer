@@ -251,6 +251,7 @@ printf "# SE solve: start (%s)\n\n",ctime();
 let tempstr := ctime();
 
 option knitro_options ("mip_multistart=" & mip_multistart & " mip_maxnodes=50 mip_intvar_strategy=" & mip_strategy & " mip_maxtime_real=" & max_time_solving);
+
 # Note : mip_multistart=1 only used when mip_strategy=0. mip_maxnodes=50 as a stopping criterion.
 
 # Solve the problem chosen

@@ -90,20 +90,20 @@ public class Ieee118TopologyTests {
 
                 // Make all branches suspects and presumed to be closed
                 for (Branch branch: network.getBranches()) {
-                    knowledge.setSuspectBranch(branch.getId(), false, "PRESUMED CLOSED");
+                    knowledge.setSuspectBranch(branch.getId(), true, "PRESUMED CLOSED");
                 }
 
-                // Make only branches around the erroneous one suspects
-                List<String> localSuspectBranches = new ArrayList<>(List.of(
-                        "L45-46-1","L44-45-1", "L45-49-1","L46-48-1","L46-47-1",
-                        "L47-49-1","L48-49-1","L43-44-1","L47-69-1","L49-69-1",
-                        "L34-43-1"
-                ));
-                for (String localSuspectBranchID : localSuspectBranches) {
-                    knowledge.setSuspectBranch(localSuspectBranchID, true, "PRESUMED CLOSED");
-                }
+                // OR : Make only branches around the erroneous one suspects
+                //List<String> localSuspectBranches = new ArrayList<>(List.of(
+                //        "L45-46-1","L44-45-1", "L45-49-1","L46-48-1","L46-47-1",
+                //        "L47-49-1","L48-49-1","L43-44-1","L47-69-1","L49-69-1",
+                //        "L34-43-1"
+                //));
+                //for (String localSuspectBranchID : localSuspectBranches) {
+                //    knowledge.setSuspectBranch(localSuspectBranchID, true, "PRESUMED CLOSED");
+                //}
 
-                // Randomly generate measurements out of LF results using proper seed and Z to N ratio
+                // Randomly generate measurements out of LF results using proper seed and Z/N ratio
                 var parameters = new RandomMeasuresGenerator.RandomMeasuresGeneratorParameters();
                 parameters.withSeed(seed).withRatioMeasuresToBuses(ratioTested)
                         .withAddNoise(true).withEnsureObservability(true);
@@ -111,7 +111,7 @@ public class Ieee118TopologyTests {
 
                 // Define the solving options for the state estimation
                 StateEstimatorOptions options = new StateEstimatorOptions()
-                        .setSolvingMode(0).setMaxTimeSolving(30).setMaxNbTopologyChanges(5);
+                        .setSolvingMode(0).setMaxTimeSolving(30).setMaxNbTopologyChanges(2).setMipMultistart(1);
 
                 // Run the state estimation and save the results
                 StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
@@ -200,7 +200,7 @@ public class Ieee118TopologyTests {
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("11LinesSusp_WithNoise_L45-46_EnsObs_SM0_5TopoMax_30secMax.csv");
+        try (FileWriter fileWriter = new FileWriter("AllLinesSusp_WithNoise_L45-46_EnsObs_SM0_MS_100Nod_2TopoMax_30secMax_TOPO.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 

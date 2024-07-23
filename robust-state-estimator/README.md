@@ -155,10 +155,11 @@ The tree structure of `robust-state-estimator/src` is as follows:
 │   │   │   │   │   ├── StateVectorStartingPoint
 │   │   │   │   │   ├── ZeroInjectionBuses
 │   │   │   │   │   ├── SlackBus
-│   │   │   │   │   ├── RandomMeasuresGenerator
 │   │   │   │   ├── options
 │   │   │   │   │   ├── StateEstimatorOptions
 │   │   │   │   │   ├── SolvingOptions
+│   │   │   │   ├── measuregeneration
+│   │   │   │   │   ├── RandomMeasuresGenerator
 │   │   │   ├── output
 │   │   │   │   ├── estimates
 │   │   │   │   │   ├── BranchPowersEstimate
@@ -180,7 +181,7 @@ The tree structure of `robust-state-estimator/src` is as follows:
 
 `knowledge` folder contains all classes related to the pieces of knowledge given as inputs to the state estimator: measurements, presumed branch statuses, initial point for the state vector, zero-injection buses and slack (= reference) bus. Each type of input has a class of its own, which must implement the `AmplInputFile` class so that data can be written in a CSV file and exported from Java towards AMPL.
 
-This folder also contains the [RandomMeasuresGenerator](https://github.com/powsybl/powsybl-optimizer/blob/robust-state-estimator/robust-state-estimator/src/main/java/com/powsybl/stateestimator/parameters/input/knowledge/RandomMeasuresGenerator.java), which can be used for generating sets of measurements for testing purposes, as explained in [How to use the State Estimator](#how-to-use-the-state-estimator).
+`measuresgeneration` folder contains the [RandomMeasuresGenerator](https://github.com/powsybl/powsybl-optimizer/blob/robust-state-estimator/robust-state-estimator/src/main/java/com/powsybl/stateestimator/parameters/input/knowledge/RandomMeasuresGenerator.java), which can be used for generating sets of measurements for testing purposes, as explained in [How to use the State Estimator](#how-to-use-the-state-estimator).
 
 Classes used to defined the solving options of the state estimation problem, gathered in a [StateEstimatorOptions](https://github.com/powsybl/powsybl-optimizer/blob/robust-state-estimator/robust-state-estimator/src/main/java/com/powsybl/stateestimator/parameters/input/options/StateEstimatorOptions.java), are present in the folder `options`.
 

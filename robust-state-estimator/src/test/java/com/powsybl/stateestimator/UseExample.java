@@ -47,7 +47,7 @@ public class UseExample {
                 .setLowImpedanceThreshold(1e-4);
 
         // Want to introduce a topology change ? Disconnect a line (don't forget to RECONNECT IT before running the state estimation)
-        //network.getLine("L45-46-1").disconnect(); // for IEEE118
+        network.getLine("L45-46-1").disconnect(); // for IEEE118
         //network.getLine("LINE-6757-6036").disconnect(); // for case1354_pegase
 
         // Solve the Load Flow problem for the network and the referenceNetwork
@@ -55,7 +55,7 @@ public class UseExample {
         assertTrue(loadFlowResult.isFullyConverged());
 
         // Reconnect the line before running the state estimation (line won't be considered in AMPL script otherwise)
-        //network.getLine("L45-46-1").connect();
+        network.getLine("L45-46-1").connect();
         //network.getLine("LINE-6757-6036").connect();
 
         long startTime = System.nanoTime();
@@ -71,7 +71,7 @@ public class UseExample {
 
         // Make all branches suspects and presumed to be closed
         for (Branch branch: network.getBranches()) {
-            knowledge.setSuspectBranch(branch.getId(), false, "PRESUMED CLOSED");
+            knowledge.setSuspectBranch(branch.getId(), true, "PRESUMED CLOSED");
         }
 
         // Add a gross error on measure Pf(VL27 --> VL28) : 80 MW (false) instead of 32.6 MW (true)
@@ -91,7 +91,7 @@ public class UseExample {
 
         // Randomly generate measurements (useful for test cases) out of load flow results
         var parameters = new RandomMeasuresGenerator.RandomMeasuresGeneratorParameters();
-        parameters.withSeed(1).withRatioMeasuresToBuses(5.0)
+        parameters.withSeed(3).withRatioMeasuresToBuses(5.0)
                 .withAddNoise(true).withEnsureObservability(true);
         RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, parameters);
 
@@ -117,14 +117,14 @@ public class UseExample {
 
         // Define the solving options for the state estimation
         StateEstimatorOptions options = new StateEstimatorOptions()
-                .setSolvingMode(0).setMaxTimeSolving(30).setMaxNbTopologyChanges(5).setMipMultistart(0);
+                .setSolvingMode(0).setMaxTimeSolving(30).setMaxNbTopologyChanges(1).setMipMultistart(1);
 
         // Run the state estimation and print the results
         StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
                 knowledge, options, new StateEstimatorConfig(true), new LocalComputationManager());
         //results.printAllResultsSi(network);
         results.printIndicators();
-        //results.printNetworkTopology();
+        results.printNetworkTopology();
 
         // Print measurement estimates along with residuals for all measures
         //results.printAllMeasurementEstimatesAndResidualsSi();

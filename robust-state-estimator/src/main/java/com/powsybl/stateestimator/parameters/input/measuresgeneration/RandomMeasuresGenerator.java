@@ -104,9 +104,7 @@ public class RandomMeasuresGenerator {
     /**
      * This method generates random measurements out of the Load Flow results obtained on a network.
      * The measurements generated are added to the "knowledge" instance.
-     * The number of measurement generated is large by default (4 times the number of buses) and distributed enough to ensure network observability.
-     * It is possible to skew the distribution to pick more often buses with higher voltages ("double roll, pick better" method),
-     * to emulate the fact that it is more likely to have measurement devices on the biggest nodes than on the smallest ones.
+     * The number of measurement generated is large by default (4 times the number of buses) and should ensure network observability (no guarantee).
      * <p>
      * Note 1 : this method should be used for testing purposes only.
      * Note 2 : the sign of injected powers (P, Q) is inverted.
@@ -115,6 +113,7 @@ public class RandomMeasuresGenerator {
      *
      * @param knowledge The knowledge object that will store the random measurements generated
      * @param network The network (LF run previously) for which random measurements must be generated
+     * @param parameters The parameters controlling how the measurements are generated.
 
      */
     public static void generateRandomMeasurements(StateEstimatorKnowledge knowledge, Network network,
@@ -355,10 +354,13 @@ public class RandomMeasuresGenerator {
 
                         // Update listOfBusesV, listOfBranchesPf and listOfBranchesQf
                         listOfBusesV.removeIf(bus -> bus.getId().equals(busID));
-                        listOfBranchesPfSide1.removeIf(b -> b.getId().equals(branchID));
-                        listOfBranchesPfSide2.removeIf(b -> b.getId().equals(branchID));
-                        listOfBranchesQfSide1.removeIf(b -> b.getId().equals(branchID));
-                        listOfBranchesQfSide2.removeIf(b -> b.getId().equals(branchID));
+                        if (isBusTerminal1) {
+                            listOfBranchesPfSide1.removeIf(b -> b.getId().equals(branchID));
+                            listOfBranchesQfSide1.removeIf(b -> b.getId().equals(branchID));
+                        } else {
+                            listOfBranchesPfSide2.removeIf(b -> b.getId().equals(branchID));
+                            listOfBranchesQfSide2.removeIf(b -> b.getId().equals(branchID));
+                        }
                     }
                 }
             }
@@ -372,12 +374,7 @@ public class RandomMeasuresGenerator {
                 throw new IllegalArgumentException("Invalid value for the parameter ratioMeasuresToBuses : should be a positive float");
             }
             // Compute maximum ratio possible (note : if ensureObservability = true, power flows measures on both sides of a line are forbidden)
-            double maxRatioMeasuresToBuses = ensureObservability ?
-                    (2.0 * network.getBranchCount() + 3.0 * network.getBusView().getBusStream().count()
-                    - 2.0 * knowledge.getZeroInjectionBuses().size())
-                     / network.getBusView().getBusStream().count()
-                    :
-                    (4.0 * network.getBranchCount() + 3.0 * network.getBusView().getBusStream().count()
+            double maxRatioMeasuresToBuses = (4.0 * network.getBranchCount() + 3.0 * network.getBusView().getBusStream().count()
                             - 2.0 * knowledge.getZeroInjectionBuses().size())
                             / network.getBusView().getBusStream().count();
             if (ratioZtoN > maxRatioMeasuresToBuses) {
