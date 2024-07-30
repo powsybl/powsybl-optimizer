@@ -6,7 +6,6 @@
 - [Getting started](#getting-started)
 - [How to use the State Estimator](#how-to-use-the-state-estimator)
 - [Description of the module and classes](#description-of-the-module-and-classes)
-- [Use the WLAV formulation instead of the WLS one](#use-the-wlav-formulation-instead-of-the-wls-one)
 
 ## Overview
 
@@ -85,10 +84,10 @@ StateEstimatorOptions options = new StateEstimatorOptions();
 options.setSolvingMode(0).setMaxTimeSolving(30).setMaxNbTopologyChanges(5).setMipMultistart(0);
 ```
 
-Once the user has provided all the desired inputs, the state estimator can be run. Results are stored in a [StateEstimatorResults](https://github.com/powsybl/powsybl-optimizer/blob/robust-state-estimator/robust-state-estimator/src/main/java/com/powsybl/stateestimator/StateEstimatorResults.java) object.
+Once the user has provided all the desired inputs, the state estimator can be run. The `runStateEstimation` method includes the possibility to choose whether to use a WLS or the WLAV estimator. Results are stored in a [StateEstimatorResults](https://github.com/powsybl/powsybl-optimizer/blob/robust-state-estimator/robust-state-estimator/src/main/java/com/powsybl/stateestimator/StateEstimatorResults.java) object.
 ```java
 // Run the state estimator
-StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(), knowledge, options, new StateEstimatorConfig(true), new LocalComputationManager());      
+StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(), knowledge, options, new StateEstimatorConfig(true), new LocalComputationManager(), "WLAV");      
 ```
 
 From there, several ways of displaying the results exist:
@@ -195,8 +194,3 @@ The class [StateEstimatorAmplIOFiles](https://github.com/powsybl/powsybl-optimiz
 These output files are written in CSV format. They are retrieved by the [StateEstimatorAmplIOFiles](https://github.com/powsybl/powsybl-optimizer/blob/robust-state-estimator/robust-state-estimator/src/main/java/com/powsybl/stateestimator/parameters/StateEstimatorAmplIOFiles.java) class and read into Java-formatted objects. Classes related to these objects are gathered in the `output` folder. Again, there is one class for each type of results/indicators: [StateVectorEstimateOutput](https://github.com/powsybl/powsybl-optimizer/blob/robust-state-estimator/robust-state-estimator/src/main/java/com/powsybl/stateestimator/parameters/output/StateVectorEstimateOutput.java) (estimates on nodal voltages), [NetworkTopologyEstimateOutput](https://github.com/powsybl/powsybl-optimizer/blob/robust-state-estimator/robust-state-estimator/src/main/java/com/powsybl/stateestimator/parameters/output/NetworkTopologyEstimateOutput.java) (estimates on branch statuses), [NetworkPowersEstimateOutput](https://github.com/powsybl/powsybl-optimizer/blob/robust-state-estimator/robust-state-estimator/src/main/java/com/powsybl/stateestimator/parameters/output/NetworkPowersEstimateOutput.java) (estimates on branch power flows), etc. Certain classes makes use of sub-classes gathered in `estimates` folder. For example, an instance of the [StateVectorEstimateOutput](https://github.com/powsybl/powsybl-optimizer/blob/robust-state-estimator/robust-state-estimator/src/main/java/com/powsybl/stateestimator/parameters/output/StateVectorEstimateOutput.java) class is actually composed of multiple instances of the [BusStateEstimate](https://github.com/powsybl/powsybl-optimizer/blob/robust-state-estimator/robust-state-estimator/src/main/java/com/powsybl/stateestimator/parameters/output/estimates/BusStateEstimate.java) class (one for each bus in the network.)
 
 Once read, results are then stored in a easy-to-handle [StateEstimatorResults](https://github.com/powsybl/powsybl-optimizer/blob/robust-state-estimator/robust-state-estimator/src/main/java/com/powsybl/stateestimator/StateEstimatorResults.java) object, as explained in [How to use the State Estimator](#how-to-use-the-state-estimator). Multiple methods are provided to display the results.
-
-## Use the WLAV formulation instead of the WLS one
-
-To use the WLAV estimator instead of the WLS estimator, a simple handling is needed. `resources` contains the AMPL codes for the WLS estimator ("stateestimator" folder) and the WLAV estimator ("stateestimatorWLAV" folder). To use one estimator instead of the other, the user must change the name of the resources folder ("stateestimator" or "stateestimatorWLAV") in the method `buildModel` of the [`StateEstimatorModel`](https://github.com/powsybl/powsybl-optimizer/blob/robust-state-estimator/robust-state-estimator/src/main/java/com/powsybl/stateestimator/StateEstimatorModel.java) class. That's all !
-
