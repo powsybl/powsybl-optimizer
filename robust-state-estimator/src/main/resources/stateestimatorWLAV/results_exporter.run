@@ -1,0 +1,100 @@
+###############################################################################
+#
+# Copyright (c) 2022,2023 RTE (http://www.rte-france.com), Coreso and TSCNet Services 
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+###############################################################################
+
+###############################################################################
+# State Estimator
+# Author : Jean Maeght 2022 2023
+# Author : Pierre Arvy 2023
+# Author : Lucas Riou 2024
+###############################################################################
+
+######################
+# Export run results #
+######################
+
+# Export the network state estimate (V, theta)
+let fileOut := "se_state_estimate.csv";
+printf "bus;bus_id;V(pu);theta(rad)\n" > (fileOut);
+printf{n in BUSCC} "%i;%Q;%.5f;%.5f\n", n, bus_id[1,n], V[n], theta[n] > (fileOut);
+close (fileOut);
+printf "\nExportation of se_state_estimate.csv done.\n";
+
+# Export the network topology estimate (branch status)
+let fileOut := "se_topology_estimate.csv";
+printf "branch_id;was_suspected;presumed_status;true_status\n" > (fileOut);
+printf{(qq,m,n,l) in BRANCHCC_FULL cross BRANCH_SUSP:branch_susp_id[l] == branch_id[1,qq,m,n]}
+      "%Q;%Q;%Q;%Q\n",
+      branch_susp_id[l], 
+      if is_suspected[l] == 1 then "YES" else "NO", 
+      if y_prior[l] == 1 then "PRESUMED CLOSED" else "PRESUMED OPENED",
+      if round(y[qq,m,n]) == 1 then "CLOSED" else "OPENED" # rounding is necessary when solving_mode = 2
+      > (fileOut);
+close (fileOut);
+printf "Exportation of se_topology_estimate.csv done.\n";
+
+# Export the network power flows estimates (act_power_end1, act_power_end2, rea_power_end1, rea_power_end2)
+let fileOut := "se_network_powers_estimate.csv";
+printf "branch_id;first_bus_id;second_bus_id;act_power_end1(MW);act_power_end2(MW);rea_power_end1(MVar);rea_power_end2(MVar)\n" > (fileOut);
+printf{(qq,m,n) in BRANCHCC}
+      "%Q;%Q;%Q;%.5f;%.5f;%.5f;%.5f;\n",
+      branch_id[1,qq,m,n], bus_id[1,m], bus_id[1,n],
+      act_power_end1[qq,m,n], act_power_end2[qq,m,n],
+      rea_power_end1[qq,m,n], rea_power_end2[qq,m,n]
+      > (fileOut);
+close (fileOut);
+printf "Exportation of se_network_powers_estimate.csv done.\n";
+
+# Export all the measurements estimates and residuals (for Pf, Qf, P, Q, V) in one file
+let fileOut := "se_measurements_estimates_and_residuals.csv";
+printf "measurement_number;estimate(SI);residual(SI)\n" > (fileOut);
+printf{l in MEASURES_Pf} "%i;%.5f;%.5f\n", l, 
+      if l in MEASURECC_Pf then estimate_Pf[l] else "NaN", if l in MEASURECC_Pf then resid_Pf[l] else "NaN" 
+            > (fileOut);
+printf{l in MEASURES_Qf} "%i;%.5f;%.5f\n", l, 
+      if l in MEASURECC_Qf then estimate_Qf[l] else "NaN", if l in MEASURECC_Qf then resid_Qf[l] else "NaN" 
+            > (fileOut);
+printf{l in MEASURES_P} "%i;%.5f;%.5f\n", l, 
+      if l in MEASURECC_P then estimate_P[l] else "NaN", if l in MEASURECC_P then resid_P[l] else "NaN" 
+            > (fileOut);
+printf{l in MEASURES_Q} "%i;%.5f;%.5f\n", l, 
+      if l in MEASURECC_Q then estimate_Q[l] else "NaN", if l in MEASURECC_Q then resid_Q[l] else "NaN" 
+            > (fileOut);
+printf{l in MEASURES_V} "%i;%.5f;%.5f\n", l, 
+      if l in MEASURECC_V then estimate_V[l] else "NaN", if l in MEASURECC_V then resid_V[l] else "NaN" 
+            > (fileOut);
+close (fileOut);
+printf "Exportation of se_measurements_estimates_and_residuals.csv done.\n";
+
+########################################
+# Export all the indicators of the run #
+########################################
+
+# Export run indicators
+let fileOut := "se_indic.txt";
+printf "# Run indicators\n" > (fileOut);
+printf "final_status %s\n", final_status                                > (fileOut);
+printf "se_begin %Q\n", ctime_start                                     > (fileOut);
+printf "se_end %Q\n", ctime()                                           > (fileOut);
+printf "total_solve_time %.5f\n", _total_solve_time                     > (fileOut);
+printf "knitro_mode %s\n", mip_strategy                                 > (fileOut);
+printf "final_objective_function_value %.5f\n", problem_sum_of_absolute_values_of_residuals > (fileOut);
+close(fileOut);
+printf "Exportation of se_indic.txt done.\n";
+
+# Export network indicators
+let fileOut := "se_network_indic.txt";
+printf "# Network indicators\n" > (fileOut);
+printf "num_main_cc %i\n",  index_main_connex_component > (fileOut);
+printf "num_buses %i\n",    card(BUSCC)                 > (fileOut);
+printf "num_branches %i\n", card(BRANCHCC_FULL)         > (fileOut);
+printf "num_rtc %i\n",      card(BRANCHCC_REGL)         > (fileOut);
+printf "num_pst %i\n",      card(BRANCHCC_DEPH)         > (fileOut);
+printf "num_3wt %i\n",      card(BRANCHCC_3WT) / 3      > (fileOut);
+close(fileOut);
+printf "Exportation of se_network_indic.txt done.\n";

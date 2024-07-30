@@ -46,8 +46,9 @@ public class StateEstimatorModel implements AmplModel {
             }
         };
 
-    public static StateEstimatorModel buildModel() {
-        return new StateEstimatorModel(OUTPUT_FILE_PREFIX, "stateestimator",
+    public static StateEstimatorModel buildModel(String estimatorType) {
+        String resourcesFolder = estimatorType.equals("WLS") ? "stateestimatorWLS" : "stateestimatorWLAV";
+        return new StateEstimatorModel(OUTPUT_FILE_PREFIX, resourcesFolder,
                     List.of("state_estimator.run"),
                     List.of("data_network.dat",
                             "data_importer.mod",

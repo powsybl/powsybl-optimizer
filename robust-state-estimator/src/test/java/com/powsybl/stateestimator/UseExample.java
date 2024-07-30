@@ -121,7 +121,7 @@ public class UseExample {
 
         // Run the state estimation and print the results
         StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
-                knowledge, options, new StateEstimatorConfig(true), new LocalComputationManager());
+                knowledge, options, new StateEstimatorConfig(true), new LocalComputationManager(), "WLS");
         //results.printAllResultsSi(network);
         results.printIndicators();
         results.printNetworkTopology();

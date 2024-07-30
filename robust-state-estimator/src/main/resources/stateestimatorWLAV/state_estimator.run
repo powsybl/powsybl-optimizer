@@ -1,0 +1,411 @@
+###############################################################################
+#
+# Copyright (c) 2022,2023 RTE (http://www.rte-france.com), Coreso and TSCNet Services 
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+###############################################################################
+
+###############################################################################
+# State Estimator
+# Author : Jean Maeght 2022 2023
+# Author : Pierre Arvy 2023
+# Author : Lucas Riou 2024
+###############################################################################
+
+# Close any files that might have been opened previously
+close;
+
+###############################################################################
+#                                     Start                                   #
+###############################################################################
+
+# Clean parameters, variables, constraints and any former models pre-existing
+reset;
+
+# Print date of start of calculation
+param ctime_start symbolic := ctime();
+printf "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
+printf "*** Start of file state estimation : %s\n",ctime_start;
+
+# Global status
+# Possible values : CRASH OK NOK UNKNOWN
+param final_status symbolic default "UNKNOWN";
+
+###############################################################################
+#                                                                             #
+#                               General options                               #
+#                                                                             #
+###############################################################################
+
+###############################################################################
+#                   Controls and associated parameters                        #
+###############################################################################
+
+# Read activation/desactivation of penalization
+model;
+set SOLVING_OPTIONS_KEYS;
+param SOLVING_OPTIONS_VALUES{SOLVING_OPTIONS_KEYS} symbolic;
+data;
+param: SOLVING_OPTIONS_KEYS: SOLVING_OPTIONS_VALUES := include solving_options.txt;
+model;
+display SOLVING_OPTIONS_VALUES;
+
+# Solving options for MINLP
+
+# "mip_strategy" specifies the value for KNITRO option "mip_intvar_strategy"
+# This specifies how to handle integer variables : 0 = No special treatment, 1 = Relax all integer variables, 2 = Convert all binary variables to complementarity constraints
+param mip_strategy integer default 2; 
+if "solving_mode" in SOLVING_OPTIONS_KEYS then let mip_strategy := num(SOLVING_OPTIONS_VALUES["solving_mode"]);
+
+param max_time_solving integer default 120;
+if "max_time_solving" in SOLVING_OPTIONS_KEYS then let max_time_solving := num(SOLVING_OPTIONS_VALUES["max_time_solving"]);
+
+param max_nb_topology_changes integer default 5;
+if "max_nb_topology_changes" in SOLVING_OPTIONS_KEYS then let max_nb_topology_changes := num(SOLVING_OPTIONS_VALUES["max_nb_topology_changes"]);
+
+param mip_multistart default 0;
+if "mip_multistart" in SOLVING_OPTIONS_KEYS then let mip_multistart := num(SOLVING_OPTIONS_VALUES["mip_multistart"]);
+
+# Absolute parameter : base 100MVA (never change this)
+param base100MVA := 100;
+
+# Parameter for detection of branches with zero impedance
+param Znull default 1e-4; # in Ohms
+printf "Parameter: threshold to detect zero impedance branch Znull:=%Q Ohms\n",Znull;
+# always check Znull > 0 and Znull < 0.1;
+
+# Tolerance for power balance of zero-injection buses (not used)
+param epsilon_max_power_balance default 1e-3; # in MVA
+
+###############################################################################
+#                     Solver choice and options                               #
+###############################################################################
+
+option solver knitroampl;
+option dual_initial_guesses 0;
+option presolve 10;
+option show_boundtol 0;
+
+suffix cfeastol IN;
+suffix xfeastol IN;
+
+suffix cscalefactor IN;
+suffix xscalefactor IN;
+suffix objscalefactor IN;
+
+suffix usercomp IN;
+suffix intvarstrategy IN;
+
+suffix knitro_feaserror OUT;
+suffix knitro_opterror OUT;
+suffix knitro_neval OUT;
+suffix knitro_niter OUT;
+
+###############################################################################
+#                               Global variables                              #
+###############################################################################
+
+# Gobal variables for writing and messages
+param fileOut symbolic default "dummy.txt";
+param errorMessage symbolic default "empty error message";
+
+# Messages to be written in final indicator file
+param messageInfo symbolic default "empty information message";
+set messagesInfo default {};
+
+# Number of iterations for divergence analysis
+param nb_iter_last  integer default 0;
+param nb_iter_total integer default 0;
+
+# Additional dummy parameters, used for local computation
+# Remenber you cannot declare new variable in loop or "if"
+param temp1;
+param temp2;
+param temp3;
+param temp4;
+param tempo;
+param tempstr symbolic default "empty string";
+
+###############################################################################
+#                       Inclusions files .mod and .dat                        #
+###############################################################################
+
+model "state_estimator.mod";
+data  "data_network.dat";
+
+###############################################################################
+# This command "check" means that all checks in .mod file are done right now  #
+###############################################################################
+check;
+
+###############################################################################
+#      Relate locations (IDs) of measurements to buses/branches numbers       #
+###############################################################################
+
+# Map each bus ID to its key in set BUS : mapping = <bus_id, key in BUS>
+let {id in ALL_BUSES_ID, (t,key) in BUS: t == 1 and bus_id[t,key] == id} mapping_for_bus[id] := key;
+
+# Map each branch ID to its key in set BRANCH : mapping = <branch_id, key in BRANCH>
+let {id in ALL_BRANCHES_ID, (t,key,m,n) in BRANCH: t == 1 and branch_id[t,key,m,n] == id} mapping_for_branch[id] := key;
+
+# "P_bus" is not loaded from data, but is assigned the bus number (see ampl_network_buses.txt) that relates to "P_bus_id" (unique identifier)
+for {l in MEASURES_P} {
+  let P_bus[l] := mapping_for_bus[P_bus_id[l]];
+}
+
+# Same goes for "Q_bus", "V_bus" "Pf_branch", "Pf_firstbus", "Pf_secondbus", "Qf_branch", "Qf_firstbus", "Qf_secondbus"
+for {l in MEASURES_Q} {
+  let Q_bus[l] := mapping_for_bus[Q_bus_id[l]];
+}
+
+for {l in MEASURES_V} {
+  let V_bus[l] := mapping_for_bus[V_bus_id[l]];
+}
+
+for {l in MEASURES_Pf} {
+  let Pf_firstbus[l] := mapping_for_bus[Pf_firstbus_id[l]];
+  let Pf_secondbus[l] := mapping_for_bus[Pf_secondbus_id[l]];
+}
+
+for {l in MEASURES_Pf} {
+  let Pf_branch[l] := mapping_for_branch[Pf_branch_id[l]];
+}
+
+for {l in MEASURES_Qf} {
+  let Qf_firstbus[l] := mapping_for_bus[Qf_firstbus_id[l]];
+  let Qf_secondbus[l] := mapping_for_bus[Qf_secondbus_id[l]];
+}
+
+for {l in MEASURES_Qf} {
+  let Qf_branch[l] := mapping_for_branch[Qf_branch_id[l]];
+}
+
+###############################################################################
+#                            Slack bus                                        #
+###############################################################################
+
+# Slack bus selection mode (most meshed or by hand) is handled in Java, so that the bus indicated in "ampl_slackbus.txt" is the one to use as slack
+
+for{n in BUS2 : bus_id[1,n] == slack_bus_id[1]}{
+  let null_phase_bus := n;
+}
+
+###############################################################################
+#                           Connexity checks (not performed)                  #
+###############################################################################
+
+option presolve 10;
+
+# TODO : no calculation of main Synchronous Component performed (unlike divergence analyzer): we considered that SC=CC (OK if no HVDC lines)
+
+let BUSCC := {n in BUS2};
+
+
+###############################################################################
+#                                                                             #
+#                         Robust State Estimation                             #
+#                                                                             #
+###############################################################################
+
+###############################################################################
+#                                                                             #
+#                             Initial point                                   #
+#                                                                             #
+###############################################################################
+
+# Initial values of state variables as provided in ampl_starting_point.txt
+for {(a,b) in BUSCC cross BUS_STARTING_POINT: bus_id[1,a] == bus_sp_id[b]} {
+  let V[a] := bus_sp_V0[b];
+  let theta[a] := bus_sp_theta0[b];
+}
+
+# For branches not suspected, fix their status to y_prior
+for {(qq,m,n,l) in BRANCHCC_FULL cross BRANCH_SUSP: branch_susp_id[l] == branch_id[1,qq,m,n] and is_suspected[l] != 1} {
+  fix y[qq,m,n] := y_prior[l];
+}
+
+# For branches suspected, assign a first value to their status based on y_prior
+for {(qq,m,n,l) in BRANCHCC_FULL cross BRANCH_SUSP: branch_susp_id[l] == branch_id[1,qq,m,n] and is_suspected[l] == 1} {
+  let y[qq,m,n] := y_prior[l];
+}
+
+
+###############################################################################
+#                                                                             #
+#                                Solving                                      #
+#                                                                             #
+###############################################################################
+
+# Activation of the good optimization problem
+let PROBLEM_SE := {1};
+
+printf "\n######################################################################\n";
+printf "Check of consistency of all the sets & parameters";
+printf "\n######################################################################\n";
+check;
+
+printf "\n######################################################################\n";
+printf "# SE solve: start (%s)\n\n",ctime();
+let tempstr := ctime();
+
+option knitro_options ("mip_multistart=" & mip_multistart & " mip_maxnodes=50 mip_intvar_strategy=" & mip_strategy & " mip_maxtime_real=" & max_time_solving);
+
+# Note : mip_multistart=1 only used when mip_strategy=0. mip_maxnodes=50 as a stopping criterion.
+
+# Solve the problem chosen
+solve problem_sum_of_absolute_values_of_residuals;
+let nb_iter_last := problem_sum_of_absolute_values_of_residuals.numiters;
+let nb_iter_total := nb_iter_total + nb_iter_last; 
+
+# Analysis of solve_result_num
+
+# 0 : solution satisfies termination conditions for verifying optimality
+# <= 103 : feasible approximate solution was found
+# >= 400 and <= 406 : feasible but Knitro reached pre-defined limit
+# 200 convergence to unfeasible
+# > 200 : failure
+
+param output_results binary default 0;
+printf "Return code of knitro : %i\n", solve_result_num;
+if solve_result_num == 200 
+then {
+  let output_results := 0;
+  let messageInfo := "Optimization was ***not*** successfull - Convergence to an infeasible solution";
+  printf "%s\n", messageInfo;
+  let messagesInfo := messagesInfo union {messageInfo};
+  let final_status := "NOK";
+}
+else if solve_result_num > 103 and (solve_result_num < 400 or solve_result_num > 406)
+then {
+  let output_results := 0;
+  let messageInfo := "Optimization was ***not*** successfull - no solution found";
+  printf "%s\n", messageInfo;
+  let messagesInfo := messagesInfo union {messageInfo};
+  let final_status := "NOK";
+}
+else {
+  let output_results := 1;
+  let final_status := "OK";
+}
+
+printf "\n# SE solve: end   (%s -> %s)\n",tempstr,ctime();
+printf "######################################################################\n\n";
+
+printf "######################################################################\n";
+printf "#                      Displays after solving                        #\n";
+printf "######################################################################\n";
+
+printf "State estimation :\n";
+for {n in BUSCC} {
+    printf "Bus %Q : voltage magnitude = %.3f (p.u) / %.3f (kV) and voltage angle = %.3f (rad)", 
+    bus_id[1,n], V[n], V[n] * substation_Vnomi[1,bus_substation[1,n]], theta[n];          
+    printf"\n";
+}
+
+printf "\n";
+if (card(REGL) == 0) then printf "[INFO] No rtc on the network\n";
+if (card(DEPH) == 0) then printf "[INFO] No ptc on the network\n";
+if (card({(1,qq,m,n) in BRANCH : branch_3wt[1,qq,m,n] != -1}) == 0) then printf "[INFO] No 3wt on the network\n";
+
+
+###############################################################################
+#                   Computing power flows estimates                           #
+###############################################################################
+
+# After a solution (V, theta) has been found, compute power flow estimates (in SI) based on this solution.
+
+param act_power_end1{(qq,k,n) in BRANCHCC};
+param act_power_end2{(qq,k,n) in BRANCHCC};
+param rea_power_end1{(qq,k,n) in BRANCHCC};
+param rea_power_end2{(qq,k,n) in BRANCHCC};
+
+for{(qq,k,n) in BRANCHCC} {
+
+  let act_power_end1[qq,k,n] :=
+  round(y[qq,k,n]) * (
+    branch_Ror_SI[qq,k,n]^2 * branch_Gor_SI[qq,k,n] * V[k]^2
+      * substation_Vnomi[1,bus_substation[1,k]]^2
+    + branch_Ror_SI[qq,k,n]^2 * branch_admi_SI[qq,k,n] * V[k]^2 * sin(branch_angper[qq,k,n])
+      * substation_Vnomi[1,bus_substation[1,k]]^2
+    - branch_Ror_SI[qq,k,n] * branch_Rex_SI[qq,k,n] * branch_admi_SI[qq,k,n] * V[k] * V[n]
+      * sin(branch_angper[qq,k,n] - branch_dephor[qq,k,n] + theta[n] - theta[k])
+      * substation_Vnomi[1,bus_substation[1,k]] * substation_Vnomi[1,bus_substation[1,n]]
+  );
+
+  let act_power_end2[qq,k,n] :=
+  round(y[qq,k,n]) * (
+    branch_Rex_SI[qq,k,n]^2 * branch_Gex_SI[qq,k,n] * V[n]^2
+      * substation_Vnomi[1,bus_substation[1,n]]^2
+    + branch_Rex_SI[qq,k,n]^2 * branch_admi_SI[qq,k,n] * V[n]^2 * sin(branch_angper[qq,k,n])
+      * substation_Vnomi[1,bus_substation[1,n]]^2
+    - branch_Rex_SI[qq,k,n] * branch_Ror_SI[qq,k,n] * branch_admi_SI[qq,k,n] * V[n] * V[k]
+      * sin(branch_angper[qq,k,n] + branch_dephor[qq,k,n] + theta[k] - theta[n])
+      * substation_Vnomi[1,bus_substation[1,n]] * substation_Vnomi[1,bus_substation[1,k]]
+  );
+
+  let rea_power_end1[qq,k,n] :=
+  round(y[qq,k,n]) * (
+    - branch_Ror_SI[qq,k,n]^2 * branch_Bor_SI[qq,k,n] * V[k]^2
+      * substation_Vnomi[1,bus_substation[1,k]]^2
+    + branch_Ror_SI[qq,k,n]^2 * branch_admi_SI[qq,k,n] * V[k]^2 * cos(branch_angper[qq,k,n])
+      * substation_Vnomi[1,bus_substation[1,k]]^2
+    - branch_Ror_SI[qq,k,n] * branch_Rex_SI[qq,k,n] * branch_admi_SI[qq,k,n] * V[k] * V[n]
+      * cos(theta[k] - theta[n] + branch_dephor[qq,k,n] - branch_angper[qq,k,n])
+      * substation_Vnomi[1,bus_substation[1,k]] * substation_Vnomi[1,bus_substation[1,n]]
+  );
+
+  let rea_power_end2[qq,k,n] :=
+  round(y[qq,k,n]) * (
+    - branch_Rex_SI[qq,k,n]^2 * branch_Bex_SI[qq,k,n] * V[n]^2
+      * substation_Vnomi[1,bus_substation[1,n]]^2
+    + branch_Rex_SI[qq,k,n]^2 * branch_admi_SI[qq,k,n] * V[n]^2 * cos(branch_angper[qq,k,n])
+      * substation_Vnomi[1,bus_substation[1,n]]^2
+    - branch_Ror_SI[qq,k,n] * branch_Rex_SI[qq,k,n] * branch_admi_SI[qq,k,n] * V[n] * V[k]
+      * cos(theta[n] - theta[k] - branch_dephor[qq,k,n] - branch_angper[qq,k,n])
+      * substation_Vnomi[1,bus_substation[1,n]] * substation_Vnomi[1,bus_substation[1,k]]
+  );
+}
+
+###############################################################################
+#                   Computing measurements estimates                          #
+###############################################################################
+
+# Compute measurement estimates (in SI) as given by the solution found : z_est = z_given - residual
+
+param estimate_Pf{l in MEASURECC_Pf};
+param estimate_Qf{l in MEASURECC_Qf};
+param estimate_P{l in MEASURECC_P};
+param estimate_Q{l in MEASURECC_Q};
+param estimate_V{l in MEASURECC_V};
+
+for {l in MEASURECC_Pf} {
+  let estimate_Pf[l] := Pf_value[l] - resid_Pf[l];
+}
+for {l in MEASURECC_Qf} {
+  let estimate_Qf[l] := Qf_value[l] - resid_Qf[l];
+}
+for {l in MEASURECC_P} {
+  let estimate_P[l] := P_value[l] - resid_P[l];
+}
+for {l in MEASURECC_Q} {
+  let estimate_Q[l] := Q_value[l] - resid_Q[l];
+}
+for {l in MEASURECC_V} {
+  let estimate_V[l] := V_value[l] - resid_V[l];
+}
+
+###############################################################################
+#                       Writing results and indicators                        #
+###############################################################################
+
+include results_exporter.run;
+
+###############################################################################
+#                                End of file                                  #
+###############################################################################
+
+printf "\n";
+printf "*** Start of file state_estimator.run : %Q\n",ctime_start;
+printf "*** End of file state_estimator.run : %Q\n",ctime();

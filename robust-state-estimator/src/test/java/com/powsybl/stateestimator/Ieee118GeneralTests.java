@@ -68,7 +68,8 @@ public class Ieee118GeneralTests {
 
         // All MeasuresToBuses ratios to be tested
         //List<Double> ratiosTested = Arrays.asList(1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0);
-        List<Double> ratiosTested = Arrays.asList(3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0); // if ensureObservability = true
+        //List<Double> ratiosTested = Arrays.asList(3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0); // if ensureObservability = true
+        List<Double> ratiosTested = List.of(5.0);
 
         for (Double ratioTested : ratiosTested) {
 
@@ -94,7 +95,7 @@ public class Ieee118GeneralTests {
 
                 // Define the solving options for the state estimation
                 StateEstimatorOptions options = new StateEstimatorOptions()
-                        .setSolvingMode(0).setMaxTimeSolving(5).setMaxNbTopologyChanges(5);
+                        .setSolvingMode(0).setMaxTimeSolving(10).setMipMultistart(0);
                 // Run the state estimation and save the results
                 StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
                         knowledge, options, new StateEstimatorConfig(true), new LocalComputationManager());
@@ -132,7 +133,7 @@ public class Ieee118GeneralTests {
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("WithNoise1.0_FullScaleZN_IEEE118.csv");
+        try (FileWriter fileWriter = new FileWriter("WLS_ZN5_100seeds_WithNoise_EnsObs_IEEE118.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 

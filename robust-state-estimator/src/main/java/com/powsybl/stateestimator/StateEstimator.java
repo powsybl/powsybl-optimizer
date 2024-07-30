@@ -11,6 +11,8 @@ import com.powsybl.stateestimator.parameters.input.options.StateEstimatorOptions
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.iidm.network.Network;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -19,8 +21,12 @@ import java.io.IOException;
  */
 public final class StateEstimator {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(StateEstimator.class);
+
     private StateEstimator() {
     }
+
+    static String DEFAULT_ESTIMATOR_TYPE = "WLS";
 
     /**
      * @param network The network on which the state estimation is applied.
@@ -28,8 +34,8 @@ public final class StateEstimator {
      * @return The results of the state estimation, without any measurements or suspected branches provided
      */
     public static StateEstimatorResults runStateEstimation(Network network, StateEstimatorKnowledge knowledge) throws IOException {
-        return runStateEstimation(network, network.getVariantManager().getWorkingVariantId(), knowledge, new StateEstimatorOptions(),
-                new StateEstimatorConfig(false), new LocalComputationManager());
+        return StateEstimatorRunner.run(network, network.getVariantManager().getWorkingVariantId(), knowledge, new StateEstimatorOptions(),
+                new StateEstimatorConfig(false), new LocalComputationManager(), DEFAULT_ESTIMATOR_TYPE);
     }
 
     /**
@@ -39,7 +45,21 @@ public final class StateEstimator {
      * @return The results of the state estimation, with the given penalties and solving options.
      */
     public static StateEstimatorResults runStateEstimation(Network network, String variantId, StateEstimatorKnowledge knowledge, StateEstimatorOptions options, StateEstimatorConfig config, ComputationManager manager) {
-        return StateEstimatorRunner.run(network, variantId, knowledge, options, config, manager);
+        return StateEstimatorRunner.run(network, variantId, knowledge, options, config, manager, DEFAULT_ESTIMATOR_TYPE);
+    }
+
+    /**
+     * @param network The network on which the state estimation is applied.
+     * @param knowledge The knowledge on the network (measurements, set of suspected branches) used by the state estimation.
+     * @param options The state estimation parameters (solving options) used.
+     * @param estimatorType The type of the estimator used: Weighted Least Squares (WLS) or Weighted Least Absolute Values (WLAV)
+     * @return The results of the state estimation, with the given penalties and solving options.
+     */
+    public static StateEstimatorResults runStateEstimation(Network network, String variantId, StateEstimatorKnowledge knowledge, StateEstimatorOptions options, StateEstimatorConfig config, ComputationManager manager, String estimatorType) {
+        if (!estimatorType.equals("WLS") && !estimatorType.equals("WLAV")) {
+            LOGGER.warn("Estimator type provided is not valid. Only two possibilities accepted: 'WLS' or 'WLAV'");
+        }
+        return StateEstimatorRunner.run(network, variantId, knowledge, options, config, manager, estimatorType);
     }
 
 }

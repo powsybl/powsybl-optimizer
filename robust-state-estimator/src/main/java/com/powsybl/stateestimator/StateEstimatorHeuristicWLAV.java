@@ -22,11 +22,12 @@ import java.util.*;
 /**
  * @author Lucas RIOU <lucas.riou@artelys.com>
  */
-public class StateEstimatorHeuristic {
+public class StateEstimatorHeuristicWLAV {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StateEstimatorHeuristic.class);
 
-    public static double DECAY_INDEX_THRESHOLD = 1.15; // default value : 1.15
+    public static double DECAY_INDEX_LOWER_THRESHOLD = 2.0; // default value : 2.0
+    public static double DECAY_INDEX_UPPER_THRESHOLD = 2.5; // default value : 2.0
 
     public static int NB_ITER_MAX = 8; // default value : 8
 
@@ -96,7 +97,7 @@ public class StateEstimatorHeuristic {
 
             LOGGER.info("   Decay index : {}", decayIndexLWR);
 
-            boolean caseA = decayIndexLWR > DECAY_INDEX_THRESHOLD;
+            boolean caseA = decayIndexLWR >= DECAY_INDEX_LOWER_THRESHOLD && decayIndexLWR <= DECAY_INDEX_UPPER_THRESHOLD;
             boolean caseB = !caseA;
             boolean caseC = false;
             boolean caseD = false;
@@ -133,7 +134,7 @@ public class StateEstimatorHeuristic {
                         knowledgeTmp.setSuspectBranch(branchID, false, presumedStatus);
                     }
 
-                    options.setMaxTimeSolving(30).setMipMultistart(0);
+                    options.setSolvingMode(0).setMaxNbTopologyChanges(5).setMaxTimeSolving(30).setMipMultistart(0);
 
                     // Run the SE with this knowledge
                     StateEstimatorResults resultsTmp = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
@@ -274,7 +275,7 @@ public class StateEstimatorHeuristic {
                         knowledgeTmp.setSuspectBranch(branchID, suspectBranches.contains(branchID), presumedStatus);
                     }
 
-                    options.setSolvingMode(0).setMaxTimeSolving(60).setMaxNbTopologyChanges(2).setMipMultistart(1);
+                    options.setSolvingMode(0).setMaxTimeSolving(60).setMaxNbTopologyChanges(5).setMipMultistart(0);
 
                     // Run the SE with this knowledge
                     StateEstimatorResults resultsTmp = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
@@ -488,7 +489,7 @@ public class StateEstimatorHeuristic {
                         knowledgeTmp.setSuspectBranch(branchID, extendedSuspectBranches.contains(branchID), presumedStatus);
                     }
 
-                    options.setMaxNbTopologyChanges(2).setSolvingMode(0).setMaxTimeSolving(60).setMipMultistart(1);
+                    options.setMaxNbTopologyChanges(5).setSolvingMode(0).setMaxTimeSolving(60).setMipMultistart(0);
 
                     // Run the SE with this knowledge
                     StateEstimatorResults resultsTmp = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
@@ -724,7 +725,12 @@ public class StateEstimatorHeuristic {
 
         // If only 1 residual remains, return a value leading to measurement removal (easiest solution)
         if (sortedResiduals.size() <= 1) {
-            return DECAY_INDEX_THRESHOLD + 1;
+            return DECAY_INDEX_LOWER_THRESHOLD + 0.1;
+        }
+
+        // If second-largest residual equals 0 (can quite frequently happen with WLAV estimator), return a value leading to measurement removal (easiest solution)
+        if (sortedResiduals.get(1).equals(0.)) {
+            return DECAY_INDEX_LOWER_THRESHOLD + 0.1;
         }
 
         double maxResidual = sortedResiduals.get(0);

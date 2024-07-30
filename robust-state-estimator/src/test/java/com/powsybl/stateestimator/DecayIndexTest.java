@@ -63,9 +63,9 @@ public class DecayIndexTest {
 
         int seed = 0;
 
-        double ratioTested = 6.0;
+        double ratioTested = 5.0;
 
-        double grossErrorMagnitude = 20;
+        double grossErrorMagnitude = 60;
 
         // Test errors on all possible voltage magnitudes
         for (Bus bus : network.getBusView().getBuses()) {
@@ -418,7 +418,7 @@ public class DecayIndexTest {
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("V2_ZN6_20sigma_seed0_AllMeasErr_WithNoise_EnsObs_DECAYINDEX.csv");
+        try (FileWriter fileWriter = new FileWriter("ZN5_60sigma_seed0_AllMeasErr_WithNoise_EnsObs_DECAYINDEX.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 
@@ -603,7 +603,7 @@ public class DecayIndexTest {
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("V2_ZN4_seed0_AllTopoErr_NoPickBranchCaseA_WithNoise_EnsObs_DECAYINDEX.csv");
+        try (FileWriter fileWriter = new FileWriter("WLAV_ZN4_seed0_AllTopoErr_NoPickBranchCaseA_WithNoise_EnsObs_DECAYINDEX.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 

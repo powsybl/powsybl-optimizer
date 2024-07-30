@@ -18,6 +18,8 @@ import com.powsybl.ampl.executor.AmplResults;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.iidm.network.Network;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 
@@ -40,8 +42,8 @@ public final class StateEstimatorRunner {
      * @param options The state estimation options (solving options) used.
      * @return All information about the run and possible modifications to apply.
      */
-    public static StateEstimatorResults run(Network network, String variantId, StateEstimatorKnowledge knowledge, StateEstimatorOptions options) {
-        return run(network, variantId, knowledge, options, new StateEstimatorConfig(false), LocalComputationManager.getDefault());
+    public static StateEstimatorResults run(Network network, String variantId, StateEstimatorKnowledge knowledge, StateEstimatorOptions options, String estimatorType) {
+        return run(network, variantId, knowledge, options, new StateEstimatorConfig(false), LocalComputationManager.getDefault(), estimatorType);
     }
 
     /**
@@ -53,16 +55,18 @@ public final class StateEstimatorRunner {
      * @param variantId The network variant to use. It will set the variant on the network.
      * @param knowledge The knowledge on the network (measurements, set of suspected branches) used by the state estimation.
      * @param options The state estimation parameters (solving options) used.
+     * @param estimatorType The type of the estimator used: Weighted Least Squares (WLS) or Weighted Least Absolute Values (WLAV)
      * @param config Allows debugging
      * @return All information about the run and possible modifications to apply.
      */
-    public static StateEstimatorResults run(Network network, String variantId, StateEstimatorKnowledge knowledge, StateEstimatorOptions options, StateEstimatorConfig config, ComputationManager manager) {
+    public static StateEstimatorResults run(Network network, String variantId, StateEstimatorKnowledge knowledge, StateEstimatorOptions options, StateEstimatorConfig config, ComputationManager manager, String estimatorType) {
         Objects.requireNonNull(network);
         Objects.requireNonNull(variantId);
         Objects.requireNonNull(knowledge);
         Objects.requireNonNull(options);
         Objects.requireNonNull(config);
         Objects.requireNonNull(manager);
+        Objects.requireNonNull(estimatorType);
         // Change name of every TwoWindingTransformer in the network
         for (TwoWindingsTransformer twt : network.getTwoWindingsTransformers()) {
             twt.setName("isTwoWindingTransformer");
@@ -72,11 +76,10 @@ public final class StateEstimatorRunner {
                 .filter(line -> line.getTerminal1().isConnected() ^ line.getTerminal2().isConnected())
                 .forEach(Connectable::disconnect);
 
-        // TODO : check the line below
         AmplExportConfig amplExportConfig = new AmplExportConfig(AmplExportConfig.ExportScope.ALL, true, AmplExportConfig.ExportActionType.CURATIVE);
 
         // Build AMPL interface and run
-        AmplModel stateEstimation = StateEstimatorModel.buildModel(); // Only AMPL files (.dat,.mod,.run) that never change should be given during this step
+        AmplModel stateEstimation = StateEstimatorModel.buildModel(estimatorType); // Only AMPL files (.dat,.mod,.run) that never change should be given during this step
         StateEstimatorAmplIOFiles amplIoInterface = new StateEstimatorAmplIOFiles(knowledge, options, config.isDebug(), amplExportConfig);
         AmplResults run = AmplModelRunner.run(network, variantId, stateEstimation, manager, amplIoInterface);
         StateEstimatorResults stateEstimatorResults = new StateEstimatorResults(run.isSuccess(), amplIoInterface, run.getIndicators());

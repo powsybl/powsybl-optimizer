@@ -162,7 +162,8 @@ public class HeuristicTest {
             RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, parameters);
 
             // Run heuristic SE on knowledgeV1
-            Map<String, Object> heuristicResults = StateEstimatorHeuristic.runHeuristic(knowledge, network);
+            // TODO : change for StateEstimatorHeuristicWLAV or StateEstimatorHeuristic (WLS) if needed
+            Map<String, Object> heuristicResults = StateEstimatorHeuristicWLAV.runHeuristic(knowledge, network);
 
             StateEstimatorResults finalResults = (StateEstimatorResults) heuristicResults.get("Results");
             StateEstimatorKnowledge finalKnowledge = (StateEstimatorKnowledge) heuristicResults.get("Knowledge");
@@ -228,7 +229,7 @@ public class HeuristicTest {
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("ZN5_WithNoise_L9180-3133_Pf4141-1311-at-300MW_8IterMax_EnsObs_PEG1354_HEUR3.csv");
+        try (FileWriter fileWriter = new FileWriter("WLAV_ZN5_Noise_L9180-3133_Pf4141-1311-at-300MW_8IterMax_PEG1354_HEUR.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 

@@ -6,6 +6,7 @@
 - [Getting started](#getting-started)
 - [How to use the State Estimator](#how-to-use-the-state-estimator)
 - [Description of the module and classes](#description-of-the-module-and-classes)
+- [Use the WLAV formulation instead of the WLS one](#use-the-wlav-formulation-instead-of-the-wls-one)
 
 ## Overview
 
@@ -13,7 +14,7 @@ The `robust-state-estimator` module is a tool to perform the state estimation of
 
 The tool relies on an implementation in AMPL of a Mixed Integer Non-Linear Program (MINLP), which is solved using the solver Artelys Knitro. Depending on the modalities of the state estimation the user whishes to perform, the problem sometimes reduces to a Non-Linear Program (NLP).
 
-The State Estimation (SE) problem is formulated in AMPL as a Weighted Least Squares (WLS) problem: its goal is to minimize the sum over all measurements of the squares of weighted residuals (a weighted residual being defined as the difference between the measurement estimate and the measurement value, divided by the measurement standard deviation).
+The State Estimation (SE) problem is formulated in AMPL as a Weighted Least Squares (WLS) problem: its goal is to minimize the sum over all measurements of the squares of weighted residuals (a weighted residual being defined as the difference between the measurement estimate and the measurement value, divided by the measurement standard deviation). Note that a formulation of the SE problem as a Weighted Least Absolute Values (WLAV) estimator is also available.
 
 Additionnaly, the SE formulation includes equality constraints to model zero-injection buses and reasonable bounds on the possible values of the conventional state variables (nodal voltages). Above all, it models with binary variables the branch statuses ("closed"/"open"), therefore making the network topology a direct output of the state estimator.
 
@@ -187,7 +188,7 @@ Classes used to defined the solving options of the state estimation problem, gat
 
 Once all prior knowledge to the state estimation and solving options have been provided by the user, the state estimator can be run. It makes use of the following main functions: [StateEstimator](https://github.com/powsybl/powsybl-optimizer/blob/robust-state-estimator/robust-state-estimator/src/main/java/com/powsybl/stateestimator/StateEstimator.java), [StateEstimatorRunner](https://github.com/powsybl/powsybl-optimizer/blob/robust-state-estimator/robust-state-estimator/src/main/java/com/powsybl/stateestimator/StateEstimatorRunner.java) and [StateEstimatorModel](https://github.com/powsybl/powsybl-optimizer/blob/robust-state-estimator/robust-state-estimator/src/main/java/com/powsybl/stateestimator/StateEstimatorModel.java).
 
-`resources` folder contains all AMPL files (.mod/.dat/.run) at the core of the state estimator. In particular, it contains the mathematical formulation of the state estimator as an optimization problem to be solved. When running a state estimation, all the necessary files (network data, measurement files, solving options, etc) are exported by the [StateEstimatorRunner](https://github.com/powsybl/powsybl-optimizer/blob/robust-state-estimator/robust-state-estimator/src/main/java/com/powsybl/stateestimator/StateEstimatorRunner.java) class as CSV and text files. Once the (MI)NLP is solved, an AMPL script exports the results and resolution indicators as output files.
+`resources` folder contains all AMPL files (.mod/.dat/.run) at the core of the state estimator. In particular, it contains the mathematical formulation of the state estimator as an optimization problem to be solved. When running a state estimation, all the necessary files (network data, measurement files, solving options, etc) are exported by the [StateEstimatorRunner](https://github.com/powsybl/powsybl-optimizer/blob/robust-state-estimator/robust-state-estimator/src/main/java/com/powsybl/stateestimator/StateEstimatorRunner.java) class as CSV and text files. Once the (MI)NLP is solved, an AMPL script exports the results and resolution indicators as output files. Note that the two formulations provided for the estimator (WLS and WLAV) are in `resources`.
 
 The class [StateEstimatorAmplIOFiles](https://github.com/powsybl/powsybl-optimizer/blob/robust-state-estimator/robust-state-estimator/src/main/java/com/powsybl/stateestimator/parameters/StateEstimatorAmplIOFiles.java) represents the interface between Java and AMPL. It handles both input files provided to AMPL (related to `knowledge` folder) and output files exported by AMPL.
 
@@ -195,5 +196,7 @@ These output files are written in CSV format. They are retrieved by the [StateEs
 
 Once read, results are then stored in a easy-to-handle [StateEstimatorResults](https://github.com/powsybl/powsybl-optimizer/blob/robust-state-estimator/robust-state-estimator/src/main/java/com/powsybl/stateestimator/StateEstimatorResults.java) object, as explained in [How to use the State Estimator](#how-to-use-the-state-estimator). Multiple methods are provided to display the results.
 
+## Use the WLAV formulation instead of the WLS one
 
+To use the WLAV estimator instead of the WLS estimator, a simple handling is needed. `resources` contains the AMPL codes for the WLS estimator ("stateestimator" folder) and the WLAV estimator ("stateestimatorWLAV" folder). To use one estimator instead of the other, the user must change the name of the resources folder ("stateestimator" or "stateestimatorWLAV") in the method `buildModel` of the [`StateEstimatorModel`](https://github.com/powsybl/powsybl-optimizer/blob/robust-state-estimator/robust-state-estimator/src/main/java/com/powsybl/stateestimator/StateEstimatorModel.java) class. That's all !
 

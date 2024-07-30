@@ -57,7 +57,7 @@ public class Ieee118TopologyTests {
 
         Network network = IeeeCdfNetworkFactory.create118();
 
-        String erroneousLine = "L45-46-1";
+        String erroneousLine = "L92-100-1";
 
         // Disconnect the erroneous line
         network.getLine(erroneousLine).disconnect();
@@ -78,7 +78,7 @@ public class Ieee118TopologyTests {
 
         // All MeasuresToBuses ratios to be tested
         //List<Double> ratiosTested = Arrays.asList(1.0, 2.0, 3.0, 4.0, 5.0);
-        List<Double> ratiosTested = Arrays.asList(4.0, 5.0, 6.0);
+        List<Double> ratiosTested = Arrays.asList(5.0);
 
         for (Double ratioTested : ratiosTested) {
 
@@ -111,7 +111,7 @@ public class Ieee118TopologyTests {
 
                 // Define the solving options for the state estimation
                 StateEstimatorOptions options = new StateEstimatorOptions()
-                        .setSolvingMode(0).setMaxTimeSolving(30).setMaxNbTopologyChanges(2).setMipMultistart(1);
+                        .setSolvingMode(0).setMaxTimeSolving(30).setMaxNbTopologyChanges(5).setMipMultistart(0);
 
                 // Run the state estimation and save the results
                 StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
@@ -163,7 +163,7 @@ public class Ieee118TopologyTests {
                 }
 
                 // TODO : delete if erroneousLine specified
-                erroneousLine = "L45-46-1";
+                erroneousLine = "L92-100-1";
 
                 // Save statistics on the accuracy of the state estimation w.r.t load flow solution
                 StateEstimatorEvaluator evaluator = new StateEstimatorEvaluator(network, knowledge, results);
@@ -200,7 +200,7 @@ public class Ieee118TopologyTests {
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("AllLinesSusp_WithNoise_L45-46_EnsObs_SM0_MS_100Nod_2TopoMax_30secMax_TOPO.csv");
+        try (FileWriter fileWriter = new FileWriter("WLAV_AllLinesSusp_WithNoise_L92-100_Pf27-28_EnsObs_SM0_5TopoMax_30secMax.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 

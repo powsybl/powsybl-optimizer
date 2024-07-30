@@ -51,14 +51,14 @@ public class Pegase1354TopologyTests {
                 "MeanQfError(%)", "StdQfError(%)", "MedianQfError(%)", "MaxQfError(%)",
                 "5percentileQfError(%)", "95percentileQfError(%)",
                 "NbVMeasures","NbPfMeasures","NbQfMeasures","NbPMeasures","NbQMeasures",
-                "ObjectiveFunctionValue"
-                //"PerformanceIndex"
+                "ObjectiveFunctionValue", "SolvingTime(s)"
+                ,"PerformanceIndex"
         );
         List<List<String>> data = new ArrayList<>();
 
         Network network = Network.read(Path.of("D:", "Projet", "Réseaux_tests", "IIDM", "pglib_opf_case1354_pegase.xiidm"));
 
-        String erroneousLine = "LINE-6757-6036";
+        String erroneousLine = "LINE-9180-3133";
 
         // Disconnect the erroneous line
         network.getLine(erroneousLine).disconnect();
@@ -85,7 +85,7 @@ public class Pegase1354TopologyTests {
 
             System.out.println(ratioTested);
 
-            for (int seed = 20; seed < 50; seed++) {
+            for (int seed = 10; seed < 30; seed++) {
 
                 // Create "knowledge" instance and indicate slack bus
                 StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network, "VL-4231_0");
@@ -95,20 +95,24 @@ public class Pegase1354TopologyTests {
                     knowledge.setSuspectBranch(branch.getId(), true, "PRESUMED CLOSED");
                 }
 
-                // TODO : change ratioForCtrlMeasType depending on ratioTested !
-                // Randomly generate measurements out of load flow results, with all P measures given to ensure observability
+                // Randomly generate measurements out of load flow results
                 var parameters = new RandomMeasuresGenerator.RandomMeasuresGeneratorParameters();
-                parameters.withSeed(seed).withRatioMeasuresToBuses(ratioTested);
-                RandomMeasuresGenerator.generateRandomMeasurementsWithCtrlMeasureRatio(knowledge, network,
-                        0.1991137371, "P", parameters);
+                parameters.withSeed(seed).withRatioMeasuresToBuses(ratioTested)
+                        .withAddNoise(true).withEnsureObservability(true);
+                RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, parameters);
 
                 // Define the solving options for the state estimation
                 StateEstimatorOptions options = new StateEstimatorOptions()
-                        .setSolvingMode(2).setMaxTimeSolving(60).setMaxNbTopologyChanges(5);
+                        .setSolvingMode(0).setMaxTimeSolving(180).setMaxNbTopologyChanges(5).setMipMultistart(0);
+
+                long startTime = System.nanoTime();
 
                 // Run the state estimation and save the results
                 StateEstimatorResults results = StateEstimator.runStateEstimation(network, network.getVariantManager().getWorkingVariantId(),
                         knowledge, options, new StateEstimatorConfig(true), new LocalComputationManager());
+
+                long endTime   = System.nanoTime();
+                Double totalTime = (endTime - startTime) / 1e9;
 
                 // Find if the erroneous line is detected or at least is the first neighbour of a changed line
                 int falseLineNearDetection = 0;
@@ -155,7 +159,7 @@ public class Pegase1354TopologyTests {
                 }
 
                 // TODO : delete if erroneousLine specified
-                //erroneousLine = "LINE-6757-6036";
+                erroneousLine = "LINE-9180-3133";
 
                 // Save statistics on the accuracy of the state estimation w.r.t load flow solution
                 StateEstimatorEvaluator evaluator = new StateEstimatorEvaluator(network, knowledge, results);
@@ -183,14 +187,15 @@ public class Pegase1354TopologyTests {
                         String.valueOf(knowledge.getReactivePowerFlowMeasures().size()),
                         String.valueOf(knowledge.getActivePowerInjectedMeasures().size()),
                         String.valueOf(knowledge.getReactivePowerInjectedMeasures().size()),
-                        String.valueOf(results.getObjectiveFunctionValue())
-                        //String.valueOf(evaluator.computePerformanceIndex())
+                        String.valueOf(results.getObjectiveFunctionValue()),
+                        String.valueOf(totalTime)
+                        ,String.valueOf(evaluator.computePerformanceIndex())
                 ));
             }
         }
 
         // Export the results in a CSV file
-        try (FileWriter fileWriter = new FileWriter("(part2)SM2_60sec_5NbTopoChanges_ZN5_AllLinesSuspect_NoNoise_L6757-6036-OPENED_Pegase1354.csv");
+        try (FileWriter fileWriter = new FileWriter("WLAV_AllLinesSusp_WithNoise_L9180-3133_EnsObs_5TopoMax_180secMax_PEG_TOPO.csv");
              CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSVFormat.DEFAULT)) {
             csvPrinter.printRecord(headers);
 
