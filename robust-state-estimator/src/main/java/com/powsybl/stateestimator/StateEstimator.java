@@ -56,8 +56,8 @@ public final class StateEstimator {
      * @return The results of the state estimation, with the given penalties and solving options.
      */
     public static StateEstimatorResults runStateEstimation(Network network, String variantId, StateEstimatorKnowledge knowledge, StateEstimatorOptions options, StateEstimatorConfig config, ComputationManager manager, String estimatorType) {
-        if (!estimatorType.equals("WLS") && !estimatorType.equals("WLAV")) {
-            LOGGER.warn("Estimator type provided is not valid. Only two possibilities accepted: 'WLS' or 'WLAV'");
+        if (!estimatorType.equals("WLS") && !estimatorType.equals("WLAV") && !estimatorType.equals("FILTER")) {
+            LOGGER.warn("Estimator type provided is not valid. Only three possibilities accepted: 'WLS', 'WLAV' or 'FILTER'");
         }
         return StateEstimatorRunner.run(network, variantId, knowledge, options, config, manager, estimatorType);
     }

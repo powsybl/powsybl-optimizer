@@ -52,7 +52,7 @@ public class HeuristicTest {
 
         StateEstimatorKnowledge knowledge = new StateEstimatorKnowledge(network, "VL-4231_0"); // for case1354_pegase
 
-        // Add measurement error : Active power flow P at VL-4141_0 for branch LINE-4141-1311 : 102,488691 (true)
+        // Add measurement error : Active power flow Pf at VL-4141_0 for branch LINE-4141-1311 : 102,488691 (true)
         Map<String, String> grossMeasure = Map.of("BranchID", "LINE-4141-1311", "FirstBusID", "VL-4141_0", "SecondBusID", "VL-1311_0",
                 "Value", "300.0", "Variance", "1.269", "Type", "Pf");
         knowledge.addMeasure(1, grossMeasure, network);
@@ -162,8 +162,7 @@ public class HeuristicTest {
             RandomMeasuresGenerator.generateRandomMeasurements(knowledge, network, parameters);
 
             // Run heuristic SE on knowledgeV1
-            // TODO : change for StateEstimatorHeuristicWLAV or StateEstimatorHeuristic (WLS) if needed
-            Map<String, Object> heuristicResults = StateEstimatorHeuristicWLAV.runHeuristic(knowledge, network);
+            Map<String, Object> heuristicResults = StateEstimatorHeuristic.runHeuristic(knowledge, network);
 
             StateEstimatorResults finalResults = (StateEstimatorResults) heuristicResults.get("Results");
             StateEstimatorKnowledge finalKnowledge = (StateEstimatorKnowledge) heuristicResults.get("Knowledge");

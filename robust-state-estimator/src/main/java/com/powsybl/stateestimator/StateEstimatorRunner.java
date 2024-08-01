@@ -28,6 +28,8 @@ import java.util.Objects;
  */
 public final class StateEstimatorRunner {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(StateEstimatorRunner.class);
+
     private StateEstimatorRunner() {
     }
 
@@ -89,6 +91,49 @@ public final class StateEstimatorRunner {
         stateEstimatorResults.setActivePowerInjectedMeasuresExtended(new ActivePowerInjectedMeasures(knowledge.getActivePowerInjectedMeasures(), stateEstimatorResults.measurementEstimatesAndResiduals));
         stateEstimatorResults.setReactivePowerInjectedMeasuresExtended(new ReactivePowerInjectedMeasures(knowledge.getReactivePowerInjectedMeasures(), stateEstimatorResults.measurementEstimatesAndResiduals));
         stateEstimatorResults.setVoltageMagnitudeMeasuresExtended(new VoltageMagnitudeMeasures(knowledge.getVoltageMagnitudeMeasures(), stateEstimatorResults.measurementEstimatesAndResiduals));
+
+        // If FILTER mode is used, warn the user about abnormalities detected by the filter
+        if (estimatorType.equals("FILTER")) {
+            // Warn the user about any gross measurement error
+            for (var measure : stateEstimatorResults.getActivePowerFlowMeasuresExtended().getMeasuresWithEstimatesAndResiduals().entrySet()) {
+                if (Double.parseDouble(measure.getValue().get(7)) == 999999999) {
+                    String warning = "Measurement n°" + measure.getKey() + " is considered abnormal by the filter. It should be removed.";
+                    LOGGER.warn(warning);
+                }
+            }
+            for (var measure : stateEstimatorResults.getReactivePowerFlowMeasuresExtended().getMeasuresWithEstimatesAndResiduals().entrySet()) {
+                if (Double.parseDouble(measure.getValue().get(7)) == 999999999) {
+                    String warning = "Measurement n°" + measure.getKey() + " is considered abnormal by the filter. It should be removed.";
+                    LOGGER.warn(warning);
+                }
+            }
+            for (var measure : stateEstimatorResults.getActivePowerInjectedMeasuresExtended().getMeasuresWithEstimatesAndResiduals().entrySet()) {
+                if (Double.parseDouble(measure.getValue().get(5)) == 999999999) {
+                    String warning = "Measurement n°" + measure.getKey() + " is considered abnormal by the filter. It should be removed.";
+                    LOGGER.warn(warning);
+                }
+            }
+            for (var measure : stateEstimatorResults.getReactivePowerInjectedMeasuresExtended().getMeasuresWithEstimatesAndResiduals().entrySet()) {
+                if (Double.parseDouble(measure.getValue().get(5)) == 999999999) {
+                    String warning = "Measurement n°" + measure.getKey() + " is considered abnormal by the filter. It should be removed.";
+                    LOGGER.warn(warning);
+                }
+            }
+            for (var measure : stateEstimatorResults.getVoltageMagnitudeMeasuresExtended().getMeasuresWithEstimatesAndResiduals().entrySet()) {
+                if (Double.parseDouble(measure.getValue().get(5)) == 999999999) {
+                    String warning = "Measurement n°" + measure.getKey() + " is considered abnormal by the filter. It should be removed.";
+                    LOGGER.warn(warning);
+                }
+            }
+            // Warn the user about any topology error
+            for (var branch : stateEstimatorResults.getNetworkTopologyEstimate()) {
+                if (!branch.getPresumedStatus().equals("PRESUMED " + branch.getEstimatedStatus())) {
+                    String warning = "Status of branch " + branch.getBranchId() + " is considered abnormal by the filter. It should be switched to: "
+                            + branch.getEstimatedStatus();
+                    LOGGER.warn(warning);
+                }
+            }
+        }
         return stateEstimatorResults;
     }
 }
