@@ -30,6 +30,8 @@ set PROBLEM_ACOPF default { };
 # Complex voltage = V*exp(i*teta). (with i**2=-1)
 
 # Phase of voltage
+param teta_min default -10; # roughly 3*pi
+param teta_max default  10; # roughly 3*pi
 var teta{BUSCC} <= teta_max, >= teta_min;
 subject to ctr_null_phase_bus{PROBLEM_ACOPF}: teta[null_phase_bus] = 0;
 

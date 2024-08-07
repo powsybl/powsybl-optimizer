@@ -127,6 +127,8 @@ public class OpenReacParameters {
 
     private double shuntCompensatorActivationAlertThreshold;
 
+    private boolean dcLoadFlowBeforeOptimization = true;
+
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.
      * <p>
@@ -545,6 +547,15 @@ public class OpenReacParameters {
             throw new IllegalArgumentException("The shunt compensator activation alert threshold must be >= 0 and defined to be consistent.");
         }
         this.shuntCompensatorActivationAlertThreshold = shuntCompensatorActivationAlertThreshold;
+        return this;
+    }
+
+    public boolean isDcLoadFlowBeforeOptimization() {
+        return dcLoadFlowBeforeOptimization;
+    }
+
+    public OpenReacParameters setDcLoadFlowBeforeOptimization(boolean dcLoadFlowBeforeOptimization) {
+        this.dcLoadFlowBeforeOptimization = dcLoadFlowBeforeOptimization;
         return this;
     }
 

@@ -1,136 +1,136 @@
-###############################################################################
+################################################################################
+##
+## Copyright (c) 2022 2023 2024, RTE (http://www.rte-france.com)
+## This Source Code Form is subject to the terms of the Mozilla Public
+## License, v. 2.0. If a copy of the MPL was not distributed with this
+## file, You can obtain one at http://mozilla.org/MPL/2.0/.
+## SPDX-License-Identifier: MPL-2.0
+##
+################################################################################
 #
-# Copyright (c) 2022 2023 2024, RTE (http://www.rte-france.com)
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
-# SPDX-License-Identifier: MPL-2.0
+################################################################################
+## Reactive OPF
+## Author:  Jean Maeght 2022 2023
+## Author:  Manuel Ruiz 2023 2024
+################################################################################
 #
-###############################################################################
-
-###############################################################################
-# Reactive OPF
-# Author:  Jean Maeght 2022 2023
-# Author:  Manuel Ruiz 2023 2024
-###############################################################################
-
-
-###############################################################################
-# Solve PROBLEM_DCOPF
-###############################################################################
-
-let PROBLEM_DCOPF := {1};
-let tempstr := ctime();
-printf{LOG_KNITRO} "\n######################################################################\n";
-printf{LOG_KNITRO} "** DCopf solve: start (%s)\n\n",tempstr;
-
-option knitro_options ("outlev=3");
-
-# solve dcopf and avoid knitro printing if user asks
-if (log_level_knitro <= 1) then {
-  solve problem_dcopf_objective > (nullDevice);
-} else {
-  solve problem_dcopf_objective;
-}
-
-printf{LOG_KNITRO} "\n** DCopf solve: end   (%s -> %s)\n",tempstr,ctime();
-printf{LOG_KNITRO} "######################################################################\n\n";
-
-
-###############################################################################
-# Analysis of solve_result_num
-###############################################################################
-
-if solve_result_num > 103
-then {
-  # First return codes of knitro :
-  # See https://www.artelys.com/docs/knitro/3_referenceManual/knitroamplReference.html#return-codes
-  #   0 Locally optimal or satisfactory solution.
-  # 100 Current feasible solution estimate cannot be improved. Nearly optimal.
-  # 101 Relative change in feasible solution estimate < xtol.
-  # 102 Current feasible solution estimate cannot be improved.
-  # 103 Relative change in feasible objective < ftol for ftol_iters.
-  # 200 Convergence to an infeasible point. Problem may be locally infeasible.
-  let errorMessage := "DCOPF optimisation failed";
-  let final_status := "NOK";
-  let dcopf_status := "NOK";
-  include reactiveopfexit.run;
-}
-# "else" is useless since there is an "exit" just above
-let dcopf_status := "OK";
-
-if sum{n in BUSCC} (balance_pos[n] + balance_neg[n]) >= Pnull
-then {
-  let errorMessage := "QP problem for Dcopf is not feasible since some slack variables are non zero";
-  display card({n in BUSCC : balance_pos[n] + balance_neg[n] >= Pnull});
-  display sum{n in BUSCC} (balance_pos[n] + balance_neg[n]);
-
-  for{n in BUSCC: balance_pos[n] + balance_neg[n] >= Pnull}
-    printf{LOG_ERROR} "Bus %Q in substation %Q (Vnomi=%.2fkV, country=%Q) slacks %.2f and %.2f MW\n",
-      bus_id[1,n], substation_id[1,bus_substation[1,n]],
-      substation_Vnomi[1,bus_substation[1,n]], substation_country[1,bus_substation[1,n]],
-      balance_pos[n], balance_neg[n];
-
-  let final_status := "NOK";
-  let dcopf_status := "NOK";
-  include reactiveopfexit.run;
-}
-# "else" is useless since there is an "exit" just above
-
-
-###############################################################################
-# Displays after solving
-###############################################################################
-
-printf{LOG_INFO} "\n######################################################################\n";
-printf{LOG_INFO} "** DCopf results\n";
-printf{LOG_INFO} "OK all slack variables for DCOPF are null\n";
-let dcopf_status := "OK";
-
-# Print flows on branches with zero impedance
-for{(qq,m,n) in BRANCHZNULL} printf{LOG_INFO} "Flow on zero impedance branch %Q: %.f MW\n",branch_id[1,qq,m,n],activeflow[qq,m,n];
-
-# Print flows on most loaded lines
-let temp1 := max{(qq,m,n) in BRANCHCC}abs(activeflow[qq,m,n]);
-printf{LOG_INFO} "Maximum flow: %.2f MW\n",temp1;
-for {(qq,m,n) in BRANCHCC : abs(activeflow[qq,m,n]) >= temp1*0.99} printf{LOG_INFO} "Maximum flow %.2f MW is on branch %Q\n", activeflow[qq,m,n],branch_id[1,qq,m,n];
-
-# Print generations which are very different from their target value
-let temp2 := max{(g,n) in UNITON} abs(P_dcopf[g,n]-unit_Pc[1,g,n]);
-printf{LOG_INFO} "Maximum deviation between generation and target: %.2f MW\n",temp2;
-if temp2 >= 10 then
-for {(g,n) in UNITON : abs(P_dcopf[g,n]-unit_Pc[1,g,n]) >= temp2*0.99}
-  printf{LOG_INFO} "Generating unit %Q : Pc=%.2fMW P=%.2fMW (Pmin=%.2fMW Pmax=%.2fMW)\n",
-    unit_id[1,g,n],unit_Pc[1,g,n],P_dcopf[g,n],unit_Pmin[1,g,n],unit_Pmax[1,g,n];
-
-# Balance check
-let temp1 := sum{(c,n) in LOADCC} load_PFix[1,c,n];
-let temp2 := sum{(g,n) in UNITON} P_dcopf[g,n];
-let temp2 := temp2 + sum{(b,n) in BATTERYCC} battery_p0[1,b,n];
-let temp3 :=  (sum{(vscconv,n) in VSCCONVON} vscconv_P0[1,vscconv,n])+(sum{(l,k) in LCCCONVON} lccconv_P0[1,l,k]);
-printf{LOG_INFO} "Sum of HVDC conv.  H: %.0f MW\n", temp3;
-printf{LOG_INFO} "Sum of loads       C: %.0f MW\n", temp1;
-printf{LOG_INFO} "Sum of generations P: %.0f MW\n", temp2;
-printf{LOG_INFO} "Balance    (P-C-H)/C: %.2f %%\n\n", (temp2-temp1-temp3)/temp1*100;
-
-# Analysis of phases computed by DC OPF
-let teta_max := max({n in BUSCC} teta_dc[n].val) + 3; # radians
-let teta_min := min({n in BUSCC} teta_dc[n].val) - 3; # radians
-if 1 in LOG_INFO then display teta_max,teta_min,max({n in BUSCC} teta_dc[n]),min({n in BUSCC} teta_dc[n]),
-  max({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[n])),min({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[n]));
-
-let temp1 := max({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[n]));
-let temp2 := min({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[n]));
-
-printf{LOG_INFO}"Branches with large Delta Teta:\n";
-for {(qq,m,n) in BRANCHCC: (teta_dc[m]-teta_dc[n])>temp1*0.99 or (teta_dc[m]-teta_dc[n])<temp2*0.99}
-  printf{LOG_INFO} "%Q R=%.4f X=%.4f delta=%.2f teta_m=%.2f teta_n=%.2f F=%.2f\n",
-  branch_id[1,qq,m,n],branch_R[1,qq,m,n],branch_X[1,qq,m,n],teta_dc[m]-teta_dc[n],teta_dc[m],teta_dc[n],
-  activeflow[qq,m,n];
-
-
-# Next optimization problems will use other "teta" variables. These ones were only for DCOPF
-fix{n in BUSCC} teta_dc[n];
-
-# desactivate optimization problem
-let PROBLEM_DCOPF := { };
+#
+################################################################################
+## Solve PROBLEM_DCOPF
+################################################################################
+#
+#let PROBLEM_DCOPF := {1};
+#let tempstr := ctime();
+#printf{LOG_KNITRO} "\n######################################################################\n";
+#printf{LOG_KNITRO} "** DCopf solve: start (%s)\n\n",tempstr;
+#
+#option knitro_options ("outlev=3");
+#
+## solve dcopf and avoid knitro printing if user asks
+#if (log_level_knitro <= 1) then {
+#  solve problem_dcopf_objective > (nullDevice);
+#} else {
+#  solve problem_dcopf_objective;
+#}
+#
+#printf{LOG_KNITRO} "\n** DCopf solve: end   (%s -> %s)\n",tempstr,ctime();
+#printf{LOG_KNITRO} "######################################################################\n\n";
+#
+#
+################################################################################
+## Analysis of solve_result_num
+################################################################################
+#
+#if solve_result_num > 103
+#then {
+#  # First return codes of knitro :
+#  # See https://www.artelys.com/docs/knitro/3_referenceManual/knitroamplReference.html#return-codes
+#  #   0 Locally optimal or satisfactory solution.
+#  # 100 Current feasible solution estimate cannot be improved. Nearly optimal.
+#  # 101 Relative change in feasible solution estimate < xtol.
+#  # 102 Current feasible solution estimate cannot be improved.
+#  # 103 Relative change in feasible objective < ftol for ftol_iters.
+#  # 200 Convergence to an infeasible point. Problem may be locally infeasible.
+#  let errorMessage := "DCOPF optimisation failed";
+#  let final_status := "NOK";
+#  let dcopf_status := "NOK";
+#  include reactiveopfexit.run;
+#}
+## "else" is useless since there is an "exit" just above
+#let dcopf_status := "OK";
+#
+#if sum{n in BUSCC} (balance_pos[n] + balance_neg[n]) >= Pnull
+#then {
+#  let errorMessage := "QP problem for Dcopf is not feasible since some slack variables are non zero";
+#  display card({n in BUSCC : balance_pos[n] + balance_neg[n] >= Pnull});
+#  display sum{n in BUSCC} (balance_pos[n] + balance_neg[n]);
+#
+#  for{n in BUSCC: balance_pos[n] + balance_neg[n] >= Pnull}
+#    printf{LOG_ERROR} "Bus %Q in substation %Q (Vnomi=%.2fkV, country=%Q) slacks %.2f and %.2f MW\n",
+#      bus_id[1,n], substation_id[1,bus_substation[1,n]],
+#      substation_Vnomi[1,bus_substation[1,n]], substation_country[1,bus_substation[1,n]],
+#      balance_pos[n], balance_neg[n];
+#
+#  let final_status := "NOK";
+#  let dcopf_status := "NOK";
+#  include reactiveopfexit.run;
+#}
+## "else" is useless since there is an "exit" just above
+#
+#
+################################################################################
+## Displays after solving
+################################################################################
+#
+#printf{LOG_INFO} "\n######################################################################\n";
+#printf{LOG_INFO} "** DCopf results\n";
+#printf{LOG_INFO} "OK all slack variables for DCOPF are null\n";
+#let dcopf_status := "OK";
+#
+## Print flows on branches with zero impedance
+#for{(qq,m,n) in BRANCHZNULL} printf{LOG_INFO} "Flow on zero impedance branch %Q: %.f MW\n",branch_id[1,qq,m,n],activeflow[qq,m,n];
+#
+## Print flows on most loaded lines
+#let temp1 := max{(qq,m,n) in BRANCHCC}abs(activeflow[qq,m,n]);
+#printf{LOG_INFO} "Maximum flow: %.2f MW\n",temp1;
+#for {(qq,m,n) in BRANCHCC : abs(activeflow[qq,m,n]) >= temp1*0.99} printf{LOG_INFO} "Maximum flow %.2f MW is on branch %Q\n", activeflow[qq,m,n],branch_id[1,qq,m,n];
+#
+## Print generations which are very different from their target value
+#let temp2 := max{(g,n) in UNITON} abs(P_dcopf[g,n]-unit_Pc[1,g,n]);
+#printf{LOG_INFO} "Maximum deviation between generation and target: %.2f MW\n",temp2;
+#if temp2 >= 10 then
+#for {(g,n) in UNITON : abs(P_dcopf[g,n]-unit_Pc[1,g,n]) >= temp2*0.99}
+#  printf{LOG_INFO} "Generating unit %Q : Pc=%.2fMW P=%.2fMW (Pmin=%.2fMW Pmax=%.2fMW)\n",
+#    unit_id[1,g,n],unit_Pc[1,g,n],P_dcopf[g,n],unit_Pmin[1,g,n],unit_Pmax[1,g,n];
+#
+## Balance check
+#let temp1 := sum{(c,n) in LOADCC} load_PFix[1,c,n];
+#let temp2 := sum{(g,n) in UNITON} P_dcopf[g,n];
+#let temp2 := temp2 + sum{(b,n) in BATTERYCC} battery_p0[1,b,n];
+#let temp3 :=  (sum{(vscconv,n) in VSCCONVON} vscconv_P0[1,vscconv,n])+(sum{(l,k) in LCCCONVON} lccconv_P0[1,l,k]);
+#printf{LOG_INFO} "Sum of HVDC conv.  H: %.0f MW\n", temp3;
+#printf{LOG_INFO} "Sum of loads       C: %.0f MW\n", temp1;
+#printf{LOG_INFO} "Sum of generations P: %.0f MW\n", temp2;
+#printf{LOG_INFO} "Balance    (P-C-H)/C: %.2f %%\n\n", (temp2-temp1-temp3)/temp1*100;
+#
+## Analysis of phases computed by DC OPF
+#let teta_max := max({n in BUSCC} teta_dc[n].val) + 3; # radians
+#let teta_min := min({n in BUSCC} teta_dc[n].val) - 3; # radians
+#if 1 in LOG_INFO then display teta_max,teta_min,max({n in BUSCC} teta_dc[n]),min({n in BUSCC} teta_dc[n]),
+#  max({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[n])),min({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[n]));
+#
+#let temp1 := max({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[n]));
+#let temp2 := min({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[n]));
+#
+#printf{LOG_INFO}"Branches with large Delta Teta:\n";
+#for {(qq,m,n) in BRANCHCC: (teta_dc[m]-teta_dc[n])>temp1*0.99 or (teta_dc[m]-teta_dc[n])<temp2*0.99}
+#  printf{LOG_INFO} "%Q R=%.4f X=%.4f delta=%.2f teta_m=%.2f teta_n=%.2f F=%.2f\n",
+#  branch_id[1,qq,m,n],branch_R[1,qq,m,n],branch_X[1,qq,m,n],teta_dc[m]-teta_dc[n],teta_dc[m],teta_dc[n],
+#  activeflow[qq,m,n];
+#
+#
+## Next optimization problems will use other "teta" variables. These ones were only for DCOPF
+#fix{n in BUSCC} teta_dc[n];
+#
+## desactivate optimization problem
+#let PROBLEM_DCOPF := { };
