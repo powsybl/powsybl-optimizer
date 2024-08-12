@@ -594,14 +594,17 @@ public class OpenReacParameters {
                     .withUntypedValue("size", voltageLevelsWithMissingLimits.size())
                     .add();
                 voltageLevelsWithMissingLimits.forEach((key, value) -> {
+                    String messageKey = "voltageLevelWithBothMissingLimits";
                     String messageSuffix = "has undefined low and high voltage limits";
                     if (value.getLeft() == 0) {
+                        messageKey = "voltageLevelWithHighMissingLimits";
                         messageSuffix = "has undefined high voltage limit";
                     } else if (value.getRight() == 0) {
+                        messageKey = "voltageLevelWithLowMissingLimits";
                         messageSuffix = "has undefined low voltage limit";
                     }
                     reportNode.newReportNode()
-                        .withMessageTemplate("voltageLevelWithMissingLimits", "${vlId} " + messageSuffix)
+                        .withMessageTemplate(messageKey, "${vlId} " + messageSuffix)
                         .withSeverity(TypedValue.TRACE_SEVERITY)
                         .withUntypedValue("vlId", key)
                         .add();
