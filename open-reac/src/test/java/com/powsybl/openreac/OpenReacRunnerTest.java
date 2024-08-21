@@ -284,8 +284,6 @@ class OpenReacRunnerTest {
         network.getVscConverterStation("cs3").getTerminal().setP(0.0);
         network.getVscConverterStation("cs4").getTerminal().setP(0.0);
         OpenReacParameters parameters = new OpenReacParameters();
-//        parameters.setObjective(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT)
-//                        .setObjectiveDistance(50);
         parameters.addConstantQGenerators(List.of("g1", "g2", "g5", "g6"));
         testAllModifAndLoadFlow(network, "openreac-output-vsc", parameters, ReportNode.NO_OP);
     }
@@ -426,6 +424,8 @@ class OpenReacRunnerTest {
             openReacResult.applyAllModifications(network);
         }
     }
+
+    // TODO : add a test to verify the network is not modify by open reac runner
 
     public static Network create() {
         Network network = Network.create("svc", "test");

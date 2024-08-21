@@ -10,34 +10,28 @@ import com.powsybl.ampl.converter.AmplExportConfig;
 import com.powsybl.ampl.executor.AmplModel;
 import com.powsybl.ampl.executor.AmplModelRunner;
 import com.powsybl.ampl.executor.AmplResults;
-import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.report.ReportNode;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.computation.local.LocalComputationManager;
-import com.powsybl.iidm.network.Bus;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VariantManager;
-import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowParameters;
-import com.powsybl.loadflow.LoadFlowResult;
 import com.powsybl.math.matrix.DenseMatrixFactory;
 import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.openloadflow.FullVoltageInitializer;
-import com.powsybl.openloadflow.OpenLoadFlowParameters;
 import com.powsybl.openloadflow.ac.VoltageMagnitudeInitializer;
 import com.powsybl.openloadflow.dc.DcValueVoltageInitializer;
 import com.powsybl.openloadflow.dc.equations.DcApproximationType;
 import com.powsybl.openloadflow.network.*;
+import com.powsybl.openloadflow.network.impl.LfGeneratorImpl;
 import com.powsybl.openloadflow.network.impl.LfNetworkLoaderImpl;
 import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.OpenReacStatus;
 
-import java.util.HashMap;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 /**
  * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
@@ -177,10 +171,12 @@ public final class OpenReacRunner {
     }
 
     private static void runDcLf(Network network, OpenReacParameters openReacParameters) {
-
+        // slack bus selection
         SlackBusSelector slackBusSelector = new MostMeshedSlackBusSelector();
         LfNetwork lfNetwork = LfNetwork.load(network, new LfNetworkLoaderImpl(), slackBusSelector).get(0);
         MatrixFactory matrixFactory = new DenseMatrixFactory();
+
+        // full voltage initializer, to initialize voltage magnitudes and angles
         FullVoltageInitializer initializer = new FullVoltageInitializer(
                 new VoltageMagnitudeInitializer(false, matrixFactory, openReacParameters.getLowImpedanceThreshold()),
                 new DcValueVoltageInitializer(new LfNetworkParameters().setSlackBusSelector(slackBusSelector),
@@ -189,35 +185,18 @@ public final class OpenReacRunner {
                         true,
                         DcApproximationType.IGNORE_R,
                         matrixFactory,
-                        10));
+                        1)); // FIXME : which number is optimal ?
+
+        // compute initialization
         initializer.prepare(lfNetwork);
-        lfNetwork.updateState(new LfNetworkStateUpdateParameters(false, false, true, false, false,
-                false, true, false, ReactivePowerDispatchMode.Q_EQUAL_PROPORTION, false, ReferenceBusSelectionMode.FIRST_SLACK, false));
 
-//        // store network voltages to apply them later
-//        // currently, dc load flow erases these values for NaN
-//        HashMap<String, Double> voltageValues = new HashMap<>();
-//        network.getBusView().getBusStream()
-//                .filter(Bus::isInMainSynchronousComponent)
-//                .forEach(bus -> voltageValues.put(bus.getId(), bus.getAngle()));
-//
-//        LoadFlowParameters loadFlowParameters = new LoadFlowParameters();
-//        loadFlowParameters.setDc(true)
-//                .setConnectedComponentMode(LoadFlowParameters.ConnectedComponentMode.MAIN)
-//                .setDistributedSlack(true)
-//                .setBalanceType(LoadFlowParameters.BalanceType.PROPORTIONAL_TO_GENERATION_P)
-//                .setHvdcAcEmulation(false);
-//        OpenLoadFlowParameters.create(loadFlowParameters)
-//                .setAlwaysUpdateNetwork(true)
-//                .setLowImpedanceThreshold(openReacParameters.getLowImpedanceThreshold())
-//                .setLowImpedanceBranchMode(OpenLoadFlowParameters.LowImpedanceBranchMode.REPLACE_BY_MIN_IMPEDANCE_LINE);
-
-//        LoadFlowResult result = LoadFlow.find("OpenLoadFlow").run(network, loadFlowParameters);
-//        if (result.isFailed()) {
-//            throw new PowsyblException("If DC load flow fails, no hope that reactive ACOPF converges.");
-//        }
-//
-//        // restore voltage values of the network
-//        voltageValues.forEach((k, v) -> network.getBusView().getBus(k).setV(v));
+        // update the state of the buses and of the generators to warm start AC optimization
+        LfNetworkStateUpdateParameters updateParameters = new LfNetworkStateUpdateParameters(false, false, true, false, false,
+                false, true, false, ReactivePowerDispatchMode.Q_EQUAL_PROPORTION, false, ReferenceBusSelectionMode.FIRST_SLACK, false);
+        lfNetwork.getBuses().forEach(bus -> bus.updateState(updateParameters));
+        lfNetwork.getBuses().stream()
+                .flatMap(lfBus -> lfBus.getGenerators().stream())
+                .filter(lfGenerator -> lfGenerator instanceof LfGeneratorImpl) // only active power of generators is optimized in OpenReac, not one of batteries and vsc
+                .forEach(lfGenerator -> lfGenerator.updateState(updateParameters));
     }
 }
