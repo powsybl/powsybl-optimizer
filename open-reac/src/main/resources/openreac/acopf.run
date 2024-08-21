@@ -52,7 +52,7 @@ let tempstr := ctime();
 printf{LOG_KNITRO} "\n######################################################################\n";
 printf{LOG_KNITRO} "** ACopf solve: start (%s)\n\n",ctime();
 
-option knitro_options ("opttol=1 opttolabs=1e-1 feastol=1 feastolabs=1e-3 maxit=300 outlev=3");
+option knitro_options ("opttol=1 opttolabs=1e-1 feastol=1 feastolabs=1e-3 maxit=1000 outlev=3");
 
 let {i in 1.._nvars} _var[i].xscalefactor := default_variable_scaling_factor;
 let {i in 1.._ncons} _con[i].cscalefactor := default_constraint_scaling_factor;

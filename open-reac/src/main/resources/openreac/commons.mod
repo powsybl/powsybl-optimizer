@@ -103,6 +103,23 @@ param branch_X_mod{(qq,m,n) in BRANCHCC} :=
   else branch_X[1,qq,m,n];
 check {(qq,m,n) in BRANCHCC}: abs(branch_X_mod[qq,m,n]) > 0;
 
+# If in BRANCHZNULL, then set Gor/Gex/Bor/Bex to 0
+param branch_Gor_mod{(qq,m,n) in BRANCHCC} :=
+    if (qq,m,n) in BRANCHZNULL then 0
+    else branch_Gor[1,qq,m,n];
+
+param branch_Gex_mod{(qq,m,n) in BRANCHCC} :=
+    if (qq,m,n) in BRANCHZNULL then 0
+    else branch_Gex[1,qq,m,n];
+
+param branch_Bor_mod{(qq,m,n) in BRANCHCC} :=
+    if (qq,m,n) in BRANCHZNULL then 0
+    else branch_Bor[1,qq,m,n];
+
+param branch_Bex_mod{(qq,m,n) in BRANCHCC} :=
+    if (qq,m,n) in BRANCHZNULL then 0
+    else branch_Bex[1,qq,m,n];
+
 # Busses with valid voltage value
 set BUSVV := {n in BUSCC : bus_V0[1,n] >= min_plausible_low_voltage_limit};
 
