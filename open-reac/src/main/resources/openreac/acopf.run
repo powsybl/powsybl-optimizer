@@ -20,6 +20,9 @@
 ###############################################################################
 
 # DC values used as initialization for phases
+
+let teta_max := max({n in BUSCC : -10 <= bus_angl0[1,n] and bus_angl0[1,n] <= 10} bus_angl0[1,n]) + 3;
+let teta_min := min({n in BUSCC : -10 <= bus_angl0[1,n] and bus_angl0[1,n] <= 10} bus_angl0[1,n]) - 3;
 let {n in BUSCC} teta[n] := if teta_min <= bus_angl0[1,n] and bus_angl0[1,n] <= teta_max
                             then bus_angl0[1,n]
                             else 0;

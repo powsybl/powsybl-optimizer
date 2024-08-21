@@ -20,8 +20,15 @@ import com.powsybl.iidm.network.VariantManager;
 import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.loadflow.LoadFlowResult;
+import com.powsybl.math.matrix.DenseMatrixFactory;
+import com.powsybl.math.matrix.MatrixFactory;
+import com.powsybl.openloadflow.FullVoltageInitializer;
 import com.powsybl.openloadflow.OpenLoadFlowParameters;
-import com.powsybl.openloadflow.network.SlackBusSelectionMode;
+import com.powsybl.openloadflow.ac.VoltageMagnitudeInitializer;
+import com.powsybl.openloadflow.dc.DcValueVoltageInitializer;
+import com.powsybl.openloadflow.dc.equations.DcApproximationType;
+import com.powsybl.openloadflow.network.*;
+import com.powsybl.openloadflow.network.impl.LfNetworkLoaderImpl;
 import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
@@ -146,13 +153,13 @@ public final class OpenReacRunner {
             runDcLf(network, parameters);
             runAsync = AmplModelRunner.runAsync(network, WITH_DC_LOAD_FLOW_ID_VARIANT_SUFFIX, reactiveOpf, manager, amplIoInterface);
             // remove the variant created to store dc load flow results
-            variantManager.setWorkingVariant(variantId);
-            variantManager.removeVariant(WITH_DC_LOAD_FLOW_ID_VARIANT_SUFFIX);
         } else {
             runAsync = AmplModelRunner.runAsync(network, variantId, reactiveOpf, manager, amplIoInterface);
         }
 
         return runAsync.thenApply(run -> {
+            network.getVariantManager().setWorkingVariant(variantId);
+            network.getVariantManager().removeVariant(WITH_DC_LOAD_FLOW_ID_VARIANT_SUFFIX);
             OpenReacResult result = new OpenReacResult(run.isSuccess() && amplIoInterface.checkErrors() ? OpenReacStatus.OK : OpenReacStatus.NOT_OK, amplIoInterface, run.getIndicators());
             Reports.createShuntModificationsReporter(reportNode, network.getId(), amplIoInterface.getNetworkModifications().getShuntsWithDeltaDiscreteOptimalOverThreshold());
             return result;
@@ -169,31 +176,48 @@ public final class OpenReacRunner {
         parameters.checkIntegrity(network, Reports.createParameterIntegrityReporter(reportNode, network.getId()));
     }
 
-    private static void runDcLf(Network network, OpenReacParameters parameters) {
-        // store network voltages to apply them later
-        // currently, dc load flow erases these values for NaN
-        HashMap<String, Double> voltageValues = new HashMap<>();
-        network.getBusView().getBusStream()
-                .filter(Bus::isInMainSynchronousComponent)
-                .forEach(bus -> voltageValues.put(bus.getId(), bus.getAngle()));
+    private static void runDcLf(Network network, OpenReacParameters openReacParameters) {
 
-        LoadFlowParameters loadFlowParameters = new LoadFlowParameters();
-        loadFlowParameters.setDc(true)
-                .setConnectedComponentMode(LoadFlowParameters.ConnectedComponentMode.MAIN)
-                .setDistributedSlack(true)
-                .setBalanceType(LoadFlowParameters.BalanceType.PROPORTIONAL_TO_GENERATION_P);
-        OpenLoadFlowParameters.create(loadFlowParameters)
-                .setLowImpedanceThreshold(parameters.getLowImpedanceThreshold())
-                .setLowImpedanceBranchMode(OpenLoadFlowParameters.LowImpedanceBranchMode.REPLACE_BY_MIN_IMPEDANCE_LINE)
-                .setSlackBusSelectionMode(SlackBusSelectionMode.NAME)
-                .setSlackBusId("b5_vl_0");
+        SlackBusSelector slackBusSelector = new MostMeshedSlackBusSelector();
+        LfNetwork lfNetwork = LfNetwork.load(network, new LfNetworkLoaderImpl(), slackBusSelector).get(0);
+        MatrixFactory matrixFactory = new DenseMatrixFactory();
+        FullVoltageInitializer initializer = new FullVoltageInitializer(
+                new VoltageMagnitudeInitializer(false, matrixFactory, openReacParameters.getLowImpedanceThreshold()),
+                new DcValueVoltageInitializer(new LfNetworkParameters().setSlackBusSelector(slackBusSelector),
+                        true,
+                        LoadFlowParameters.BalanceType.PROPORTIONAL_TO_GENERATION_P,
+                        true,
+                        DcApproximationType.IGNORE_R,
+                        matrixFactory,
+                        10));
+        initializer.prepare(lfNetwork);
+        lfNetwork.updateState(new LfNetworkStateUpdateParameters(false, false, true, false, false,
+                false, true, false, ReactivePowerDispatchMode.Q_EQUAL_PROPORTION, false, ReferenceBusSelectionMode.FIRST_SLACK, false));
 
-        LoadFlowResult result = LoadFlow.find("OpenLoadFlow").run(network, loadFlowParameters);
-        if (result.isFailed()) {
-            throw new PowsyblException("If DC load flow fails, no hope that reactive ACOPF converges.");
-        }
+//        // store network voltages to apply them later
+//        // currently, dc load flow erases these values for NaN
+//        HashMap<String, Double> voltageValues = new HashMap<>();
+//        network.getBusView().getBusStream()
+//                .filter(Bus::isInMainSynchronousComponent)
+//                .forEach(bus -> voltageValues.put(bus.getId(), bus.getAngle()));
+//
+//        LoadFlowParameters loadFlowParameters = new LoadFlowParameters();
+//        loadFlowParameters.setDc(true)
+//                .setConnectedComponentMode(LoadFlowParameters.ConnectedComponentMode.MAIN)
+//                .setDistributedSlack(true)
+//                .setBalanceType(LoadFlowParameters.BalanceType.PROPORTIONAL_TO_GENERATION_P)
+//                .setHvdcAcEmulation(false);
+//        OpenLoadFlowParameters.create(loadFlowParameters)
+//                .setAlwaysUpdateNetwork(true)
+//                .setLowImpedanceThreshold(openReacParameters.getLowImpedanceThreshold())
+//                .setLowImpedanceBranchMode(OpenLoadFlowParameters.LowImpedanceBranchMode.REPLACE_BY_MIN_IMPEDANCE_LINE);
 
-        // restore voltage values of the network
-        voltageValues.forEach((k, v) -> network.getBusView().getBus(k).setV(1));
+//        LoadFlowResult result = LoadFlow.find("OpenLoadFlow").run(network, loadFlowParameters);
+//        if (result.isFailed()) {
+//            throw new PowsyblException("If DC load flow fails, no hope that reactive ACOPF converges.");
+//        }
+//
+//        // restore voltage values of the network
+//        voltageValues.forEach((k, v) -> network.getBusView().getBus(k).setV(v));
     }
 }

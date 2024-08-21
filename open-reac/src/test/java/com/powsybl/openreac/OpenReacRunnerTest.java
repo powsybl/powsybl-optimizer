@@ -284,6 +284,8 @@ class OpenReacRunnerTest {
         network.getVscConverterStation("cs3").getTerminal().setP(0.0);
         network.getVscConverterStation("cs4").getTerminal().setP(0.0);
         OpenReacParameters parameters = new OpenReacParameters();
+//        parameters.setObjective(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT)
+//                        .setObjectiveDistance(50);
         parameters.addConstantQGenerators(List.of("g1", "g2", "g5", "g6"));
         testAllModifAndLoadFlow(network, "openreac-output-vsc", parameters, ReportNode.NO_OP);
     }
@@ -385,7 +387,6 @@ class OpenReacRunnerTest {
         setDefaultVoltageLimits(network);
         String subFolder = "openreac-output-warm-start";
         OpenReacParameters parameters = new OpenReacParameters();
-        parameters.setDcLoadFlowBeforeOptimization(false);
         runAndApplyAllModifications(network, subFolder, parameters, false, ReportNode.NO_OP); // without warm start, no update
         assertEquals(Double.NaN, network.getBusBreakerView().getBus("BUS_1").getV());
         assertEquals(Double.NaN, network.getBusBreakerView().getBus("BUS_1").getAngle());
