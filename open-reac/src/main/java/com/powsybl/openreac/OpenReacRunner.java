@@ -25,6 +25,8 @@ import com.powsybl.openloadflow.dc.DcValueVoltageInitializer;
 import com.powsybl.openloadflow.dc.equations.DcApproximationType;
 import com.powsybl.openloadflow.network.*;
 import com.powsybl.openloadflow.network.impl.LfNetworkLoaderImpl;
+import com.powsybl.openloadflow.network.util.UniformValueVoltageInitializer;
+import com.powsybl.openloadflow.network.util.VoltageInitializer;
 import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
@@ -38,7 +40,7 @@ import java.util.concurrent.CompletableFuture;
  */
 public final class OpenReacRunner {
 
-    private static final String WITH_DC_LOAD_FLOW_ID_VARIANT_SUFFIX = "WithDcLoadFlow";
+    private static final String WITH_USER_INITIALIZATION_ID_VARIANT = "WithDcLoadFlow";
 
     private OpenReacRunner() {
     }
@@ -89,19 +91,26 @@ public final class OpenReacRunner {
         OpenReacAmplIOFiles amplIoInterface = new OpenReacAmplIOFiles(parameters, amplExportConfig, network, config.isDebug(), Reports.createOpenReacReporter(reportNode, network.getId(), parameters.getObjective()));
 
         AmplResults run;
-        if (parameters.isDcLoadFlowBeforeOptimization()) {
-            // create new variant to avoid modifying the network
+        // current voltage values are used to initialize ACOPF optimization
+        if (parameters.getVoltageInitialization() == OpenReacParameters.OpenReacVoltageInitialization.PREVIOUS_VALUES) {
+            run = AmplModelRunner.run(network, variantId, reactiveOpf, manager, amplIoInterface);
+
+        // initialize optimization with user option
+        } else {
+            // create new variant to avoid modifications of the network
             VariantManager variantManager = network.getVariantManager();
-            variantManager.cloneVariant(variantId, WITH_DC_LOAD_FLOW_ID_VARIANT_SUFFIX);
-            variantManager.setWorkingVariant(WITH_DC_LOAD_FLOW_ID_VARIANT_SUFFIX);
-            // warm start the optimization with dc load flow results
-            runDcLf(network, parameters);
-            run = AmplModelRunner.run(network, WITH_DC_LOAD_FLOW_ID_VARIANT_SUFFIX, reactiveOpf, manager, amplIoInterface);
+            variantManager.cloneVariant(variantId, WITH_USER_INITIALIZATION_ID_VARIANT);
+            variantManager.setWorkingVariant(WITH_USER_INITIALIZATION_ID_VARIANT);
+
+            // initialize the optimization with given process
+            initializeVoltageBeforeOptimization(network, parameters);
+
+            // execute ampl code
+            run = AmplModelRunner.run(network, WITH_USER_INITIALIZATION_ID_VARIANT, reactiveOpf, manager, amplIoInterface);
+
             // remove the variant created to store dc load flow results
             variantManager.setWorkingVariant(variantId);
-            variantManager.removeVariant(WITH_DC_LOAD_FLOW_ID_VARIANT_SUFFIX);
-        } else {
-            run = AmplModelRunner.run(network, variantId, reactiveOpf, manager, amplIoInterface);
+            variantManager.removeVariant(WITH_USER_INITIALIZATION_ID_VARIANT);
         }
 
         OpenReacResult result = new OpenReacResult(run.isSuccess() && amplIoInterface.checkErrors() ? OpenReacStatus.OK : OpenReacStatus.NOT_OK, amplIoInterface, run.getIndicators());
@@ -138,22 +147,27 @@ public final class OpenReacRunner {
         OpenReacAmplIOFiles amplIoInterface = new OpenReacAmplIOFiles(parameters, amplExportConfig, network, config.isDebug(), Reports.createOpenReacReporter(reportNode, network.getId(), parameters.getObjective()));
 
         CompletableFuture<AmplResults> runAsync;
-        if (parameters.isDcLoadFlowBeforeOptimization()) {
-            // create new variant to avoid modifying the network
-            VariantManager variantManager = network.getVariantManager();
-            variantManager.cloneVariant(variantId, WITH_DC_LOAD_FLOW_ID_VARIANT_SUFFIX);
-            variantManager.setWorkingVariant(WITH_DC_LOAD_FLOW_ID_VARIANT_SUFFIX);
-            // warm start the optimization with dc load flow results
-            runDcLf(network, parameters);
-            runAsync = AmplModelRunner.runAsync(network, WITH_DC_LOAD_FLOW_ID_VARIANT_SUFFIX, reactiveOpf, manager, amplIoInterface);
-            // remove the variant created to store dc load flow results
-        } else {
+        if (parameters.getVoltageInitialization() == OpenReacParameters.OpenReacVoltageInitialization.PREVIOUS_VALUES) {
             runAsync = AmplModelRunner.runAsync(network, variantId, reactiveOpf, manager, amplIoInterface);
+        } else {
+            // create new variant to avoid modifications of the network
+            VariantManager variantManager = network.getVariantManager();
+            variantManager.cloneVariant(variantId, WITH_USER_INITIALIZATION_ID_VARIANT);
+            variantManager.setWorkingVariant(WITH_USER_INITIALIZATION_ID_VARIANT);
+
+            // initialize the optimization with given process
+            initializeVoltageBeforeOptimization(network, parameters);
+
+            // execute ampl code
+            runAsync = AmplModelRunner.runAsync(network, WITH_USER_INITIALIZATION_ID_VARIANT, reactiveOpf, manager, amplIoInterface);
         }
 
         return runAsync.thenApply(run -> {
-            network.getVariantManager().setWorkingVariant(variantId);
-            network.getVariantManager().removeVariant(WITH_DC_LOAD_FLOW_ID_VARIANT_SUFFIX);
+            if (parameters.getVoltageInitialization() != OpenReacParameters.OpenReacVoltageInitialization.PREVIOUS_VALUES) {
+                // remove the variant created to store dc load flow results
+                network.getVariantManager().setWorkingVariant(variantId);
+                network.getVariantManager().removeVariant(WITH_USER_INITIALIZATION_ID_VARIANT);
+            }
             OpenReacResult result = new OpenReacResult(run.isSuccess() && amplIoInterface.checkErrors() ? OpenReacStatus.OK : OpenReacStatus.NOT_OK, amplIoInterface, run.getIndicators());
             Reports.createShuntModificationsReporter(reportNode, network.getId(), amplIoInterface.getNetworkModifications().getShuntsWithDeltaDiscreteOptimalOverThreshold());
             return result;
@@ -170,7 +184,8 @@ public final class OpenReacRunner {
         parameters.checkIntegrity(network, Reports.createParameterIntegrityReporter(reportNode, network.getId()));
     }
 
-    private static void runDcLf(Network network, OpenReacParameters openReacParameters) {
+    private static void initializeVoltageBeforeOptimization(Network network, OpenReacParameters openReacParameters) {
+        // gsk to only distribute on generators
         network.getGeneratorStream()
                 .forEach(generator -> generator.newExtension(ActivePowerControlAdder.class)
                         .withParticipate(true)
@@ -179,32 +194,42 @@ public final class OpenReacRunner {
         // slack bus selection
         SlackBusSelector slackBusSelector = new MostMeshedSlackBusSelector();
 
-        // get lfNetwork to apply initialization on it
+        // get lfNetwork to apply voltage initialization
         LfNetwork lfNetwork = LfNetwork.load(network, new LfNetworkLoaderImpl(), slackBusSelector).get(0);
 
-        // full voltage initializer, to initialize voltage magnitudes and angles
+        // get initializer depending on user option
+        VoltageInitializer initializer;
         MatrixFactory matrixFactory = new SparseMatrixFactory();
-        FullVoltageInitializer initializer = new FullVoltageInitializer(
-                new VoltageMagnitudeInitializer(false, matrixFactory, openReacParameters.getLowImpedanceThreshold()),
-                new DcValueVoltageInitializer(new LfNetworkParameters().setSlackBusSelector(slackBusSelector),
-                        true,
-                        LoadFlowParameters.BalanceType.PROPORTIONAL_TO_GENERATION_PARTICIPATION_FACTOR,
-                        true,
-                        DcApproximationType.IGNORE_R,
-                        matrixFactory,
-                        1)); // FIXME : which number is optimal ?
+        switch (openReacParameters.getVoltageInitialization()) {
+            // uniform voltage initializer, for flat start voltage angles
+            case UNIFORM_VALUES -> initializer = new UniformValueVoltageInitializer();
+            // direct current initializer, to initialize voltage angles
+            case DC_VALUES -> initializer = new DcValueVoltageInitializer(new LfNetworkParameters().setSlackBusSelector(slackBusSelector),
+                    true,
+                                LoadFlowParameters.BalanceType.PROPORTIONAL_TO_GENERATION_PARTICIPATION_FACTOR,
+                                true,
+                                DcApproximationType.IGNORE_R,
+                                matrixFactory,
+                                1);
+            // full voltage initializer, to initialize voltage magnitudes and angles
+            case FULL_VOLTAGE -> initializer = new FullVoltageInitializer(
+                    new VoltageMagnitudeInitializer(false, matrixFactory, openReacParameters.getLowImpedanceThreshold()),
+                    new DcValueVoltageInitializer(new LfNetworkParameters().setSlackBusSelector(slackBusSelector),
+                            true,
+                            LoadFlowParameters.BalanceType.PROPORTIONAL_TO_GENERATION_PARTICIPATION_FACTOR,
+                            true,
+                            DcApproximationType.IGNORE_R,
+                            matrixFactory,
+                            1));
+            default -> throw new IllegalStateException("Unexpected value: " + openReacParameters.getVoltageInitialization());
+        }
 
-        // compute initialization
+        // initialize voltage values
         initializer.prepare(lfNetwork);
 
-        // update the state of the buses and of the generators to warm start AC optimization
+        // update the network with initialization
         LfNetworkStateUpdateParameters updateParameters = new LfNetworkStateUpdateParameters(false, false, true, false, false,
                 false, true, false, ReactivePowerDispatchMode.Q_EQUAL_PROPORTION, false, ReferenceBusSelectionMode.FIRST_SLACK, false);
         lfNetwork.updateState(updateParameters);
-        //        lfNetwork.getBuses().forEach(bus -> bus.updateState(updateParameters));
-//        lfNetwork.getBuses().stream()
-//                .flatMap(lfBus -> lfBus.getGenerators().stream())
-//                .filter(lfGenerator -> lfGenerator instanceof LfGeneratorImpl) // only active power of generators is optimized in OpenReac, not one of batteries and vsc
-//                .forEach(lfGenerator -> lfGenerator.updateState(updateParameters));
     }
 }

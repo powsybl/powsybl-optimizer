@@ -127,7 +127,14 @@ public class OpenReacParameters {
 
     private double shuntCompensatorActivationAlertThreshold;
 
-    private boolean dcLoadFlowBeforeOptimization = true;
+    private OpenReacVoltageInitialization voltageInitialization = OpenReacVoltageInitialization.PREVIOUS_VALUES;
+
+    public enum OpenReacVoltageInitialization {
+        PREVIOUS_VALUES,
+        UNIFORM_VALUES,
+        DC_VALUES,
+        FULL_VOLTAGE;
+    }
 
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.
@@ -550,12 +557,12 @@ public class OpenReacParameters {
         return this;
     }
 
-    public boolean isDcLoadFlowBeforeOptimization() {
-        return dcLoadFlowBeforeOptimization;
+    public OpenReacVoltageInitialization getVoltageInitialization() {
+        return voltageInitialization;
     }
 
-    public OpenReacParameters setDcLoadFlowBeforeOptimization(boolean dcLoadFlowBeforeOptimization) {
-        this.dcLoadFlowBeforeOptimization = dcLoadFlowBeforeOptimization;
+    public OpenReacParameters setVoltageInitialization(OpenReacVoltageInitialization voltageInitialization) {
+        this.voltageInitialization = Objects.requireNonNull(voltageInitialization);
         return this;
     }
 
