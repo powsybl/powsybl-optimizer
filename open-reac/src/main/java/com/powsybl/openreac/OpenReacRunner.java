@@ -15,15 +15,15 @@ import com.powsybl.computation.ComputationManager;
 import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VariantManager;
+import com.powsybl.iidm.network.extensions.ActivePowerControlAdder;
 import com.powsybl.loadflow.LoadFlowParameters;
-import com.powsybl.math.matrix.DenseMatrixFactory;
 import com.powsybl.math.matrix.MatrixFactory;
+import com.powsybl.math.matrix.SparseMatrixFactory;
 import com.powsybl.openloadflow.FullVoltageInitializer;
 import com.powsybl.openloadflow.ac.VoltageMagnitudeInitializer;
 import com.powsybl.openloadflow.dc.DcValueVoltageInitializer;
 import com.powsybl.openloadflow.dc.equations.DcApproximationType;
 import com.powsybl.openloadflow.network.*;
-import com.powsybl.openloadflow.network.impl.LfGeneratorImpl;
 import com.powsybl.openloadflow.network.impl.LfNetworkLoaderImpl;
 import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
@@ -171,17 +171,24 @@ public final class OpenReacRunner {
     }
 
     private static void runDcLf(Network network, OpenReacParameters openReacParameters) {
+        network.getGeneratorStream()
+                .forEach(generator -> generator.newExtension(ActivePowerControlAdder.class)
+                        .withParticipate(true)
+                        .withParticipationFactor(generator.getTargetP()));
+
         // slack bus selection
         SlackBusSelector slackBusSelector = new MostMeshedSlackBusSelector();
+
+        // get lfNetwork to apply initialization on it
         LfNetwork lfNetwork = LfNetwork.load(network, new LfNetworkLoaderImpl(), slackBusSelector).get(0);
-        MatrixFactory matrixFactory = new DenseMatrixFactory();
 
         // full voltage initializer, to initialize voltage magnitudes and angles
+        MatrixFactory matrixFactory = new SparseMatrixFactory();
         FullVoltageInitializer initializer = new FullVoltageInitializer(
                 new VoltageMagnitudeInitializer(false, matrixFactory, openReacParameters.getLowImpedanceThreshold()),
                 new DcValueVoltageInitializer(new LfNetworkParameters().setSlackBusSelector(slackBusSelector),
                         true,
-                        LoadFlowParameters.BalanceType.PROPORTIONAL_TO_GENERATION_P,
+                        LoadFlowParameters.BalanceType.PROPORTIONAL_TO_GENERATION_PARTICIPATION_FACTOR,
                         true,
                         DcApproximationType.IGNORE_R,
                         matrixFactory,
@@ -193,10 +200,11 @@ public final class OpenReacRunner {
         // update the state of the buses and of the generators to warm start AC optimization
         LfNetworkStateUpdateParameters updateParameters = new LfNetworkStateUpdateParameters(false, false, true, false, false,
                 false, true, false, ReactivePowerDispatchMode.Q_EQUAL_PROPORTION, false, ReferenceBusSelectionMode.FIRST_SLACK, false);
-        lfNetwork.getBuses().forEach(bus -> bus.updateState(updateParameters));
-        lfNetwork.getBuses().stream()
-                .flatMap(lfBus -> lfBus.getGenerators().stream())
-                .filter(lfGenerator -> lfGenerator instanceof LfGeneratorImpl) // only active power of generators is optimized in OpenReac, not one of batteries and vsc
-                .forEach(lfGenerator -> lfGenerator.updateState(updateParameters));
+        lfNetwork.updateState(updateParameters);
+        //        lfNetwork.getBuses().forEach(bus -> bus.updateState(updateParameters));
+//        lfNetwork.getBuses().stream()
+//                .flatMap(lfBus -> lfBus.getGenerators().stream())
+//                .filter(lfGenerator -> lfGenerator instanceof LfGeneratorImpl) // only active power of generators is optimized in OpenReac, not one of batteries and vsc
+//                .forEach(lfGenerator -> lfGenerator.updateState(updateParameters));
     }
 }
