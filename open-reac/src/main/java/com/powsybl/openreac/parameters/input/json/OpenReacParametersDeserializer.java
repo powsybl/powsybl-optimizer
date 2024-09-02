@@ -151,6 +151,10 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                     parser.nextToken();
                     parameters.setShuntVariableScalingFactor(parser.readValueAs(Double.class));
                 }
+                case "voltageInitialization" -> {
+                    parser.nextToken();
+                    parameters.setVoltageInitialization(OpenReacParameters.OpenReacVoltageInitialization.valueOf(parser.getText()));
+                }
                 default -> throw new IllegalStateException("Unexpected field: " + parser.getCurrentName());
             }
         }
