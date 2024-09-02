@@ -25,7 +25,6 @@ import com.powsybl.openloadflow.dc.DcValueVoltageInitializer;
 import com.powsybl.openloadflow.dc.equations.DcApproximationType;
 import com.powsybl.openloadflow.network.*;
 import com.powsybl.openloadflow.network.impl.LfNetworkLoaderImpl;
-import com.powsybl.openloadflow.network.util.UniformValueVoltageInitializer;
 import com.powsybl.openloadflow.network.util.VoltageInitializer;
 import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
@@ -184,7 +183,7 @@ public final class OpenReacRunner {
         parameters.checkIntegrity(network, Reports.createParameterIntegrityReporter(reportNode, network.getId()));
     }
 
-    private static void initializeVoltageBeforeOptimization(Network network, OpenReacParameters openReacParameters) {
+    public static void initializeVoltageBeforeOptimization(Network network, OpenReacParameters openReacParameters) {
         // gsk to only distribute on generators
         network.getGeneratorStream()
                 .forEach(generator -> generator.newExtension(ActivePowerControlAdder.class)
@@ -198,34 +197,43 @@ public final class OpenReacRunner {
         LfNetwork lfNetwork = LfNetwork.load(network, new LfNetworkLoaderImpl(), slackBusSelector).get(0);
 
         // get initializer depending on user option
-        VoltageInitializer initializer;
         MatrixFactory matrixFactory = new SparseMatrixFactory();
         switch (openReacParameters.getVoltageInitialization()) {
             // uniform voltage initializer, for flat start voltage angles
-            case UNIFORM_VALUES -> initializer = new UniformValueVoltageInitializer();
+            case UNIFORM_VALUES -> {
+                for (LfBus lfBus : lfNetwork.getBuses()) {
+                    lfBus.setV(1);
+                    lfBus.setAngle(0);
+                }
+            }
             // direct current initializer, to initialize voltage angles
-            case DC_VALUES -> initializer = new DcValueVoltageInitializer(new LfNetworkParameters().setSlackBusSelector(slackBusSelector),
-                    true,
+            case DC_VALUES -> {
+                VoltageInitializer initializer = new DcValueVoltageInitializer(new LfNetworkParameters().setSlackBusSelector(slackBusSelector),
+                        true,
+                        LoadFlowParameters.BalanceType.PROPORTIONAL_TO_GENERATION_PARTICIPATION_FACTOR,
+                        true,
+                        DcApproximationType.IGNORE_R,
+                        matrixFactory,
+                        1);
+                initializer.prepare(lfNetwork);
+            }
+            // full voltage initializer, to initialize voltage magnitudes and angles
+            case FULL_VOLTAGE -> {
+                VoltageInitializer initializer = new FullVoltageInitializer(
+                        new VoltageMagnitudeInitializer(false, matrixFactory, openReacParameters.getLowImpedanceThreshold()),
+                        new DcValueVoltageInitializer(new LfNetworkParameters().setSlackBusSelector(slackBusSelector),
+                                true,
                                 LoadFlowParameters.BalanceType.PROPORTIONAL_TO_GENERATION_PARTICIPATION_FACTOR,
                                 true,
                                 DcApproximationType.IGNORE_R,
                                 matrixFactory,
-                                1);
-            // full voltage initializer, to initialize voltage magnitudes and angles
-            case FULL_VOLTAGE -> initializer = new FullVoltageInitializer(
-                    new VoltageMagnitudeInitializer(false, matrixFactory, openReacParameters.getLowImpedanceThreshold()),
-                    new DcValueVoltageInitializer(new LfNetworkParameters().setSlackBusSelector(slackBusSelector),
-                            true,
-                            LoadFlowParameters.BalanceType.PROPORTIONAL_TO_GENERATION_PARTICIPATION_FACTOR,
-                            true,
-                            DcApproximationType.IGNORE_R,
-                            matrixFactory,
-                            1));
+                                1));
+                initializer.prepare(lfNetwork);
+            }
             default -> throw new IllegalStateException("Unexpected value: " + openReacParameters.getVoltageInitialization());
         }
 
         // initialize voltage values
-        initializer.prepare(lfNetwork);
 
         // update the network with initialization
         LfNetworkStateUpdateParameters updateParameters = new LfNetworkStateUpdateParameters(false, false, true, false, false,
