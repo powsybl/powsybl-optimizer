@@ -151,10 +151,6 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                     parser.nextToken();
                     parameters.setShuntVariableScalingFactor(parser.readValueAs(Double.class));
                 }
-                case "dcLoadFlowBeforeOptimization" -> {
-                    parser.nextToken();
-                    parameters.setDcLoadFlowBeforeOptimization(parser.readValueAs(Boolean.class));
-                }
                 default -> throw new IllegalStateException("Unexpected field: " + parser.getCurrentName());
             }
         }

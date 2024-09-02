@@ -127,7 +127,7 @@ public class OpenReacParameters {
 
     private double shuntCompensatorActivationAlertThreshold;
 
-    private OpenReacVoltageInitialization voltageInitialization = OpenReacVoltageInitialization.PREVIOUS_VALUES;
+    private OpenReacVoltageInitialization voltageInitialization = OpenReacVoltageInitialization.FULL_VOLTAGE;
 
     public enum OpenReacVoltageInitialization {
         PREVIOUS_VALUES,

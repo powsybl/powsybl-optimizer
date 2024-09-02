@@ -96,7 +96,6 @@ class OpenReacJsonModuleTest {
         parameters.setDefaultConstraintScalingFactor(0.888);
         parameters.setReactiveSlackVariableScalingFactor(1e-2);
         parameters.setTwoWindingTransformerRatioVariableScalingFactor(0.005);
-        parameters.setDcLoadFlowBeforeOptimization(false);
 
         String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(parameters);
         ComparisonUtils.assertTxtEquals(Objects.requireNonNull(getClass().getResourceAsStream("/parametersThresholds.json")), json);
@@ -123,6 +122,5 @@ class OpenReacJsonModuleTest {
         assertEquals(0.888, parameters2.getDefaultConstraintScalingFactor());
         assertEquals(1e-2, parameters2.getReactiveSlackVariableScalingFactor());
         assertEquals(0.005, parameters2.getTwoWindingTransformerRatioVariableScalingFactor());
-        assertEquals(false, parameters2.isDcLoadFlowBeforeOptimization());
     }
 }

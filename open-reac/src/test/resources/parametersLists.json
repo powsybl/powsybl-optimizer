@@ -45,6 +45,5 @@
   "defaultConstraintScalingFactor" : 1.0,
   "reactiveSlackVariableScalingFactor" : 0.1,
   "twoWindingTransformerRatioVariableScalingFactor" : 0.001,
-  "shuntVariableScalingFactor" : 0.1,
-  "dcLoadFlowBeforeOptimization" : true
+  "shuntVariableScalingFactor" : 0.1
 }
