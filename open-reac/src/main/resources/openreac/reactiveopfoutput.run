@@ -314,15 +314,15 @@ printf "%s %.1f\n","sum_batteries_pmax",sum{(b,k) in BATTERYCC} battery_Pmax[1,b
 printf "%s %.1f\n","sum_batteries_pmin",sum{(b,k) in BATTERYCC} battery_Pmin[1,b,k] > (fileOut);
 
 printf "\n" > (fileOut);
-printf "max_teta_dc %.2f\n",max({n in BUSCC} teta_dc[n]) > (fileOut);
+#printf "max_teta_dc %.2f\n",max({n in BUSCC} teta_dc[n]) > (fileOut);
 printf "max_teta_ac %.2f\n",max({n in BUSCC} teta[n]) > (fileOut);
 printf "teta_max %.2f\n",teta_max > (fileOut);
-printf "min_teta_dc %.2f\n",min({n in BUSCC} teta_dc[n]) > (fileOut);
+#printf "min_teta_dc %.2f\n",min({n in BUSCC} teta_dc[n]) > (fileOut);
 printf "min_teta_ac %.2f\n",min({n in BUSCC} teta[n]) > (fileOut);
 printf "teta_min %.2f\n",teta_min > (fileOut);
-printf "max_delta_teta_dc %2f\n",max({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[n])) > (fileOut);
+#printf "max_delta_teta_dc %2f\n",max({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[n])) > (fileOut);
 printf "max_delta_teta_ac %2f\n",max({(qq,m,n) in BRANCHCC} (teta[m]-teta[n])) > (fileOut);
-printf "min_delta_teta_dc %2f\n",min({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[n])) > (fileOut);
+#printf "min_delta_teta_dc %2f\n",min({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[n])) > (fileOut);
 printf "min_delta_teta_ac %2f\n",min({(qq,m,n) in BRANCHCC} (teta[m]-teta[n])) > (fileOut);
 
 printf "\n" > (fileOut);
