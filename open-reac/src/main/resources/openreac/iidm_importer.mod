@@ -70,7 +70,7 @@ check maximal_voltage_upper_bound > minimal_voltage_lower_bound;
 set BUS dimen 2 ; # [variant, bus]
 param bus_substation{BUS} integer;
 param bus_CC        {BUS} integer; # num of connex component. Computation only in CC number 0 (=main connex component)
-param bus_SC        {BUS} integer; # num of synchronous component. Computation only in CS number 0 (=main synchronous component)
+param bus_SC        {BUS} integer; # num of synchronous component. Computation only in SC number 0 (=main synchronous component)
 param bus_V0        {BUS};
 param bus_angl0     {BUS};
 param bus_injA      {BUS};
@@ -208,7 +208,7 @@ param svc_bmax        {SVC}; # Susceptance B in p.u.: compute B*100*V^2 to get M
 param svc_vregul      {SVC} symbolic; # true if SVC is in voltage regulation mode
 param svc_vregul_bus  {SVC} integer; # Bus regulated by SVC, if it is in voltage regulation mode
 param svc_targetV     {SVC}; # Voltage target for voltage regulation mode
-param svc_targetQ     {SVC}; 
+param svc_targetQ     {SVC};
 param svc_fault       {SVC};
 param svc_curative    {SVC};
 param svc_id          {SVC} symbolic;
