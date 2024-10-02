@@ -70,10 +70,12 @@ check maximal_voltage_upper_bound > minimal_voltage_lower_bound;
 set BUS dimen 2 ; # [variant, bus]
 param bus_substation{BUS} integer;
 param bus_CC        {BUS} integer; # num of connex component. Computation only in CC number 0 (=main connex component)
+param bus_SC        {BUS} integer; # num of synchronous component. Computation only in SC number 0 (=main synchronous component)
 param bus_V0        {BUS};
 param bus_angl0     {BUS};
 param bus_injA      {BUS};
 param bus_injR      {BUS};
+param bus_slack     {BUS} symbolic; # Is bus a slack bus
 param bus_fault     {BUS};
 param bus_curative  {BUS};
 param bus_id        {BUS} symbolic;
@@ -95,24 +97,25 @@ param null_phase_bus;
 set UNIT dimen 3; # [variant, unit, bus]
 param unit_potentialbus{UNIT} integer;
 param unit_substation  {UNIT} integer;
-param unit_Pmin    {UNIT};
-param unit_Pmax    {UNIT};
-param unit_qP      {UNIT};
-param unit_qp0     {UNIT};
-param unit_qp      {UNIT};
-param unit_QP      {UNIT};
-param unit_Qp0     {UNIT};
-param unit_Qp      {UNIT};
-param unit_vregul  {UNIT} symbolic; # Does unit do voltage regulation, or PQ bus?
-param unit_Vc      {UNIT}; # Voltage set point (in case of voltage regulation)
-param unit_Pc      {UNIT}; # Active  power set point
-param unit_Qc      {UNIT}; # Rective power set point (in case no voltage regulation)
-param unit_fault   {UNIT};
-param unit_curative{UNIT};
-param unit_id      {UNIT} symbolic;
-param unit_name    {UNIT} symbolic; # description
-param unit_P0      {UNIT}; # Initial value of P (if relevant)
-param unit_Q0      {UNIT}; # Initial value of Q (if relevant)
+param unit_Pmin        {UNIT};
+param unit_Pmax        {UNIT};
+param unit_qP          {UNIT};
+param unit_qp0         {UNIT};
+param unit_qp          {UNIT};
+param unit_QP          {UNIT};
+param unit_Qp0         {UNIT};
+param unit_Qp          {UNIT};
+param unit_vregul      {UNIT} symbolic; # Does unit do voltage regulation, or PQ bus?
+param unit_vregul_bus  {UNIT} integer; # Bus regulated by unit, if it does voltage regulation
+param unit_Vc          {UNIT}; # Voltage set point (in case of voltage regulation)
+param unit_Pc          {UNIT}; # Active  power set point
+param unit_Qc          {UNIT}; # Rective power set point (in case no voltage regulation)
+param unit_fault       {UNIT};
+param unit_curative    {UNIT};
+param unit_id          {UNIT} symbolic;
+param unit_name        {UNIT} symbolic; # description
+param unit_P0          {UNIT}; # Initial value of P (if relevant)
+param unit_Q0          {UNIT}; # Initial value of Q (if relevant)
 
 #
 # Consistency
@@ -120,6 +123,7 @@ param unit_Q0      {UNIT}; # Initial value of Q (if relevant)
 check {(t,g,n) in UNIT}: t in TIME;
 check {(t,g,n) in UNIT}: (t,n) in BUS or n==-1;
 check {(t,g,n) in UNIT}: (t,unit_substation[t,g,n]) in SUBSTATIONS;
+check {(t,g,n) in UNIT}: (t,unit_vregul_bus[t,g,n]) in BUS or unit_vregul_bus[t,g,n] == -1;
 check {(t,g,n) in UNIT}: unit_Pmax[t,g,n] >= -Pnull;
 check {(t,g,n) in UNIT}: unit_Pmax[t,g,n] >= unit_Pmin[t,g,n];
 # Checks below are useless since values will be corrected for units in UNITON
@@ -202,6 +206,7 @@ param svc_substation  {SVC} integer;
 param svc_bmin        {SVC}; # Susceptance B in p.u.: compute B*100*V^2 to get MVAr
 param svc_bmax        {SVC}; # Susceptance B in p.u.: compute B*100*V^2 to get MVAr
 param svc_vregul      {SVC} symbolic; # true if SVC is in voltage regulation mode
+param svc_vregul_bus  {SVC} integer; # Bus regulated by SVC, if it is in voltage regulation mode
 param svc_targetV     {SVC}; # Voltage target for voltage regulation mode
 param svc_targetQ     {SVC};
 param svc_fault       {SVC};
@@ -214,6 +219,7 @@ param svc_Q0          {SVC}; # Fixed value to be used if SVC is not in voltage r
 # Consistency checks
 check {(t,svc,n) in SVC}: (t,n) in BUS or n==-1;
 check {(t,svc,n) in SVC}: (t,svc_substation[t,svc,n]) in SUBSTATIONS;
+check {(t,svc,n) in SVC}: (t,svc_vregul_bus[t,svc,n]) in BUS or svc_vregul_bus[t,svc,n] == -1;
 
 
 
@@ -259,7 +265,10 @@ check {(t,b,n) in BATTERY} : abs(battery_q0[t,b,n]) <= PQmax;
 
 set TAPS dimen 3;  # [variant, num, tap]
 param tap_ratio    {TAPS};
+param tap_r        {TAPS};
 param tap_x        {TAPS};
+param tap_g        {TAPS};
+param tap_b        {TAPS};
 param tap_angle    {TAPS};
 param tap_fault    {TAPS};
 param tap_curative {TAPS};
