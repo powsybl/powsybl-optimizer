@@ -50,53 +50,14 @@ if card(SLACK_BUSES) > 0 then {
 
 }
 
-###############################################################################
-# Solve PROBLEM_CCOMP
-###############################################################################
-
-let PROBLEM_CCOMP := {1};
-let tempstr := ctime();
-printf{LOG_KNITRO} "\n######################################################################\n";
-printf{LOG_KNITRO} "** CCcomp solve: start (%s)\n\n",tempstr;
-
-option presolve 0;
-option knitro_options ("outlev=3");;
-
-# TODO : remove suffix printing
-if (log_level_knitro <= 1) then {
-  solve cccomputation_objective > (nullDevice);
-} else {
-  solve cccomputation_objective;
-}
-
-printf{LOG_KNITRO} "\n** CCcomp solve: end   (%s -> %s)\n",tempstr,ctime();
-printf{LOG_KNITRO} "######################################################################\n\n";
-
 
 ###############################################################################
-# Analysis of solve_result_num
-###############################################################################
-
-if solve_result_num > 103 or card({n in BUS2: teta_ccomputation[n].val > 0.01 and teta_ccomputation[n].val < 0.99})>0
-then {
-  # First return codes of knitro :
-  # See https://www.artelys.com/docs/knitro/3_referenceManual/knitroamplReference.html#return-codes
-  #   0 Locally optimal or satisfactory solution.
-  let errorMessage := "Optimization for connex component computation failed";
-  let final_status := "NOK";
-  include reactiveopfexit.run;
-}
-option presolve 10;
-
-
-###############################################################################
-# Definition of BUSCC below was the purpose of this optimization
+# A few information
 ###############################################################################
 
 printf{LOG_INFO} "\n######################################################################\n";
 printf{LOG_INFO} "** CCcomp results\n";
 
-let BUSCC := {n in BUS2: teta_ccomputation[n].val <= 0.01};
 for{n in BUS2 diff BUSCC}
   printf{LOG_WARNING} "Bus %Q in substation %Q (Vnomi=%.2fkV, country=%Q) is out of main AC CC\n",
     bus_id[1,n], substation_id[1,bus_substation[1,n]],
@@ -105,11 +66,6 @@ printf{LOG_INFO} "Nb of busses in AC+DC CC: %i\n",card(BUS2);
 printf{LOG_INFO} "Nb of busses in CC %Q: %i\n",bus_id[1,null_phase_bus],card(BUSCC);
 printf{LOG_INFO} "Nb of busses in other CCs: %Q\n",card(BUS2)-card(BUSCC);
 printf "\n";
-
-
-###############################################################################
-# A few information
-###############################################################################
 
 if 1 in LOG_INFO then {
   display
@@ -142,7 +98,7 @@ for {(l,n) in LCCCONVON}
 printf{LOG_INFO} "Sum of HVDC conv.  H: %.0f MW\n", temp3;
 printf{LOG_INFO} "Sum of loads       C: %.0f MW\n", temp1;
 printf{LOG_INFO} "Sum of generations P: %.0f MW\n", temp2;
-printf{LOG_INFO} "  (including batteries for %.1f MW\n", sum{(b,n) in BATTERYCC} battery_p0[1,b,n];
+printf{LOG_INFO} "  (including batteries for %.1f MW)\n", sum{(b,n) in BATTERYCC} battery_p0[1,b,n];
 printf{LOG_INFO} "Balance    (P-C-H)/C: %.2f %%    (global_initial_losses_ratio=%f)\n\n", (temp2-temp1-temp3)/temp1*100,global_initial_losses_ratio;
 
 # Branches with low current limits (but keep in mind they are not used; this is just for information)
@@ -155,6 +111,3 @@ for {(qq,m,n) in BRANCHCC : Fmax[qq,m,n] <= temp1 * 1.5}
 for {(t,n) in BUS: substation_Vnomi[1,bus_substation[1,n]] < epsilon_nominal_voltage}
   printf{LOG_WARNING} "Warning: bus %Q in substation %Q has nominal voltage %.2fkV < %QkV -> bus is ignored\n",
   bus_id[1,n], substation_id[1,bus_substation[1,n]], substation_Vnomi[1,bus_substation[1,n]], epsilon_nominal_voltage;
-
-# desactivate optimization problem
-let PROBLEM_CCOMP := { };
