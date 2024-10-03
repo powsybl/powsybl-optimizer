@@ -7,13 +7,21 @@
 package com.powsybl.openreac;
 
 import com.powsybl.ampl.converter.AmplExportConfig;
+import com.powsybl.ampl.converter.util.NetworkUtil;
 import com.powsybl.ampl.executor.AmplModel;
 import com.powsybl.ampl.executor.AmplModelRunner;
 import com.powsybl.ampl.executor.AmplResults;
 import com.powsybl.commons.report.ReportNode;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.computation.local.LocalComputationManager;
+import com.powsybl.iidm.network.Bus;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.Terminal;
+import com.powsybl.iidm.network.extensions.SlackTerminal;
+import com.powsybl.openloadflow.network.LfNetwork;
+import com.powsybl.openloadflow.network.MostMeshedSlackBusSelector;
+import com.powsybl.openloadflow.network.SlackBusSelector;
+import com.powsybl.openloadflow.network.impl.LfNetworkLoaderImpl;
 import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
@@ -74,6 +82,7 @@ public final class OpenReacRunner {
         checkParameters(network, variantId, parameters, config, manager, reportNode);
         AmplModel reactiveOpf = OpenReacModel.buildModel();
         OpenReacAmplIOFiles amplIoInterface = new OpenReacAmplIOFiles(parameters, amplExportConfig, network, config.isDebug(), Reports.createOpenReacReporter(reportNode, network.getId(), parameters.getObjective()));
+        prepareAMPLExport(network);
         AmplResults run = AmplModelRunner.run(network, variantId, reactiveOpf, manager, amplIoInterface);
         OpenReacResult result = new OpenReacResult(run.isSuccess() && amplIoInterface.checkErrors() ? OpenReacStatus.OK : OpenReacStatus.NOT_OK, amplIoInterface, run.getIndicators());
         Reports.createShuntModificationsReporter(reportNode, network.getId(), amplIoInterface.getNetworkModifications().getShuntsWithDeltaDiscreteOptimalOverThreshold());
@@ -107,6 +116,7 @@ public final class OpenReacRunner {
         checkParameters(network, variantId, parameters, config, manager, reportNode);
         AmplModel reactiveOpf = OpenReacModel.buildModel();
         OpenReacAmplIOFiles amplIoInterface = new OpenReacAmplIOFiles(parameters, amplExportConfig, network, config.isDebug(), Reports.createOpenReacReporter(reportNode, network.getId(), parameters.getObjective()));
+        prepareAMPLExport(network);
         CompletableFuture<AmplResults> runAsync = AmplModelRunner.runAsync(network, variantId, reactiveOpf, manager, amplIoInterface);
         return runAsync.thenApply(run -> {
             OpenReacResult result = new OpenReacResult(run.isSuccess() && amplIoInterface.checkErrors() ? OpenReacStatus.OK : OpenReacStatus.NOT_OK, amplIoInterface, run.getIndicators());
@@ -123,5 +133,29 @@ public final class OpenReacRunner {
         Objects.requireNonNull(manager);
         Objects.requireNonNull(reportNode);
         parameters.checkIntegrity(network, Reports.createParameterIntegrityReporter(reportNode, network.getId()));
+    }
+
+    private static void prepareAMPLExport(Network network) {
+        // verify the network has a defined slack bus in the export...
+        if (!hasSlackBus(network)) {
+            // slack bus selector to chose bus with most neighbors
+            SlackBusSelector slackBusSelector = new MostMeshedSlackBusSelector();
+            // get lfNetwork to compute reference bus
+            LfNetwork lfNetwork = LfNetwork.load(network, new LfNetworkLoaderImpl(), slackBusSelector).get(0);
+            // set reference bus as slack bus in the exporter
+            String referenceBusId = lfNetwork.getReferenceBus().getId();
+            network.getBusView().getBus(referenceBusId).getVoltageLevel()
+                    .getExtension(SlackTerminal.class)
+                    .setTerminal(network.getBusView().getBus(referenceBusId).getVoltageLevel().getExtension(Terminal.class));
+        }
+    }
+
+    private static boolean hasSlackBus(Network network) {
+        for (Bus bus : network.getBusView().getBuses()) {
+            if (NetworkUtil.isSlackBus(bus)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
