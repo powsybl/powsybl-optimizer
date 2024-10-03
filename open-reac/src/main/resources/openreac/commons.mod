@@ -45,6 +45,7 @@ set BUS2:= setof {(1,n) in BUS:
   and substation_Vnomi[1,bus_substation[1,n]] >= epsilon_nominal_voltage
   } n;
 set BRANCH2:= setof {(1,qq,m,n) in BRANCH: m in BUS2 and n in BUS2} (qq,m,n);
+set SLACK_BUSES := setof {n in BUS2 : bus_slack[1,n] == "true"} n;
 
 set BUSCC dimen 1 default {};
 set BRANCHCC  := {(qq,m,n) in BRANCH2: m in BUSCC and n in BUSCC};

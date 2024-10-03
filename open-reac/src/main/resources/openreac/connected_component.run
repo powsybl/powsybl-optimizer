@@ -24,24 +24,31 @@
 # of generation proportionally, to ensure global balance generation=losses+load
 # So this "slack node" is used only for zero phase constraint
 # This reference bus is also used to choose on which connect component computation si performed
-printf{LOG_INFO} "\nComputation of bus with largest number of branches connected, in order to fix phase to 0 and to choose on which connex component reacive OPF will run\n";
-let temp1 := min(300,max{n in BUS2} substation_Vnomi[1,bus_substation[1,n]]);
-let null_phase_bus := min{n in BUS2} n;
-let tempo := 0;
-for {n in BUS2 : substation_Vnomi[1,bus_substation[1,n]] >= temp1 * 0.9}
-  let tempo := max (tempo, card({(qq,mm,n) in BRANCH2} union {(qq,n,nn) in BRANCH2}));
-for {n in BUS2 : substation_Vnomi[1,bus_substation[1,n]] >= temp1 * 0.9 && card({(qq,mm,n) in BRANCH2} union {(qq,n,nn) in BRANCH2}) == tempo}
-  let null_phase_bus := n;
-if ( tempo > 0 ) then
-  printf{LOG_INFO} "Bus %QkV with most branches: %Q in substation %s/%s with %Q connected branches\n",
-  substation_Vnomi[1,bus_substation[1,null_phase_bus]],
-  null_phase_bus,
-  substation_id[1,bus_substation[1,null_phase_bus]],
-  substation_description[1,bus_substation[1,null_phase_bus]],
-  tempo;
-if ( tempo == 0 ) then
-  printf{LOG_WARNING} "Bus with most branches: not found. Take first bus (=%Q) for phase=0 constraint\n",null_phase_bus;
 
+if card(SLACK_BUSES) > 0 then {
+  let null_phase_bus := min{n in SLACK_BUSES} n; # for now, take the slack bus with min identifier
+  printf{LOG_WARNING} "\nSlack bus %s specified in ampl_network_buses is chosen for phase=0 constraint\n", null_phase_bus;
+} else {
+  printf{LOG_WARNING} "\nWarning: No slack bus is specified in the file ampl_network_buses.txt";
+  printf{LOG_INFO} "\nComputation of bus with largest number of branches connected is used as fallback, in order to fix phase to 0 in reactive OPF optimization\n";
+  let temp1 := min(300,max{n in BUS2} substation_Vnomi[1,bus_substation[1,n]]);
+  let null_phase_bus := min{n in BUS2} n;
+  let tempo := 0;
+  for {n in BUS2 : substation_Vnomi[1,bus_substation[1,n]] >= temp1 * 0.9}
+    let tempo := max (tempo, card({(qq,mm,n) in BRANCH2} union {(qq,n,nn) in BRANCH2}));
+  for {n in BUS2 : substation_Vnomi[1,bus_substation[1,n]] >= temp1 * 0.9 && card({(qq,mm,n) in BRANCH2} union {(qq,n,nn) in BRANCH2}) == tempo}
+    let null_phase_bus := n;
+  if ( tempo > 0 ) then
+    printf{LOG_INFO} "Bus %QkV with most branches: %Q in substation %s/%s with %Q connected branches\n",
+    substation_Vnomi[1,bus_substation[1,null_phase_bus]],
+    null_phase_bus,
+    substation_id[1,bus_substation[1,null_phase_bus]],
+    substation_description[1,bus_substation[1,null_phase_bus]],
+    tempo;
+  if ( tempo == 0 ) then
+    printf{LOG_WARNING} "Bus with most branches: not found. Take first bus (=%Q) for phase=0 constraint\n",null_phase_bus;
+
+}
 
 ###############################################################################
 # Solve PROBLEM_CCOMP
