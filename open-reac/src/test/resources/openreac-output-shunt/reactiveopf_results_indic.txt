@@ -1,18 +1,18 @@
 final_status OK
 dcopf_status OK
 
-ctime_start 'Thu Jun 20 14:41:11 2024'
+ctime_start 'Mon Oct 07 15:38:05 2024'
 last_solve_result_num 0
 nb_iter_last 35
 nb_iter_total 35
-_ampl_elapsed_time 0.047000
-_total_solve_time 0.031250
+_ampl_elapsed_time 0.172000
+_total_solve_time 0.046875
 total_time 0
 
 operatingSystem windows
 OS 'Windows_NT'
 COMPUTERNAME 'ARTELYS-PC253'
-directory 'C:\Users\parvy\AppData\Local\Temp\ampl_10955859460968685093'
+directory 'C:\Users\parvy\AppData\Local\Temp\ampl_14267349388051094683'
 
 log_level_ampl INFO
 log_level_knitro 2
@@ -41,9 +41,9 @@ shunt_variable_scaling_factor 0.100000
 
 nb_substations 3
 nb_bus_in_data_file 3
-nb_bus_in_ACDC_CC 3
-nb_bus_in_AC_CC 3
-nb_bus_in_ACDC_but_out_AC_CC 0
+nb_bus_in_main_CC 3
+nb_bus_in_main_SC 3
+nb_bus_in_main_CC_but_out_main_SC 0
 nb_bus_with_voltage_value 0
 nb_bus_with_reactive_slacks 3
 nb_bus_without_reactive_slacks 0

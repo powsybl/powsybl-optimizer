@@ -1,18 +1,18 @@
 final_status OK
 dcopf_status OK
 
-ctime_start 'Thu Jun 20 14:34:11 2024'
+ctime_start 'Mon Oct 07 15:38:08 2024'
 last_solve_result_num 0
-nb_iter_last 6
-nb_iter_total 6
-_ampl_elapsed_time 0.032000
-_total_solve_time 0.000000
+nb_iter_last 5
+nb_iter_total 5
+_ampl_elapsed_time 0.235000
+_total_solve_time 0.015625
 total_time 0
 
 operatingSystem windows
 OS 'Windows_NT'
 COMPUTERNAME 'ARTELYS-PC253'
-directory 'C:\Users\parvy\AppData\Local\Temp\ampl_15080248147598462242'
+directory 'C:\Users\parvy\AppData\Local\Temp\ampl_16429938038117167076'
 
 log_level_ampl INFO
 log_level_knitro 2
@@ -41,9 +41,9 @@ shunt_variable_scaling_factor 0.100000
 
 nb_substations 14
 nb_bus_in_data_file 14
-nb_bus_in_ACDC_CC 14
-nb_bus_in_AC_CC 14
-nb_bus_in_ACDC_but_out_AC_CC 0
+nb_bus_in_main_CC 14
+nb_bus_in_main_SC 14
+nb_bus_in_main_CC_but_out_main_SC 0
 nb_bus_with_voltage_value 14
 nb_bus_with_reactive_slacks 14
 nb_bus_without_reactive_slacks 0
@@ -75,16 +75,16 @@ nb_batteries 0
 sum_batteries_pmax 0.0
 sum_batteries_pmin 0.0
 
-max_teta_dc 0.19
-max_teta_ac 0.17
-teta_max 3.19
-min_teta_dc -0.12
-min_teta_ac -0.11
-teta_min -3.12
-max_delta_teta_dc 0.159330
-max_delta_teta_ac 0.140559
-min_delta_teta_dc -0.041368
-min_delta_teta_ac -0.041533
+max_teta_dc 0.00
+max_teta_ac 0.00
+teta_max 3.00
+min_teta_dc -0.30
+min_teta_ac -0.14
+teta_min -3.30
+max_delta_teta_dc 0.159381
+max_delta_teta_ac 0.076647
+min_delta_teta_dc -0.041401
+min_delta_teta_ac -0.018540
 
 nb_reactive_slacks 0
 nb_slacks_condensator 0
