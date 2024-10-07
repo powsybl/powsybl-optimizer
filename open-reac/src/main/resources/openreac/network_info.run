@@ -17,26 +17,26 @@
 
 ###############################################################################
 #
-# Computation of "slack bus" or reference bus
+# Fallback computation of "slack bus" or reference bus if absent in provided data
 #
 ###############################################################################
 # This is not really a slack bus since this reactive OPF will change values
 # of generation proportionally, to ensure global balance generation=losses+load
 # So this "slack node" is used only for zero phase constraint
-# This reference bus is also used to choose on which connect component computation si performed
 
 if card(SLACK_BUSES) > 0 then {
   let null_phase_bus := min{n in SLACK_BUSES} n; # for now, take the slack bus with min identifier
   printf{LOG_WARNING} "\nSlack bus %s specified in ampl_network_buses is chosen for phase=0 constraint\n", null_phase_bus;
+# if no slack bus is specified in the provided data, compute one 
 } else {
   printf{LOG_WARNING} "\nWarning: No slack bus is specified in the file ampl_network_buses.txt";
-  printf{LOG_INFO} "\nComputation of bus with largest number of branches connected is used as fallback, in order to fix phase to 0 in reactive OPF optimization\n";
-  let temp1 := min(300,max{n in BUS2} substation_Vnomi[1,bus_substation[1,n]]);
-  let null_phase_bus := min{n in BUS2} n;
+  printf{LOG_INFO} "\nComputation of bus with largest number of branches connected and in main SC is used as fallback, in order to fix phase to 0 in reactive OPF optimization\n";
+  let temp1 := min(300,max{n in BUSCC} substation_Vnomi[1,bus_substation[1,n]]);
+  let null_phase_bus := min{n in BUSCC} n;
   let tempo := 0;
-  for {n in BUS2 : substation_Vnomi[1,bus_substation[1,n]] >= temp1 * 0.9}
+  for {n in BUSCC : substation_Vnomi[1,bus_substation[1,n]] >= temp1 * 0.9}
     let tempo := max (tempo, card({(qq,mm,n) in BRANCH2} union {(qq,n,nn) in BRANCH2}));
-  for {n in BUS2 : substation_Vnomi[1,bus_substation[1,n]] >= temp1 * 0.9 && card({(qq,mm,n) in BRANCH2} union {(qq,n,nn) in BRANCH2}) == tempo}
+  for {n in BUSCC : substation_Vnomi[1,bus_substation[1,n]] >= temp1 * 0.9 && card({(qq,mm,n) in BRANCH2} union {(qq,n,nn) in BRANCH2}) == tempo}
     let null_phase_bus := n;
   if ( tempo > 0 ) then
     printf{LOG_INFO} "Bus %QkV with most branches: %Q in substation %s/%s with %Q connected branches\n",
@@ -47,8 +47,8 @@ if card(SLACK_BUSES) > 0 then {
     tempo;
   if ( tempo == 0 ) then
     printf{LOG_WARNING} "Bus with most branches: not found. Take first bus (=%Q) for phase=0 constraint\n",null_phase_bus;
-
 }
+check bus_SC[1,null_phase_bus] == 0;
 
 
 ###############################################################################
@@ -56,15 +56,15 @@ if card(SLACK_BUSES) > 0 then {
 ###############################################################################
 
 printf{LOG_INFO} "\n######################################################################\n";
-printf{LOG_INFO} "** CCcomp results\n";
+printf{LOG_INFO} "** Network information\n";
 
 for{n in BUS2 diff BUSCC}
-  printf{LOG_WARNING} "Bus %Q in substation %Q (Vnomi=%.2fkV, country=%Q) is out of main AC CC\n",
+  printf{LOG_WARNING} "Bus %Q in substation %Q (Vnomi=%.2fkV, country=%Q) is out of main SC\n",
     bus_id[1,n], substation_id[1,bus_substation[1,n]],
     substation_Vnomi[1,bus_substation[1,n]], substation_country[1,bus_substation[1,n]];
-printf{LOG_INFO} "Nb of busses in AC+DC CC: %i\n",card(BUS2);
-printf{LOG_INFO} "Nb of busses in CC %Q: %i\n",bus_id[1,null_phase_bus],card(BUSCC);
-printf{LOG_INFO} "Nb of busses in other CCs: %Q\n",card(BUS2)-card(BUSCC);
+printf{LOG_INFO} "Nb of busses in main CC: %i\n",card(BUS2);
+printf{LOG_INFO} "Nb of busses in SC %Q: %i\n",bus_id[1,null_phase_bus],card(BUSCC);
+printf{LOG_INFO} "Nb of busses in other SCs: %Q\n",card(BUS2)-card(BUSCC);
 printf "\n";
 
 if 1 in LOG_INFO then {

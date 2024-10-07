@@ -361,9 +361,9 @@ check;
 model "commons.mod";
 
 ###############################################################################
-# Compute reference bus and main connex component
+# Reference bus fallback and print network few information
 ###############################################################################
-include "connected_component.run";
+include "network_info.run";
 
 ###############################################################################
 # Optimisation DC OPF (for phase initialization and data consistency check)
