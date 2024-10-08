@@ -61,6 +61,7 @@ public class OpenReacParametersSerializer extends StdSerializer<OpenReacParamete
         serializerProvider.defaultSerializeField("defaultConstraintScalingFactor", openReacParameters.getDefaultConstraintScalingFactor(), jsonGenerator);
         serializerProvider.defaultSerializeField("reactiveSlackVariableScalingFactor", openReacParameters.getReactiveSlackVariableScalingFactor(), jsonGenerator);
         serializerProvider.defaultSerializeField("twoWindingTransformerRatioVariableScalingFactor", openReacParameters.getTwoWindingTransformerRatioVariableScalingFactor(), jsonGenerator);
+        serializerProvider.defaultSerializeField("shuntVariableScalingFactor", openReacParameters.getShuntVariableScalingFactor(), jsonGenerator);
         jsonGenerator.writeEndObject();
     }
 }

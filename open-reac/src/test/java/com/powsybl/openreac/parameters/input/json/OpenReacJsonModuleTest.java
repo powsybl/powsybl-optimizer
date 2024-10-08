@@ -51,7 +51,7 @@ class OpenReacJsonModuleTest {
         parameters.addConfiguredReactiveSlackBuses(List.of("bus1", "bus2"));
 
         String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(parameters);
-        ComparisonUtils.compareTxt(Objects.requireNonNull(getClass().getResourceAsStream("/parametersLists.json")), json);
+        ComparisonUtils.assertTxtEquals(Objects.requireNonNull(getClass().getResourceAsStream("/parametersLists.json")), json);
 
         OpenReacParameters parameters2 = objectMapper.readValue(json, OpenReacParameters.class);
         // List of voltage limit overrides
@@ -98,7 +98,7 @@ class OpenReacJsonModuleTest {
         parameters.setTwoWindingTransformerRatioVariableScalingFactor(0.005);
 
         String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(parameters);
-        ComparisonUtils.compareTxt(Objects.requireNonNull(getClass().getResourceAsStream("/parametersThresholds.json")), json);
+        ComparisonUtils.assertTxtEquals(Objects.requireNonNull(getClass().getResourceAsStream("/parametersThresholds.json")), json);
         OpenReacParameters parameters2 = objectMapper.readValue(json, OpenReacParameters.class);
 
         assertEquals(5, parameters2.getObjectiveDistance());

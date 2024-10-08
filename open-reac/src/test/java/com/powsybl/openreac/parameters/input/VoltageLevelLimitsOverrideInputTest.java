@@ -157,6 +157,7 @@ class VoltageLevelLimitsOverrideInputTest {
 
         params2.getSpecificVoltageLimits().clear();
         voltageLimitsOverride2.clear();
+        vl.setLowVoltageLimit(0.);
         voltageLimitsOverride2.add(new VoltageLimitOverride(vl.getId(), VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, true, -480));
         params2.addSpecificVoltageLimits(voltageLimitsOverride2);
         assertDoesNotThrow(() -> params2.checkIntegrity(network)); // zero value

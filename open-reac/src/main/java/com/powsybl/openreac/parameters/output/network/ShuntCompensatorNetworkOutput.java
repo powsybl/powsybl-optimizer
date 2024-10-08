@@ -6,24 +6,38 @@
  */
 package com.powsybl.openreac.parameters.output.network;
 
+import com.powsybl.ampl.converter.AmplConstants;
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.iidm.modification.ShuntCompensatorModification;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.ShuntCompensator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
  */
 public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCompensatorModification> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ShuntCompensatorNetworkOutput.class);
     private static final String ELEMENT = "shunts";
     public static final int EXPECTED_COLS = 6;
     private static final int ID_COLUMN_INDEX = 1;
     private static final int B_COLUMN_INDEX = 3;
     private static final int BUS_COLUMN_INDEX = 2;
+    private final List<ShuntWithDeltaDiscreteOptimalOverThreshold> shuntWithDeltaDiscreteOptimalOverThresholds = new ArrayList<>();
+    private final double shuntCompensatorActivationAlertThreshold;
 
-    public ShuntCompensatorNetworkOutput(Network network) {
+    public record ShuntWithDeltaDiscreteOptimalOverThreshold(String id, int maximumSectionCount, double discretizedReactiveValue, double optimalReactiveValue) { }
+
+    public ShuntCompensatorNetworkOutput(Network network, double shuntCompensatorActivationAlertThreshold) {
         super(network);
+        this.shuntCompensatorActivationAlertThreshold = shuntCompensatorActivationAlertThreshold;
     }
 
     @Override
@@ -39,15 +53,18 @@ public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCo
     @Override
     protected void readLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
         String id = stringToIntMapper.getId(AmplSubset.SHUNT, Integer.parseInt(tokens[ID_COLUMN_INDEX]));
-        double b = readDouble(tokens[B_COLUMN_INDEX]);
-        String busId = stringToIntMapper.getId(AmplSubset.BUS, Integer.parseInt(tokens[BUS_COLUMN_INDEX]));
-        Boolean reconnect = null;
         ShuntCompensator shuntCompensator = network.getShuntCompensator(id);
-        if (busId != null && shuntCompensator != null && busId.equals(
-            shuntCompensator.getTerminal().getBusView().getConnectableBus().getId())) {
-            reconnect = true;
+        if (!Objects.isNull(shuntCompensator)) {
+            double b = readDouble(tokens[B_COLUMN_INDEX]) * AmplConstants.SB / Math.pow(shuntCompensator.getTerminal().getVoltageLevel().getNominalV(), 2);
+            String busId = stringToIntMapper.getId(AmplSubset.BUS, Integer.parseInt(tokens[BUS_COLUMN_INDEX]));
+            Boolean reconnect = null;
+            if (busId != null && busId.equals(shuntCompensator.getTerminal().getBusView().getConnectableBus().getId())) {
+                reconnect = true;
+            }
+            modifications.add(new ShuntCompensatorModification(id, reconnect, findSectionCount(shuntCompensator, b)));
+        } else {
+            LOGGER.warn("Shunt compensator with id {} not found in the network", id);
         }
-        modifications.add(new ShuntCompensatorModification(id, reconnect, shuntCompensator == null ? null : findSectionCount(shuntCompensator, b)));
     }
 
     /**
@@ -64,6 +81,15 @@ public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCo
                 sectionCount = i;
             }
         }
+        double optimalReactiveValue = Math.abs(b * Math.pow(sc.getTerminal().getVoltageLevel().getNominalV(), 2));
+        double discretizedReactiveValue = Math.abs(sc.getB(sectionCount) * Math.pow(sc.getTerminal().getVoltageLevel().getNominalV(), 2));
+        if (Math.abs(discretizedReactiveValue - optimalReactiveValue) > shuntCompensatorActivationAlertThreshold) {
+            shuntWithDeltaDiscreteOptimalOverThresholds.add(new ShuntWithDeltaDiscreteOptimalOverThreshold(sc.getId(), sc.getMaximumSectionCount(), discretizedReactiveValue, optimalReactiveValue));
+        }
         return sectionCount;
+    }
+
+    public List<ShuntWithDeltaDiscreteOptimalOverThreshold> getShuntsWithDeltaDiscreteOptimalOverThresholds() {
+        return shuntWithDeltaDiscreteOptimalOverThresholds;
     }
 }

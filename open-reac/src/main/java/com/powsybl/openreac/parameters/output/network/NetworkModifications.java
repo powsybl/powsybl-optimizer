@@ -28,9 +28,9 @@ public class NetworkModifications {
     private final SvcNetworkOutput svcOutput;
     private final TapPositionNetworkOutput tapPositionOutput;
 
-    public NetworkModifications(Network network) {
+    public NetworkModifications(Network network, double shuntCompensatorActivationAlertThreshold) {
         generatorNetworkOutput = new GeneratorNetworkOutput(network);
-        shuntsOutput = new ShuntCompensatorNetworkOutput(network);
+        shuntsOutput = new ShuntCompensatorNetworkOutput(network, shuntCompensatorActivationAlertThreshold);
         vscOutput = new VscNetworkOutput(network);
         svcOutput = new SvcNetworkOutput(network);
         tapPositionOutput = new TapPositionNetworkOutput(network);
@@ -46,6 +46,10 @@ public class NetworkModifications {
 
     public List<ShuntCompensatorModification> getShuntModifications() {
         return shuntsOutput.getModifications();
+    }
+
+    public List<ShuntCompensatorNetworkOutput.ShuntWithDeltaDiscreteOptimalOverThreshold> getShuntsWithDeltaDiscreteOptimalOverThreshold() {
+        return shuntsOutput.getShuntsWithDeltaDiscreteOptimalOverThresholds();
     }
 
     public List<VscConverterStationModification> getVscModifications() {

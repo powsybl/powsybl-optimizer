@@ -57,8 +57,11 @@ each serving a specific function:
 - `reactiveopf.dat` defines the network data files imported (files with
   *ampl_* prefix), and the files used to configure the run (files with *param_* prefix).
   Refer to section [3](#3-input).
-- `reactiveopf.mod` defines the sets, parameters and optimization problems (CC, DCOPF, ACOPF) solved in `reactiveopf.run`. 
-  Refer to sections [5](#5-slack-bus--main-connex-component), [6](#6-direct-current-optimal-power-flow) and [7](#7-alternative-current-optimal-power-flow).
+- `iidm_importer.mod`, `or_param_importer.mod` and `commons.mod` define the sets and parameters of the optimization.
+- `connected_component.mod`, `dcopf.mod` and `acopf.mod` define the optimization problems solved in `reactiveopf.run`. 
+  Refer to sections [5](#5-slack-bus--main-connex-component), [6](#6-direct-current-optimal-power-flow) and [7](#7-alternative-current-optimal-power-flow),
+  respectively.
+- `connected_component.run`, `dcopf.run`, `acopf_preprocessing.run` and `acopf.run` orchestrate the optimization and its post-process.
 - `reactiveopfoutput.mod` exports result files if the execution of `reactiveopf.run` is successful. 
   Refer to section [8.1](#81-in-case-of-convergence).
 - `reactiveopfexit.run` contains the code executed when the process fails. 
@@ -81,30 +84,33 @@ The user can configure the run with the dedicated Java interface
 Specifically, the user can set various parameters and thresholds used in the preprocessing and modeling of the reactive OPF. 
 These are specified in the file `param_algo.txt`:
 
-| Parameter                                   | Description                                                                                                                                                                       | Default value     | Domain                                        |
-|---------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------|-----------------------------------------------|
-| `log_level_ampl`                            | Level of display for AMPL prints                                                                                                                                                  | INFO              | {DEBUG, INFO, WARNING, ERROR}                 |
-| `log_level_knitro`                          | Level of display for solver prints (see [AMPL documentation](https://dev.ampl.com/ampl/options.html))                                                                             | $1$               | {0, 1, 2}                                     |  
-| `objective_choice`                          | Choice of the objective function for the ACOPF (see [7](#7-alternative-current-optimal-power-flow))                                                                               | $0$               | {0, 1, 2}                                     |
-| `ratio_voltage_target`                      | Ratio to calculate target V of buses when `objective_choice` is set to $1$ (see [7](#7-alternative-current-optimal-power-flow))                                                   | $0.5$             | $\[0; 1\]$                                    |
-| `coeff_alpha`                               | Weight to favor more/less minimization of active power produced by generators or deviation between them and target values (see [6.2](#62-alternative-current-optimal-power-flow)) | $1$               | $\[0; 1\]$                                    |
-| `Pnull`                                     | Threshold of active and reactive powers considered as null                                                                                                                        | $0.01$ (MW)       | $\[0; 1\]$                                    |
-| `Znull`                                     | Threshold of impedance considered as null (see [4.2](#))                                                                                                                          | $10^{-5}$ (p.u.)  | $\[0; 0.1\]$                                  |                                                                                                                                                                  
- | `epsilon_nominal_voltage`                   | Threshold to ignore voltage levels with nominal voltage lower than it                                                                                                             | $1$ (kV)          | $\mathbb{R}^{+}$                              | 
-| `min_plausible_low_voltage_limit`           | Consistency bound for low voltage limit of voltage levels (see [4.1](#41-voltage-level-limits-computation))                                                                       | $0.5$ (p.u.)      | $\mathbb{R}^{+}$                              |
-| `max_plausible_high_voltage_limit`          | Consistency bound for high voltage limit of voltage levels (see [4.1](#41-voltage-level-limits-computation))                                                                      | $1.5$ (p.u.)      | [`min_plausible_low_voltage_limit`; $\infty$] |
-| `ignore_voltage_bounds`                     | Threshold to replace voltage limits of voltage levels with nominal voltage lower than it, by  [min_plausible_low_voltage_limit; max_plausible_high_voltage_limit]                 | $0$ (p.u.)        | $\mathbb{R}^{+}$                              |
-| `buses_with_reactive_slacks`                | Choice of which buses will have reactive slacks attached in ACOPF solving (see [7](#7-alternative-current-optimal-power-flow))                                                    | NO_GENERATION     | {CONFIGURED, NO_GENERATION, ALL}              |
-| `PQmax`                                     | Threshold for maximum active and reactive power considered in correction of generator limits  (see [4.4](#44-pq-units-domain))                                                    | $9000$ (MW, MVAr) | $\mathbb{R}$                                  |
-| `defaultPmax`                               | Threshold for correction of high active power limit produced by generators (see [4.4](#44-pq-units-domain))                                                                       | $1000$ (MW)       | $\mathbb{R}$                                  |
-| `defaultPmin`                               | Threshold for correction of low active power limit produced by generators (see [4.4](#44-pq-units-domain))                                                                        | $0$ (MW)          | $\mathbb{R}$                                  |
-| `defaultQmaxPmaxRatio`                      | Ratio used to calculate threshold for corrections of high/low reactive power limits (see [4.4](#44-pq-units-domain))                                                              | $0.3$ (MVAr/MW)   | $\mathbb{R}$                                  |
-| `minimalQPrange`                            | Threshold to fix active (resp. reactive) power of generators with active (resp. reactive) power limits that are closer than it (see [4.4](#44-pq-units-domain))                   | $1$ (MW, MVAr)    | $\mathbb{R}$                                  |
-| `default_variable_scaling_factor`           | Default scaling factor applied to all the variables (except reactive slacks and transformer ratios) before ACOPF solving                                                          | $1$               | $\mathbb{R}^{*,+}$                            |
-| `default_constraint_scaling_factor`         | Default scaling factor applied to all the constraints before ACOPF solving                                                                                                        | $1$               | $\mathbb{R}^{+}$                              |
-| `reactive_slack_variable_scaling_factor`    | Scaling factor applied to all reactive slacks variables before ACOPF solving (see [7](#7-alternative-current-optimal-power-flow))                                                 | $0.1$             | $\mathbb{R}^{*,+}$                            |
-| `transformer_ratio_variable_scaling_factor` | Scaling factor applied to all transformer ratio variables before ACOPF solving (see [7](#7-alternative-current-optimal-power-flow))                                               | $0.001$           | $\mathbb{R}^{*,+}$                            |
+| Parameter                                   | Description                                                                                                                                                                       | Java default value | Domain                                        |
+|---------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------|-----------------------------------------------|
+| `log_level_ampl`                            | Level of display for AMPL prints                                                                                                                                                  | INFO               | {DEBUG, INFO, WARNING, ERROR}                 |
+| `log_level_knitro`                          | Level of display for solver prints (see [AMPL documentation](https://dev.ampl.com/ampl/options.html))                                                                             | $1$                | {0, 1, 2}                                     |  
+| `objective_choice`                          | Choice of the objective function for the ACOPF (see [7](#7-alternative-current-optimal-power-flow))                                                                               | $0$                | {0, 1, 2}                                     |
+| `ratio_voltage_target`                      | Ratio to calculate target V of buses when `objective_choice` is set to $1$ (see [7](#7-alternative-current-optimal-power-flow))                                                   | $0.5$              | $\[0; 1\]$                                    |
+| `coeff_alpha`                               | Weight to favor more/less minimization of active power produced by generators or deviation between them and target values (see [6.2](#62-alternative-current-optimal-power-flow)) | $1$                | $\[0; 1\]$                                    |
+| `Pnull`                                     | Threshold of active and reactive powers considered as null                                                                                                                        | $0.01$ (MW)        | $\[0; 1\]$                                    |
+| `Znull`                                     | Threshold of impedance considered as null (see [4.2](#))                                                                                                                          | $10^{-5}$ (p.u.)   | $\[0; 0.1\]$                                  |                                                                                                                                                                  
+ | `epsilon_nominal_voltage`                   | Threshold to ignore voltage levels with nominal voltage lower than it                                                                                                             | $1$ (kV)           | $\mathbb{R}^{+}$                              | 
+| `min_plausible_low_voltage_limit`           | Consistency bound for low voltage limit of voltage levels (see [4.1](#41-voltage-level-limits-computation))                                                                       | $0.5$ (p.u.)       | $\mathbb{R}^{+}$                              |
+| `max_plausible_high_voltage_limit`          | Consistency bound for high voltage limit of voltage levels (see [4.1](#41-voltage-level-limits-computation))                                                                      | $1.5$ (p.u.)       | [`min_plausible_low_voltage_limit`; $\infty$] |
+| `ignore_voltage_bounds`                     | Threshold to replace voltage limits of voltage levels with nominal voltage lower than it, by  [min_plausible_low_voltage_limit; max_plausible_high_voltage_limit]                 | $0$ (p.u.)         | $\mathbb{R}^{+}$                              |
+| `buses_with_reactive_slacks`                | Choice of which buses will have reactive slacks attached in ACOPF solving (see [7](#7-alternative-current-optimal-power-flow))                                                    | ALL                | {CONFIGURED, NO_GENERATION, ALL}              |
+| `PQmax`                                     | Threshold for maximum active and reactive power considered in correction of generator limits  (see [4.4](#44-pq-units-domain))                                                    | $9000$ (MW, MVAr)  | $\mathbb{R}$                                  |
+| `defaultPmax`                               | Threshold for correction of high active power limit produced by generators (see [4.4](#44-pq-units-domain))                                                                       | $1000$ (MW)        | $\mathbb{R}$                                  |
+| `defaultPmin`                               | Threshold for correction of low active power limit produced by generators (see [4.4](#44-pq-units-domain))                                                                        | $0$ (MW)           | $\mathbb{R}$                                  |
+| `defaultQmaxPmaxRatio`                      | Ratio used to calculate threshold for corrections of high/low reactive power limits (see [4.4](#44-pq-units-domain))                                                              | $0.3$ (MVAr/MW)    | $\mathbb{R}$                                  |
+| `minimalQPrange`                            | Threshold to fix active (resp. reactive) power of generators with active (resp. reactive) power limits that are closer than it (see [4.4](#44-pq-units-domain))                   | $1$ (MW, MVAr)     | $\mathbb{R}$                                  |
+| `default_variable_scaling_factor`           | Default scaling factor applied to all the variables (except reactive slacks and transformer ratios) before ACOPF solving                                                          | $1$                | $\mathbb{R}^{*,+}$                            |
+| `default_constraint_scaling_factor`         | Default scaling factor applied to all the constraints before ACOPF solving                                                                                                        | $1$                | $\mathbb{R}^{+}$                              |
+| `reactive_slack_variable_scaling_factor`    | Scaling factor applied to all reactive slacks variables before ACOPF solving (see [7](#7-alternative-current-optimal-power-flow))                                                 | $0.1$              | $\mathbb{R}^{*,+}$                            |
+| `transformer_ratio_variable_scaling_factor` | Scaling factor applied to all transformer ratio variables before ACOPF solving (see [7](#7-alternative-current-optimal-power-flow))                                               | $0.001$            | $\mathbb{R}^{*,+}$                            |
+| `shunt_variable_scaling_factor`             | Scaling factor applied to all shunt variables before ACOPF solving (see [7](#7-alternative-current-optimal-power-flow))                                                           | $0.1$              | $\mathbb{R}^{*,+}$                            |
 
+Please note that for these parameters, the AMPL code defines default values which may be different from those in Java (for example, for the
+scaling values). This allows a user to use the AMPL code without going through the Java interface, and without providing the file `param_algo.txt`.
 
 In addition to the previous parameters, the user can specify which 
 parameters will be variable or fixed in the ACOPF solving (see [7](#7-alternative-current-optimal-power-flow)).
@@ -118,6 +124,9 @@ This is done using the following files:
 | `param_buses_with_reactive_slack.txt` | Buses with attached reactive slacks if configurable parameter buses_with_reactive_slacks = "CONFIGURED"                                                 | Only buses with no reactive power production have reactive slacks attached        |    
 
 All of these files share the same format: 2 columns #"num" "id".
+
+Once again, the user can directly execute the AMPL code without passing these parameters files as input. 
+If so, empty files will be created during execution.
 
 #### 3.3 New voltage limits
 
@@ -310,7 +319,7 @@ $$\sum\limits_{j\in v(i)} \boldsymbol{q_{ij}} = Q_i^{in} - \boldsymbol{\sigma_{i
 
 where:
 - $\boldsymbol{p_{ij}}$ (resp. $\boldsymbol{q_{ij}}$) is the active (resp. reactive) power leaving bus $i$ on branch $ij$,
-  calculated as defined in the [PowSyBl documentation](https://www.powsybl.org/pages/documentation/simulation/powerflow/openlf.html).
+  calculated as defined in the [PowSyBl documentation](https://powsybl.readthedocs.io/projects/powsybl-open-loadflow).
   Those are variables because they depend on $\boldsymbol{V_i}$, $\boldsymbol{V_j}$, $\boldsymbol{\theta_i}$, $\boldsymbol{\theta_j}$ and $\boldsymbol{\rho_{ij}}$.
 - $P_i^{in}$ is the constant active power injected or consumed in bus $i$ by batteries, loads, VSC stations and LCC stations.
 - $Q_i^{in}$ is the constant reactive power injected or consumed in bus $i$, by fixed generators and fixed shunts (see [3.2](#32-configuration-of-the-run)), batteries, loads and LCC stations.
