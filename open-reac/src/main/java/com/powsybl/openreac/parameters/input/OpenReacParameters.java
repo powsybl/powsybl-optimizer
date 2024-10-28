@@ -590,7 +590,7 @@ public class OpenReacParameters {
             if (!voltageLevelsWithMissingLimits.isEmpty()) {
                 reportNode.newReportNode()
                     .withMessageTemplate("nbVoltageLevelsWithMissingLimits", "${size} voltage level(s) have undefined low and/or high voltage limits")
-                    .withSeverity(TypedValue.INFO_SEVERITY)
+                    .withSeverity(TypedValue.ERROR_SEVERITY)
                     .withUntypedValue("size", voltageLevelsWithMissingLimits.size())
                     .add();
                 voltageLevelsWithMissingLimits.forEach((key, value) -> {
@@ -613,7 +613,7 @@ public class OpenReacParameters {
             if (!voltageLevelsWithInconsistentLimits.isEmpty()) {
                 reportNode.newReportNode()
                     .withMessageTemplate("nbVoltageLevelsWithInconsistentLimits", "${size} voltage level(s) have inconsistent low and/or high voltage limits")
-                    .withSeverity(TypedValue.INFO_SEVERITY)
+                    .withSeverity(TypedValue.ERROR_SEVERITY)
                     .withUntypedValue("size", voltageLevelsWithInconsistentLimits.size())
                     .add();
                 voltageLevelsWithInconsistentLimits.forEach((key, value) -> reportNode.newReportNode()
