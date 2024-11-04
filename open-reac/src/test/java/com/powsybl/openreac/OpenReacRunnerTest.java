@@ -333,6 +333,139 @@ class OpenReacRunnerTest {
     }
 
     @Test
+    void testShuntReconnection() throws IOException {
+        Network network = create();
+        setDefaultVoltageLimits(network);
+        // create two disconnected shunts linked to b3, where there is already a disconnected shunt
+        network.getVoltageLevel("vl3").newShuntCompensator().setId("SHUNT2")
+                .setConnectableBus("b3")
+                .setSectionCount(1)
+                .setVoltageRegulatorOn(true)
+                .setTargetV(393)
+                .setTargetDeadband(5.0)
+                .newLinearModel()
+                .setMaximumSectionCount(1)
+                .setBPerSection(1e-3)
+                .add()
+                .add();
+        network.getVoltageLevel("vl3").newShuntCompensator().setId("SHUNT3")
+                .setConnectableBus("b3")
+                .setSectionCount(1)
+                .setVoltageRegulatorOn(true)
+                .setTargetV(393)
+                .setTargetDeadband(5.0)
+                .newLinearModel()
+                .setMaximumSectionCount(1)
+                .setBPerSection(1e-3)
+                .add()
+                .add();
+
+        // verify all shunts are disconnected
+        assertFalse(network.getShuntCompensator("SHUNT").getTerminal().isConnected());
+        assertFalse(network.getShuntCompensator("SHUNT2").getTerminal().isConnected());
+        assertFalse(network.getShuntCompensator("SHUNT3").getTerminal().isConnected());
+
+        OpenReacParameters parameters = new OpenReacParameters();
+        // only shunt 1 and 2 that can be optimized
+        parameters.addVariableShuntCompensators(List.of("SHUNT", "SHUNT2"));
+        // run open reac and apply results
+        try (ComputationManager computationManager = new LocalComputationManager()) {
+            OpenReacResult openReacResult = OpenReacRunner.run(network,
+                    network.getVariantManager().getWorkingVariantId(), parameters,
+                    new OpenReacConfig(true), computationManager, ReportNode.NO_OP, null);
+            // only shunt 1 and 2 have been reconnected
+            assertEquals(2, openReacResult.getShuntsModifications().size());
+            assertTrue(openReacResult.getShuntsModifications().get(0).getConnect());
+            assertTrue(openReacResult.getShuntsModifications().get(1).getConnect());
+            openReacResult.applyAllModifications(network);
+        }
+
+        // verify only shunt 1 and 2 have been reconnected
+        assertTrue(network.getShuntCompensator("SHUNT").getTerminal().isConnected());
+        assertTrue(network.getShuntCompensator("SHUNT2").getTerminal().isConnected());
+        assertFalse(network.getShuntCompensator("SHUNT3").getTerminal().isConnected());
+
+        // verify the current section has no susceptance for both shunts, after reconnection due to rounding
+        assertEquals(0, network.getShuntCompensator("SHUNT").getSectionCount());
+        assertEquals(0, network.getShuntCompensator("SHUNT").getB());
+        assertEquals(0, network.getShuntCompensator("SHUNT2").getSectionCount());
+        assertEquals(0, network.getShuntCompensator("SHUNT2").getB());
+    }
+
+    @Test
+    void testShuntSectionRounding() throws IOException {
+        Network network = create();
+        setDefaultVoltageLimits(network);
+        network.getVoltageLevel("vl3").newShuntCompensator().setId("SHUNT2")
+                .setConnectableBus("b3")
+                .setSectionCount(0)
+                .setVoltageRegulatorOn(true)
+                .setTargetV(393)
+                .setTargetDeadband(5.0)
+                .newLinearModel()
+                .setMaximumSectionCount(1)
+                .setBPerSection(1e-3)
+                .add()
+                .add();
+
+        OpenReacParameters parameters = new OpenReacParameters();
+        parameters.addVariableShuntCompensators(List.of("SHUNT", "SHUNT2"));
+        // run open reac and apply results
+        try (ComputationManager computationManager = new LocalComputationManager()) {
+            OpenReacResult openReacResult = OpenReacRunner.run(network,
+                    network.getVariantManager().getWorkingVariantId(), parameters,
+                    new OpenReacConfig(true), computationManager, ReportNode.NO_OP, null);
+            openReacResult.applyAllModifications(network);
+        }
+
+        // verify the current section has no susceptance for both shunts, after reconnection, due to rounding
+        assertEquals(0, network.getShuntCompensator("SHUNT").getSectionCount());
+        assertEquals(0, network.getShuntCompensator("SHUNT").getB());
+        assertEquals(0, network.getShuntCompensator("SHUNT2").getSectionCount());
+        assertEquals(0, network.getShuntCompensator("SHUNT2").getB());
+
+        // now only optimize shunt 1
+        parameters.getVariableShuntCompensators().remove("SHUNT2");
+        // run open reac and apply results
+        try (ComputationManager computationManager = new LocalComputationManager()) {
+            OpenReacResult openReacResult = OpenReacRunner.run(network,
+                    network.getVariantManager().getWorkingVariantId(), parameters,
+                    new OpenReacConfig(true), computationManager, ReportNode.NO_OP, null);
+            openReacResult.applyAllModifications(network);
+        }
+
+        // verify section of shunt 1 has been modified due to optimization
+        // this was not the case before, because of rounding of susceptance for shunt 1 and 2
+        assertEquals(0.001, network.getShuntCompensator("SHUNT").getB());
+        assertEquals(1, network.getShuntCompensator("SHUNT").getSectionCount());
+
+        // now optimize shunt 1 and shunt 2, with much more sections
+        network.getShuntCompensator("SHUNT")
+                .setSectionCount(0)
+                .getModel(ShuntCompensatorLinearModel.class)
+                .setMaximumSectionCount(10)
+                .setBPerSection(1e-4);
+        network.getShuntCompensator("SHUNT2")
+                .getModel(ShuntCompensatorLinearModel.class)
+                .setMaximumSectionCount(10)
+                .setBPerSection(1e-4);
+        parameters.addVariableShuntCompensators(List.of("SHUNT2"));
+        // run open reac and apply results
+        try (ComputationManager computationManager = new LocalComputationManager()) {
+            OpenReacResult openReacResult = OpenReacRunner.run(network,
+                    network.getVariantManager().getWorkingVariantId(), parameters,
+                    new OpenReacConfig(true), computationManager, ReportNode.NO_OP, null);
+            openReacResult.applyAllModifications(network);
+        }
+
+        // shunt 1 and 2 have both a section with non null b
+        assertEquals(4, network.getShuntCompensator("SHUNT").getSectionCount());
+        assertEquals(4.0e-4, network.getShuntCompensator("SHUNT").getB());
+        assertEquals(4, network.getShuntCompensator("SHUNT2").getSectionCount());
+        assertEquals(4.0e-4, network.getShuntCompensator("SHUNT2").getB());
+    }
+
+    @Test
     void testShuntWithDeltaBetweenDiscretizedAndOptimalReactiveValueUnderThreshold() throws IOException {
         Network network = create();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
@@ -486,7 +619,7 @@ class OpenReacRunnerTest {
                 .setTargetV(393)
                 .setTargetDeadband(5.0)
                 .newLinearModel()
-                .setMaximumSectionCount(25)
+                .setMaximumSectionCount(1)
                 .setBPerSection(1e-3)
                 .add()
                 .add();
