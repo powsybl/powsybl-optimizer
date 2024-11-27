@@ -14,6 +14,8 @@ import com.powsybl.computation.local.LocalComputationConfig;
 import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
 import com.powsybl.iidm.network.*;
+import com.powsybl.loadflow.LoadFlow;
+import com.powsybl.loadflow.LoadFlowResult;
 import com.powsybl.openreac.OpenReacConfig;
 import com.powsybl.openreac.OpenReacRunner;
 import com.powsybl.openreac.network.HvdcNetworkFactory;
@@ -36,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  * @author Nicolas PIERRE {@literal <nicolas.pierre at artelys.com>}
  */
-public class OpenReacOptimizationTest extends AbstractOpenReacRunnerTest {
+public class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
 
     @Test
     void testRunAsync() throws IOException {
@@ -187,6 +189,9 @@ public class OpenReacOptimizationTest extends AbstractOpenReacRunnerTest {
         assertEquals(0, network.getBusBreakerView().getBus("BUS_2").getAngle());
         assertEquals(22.935, network.getBusBreakerView().getBus("BUS_3").getV());
         assertEquals(-4.698, network.getBusBreakerView().getBus("BUS_3").getAngle(), 0.001);
+
+        LoadFlowResult loadFlowResult = LoadFlow.run(network);
+        assertTrue(loadFlowResult.isFullyConverged());
     }
 
     public static Network create() {
