@@ -62,7 +62,7 @@ public abstract class AbstractLoadFlowNetworkFactory {
                 .setConnectableBus(b.getId())
                 .setEnergySource(EnergySource.OTHER)
                 .setMinP(0)
-                .setMaxP(p)
+                .setMaxP(2 * p)
                 .setTargetP(p)
                 .setTargetV(v)
                 .setVoltageRegulatorOn(true)
@@ -101,14 +101,22 @@ public abstract class AbstractLoadFlowNetworkFactory {
     }
 
     protected static Line createLine(Network network, Bus b1, Bus b2, String id, double x) {
+        return createLine(network, b1, b2, id, 0, x, 0, 0);
+    }
+
+    protected static Line createLine(Network network, Bus b1, Bus b2, String id, double r, double x, double halfG, double halfB) {
         return network.newLine()
                 .setId(id)
                 .setBus1(b1.getId())
                 .setConnectableBus1(b1.getId())
                 .setBus2(b2.getId())
                 .setConnectableBus2(b2.getId())
-                .setR(0)
+                .setR(r)
                 .setX(x)
+                .setG1(halfG)
+                .setB1(halfB)
+                .setG2(halfG)
+                .setB2(halfB)
                 .add();
     }
 

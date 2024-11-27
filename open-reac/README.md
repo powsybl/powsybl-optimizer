@@ -407,3 +407,8 @@ of the DCOPF fails (see [6](#6-direct-current-optimal-power-flow)),
 the problem is considered as inconsistent.
 Then, the script `reactiveopfexit.run` is executed and the file `reactiveopf_results_indic.txt` described in [8.1](#81-in-case-of-convergence)
  is exported, without the information on the calculated angles.
+
+TODO 
+Should ratio tap changers on branch with one side opened be optimized?
+Clarify if they should be taken into account on branches with side 1 opened
+Surement une erreur dans le code AMPL. QUand G1 est non nul alors il y a des problèmes
