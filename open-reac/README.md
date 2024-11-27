@@ -116,12 +116,12 @@ In addition to the previous parameters, the user can specify which
 parameters will be variable or fixed in the ACOPF solving (see [7](#7-alternative-current-optimal-power-flow)).
 This is done using the following files:
 
-| File                                  | Description                                                                                                                                             | Default behavior of modified values                                               |
-|---------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------|
-| `param_transformers.txt`              | Ratio tap changers with a variable transformation ratio (real variable)                                                                                 | Transformation ratios are fixed                                                   |
-| `param_shunt.txt`                     | Shunts with a continuous variable susceptance and which can be modified and/or connected (only if possible bus is defined in `ampl_network_shunts.txt`) | Shunt susceptances are fixed                                                      |
-| `param_generators_reactive.txt`       | Generators with a constant reactive power production. If this value is not consistent (> PQmax), the reactive power production stays variable           | Coherent reactive power productions (see [4.5](#45-pq-units-domain)) are variable |
-| `param_buses_with_reactive_slack.txt` | Buses with attached reactive slacks if configurable parameter buses_with_reactive_slacks = "CONFIGURED"                                                 | Only buses with no reactive power production have reactive slacks attached        |    
+| File                                  | Description                                                                                                                                                     | Default behavior of modified values                                               |
+|---------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------|
+| `param_transformers.txt`              | Ratio tap changers with a variable transformation ratio (real variable). Note that ratio tap changers on branches with opened side 2 **will not be optimized**. | Transformation ratios are fixed                                                   |
+| `param_shunt.txt`                     | Shunts with a continuous variable susceptance and which can be modified and/or connected (only if possible bus is defined in `ampl_network_shunts.txt`)         | Shunt susceptances are fixed                                                      |
+| `param_generators_reactive.txt`       | Generators with a constant reactive power production. If this value is not consistent (> PQmax), the reactive power production stays variable                   | Coherent reactive power productions (see [4.5](#45-pq-units-domain)) are variable |
+| `param_buses_with_reactive_slack.txt` | Buses with attached reactive slacks if configurable parameter buses_with_reactive_slacks = "CONFIGURED"                                                         | Only buses with no reactive power production have reactive slacks attached        |    
 
 All of these files share the same format: 2 columns #"num" "id".
 
@@ -303,6 +303,7 @@ Please note that:
   even if the user designates these generators as fixed in the parameter file `param_generators_reactive.txt` (see [3.2](#32-configuration-of-the-run)).
   Therefore, when the optimization results are exported, **these generators are exported with a reactive power target of $0$**.
 - **Neither current limits nor power limits** on branches are considered in the optimization.
+- Branches with opened side 1 or 2 are taken into account in the optimization. 
 
 #### 7.2 Constraints
 

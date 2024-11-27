@@ -37,9 +37,7 @@ import java.io.InputStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
@@ -403,8 +401,24 @@ class OpenReacRunnerTest {
         assertEquals(-4.698, network.getBusBreakerView().getBus("BUS_3").getAngle(), 0.001);
     }
 
+    /**
+     * Runs OpenReac and apply the results on the network.
+     * The application of the voltage plan calculated by optimization is optional.
+     */
     private void runAndApplyAllModifications(Network network, String subFolder, OpenReacParameters parameters,
                                              boolean updateNetworkWithVoltages, ReportNode reportNode) throws IOException {
+        OpenReacResult openReacResult = runOpenReac(network, subFolder, parameters, reportNode);
+        assertEquals(OpenReacStatus.OK, openReacResult.getStatus());
+        openReacResult.setUpdateNetworkWithVoltages(updateNetworkWithVoltages);
+        openReacResult.applyAllModifications(network);
+    }
+
+    /**
+     * Runs OpenReac and returns associated result.
+     * Note that OpenReac is not really executed by default. If the execution line is not uncommented,
+     * the results are retrieved and stored in an {@link OpenReacResult} object.
+     */
+    private OpenReacResult runOpenReac(Network network, String subFolder, OpenReacParameters parameters, ReportNode reportNode) throws IOException {
         LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
                 List.of(subFolder + "/reactiveopf_results_generators.csv",
                         subFolder + "/reactiveopf_results_indic.txt",
@@ -414,16 +428,107 @@ class OpenReacRunnerTest {
                         subFolder + "/reactiveopf_results_vsc_converter_stations.csv",
                         subFolder + "/reactiveopf_results_voltages.csv"));
         // To really run open reac, use the commentede line below. Be sure that open-reac/src/test/resources/com/powsybl/config/test/config.yml contains your ampl path
-//        try (ComputationManager computationManager = new LocalComputationManager()) {
-        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
-                localCommandExecutor, ForkJoinPool.commonPool())) {
-            OpenReacResult openReacResult = OpenReacRunner.run(network,
-                    network.getVariantManager().getWorkingVariantId(), parameters,
+        try (ComputationManager computationManager = new LocalComputationManager()) {
+//        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
+//                localCommandExecutor, ForkJoinPool.commonPool())) {
+            return OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), parameters,
                     new OpenReacConfig(true), computationManager, reportNode, null);
-            assertEquals(OpenReacStatus.OK, openReacResult.getStatus());
-            openReacResult.setUpdateNetworkWithVoltages(updateNetworkWithVoltages);
-            openReacResult.applyAllModifications(network);
         }
+    }
+
+    // TODO : add more tests for indicators and rebase on this
+    // TODO : for no impedance lines, use the same network
+    @Test
+    void testBranchesIndicators() throws IOException {
+        Network network = VoltageControlNetworkFactory.createWithSimpleRemoteControl();
+        network.getLine("l24").getTerminal2().disconnect();
+        network.getLine("l43").getTerminal1().disconnect();
+        setDefaultVoltageLimits(network);
+        OpenReacResult result = runOpenReac(network, "openreac-output-branches-opened", new OpenReacParameters(), ReportNode.NO_OP);
+        assertEquals("4", result.getIndicators().get("nb_branch_in_data_file"));
+        assertEquals("4", result.getIndicators().get("nb_branch_in_AC_CC"));
+        assertEquals("1", result.getIndicators().get("nb_branch_in_AC_CC_side_1_opened"));
+        assertEquals("1", result.getIndicators().get("nb_branch_in_AC_CC_side_2_opened"));
+    }
+
+    @Test
+    void testOpenLineSide1OpenReac() throws IOException {
+        Network network = VoltageControlNetworkFactory.createWithSimpleRemoteControl();
+        network.getLine("l43").setG2(0.1f).setB2(0.1f).getTerminal1().disconnect();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
+        testAllModifAndLoadFlow(network, "openreac-output-real-network", new OpenReacParameters(), ReportNode.NO_OP);
+    }
+
+
+
+
+    @Test
+    void testZeroImpedanceOpenBranchSide1OpenReac() throws IOException {
+        Network network = VoltageControlNetworkFactory.createWithTwoVoltageControls();
+        network.getLine("l45").setX(1e-8).setB1(1).setG1(0.1).getTerminal2().disconnect();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
+
+        OpenReacResult result = runOpenReac(network, "", new OpenReacParameters(), ReportNode.NO_OP);
+        // opened branch is considered as non impedant
+        assertEquals("1", result.getIndicators().get("nb_branch_with_zero_or_small_impedance"));
+
+        assertEquals(OpenReacStatus.OK, result.getStatus());
+        result.applyAllModifications(network);
+        LoadFlowResult loadFlowResult = LoadFlow.run(network);
+        assertTrue(loadFlowResult.isFullyConverged());
+    }
+
+    @Test
+    void testZeroImpedanceOpenBranchSide2OpenReac() throws IOException {
+        Network network = VoltageControlNetworkFactory.createNetworkWith2T2wt();
+        network.getTwoWindingsTransformer("T2wT2").setR(0.0).setX(1e-8).setG(0.01).setB(0.1).getTerminal1().disconnect();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
+
+        OpenReacResult result = runOpenReac(network, "", new OpenReacParameters(), ReportNode.NO_OP);
+        // opened branch is considered as non impedant
+        assertEquals("1", result.getIndicators().get("nb_branch_with_zero_or_small_impedance"));
+
+        assertEquals(OpenReacStatus.OK, result.getStatus());
+        result.applyAllModifications(network);
+        LoadFlowResult loadFlowResult = LoadFlow.run(network);
+        assertTrue(loadFlowResult.isFullyConverged());
+    }
+
+    @Test
+    void testRatioTapChangerOpenSide1OpenReac() throws IOException {
+        Network network = VoltageControlNetworkFactory.createNetworkWithT2wt();
+        network.getTwoWindingsTransformer("T2wT").getTerminal2().disconnect();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
+        testAllModifAndLoadFlow(network, "", new OpenReacParameters(), ReportNode.NO_OP);
+    }
+
+    @Test
+    void testRatioTapChangerOpenSide2OpenReac() throws IOException {
+        Network network = VoltageControlNetworkFactory.createNetworkWithT2wt();
+        network.getTwoWindingsTransformer("T2wT").getTerminal2().disconnect();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
+        testAllModifAndLoadFlow(network, "", new OpenReacParameters(), ReportNode.NO_OP);
+    }
+
+    @Test
+    void testRatioTapChangerNotOptimizedOnOpenBranchSide2() throws IOException {
+        Network network = VoltageControlNetworkFactory.createNetworkWith2T2wt();
+        network.getTwoWindingsTransformer("T2wT1").getTerminal2().disconnect();
+        network.getTwoWindingsTransformer("T2wT2").getRatioTapChanger().setTapPosition(3);
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
+
+        OpenReacParameters parameters = new OpenReacParameters();
+        parameters.addVariableTwoWindingsTransformers(List.of("T2wT1", "T2wT2"));
+        OpenReacResult result = runOpenReac(network, "", parameters, ReportNode.NO_OP);
+
+        // verify only one rtc has been optimized
+        assertEquals("1", result.getIndicators().get("nb_transformers_with_variable_ratio"));
+        assertEquals("1", result.getIndicators().get("nb_transformers_with_fixed_ratio"));
+
+        // verify only tap of optimized rtc has changed
+        result.applyAllModifications(network);
+        assertEquals(0, network.getTwoWindingsTransformer("T2wT1").getRatioTapChanger().getTapPosition());
+        assertEquals(0, network.getTwoWindingsTransformer("T2wT2").getRatioTapChanger().getTapPosition());
     }
 
     public static Network create() {
@@ -507,6 +612,7 @@ class OpenReacRunnerTest {
         return network;
     }
 
+    // TODO : to be moved so that it is used by default when we run a network
     void setDefaultVoltageLimits(Network network) {
         for (VoltageLevel vl : network.getVoltageLevels()) {
             if (vl.getLowVoltageLimit() <= 0 || Double.isNaN(vl.getLowVoltageLimit())) {
