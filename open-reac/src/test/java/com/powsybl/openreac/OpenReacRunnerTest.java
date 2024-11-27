@@ -452,72 +452,69 @@ class OpenReacRunnerTest {
     }
 
     @Test
-    void testLinesOpenedSide1OpenReac() throws IOException {
+    void testOpenLineSide1OpenReac() throws IOException {
         Network network = VoltageControlNetworkFactory.createWithSimpleRemoteControl();
-        network.getLine("l43")
-                .setG2(0.1f)
-                .setB2(0.1f)
-                .getTerminal1().disconnect();
+        network.getLine("l43").setG2(0.1f).setB2(0.1f).getTerminal1().disconnect();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         testAllModifAndLoadFlow(network, "openreac-output-real-network", new OpenReacParameters(), ReportNode.NO_OP);
     }
 
+
+
+
     @Test
-    void testLinesOpenedSide2OpenReac() throws IOException {
-        Network network = VoltageControlNetworkFactory.createWithSimpleRemoteControl();
-        network.getLine("l24")
-                .setG1(0.1f)
-                .setB1(0.1f)
-                .getTerminal2().disconnect();
+    void testZeroImpedanceOpenBranchSide1OpenReac() throws IOException {
+        Network network = VoltageControlNetworkFactory.createWithTwoVoltageControls();
+        network.getLine("l45").setX(1e-8).setB1(1).setG1(0.1).getTerminal2().disconnect();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
-        testAllModifAndLoadFlow(network, "openreac-output-real-network", new OpenReacParameters(), ReportNode.NO_OP);
+
+        OpenReacResult result = runOpenReac(network, "", new OpenReacParameters(), ReportNode.NO_OP);
+        // opened branch is considered as non impedant
+        assertEquals("1", result.getIndicators().get("nb_branch_with_zero_or_small_impedance"));
+
+        assertEquals(OpenReacStatus.OK, result.getStatus());
+        result.applyAllModifications(network);
+        LoadFlowResult loadFlowResult = LoadFlow.run(network);
+        assertTrue(loadFlowResult.isFullyConverged());
     }
 
     @Test
-    void testBranchZeroImpedanceSide1OpenedOpenReac() throws IOException {
-        Network network = VoltageControlNetworkFactory.createWithSimpleRemoteControl();
-        network.getLine("l43")
-                .setX(0.0)
-                .getTerminal2().disconnect();
+    void testZeroImpedanceOpenBranchSide2OpenReac() throws IOException {
+        Network network = VoltageControlNetworkFactory.createNetworkWith2T2wt();
+        network.getTwoWindingsTransformer("T2wT2").setR(0.0).setX(1e-8).setG(0.01).setB(0.1).getTerminal1().disconnect();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
-        testAllModifAndLoadFlow(network, "openreac-output-real-network", new OpenReacParameters(), ReportNode.NO_OP);
+
+        OpenReacResult result = runOpenReac(network, "", new OpenReacParameters(), ReportNode.NO_OP);
+        // opened branch is considered as non impedant
+        assertEquals("1", result.getIndicators().get("nb_branch_with_zero_or_small_impedance"));
+
+        assertEquals(OpenReacStatus.OK, result.getStatus());
+        result.applyAllModifications(network);
+        LoadFlowResult loadFlowResult = LoadFlow.run(network);
+        assertTrue(loadFlowResult.isFullyConverged());
     }
 
     @Test
-    void testBranchZeroImpedanceSide2OpenedOpenReac() throws IOException {
-        Network network = VoltageControlNetworkFactory.createWithSimpleRemoteControl();
-        network.getLine("l43")
-                .setX(0.0)
-                .getTerminal1().disconnect();
+    void testRatioTapChangerOpenSide1OpenReac() throws IOException {
+        Network network = VoltageControlNetworkFactory.createNetworkWithT2wt();
+        network.getTwoWindingsTransformer("T2wT").getTerminal2().disconnect();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
-        testAllModifAndLoadFlow(network, "openreac-output-real-network", new OpenReacParameters(), ReportNode.NO_OP);
+        testAllModifAndLoadFlow(network, "", new OpenReacParameters(), ReportNode.NO_OP);
     }
 
     @Test
-    void testBranchWithRatioTapChangerSide1OpenedOpenReac() {
-        // TODO
+    void testRatioTapChangerOpenSide2OpenReac() throws IOException {
+        Network network = VoltageControlNetworkFactory.createNetworkWithT2wt();
+        network.getTwoWindingsTransformer("T2wT").getTerminal2().disconnect();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
+        testAllModifAndLoadFlow(network, "", new OpenReacParameters(), ReportNode.NO_OP);
     }
 
     @Test
-    void testBranchWithPhaseTapChangerSide1OpenedOpenReac() {
-        // TODO
-    }
-
-    @Test
-    void testBranchWithRatioTapChangerSide2OpenedOpenReac() {
-        // TODO
-    }
-
-    @Test
-    void testBranchWithPhaseTapChangerSide2OpenedOpenReac() {
-        // TODO
-    }
-
-    @Test
-    // TODO : to be clarified if we take into account the ratio tap changers on branches that are opened...
-    void testRatioTapChangerNotOptimizedIfOpenSide2() throws IOException {
+    void testRatioTapChangerNotOptimizedOnOpenBranchSide2() throws IOException {
         Network network = VoltageControlNetworkFactory.createNetworkWith2T2wt();
         network.getTwoWindingsTransformer("T2wT1").getTerminal2().disconnect();
+        network.getTwoWindingsTransformer("T2wT2").getRatioTapChanger().setTapPosition(3);
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
 
         OpenReacParameters parameters = new OpenReacParameters();
@@ -528,8 +525,10 @@ class OpenReacRunnerTest {
         assertEquals("1", result.getIndicators().get("nb_transformers_with_variable_ratio"));
         assertEquals("1", result.getIndicators().get("nb_transformers_with_fixed_ratio"));
 
-        // verify tap of optimized rtc has changed
-        assertEquals();
+        // verify only tap of optimized rtc has changed
+        result.applyAllModifications(network);
+        assertEquals(0, network.getTwoWindingsTransformer("T2wT1").getRatioTapChanger().getTapPosition());
+        assertEquals(0, network.getTwoWindingsTransformer("T2wT2").getRatioTapChanger().getTapPosition());
     }
 
     public static Network create() {
