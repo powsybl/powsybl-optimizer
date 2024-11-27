@@ -132,48 +132,34 @@ var Red_Tran_Rea_Inv{(qq,m,n) in BRANCHCC } =
   + V[n] * (branch_admi[qq,m,n]*cos(branch_angper[qq,m,n])-branch_Bex_mod[qq,m,n])
   ;
 
-# Penalized active/reactive power on branches with one side opened
-var act_power_bus2_opened{(qq,m,n) in BRANCH_WITH_SIDE_2_OPENED} =
-(branch_Ror[qq,m,n])**2 * V[m] *
-(branch_Gor_mod[qq,m,n] + (branch_admi[qq,m,n])**2 * branch_Gex_mod[qq,m,n]
-/ ( (branch_Gex_mod[qq,m,n] + branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]))**2
-+ (- branch_Bex_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 ) # Shunt
-+ ((branch_Bex_mod[qq,m,n])**2 + (branch_Gex_mod[qq,m,n])**2) * branch_admi[qq,m,n] * sin(branch_angper[qq,m,n])
-/ ( (branch_Gex_mod[qq,m,n] + branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]))**2
-+ (- branch_Bex_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 ) # Shunt
-);
+var Red_Tran_Act_Dir_Side_2_Opened{(qq,m,n) in BRANCHCC_WITH_SIDE_2_OPENED} =
+    (branch_Ror[qq,m,n])**2 * V[m] * (branch_Gor_mod[qq,m,n] + (branch_admi[qq,m,n])**2 * branch_Gex_mod[qq,m,n] / ( (branch_Gex_mod[qq,m,n] + branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]))**2
+    + (- branch_Bex_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 ) 
+    + ((branch_Bex_mod[qq,m,n])**2 + (branch_Gex_mod[qq,m,n])**2) * branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]) / ( (branch_Gex_mod[qq,m,n] + branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]))**2
+    + (- branch_Bex_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 ))
+  ;
 
-var rea_power_bus2_opened{(qq,m,n) in BRANCH_WITH_SIDE_2_OPENED} =
-- (branch_Ror[qq,m,n])**2 * V[m] *
-(branch_Bor_mod[qq,m,n] + (branch_admi[qq,m,n])**2 * branch_Bex_mod[qq,m,n]
-/ ( (branch_Gex_mod[qq,m,n] + branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]))**2
-+ (- branch_Bex_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 ) # Shunt
-- ((branch_Bex_mod[qq,m,n])**2 + (branch_Gex_mod[qq,m,n])**2) * branch_admi[qq,m,n] * cos(branch_angper[qq,m,n])
-/ ( (branch_Gex_mod[qq,m,n] + branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]))**2
-+ (-branch_Bex_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 ) # Shunt
-);
+var Red_Tran_Rea_Dir_Side_2_Opened{(qq,m,n) in BRANCHCC_WITH_SIDE_2_OPENED} =
+    - (branch_Ror[qq,m,n])**2 * V[m] * (branch_Bor_mod[qq,m,n] + (branch_admi[qq,m,n])**2 * branch_Bex_mod[qq,m,n] / ( (branch_Gex_mod[qq,m,n] + branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]))**2
+    + (- branch_Bex_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 )
+    - ((branch_Bex_mod[qq,m,n])**2 + (branch_Gex_mod[qq,m,n])**2) * branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]) / ( (branch_Gex_mod[qq,m,n] + branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]))**2
+    + (-branch_Bex_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 ))
+  ;
 
-var act_power_bus1_opened{(qq,m,n) in BRANCH_WITH_SIDE_1_OPENED} =
-V[n] *
-(branch_Gex_mod[qq,m,n]
-+ (branch_admi[qq,m,n])**2 * branch_Gor_mod[qq,m,n]
-/ ( (branch_Gor_mod[qq,m,n] + branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]))**2
-+ (- branch_Bor_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 ) # Shunt
-+ ((branch_Bor_mod[qq,m,n])**2 + (branch_Gor_mod[qq,m,n])**2) * branch_admi[qq,m,n] * sin(branch_angper[qq,m,n])
-/ ( (branch_Gor_mod[qq,m,n] + branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]))**2
-+ (- branch_Bor_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 ) # Shunt
-);
+var Red_Tran_Act_Inv_Side_1_Opened{(qq,m,n) in BRANCHCC_WITH_SIDE_1_OPENED} =
+    V[n] * (branch_Gex_mod[qq,m,n] + (branch_admi[qq,m,n])**2 * branch_Gor_mod[qq,m,n] / ( (branch_Gor_mod[qq,m,n] + branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]))**2
+    + (- branch_Bor_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 )
+    + ((branch_Bor_mod[qq,m,n])**2 + (branch_Gor_mod[qq,m,n])**2) * branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]) / ( (branch_Gor_mod[qq,m,n] + branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]))**2
+    + (- branch_Bor_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 ))
+  ;
 
-var rea_power_bus1_opened{(qq,m,n) in BRANCH_WITH_SIDE_1_OPENED} =
-- V[n] *
-(branch_Bex_mod[qq,m,n]
-+ (branch_admi[qq,m,n])**2 * branch_Bor_mod[qq,m,n]
-/ ( (branch_Gor_mod[qq,m,n] + branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]))**2
-+ (- branch_Bor_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 ) # Shunt
-- ((branch_Bor_mod[qq,m,n])**2 + (branch_Gor_mod[qq,m,n])**2) * branch_admi[qq,m,n] * cos(branch_angper[qq,m,n])
-/ ( (branch_Gor_mod[qq,m,n] + branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]))**2
-+ (- branch_Bor_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 ) # Shunt
-);
+var Red_Tran_Rea_Inv_Side_1_Opened{(qq,m,n) in BRANCHCC_WITH_SIDE_1_OPENED} =
+    - V[n] * (branch_Bex_mod[qq,m,n]
+    + (branch_admi[qq,m,n])**2 * branch_Bor_mod[qq,m,n] / ( (branch_Gor_mod[qq,m,n] + branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]))**2
+    + (- branch_Bor_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 )
+    - ((branch_Bor_mod[qq,m,n])**2 + (branch_Gor_mod[qq,m,n])**2) * branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]) / ( (branch_Gor_mod[qq,m,n] + branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]))**2
+    + (- branch_Bor_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 ))
+  ;
 
 
 #
@@ -185,8 +171,8 @@ subject to ctr_balance_P{PROBLEM_ACOPF,k in BUSCC}:
 sum{(qq,k,n) in BRANCHCC} base100MVA * V[k] * Red_Tran_Act_Dir[qq,k,n]
 + sum{(qq,m,k) in BRANCHCC} base100MVA * V[k] * Red_Tran_Act_Inv[qq,m,k]
 # Flows on branches with one side opened
-+ sum{(qq,k,n) in BRANCH_WITH_SIDE_2_OPENED} base100MVA * V[k] * act_power_bus2_opened[qq,k,n]
-+ sum{(qq,m,k) in BRANCH_WITH_SIDE_1_OPENED} base100MVA * V[k] * act_power_bus1_opened[qq,m,k]
++ sum{(qq,k,n) in BRANCHCC_WITH_SIDE_2_OPENED} base100MVA * V[k] * Red_Tran_Act_Dir_Side_2_Opened[qq,k,n]
++ sum{(qq,m,k) in BRANCHCC_WITH_SIDE_1_OPENED} base100MVA * V[k] * Red_Tran_Act_Inv_Side_1_Opened[qq,m,k]
 # Generating units
 - sum{(g,k) in UNITON} P[g,k]
 # Batteries
@@ -217,8 +203,8 @@ subject to ctr_balance_Q{PROBLEM_ACOPF,k in BUSCC}:
 sum{(qq,k,n) in BRANCHCC} base100MVA * V[k] * Red_Tran_Rea_Dir[qq,k,n]
 + sum{(qq,m,k) in BRANCHCC} base100MVA * V[k] * Red_Tran_Rea_Inv[qq,m,k]
 # Flows on branches with one side opened
-+ sum{(qq,k,n) in BRANCH_WITH_SIDE_2_OPENED} base100MVA * V[k] * rea_power_bus2_opened[qq,k,n]
-+ sum{(qq,m,k) in BRANCH_WITH_SIDE_1_OPENED} base100MVA * V[k] * rea_power_bus1_opened[qq,m,k]
++ sum{(qq,k,n) in BRANCHCC_WITH_SIDE_2_OPENED} base100MVA * V[k] * Red_Tran_Rea_Dir_Side_2_Opened[qq,k,n]
++ sum{(qq,m,k) in BRANCHCC_WITH_SIDE_1_OPENED} base100MVA * V[k] * Red_Tran_Rea_Inv_Side_1_Opened[qq,m,k]
 # Generating units
 - sum{(g,k) in UNITON: (g,k) not in UNIT_FIXQ } Q[g,k]
 - sum{(g,k) in UNIT_FIXQ} unit_Qc[1,g,k]
