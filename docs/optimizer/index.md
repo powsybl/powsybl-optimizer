@@ -1,4 +1,4 @@
-# Overview
+# OpenReac
 
 The reactive optimal power flow (OPF) is implemented with AMPL.
 Its goal is to compute voltage values on each point of the network as well as control values for reactive equipment and controllers of the grid (voltage set point of generating units, shunts, transformer ratios...).
@@ -13,6 +13,7 @@ Please notice that this reactive OPF does **not** decide active power of generat
 ---
 maxdepth: 2
 hidden: true
+---
 divisionOfCode.md
 inputs.md
 preprocessing.md
@@ -20,7 +21,6 @@ slackBusMainConnexComponent.md
 dcOptimalPowerflow.md
 acOptimalPowerflow.md
 outputs.md
----
 
 ```
 

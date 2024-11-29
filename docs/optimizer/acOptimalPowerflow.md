@@ -9,7 +9,7 @@ Then, the following values will be variable in the optimization:
 - $\boldsymbol{Q_{i,vsc}}$ the reactive power produced by voltage source converter stations $vsc$ of bus $i$.
 - $\boldsymbol{b_{i,g}}$ (resp. $\boldsymbol{b_{i,svc}}$) the susceptance of shunt $s$ (resp. of static var compensator $svc$) of bus $i$.
 - $\boldsymbol{\rho_{ij}}$ the transformer ratio of the ratio tap changer on branch $ij$, 
-specified as variable by the user (see [3.2](#32-configuration-of-the-run)).
+specified as variable by the user (see [Configuration of the run](inputs.md#configuration-of-the-run)).
 
 Please note that:
 - Units with active power specified in `ampl_network_generators.txt` that is less than the configurable parameter `Pnull` **are excluded from the optimization**,

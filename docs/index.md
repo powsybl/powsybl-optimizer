@@ -11,9 +11,9 @@ OpenReac is a reactive optimal power flow that gives a set of hypotheses for vol
 ---
 maxdepth: 2
 hidden: true
-gettingStarted.md
-optimizer/index
 ---
+gettingStarted.md
+optimizer/index.md
 
 ```
 

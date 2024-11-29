@@ -3,12 +3,12 @@
 ## Network data
 
 Files with the prefix `ampl_` contain the data and the parameters of the network on which the reactive OPF is executed.
-These files are obtained by using the [extended version of PowSyBl AMPL export](inv:powsyblcore:*:*:#the-extendedamplexporter), which is the default version.
+These files are obtained by using the [PowSyBl AMPL export](inv:powsyblcore:*:*:#grid_exchange_formats/ampl/export), which is the default version.
 
 ## Configuration of the run
 
 The user can configure the run with the dedicated Java interface 
-(see [OpenReacParameters](../open-reac/src/main/java/com/powsybl/openreac/parameters/input/OpenReacParameters.java)).
+(see [OpenReacParameters](https://github.com/powsybl/powsybl-optimizer/blob/main/open-reac/src/main/java/com/powsybl/openreac/parameters/input/OpenReacParameters.java)).
 Specifically, the user can set various parameters and thresholds used in the preprocessing and modeling of the reactive OPF. 
 These are specified in the file `param_algo.txt`:
 
@@ -17,10 +17,10 @@ These are specified in the file `param_algo.txt`:
 | `log_level_ampl`                            | Level of display for AMPL prints                                                                                                                                                  | INFO               | {DEBUG, INFO, WARNING, ERROR}                 |
 | `log_level_knitro`                          | Level of display for solver prints (see [AMPL documentation](https://dev.ampl.com/ampl/options.html))                                                                             | $1$                | {0, 1, 2}                                     |  
 | `objective_choice`                          | Choice of the objective function for the ACOPF (see [AC optimal powerflow](acOptimalPowerflow.md))                                                                               | $0$                | {0, 1, 2}                                     |
-| `ratio_voltage_target`                      | Ratio to calculate target V of buses when `objective_choice` is set to $1$ (see [AC optimal powerflow](acOptimalPowerflow.md))                                                   | $0.5$              | $\[0; 1\]$                                    |
-| `coeff_alpha`                               | Weight to favor more/less minimization of active power produced by generators or deviation between them and target values (see [AC optimal powerflow](acOptimalPowerflow.md)) | $1$                | $\[0; 1\]$                                    |
-| `Pnull`                                     | Threshold of active and reactive powers considered as null                                                                                                                        | $0.01$ (MW)        | $\[0; 1\]$                                    |
-| `Znull`                                     | Threshold of impedance considered as null (see [Zero impedance threshold](preprocessing.md#zero-impedance-threshold))                                                                                                                          | $10^{-5}$ (p.u.)   | $\[0; 0.1\]$                                  |                                                                                                                                                                  
+| `ratio_voltage_target`                      | Ratio to calculate target V of buses when `objective_choice` is set to $1$ (see [AC optimal powerflow](acOptimalPowerflow.md))                                                   | $0.5$              | $[0; 1]$                                    |
+| `coeff_alpha`                               | Weight to favor more/less minimization of active power produced by generators or deviation between them and target values (see [AC optimal powerflow](acOptimalPowerflow.md)) | $1$                | $[0; 1]$                                    |
+| `Pnull`                                     | Threshold of active and reactive powers considered as null                                                                                                                        | $0.01$ (MW)        | $[0; 1]$                                    |
+| `Znull`                                     | Threshold of impedance considered as null (see [Zero impedance threshold](preprocessing.md#zero-impedance-threshold))                                                                                                                          | $10^{-5}$ (p.u.)   | $[0; 0.1]$                                  |                                                                                                                                                                  
  | `epsilon_nominal_voltage`                   | Threshold to ignore voltage levels with nominal voltage lower than it                                                                                                             | $1$ (kV)           | $\mathbb{R}^{+}$                              | 
 | `min_plausible_low_voltage_limit`           | Consistency bound for low voltage limit of voltage levels (see [Voltage level limit consistency](preprocessing.md#voltage-level-limit-consistency))                                                                       | $0.5$ (p.u.)       | $\mathbb{R}^{+}$                              |
 | `max_plausible_high_voltage_limit`          | Consistency bound for high voltage limit of voltage levels (see [Voltage level limit consistency](preprocessing.md#voltage-level-limit-consistency))                                                                      | $1.5$ (p.u.)       | [`min_plausible_low_voltage_limit`; $\infty$] |
@@ -46,7 +46,7 @@ This is done using the following files:
 |---------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------|
 | `param_transformers.txt`              | Ratio tap changers with a variable transformation ratio (real variable)                                                                                 | Transformation ratios are fixed                                                   |
 | `param_shunt.txt`                     | Shunts with a continuous variable susceptance and which can be modified and/or connected (only if possible bus is defined in `ampl_network_shunts.txt`) | Shunt susceptances are fixed                                                      |
-| `param_generators_reactive.txt`       | Generators with a constant reactive power production. If this value is not consistent (> PQmax), the reactive power production stays variable           | Coherent reactive power productions (see [4.5](#45-pq-units-domain)) are variable |
+| `param_generators_reactive.txt`       | Generators with a constant reactive power production. If this value is not consistent (> PQmax), the reactive power production stays variable           | Coherent reactive power productions (see [P/Q unit domain](preprocessing.md#pq-unit-domain)) are variable |
 | `param_buses_with_reactive_slack.txt` | Buses with attached reactive slacks if configurable parameter buses_with_reactive_slacks = "CONFIGURED"                                                 | Only buses with no reactive power production have reactive slacks attached        |    
 
 All of these files share the same format: 2 columns #"num" "id".
@@ -58,4 +58,5 @@ If so, empty files will be created during execution.
 
 In addition to the elements specified in section [Configuration of the run](#configuration-of-the-run), the user may choose to override the voltage limits of specified voltage levels. These values must be defined in `ampl_network_substations_override.txt` and are employed to establish the new voltage limits as specified in section [Voltage level limit consistency](preprocessing.md#voltage-level-limit-consistency). 
 
-Format of `ampl_network_substations_override.txt`: 4 columns #"num" "minV (pu)" "maxV (pu)" "id"
+Format of `ampl_network_substations_override.txt`: 4 columns  
+\#"num" "minV (pu)" "maxV (pu)" "id"

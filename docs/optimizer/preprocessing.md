@@ -2,7 +2,7 @@
 
 Before solving the reactive ACOPF described in [AC optimal powerflow](acOptimalPowerflow.md), the following pre-processing blocks are executed to ensure the consistency of the values used in the optimization. 
 
-##Voltage level limit consistency
+## Voltage level limit consistency
 
 To ensure consistent voltage level limits for the buses, the configurable domain [`min_plausible_low_voltage_limit`; `max_plausible_high_voltage_limit`] is used (see [Configuration of the run](inputs.md#configuration-of-the-run)). 
 
@@ -10,14 +10,14 @@ Let $V_{s}^{min}$ (resp. $V_{s}^{max}$) be the low (resp. high) voltage limit of
 - $V_{s}^{min,c} = \max(V_{s}^{min},$ min_plausible_low_voltage_limit)
 - $V_{s}^{max,c} = \min(V_{s}^{max},$ max_plausible_low_voltage_limit)
 
-## Zero-impedance branches
+## Zero-impedance threshold
 
 Branches with an impedance magnitude, **calculated in per unit**, lower than the configurable threshold `Znull` (see section [Configuration of the run](inputs.md#configuration-of-the-run)) are considered as non-impedant. 
 These branches will have their reactance replaced by the threshold `Znull` (in p.u.), **even if the reactance specified in `ampl_network_branches.txt` is negative**.
 
 ## Impedance of transformers
 
-In the calculations of the ACOPF (see [AC optimal powerflow](acOptimalPowerflow.md)), the transformers with an impedance (specified in `ampl_network_branches.txt`) considered as null (see [Zero-impedance branches](preprocessing.md#zero-impedance-branches))  **are treated as lines**. Then, the transformation ratios/phase shifts are ignored, as well as the impedance specified in the tap changer table `ampl_network_tct.txt`.
+In the calculations of the ACOPF (see [AC optimal powerflow](acOptimalPowerflow.md)), the transformers with an impedance (specified in `ampl_network_branches.txt`) considered as null (see [Zero-impedance threshold](#zero-impedance-threshold))  **are treated as lines**. Then, the transformation ratios/phase shifts are ignored, as well as the impedance specified in the tap changer table `ampl_network_tct.txt`.
 
 For phase shifters transformers considered as impedant, the reactance values from the tap changer table (in `ampl_network_tct.txt`) replace the reactance specified in `ampl_network_branches.txt`. The resistance is then calculated proportionally. 
 For the ratio tap changers, the impedance stays as specified in `ampl_network_branches.txt`. **Please notice there is no specified handling for cases where resistance and/or reactance is negative or if there is both a ratio tap changer and a  phase shift transformer on the same branch.**
