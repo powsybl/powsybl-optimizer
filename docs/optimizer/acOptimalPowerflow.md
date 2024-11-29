@@ -13,18 +13,18 @@ specified as variable by the user (see [3.2](#32-configuration-of-the-run)).
 
 Please note that:
 - Units with active power specified in `ampl_network_generators.txt` that is less than the configurable parameter `Pnull` **are excluded from the optimization**,
-  even if the user designates these generators as fixed in the parameter file `param_generators_reactive.txt` (see [3.2](#32-configuration-of-the-run)).
+  even if the user designates these generators as fixed in the parameter file `param_generators_reactive.txt` (see [Configuration of the run](inputs.md#configuration-of-the-run)).
   Therefore, when the optimization results are exported, **these generators are exported with a reactive power target of $0$**.
 - **Neither current limits nor power limits** on branches are considered in the optimization.
 
 ## Constraints
 
-The constraints of the optimization problem depend on parameters specified by the user (see [3.2](#32-configuration-of-the-run)). 
+The constraints of the optimization problem depend on parameters specified by the user (see [Configuration of the run](inputs.md#configuration-of-the-run)). 
 In particular, the user can indicate which buses will have associated **reactive slacks** $\boldsymbol{\sigma_{i}^{Q,+}}$ and $\boldsymbol{\sigma_{i}^{Q,-}}$
 , expressing the excess (resp. shortfall) of reactive power produced in bus $i$, and used to ensure reactive power balance. 
 To do so, these buses must be specified in parameter file `param_buses_with_reactive_slack.txt`, and `buses_with_reactive_slacks` must be set to $\text{CONFIGURED}$.
 
-The ACOPF involves the following constraints, in addition to the slack constraint $(1)$ introduced in [5](#5-slack-bus--main-connex-component):
+The ACOPF involves the following constraints, in addition to the slack constraint $(1)$ introduced in the [Slack bus and main connex component](slackBusMainConnexComponent.md) part:
 
 $$\sum\limits_{j\in v(i)} \boldsymbol{p_{ij}} = P_i^{in} - \sum\limits_{g}\boldsymbol{P_{i,g}}, \quad i\in\text{BUSCC} \quad (5)$$
 
@@ -35,14 +35,12 @@ where:
   calculated as defined in the [PowSyBl documentation](https://powsybl.readthedocs.io/projects/powsybl-open-loadflow).
   Those are variables because they depend on $\boldsymbol{V_i}$, $\boldsymbol{V_j}$, $\boldsymbol{\theta_i}$, $\boldsymbol{\theta_j}$ and $\boldsymbol{\rho_{ij}}$.
 - $P_i^{in}$ is the constant active power injected or consumed in bus $i$ by batteries, loads, VSC stations and LCC stations.
-- $Q_i^{in}$ is the constant reactive power injected or consumed in bus $i$, by fixed generators and fixed shunts (see [3.2](#32-configuration-of-the-run)), batteries, loads and LCC stations.
+- $Q_i^{in}$ is the constant reactive power injected or consumed in bus $i$, by fixed generators and fixed shunts (see [Configuration of the run](inputs.md#configuration-of-the-run)), batteries, loads and LCC stations.
 
-In order to bound the variables described in [7.1](#71-generalities), the limits specified in the files of network data (see [3.1](#31-network-data)) 
-are used. We specify the following special treatments:
-- The voltage magnitude $\boldsymbol{V_i}$ lies between the corrected voltage limits described in [4.1](#41-voltage-level-limits-consistency).
-- The reactive power $\boldsymbol{Q_{i,g}}$ produced by unit $g$ lies between the corrected limits described in [4.4](#44-pq-units-domain).
-- The active power $\boldsymbol{P_{i,g}}$ also lies between the corrected limits described in [4.4](#44-pq-units-domain),
-but these bounds are only considered when the configurable parameter $\alpha$ is different than $1$ (default value).
+In order to bound the variables described in [Generalities](#generalities), the limits specified in the files of network data (see [Network data](inputs.md#network-data)) are used. We specify the following special treatments:
+- The voltage magnitude $\boldsymbol{V_i}$ lies between the corrected voltage limits described in the [Voltage level limit consistency](preprocessing.md#voltage-level-limit-consistency) section.
+- The reactive power $\boldsymbol{Q_{i,g}}$ produced by unit $g$ lies between the corrected limits described in the [P/Q unit domain](preprocessing.md#pq-unit-domain) section.
+- The active power $\boldsymbol{P_{i,g}}$ also lies between the corrected limits described in the [P/Q unit domain](preprocessing.md#pq-unit-domain) section, but these bounds are only considered when the configurable parameter $\alpha$ is different than $1$ (default value).
 Otherwise, all active powers evolve proportionally to their initial point $P_{i,g}^t$ (specified in `ampl_network_generators.txt`):
 $\boldsymbol{P_{i,g}} = P_{i,g}^t + \boldsymbol{\gamma} (P_{g}^{max,c} - P_{i,g}^t)$, where $\boldsymbol{\gamma}$ is optimized and lies in $\[-1;1\]$.
 - The reactive power $\boldsymbol{Q_{i,vsc}}$ produced by voltage source converter station $vsc$ is included in $\[\min(qP_{vsc}, qp_{vsc}, qp_{vsc}^0)$; $\max(QP_{vsc}, Qp_{vsc}, Qp_{vsc}^0)\]$.
@@ -50,7 +48,7 @@ $\boldsymbol{P_{i,g}} = P_{i,g}^t + \boldsymbol{\gamma} (P_{g}^{max,c} - P_{i,g}
 
 ## Objective function
 
-The objective function also depends on parameters specified by the user (see [3.2](#32-configuration-of-the-run)).
+The objective function also depends on parameters specified by the user (see [Configuration of the run](inputs.md#configuration-of-the-run)).
 The `objective_choice` parameter modifies the values of penalties $\beta_1$, $\beta_2$, and $\beta_3$ in the objective function:
 if `objective_choice` $= i$, then $\beta_i = 1$ and $\beta_j = 0.01$ for $j \neq i$.
 
@@ -73,16 +71,14 @@ high coefficient ($10$) to drive it towards $0$, ensuring reactive power balance
 ## Solving
 
 Before solving the ACOPF, the voltage magnitudes $\boldsymbol{V_i}$ are warm-started with $V_i^t$
-(specified in `ampl_network_buses.txt`), as well as the voltage phases $\boldsymbol{\theta_i}$ with the results of the DCOPF (see [6](#6-direct-current-optimal-power-flow)).
+(specified in `ampl_network_buses.txt`), as well as the voltage phases $\boldsymbol{\theta_i}$ with the results of the DCOPF (see [DC optimal powerflow](dcOptimalPowerflow.md)).
 Please also note that a scaling is applied with user-defined values before solving the ACOPF.
 
-The solving is considered as successful if the non-linear solver employed (see [Non-linear solver](#non-linear-optimization-solver)) 
-finds a feasible approximate solution (**even if the sum of 
-slacks is important**), and the script `reactiveopfoutput.run` is executed (see [8.1](#81-in-case-of-convergence)). 
+The solving is considered as successful if the non-linear solver employed (see [Non-linear optimization solver](../gettingStarted.md#non-linear-optimization-solver)) finds a feasible approximate solution (**even if the sum of slacks is important**), and the script `reactiveopfoutput.run` is executed (see [In case of convergence](outputs.md#in-case-of-convergence)). 
 
 Note that if the solving of ACOPF fails, and the $\alpha$ parameter is set to $1$ (default value),
 then a new resolution is attempted, with $\alpha$ set to zero. This gives more freedom to the active powers
-produced (see [7.2](#72-constraints)), leaving these variables free withing their respective bounds.
+produced (see [Constraints](#constraints)), leaving these variables free withing their respective bounds.
 
-If ACOPF solving fails another time, the script `reactiveopfexit.run` is executed (see [8.2](#82-in-case-of-inconsistency)).
+If ACOPF solving fails another time, the script `reactiveopfexit.run` is executed (see [In case of inconsistency](outputs.md#in-case-of-inconsistency)).
 
