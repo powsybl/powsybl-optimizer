@@ -38,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  * @author Nicolas PIERRE {@literal <nicolas.pierre at artelys.com>}
  */
-public class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
+class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
 
     @Test
     void testRunAsync() throws IOException {

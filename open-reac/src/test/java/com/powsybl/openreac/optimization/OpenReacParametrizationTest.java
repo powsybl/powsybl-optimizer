@@ -30,7 +30,7 @@ import java.util.concurrent.ForkJoinPool;
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  * @author Nicolas PIERRE {@literal <nicolas.pierre at artelys.com>}
  */
-public class OpenReacParametrizationTest extends AbstractOpenReacRunnerTest {
+class OpenReacParametrizationTest extends AbstractOpenReacRunnerTest {
 
     @Test
     void testDefaultParamAlgoExport() throws IOException {

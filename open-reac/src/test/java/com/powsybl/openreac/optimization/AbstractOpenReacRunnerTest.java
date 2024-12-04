@@ -31,7 +31,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -95,7 +94,14 @@ abstract class AbstractOpenReacRunnerTest {
      * Runs OpenReac and returns associated result.
      */
     protected OpenReacResult runOpenReac(Network network, String subFolder) throws IOException {
-        return runOpenReac(network, subFolder, new OpenReacParameters(), ReportNode.NO_OP);
+        return runOpenReac(network, subFolder, new OpenReacParameters());
+    }
+
+    /**
+     * Runs OpenReac and returns associated result.
+     */
+    protected OpenReacResult runOpenReac(Network network, String subFolder, OpenReacParameters parameters) throws IOException {
+        return runOpenReac(network, subFolder, parameters, ReportNode.NO_OP);
     }
 
     /**

@@ -34,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  * @author Nicolas PIERRE {@literal <nicolas.pierre at artelys.com>}
  */
-public class OpenReacAmplIOTest extends AbstractOpenReacRunnerTest {
+class OpenReacAmplIOTest extends AbstractOpenReacRunnerTest {
 
     @Test
     void testInputFile() throws IOException {
