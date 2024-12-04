@@ -12,6 +12,7 @@ import com.powsybl.commons.report.ReportNode;
 import com.powsybl.commons.test.ComparisonUtils;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.computation.local.LocalCommandExecutor;
+import com.powsybl.computation.local.LocalComputationConfig;
 import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.iidm.network.*;
 import com.powsybl.loadflow.LoadFlow;
@@ -27,13 +28,15 @@ import org.junit.jupiter.api.BeforeEach;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.FileSystem;
-import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.nio.file.Files.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -47,7 +50,7 @@ abstract class AbstractOpenReacRunnerTest {
     @BeforeEach
     public void setUp() throws IOException {
         fileSystem = Jimfs.newFileSystem(Configuration.unix());
-        tmpDir = Files.createDirectory(fileSystem.getPath("tmp"));
+        tmpDir = createDirectory(fileSystem.getPath("tmp"));
     }
 
     @AfterEach
@@ -56,14 +59,14 @@ abstract class AbstractOpenReacRunnerTest {
     }
 
     protected void assertEqualsToRef(Path p, String refFileName) throws IOException {
-        try (InputStream actual = Files.newInputStream(p)) {
+        try (InputStream actual = newInputStream(p)) {
             ComparisonUtils.assertTxtEquals(Objects.requireNonNull(getClass().getResourceAsStream(refFileName)), actual);
         }
     }
 
     protected Path getAmplExecPath() throws IOException {
         Path execFolder;
-        try (Stream<Path> walk = Files.walk(tmpDir)) {
+        try (Stream<Path> walk = walk(tmpDir)) {
             execFolder = walk.limit(2).collect(Collectors.toList()).get(1);
         }
         return execFolder;
@@ -90,18 +93,33 @@ abstract class AbstractOpenReacRunnerTest {
         openReacResult.applyAllModifications(network);
     }
 
+    // TODO : remove useless methods here
     /**
      * Runs OpenReac and returns associated result.
      */
     protected OpenReacResult runOpenReac(Network network, String subFolder) throws IOException {
-        return runOpenReac(network, subFolder, new OpenReacParameters());
+        return runOpenReac(network, subFolder, false);
     }
 
     /**
      * Runs OpenReac and returns associated result.
      */
-    protected OpenReacResult runOpenReac(Network network, String subFolder, OpenReacParameters parameters) throws IOException {
+    protected OpenReacResult runOpenReac(Network network, String subFolder, boolean onlyIndicators) throws IOException {
+        return runOpenReac(network, subFolder, new OpenReacParameters(), onlyIndicators);
+    }
+
+    /**
+     * Runs OpenReac and returns associated result.
+     */
+    protected OpenReacResult runOpenReac(Network network, String subFolder, OpenReacParameters parameters, boolean onlyIndicators) throws IOException {
         return runOpenReac(network, subFolder, parameters, ReportNode.NO_OP);
+    }
+
+    /**
+     * Runs OpenReac and returns associated result.
+     */
+    protected OpenReacResult runOpenReac(Network network, String subFolder, OpenReacParameters parameters, ReportNode reportNode) throws IOException {
+        return runOpenReac(network, subFolder, parameters, false, reportNode);
     }
 
     /**
@@ -109,21 +127,25 @@ abstract class AbstractOpenReacRunnerTest {
      * Note that OpenReac is not really executed by default. If the execution line is not uncommented,
      * the results are retrieved and stored in an {@link OpenReacResult} object.
      */
-    protected OpenReacResult runOpenReac(Network network, String subFolder, OpenReacParameters parameters, ReportNode reportNode) throws IOException {
+    protected OpenReacResult runOpenReac(Network network, String subFolder, OpenReacParameters parameters,
+                                         boolean onlyIndicators, ReportNode reportNode) throws IOException {
         // set default voltage limits to every voltage levels of the network
         setDefaultVoltageLimits(network);
-        LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
-                List.of(subFolder + "/reactiveopf_results_generators.csv",
-                        subFolder + "/reactiveopf_results_indic.txt",
-                        subFolder + "/reactiveopf_results_rtc.csv",
-                        subFolder + "/reactiveopf_results_shunts.csv",
-                        subFolder + "/reactiveopf_results_static_var_compensators.csv",
-                        subFolder + "/reactiveopf_results_vsc_converter_stations.csv",
-                        subFolder + "/reactiveopf_results_voltages.csv"));
+        List<String> outputFileNames = new ArrayList<>(List.of(subFolder + "/reactiveopf_results_indic.txt"));
+        if (!onlyIndicators) {
+            outputFileNames.addAll(List.of(
+                    subFolder + "/reactiveopf_results_rtc.csv",
+                    subFolder + "/reactiveopf_results_shunts.csv",
+                    subFolder + "/reactiveopf_results_static_var_compensators.csv",
+                    subFolder + "/reactiveopf_results_vsc_converter_stations.csv",
+                    subFolder + "/reactiveopf_results_voltages.csv"
+            ));
+        }
+        LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(outputFileNames);
         // To really run open reac, use the commentede line below. Be sure that open-reac/src/test/resources/com/powsybl/config/test/config.yml contains your ampl path
-        try (ComputationManager computationManager = new LocalComputationManager()) {
-//        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
-//                localCommandExecutor, ForkJoinPool.commonPool())) {
+//        try (ComputationManager computationManager = new LocalComputationManager()) {
+        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
+                localCommandExecutor, ForkJoinPool.commonPool())) {
             return OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), parameters,
                     new OpenReacConfig(true), computationManager, reportNode, null);
         }

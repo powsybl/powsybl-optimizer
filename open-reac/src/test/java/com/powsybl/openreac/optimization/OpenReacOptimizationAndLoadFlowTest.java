@@ -43,7 +43,7 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
     @Test
     void testRunAsync() throws IOException {
         Network network = IeeeCdfNetworkFactory.create14();
-        String subFolder = "openreac-output-ieee14";
+        String subFolder = "optimization/loadflow/openreac-output-ieee14";
         OpenReacParameters parameters = new OpenReacParameters();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
         LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
@@ -69,7 +69,7 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
     @Test
     void testOnlyGenerator() throws IOException {
         Network network = IeeeCdfNetworkFactory.create14();
-        testAllModifAndLoadFlow(network, "openreac-output-ieee14", new OpenReacParameters(), ReportNode.NO_OP);
+        testAllModifAndLoadFlow(network, "optimization/loadflow/openreac-output-ieee14", new OpenReacParameters(), ReportNode.NO_OP);
     }
 
     @Test
@@ -79,7 +79,7 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
         network.getVscConverterStation("cs4").getTerminal().setP(0.0);
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.addConstantQGenerators(List.of("g1", "g2", "g5", "g6"));
-        testAllModifAndLoadFlow(network, "openreac-output-vsc", parameters, ReportNode.NO_OP);
+        testAllModifAndLoadFlow(network, "optimization/loadflow/openreac-output-vsc", parameters, ReportNode.NO_OP);
     }
 
     @Test
@@ -89,7 +89,7 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
         network.getStaticVarCompensator("svc1").setVoltageSetpoint(390).setRegulationMode(StaticVarCompensator.RegulationMode.VOLTAGE);
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.addConstantQGenerators(List.of("g1"));
-        testAllModifAndLoadFlow(network, "openreac-output-svc", parameters, ReportNode.NO_OP);
+        testAllModifAndLoadFlow(network, "optimization/loadflow/openreac-output-svc", parameters, ReportNode.NO_OP);
     }
 
     @Test
@@ -102,7 +102,7 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.addVariableShuntCompensators(List.of(shunt.getId()));
         ReportNode reportNode = ReportNode.newRootReportNode().withMessageTemplate("openReac", "openReac").build();
-        testAllModifAndLoadFlow(network, "openreac-output-shunt", parameters, reportNode);
+        testAllModifAndLoadFlow(network, "optimization/loadflow/openreac-output-shunt", parameters, reportNode);
 
         assertEquals(3, reportNode.getChildren().size());
         ReportNode reportShunts = reportNode.getChildren().get(2);
@@ -135,7 +135,7 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
         parameters.setShuntCompensatorActivationAlertThreshold(100.);
         parameters.addVariableShuntCompensators(List.of(shunt.getId()));
         ReportNode reportNode = ReportNode.newRootReportNode().withMessageTemplate("openReac", "openReac").build();
-        testAllModifAndLoadFlow(network, "openreac-output-shunt", parameters, reportNode);
+        testAllModifAndLoadFlow(network, "optimization/loadflow/openreac-output-shunt", parameters, reportNode);
 
         assertEquals(2, reportNode.getChildren().size());
 
@@ -156,7 +156,7 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.addConstantQGenerators(List.of("GEN_1"));
         parameters.addVariableTwoWindingsTransformers(List.of("T2wT"));
-        testAllModifAndLoadFlow(network, "openreac-output-transfo", parameters, ReportNode.NO_OP);
+        testAllModifAndLoadFlow(network, "optimization/loadflow/openreac-output-transfo", parameters, ReportNode.NO_OP);
         assertEquals(0, rtc.getTapPosition());
         assertEquals(22.935, rtc.getTargetV());
     }
@@ -165,13 +165,13 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
     void testRealNetwork() throws IOException {
         Network network = IeeeCdfNetworkFactory.create57();
         OpenReacParameters parameters = new OpenReacParameters();
-        testAllModifAndLoadFlow(network, "openreac-output-real-network", parameters, ReportNode.NO_OP);
+        testAllModifAndLoadFlow(network, "optimization/loadflow/openreac-output-real-network", parameters, ReportNode.NO_OP);
     }
 
     @Test
     void testWarmStart() throws IOException {
         Network network = VoltageControlNetworkFactory.createNetworkWithT2wt();
-        String subFolder = "openreac-output-warm-start";
+        String subFolder = "optimization/loadflow/openreac-output-warm-start";
         OpenReacParameters parameters = new OpenReacParameters();
 
         runAndApplyAllModifications(network, subFolder, parameters, false, ReportNode.NO_OP); // without warm start, no update

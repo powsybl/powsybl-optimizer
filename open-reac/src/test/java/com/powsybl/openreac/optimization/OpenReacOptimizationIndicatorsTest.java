@@ -7,7 +7,6 @@
  */
 package com.powsybl.openreac.optimization;
 
-import com.powsybl.commons.report.ReportNode;
 import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.StaticVarCompensator;
@@ -62,7 +61,7 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
                 .setReactiveSlackVariableScalingFactor(1e-2)
                 .setTwoWindingTransformerRatioVariableScalingFactor(2e-3)
                 .setShuntVariableScalingFactor(0.11);
-        OpenReacResult result = runOpenReac(network, "", parameters, ReportNode.NO_OP);
+        OpenReacResult result = runOpenReac(network, "optimization/indicators/input-parameters-test", parameters, true);
 
         // verify buses outside main SC have been excluded
         assertEquals("WARNING", result.getIndicators().get("log_level_ampl"));
@@ -95,7 +94,7 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
     void testBusIndicators() throws IOException {
         Network network = HvdcNetworkFactory.createLccWithBiggerComponents();
         network.getBusBreakerView().getBus("b1").setV(400);
-        OpenReacResult result = runOpenReac(network, "");
+        OpenReacResult result = runOpenReac(network, "optimization/indicators/bus-test", true);
 
         assertEquals(OpenReacStatus.OK, result.getStatus());
         assertEquals(16, Integer.parseInt(result.getIndicators().get("nb_substations")));
@@ -115,7 +114,7 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
         // due to disconnected lines, increase max P of generators in main CC
         network.getGenerator("g3").setMaxP(3);
         network.getGenerator("g4").setMaxP(3);
-        OpenReacResult result = runOpenReac(network, "openreac-output-branches-opened");
+        OpenReacResult result = runOpenReac(network, "optimization/indicators/branches-test", true);
 
         assertEquals(OpenReacStatus.OK, result.getStatus());
         assertEquals(4, Integer.parseInt(result.getIndicators().get("nb_branch_in_data_file")));
@@ -131,7 +130,7 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
         network.getGenerator("g1").setTargetQ(50);
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.addConstantQGenerators(List.of("g1", "g3"));
-        OpenReacResult result = runOpenReac(network, "", parameters, ReportNode.NO_OP);
+        OpenReacResult result = runOpenReac(network, "optimization/indicators/generators-test", parameters, true);
 
         assertEquals(OpenReacStatus.OK, result.getStatus());
         assertEquals(3, Integer.parseInt(result.getIndicators().get("nb_unit_in_data_file")));
@@ -148,7 +147,7 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
         Network network = VoltageControlNetworkFactory.createNetworkWith2T2wt();
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.addVariableTwoWindingsTransformers(List.of("T2wT1"));
-        OpenReacResult result = runOpenReac(network, "", parameters, ReportNode.NO_OP);
+        OpenReacResult result = runOpenReac(network, "optimization/indicators/transfo-test", parameters, true);
 
         // verify only one rtc has been optimized
         assertEquals(OpenReacStatus.OK, result.getStatus());
@@ -161,7 +160,7 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
         Network network = HvdcNetworkFactory.createVsc();
         // FIXME : should not depend on P/Q values on terminal
         network.getVscConverterStation("cs2").getTerminal().setP(2).setQ(1);
-        OpenReacResult result = runOpenReac(network, "");
+        OpenReacResult result = runOpenReac(network, "optimization/indicators/vsc-test");
 
         assertEquals(OpenReacStatus.OK, result.getStatus());
         assertEquals(2, Integer.parseInt(result.getIndicators().get("nb_vsc_converter_in_data_file")));
@@ -174,7 +173,7 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
         Network network = HvdcNetworkFactory.createLcc();
         // FIXME : should not depend on P/Q values on terminal
         network.getLccConverterStation("cs2").getTerminal().setP(2).setQ(1);
-        OpenReacResult result = runOpenReac(network, "");
+        OpenReacResult result = runOpenReac(network, "optimization/indicators/lcc-test", true);
 
         assertEquals(OpenReacStatus.OK, result.getStatus());
         assertEquals(2, Integer.parseInt(result.getIndicators().get("nb_lcc_converter_in_data_file")));
@@ -215,7 +214,7 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
                 .add();
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.addVariableShuntCompensators(List.of("SHUNT"));
-        OpenReacResult result = runOpenReac(network, "", parameters);
+        OpenReacResult result = runOpenReac(network, "optimization/indicators/shunt-test", parameters, true);
 
         assertEquals(OpenReacStatus.OK, result.getStatus());
         assertEquals(3, Integer.parseInt(result.getIndicators().get("nb_shunt_in_data_file")));
@@ -238,7 +237,7 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
                 .setBmin(-0.008)
                 .setBmax(0.008)
                 .add();
-        OpenReacResult result = runOpenReac(network, "");
+        OpenReacResult result = runOpenReac(network, "optimization/indicators/svc-test", true);
 
         assertEquals(OpenReacStatus.OK, result.getStatus());
         assertEquals(2, Integer.parseInt(result.getIndicators().get("nb_svc_in_data_file")));
@@ -270,7 +269,7 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
                 .setConnectableBus("b1")
                 .setTargetQ(0.2)
                 .add();
-        OpenReacResult result = runOpenReac(network, "");
+        OpenReacResult result = runOpenReac(network, "optimization/indicators/battery-test", true);
 
         assertEquals(OpenReacStatus.OK, result.getStatus());
         assertEquals(2, Integer.parseInt(result.getIndicators().get("nb_batteries")));

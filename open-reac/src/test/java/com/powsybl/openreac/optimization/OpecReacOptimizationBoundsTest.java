@@ -30,13 +30,13 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
         // due to the disconnection, the network is now imbalanced
         // and max p of generators is not enough to provide balance
         network.getLine("l45").getTerminal2().disconnect();
-        OpenReacResult result = runOpenReac(network, "openreac-output-branches-opened");
+        OpenReacResult result = runOpenReac(network, "optimization/bounds/generators-pmax-too-small", true);
         assertEquals(OpenReacStatus.NOT_OK, result.getStatus());
 
         // increase max p of generators to allow power balance
         network.getGenerator("g2").setMaxP(2.5);
         network.getGenerator("g3").setMaxP(2.5);
-        result = runOpenReac(network, "openreac-output-branches-opened");
+        result = runOpenReac(network, "optimization/bounds/generators-pmax", true);
         assertEquals(OpenReacStatus.OK, result.getStatus());
     }
 
@@ -49,20 +49,20 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
         network.getLoad("l4").setP0(3);
         network.getGenerator("g2").setMinP(2);
         network.getGenerator("g3").setMinP(2);
-        OpenReacResult result = runOpenReac(network, "openreac-output-branches-opened");
+        OpenReacResult result = runOpenReac(network, "optimization/bounds/generators-pmin-too-high", true);
         assertEquals(OpenReacStatus.NOT_OK, result.getStatus());
 
         // decrease min p of generators to allow power balance
         // but targetP will be fixed in optimization, because it is too close of maxP
         network.getGenerator("g2").setMinP(1);
         network.getGenerator("g3").setMinP(1);
-        result = runOpenReac(network, "openreac-output-branches-opened");
+        result = runOpenReac(network, "optimization/bounds/generators-target-p-too-close-pmax", true);
         assertEquals(OpenReacStatus.NOT_OK, result.getStatus());
 
         // increase max p of generators to allow modification of targetP in optimization
         network.getGenerator("g2").setMaxP(2.5);
         network.getGenerator("g3").setMaxP(2.5);
-        result = runOpenReac(network, "openreac-output-branches-opened");
+        result = runOpenReac(network, "optimization/bounds/generators-pmin", true);
         assertEquals(OpenReacStatus.OK, result.getStatus());
     }
 
