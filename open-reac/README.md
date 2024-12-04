@@ -75,7 +75,7 @@ each serving a specific function:
 Files with the prefix `ampl_` contain the
 data and the parameters of the network on which the reactive OPF is executed.
 These files are obtained by using the
-[AMPL export of PowSyBl](https://github.com/powsybl/powsybl-core/blob/main/ampl-converter/src/main/java/com/powsybl/ampl/converter/AmplNetworkWriter.java).
+[extended version of PowSyBl AMPL export](https://github.com/powsybl/powsybl-core/blob/main/ampl-converter/src/main/java/com/powsybl/ampl/converter/version/ExtendedAmplExporter.java), which is the default version.
 
 #### 3.2 Configuration of the run
 

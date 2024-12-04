@@ -21,12 +21,12 @@ data;
 param: SUBSTATIONS: substation_horizon substation_fodist substation_Vnomi substation_Vmin substation_Vmax substation_fault substation_curative substation_country substation_id substation_description := include ampl_network_substations.txt;
 
 # ampl_network_buses.txt
-#"variant" "num" "substation" "cc" "v (pu)" "theta (rad)" "p (MW)" "q (MVar)" "fault" "curative" "id"
-param: BUS: bus_substation bus_CC bus_V0 bus_angl0 bus_injA  bus_injR bus_fault bus_curative bus_id := include ampl_network_buses.txt;
+#"variant" "num" "substation" "cc" "sc" "v (pu)" "theta (rad)" "p (MW)" "q (MVar)" "slack bus" "fault" "curative" "id"
+param: BUS: bus_substation bus_CC bus_SC bus_V0 bus_angl0 bus_injA bus_injR bus_slack bus_fault bus_curative bus_id := include ampl_network_buses.txt;
 
 # ampl_network_generators.txt
-#"variant" "num" "bus" "con. bus" "substation" "minP (MW)" "maxP (MW)" "minQmaxP (MVar)" "minQ0 (MVar)" "minQminP (MVar)" "maxQmaxP (MVar)" "maxQ0 (MVar)" "maxQminP (MVar)" "v regul." "targetV (pu)" "targetP (MW)" "targetQ (MVar)" "fault" "curative" "id" "description" "P (MW)" "Q (MVar)"
-param: UNIT: unit_potentialbus unit_substation unit_Pmin unit_Pmax unit_qP unit_qp0 unit_qp unit_QP unit_Qp0 unit_Qp unit_vregul unit_Vc unit_Pc unit_Qc unit_fault unit_curative unit_id unit_name unit_P0 unit_Q0 := include ampl_network_generators.txt;
+#"variant" "num" "bus" "con. bus" "substation" "minP (MW)" "maxP (MW)" "minQmaxP (MVar)" "minQ0 (MVar)" "minQminP (MVar)" "maxQmaxP (MVar)" "maxQ0 (MVar)" "maxQminP (MVar)" "v regul." "v regul. bus" "targetV (pu)" "targetP (MW)" "targetQ (MVar)" "fault" "curative" "id" "description" "P (MW)" "Q (MVar)"
+param: UNIT: unit_potentialbus unit_substation unit_Pmin unit_Pmax unit_qP unit_qp0 unit_qp unit_QP unit_Qp0 unit_Qp unit_vregul unit_vregul_bus unit_Vc unit_Pc unit_Qc unit_fault unit_curative unit_id unit_name unit_P0 unit_Q0 := include ampl_network_generators.txt;
 
 # ampl_network_loads.txt
 #"variant" "num" "bus" "substation" "p (MW)" "q (MVar)" "fault" "curative" "id" "description" "p (MW)" "q (MVar)"
@@ -37,16 +37,16 @@ param: LOAD: load_substation load_PFix load_QFix load_fault load_curative load_i
 param: SHUNT: shunt_possiblebus shunt_substation shunt_valmin shunt_valmax shunt_interPoints shunt_valnom shunt_fault shunt_curative shunt_id shunt_nom shunt_P0 shunt_Q0 shunt_sections_count := include ampl_network_shunts.txt;
 
 # ampl_network_static_var_compensators.txt
-#"variant" "num" "bus" "con. bus" "substation" "minB (pu)" "maxB (pu)" "v regul." "targetV (pu)" "targetQ (MVar)" "fault" "curative" "id" "description" "P (MW)" "Q (MVar)"
-param: SVC: svc_possiblebus svc_substation svc_bmin svc_bmax svc_vregul svc_targetV svc_targetQ svc_fault svc_curative svc_id svc_description svc_P0 svc_Q0 := include ampl_network_static_var_compensators.txt;
+#"variant" "num" "bus" "con. bus" "substation" "minB (pu)" "maxB (pu)" "v regul." "v regul. bus" "targetV (pu)" "targetQ (MVar)" "fault" "curative" "id" "description" "P (MW)" "Q (MVar)"
+param: SVC: svc_possiblebus svc_substation svc_bmin svc_bmax svc_vregul svc_vregul_bus svc_targetV svc_targetQ svc_fault svc_curative svc_id svc_description svc_P0 svc_Q0 := include ampl_network_static_var_compensators.txt;
 
 # ampl_network_batteries.txt
 #"variant" "num" "bus" "con. bus" "substation" "p0 (MW)" "q0 (MW)" "minP (MW)" "maxP (MW)" "minQmaxP (MVar)" "minQ0 (MVar)" "minQminP (MVar)" "maxQmaxP (MVar)" "maxQ0 (MVar)" "maxQminP (MVar)" "fault" "curative" "id" "description" "P (MW)" "Q (MVar)"
 param: BATTERY: battery_possiblebus battery_substation battery_p0 battery_q0 battery_Pmin battery_Pmax battery_qP battery_qp0 battery_qp battery_QP battery_Qp0 battery_Qp battery_fault battery_curative battery_id battery_name battery_P0 battery_Q0 := include ampl_network_batteries.txt;
 
 # ampl_network_tct.txt
-#"variant" "num" "tap" "var ratio" "x (pu)" "angle (rad)" "fault" "curative"
-param: TAPS: tap_ratio tap_x tap_angle tap_fault tap_curative := include ampl_network_tct.txt;
+#"variant" "num" "tap" "var ratio" "r (pu)" "x (pu)" "g (pu)" "b (pu)" "angle (rad)" "fault" "curative"
+param: TAPS: tap_ratio tap_r tap_x tap_g tap_b tap_angle tap_fault tap_curative := include ampl_network_tct.txt;
 
 # ampl_network_rtc.txt
 #"num" "tap" "table" "onLoad" "targetV" "fault" "curative" "id" 
