@@ -88,7 +88,7 @@ The solving is considered as successful if the non-linear solver employed (see [
 
 Note that if the solving of ACOPF fails, and the $\alpha$ parameter is set to $1$ (default value),
 then a new resolution is attempted, with $\alpha$ set to zero. This gives more freedom to the active powers
-produced (see [Constraints](#constraints)), leaving these variables free withing their respective bounds.
+produced (see [Constraints](#constraints)), leaving these variables free within their respective bounds.
 
 If ACOPF solving fails another time, the script `reactiveopfexit.run` is executed (see [In case of inconsistency](outputs.md#in-case-of-inconsistency)).
 
