@@ -5,7 +5,7 @@
 Before addressing the ACOPF (see [AC optimal powerflow](acOptimalPowerflow.md)), a DCOPF is solved for two main reasons:
 - If the DCOPF resolution fails, it provides a strong indication that the ACOPF resolution will also fail.
   Thus, it serves as a formal consistency check on the data.
-- The phases computed by DCOPF resolution will be used as initial points for the solving of the ACOPF.
+- The angles computed by DCOPF resolution will be used as initial points for the solving of the ACOPF.
 
 ## Optimization problem
 
