@@ -52,5 +52,5 @@ Please note that in the end, **the corrected bounds are rectangular**, not trape
 In addition, bounds $qP_{g}^0$ and $Qp_{g}^0$ are not used, as generators with zero active power will be excluded from the optimisation (see [AC optimal powerflow](acOptimalPowerflow.md#generalities)).
 
 The general correction of the generator's reactive power diagram $g$ is illustrated in the following figure:
-![Reactive diagram correction](_static/img/reactive-diagram.png){width="30%" align=center}
+![Reactive diagram correction](_static/img/reactive-diagram.png){width="50%" align=center}
 
