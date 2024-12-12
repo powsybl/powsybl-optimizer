@@ -73,7 +73,7 @@ abstract class AbstractOpenReacRunnerTest {
     }
 
     /**
-     * Runs OpenReac, apply the results and run a load flow.
+     * Runs OpenReac, apply the results and verify that a load flow converges on these results.
      */
     protected void testAllModifAndLoadFlow(Network network, String subFolder, OpenReacParameters parameters, ReportNode reportNode) throws IOException {
         runAndApplyAllModifications(network, subFolder, parameters, true, reportNode);
@@ -83,56 +83,27 @@ abstract class AbstractOpenReacRunnerTest {
 
     /**
      * Runs OpenReac and apply the results on the network.
-     * The application of the voltage plan calculated by optimization is optional.
      */
-    protected void runAndApplyAllModifications(Network network, String subFolder, OpenReacParameters parameters,
-                                             boolean updateNetworkWithVoltages, ReportNode reportNode) throws IOException {
-        OpenReacResult openReacResult = runOpenReac(network, subFolder, parameters, false, reportNode);
-        assertEquals(OpenReacStatus.OK, openReacResult.getStatus());
-        openReacResult.setUpdateNetworkWithVoltages(updateNetworkWithVoltages);
-        openReacResult.applyAllModifications(network);
-    }
-
-    /**
-     * Runs OpenReac and returns associated result.
-     */
-    protected OpenReacResult runOpenReac(Network network, String subFolder, boolean onlyIndicators) throws IOException {
-        return runOpenReac(network, subFolder, new OpenReacParameters(), onlyIndicators);
-    }
-
-    /**
-     * Runs OpenReac and returns associated result.
-     */
-    protected OpenReacResult runOpenReac(Network network, String subFolder, OpenReacParameters parameters, boolean onlyIndicators) throws IOException {
-        return runOpenReac(network, subFolder, parameters, onlyIndicators, ReportNode.NO_OP);
-    }
-
-    /**
-     * Runs OpenReac and returns associated result.
-     * Note that OpenReac is not really executed by default. If the execution line is not uncommented,
-     * the results are retrieved and stored in an {@link OpenReacResult} object.
-     */
-    protected OpenReacResult runOpenReac(Network network, String subFolder, OpenReacParameters parameters,
-                                         boolean onlyIndicators, ReportNode reportNode) throws IOException {
-        // set default voltage limits to every voltage levels of the network
-        setDefaultVoltageLimits(network);
-        List<String> outputFileNames = new ArrayList<>(List.of(subFolder + "/reactiveopf_results_indic.txt"));
-        if (!onlyIndicators) {
-            outputFileNames.addAll(List.of(
-                    subFolder + "/reactiveopf_results_rtc.csv",
-                    subFolder + "/reactiveopf_results_shunts.csv",
-                    subFolder + "/reactiveopf_results_static_var_compensators.csv",
-                    subFolder + "/reactiveopf_results_vsc_converter_stations.csv",
-                    subFolder + "/reactiveopf_results_voltages.csv"
-            ));
-        }
-        LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(outputFileNames);
+    void runAndApplyAllModifications(Network network, String subFolder, OpenReacParameters parameters,
+                                     boolean updateNetworkWithVoltages, ReportNode reportNode) throws IOException {
+        LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
+                List.of(subFolder + "/reactiveopf_results_generators.csv",
+                        subFolder + "/reactiveopf_results_indic.txt",
+                        subFolder + "/reactiveopf_results_rtc.csv",
+                        subFolder + "/reactiveopf_results_shunts.csv",
+                        subFolder + "/reactiveopf_results_static_var_compensators.csv",
+                        subFolder + "/reactiveopf_results_vsc_converter_stations.csv",
+                        subFolder + "/reactiveopf_results_voltages.csv"));
         // To really run open reac, use the commentede line below. Be sure that open-reac/src/test/resources/com/powsybl/config/test/config.yml contains your ampl path
 //        try (ComputationManager computationManager = new LocalComputationManager()) {
         try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
                 localCommandExecutor, ForkJoinPool.commonPool())) {
-            return OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), parameters,
+            OpenReacResult openReacResult = OpenReacRunner.run(network,
+                    network.getVariantManager().getWorkingVariantId(), parameters,
                     new OpenReacConfig(true), computationManager, reportNode, null);
+            assertEquals(OpenReacStatus.OK, openReacResult.getStatus());
+            openReacResult.setUpdateNetworkWithVoltages(updateNetworkWithVoltages);
+            openReacResult.applyAllModifications(network);
         }
     }
 
