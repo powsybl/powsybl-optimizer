@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ForkJoinPool;
@@ -86,6 +85,8 @@ abstract class AbstractOpenReacRunnerTest {
      */
     void runAndApplyAllModifications(Network network, String subFolder, OpenReacParameters parameters,
                                      boolean updateNetworkWithVoltages, ReportNode reportNode) throws IOException {
+        // set default voltage limits to every voltage levels of the network
+        setDefaultVoltageLimits(network);
         LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
                 List.of(subFolder + "/reactiveopf_results_generators.csv",
                         subFolder + "/reactiveopf_results_indic.txt",

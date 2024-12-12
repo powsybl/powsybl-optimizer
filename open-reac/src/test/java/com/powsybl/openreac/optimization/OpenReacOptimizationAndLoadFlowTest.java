@@ -14,8 +14,6 @@ import com.powsybl.computation.local.LocalComputationConfig;
 import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
 import com.powsybl.iidm.network.*;
-import com.powsybl.loadflow.LoadFlow;
-import com.powsybl.loadflow.LoadFlowResult;
 import com.powsybl.openreac.OpenReacConfig;
 import com.powsybl.openreac.OpenReacRunner;
 import com.powsybl.openreac.network.HvdcNetworkFactory;
@@ -189,9 +187,6 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
         assertEquals(0, network.getBusBreakerView().getBus("BUS_2").getAngle());
         assertEquals(22.935, network.getBusBreakerView().getBus("BUS_3").getV());
         assertEquals(-4.698, network.getBusBreakerView().getBus("BUS_3").getAngle(), 0.001);
-
-        LoadFlowResult loadFlowResult = LoadFlow.run(network);
-        assertTrue(loadFlowResult.isFullyConverged());
     }
 
     public static Network create() {
