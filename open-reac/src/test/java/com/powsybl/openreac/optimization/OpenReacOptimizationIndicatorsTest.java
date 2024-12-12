@@ -160,7 +160,7 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
         Network network = HvdcNetworkFactory.createVsc();
         // FIXME : should not depend on P/Q values on terminal
         network.getVscConverterStation("cs2").getTerminal().setP(2).setQ(1);
-        OpenReacResult result = runOpenReac(network, "optimization/indicators/vsc-test");
+        OpenReacResult result = runOpenReac(network, "optimization/indicators/vsc-test", true);
 
         assertEquals(OpenReacStatus.OK, result.getStatus());
         assertEquals(2, Integer.parseInt(result.getIndicators().get("nb_vsc_converter_in_data_file")));

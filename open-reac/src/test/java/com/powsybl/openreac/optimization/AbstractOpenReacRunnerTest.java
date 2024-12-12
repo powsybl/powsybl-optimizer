@@ -87,18 +87,10 @@ abstract class AbstractOpenReacRunnerTest {
      */
     protected void runAndApplyAllModifications(Network network, String subFolder, OpenReacParameters parameters,
                                              boolean updateNetworkWithVoltages, ReportNode reportNode) throws IOException {
-        OpenReacResult openReacResult = runOpenReac(network, subFolder, parameters, reportNode);
+        OpenReacResult openReacResult = runOpenReac(network, subFolder, parameters, false, reportNode);
         assertEquals(OpenReacStatus.OK, openReacResult.getStatus());
         openReacResult.setUpdateNetworkWithVoltages(updateNetworkWithVoltages);
         openReacResult.applyAllModifications(network);
-    }
-
-    // TODO : remove useless methods here
-    /**
-     * Runs OpenReac and returns associated result.
-     */
-    protected OpenReacResult runOpenReac(Network network, String subFolder) throws IOException {
-        return runOpenReac(network, subFolder, false);
     }
 
     /**
@@ -112,14 +104,7 @@ abstract class AbstractOpenReacRunnerTest {
      * Runs OpenReac and returns associated result.
      */
     protected OpenReacResult runOpenReac(Network network, String subFolder, OpenReacParameters parameters, boolean onlyIndicators) throws IOException {
-        return runOpenReac(network, subFolder, parameters, ReportNode.NO_OP);
-    }
-
-    /**
-     * Runs OpenReac and returns associated result.
-     */
-    protected OpenReacResult runOpenReac(Network network, String subFolder, OpenReacParameters parameters, ReportNode reportNode) throws IOException {
-        return runOpenReac(network, subFolder, parameters, false, reportNode);
+        return runOpenReac(network, subFolder, parameters, onlyIndicators, ReportNode.NO_OP);
     }
 
     /**
