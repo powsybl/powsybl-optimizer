@@ -19,7 +19,7 @@ import java.io.IOException;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Test the equipment bounds in OpenReac optimization.
+ * Test the generator bounds in OpenReac optimization.
  *
  * @author Pierre ARVY {@literal <pierre.arvy at artelys.com>}
  */
