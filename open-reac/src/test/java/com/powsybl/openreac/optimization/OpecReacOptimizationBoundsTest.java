@@ -9,13 +9,14 @@ package com.powsybl.openreac.optimization;
 
 import com.powsybl.iidm.network.Network;
 import com.powsybl.openreac.network.VoltageControlNetworkFactory;
+import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.OpenReacStatus;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test the equipment bounds in OpenReac optimization.
@@ -29,7 +30,7 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
         Network network = VoltageControlNetworkFactory.createWithTwoVoltageControls();
         // due to the disconnection, the network is now imbalanced
         // and max p of generators is not enough to provide balance
-        network.getLine("l45").getTerminal2().disconnect();
+        network.getLine("l45").disconnect();
         OpenReacResult result = runOpenReac(network, "optimization/bounds/generators-pmax-too-small", true);
         assertEquals(OpenReacStatus.NOT_OK, result.getStatus());
 
@@ -45,7 +46,7 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
         Network network = VoltageControlNetworkFactory.createWithTwoVoltageControls();
         // due to the modifications, the network is now imbalanced
         // and min p of generators is not small enough to provide balance
-        network.getLine("l45").getTerminal2().disconnect();
+        network.getLine("l45").disconnect();
         network.getLoad("l4").setP0(3);
         network.getGenerator("g2").setMinP(2);
         network.getGenerator("g3").setMinP(2);
@@ -64,6 +65,63 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
         network.getGenerator("g3").setMaxP(2.5);
         result = runOpenReac(network, "optimization/bounds/generators-pmin", true);
         assertEquals(OpenReacStatus.OK, result.getStatus());
+    }
+
+    @Test
+    void testGeneratorRectangularQBounds() throws IOException {
+        Network network = VoltageControlNetworkFactory.createWithTwoVoltageControls();
+        network.getLine("l45").disconnect();
+        network.getLoad("l4").setP0(4).setQ0(2);
+
+        // set reactive limits to both generators
+        network.getGenerator("g2").newReactiveCapabilityCurve()
+                .beginPoint()
+                .setP(0)
+                .setMinQ(-0.25)
+                .setMaxQ(0.25)
+                .endPoint()
+                .beginPoint()
+                .setP(2)
+                .setMinQ(-2)
+                .setMaxQ(2)
+                .endPoint()
+                .add();
+        network.getGenerator("g3").newReactiveCapabilityCurve()
+                .beginPoint()
+                .setP(0)
+                .setMinQ(-0.25)
+                .setMaxQ(0.25)
+                .endPoint()
+                .beginPoint()
+                .setP(2)
+                .setMinQ(-2)
+                .setMaxQ(2)
+                .endPoint()
+                .add();
+
+        OpenReacResult result = runOpenReac(network, "optimization/bounds/generator-rectangular-bounds", true);
+        assertEquals(OpenReacStatus.OK, result.getStatus());
+        // rectangular bounds in ACOPF implies Q bounds are not large enough to remove reactive slacks in optimization
+        assertTrue(Integer.parseInt(result.getIndicators().get("nb_reactive_slacks")) > 0);
+    }
+
+    @Test
+    void testGeneratorQmaxPmaxRatioBounds() throws IOException {
+        Network network = VoltageControlNetworkFactory.createWithTwoVoltageControls();
+        network.getLine("l45").disconnect();
+        network.getLoad("l4").setP0(4).setQ0(2);
+
+        OpenReacParameters parameters = new OpenReacParameters();
+        OpenReacResult result = runOpenReac(network, "optimization/bounds/qmax-pmax-default-ratio", parameters, true);
+        assertEquals(OpenReacStatus.OK, result.getStatus());
+        // there are slacks as Q bounds are not large enough
+        assertTrue(Integer.parseInt(result.getIndicators().get("nb_reactive_slacks")) > 0);
+
+        parameters.setDefaultQmaxPmaxRatio(1);
+        result = runOpenReac(network, "optimization/bounds/same-qmax-pmax", parameters, true);
+        assertEquals(OpenReacStatus.OK, result.getStatus());
+        // Q bounds are large enough to remove reactive slacks in optimization
+        assertEquals(0, Integer.parseInt(result.getIndicators().get("nb_reactive_slacks")));
     }
 
 }
