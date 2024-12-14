@@ -127,6 +127,15 @@ public class OpenReacParameters {
 
     private double shuntCompensatorActivationAlertThreshold;
 
+    private OpenReacVoltageInitialization voltageInitialization = OpenReacVoltageInitialization.FULL_VOLTAGE;
+
+    public enum OpenReacVoltageInitialization {
+        PREVIOUS_VALUES,
+        UNIFORM_VALUES,
+        DC_VALUES,
+        FULL_VOLTAGE;
+    }
+
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.
      * <p>
@@ -545,6 +554,15 @@ public class OpenReacParameters {
             throw new IllegalArgumentException("The shunt compensator activation alert threshold must be >= 0 and defined to be consistent.");
         }
         this.shuntCompensatorActivationAlertThreshold = shuntCompensatorActivationAlertThreshold;
+        return this;
+    }
+
+    public OpenReacVoltageInitialization getVoltageInitialization() {
+        return voltageInitialization;
+    }
+
+    public OpenReacParameters setVoltageInitialization(OpenReacVoltageInitialization voltageInitialization) {
+        this.voltageInitialization = Objects.requireNonNull(voltageInitialization);
         return this;
     }
 

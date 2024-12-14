@@ -366,11 +366,11 @@ model "commons.mod";
 model "connected_component.mod";
 include "connected_component.run";
 
-###############################################################################
-# Optimisation DC OPF (for phase initialization and data consistency check)
-###############################################################################
-model "dcopf.mod";
-include "dcopf.run";
+################################################################################
+## Optimisation DC OPF (for phase initialization and data consistency check)
+################################################################################
+#model "dcopf.mod";
+#include "dcopf.run";
 
 
 ###############################################################################

@@ -390,6 +390,21 @@ class OpenReacParametersTest {
     }
 
     @Test
+    void testVoltageInitializationIntegrity() {
+        OpenReacParameters parameters = new OpenReacParameters();
+
+        assertThrows(NullPointerException.class, () -> parameters.setVoltageInitialization(null));
+        parameters.setVoltageInitialization(OpenReacParameters.OpenReacVoltageInitialization.DC_VALUES);
+        assertEquals(OpenReacParameters.OpenReacVoltageInitialization.DC_VALUES, parameters.getVoltageInitialization());
+        parameters.setVoltageInitialization(OpenReacParameters.OpenReacVoltageInitialization.PREVIOUS_VALUES);
+        assertEquals(OpenReacParameters.OpenReacVoltageInitialization.PREVIOUS_VALUES, parameters.getVoltageInitialization());
+        parameters.setVoltageInitialization(OpenReacParameters.OpenReacVoltageInitialization.UNIFORM_VALUES);
+        assertEquals(OpenReacParameters.OpenReacVoltageInitialization.UNIFORM_VALUES, parameters.getVoltageInitialization());
+        parameters.setVoltageInitialization(OpenReacParameters.OpenReacVoltageInitialization.FULL_VOLTAGE);
+        assertEquals(OpenReacParameters.OpenReacVoltageInitialization.FULL_VOLTAGE, parameters.getVoltageInitialization());
+    }
+
+    @Test
     void testDefaultParametersValuesIntegrity() {
         OpenReacParameters parameters = new OpenReacParameters();
         assertEquals(OpenReacOptimisationObjective.MIN_GENERATION, parameters.getObjective());
@@ -413,6 +428,7 @@ class OpenReacParametersTest {
         assertEquals(1e-1, parameters.getReactiveSlackVariableScalingFactor());
         assertEquals(1e-3, parameters.getTwoWindingTransformerRatioVariableScalingFactor());
         assertEquals(1e-1, parameters.getShuntVariableScalingFactor());
+        assertEquals(OpenReacParameters.OpenReacVoltageInitialization.FULL_VOLTAGE, parameters.getVoltageInitialization());
         assertTrue(parameters.checkAlgorithmParametersIntegrity());
     }
 
