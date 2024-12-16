@@ -1,6 +1,19 @@
 final_status OK
 dcopf_status OK
 
+ctime_start 'Mon Dec 16 14:51:02 2024'
+last_solve_result_num 0
+nb_iter_last 6
+nb_iter_total 6
+_ampl_elapsed_time 0.078000
+_total_solve_time 0.015625
+total_time 0
+
+operatingSystem windows
+OS 'Windows_NT'
+COMPUTERNAME 'ARTELYS-PC253'
+directory 'C:\Users\parvy\AppData\Local\Temp\ampl_910703953351669228'
+
 log_level_ampl INFO
 log_level_knitro 2
 objective_choice 0
@@ -26,27 +39,27 @@ reactive_slack_variable_scaling_factor 0.100000
 transformer_ratio_variable_scaling_factor 0.001000
 shunt_variable_scaling_factor 0.100000
 
-nb_substations 4
-nb_bus_in_data_file 4
-nb_bus_in_ACDC_CC 3
-nb_bus_in_AC_CC 3
+nb_substations 5
+nb_bus_in_data_file 5
+nb_bus_in_ACDC_CC 4
+nb_bus_in_AC_CC 4
 nb_bus_in_ACDC_but_out_AC_CC 0
 nb_bus_with_voltage_value 0
-nb_bus_with_reactive_slacks 3
+nb_bus_with_reactive_slacks 4
 nb_bus_without_reactive_slacks 0
 nb_branch_in_data_file 4
 nb_branch_in_AC_CC 4
-nb_branch_in_AC_CC_side_1_opened 1
+nb_branch_in_AC_CC_side_1_opened 0
 nb_branch_in_AC_CC_side_2_opened 1
-nb_branch_with_nonsmall_impedance 2
-nb_branch_with_zero_or_small_impedance 2
+nb_branch_with_nonsmall_impedance 3
+nb_branch_with_zero_or_small_impedance 1
 nb_unit_in_data_file 3
 nb_unit_in_AC_CC 2
 nb_unit_up_and_running 2
 nb_unit_with_variable_reactive_power 2
 nb_unit_with_fixed_reactive_power 0
 nb_load_in_data_file 2
-nb_load_in_AC_CC 2
+nb_load_in_AC_CC 1
 nb_shunt_in_data_file 0
 nb_shunt_connectable_or_in_AC_CC 0
 nb_shunt_with_fixed_value 0
@@ -64,19 +77,19 @@ nb_batteries 0
 sum_batteries_pmax 0.0
 sum_batteries_pmin 0.0
 
-max_teta_dc 0.03
-max_teta_ac 0.01
-teta_max 3.03
-min_teta_dc -0.00
-min_teta_ac -0.00
-teta_min -3.00
-max_delta_teta_dc 0.030000
-max_delta_teta_ac 0.013386
-min_delta_teta_dc 0.000001
-min_delta_teta_ac 0.000000
+max_teta_dc 0.02
+max_teta_ac 0.04
+teta_max 3.02
+min_teta_dc -0.05
+min_teta_ac -0.09
+teta_min -3.05
+max_delta_teta_dc 0.050000
+max_delta_teta_ac 0.086887
+min_delta_teta_dc -0.025000
+min_delta_teta_ac -0.042570
 
-nb_reactive_slacks 2
-nb_slacks_condensator 2
-sum_slacks_condensator 0.2
+nb_reactive_slacks 0
+nb_slacks_condensator 0
+sum_slacks_condensator 0.0
 nb_slacks_self 0
 sum_slacks_self 0.0

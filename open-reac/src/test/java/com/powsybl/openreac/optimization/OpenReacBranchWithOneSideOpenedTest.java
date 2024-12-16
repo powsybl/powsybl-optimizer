@@ -34,7 +34,7 @@ public class OpenReacBranchWithOneSideOpenedTest extends AbstractOpenReacRunnerT
     void testOpenLineSide1OpenReac() throws IOException {
         Network network = VoltageControlNetworkFactory.createWithSimpleRemoteControl();
         network.getLine("l43").setG2(0.1f).setB2(0.1f).getTerminal1().disconnect();
-        testAllModifAndLoadFlow(network, "openreac-output-real-network", new OpenReacParameters(), ReportNode.NO_OP);
+        testAllModifAndLoadFlow(network, "optimization/opened-branches/line-open-side-1", new OpenReacParameters(), ReportNode.NO_OP);
     }
 
     @Test
@@ -42,7 +42,7 @@ public class OpenReacBranchWithOneSideOpenedTest extends AbstractOpenReacRunnerT
         Network network = VoltageControlNetworkFactory.createWithTwoVoltageControls();
         network.getLine("l45").setX(1e-8).setB1(1).setG1(0.1).getTerminal2().disconnect();
 
-        OpenReacResult result = runOpenReac(network, "");
+        OpenReacResult result = runOpenReac(network, "optimization/opened-branches/zero-impedance-open-side-2");
         // opened branch is considered as non impedant
         assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_branch_in_AC_CC_side_2_opened")));
         assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_branch_with_zero_or_small_impedance")));
@@ -58,7 +58,7 @@ public class OpenReacBranchWithOneSideOpenedTest extends AbstractOpenReacRunnerT
         Network network = VoltageControlNetworkFactory.createNetworkWith2T2wt();
         network.getTwoWindingsTransformer("T2wT2").setR(0.0).setX(1e-8).setG(0.01).setB(0.1).getTerminal1().disconnect();
 
-        OpenReacResult result = runOpenReac(network, "");
+        OpenReacResult result = runOpenReac(network, "optimization/opened-branches/zero-impedance-open-side-1");
         // opened branch is considered as non impedance branch
         assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_branch_in_AC_CC_side_1_opened")));
         assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_branch_with_zero_or_small_impedance")));
@@ -74,7 +74,7 @@ public class OpenReacBranchWithOneSideOpenedTest extends AbstractOpenReacRunnerT
         Network network = VoltageControlNetworkFactory.createNetworkWithT2wt();
         network.getTwoWindingsTransformer("T2wT").getTerminal2().disconnect();
 
-        OpenReacResult result = runOpenReac(network, "");
+        OpenReacResult result = runOpenReac(network, "optimization/opened-branches/rtc-open-side-2");
         // verify ratio tap changer is considered in optimization
         assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_branch_in_AC_CC_side_2_opened")));
         assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_transformers_with_fixed_ratio")));
@@ -90,7 +90,7 @@ public class OpenReacBranchWithOneSideOpenedTest extends AbstractOpenReacRunnerT
         Network network = VoltageControlNetworkFactory.createNetworkWith2T2wt();
         network.getTwoWindingsTransformer("T2wT1").getTerminal1().disconnect();
 
-        OpenReacResult result = runOpenReac(network, "");
+        OpenReacResult result = runOpenReac(network, "optimization/opened-branches/rtc-open-side-1");
         // verify ratio tap changer on T2wT1 is ignored in optimization
         assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_branch_in_AC_CC_side_1_opened")));
         assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_transformers_with_fixed_ratio")));
@@ -111,7 +111,7 @@ public class OpenReacBranchWithOneSideOpenedTest extends AbstractOpenReacRunnerT
         OpenReacParameters parameters = new OpenReacParameters();
         // try to optimize both ratio tap changers
         parameters.addVariableTwoWindingsTransformers(List.of("T2wT1", "T2wT2"));
-        OpenReacResult result = runOpenReac(network, "", parameters, false);
+        OpenReacResult result = runOpenReac(network, "optimization/opened-branches/rtc-not-optimized", parameters, false);
 
         // verify only one rtc has been optimized
         assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_transformers_with_variable_ratio")));
