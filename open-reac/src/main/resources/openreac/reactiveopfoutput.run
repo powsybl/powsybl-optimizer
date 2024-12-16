@@ -289,7 +289,7 @@ printf "%s %i\n","nb_branch_in_data_file",card(BRANCH) > (fileOut);
 printf "%s %i\n","nb_branch_in_AC_CC",card(ALL_BRANCHCC) > (fileOut);
 printf "%s %i\n","nb_branch_in_AC_CC_side_1_opened",card(BRANCHCC_WITH_SIDE_1_OPENED) > (fileOut);
 printf "%s %i\n","nb_branch_in_AC_CC_side_2_opened",card(BRANCHCC_WITH_SIDE_2_OPENED) > (fileOut);
-printf "%s %i\n","nb_branch_with_nonsmall_impedance",card(BRANCHCC diff BRANCHZNULL) > (fileOut);
+printf "%s %i\n","nb_branch_with_nonsmall_impedance",card(ALL_BRANCHCC diff BRANCHZNULL) > (fileOut);
 printf "%s %i\n","nb_branch_with_zero_or_small_impedance",card(BRANCHZNULL) > (fileOut);
 printf "%s %i\n","nb_unit_in_data_file",card(UNIT) > (fileOut);
 printf "%s %i\n","nb_unit_in_AC_CC",card(UNITCC) > (fileOut);
