@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *
  * @author Pierre ARVY {@literal <pierre.arvy at artelys.com>}
  */
-public class OpenReacBranchWithOneSideOpenedTest extends AbstractOpenReacRunnerTest {
+class OpenReacBranchWithOneSideOpenedTest extends AbstractOpenReacRunnerTest {
 
     @Test
     void testOpenLineSide1OpenReac() throws IOException {
