@@ -15,6 +15,7 @@ import com.powsybl.iidm.network.*;
 import com.powsybl.openreac.OpenReacConfig;
 import com.powsybl.openreac.OpenReacRunner;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
+import com.powsybl.openreac.parameters.input.algo.OpenReacAmplLogLevel;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 import com.powsybl.openreac.parameters.input.algo.ReactiveSlackBusesMode;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
@@ -27,8 +28,7 @@ import java.util.List;
 import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
@@ -122,8 +122,10 @@ class OpenReacAmplIOTest extends AbstractOpenReacRunnerTest {
                         "mock_outputs/reactiveopf_results_voltages.csv"));
         try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
                 localCommandExecutor, ForkJoinPool.commonPool())) {
+            OpenReacParameters parameters = new OpenReacParameters();
+            parameters.setLogLevelAmpl(OpenReacAmplLogLevel.DEBUG);
             OpenReacResult openReacResult = OpenReacRunner.run(network,
-                    network.getVariantManager().getWorkingVariantId(), new OpenReacParameters(), new OpenReacConfig(true),
+                    network.getVariantManager().getWorkingVariantId(), parameters, new OpenReacConfig(true),
                     computationManager);
 
             assertEquals(OpenReacStatus.OK, openReacResult.getStatus());
@@ -133,8 +135,35 @@ class OpenReacAmplIOTest extends AbstractOpenReacRunnerTest {
             assertEquals(1, openReacResult.getVscModifications().size());
             assertEquals(7, openReacResult.getGeneratorModifications().size());
             assertEquals(3, openReacResult.getVoltageProfile().size());
-            assertEquals(87, openReacResult.getIndicators().size());
+            assertEquals(76, openReacResult.getIndicators().size());
             assertTrue(openReacResult.getReactiveSlacks().isEmpty());
+        }
+    }
+
+    @Test
+    void testDebugIndicators() throws IOException {
+        Network network = IeeeCdfNetworkFactory.create14();
+        setDefaultVoltageLimits(network);
+        LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(List.of("optimization/indicators/debug-log-level-indicators/reactiveopf_results_indic.txt"));
+        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
+                localCommandExecutor, ForkJoinPool.commonPool())) {
+            OpenReacParameters parameters = new OpenReacParameters();
+            parameters.setLogLevelAmpl(OpenReacAmplLogLevel.DEBUG);
+            OpenReacResult openReacResult = OpenReacRunner.run(network,
+                    network.getVariantManager().getWorkingVariantId(), parameters, new OpenReacConfig(true),
+                    computationManager);
+            assertEquals(87, openReacResult.getIndicators().size());
+            assertEquals("Tue Dec 17 18:49:34 2024", openReacResult.getIndicators().get("ctime_start"));
+            assertEquals(0, Integer.parseInt(openReacResult.getIndicators().get("last_solve_result_num")));
+            assertEquals(5, Integer.parseInt(openReacResult.getIndicators().get("nb_iter_last")));
+            assertEquals(5, Integer.parseInt(openReacResult.getIndicators().get("nb_iter_total")));
+            assertEquals(0.095, Double.parseDouble(openReacResult.getIndicators().get("_ampl_elapsed_time")));
+            assertEquals(0.0625, Double.parseDouble(openReacResult.getIndicators().get("_total_solve_time")));
+            assertEquals(0, Double.parseDouble(openReacResult.getIndicators().get("total_time")));
+            assertEquals("windows", openReacResult.getIndicators().get("operatingSystem"));
+            assertEquals("Windows_NT", openReacResult.getIndicators().get("OS"));
+            assertEquals("A-COMPUTER-NAME", openReacResult.getIndicators().get("COMPUTERNAME"));
+            assertEquals("C:\\Users\\user\\AppData\\Local\\Temp\\ampl_tmp", openReacResult.getIndicators().get("directory"));
         }
     }
 
