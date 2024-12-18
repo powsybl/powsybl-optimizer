@@ -12,6 +12,7 @@ import com.powsybl.commons.report.ReportNode;
 import com.powsybl.commons.test.ComparisonUtils;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.computation.local.LocalCommandExecutor;
+import com.powsybl.computation.local.LocalComputationConfig;
 import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.iidm.network.*;
 import com.powsybl.loadflow.LoadFlow;
@@ -31,6 +32,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -133,9 +135,9 @@ abstract class AbstractOpenReacRunnerTest {
         }
         LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(outputFileNames);
         // To really run open reac, use the commentede line below. Be sure that open-reac/src/test/resources/com/powsybl/config/test/config.yml contains your ampl path
-        try (ComputationManager computationManager = new LocalComputationManager()) {
-//        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
-//                localCommandExecutor, ForkJoinPool.commonPool())) {
+//        try (ComputationManager computationManager = new LocalComputationManager()) {
+        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
+                localCommandExecutor, ForkJoinPool.commonPool())) {
             return OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), parameters,
                     new OpenReacConfig(true), computationManager, reportNode, null);
         }
