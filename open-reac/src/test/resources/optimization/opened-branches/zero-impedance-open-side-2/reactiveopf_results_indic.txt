@@ -1,19 +1,6 @@
 final_status OK
 dcopf_status OK
 
-ctime_start 'Mon Dec 16 14:51:02 2024'
-last_solve_result_num 0
-nb_iter_last 6
-nb_iter_total 6
-_ampl_elapsed_time 0.078000
-_total_solve_time 0.015625
-total_time 0
-
-operatingSystem windows
-OS 'Windows_NT'
-COMPUTERNAME 'ARTELYS-PC253'
-directory 'C:\Users\parvy\AppData\Local\Temp\ampl_910703953351669228'
-
 log_level_ampl INFO
 log_level_knitro 2
 objective_choice 0
@@ -78,15 +65,15 @@ sum_batteries_pmax 0.0
 sum_batteries_pmin 0.0
 
 max_teta_dc 0.02
-max_teta_ac 0.04
+max_teta_ac 0.05
 teta_max 3.02
 min_teta_dc -0.05
-min_teta_ac -0.09
+min_teta_ac -0.08
 teta_min -3.05
 max_delta_teta_dc 0.050000
-max_delta_teta_ac 0.086887
+max_delta_teta_ac 0.080167
 min_delta_teta_dc -0.025000
-min_delta_teta_ac -0.042570
+min_delta_teta_ac -0.047639
 
 nb_reactive_slacks 0
 nb_slacks_condensator 0

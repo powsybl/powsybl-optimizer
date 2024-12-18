@@ -34,6 +34,7 @@ class OpenReacBranchWithOneSideOpenedTest extends AbstractOpenReacRunnerTest {
     void testOpenLineSide1OpenReac() throws IOException {
         Network network = VoltageControlNetworkFactory.createWithSimpleRemoteControl();
         network.getLine("l43").setG2(0.1f).setB2(0.1f).getTerminal1().disconnect();
+        network.getGenerator("g3").setMaxP(4);
         testAllModifAndLoadFlow(network, "optimization/opened-branches/line-open-side-1", new OpenReacParameters(), ReportNode.NO_OP);
     }
 
@@ -41,6 +42,7 @@ class OpenReacBranchWithOneSideOpenedTest extends AbstractOpenReacRunnerTest {
     void testZeroImpedanceOpenBranchSide2OpenReac() throws IOException {
         Network network = VoltageControlNetworkFactory.createWithTwoVoltageControls();
         network.getLine("l45").setX(1e-8).setB1(1).setG1(0.1).getTerminal2().disconnect();
+        network.getGenerator("g3").setMaxP(4);
 
         OpenReacResult result = runOpenReac(network, "optimization/opened-branches/zero-impedance-open-side-2");
         // opened branch is considered as non impedant

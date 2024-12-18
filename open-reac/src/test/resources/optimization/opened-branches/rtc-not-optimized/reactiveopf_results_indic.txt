@@ -1,19 +1,6 @@
 final_status OK
 dcopf_status OK
 
-ctime_start 'Mon Dec 16 14:51:03 2024'
-last_solve_result_num 0
-nb_iter_last 6
-nb_iter_total 6
-_ampl_elapsed_time 0.078000
-_total_solve_time 0.046875
-total_time 0
-
-operatingSystem windows
-OS 'Windows_NT'
-COMPUTERNAME 'ARTELYS-PC253'
-directory 'C:\Users\parvy\AppData\Local\Temp\ampl_11159029444846276223'
-
 log_level_ampl INFO
 log_level_knitro 2
 objective_choice 0
