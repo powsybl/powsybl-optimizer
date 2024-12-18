@@ -915,15 +915,12 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
     }
 
     /**
-     * SVC test case.
-     *
      * g1        ld1
      * |          |
      * b1---------b2
-     *      l1    |
-     *           svc1
+     *      l1
      */
-    public static Network createWithStaticVarCompensator() {
+    public static Network createWithTwoBuses() {
         Network network = Network.create("svc", "test");
         Substation s1 = network.newSubstation()
                 .setId("S1")
@@ -964,20 +961,34 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
                 .setP0(101)
                 .setQ0(150)
                 .add();
-        vl2.newStaticVarCompensator()
-                .setId("svc1")
-                .setConnectableBus("b2")
-                .setBus("b2")
-                .setRegulationMode(StaticVarCompensator.RegulationMode.OFF)
-                .setBmin(-0.008)
-                .setBmax(0.008)
-                .add();
         network.newLine()
                 .setId("l1")
                 .setBus1("b1")
                 .setBus2("b2")
                 .setR(1)
                 .setX(3)
+                .add();
+        return network;
+    }
+
+    /**
+     * SVC test case.
+     *
+     * g1        ld1
+     * |          |
+     * b1---------b2
+     *      l1    |
+     *           svc1
+     */
+    public static Network createWithStaticVarCompensator() {
+        Network network = createWithTwoBuses();
+        network.getVoltageLevel("vl2").newStaticVarCompensator()
+                .setId("svc1")
+                .setConnectableBus("b2")
+                .setBus("b2")
+                .setRegulationMode(StaticVarCompensator.RegulationMode.OFF)
+                .setBmin(-0.008)
+                .setBmax(0.008)
                 .add();
         return network;
     }
