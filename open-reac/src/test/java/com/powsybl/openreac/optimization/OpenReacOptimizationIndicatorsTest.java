@@ -119,11 +119,11 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
 
         assertEquals(OpenReacStatus.OK, result.getStatus());
         assertEquals(4, Integer.parseInt(result.getIndicators().get("nb_branch_in_data_file")));
-        // verify opened branch are considered in optimization
+        // verify opened branches are considered in optimization
         assertEquals(4, Integer.parseInt(result.getIndicators().get("nb_branch_in_AC_CC")));
         assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_branch_in_AC_CC_side_1_opened")));
         assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_branch_in_AC_CC_side_2_opened")));
-        // verify opened branch can be considered as zero impedance branches
+        // verify opened branches can be considered as zero impedance branches
         assertEquals(2, Integer.parseInt(result.getIndicators().get("nb_branch_with_nonsmall_impedance")));
         assertEquals(2, Integer.parseInt(result.getIndicators().get("nb_branch_with_zero_or_small_impedance")));
     }

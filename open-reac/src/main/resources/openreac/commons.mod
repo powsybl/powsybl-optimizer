@@ -131,7 +131,7 @@ set BUSVV := {n in BUSCC : bus_V0[1,n] >= min_plausible_low_voltage_limit};
 
 # Reactive
 set SHUNTCC := {(1,s,n) in SHUNT: n in BUSCC or shunt_possiblebus[1,s,n] in BUSCC}; # We want to be able to reconnect shunts
-set BRANCHCC_REGL := {(qq,m,n) in BRANCHCC union BRANCHCC_WITH_SIDE_2_OPENED diff BRANCHZNULL: branch_ptrRegl[1,qq,m,n] != -1 }; # ratio tap changers have impact on lines with side 1 opened
+set BRANCHCC_REGL := {(qq,m,n) in BRANCHCC union BRANCHCC_WITH_SIDE_2_OPENED diff BRANCHZNULL: branch_ptrRegl[1,qq,m,n] != -1 }; # ratio tap changers also have impact on lines with side 2 opened
 set BRANCHCC_DEPH := {(qq,m,n) in BRANCHCC diff BRANCHZNULL: branch_ptrDeph[1,qq,m,n] != -1 };
 set SVCCC   := {(1,svc,n) in SVC: n in BUSCC};
 
@@ -170,7 +170,7 @@ set UNIT_FIXQ := {(g,n) in UNITON: g in PARAM_UNIT_FIXQ and abs(unit_Qc[1,g,n])<
 set BRANCHCC_REGL_VAR :=
   { (qq,m,n) in BRANCHCC_REGL:
     qq in PARAM_TRANSFORMERS_RATIO_VARIABLE
-    and (qq,m,n) not in BRANCHCC_WITH_SIDE_2_OPENED # ratio tap changers on branch with side 2 opened are not optimized
+    and (qq,m,n) not in BRANCHCC_WITH_SIDE_2_OPENED # ratio tap changers on opened branches are not optimized
     and regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]] < regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]]
   };
 set BRANCHCC_REGL_FIX := BRANCHCC_REGL diff BRANCHCC_REGL_VAR;
