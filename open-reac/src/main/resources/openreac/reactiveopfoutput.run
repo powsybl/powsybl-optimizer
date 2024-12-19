@@ -286,8 +286,10 @@ printf "%s %i\n","nb_bus_with_voltage_value",card(BUSVV) > (fileOut);
 printf "%s %i\n","nb_bus_with_reactive_slacks",card(BUSCC_SLACK) > (fileOut);
 printf "%s %i\n","nb_bus_without_reactive_slacks",card(BUSCC diff BUSCC_SLACK) > (fileOut);
 printf "%s %i\n","nb_branch_in_data_file",card(BRANCH) > (fileOut);
-printf "%s %i\n","nb_branch_in_AC_CC",card(BRANCHCC) > (fileOut);
-printf "%s %i\n","nb_branch_with_nonsmall_impedance",card(BRANCHCC diff BRANCHZNULL) > (fileOut);
+printf "%s %i\n","nb_branch_in_AC_CC",card(ALL_BRANCHCC) > (fileOut);
+printf "%s %i\n","nb_branch_in_AC_CC_side_1_opened",card(BRANCHCC_WITH_SIDE_1_OPENED) > (fileOut);
+printf "%s %i\n","nb_branch_in_AC_CC_side_2_opened",card(BRANCHCC_WITH_SIDE_2_OPENED) > (fileOut);
+printf "%s %i\n","nb_branch_with_nonsmall_impedance",card(ALL_BRANCHCC diff BRANCHZNULL) > (fileOut);
 printf "%s %i\n","nb_branch_with_zero_or_small_impedance",card(BRANCHZNULL) > (fileOut);
 printf "%s %i\n","nb_unit_in_data_file",card(UNIT) > (fileOut);
 printf "%s %i\n","nb_unit_in_AC_CC",card(UNITCC) > (fileOut);
@@ -374,5 +376,39 @@ for {(g,n) in UNITCC diff UNITON}
     unit_Q0[1,g,n],
     '"' & unit_id[1,g,n] & '"',
     '"' & bus_id[1,n] & '"'
+    > (fileOut);
+close (fileOut);
+
+# write flows on the branches
+let fileOut := "reactiveopf_results_branches.csv";
+printf{LOG_DEBUG} "#qq;m;n;P1;Q1;P2;Q2;branch_id;\n" > (fileOut);
+for {(qq,m,n) in ALL_BRANCHCC}
+  printf{LOG_DEBUG} "%i;%i;%i;%.3f;%.3f;%.3f;%.3f;%s;\n",
+    qq,m,n,
+    # p1 flow
+    if (qq,m,n) in BRANCHCC 
+    then base100MVA * V[m] * Red_Tran_Act_Dir[qq,m,n]
+    else if (qq,m,n) in BRANCHCC_WITH_SIDE_2_OPENED
+    then base100MVA * V[m] * Red_Tran_Act_Dir_Side_2_Opened[qq,m,n]
+    else 0, # no flow as branch is opened on side 1
+    # q1 flow
+    if (qq,m,n) in BRANCHCC 
+    then base100MVA * V[m] * Red_Tran_Rea_Dir[qq,m,n]
+    else if (qq,m,n) in BRANCHCC_WITH_SIDE_2_OPENED
+    then base100MVA * V[m] * Red_Tran_Rea_Dir_Side_2_Opened[qq,m,n]
+    else 0, # no flow as branch is opened on side 1
+    # p2 flow
+    if (qq,m,n) in BRANCHCC 
+    then base100MVA * V[n] * Red_Tran_Act_Inv[qq,m,n]
+    else if (qq,m,n) in BRANCHCC_WITH_SIDE_1_OPENED
+    then base100MVA * V[n] * Red_Tran_Act_Inv_Side_1_Opened[qq,m,n]
+    else 0, # no flow as branch is opened on side 2
+    # q2 flow
+    if (qq,m,n) in BRANCHCC 
+    then base100MVA * V[n] * Red_Tran_Rea_Inv[qq,m,n]
+    else if (qq,m,n) in BRANCHCC_WITH_SIDE_1_OPENED
+    then base100MVA * V[n] * Red_Tran_Rea_Inv_Side_1_Opened[qq,m,n]
+    else 0, # no flow as branch is opened on side 2
+    '"' & branch_id[1,qq,m,n] & '"'
     > (fileOut);
 close (fileOut);

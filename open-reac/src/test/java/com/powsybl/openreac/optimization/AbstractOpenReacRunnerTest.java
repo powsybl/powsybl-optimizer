@@ -96,6 +96,13 @@ abstract class AbstractOpenReacRunnerTest {
     /**
      * Runs OpenReac and returns associated result.
      */
+    protected OpenReacResult runOpenReac(Network network, String subFolder) throws IOException {
+        return runOpenReac(network, subFolder, false);
+    }
+
+    /**
+     * Runs OpenReac and returns associated result.
+     */
     protected OpenReacResult runOpenReac(Network network, String subFolder, boolean onlyIndicators) throws IOException {
         return runOpenReac(network, subFolder, new OpenReacParameters(), onlyIndicators);
     }
