@@ -122,10 +122,8 @@ class OpenReacAmplIOTest extends AbstractOpenReacRunnerTest {
                         "mock_outputs/reactiveopf_results_voltages.csv"));
         try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
                 localCommandExecutor, ForkJoinPool.commonPool())) {
-            OpenReacParameters parameters = new OpenReacParameters();
-            parameters.setLogLevelAmpl(OpenReacAmplLogLevel.DEBUG);
             OpenReacResult openReacResult = OpenReacRunner.run(network,
-                    network.getVariantManager().getWorkingVariantId(), parameters, new OpenReacConfig(true),
+                    network.getVariantManager().getWorkingVariantId(), new OpenReacParameters(), new OpenReacConfig(true),
                     computationManager);
 
             assertEquals(OpenReacStatus.OK, openReacResult.getStatus());
