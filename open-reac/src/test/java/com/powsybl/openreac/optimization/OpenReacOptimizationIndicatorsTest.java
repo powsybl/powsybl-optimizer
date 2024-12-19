@@ -63,7 +63,6 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
                 .setShuntVariableScalingFactor(0.11);
         OpenReacResult result = runOpenReac(network, "optimization/indicators/input-parameters-test", parameters, true);
 
-        // verify buses outside main SC have been excluded
         assertEquals("WARNING", result.getIndicators().get("log_level_ampl"));
         assertEquals(1, Integer.parseInt(result.getIndicators().get("log_level_knitro")));
         assertEquals(2, Integer.parseInt(result.getIndicators().get("objective_choice")));
