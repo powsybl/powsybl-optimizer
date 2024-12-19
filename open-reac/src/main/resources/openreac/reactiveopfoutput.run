@@ -229,26 +229,26 @@ let fileOut := "reactiveopf_results_indic.txt";
 printf "%s %s\n","final_status",final_status > (fileOut);
 printf "%s %s\n","dcopf_status",dcopf_status > (fileOut);
 
-printf "\n" > (fileOut);
-printf "%s %Q\n","ctime_start",ctime_start > (fileOut);
-printf "%s %i\n","last_solve_result_num",solve_result_num > (fileOut);
-printf "%s %i\n","nb_iter_last",nb_iter_last > (fileOut);
-printf "%s %i\n","nb_iter_total",nb_iter_total > (fileOut);
-printf "%s %f\n","_ampl_elapsed_time",_ampl_elapsed_time > (fileOut);
-printf "%s %f\n","_total_solve_time",_total_solve_time > (fileOut);
-printf "%s %i\n","total_time",_total_solve_time+_ampl_elapsed_time > (fileOut);
+printf{LOG_DEBUG} "\n" > (fileOut);
+printf{LOG_DEBUG} "%s %Q\n","ctime_start",ctime_start > (fileOut);
+printf{LOG_DEBUG} "%s %i\n","last_solve_result_num",solve_result_num > (fileOut);
+printf{LOG_DEBUG} "%s %i\n","nb_iter_last",nb_iter_last > (fileOut);
+printf{LOG_DEBUG} "%s %i\n","nb_iter_total",nb_iter_total > (fileOut);
+printf{LOG_DEBUG} "%s %f\n","_ampl_elapsed_time",_ampl_elapsed_time > (fileOut);
+printf{LOG_DEBUG} "%s %f\n","_total_solve_time",_total_solve_time > (fileOut);
+printf{LOG_DEBUG} "%s %i\n","total_time",_total_solve_time+_ampl_elapsed_time > (fileOut);
 
-printf "\n" > (fileOut);
-printf "%s %s\n","operatingSystem",operatingSystem > (fileOut);
+printf{LOG_DEBUG} "\n" > (fileOut);
+printf{LOG_DEBUG} "%s %s\n","operatingSystem",operatingSystem > (fileOut);
 if length($OS) > 0 then {
-  printf "%s %Q\n","OS",$OS > (fileOut); # Windows
-  printf "%s %Q\n","COMPUTERNAME",$COMPUTERNAME > (fileOut);
+  printf{LOG_DEBUG} "%s %Q\n","OS",$OS > (fileOut); # Windows
+  printf{LOG_DEBUG} "%s %Q\n","COMPUTERNAME",$COMPUTERNAME > (fileOut);
 }
 if length($SHELL) > 0 then {
-  printf "%s %Q\n","SHELL",$SHELL > (fileOut); # Linux
-  printf "%s %Q\n","HOSTNAME",$HOSTNAME > (fileOut);
+  printf{LOG_DEBUG} "%s %Q\n","SHELL",$SHELL > (fileOut); # Linux
+  printf{LOG_DEBUG} "%s %Q\n","HOSTNAME",$HOSTNAME > (fileOut);
 }
-printf "%s %Q\n","directory",_cd > (fileOut);
+printf{LOG_DEBUG} "%s %Q\n","directory",_cd > (fileOut);
 
 printf "\n" > (fileOut);
 printf "%s %s\n","log_level_ampl",log_level_ampl > (fileOut);
