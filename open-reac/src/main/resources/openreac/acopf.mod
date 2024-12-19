@@ -132,26 +132,58 @@ var Red_Tran_Rea_Inv{(qq,m,n) in BRANCHCC } =
   + V[n] * (branch_admi[qq,m,n]*cos(branch_angper[qq,m,n])-branch_Bex_mod[qq,m,n])
   ;
 
+var Red_Tran_Act_Dir_Side_2_Opened{(qq,m,n) in BRANCHCC_WITH_SIDE_2_OPENED} =
+    (branch_Ror[qq,m,n])**2 * V[m] * (branch_Gor_mod[qq,m,n] + (branch_admi[qq,m,n])**2 * branch_Gex_mod[qq,m,n] / ( (branch_Gex_mod[qq,m,n] + branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]))**2
+    + (- branch_Bex_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 ) 
+    + ((branch_Bex_mod[qq,m,n])**2 + (branch_Gex_mod[qq,m,n])**2) * branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]) / ( (branch_Gex_mod[qq,m,n] + branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]))**2
+    + (- branch_Bex_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 ))
+  ;
+
+var Red_Tran_Rea_Dir_Side_2_Opened{(qq,m,n) in BRANCHCC_WITH_SIDE_2_OPENED} =
+    - (branch_Ror[qq,m,n])**2 * V[m] * (branch_Bor_mod[qq,m,n] + (branch_admi[qq,m,n])**2 * branch_Bex_mod[qq,m,n] / ( (branch_Gex_mod[qq,m,n] + branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]))**2
+    + (- branch_Bex_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 )
+    - ((branch_Bex_mod[qq,m,n])**2 + (branch_Gex_mod[qq,m,n])**2) * branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]) / ( (branch_Gex_mod[qq,m,n] + branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]))**2
+    + (-branch_Bex_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 ))
+  ;
+
+var Red_Tran_Act_Inv_Side_1_Opened{(qq,m,n) in BRANCHCC_WITH_SIDE_1_OPENED} =
+    V[n] * (branch_Gex_mod[qq,m,n] + (branch_admi[qq,m,n])**2 * branch_Gor_mod[qq,m,n] / ( (branch_Gor_mod[qq,m,n] + branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]))**2
+    + (- branch_Bor_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 )
+    + ((branch_Bor_mod[qq,m,n])**2 + (branch_Gor_mod[qq,m,n])**2) * branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]) / ( (branch_Gor_mod[qq,m,n] + branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]))**2
+    + (- branch_Bor_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 ))
+  ;
+
+var Red_Tran_Rea_Inv_Side_1_Opened{(qq,m,n) in BRANCHCC_WITH_SIDE_1_OPENED} =
+    - V[n] * (branch_Bex_mod[qq,m,n]
+    + (branch_admi[qq,m,n])**2 * branch_Bor_mod[qq,m,n] / ( (branch_Gor_mod[qq,m,n] + branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]))**2
+    + (- branch_Bor_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 )
+    - ((branch_Bor_mod[qq,m,n])**2 + (branch_Gor_mod[qq,m,n])**2) * branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]) / ( (branch_Gor_mod[qq,m,n] + branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]))**2
+    + (- branch_Bor_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 ))
+  ;
+
 
 #
 # Active Balance
 #
 
 subject to ctr_balance_P{PROBLEM_ACOPF,k in BUSCC}:
-  # Flows
-    sum{(qq,k,n) in BRANCHCC} base100MVA * V[k] * Red_Tran_Act_Dir[qq,k,n]
-  + sum{(qq,m,k) in BRANCHCC} base100MVA * V[k] * Red_Tran_Act_Inv[qq,m,k]
-  # Generating units
-  - sum{(g,k) in UNITON} P[g,k]
-  # Batteries
-  - sum{(b,k) in BATTERYCC} battery_p0[1,b,k]
-  # Loads
-  + sum{(c,k) in LOADCC} load_PFix[1,c,k]     # Fixed value
-  # VSC converters
-  + sum{(v,k) in VSCCONVON} vscconv_P0[1,v,k] # Fixed value
-  # LCC converters
-  + sum{(l,k) in LCCCONVON} lccconv_P0[1,l,k] # Fixed value
-  = 0; # No slack variables for active power. If data are really too bad, may not converge.
+# Flows
+sum{(qq,k,n) in BRANCHCC} base100MVA * V[k] * Red_Tran_Act_Dir[qq,k,n]
++ sum{(qq,m,k) in BRANCHCC} base100MVA * V[k] * Red_Tran_Act_Inv[qq,m,k]
+# Flows on branches with one side opened
++ sum{(qq,k,n) in BRANCHCC_WITH_SIDE_2_OPENED} base100MVA * V[k] * Red_Tran_Act_Dir_Side_2_Opened[qq,k,n]
++ sum{(qq,m,k) in BRANCHCC_WITH_SIDE_1_OPENED} base100MVA * V[k] * Red_Tran_Act_Inv_Side_1_Opened[qq,m,k]
+# Generating units
+- sum{(g,k) in UNITON} P[g,k]
+# Batteries
+- sum{(b,k) in BATTERYCC} battery_p0[1,b,k]
+# Loads
++ sum{(c,k) in LOADCC} load_PFix[1,c,k]     # Fixed value
+# VSC converters
++ sum{(v,k) in VSCCONVON} vscconv_P0[1,v,k] # Fixed value
+# LCC converters
++ sum{(l,k) in LCCCONVON} lccconv_P0[1,l,k] # Fixed value
+= 0; # No slack variables for active power. If data are really too bad, may not converge.
 
 
 #
@@ -167,30 +199,33 @@ var slack2_shunt_B{BUSCC_SLACK} >= 0;
 #subject to ctr_compl_slack_Q{PROBLEM_ACOPF,k in BUSCC_SLACK}: slack1_balance_Q[k] >= 0 complements slack2_balance_Q[k] >= 0;
 
 subject to ctr_balance_Q{PROBLEM_ACOPF,k in BUSCC}:
-  # Flows
-    sum{(qq,k,n) in BRANCHCC} base100MVA * V[k] * Red_Tran_Rea_Dir[qq,k,n]
-  + sum{(qq,m,k) in BRANCHCC} base100MVA * V[k] * Red_Tran_Rea_Inv[qq,m,k]
-  # Generating units
-  - sum{(g,k) in UNITON: (g,k) not in UNIT_FIXQ } Q[g,k]
-  - sum{(g,k) in UNIT_FIXQ} unit_Qc[1,g,k]
-  # Batteries
-  - sum{(b,k) in BATTERYCC} battery_q0[1,b,k]
-  # Loads
-  + sum{(c,k) in LOADCC} load_QFix[1,c,k]
-  # Shunts
-  - sum{(shunt,k) in SHUNT_FIX} base100MVA * shunt_valnom[1,shunt,k] * V[k]^2
-  - sum{(shunt,k) in SHUNT_VAR} base100MVA * shunt_var[shunt,k] * V[k]^2
-  # SVC
-  - sum{(svc,k) in SVCON} base100MVA * svc_qvar[svc,k] * V[k]^2
-  # VSC converters
-  - sum{(v,k) in VSCCONVON} vscconv_qvar[v,k]
-  # LCC converters
-  + sum{(l,k) in LCCCONVON} lccconv_Q0[1,l,k] # Fixed value
-  # Slack variables
-  + if k in BUSCC_SLACK then
-  (- base100MVA * V[k]^2 * slack1_shunt_B[k]  # Homogeneous to a generation of reactive power (condensator)
-  + base100MVA * V[k]^2 * slack2_shunt_B[k]) # homogeneous to a reactive load (self)
-  = 0;
+# Flows
+sum{(qq,k,n) in BRANCHCC} base100MVA * V[k] * Red_Tran_Rea_Dir[qq,k,n]
++ sum{(qq,m,k) in BRANCHCC} base100MVA * V[k] * Red_Tran_Rea_Inv[qq,m,k]
+# Flows on branches with one side opened
++ sum{(qq,k,n) in BRANCHCC_WITH_SIDE_2_OPENED} base100MVA * V[k] * Red_Tran_Rea_Dir_Side_2_Opened[qq,k,n]
++ sum{(qq,m,k) in BRANCHCC_WITH_SIDE_1_OPENED} base100MVA * V[k] * Red_Tran_Rea_Inv_Side_1_Opened[qq,m,k]
+# Generating units
+- sum{(g,k) in UNITON: (g,k) not in UNIT_FIXQ } Q[g,k]
+- sum{(g,k) in UNIT_FIXQ} unit_Qc[1,g,k]
+# Batteries
+- sum{(b,k) in BATTERYCC} battery_q0[1,b,k]
+# Loads
++ sum{(c,k) in LOADCC} load_QFix[1,c,k]
+# Shunts
+- sum{(shunt,k) in SHUNT_FIX} base100MVA * shunt_valnom[1,shunt,k] * V[k]^2
+- sum{(shunt,k) in SHUNT_VAR} base100MVA * shunt_var[shunt,k] * V[k]^2
+# SVC
+- sum{(svc,k) in SVCON} base100MVA * svc_qvar[svc,k] * V[k]^2
+# VSC converters
+- sum{(v,k) in VSCCONVON} vscconv_qvar[v,k]
+# LCC converters
++ sum{(l,k) in LCCCONVON} lccconv_Q0[1,l,k] # Fixed value
+# Slack variables
++ if k in BUSCC_SLACK then
+(- base100MVA * V[k]^2 * slack1_shunt_B[k]  # Homogeneous to a generation of reactive power (condensator)
++ base100MVA * V[k]^2 * slack2_shunt_B[k]) # homogeneous to a reactive load (self)
+= 0;
 
 
 #

@@ -88,7 +88,7 @@ printf{LOG_INFO} "OK all slack variables for DCOPF are null\n";
 let dcopf_status := "OK";
 
 # Print flows on branches with zero impedance
-for{(qq,m,n) in BRANCHZNULL} printf{LOG_INFO} "Flow on zero impedance branch %Q: %.f MW\n",branch_id[1,qq,m,n],activeflow[qq,m,n];
+#for{(qq,m,n) in BRANCHZNULL} printf{LOG_INFO} "Flow on zero impedance branch %Q: %.f MW\n",branch_id[1,qq,m,n],activeflow[qq,m,n];
 
 # Print flows on most loaded lines
 let temp1 := max{(qq,m,n) in BRANCHCC}abs(activeflow[qq,m,n]);
