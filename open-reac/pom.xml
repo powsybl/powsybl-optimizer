@@ -23,7 +23,7 @@
 
     <properties>
         <powsybl-core.version>6.6.0</powsybl-core.version>
-        <powsybl-open-loadflow.version>1.13.2</powsybl-open-loadflow.version>
+        <powsybl-open-loadflow.version>1.14.1</powsybl-open-loadflow.version>
     </properties>
 
     <developers>
