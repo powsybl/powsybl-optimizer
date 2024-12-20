@@ -62,7 +62,7 @@ public abstract class AbstractLoadFlowNetworkFactory {
                 .setConnectableBus(b.getId())
                 .setEnergySource(EnergySource.OTHER)
                 .setMinP(0)
-                .setMaxP(2)
+                .setMaxP(p)
                 .setTargetP(p)
                 .setTargetV(v)
                 .setVoltageRegulatorOn(true)
