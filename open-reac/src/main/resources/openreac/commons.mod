@@ -49,9 +49,9 @@ set BRANCH2:= setof {(1,qq,m,n) in BRANCH: m in BUS2 and n in BUS2} (qq,m,n);
 set BUSCC dimen 1 default {};
 # Branches with bus on side 1 and 2 in CC
 set BRANCHCC  := {(qq,m,n) in BRANCH2: m in BUSCC and n in BUSCC};
-# Branches with disconnected bus on side 2
+# Branches with bus on side 1 in CC, and disconnected bus on side 2
 set BRANCHCC_WITH_SIDE_2_OPENED := setof {(1,qq,m,n) in BRANCH: m in BUSCC and n == -1 and m != n} (qq,m,n);
-# Branches with disconnected bus on side 1
+# Branches with bus on side 2 in CC, and disconnected bus on side 1
 set BRANCHCC_WITH_SIDE_1_OPENED := setof {(1,qq,m,n) in BRANCH: m == -1 and n in BUSCC and m != n} (qq,m,n);
 set ALL_BRANCHCC := BRANCHCC union BRANCHCC_WITH_SIDE_2_OPENED union BRANCHCC_WITH_SIDE_1_OPENED;
 
