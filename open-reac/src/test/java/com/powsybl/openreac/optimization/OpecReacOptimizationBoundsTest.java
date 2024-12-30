@@ -23,6 +23,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test the generator bounds in OpenReac optimization.
+ * Note that depending on the solver, the results may vary. Only the feasibility is tested,
+ * meaning that it verifies whether the generator bounds allow for finding
+ * a feasible solution or not.
  *
  * @author Pierre ARVY {@literal <pierre.arvy at artelys.com>}
  */
@@ -70,59 +73,58 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
         assertEquals(OpenReacStatus.OK, result.getStatus());
     }
 
-//    @Test
-//    void testGeneratorQmaxPmaxRatioBounds() throws IOException {
-//        Network network = VoltageControlNetworkFactory.createWithTwoVoltageControls();
-//        network.getLine("l45").disconnect();
-//        network.getLoad("l4").setP0(4).setQ0(2);
-//
-//        OpenReacParameters parameters = new OpenReacParameters();
-//        OpenReacResult result = runOpenReac(network, "optimization/bounds/qmax-pmax-default-ratio", parameters, true);
-//        assertEquals(OpenReacStatus.OK, result.getStatus());
-//        // there are slacks as Q bounds are not large enough
-//        assertTrue(Integer.parseInt(result.getIndicators().get("nb_reactive_slacks")) > 0);
-//
-//        parameters.setDefaultQmaxPmaxRatio(1);
-//        result = runOpenReac(network, "optimization/bounds/same-qmax-pmax", parameters, true);
-//        assertEquals(OpenReacStatus.OK, result.getStatus());
-//        // Q bounds are large enough to remove reactive slacks in optimization
-//        assertEquals(0, Integer.parseInt(result.getIndicators().get("nb_reactive_slacks")));
-//    }
+    @Test
+    void testGeneratorQmaxPmaxRatioBounds() throws IOException {
+        Network network = VoltageControlNetworkFactory.createWithTwoVoltageControls();
+        network.getLine("l45").disconnect();
+        network.getLoad("l4").setP0(4).setQ0(2);
+
+        OpenReacParameters parameters = new OpenReacParameters();
+        OpenReacResult result = runOpenReac(network, "optimization/bounds/qmax-pmax-default-ratio", parameters, true);
+        assertEquals(OpenReacStatus.OK, result.getStatus());
+        // there are slacks as Q bounds are not large enough
+        assertTrue(Integer.parseInt(result.getIndicators().get("nb_reactive_slacks")) > 0);
+
+        parameters.setDefaultQmaxPmaxRatio(1);
+        result = runOpenReac(network, "optimization/bounds/same-qmax-pmax", parameters, true);
+        assertEquals(OpenReacStatus.OK, result.getStatus());
+        // Q bounds are large enough to remove reactive slacks in optimization
+        assertEquals(0, Integer.parseInt(result.getIndicators().get("nb_reactive_slacks")));
+    }
 
     @Test
-    void testGeneratorQBoundsTargetPInsidePminPmax() throws IOException {
+    void testGeneratorQBoundsInterpolatedBetweenMinPMaxP() throws IOException {
+        // 0 < minP < targetP < maxP
         Network network = createWithTwoBuses(101, 50, 150, 0, -100, 100, 150, -200, 200, 150);
         assertConvergence(network);
         network = createWithTwoBuses(101, 50, 150, 0, -100, 100, 150, -150, 150, 150);
         assertDivergence(network);
-    }
 
-    @Test
-    void testGeneratorQBoundsTargetPInsidePminPmax2() throws IOException {
-        Network network = createWithTwoBuses(-10, -20, -5, -20, -30, 30, -5, -5, 5, -10);
+        // minP < targetP < maxP < 0
+        network = createWithTwoBuses(-10, -20, -5, -20, -30, 30, -5, -5, 5, -10);
         assertConvergence(network);
         network = createWithTwoBuses(-10, -20, -5, -20, -18, 18, -5, -5, 5, -10);
         assertDivergence(network);
     }
 
     @Test
-    void testGeneratorQBoundsTargetPInside0Pmax() throws IOException {
+    void testGeneratorQBoundsInterpolatedBetweenP0MaxP() throws IOException {
+        // minP < 0 < targetP < maxP
         Network network = createWithTwoBuses(101, -50, 150, 0, -0, 0, 150, -300, 300, 150);
         assertConvergence(network);
         network = createWithTwoBuses(101, -50, 150, 0, -0, 0, 150, -100, 100, 150);
         assertDivergence(network);
-    }
 
-    @Test
-    void testGeneratorQBoundsTargetPInside0Pmax2() throws IOException {
-        Network network = createWithTwoBuses(-4, -20, -5, -5, -5, 5, 0, -1, 1, -4);
+        // maxP < targetP < 0
+        network = createWithTwoBuses(-4, -20, -5, -5, -5, 5, 0, -1, 1, -4);
         assertConvergence(network);
         network = createWithTwoBuses(-4, -20, -5, -5, -4.25, 4.25, 0, -1, 1, -4);
         assertDivergence(network);
     }
 
     @Test
-    void testGeneratorQBoundsTargetPInside0Pmin() throws IOException {
+    void testGeneratorQBoundsInterpolatedBetweenMinPP0() throws IOException {
+        // 0 < targetP < minP
         Network network = createWithTwoBuses(101, 150, 200,
                 0, -0, 0,
                 150, -150, 150, 100);
@@ -131,11 +133,9 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
                 0, -0, 0,
                 150, -140, 140, 100);
         assertDivergence(network);
-    }
 
-    @Test
-    void testGeneratorQBoundsTargetPInside0Pmin2() throws IOException {
-        Network network = createWithTwoBuses(-5.1, -10, 10,
+        // minP < targetP < 0 < maxP
+        network = createWithTwoBuses(-5.1, -10, 10,
                 0, -0, 0,
                 -10, -4, 4,
                 -2);
@@ -143,6 +143,41 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
         network = createWithTwoBuses(-5.1, -10, 10,
                 0, -0, 0,
                 -10, -3.8, 3.8,
+                -2);
+        assertDivergence(network);
+    }
+
+    @Test
+    void testGeneratorQBoundsTakenAtPmax() throws IOException {
+        // 0 < maxP < targetP
+        Network network = createWithTwoBuses(102, 50, 100, 50, -100, 100, 100, -155, 155, 150);
+        network.getVoltageLevel("vl1").newGenerator()
+                .setId("g2")
+                .setConnectableBus("b1")
+                .setBus("b1")
+                .setTargetP(1)
+                .setTargetV(390)
+                .setMinP(0)
+                .setMaxP(2)
+                .setVoltageRegulatorOn(true)
+                .add();
+
+        assertConvergence(network);
+        network = createWithTwoBuses(155, 50, 150, 0, -100, 100, 150, -125, 125, 150);
+        assertDivergence(network);
+    }
+
+    @Test
+    void testGeneratorQBoundsTakenAtPmin() throws IOException {
+        // targetP < minP < 0
+        Network network = createWithTwoBuses(-11, -10, 10,
+                0, -0, 0,
+                -10, -2.5, 2.5,
+                -2);
+        assertConvergence(network);
+        network = createWithTwoBuses(-11, -10, 10,
+                0, -0, 0,
+                -10, -1.95, 1.95,
                 -2);
         assertDivergence(network);
     }
@@ -171,7 +206,7 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
      * b1---------b2
      *      l1
      */
-    public static Network createWithTwoBuses(double g1TargetP, double g1PMin, double g1PMax,
+    public static Network createWithTwoBuses(double targetP, double minP, double maxP,
                                              double pValue1, double g1QMin1, double g1QMax1,
                                              double pValue2, double g1QMin2, double g1QMax2,
                                              double ld1TargetQ) {
@@ -194,10 +229,10 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
                 .setId("g1")
                 .setConnectableBus("b1")
                 .setBus("b1")
-                .setTargetP(g1TargetP)
+                .setTargetP(targetP)
                 .setTargetV(390)
-                .setMinP(g1PMin)
-                .setMaxP(g1PMax)
+                .setMinP(minP)
+                .setMaxP(maxP)
                 .setVoltageRegulatorOn(true)
                 .add();
         network.getGenerator("g1").newReactiveCapabilityCurve()
@@ -224,7 +259,7 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
                 .setId("ld1")
                 .setConnectableBus("b2")
                 .setBus("b2")
-                .setP0(g1TargetP)
+                .setP0(targetP)
                 .setQ0(ld1TargetQ)
                 .add();
         network.newLine()

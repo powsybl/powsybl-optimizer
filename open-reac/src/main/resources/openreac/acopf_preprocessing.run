@@ -191,7 +191,7 @@ for {(g,n) in UNITON} {
   # correct qp0 value of generator if needed
   if abs(unit_qp0[1,g,n]) >= PQmax then {
     let corrected_unit_qp0[g,n] := -defaultQmaxPmaxRatio * corrected_unit_Pmax[g,n];
-    printf{LOG_DEBUG} "%Q for %Q is %Q -> corrected to %Q\n","unit_qp",unit_id[1,g,n],unit_qp0[1,g,n],corrected_unit_qp0[g,n];
+    printf{LOG_DEBUG} "%Q for %Q is %Q -> corrected to %Q\n","unit_qp0",unit_id[1,g,n],unit_qp0[1,g,n],corrected_unit_qp0[g,n];
   }
   else let corrected_unit_qp0[g,n] := unit_qp0[1,g,n];
 
@@ -212,7 +212,7 @@ for {(g,n) in UNITON} {
   # correct Qp0 value of generator if needed
   if abs(unit_Qp0[1,g,n]) >= PQmax then {
     let corrected_unit_Qp0[g,n] := defaultQmaxPmaxRatio * corrected_unit_Pmax[g,n];
-    printf{LOG_DEBUG} "%Q for %Q is %Q -> corrected to %Q\n","unit_Qp",unit_id[1,g,n],unit_Qp0[1,g,n],corrected_unit_Qp0[g,n];
+    printf{LOG_DEBUG} "%Q for %Q is %Q -> corrected to %Q\n","unit_Qp0",unit_id[1,g,n],unit_Qp0[1,g,n],corrected_unit_Qp0[g,n];
   }
   else let corrected_unit_Qp0[g,n] := unit_Qp0[1,g,n];
 
@@ -273,8 +273,8 @@ for {(g,n) in UNITON} {
       let corrected_unit_Qmin[g,n] := (corrected_unit_qp0[g,n] + corrected_unit_qP[g,n]) / 2;
       let corrected_unit_Qmax[g,n] := (corrected_unit_Qp0[g,n] + corrected_unit_QP[g,n]) / 2;
     } else {
-      let corrected_unit_Qmin[g,n] := corrected_unit_q0[g,n] + (unit_Pc[1,g,n] - 0) / (corrected_unit_Pmax[g,n] - 0) * (corrected_unit_qP[g,n] - corrected_unit_q0[g,n]);
-      let corrected_unit_Qmax[g,n] := corrected_unit_Q0[g,n] + (unit_Pc[1,g,n] - 0) / (corrected_unit_Pmax[g,n] - 0) * (corrected_unit_QP[g,n] - corrected_unit_Q0[g,n]);
+      let corrected_unit_Qmin[g,n] := corrected_unit_qp0[g,n] + (unit_Pc[1,g,n] - 0) / (corrected_unit_Pmax[g,n] - 0) * (corrected_unit_qP[g,n] - corrected_unit_qp0[g,n]);
+      let corrected_unit_Qmax[g,n] := corrected_unit_Qp0[g,n] + (unit_Pc[1,g,n] - 0) / (corrected_unit_Pmax[g,n] - 0) * (corrected_unit_QP[g,n] - corrected_unit_Qp0[g,n]);
     }
 
   # cases when Qmin/Qmax are interpolated between 0 and Pmin
@@ -285,13 +285,22 @@ for {(g,n) in UNITON} {
       let corrected_unit_Qmin[g,n] := (corrected_unit_qp0[g,n] + corrected_unit_qp[g,n]) / 2;
       let corrected_unit_Qmax[g,n] := (corrected_unit_Qp0[g,n] + corrected_unit_Qp[g,n]) / 2;
     } else {
-      let corrected_unit_Qmin[g,n] := corrected_unit_qp[g,n] + (unit_Pc[1,g,n] - corrected_unit_Pmin[g,n]) / (0 - corrected_unit_Pmin[g,n]) * (corrected_unit_q0[g,n] - corrected_unit_qp[g,n]);
-      let corrected_unit_Qmax[g,n] := corrected_unit_Qp[g,n] + (unit_Pc[1,g,n] - corrected_unit_Pmin[g,n]) / (0 - corrected_unit_Pmin[g,n]) * (corrected_unit_Q0[g,n] - corrected_unit_Qp[g,n]);
+      let corrected_unit_Qmin[g,n] := corrected_unit_qp[g,n] + (unit_Pc[1,g,n] - corrected_unit_Pmin[g,n]) / (0 - corrected_unit_Pmin[g,n]) * (corrected_unit_qp0[g,n] - corrected_unit_qp[g,n]);
+      let corrected_unit_Qmax[g,n] := corrected_unit_Qp[g,n] + (unit_Pc[1,g,n] - corrected_unit_Pmin[g,n]) / (0 - corrected_unit_Pmin[g,n]) * (corrected_unit_Qp0[g,n] - corrected_unit_Qp[g,n]);
     }
 
+  # cases when Qmin/Qmax are equals to qP/QP
+  } else if (unit_Pc[1,g,n] > corrected_unit_Pmax[g,n] and corrected_unit_Pmax[g,n] > 0) then {
+    let corrected_unit_Qmin[g,n] := corrected_unit_qP[g,n];
+    let corrected_unit_Qmax[g,n] := corrected_unit_QP[g,n];
+
+  # cases when Qmin/Qmax are equals to qp/Qp
+  } else if (unit_Pc[1,g,n] < corrected_unit_Pmin[g,n] and corrected_unit_Pmin[g,n] < 0) then {
+    let corrected_unit_Qmin[g,n] := corrected_unit_qp[g,n];
+    let corrected_unit_Qmax[g,n] := corrected_unit_Qp[g,n];
+
+  # default case
   } else {
-    # TODO : add case when P_t is not in ramp up/down or in the diagram
-    # TODO : same when diagram has only 4 points...
     let corrected_unit_Qmin[g,n] := min(corrected_unit_qP[g,n],corrected_unit_qp[g,n]);
     let corrected_unit_Qmax[g,n] := min(corrected_unit_QP[g,n],corrected_unit_Qp[g,n]);
   }
