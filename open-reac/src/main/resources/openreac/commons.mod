@@ -109,7 +109,7 @@ param branch_X_mod{(qq,m,n) in ALL_BRANCHCC} :=
   else branch_X[1,qq,m,n];
 check {(qq,m,n) in ALL_BRANCHCC}: abs(branch_X_mod[qq,m,n]) > 0;
 
-# If in BRANCHZNULL, then set Gor/Gex/Bor/Bex to 0
+# If in BRANCHZNULL and Vnom1 != Vnom2, then set Gor/Gex/Bor/Bex to 0
 param branch_Gor_mod{(qq,m,n) in ALL_BRANCHCC} :=
     if (qq,m,n) in BRANCHCC and (qq,m,n) in BRANCHZNULL and substation_Vnomi[1,bus_substation[1,m]] != substation_Vnomi[1,bus_substation[1,n]] then 0
     else branch_Gor[1,qq,m,n];
