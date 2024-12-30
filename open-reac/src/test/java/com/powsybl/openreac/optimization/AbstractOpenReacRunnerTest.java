@@ -83,7 +83,7 @@ abstract class AbstractOpenReacRunnerTest {
     /**
      * Runs OpenReac and apply the results on the network.
      */
-    void runAndApplyAllModifications(Network network, String subFolder, OpenReacParameters parameters,
+    protected void runAndApplyAllModifications(Network network, String subFolder, OpenReacParameters parameters,
                                      boolean updateNetworkWithVoltages, ReportNode reportNode) throws IOException {
         // set default voltage limits to every voltage levels of the network
         setDefaultVoltageLimits(network);
@@ -112,7 +112,7 @@ abstract class AbstractOpenReacRunnerTest {
      * Add voltage limits to voltage levels with undefined limits.
      * OpenReac needs voltage limits to run optimization.
      */
-    void setDefaultVoltageLimits(Network network) {
+    protected void setDefaultVoltageLimits(Network network) {
         for (VoltageLevel vl : network.getVoltageLevels()) {
             if (vl.getLowVoltageLimit() <= 0 || Double.isNaN(vl.getLowVoltageLimit())) {
                 vl.setLowVoltageLimit(0.5 * vl.getNominalV());

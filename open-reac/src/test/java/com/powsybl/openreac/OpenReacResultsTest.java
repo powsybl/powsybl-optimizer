@@ -77,7 +77,7 @@ class OpenReacResultsTest {
 
     @Test
     void testShuntTargetVUpdateWithoutVoltageResult() throws IOException {
-        Network network = ShuntNetworkFactory.create();
+        Network network = ShuntNetworkFactory.createWithNonLinearModel();
         ShuntCompensator shunt = network.getShuntCompensator("SHUNT");
         String regulatedBusId = shunt.getRegulatingTerminal().getBusView().getBus().getId();
 
@@ -91,7 +91,7 @@ class OpenReacResultsTest {
 
     @Test
     void testShuntUpdateWithoutRegulationBus() throws IOException {
-        Network network = ShuntNetworkFactory.create();
+        Network network = ShuntNetworkFactory.createWithNonLinearModel();
         ShuntCompensator shunt = network.getShuntCompensator("SHUNT");
         shunt.getRegulatingTerminal().disconnect();
 

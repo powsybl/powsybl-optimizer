@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-import static com.powsybl.openreac.network.ShuntNetworkFactory.create;
+import static com.powsybl.openreac.network.ShuntNetworkFactory.createWithNonLinearModel;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class ShuntCompensatorNetworkOutputTest {
     @Test
     void read() throws IOException {
-        Network network = create();
+        Network network = createWithNonLinearModel();
         ShuntCompensatorNetworkOutput output = new ShuntCompensatorNetworkOutput(network, 0);
         StringToIntMapper<AmplSubset> mapper = new StringToIntMapper<>(AmplSubset.class);
         mapper.newInt(AmplSubset.SHUNT, "SHUNT");
@@ -47,7 +47,7 @@ class ShuntCompensatorNetworkOutputTest {
 
     @Test
     void readNullShuntCompensator() throws IOException {
-        Network network = create();
+        Network network = createWithNonLinearModel();
         ShuntCompensatorNetworkOutput output = new ShuntCompensatorNetworkOutput(network, 0);
         StringToIntMapper<AmplSubset> mapper = new StringToIntMapper<>(AmplSubset.class);
         mapper.newInt(AmplSubset.SHUNT, "wrongId");
@@ -64,7 +64,7 @@ class ShuntCompensatorNetworkOutputTest {
 
     @Test
     void noShuntNumberInMapper() throws IOException {
-        Network network = create();
+        Network network = createWithNonLinearModel();
         ShuntCompensatorNetworkOutput output = new ShuntCompensatorNetworkOutput(network, 0);
         StringToIntMapper<AmplSubset> mapper = new StringToIntMapper<>(AmplSubset.class);
         try (InputStream input = getClass().getResourceAsStream("/mock_outputs/reactiveopf_results_shunts.csv");
@@ -76,7 +76,7 @@ class ShuntCompensatorNetworkOutputTest {
 
     @Test
     void noBusNumberInMapper() throws IOException {
-        Network network = create();
+        Network network = createWithNonLinearModel();
         ShuntCompensatorNetworkOutput output = new ShuntCompensatorNetworkOutput(network, 0);
         StringToIntMapper<AmplSubset> mapper = new StringToIntMapper<>(AmplSubset.class);
         mapper.newInt(AmplSubset.SHUNT, "SHUNT");
