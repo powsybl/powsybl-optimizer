@@ -11,6 +11,7 @@ import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.StaticVarCompensator;
 import com.powsybl.openreac.network.HvdcNetworkFactory;
+import com.powsybl.openreac.network.ShuntNetworkFactory;
 import com.powsybl.openreac.network.VoltageControlNetworkFactory;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAmplLogLevel;
@@ -182,7 +183,7 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
 
     @Test
     void testShuntsIndicators() throws IOException {
-        Network network = OpenReacOptimizationAndLoadFlowTest.create();
+        Network network = ShuntNetworkFactory.createWithLinearModel();
         // add one shunt that will be fixed in optimization
         network.getVoltageLevel("vl3").newShuntCompensator()
                 .setId("SHUNT2")
