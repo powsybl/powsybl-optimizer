@@ -19,7 +19,6 @@ import com.powsybl.loadflow.LoadFlowResult;
 import com.powsybl.openreac.OpenReacConfig;
 import com.powsybl.openreac.OpenReacRunner;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
-import com.powsybl.openreac.parameters.input.algo.OpenReacAmplLogLevel;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.OpenReacStatus;
 import org.junit.jupiter.api.AfterEach;
@@ -137,25 +136,29 @@ abstract class AbstractOpenReacRunnerTest {
         try (ComputationManager computationManager = new LocalComputationManager()) {
 //        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
 //                localCommandExecutor, ForkJoinPool.commonPool())) {
-            parameters.setLogLevelAmpl(OpenReacAmplLogLevel.DEBUG);
+//            parameters.setLogLevelAmpl(OpenReacAmplLogLevel.DEBUG);
             OpenReacResult result = OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), parameters,
                     new OpenReacConfig(true), computationManager, reportNode, null);
-            System.out.println(result.getIndicators().get("directory"));
+//            System.out.println(result.getIndicators().get("directory"));
             return result;
         }
+    }
+
+    protected void setDefaultVoltageLimits(Network network) {
+        setDefaultVoltageLimits(network, 0.5, 1.5);
     }
 
     /**
      * Add voltage limits to voltage levels with undefined limits.
      * OpenReac needs voltage limits to run optimization.
      */
-    protected void setDefaultVoltageLimits(Network network) {
+    protected void setDefaultVoltageLimits(Network network, double thresholdMin, double thresholdMax) {
         for (VoltageLevel vl : network.getVoltageLevels()) {
             if (vl.getLowVoltageLimit() <= 0 || Double.isNaN(vl.getLowVoltageLimit())) {
-                vl.setLowVoltageLimit(0.5 * vl.getNominalV());
+                vl.setLowVoltageLimit(thresholdMin * vl.getNominalV());
             }
             if (Double.isNaN(vl.getHighVoltageLimit())) {
-                vl.setHighVoltageLimit(1.5 * vl.getNominalV());
+                vl.setHighVoltageLimit(thresholdMax * vl.getNominalV());
             }
         }
     }

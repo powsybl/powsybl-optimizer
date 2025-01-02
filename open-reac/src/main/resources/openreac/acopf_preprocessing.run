@@ -254,8 +254,14 @@ for {(g,n) in UNITON} {
     let corrected_unit_Qp[g,n] := tempo;
   }
 
-  # cases when Qmin/Qmax are interpolated between Pmin and Pmax
-  if (unit_Pc[1,g,n] >= corrected_unit_Pmin[g,n] and unit_Pc[1,g,n] <= corrected_unit_Pmax[g,n] and (corrected_unit_Pmin[g,n] > 0 or corrected_unit_Pmax[g,n] < 0)) then {
+  if (abs(unit_Pc[1,g,n] - corrected_unit_Pmin[g,n]) < Pnull) then {
+      let corrected_unit_Qmin[g,n] := corrected_unit_qp[g,n];
+      let corrected_unit_Qmax[g,n] := corrected_unit_Qp[g,n];
+    } else if (abs(unit_Pc[1,g,n] - corrected_unit_Pmax[g,n]) < Pnull) then {
+      let corrected_unit_Qmin[g,n] := corrected_unit_qP[g,n];
+      let corrected_unit_Qmax[g,n] := corrected_unit_QP[g,n];
+    # cases when Qmin/Qmax are interpolated between Pmin and Pmax
+    } else if (unit_Pc[1,g,n] >= corrected_unit_Pmin[g,n] and unit_Pc[1,g,n] <= corrected_unit_Pmax[g,n] and (corrected_unit_Pmin[g,n] >= 0 or corrected_unit_Pmax[g,n] <= 0)) then {
       # if Pmin/Pmax are too close, compute Qmin/Qmax as the mean of diagram values
       if (abs((corrected_unit_Pmax[g,n] - corrected_unit_Pmin[g,n])) < 1e-4) then {
         let corrected_unit_Qmin[g,n] := (corrected_unit_qp[g,n] + corrected_unit_qP[g,n]) / 2;
