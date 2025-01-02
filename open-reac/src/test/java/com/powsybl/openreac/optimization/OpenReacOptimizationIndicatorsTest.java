@@ -162,8 +162,6 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
     @Test
     void testVscIndicators() throws IOException {
         Network network = HvdcNetworkFactory.createVsc();
-        // FIXME : should not depend on P/Q values on terminal
-        network.getVscConverterStation("cs2").getTerminal().setP(2).setQ(1);
         OpenReacResult result = runOpenReac(network, "optimization/indicators/vsc-test", true);
 
         assertEquals(OpenReacStatus.OK, result.getStatus());
@@ -175,8 +173,6 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
     @Test
     void testLccIndicators() throws IOException {
         Network network = HvdcNetworkFactory.createLcc();
-        // FIXME : should not depend on P/Q values on terminal
-        network.getLccConverterStation("cs2").getTerminal().setP(2).setQ(1);
         OpenReacResult result = runOpenReac(network, "optimization/indicators/lcc-test", true);
 
         assertEquals(OpenReacStatus.OK, result.getStatus());

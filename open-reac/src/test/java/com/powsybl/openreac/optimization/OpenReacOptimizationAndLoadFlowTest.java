@@ -74,8 +74,6 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
     @Test
     void testHvdc() throws IOException {
         Network network = HvdcNetworkFactory.createNetworkWithGenerators2();
-        network.getVscConverterStation("cs3").getTerminal().setP(0.0);
-        network.getVscConverterStation("cs4").getTerminal().setP(0.0);
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.addConstantQGenerators(List.of("g1", "g2", "g5", "g6"));
         testAllModifAndLoadFlow(network, "optimization/loadflow/openreac-output-vsc", parameters, ReportNode.NO_OP);
