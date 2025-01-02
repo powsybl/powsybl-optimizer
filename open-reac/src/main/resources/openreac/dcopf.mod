@@ -53,8 +53,8 @@ subject to ctr_balance{PROBLEM_DCOPF, n in BUSCC}:
   + sum{(c,n) in LOADCC} load_PFix[1,c,n]
   + sum{(qq,n,m) in BRANCHCC} activeflow[qq,n,m] # active power flow outgoing on branch qq at bus n
   - sum{(qq,m,n) in BRANCHCC} activeflow[qq,m,n] # active power flow entering in bus n on branch qq
-  + sum{(vscconv,n) in VSCCONVON} vscconv_P0[1,vscconv,n]
-  + sum{(l,n) in LCCCONVON} lccconv_P0[1,l,n]
+  - sum{(vscconv,n) in VSCCONVON} vscconv_targetP[vscconv]
+  + sum{(l,n) in LCCCONVON} lccconv_targetP[l]
   =
   balance_pos[n] - balance_neg[n];
 

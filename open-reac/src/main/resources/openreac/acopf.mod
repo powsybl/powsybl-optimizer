@@ -134,7 +134,7 @@ var Red_Tran_Rea_Inv{(qq,m,n) in BRANCHCC } =
 
 var Red_Tran_Act_Dir_Side_2_Opened{(qq,m,n) in BRANCHCC_WITH_SIDE_2_OPENED} =
     (branch_Ror[qq,m,n])**2 * V[m] * (branch_Gor_mod[qq,m,n] + (branch_admi[qq,m,n])**2 * branch_Gex_mod[qq,m,n] / ( (branch_Gex_mod[qq,m,n] + branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]))**2
-    + (- branch_Bex_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 ) 
+    + (- branch_Bex_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 )
     + ((branch_Bex_mod[qq,m,n])**2 + (branch_Gex_mod[qq,m,n])**2) * branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]) / ( (branch_Gex_mod[qq,m,n] + branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]))**2
     + (- branch_Bex_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 ))
   ;
@@ -180,9 +180,9 @@ sum{(qq,k,n) in BRANCHCC} base100MVA * V[k] * Red_Tran_Act_Dir[qq,k,n]
 # Loads
 + sum{(c,k) in LOADCC} load_PFix[1,c,k]     # Fixed value
 # VSC converters
-+ sum{(v,k) in VSCCONVON} vscconv_P0[1,v,k] # Fixed value
++ sum{(v,k) in VSCCONVON} vscconv_targetP[v] # Fixed value
 # LCC converters
-+ sum{(l,k) in LCCCONVON} lccconv_P0[1,l,k] # Fixed value
++ sum{(l,k) in LCCCONVON} lccconv_targetP[l] # Fixed value
 = 0; # No slack variables for active power. If data are really too bad, may not converge.
 
 
@@ -220,7 +220,7 @@ sum{(qq,k,n) in BRANCHCC} base100MVA * V[k] * Red_Tran_Rea_Dir[qq,k,n]
 # VSC converters
 - sum{(v,k) in VSCCONVON} vscconv_qvar[v,k]
 # LCC converters
-+ sum{(l,k) in LCCCONVON} lccconv_Q0[1,l,k] # Fixed value
++ sum{(l,k) in LCCCONVON} lccconv_q0[1,l,k] # Fixed value
 # Slack variables
 + if k in BUSCC_SLACK then
 (- base100MVA * V[k]^2 * slack1_shunt_B[k]  # Homogeneous to a generation of reactive power (condensator)

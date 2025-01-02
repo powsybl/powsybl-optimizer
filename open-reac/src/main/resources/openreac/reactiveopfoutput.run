@@ -115,7 +115,7 @@ printf{(v,n) in VSCCONVON} "%i;%i;%i;%Q;%.3f;%.1f;%.1f;%.1f;\n",
   vscconv_vregul[1,v,n],
   V[n],
   vscconv_qvar[v,n],
-  vscconv_P0[1,v,n],
+  vscconv_targetP[v],
   vscconv_qvar[v,n]
   > (fileOut);
 close (fileOut);
