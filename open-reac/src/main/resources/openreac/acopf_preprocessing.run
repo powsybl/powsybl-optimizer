@@ -317,12 +317,12 @@ for {(g,n) in UNITON} {
     }
 
   # cases when Qmin/Qmax are equals to qP/QP
-  } else if (unit_Pc[1,g,n] > corrected_unit_Pmax[g,n] and corrected_unit_Pmax[g,n] > 0) then {
+  } else if (unit_Pc[1,g,n] >= corrected_unit_Pmax[g,n] and corrected_unit_Pmax[g,n] > 0) then {
     let corrected_unit_Qmin[g,n] := corrected_unit_qP[g,n];
     let corrected_unit_Qmax[g,n] := corrected_unit_QP[g,n];
 
   # cases when Qmin/Qmax are equals to qp/Qp
-  } else if (unit_Pc[1,g,n] < corrected_unit_Pmin[g,n] and corrected_unit_Pmin[g,n] < 0) then {
+  } else if (unit_Pc[1,g,n] <= corrected_unit_Pmin[g,n] and corrected_unit_Pmin[g,n] < 0) then {
     let corrected_unit_Qmin[g,n] := corrected_unit_qp[g,n];
     let corrected_unit_Qmax[g,n] := corrected_unit_Qp[g,n];
 

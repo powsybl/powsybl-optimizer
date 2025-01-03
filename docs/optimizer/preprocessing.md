@@ -41,34 +41,41 @@ Let $qp_g^c$ (resp. $qp0_g^c$, $qP_g^c$) and $Qp_g^c$ (resp. $Qp0_g^c$, $QP_g^c$
 
 - By default, $qp_g^{c} = qP_{g}^{c} = - \text{defaultPmin} \times \text{defaultQmaxPmaxRatio}$ and $Qp_{g}^{c} = QP_{g}^{c} = \text{defaultPmax} \times \text{defaultQmaxPmaxRatio}$ (see [Configuration of the run](inputs.md#configuration-of-the-run))
 - If $|qp_{g}| \geq \text{PQmax}$, then $qp_{g}^{c} = -\text{defaultQmaxPmaxRatio} \times P_{max}^{g,c}$.  
-  Same with $qP_{g}^{c}$.  
+  Same with $qP_{g}^{c}$, $qp0_{g}^{c}$.  
 - If $|Qp_{g}| \geq \text{PQmax}$, then $Qp_{g}^{c} = \text{defaultQmaxPmaxRatio} \times P_{max}^{g,c}$.  
-  Same with $QP_{g}^{c}$.  
+  Same with $QP_{g}^{c}$, $Qp0_{g}^{c}$.  
 - If $qp_{g}^{c} > Qp_{g}^{c}$, the values are swapped.  
-  Same with $qP_{g}^{c}$ and $QP_{g}^{c}$.  
-- If the corrected reactive diagram is too small (the distances between the vertices of the reactive diagram are lower than $\text{minimalQPrange}$), then $qp_{g}^{c} = Qp_{g}^{c} = qP_{g}^{c} = QP_{g}^{c} = \frac{qp_{g}^{c} + Qp_{g}^{c} + qP_{g}^{c} + QP_{g}^{c}}{4}$ (reactive power is fixed).
+  Same with $qP_{g}^{c}$ and $QP_{g}^{c}$, $qp0_{g}^{c}$ and $Qp0_{g}^{c}$.  
+- If the corrected reactive diagram is too small between $P_{g}^{min,c}$ and $P_{g}^{max,c}$ (the distances between the vertices of the reactive diagram are lower than $\text{minimalQPrange}$), 
+then $qp_{g}^{c} = Qp_{g}^{c} = qP_{g}^{c} = QP_{g}^{c} = \frac{qp_{g}^{c} + Qp_{g}^{c} + qP_{g}^{c} + QP_{g}^{c}}{4}$ (reactive power is fixed). The same applies if the diagram
+is too small between $P_{g}^{min,c}$ and 0, or 0 and $P_{g}^{max,c}$.
 
 Then, the corrected reactive bounds ($Q_{g}^{min,c}$ and $Q_{g}^{max,c}$) are interpolated between the points forming the hexagonal diagram.
-The general case corresponds to the active target between the active bounds ($P_{g}^{min,c}$ and $P_{g}^{max,c}$). Then, the interpolating formula is:
-# TODO
-The general correction of the generator's reactive power diagram $g$ is illustrated in the following figure:
-![Reactive diagram correction](_static/img/reactive-diagram.png){width="50%" align=center}
+The general case corresponds to the active target being between the active bounds ($P_{g}^{min,c}$ and $P_{g}^{max,c}$). The interpolating formula is as follows:
+- $Q_{g}^{min,c} = qp_{g}^{c} + \frac{P_{g}^{t}-P_{g}^{min,c}}{P_{g}^{max,c}-P_{g}^{min,c}}(qP_{g}^{c}-qp_{g}^{c})$
+- $Q_{g}^{max,c} = Qp_{g}^{c} + \frac{P_{g}^{t}-P_{g}^{min,c}}{P_{g}^{max,c}-P_{g}^{min,c}}(QP_{g}^{c}-Qp_{g}^{c})$
 
-On note les exceptions suivantes, qu'il est utile de clarifier. 
+The formula also applies when the active target is between $0$ and $P_{g}^{min,c}$, or $0$ and $P_{g}^{max,c}$. For the last case, the interpolating formula becomes:
+- $Q_{g}^{min,c} = qp0_{g}^{c} + \frac{P_{g}^{t}}{P_{g}^{max,c}}(qP_{g}^{c}-qp0_{g}^{c})$
+- $Q_{g}^{max,c} = Qp0_{g}^{c} + \frac{P_{g}^{t}}{P_{g}^{max,c}}(QP_{g}^{c}-Qp0_{g}^{c})$
+This is illustrated in the following figure:
+![Reactive diagram correction](_static/img/reactive-bounds-ptarget-between-0-pmax.PNG){width="50%" align=center}
 
-Si le générateur est en ramp up, c'est à dire que la target de puissance active est située entre 0 et Pmin, alors 
-l'interpolation est effectuée entre les points $0$ et Pmin, comme suit:
-![Reactive diagram correction](_static/img/reactive-diagram.png){width="50%" align=center}
+The following corner cases are important to clarify:
+- If the generator has an active power target located between $0$ and $P_{g}^{min,c}$ (e.g., during ramp up), the 
+interpolation is performed between the points $0$ and $P_{g}^{min,c}$, as follows:
+![Reactive diagram correction](_static/img/reactive-bounds-ptarget-between-0-pmin.PNG){width="50%" align=center}
 
-Si le générateur a une target supérieure à sa borne supérieure de production de puissance active, et que cette borne est 
-supérieure à $0$, then the corrected reactive bounds are taken at Pmax, as follows:
-![Reactive diagram correction](_static/img/reactive-diagram.png){width="50%" align=center}
+- If the generator has a target greater (resp. smaller) than its upper (resp. lower) active power bound, and 
+this bound is greater (resp. smaller) than $0$, then the corrected reactive bounds are taken at $P_{g}^{max,c}$ (resp. $P_{g}^{min,c}$), as follows:
+![Reactive diagram correction](_static/img/reactive-bounds-ptarget-higher-than-pmax.PNG){width="50%" align=center}
 
-Si des points du diagramme héxagonal du générateur sont trop sérrés, et que la target P du générateur se situe entre ces points,
-alors the corrected reactive bounds are taken as the half of the extreme points of the diagram. This is illustrated by the following:
-![Reactive diagram correction](_static/img/reactive-diagram.png){width="50%" align=center}
+- If corrected active bounds $P_{g}^{min,c}$ and $P_{g}^{max,c}$ are too close, and the target
+  of the generator is located between these points, then the corrected reactive bounds are taken as the midpoint of the extreme points of the diagram. The same applies
+  if $0$ and $P_{g}^{min,c}$ or $0$ and $P_{g}^{max,c}$ are too close, and that the target is located between.
+  This is illustrated below:
+![Reactive diagram correction](_static/img/reactive-bounds-ptarget-in-active-bounds-too-close.PNG){width="50%" align=center}
 
-- $Q_{g}^{min,c} = \min(qp_{g}^{c}, qP_{g}^{c})$ and $Q_{g}^{max,c} = \min(Qp_{g}^{c}, QP_{g}^{c})$
-
-Please note that in the end, **the corrected bounds are hexagonal**, and they are used only in the reactive OPF (see [AC optimal powerflow](acOptimalPowerflow.md). 
-In addition, note that bounds $qP_{g}^0$ and $Qp_{g}^0$ are only used to interpolate the corrected bounds $Q_{g}^{min,c}$ and $Q_{g}^{max,c}$, as generators with zero active power are excluded from the optimisation (see [AC optimal powerflow](acOptimalPowerflow.md#generalities)).
+Please note that in the end, the corrected bounds are used in the reactive OPF (see [AC optimal powerflow](acOptimalPowerflow.md). 
+In addition, note that bounds $qP_{g}^0$ and $Qp_{g}^0$ are only used to interpolate the corrected bounds $Q_{g}^{min,c}$ and $Q_{g}^{max,c}$, 
+as generators with zero active power are excluded from the optimisation (see [AC optimal powerflow](acOptimalPowerflow.md#generalities)).
