@@ -64,22 +64,22 @@ The formula also applies when the active target is between $0$ and $P_{g}^{min,c
 - $Q_{g}^{max,c} = Qp0_{g}^{c} + \frac{P_{g}^{t}}{P_{g}^{max,c}}(QP_{g}^{c}-Qp0_{g}^{c})$
 
 This is illustrated in the following figure:
-![Reactive diagram correction](_static/img/reactive-bounds-ptarget-between-0-pmax.PNG){width="50%" align=center}
+![Reactive diagram between 0 and Pmax](_static/img/reactive-bounds-ptarget-between-0-pmax.PNG){width="50%" align=center}
 
 The following corner cases are important to clarify:
 - If the generator has an active power target located between $0$ and $P_{g}^{min,c}$ (e.g., during ramp up), the 
 interpolation is performed between the points $0$ and $P_{g}^{min,c}$, as follows:
-![Reactive diagram correction](_static/img/reactive-bounds-ptarget-between-0-pmin.PNG){width="50%" align=center}
+![Reactive diagram between 0 and Pmin](_static/img/reactive-bounds-ptarget-between-0-pmin.PNG){width="50%" align=center}
 
 - If the generator has a target greater (resp. smaller) than its upper (resp. lower) active power bound, and 
 this bound is greater (resp. smaller) than $0$, then the corrected reactive bounds are taken at $P_{g}^{max,c}$ (resp. $P_{g}^{min,c}$), as follows:
-![Reactive diagram correction](_static/img/reactive-bounds-ptarget-higher-than-pmax.PNG){width="50%" align=center}
+![Reactive diagram taken at Pmax](_static/img/reactive-bounds-ptarget-higher-than-pmax.PNG){width="50%" align=center}
 
 - If corrected active bounds $P_{g}^{min,c}$ and $P_{g}^{max,c}$ are too close, and the target
   of the generator is located between these points, then the corrected reactive bounds are taken as the midpoint of the extreme points of the diagram. The same applies
   if $0$ and $P_{g}^{min,c}$ or $0$ and $P_{g}^{max,c}$ are too close, and that the target is located between.
   This is illustrated below:
-![Reactive diagram correction](_static/img/reactive-bounds-ptarget-in-active-bounds-too-close.PNG){width="50%" align=center}
+![Reactive diagram when active bounds are too close](_static/img/reactive-bounds-ptarget-in-active-bounds-too-close.PNG){width="50%" align=center}
 
 Please note that in the end, the corrected bounds are used in the reactive OPF (see [AC optimal powerflow](acOptimalPowerflow.md). 
 In addition, note that bounds $qP_{g}^0$ and $Qp_{g}^0$ are only used to interpolate the corrected bounds $Q_{g}^{min,c}$ and $Q_{g}^{max,c}$, 
