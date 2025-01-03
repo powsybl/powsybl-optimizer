@@ -36,6 +36,8 @@ nb_bus_with_reactive_slacks 6
 nb_bus_without_reactive_slacks 0
 nb_branch_in_data_file 7
 nb_branch_in_AC_CC 7
+nb_branch_in_AC_CC_side_1_opened 0
+nb_branch_in_AC_CC_side_2_opened 0
 nb_branch_with_nonsmall_impedance 7
 nb_branch_with_zero_or_small_impedance 0
 nb_unit_in_data_file 4
@@ -62,16 +64,16 @@ nb_batteries 0
 sum_batteries_pmax 0.0
 sum_batteries_pmin 0.0
 
-max_teta_dc 0.07
-max_teta_ac 0.22
-teta_max 3.07
-min_teta_dc -0.20
-min_teta_ac -0.93
-teta_min -3.20
-max_delta_teta_dc 0.066667
-max_delta_teta_ac 0.220224
-min_delta_teta_dc -0.200000
-min_delta_teta_ac -0.927179
+max_teta_dc 0.17
+max_teta_ac 0.58
+teta_max 3.17
+min_teta_dc -0.10
+min_teta_ac -0.38
+teta_min -3.10
+max_delta_teta_dc 0.133333
+max_delta_teta_ac 0.496485
+min_delta_teta_dc -0.166667
+min_delta_teta_ac -0.577584
 
 nb_reactive_slacks 0
 nb_slacks_condensator 0

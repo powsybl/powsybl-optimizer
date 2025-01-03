@@ -36,6 +36,8 @@ nb_bus_with_reactive_slacks 2
 nb_bus_without_reactive_slacks 0
 nb_branch_in_data_file 1
 nb_branch_in_AC_CC 1
+nb_branch_in_AC_CC_side_1_opened 0
+nb_branch_in_AC_CC_side_2_opened 0
 nb_branch_with_nonsmall_impedance 1
 nb_branch_with_zero_or_small_impedance 0
 nb_unit_in_data_file 1
@@ -68,10 +70,10 @@ teta_max 3.00
 min_teta_dc 0.00
 min_teta_ac 0.00
 teta_min -3.00
-max_delta_teta_dc 0.000975
-max_delta_teta_ac 0.001335
-min_delta_teta_dc 0.000975
-min_delta_teta_ac 0.001335
+max_delta_teta_dc 0.001875
+max_delta_teta_ac 0.001259
+min_delta_teta_dc 0.001875
+min_delta_teta_ac 0.001259
 
 nb_reactive_slacks 0
 nb_slacks_condensator 0

@@ -1,0 +1,2 @@
+#variant;num;bus;vRegul;V(pu);targetP(MW);targetQ(Mvar);P(MW);Q(MW);
+1;1;1;'true';1.040;102.6;25.1;-70.0;-25.1;

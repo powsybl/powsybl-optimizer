@@ -7,6 +7,7 @@
  */
 package com.powsybl.openreac.optimization;
 
+import com.powsybl.commons.report.ReportNode;
 import com.powsybl.iidm.network.HvdcLine;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.openreac.network.HvdcNetworkFactory;
@@ -27,15 +28,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class OpenReacOptimizationHvdcTest extends AbstractOpenReacRunnerTest {
 
     @Test
-    void testActivePowerSetpointLowerThanPmax() throws IOException {
-        Network network = HvdcNetworkFactory.createVsc();
-        // put max P < active set point to fail checks before optimization
-        network.getVscConverterStation("cs2").getHvdcLine().setMaxP(1);
-        OpenReacResult result = runOpenReac(network, "optimization/indicators/lcc-test", true);
-        assertEquals(OpenReacStatus.NOT_OK, result.getStatus());
-    }
-
-    @Test
     void testLccExcludedFromOptimization() throws IOException {
         Network network = HvdcNetworkFactory.createLcc();
         OpenReacParameters parameters = new OpenReacParameters();
@@ -45,7 +37,7 @@ public class OpenReacOptimizationHvdcTest extends AbstractOpenReacRunnerTest {
                 .setActivePowerSetpoint(parameters.getPQMax() + 1)
                 // modify max P to avoid check failure before optimization
                 .setMaxP(Double.MAX_VALUE);
-        OpenReacResult result = runOpenReac(network, "optimization/indicators/lcc-test", true);
+        OpenReacResult result = runOpenReac(network, "optimization/hvdc/lcc-excluded", true);
 
         assertEquals(OpenReacStatus.OK, result.getStatus());
         assertEquals(2, Integer.parseInt(result.getIndicators().get("nb_lcc_converter_in_data_file")));
@@ -63,7 +55,7 @@ public class OpenReacOptimizationHvdcTest extends AbstractOpenReacRunnerTest {
                 .setActivePowerSetpoint(parameters.getPQMax() + 1)
                 // modify max P to avoid check failure before optimization
                 .setMaxP(parameters.getPQMax() + 2);
-        OpenReacResult result = runOpenReac(network, "optimization/indicators/lcc-test", true);
+        OpenReacResult result = runOpenReac(network, "optimization/hvdc/vsc-excluded", true);
 
         assertEquals(OpenReacStatus.OK, result.getStatus());
         assertEquals(2, Integer.parseInt(result.getIndicators().get("nb_vsc_converter_in_data_file")));
@@ -79,7 +71,7 @@ public class OpenReacOptimizationHvdcTest extends AbstractOpenReacRunnerTest {
                 .getHvdcLine()
                 // put max P > PQmax to remove vsc from optimization
                 .setMaxP(parameters.getPQMax() + 1);
-        OpenReacResult result = runOpenReac(network, "optimization/indicators/lcc-test", true);
+        OpenReacResult result = runOpenReac(network, "optimization/hvdc/vsc-excluded2", true);
 
         assertEquals(OpenReacStatus.OK, result.getStatus());
         assertEquals(2, Integer.parseInt(result.getIndicators().get("nb_vsc_converter_in_data_file")));
@@ -90,26 +82,29 @@ public class OpenReacOptimizationHvdcTest extends AbstractOpenReacRunnerTest {
     @Test
     void testVscActiveSetPointSignInOptimization() throws IOException {
         Network network = HvdcNetworkFactory.createVsc();
-        // verify active power equilibrium if cs2 is rectifier
-        OpenReacResult result = runOpenReac(network, "optimization/indicators/lcc-test", true);
-        assertEquals(OpenReacStatus.OK, result.getStatus());
+        network.getHvdcLine("hvdc23")
+                .setActivePowerSetpoint(20)
+                .setConvertersMode(HvdcLine.ConvertersMode.SIDE_1_RECTIFIER_SIDE_2_INVERTER);
+        testAllModifAndLoadFlow(network, "optimization/hvdc/vsc-in-optimization/rectifier", new OpenReacParameters(), ReportNode.NO_OP);
 
-        // verify there is no equilibrium if cs2 is inverter
-        network.getHvdcLine("hvdc23").setConvertersMode(HvdcLine.ConvertersMode.SIDE_1_INVERTER_SIDE_2_RECTIFIER);
-        result = runOpenReac(network, "optimization/indicators/lcc-test", true);
-        assertEquals(OpenReacStatus.NOT_OK, result.getStatus());
+        network.getHvdcLine("hvdc23")
+                .setActivePowerSetpoint(2)
+                .setConvertersMode(HvdcLine.ConvertersMode.SIDE_1_INVERTER_SIDE_2_RECTIFIER);
+        testAllModifAndLoadFlow(network, "optimization/hvdc/vsc-in-optimization/inverter", new OpenReacParameters(), ReportNode.NO_OP);
+
     }
 
     @Test
     void testLccActiveSetPointSignInOptimization() throws IOException {
         Network network = HvdcNetworkFactory.createLcc();
-        // verify active power equilibrium if cs2 is rectifier
-        OpenReacResult result = runOpenReac(network, "optimization/indicators/lcc-test", true);
-        assertEquals(OpenReacStatus.OK, result.getStatus());
+        network.getHvdcLine("hvdc23")
+                .setActivePowerSetpoint(20)
+                .setConvertersMode(HvdcLine.ConvertersMode.SIDE_1_RECTIFIER_SIDE_2_INVERTER);
+        testAllModifAndLoadFlow(network, "optimization/hvdc/lcc-in-optimization/rectifier", new OpenReacParameters(), ReportNode.NO_OP);
 
-        // verify there is no equilibrium if cs2 is inverter
-        network.getHvdcLine("hvdc23").setConvertersMode(HvdcLine.ConvertersMode.SIDE_1_INVERTER_SIDE_2_RECTIFIER);
-        result = runOpenReac(network, "optimization/indicators/lcc-test", true);
-        assertEquals(OpenReacStatus.NOT_OK, result.getStatus());
+        network.getHvdcLine("hvdc23")
+                .setActivePowerSetpoint(51)
+                .setConvertersMode(HvdcLine.ConvertersMode.SIDE_1_INVERTER_SIDE_2_RECTIFIER);
+        testAllModifAndLoadFlow(network, "optimization/hvdc/lcc-in-optimization/inverter", new OpenReacParameters(), ReportNode.NO_OP);
     }
 }
