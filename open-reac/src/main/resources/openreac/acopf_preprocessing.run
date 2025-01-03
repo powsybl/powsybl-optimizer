@@ -240,37 +240,57 @@ for {(g,n) in UNITON} {
     let corrected_unit_Qp0[g,n] := tempo;
   }
 
-    # TODO : add corner cases here
+  # If reactive diagram between pmin and 0 is too small, fix it
+  if    abs(corrected_unit_qp0[g,n]-corrected_unit_Qp0[g,n]) <= minimalQPrange
+    and abs(corrected_unit_qp[g,n]-corrected_unit_Qp[g,n]) <= minimalQPrange
+    and abs(corrected_unit_Qp0[g,n]-corrected_unit_qp[g,n]) <= minimalQPrange
+  then {
+    let tempo := 0.25*(corrected_unit_Qp0[g,n]+corrected_unit_qp0[g,n]+corrected_unit_qp[g,n]+corrected_unit_Qp[g,n]);
+    printf{LOG_DEBUG} "Unit %Q has reactive diagram too small between Pmin=%.1f and 0 -> we set qp=qp0=Qp=Qp0=%Q (Pc=%Q)\n",
+      unit_id[1,g,n],corrected_unit_Pmin[g,n],tempo,unit_Pc[1,g,n];
+    let corrected_unit_Qp0[g,n] := tempo;
+    let corrected_unit_qp0[g,n] := tempo;
+    let corrected_unit_qp[g,n] := tempo;
+    let corrected_unit_Qp[g,n] := tempo;
+  }
+
+  # If reactive diagram between 0 and pmax is too small, fix it
+  if    abs(corrected_unit_qP[g,n]-corrected_unit_QP[g,n]) <= minimalQPrange
+    and abs(corrected_unit_qp0[g,n]-corrected_unit_Qp0[g,n]) <= minimalQPrange
+    and abs(corrected_unit_QP[g,n]-corrected_unit_qp0[g,n]) <= minimalQPrange
+  then {
+    let tempo := 0.25*(corrected_unit_qP[g,n]+corrected_unit_QP[g,n]+corrected_unit_qp0[g,n]+corrected_unit_Qp0[g,n]);
+    printf{LOG_DEBUG} "Unit %Q has reactive diagram too small between 0 and Pmax=%.1f -> we set qp0=qP=Qp0=QP=%Q (Pc=%Q)\n",
+      unit_id[1,g,n],corrected_unit_Pmax[g,n],tempo,unit_Pc[1,g,n];
+    let corrected_unit_qP[g,n] := tempo;
+    let corrected_unit_QP[g,n] := tempo;
+    let corrected_unit_qp0[g,n] := tempo;
+    let corrected_unit_Qp0[g,n] := tempo;
+  }
+
+  # If reactive diagram between pmin and pmax is too small, fix it
   if    abs(corrected_unit_qP[g,n]-corrected_unit_QP[g,n]) <= minimalQPrange
     and abs(corrected_unit_qp[g,n]-corrected_unit_Qp[g,n]) <= minimalQPrange
     and abs(corrected_unit_QP[g,n]-corrected_unit_qp[g,n]) <= minimalQPrange
   then {
     let tempo := 0.25*(corrected_unit_qP[g,n]+corrected_unit_QP[g,n]+corrected_unit_qp[g,n]+corrected_unit_Qp[g,n]);
-    printf{LOG_DEBUG} "Unit %Q has reactive diagram too small -> we set qp=qP=Qp=QP=%Q (Pc=%Q)\n",
-      unit_id[1,g,n],tempo,unit_Pc[1,g,n];
+    printf{LOG_DEBUG} "Unit %Q has reactive diagram too small between Pmin=%.1f and Pmax=%.1f -> we set qp=qP=Qp=QP=%Q (Pc=%Q)\n",
+      unit_id[1,g,n],corrected_unit_Pmin[g,n],corrected_unit_Pmax[g,n],tempo,unit_Pc[1,g,n];
     let corrected_unit_qP[g,n] := tempo;
     let corrected_unit_QP[g,n] := tempo;
     let corrected_unit_qp[g,n] := tempo;
     let corrected_unit_Qp[g,n] := tempo;
   }
 
-  #if (abs(unit_Pc[1,g,n] - corrected_unit_Pmin[g,n]) < Pnull) then {
-  #    let corrected_unit_Qmin[g,n] := corrected_unit_qp[g,n];
-  ##    let corrected_unit_Qmax[g,n] := corrected_unit_Qp[g,n];
-  #  } else if (abs(unit_Pc[1,g,n] - corrected_unit_Pmax[g,n]) < Pnull) then {
-  #    let corrected_unit_Qmin[g,n] := corrected_unit_qP[g,n];
-  #    let corrected_unit_Qmax[g,n] := corrected_unit_QP[g,n];
-    # cases when Qmin/Qmax are interpolated between Pmin and Pmax
-    #} else
-    if (unit_Pc[1,g,n] >= corrected_unit_Pmin[g,n] and unit_Pc[1,g,n] <= corrected_unit_Pmax[g,n] and (corrected_unit_Pmin[g,n] >= 0 or corrected_unit_Pmax[g,n] <= 0)) then {
-      # if Pmin/Pmax are too close, compute Qmin/Qmax as the mean of diagram values
-      if (abs((corrected_unit_Pmax[g,n] - corrected_unit_Pmin[g,n])) < Pnull) then {
-        let corrected_unit_Qmin[g,n] := (corrected_unit_qp[g,n] + corrected_unit_qP[g,n]) / 2;
-        let corrected_unit_Qmax[g,n] := (corrected_unit_Qp[g,n] + corrected_unit_QP[g,n]) / 2;
-      } else {
-        let corrected_unit_Qmin[g,n] := corrected_unit_qp[g,n] + (unit_Pc[1,g,n] - corrected_unit_Pmin[g,n]) / (corrected_unit_Pmax[g,n] - corrected_unit_Pmin[g,n]) * (corrected_unit_qP[g,n] - corrected_unit_qp[g,n]);
-        let corrected_unit_Qmax[g,n] := corrected_unit_Qp[g,n] + (unit_Pc[1,g,n] - corrected_unit_Pmin[g,n]) / (corrected_unit_Pmax[g,n] - corrected_unit_Pmin[g,n]) * (corrected_unit_QP[g,n] - corrected_unit_Qp[g,n]);
-      }
+  if (unit_Pc[1,g,n] >= corrected_unit_Pmin[g,n] and unit_Pc[1,g,n] <= corrected_unit_Pmax[g,n] and (corrected_unit_Pmin[g,n] >= 0 or corrected_unit_Pmax[g,n] <= 0)) then {
+    # if Pmin/Pmax are too close, compute Qmin/Qmax as the mean of diagram values
+    if (abs((corrected_unit_Pmax[g,n] - corrected_unit_Pmin[g,n])) < Pnull) then {
+      let corrected_unit_Qmin[g,n] := (corrected_unit_qp[g,n] + corrected_unit_qP[g,n]) / 2;
+      let corrected_unit_Qmax[g,n] := (corrected_unit_Qp[g,n] + corrected_unit_QP[g,n]) / 2;
+    } else {
+      let corrected_unit_Qmin[g,n] := corrected_unit_qp[g,n] + (unit_Pc[1,g,n] - corrected_unit_Pmin[g,n]) / (corrected_unit_Pmax[g,n] - corrected_unit_Pmin[g,n]) * (corrected_unit_qP[g,n] - corrected_unit_qp[g,n]);
+      let corrected_unit_Qmax[g,n] := corrected_unit_Qp[g,n] + (unit_Pc[1,g,n] - corrected_unit_Pmin[g,n]) / (corrected_unit_Pmax[g,n] - corrected_unit_Pmin[g,n]) * (corrected_unit_QP[g,n] - corrected_unit_Qp[g,n]);
+    }
 
   # cases when Qmin/Qmax are interpolated between 0 and Pmax
   } else if ((unit_Pc[1,g,n] >= corrected_unit_Pmin[g,n] and unit_Pc[1,g,n] <= corrected_unit_Pmax[g,n] and unit_Pc[1,g,n] > 0)
