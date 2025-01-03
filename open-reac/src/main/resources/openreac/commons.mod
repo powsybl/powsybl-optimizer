@@ -108,7 +108,7 @@ check {vsc in VSCCONV_NUM}: vscconv_targetP[vsc] != NaN;
 #
 set VSCCONVON := setof{(t,v,n) in VSCCONV:
   n in BUSCC
-  and abs(vscconv_targetP[v]  )    <= PQmax
+  and abs(vscconv_targetP[v])  <= PQmax
   and abs(vscconv_Pmin[t,v,n]) <= PQmax
   and abs(vscconv_Pmax[t,v,n]) <= PQmax
   and vscconv_targetP[v] >= vscconv_Pmin[t,v,n]
@@ -121,7 +121,7 @@ set VSCCONVON := setof{(t,v,n) in VSCCONV:
 set LCCCONVON := setof{(t,l,n) in LCCCONV:
   n in BUSCC
   and abs(lccconv_targetP[l]) <= PQmax
-  and abs(lccconv_q0[1,l,n]) <= PQmax
+  and abs(lccconv_q0[1,l,n])  <= PQmax
   } (l,n);
 
 
