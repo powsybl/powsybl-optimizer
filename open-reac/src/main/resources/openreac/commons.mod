@@ -72,6 +72,8 @@ set BATTERYCC := setof {(1,b,n) in BATTERY : n in BUSCC} (b,n);
 # Warning: units with Ptarget=0 are considered as out of order
 set UNITON := {(g,n) in UNITCC : abs(unit_Pc[1,g,n]) >= Pnull};
 
+# Active and reactive targets of converter stations
+# Warning: the losses are ignored
 set LCCCONV_NUM := setof{(t,lcc,bus) in LCCCONV}lcc;
 set VSCCONV_NUM := setof{(t,vsc,bus) in VSCCONV}vsc;
 param lccconv_targetP {LCCCONV_NUM};
