@@ -29,7 +29,10 @@ The following corrections apply successively to determine consistent domains for
 
 To determine the consistent domain of produced active power, the bounds of the domains $P_g^{min}$ and $P_g^{max}$, as well as the target $P_g^{t}$ of generator $g$ (all specified in `ampl_network_generators.txt`) are used.
 
-Let $P_{g}^{min,c}$ and $P_{g}^{max,c}$ be the corrected active bounds:
+Let $P_{g}^{min,c}$ and $P_{g}^{max,c}$ be the corrected active bounds. Note that these bounds are used to determine the generator's reactive bounds, and they can be used in the optimization if the user specifies a value for
+`coeff_alpha` different from 1 (see [Configuration of the run](inputs.md#configuration-of-the-run)).
+
+$P_{g}^{min,c}$ and $P_{g}^{max,c}$ are computed using the following:
 
 - By default, $P_{g}^{min,c} = \text{defaultPmin}$ and $P_{g}^{max,c} = \text{defaultPmax}$ (see [Configuration of the run](inputs.md#configuration-of-the-run))
 - If $|P_g^{max}| \geq \text{PQmax}$, then $P_{g}^{max,c} = \max(\text{defaultPmax}, P_g^t)$
@@ -37,7 +40,8 @@ Let $P_{g}^{min,c}$ and $P_{g}^{max,c}$ be the corrected active bounds:
 - If $|P_{g}^{max,c} - P_{g}^{min,c}| \leq \text{minimalQPrange}$, then $P_{g}^{max,c} = P_{g}^{min,c} = P_{g}^t$ (active power is fixed).
 
 To determine the consistent domain of produced reactive power, the reactive power diagram (specified in `ampl_network_generators.txt`) of generator $g$ is used: $qp_g$ (resp. $qp0_g$, $qP_g$) and $Qp_g$ (resp. $Qp0_g$, $QP_g$) when $P_{g}^{min,c}$ (resp. $0$, $P_{g}^{max,c}$) is reached.
-Let $qp_g^c$ (resp. $qp0_g^c$, $qP_g^c$) and $Qp_g^c$ (resp. $Qp0_g^c$, $QP_g^c$) be the bounds of the corrected reactive diagram, and $Q_{g}^{min,c}$ and $Q_{g}^{max,c}$ be the corrected reactive bounds:
+Let $qp_g^c$ (resp. $qp0_g^c$, $qP_g^c$) and $Qp_g^c$ (resp. $Qp0_g^c$, $QP_g^c$) be the bounds of the corrected reactive diagram, 
+and $Q_{g}^{min,c}$ and $Q_{g}^{max,c}$ be the corrected reactive bounds, used in the optimization:
 
 - By default, $qp_g^{c} = qP_{g}^{c} = - \text{defaultPmin} \times \text{defaultQmaxPmaxRatio}$ and $Qp_{g}^{c} = QP_{g}^{c} = \text{defaultPmax} \times \text{defaultQmaxPmaxRatio}$ (see [Configuration of the run](inputs.md#configuration-of-the-run))
 - If $|qp_{g}| \geq \text{PQmax}$, then $qp_{g}^{c} = -\text{defaultQmaxPmaxRatio} \times P_{max}^{g,c}$.  
@@ -58,6 +62,7 @@ The general case corresponds to the active target being between the active bound
 The formula also applies when the active target is between $0$ and $P_{g}^{min,c}$, or $0$ and $P_{g}^{max,c}$. For the last case, the interpolating formula becomes:
 - $Q_{g}^{min,c} = qp0_{g}^{c} + \frac{P_{g}^{t}}{P_{g}^{max,c}}(qP_{g}^{c}-qp0_{g}^{c})$
 - $Q_{g}^{max,c} = Qp0_{g}^{c} + \frac{P_{g}^{t}}{P_{g}^{max,c}}(QP_{g}^{c}-Qp0_{g}^{c})$
+
 This is illustrated in the following figure:
 ![Reactive diagram correction](_static/img/reactive-bounds-ptarget-between-0-pmax.PNG){width="50%" align=center}
 
