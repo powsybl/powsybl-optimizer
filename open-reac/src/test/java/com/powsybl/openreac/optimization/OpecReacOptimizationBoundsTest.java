@@ -118,7 +118,7 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
                 .setMaxQ(200)
                 .endPoint()
                 .add();
-        testAllModifAndLoadFlow(network, "", parameters, ReportNode.NO_OP);
+        testAllModifAndLoadFlow(network, "optimization/bounds/generator-q-bounds-interpolated-between-pmin-pmax/positive-pmin/valid", parameters, ReportNode.NO_OP);
 
         // verify non convergence due to insufficient bounds
         network = create(101, 50, 150, 150);
@@ -134,7 +134,7 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
                 .setMaxQ(150)
                 .endPoint()
                 .add();
-        OpenReacResult result = runOpenReac(network, "", parameters, false);
+        OpenReacResult result = runOpenReac(network, "optimization/bounds/generator-q-bounds-interpolated-between-pmin-pmax/positive-pmin/invalid", parameters, true);
         assertEquals(OpenReacStatus.NOT_OK, result.getStatus());
     }
 
@@ -155,7 +155,7 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
                 .setMaxQ(5)
                 .endPoint()
                 .add();
-        testAllModifAndLoadFlow(network, "", parameters, ReportNode.NO_OP);
+        testAllModifAndLoadFlow(network, "optimization/bounds/generator-q-bounds-interpolated-between-pmin-pmax/negative-pmax/valid", parameters, ReportNode.NO_OP);
 
         // verify non convergence due to insufficient bounds
         network.getGenerator("g1").newReactiveCapabilityCurve()
@@ -170,7 +170,7 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
                 .setMaxQ(5)
                 .endPoint()
                 .add();
-        OpenReacResult result = runOpenReac(network, "", parameters, false);
+        OpenReacResult result = runOpenReac(network, "optimization/bounds/generator-q-bounds-interpolated-between-pmin-pmax/negative-pmax/invalid", parameters, true);
         assertEquals(OpenReacStatus.NOT_OK, result.getStatus());
     }
 
@@ -190,7 +190,7 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
                 .setMaxQ(300)
                 .endPoint()
                 .add();
-        testAllModifAndLoadFlow(network, "", parameters, ReportNode.NO_OP);
+        testAllModifAndLoadFlow(network, "optimization/bounds/generator-q-bounds-interpolated-between-0-pmax/positive-pmax/valid", parameters, ReportNode.NO_OP);
 
         // verify non convergence due to insufficient bounds
         network.getGenerator("g1").newReactiveCapabilityCurve()
@@ -205,7 +205,7 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
                 .setMaxQ(100)
                 .endPoint()
                 .add();
-        OpenReacResult result = runOpenReac(network, "", parameters, false);
+        OpenReacResult result = runOpenReac(network, "optimization/bounds/generator-q-bounds-interpolated-between-0-pmax/positive-pmax/invalid", parameters, true);
         assertEquals(OpenReacStatus.NOT_OK, result.getStatus());
     }
 
@@ -226,7 +226,7 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
                 .setMaxQ(1)
                 .endPoint()
                 .add();
-        testAllModifAndLoadFlow(network, "", parameters, ReportNode.NO_OP);
+        testAllModifAndLoadFlow(network, "optimization/bounds/generator-q-bounds-interpolated-between-0-pmax/negative-pmax/valid", parameters, ReportNode.NO_OP);
 
         // verify non convergence due to insufficient bounds
         network.getGenerator("g1").newReactiveCapabilityCurve()
@@ -241,7 +241,7 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
                 .setMaxQ(1)
                 .endPoint()
                 .add();
-        OpenReacResult result = runOpenReac(network, "", parameters, false);
+        OpenReacResult result = runOpenReac(network, "optimization/bounds/generator-q-bounds-interpolated-between-0-pmax/negative-pmax/invalid", parameters, true);
         assertEquals(OpenReacStatus.NOT_OK, result.getStatus());
     }
 
@@ -261,7 +261,7 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
                 .setMaxQ(150)
                 .endPoint()
                 .add();
-        testAllModifAndLoadFlow(network, "", parameters, ReportNode.NO_OP);
+        testAllModifAndLoadFlow(network, "optimization/bounds/generator-q-bounds-interpolated-between-0-pmin/positive-pmin/valid", parameters, ReportNode.NO_OP);
 
         // verify non convergence due to insufficient bounds
         network.getGenerator("g1").newReactiveCapabilityCurve()
@@ -276,7 +276,7 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
                 .setMaxQ(140)
                 .endPoint()
                 .add();
-        OpenReacResult result = runOpenReac(network, "", parameters, false);
+        OpenReacResult result = runOpenReac(network, "optimization/bounds/generator-q-bounds-interpolated-between-0-pmin/positive-pmin/invalid", parameters, true);
         assertEquals(OpenReacStatus.NOT_OK, result.getStatus());
     }
 
@@ -297,7 +297,7 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
                 .setMaxQ(4)
                 .endPoint()
                 .add();
-        testAllModifAndLoadFlow(network, "", parameters, ReportNode.NO_OP);
+        testAllModifAndLoadFlow(network, "optimization/bounds/generator-q-bounds-interpolated-between-0-pmin/negative-pmin/valid", parameters, ReportNode.NO_OP);
 
         // verify non convergence due to insufficient bounds
         network.getGenerator("g1").newReactiveCapabilityCurve()
@@ -312,7 +312,7 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
                 .setMaxQ(3)
                 .endPoint()
                 .add();
-        OpenReacResult result = runOpenReac(network, "", parameters, false);
+        OpenReacResult result = runOpenReac(network, "optimization/bounds/generator-q-bounds-interpolated-between-0-pmin/negative-pmin/invalid", parameters, true);
         assertEquals(OpenReacStatus.NOT_OK, result.getStatus());
     }
 
@@ -343,7 +343,7 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
                 .setMaxP(2)
                 .setVoltageRegulatorOn(true)
                 .add();
-        testAllModifAndLoadFlow(network, "", parameters, ReportNode.NO_OP);
+        testAllModifAndLoadFlow(network, "optimization/bounds/generator-q-bounds-taken-at-pmax/valid", parameters, ReportNode.NO_OP);
 
         // verify non convergence due to insufficient bounds
         network.getGenerator("g1").newReactiveCapabilityCurve()
@@ -358,7 +358,7 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
                 .setMaxQ(149)
                 .endPoint()
                 .add();
-        OpenReacResult result = runOpenReac(network, "", parameters, false);
+        OpenReacResult result = runOpenReac(network, "optimization/bounds/generator-q-bounds-taken-at-pmax/invalid", parameters, true);
         assertEquals(OpenReacStatus.NOT_OK, result.getStatus());
     }
 
@@ -379,7 +379,7 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
                 .setMaxQ(10)
                 .endPoint()
                 .add();
-        testAllModifAndLoadFlow(network, "", parameters, ReportNode.NO_OP);
+        testAllModifAndLoadFlow(network, "optimization/bounds/generator-q-bounds-taken-at-pmin/valid", parameters, ReportNode.NO_OP);
 
         // verify non convergence due to insufficient bounds
         network.getGenerator("g1").newReactiveCapabilityCurve()
@@ -394,7 +394,7 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
                 .setMaxQ(1.99)
                 .endPoint()
                 .add();
-        OpenReacResult result = runOpenReac(network, "", parameters, false);
+        OpenReacResult result = runOpenReac(network, "optimization/bounds/generator-q-bounds-taken-at-pmin/invalid", parameters, true);
         assertEquals(OpenReacStatus.NOT_OK, result.getStatus());
     }
 
