@@ -104,7 +104,7 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
 
     @Test
     void testGeneratorQBoundsInterpolatedBetweenMinPMaxP() throws IOException {
-        // verify feasibility when minQ/maxQ are interpolated between bounds at MinP and MaxP (0 < minP < targetP < maxP)
+        // verify feasibility when minQ/maxQ are interpolated between minP and maxP (0 < minP < targetP < maxP)
         Network network = create(101, 50, 150, 150);
         network.getGenerator("g1").newReactiveCapabilityCurve()
                 .beginPoint()
@@ -140,7 +140,7 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
 
     @Test
     void testGeneratorQBoundsInterpolatedBetweenMinPMaxP2() throws IOException {
-        // verify feasibility when minQ/maxQ are interpolated between bounds at MinP and MaxP (minP < targetP < maxP < 0)
+        // verify feasibility when minQ/maxQ are interpolated between minP and maxP (minP < targetP < maxP < 0)
         Network network = create(-10, -20, -5, -10);
         setDefaultVoltageLimits(network, 0.85, 1.15);
         network.getGenerator("g1").newReactiveCapabilityCurve()
@@ -176,7 +176,7 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
 
     @Test
     void testGeneratorQBoundsInterpolatedBetweenP0MaxP() throws IOException {
-        // verify feasibility when minQ/maxQ are interpolated between bounds at MinP and P0 (minP < 0 < targetP < maxP)
+        // verify feasibility when minQ/maxQ are interpolated between P0 and maxP (minP < 0 < targetP < maxP)
         Network network = create(101, -50, 150, 150);
         network.getGenerator("g1").newReactiveCapabilityCurve()
                 .beginPoint()
@@ -211,7 +211,7 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
 
     @Test
     void testGeneratorQBoundsInterpolatedBetweenP0MaxP2() throws IOException {
-        // verify feasibility when minQ/maxQ are interpolated between bounds at MinP and P0 (maxP < targetP < 0)
+        // verify feasibility when minQ/maxQ are interpolated between P0 and maxP (maxP < targetP < 0)
         Network network = create(-4, -20, -5, -4);
         setDefaultVoltageLimits(network, 0.85, 1.15);
         network.getGenerator("g1").newReactiveCapabilityCurve()
@@ -247,7 +247,7 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
 
     @Test
     void testGeneratorQBoundsInterpolatedBetweenP0MinP() throws IOException {
-        // verify feasibility when minQ/maxQ are interpolated between bounds at MinP and P0 (0 < targetP < minP)
+        // verify feasibility when minQ/maxQ are interpolated between minP and P0 (0 < targetP < minP)
         Network network = create(101, 150, 200, 100);
         network.getGenerator("g1").newReactiveCapabilityCurve()
                 .beginPoint()
@@ -282,7 +282,7 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
 
     @Test
     void testGeneratorQBoundsInterpolatedBetweenP0MinP2() throws IOException {
-        // verify feasibility when minQ/maxQ are interpolated between bounds at MinP and P0 (minP < targetP < 0 < maxP)
+        // verify feasibility when minQ/maxQ are interpolated between minP and P0 (minP < targetP < 0 < maxP)
         Network network = create(-5.1, -10, 10, -2);
         setDefaultVoltageLimits(network, 0.85, 1.15);
         network.getGenerator("g1").newReactiveCapabilityCurve()
