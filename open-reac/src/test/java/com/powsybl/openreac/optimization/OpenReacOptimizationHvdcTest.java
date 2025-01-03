@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  *
  * @author Pierre ARVY {@literal <pierre.arvy at artelys.com>}
  */
-public class OpenReacOptimizationHvdcTest extends AbstractOpenReacRunnerTest {
+class OpenReacOptimizationHvdcTest extends AbstractOpenReacRunnerTest {
 
     @Test
     void testLccExcludedFromOptimization() throws IOException {
