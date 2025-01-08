@@ -70,10 +70,10 @@ teta_max 3.00
 min_teta_dc 0.00
 min_teta_ac 0.00
 teta_min -3.00
-max_delta_teta_dc 0.001875
-max_delta_teta_ac 0.000948
-min_delta_teta_dc 0.001875
-min_delta_teta_ac 0.000948
+max_delta_teta_dc 0.001312
+max_delta_teta_ac 0.001070
+min_delta_teta_dc 0.001312
+min_delta_teta_ac 0.001070
 
 nb_reactive_slacks 0
 nb_slacks_condensator 0

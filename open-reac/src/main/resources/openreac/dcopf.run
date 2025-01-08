@@ -107,7 +107,7 @@ for {(g,n) in UNITON : abs(P_dcopf[g,n]-unit_Pc[1,g,n]) >= temp2*0.99}
 let temp1 := sum{(c,n) in LOADCC} load_PFix[1,c,n];
 let temp2 := sum{(g,n) in UNITON} P_dcopf[g,n];
 let temp2 := temp2 + sum{(b,n) in BATTERYCC} battery_p0[1,b,n];
-let temp3 :=  (sum{(vscconv,n) in VSCCONVON} vscconv_P0[1,vscconv,n])+(sum{(l,k) in LCCCONVON} lccconv_P0[1,l,k]);
+let temp3 :=  (sum{(vscconv,n) in VSCCONVON} vscconv_targetP[vscconv])+(sum{(l,k) in LCCCONVON} lccconv_targetP[l]);
 printf{LOG_INFO} "Sum of HVDC conv.  H: %.0f MW\n", temp3;
 printf{LOG_INFO} "Sum of loads       C: %.0f MW\n", temp1;
 printf{LOG_INFO} "Sum of generations P: %.0f MW\n", temp2;

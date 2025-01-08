@@ -72,16 +72,47 @@ set BATTERYCC := setof {(1,b,n) in BATTERY : n in BUSCC} (b,n);
 # Warning: units with Ptarget=0 are considered as out of order
 set UNITON := {(g,n) in UNITCC : abs(unit_Pc[1,g,n]) >= Pnull};
 
+# Active and reactive targets of converter stations
+# Warning: the losses are ignored
+set LCCCONV_NUM := setof{(t,lcc,bus) in LCCCONV}lcc;
+set VSCCONV_NUM := setof{(t,vsc,bus) in VSCCONV}vsc;
+param lccconv_targetP {LCCCONV_NUM};
+param vscconv_targetP {VSCCONV_NUM};
+for {(1,h) in HVDC} {
+  # case of VSC converter stations
+  if (hvdc_type[1,h] == 1) then {
+    if (hvdc_convertersMode[1,h] == "SIDE_1_RECTIFIER_SIDE_2_INVERTER") then {
+      let vscconv_targetP[hvdc_conv1[1,h]] := hvdc_targetP[1,h];
+      let vscconv_targetP[hvdc_conv2[1,h]] := -hvdc_targetP[1,h];
+    } else {
+      let vscconv_targetP[hvdc_conv1[1,h]] := -hvdc_targetP[1,h];
+      let vscconv_targetP[hvdc_conv2[1,h]] := hvdc_targetP[1,h];
+    }
+  }
+  # case of LCC converter stations
+  if (hvdc_type[1,h] == 2) then {
+    if (hvdc_convertersMode[1,h] == "SIDE_1_RECTIFIER_SIDE_2_INVERTER") then {
+      let lccconv_targetP[hvdc_conv1[1,h]] := hvdc_targetP[1,h];
+      let lccconv_targetP[hvdc_conv2[1,h]] := -hvdc_targetP[1,h];
+    } else {
+      let lccconv_targetP[hvdc_conv1[1,h]] := -hvdc_targetP[1,h];
+      let lccconv_targetP[hvdc_conv2[1,h]] := hvdc_targetP[1,h];
+    }
+  }
+}
+check {lcc in LCCCONV_NUM}: lccconv_targetP[lcc] != NaN;
+check {vsc in VSCCONV_NUM}: vscconv_targetP[vsc] != NaN;
+
 #
 # VSC converter stations
 #
 set VSCCONVON := setof{(t,v,n) in VSCCONV:
   n in BUSCC
-  and abs(vscconv_P0[t,v,n]  ) <= PQmax
+  and abs(vscconv_targetP[v])  <= PQmax
   and abs(vscconv_Pmin[t,v,n]) <= PQmax
   and abs(vscconv_Pmax[t,v,n]) <= PQmax
-  and vscconv_P0[t,v,n] >= vscconv_Pmin[t,v,n]
-  and vscconv_P0[t,v,n] <= vscconv_Pmax[t,v,n]
+  and vscconv_targetP[v] >= vscconv_Pmin[t,v,n]
+  and vscconv_targetP[v] <= vscconv_Pmax[t,v,n]
   } (v,n);
 
 #
@@ -89,8 +120,8 @@ set VSCCONVON := setof{(t,v,n) in VSCCONV:
 #
 set LCCCONVON := setof{(t,l,n) in LCCCONV:
   n in BUSCC
-  and abs(lccconv_P0[1,l,n]) <= PQmax
-  and abs(lccconv_Q0[1,l,n]) <= PQmax
+  and abs(lccconv_targetP[l]) <= PQmax
+  and abs(lccconv_q0[1,l,n])  <= PQmax
   } (l,n);
 
 

@@ -122,16 +122,16 @@ if 1 in LOG_INFO then {
 let temp1 := sum{(c,n) in LOADCC} load_PFix[1,c,n];
 let temp2 := sum{(g,n) in UNITON} unit_Pc[1,g,n];
 let temp2 := temp2 + sum{(b,n) in BATTERYCC} battery_p0[1,b,n];
-let temp3 :=  (sum{(vscconv,n) in VSCCONVON} vscconv_P0[1,vscconv,n])+(sum{(l,k) in LCCCONVON} lccconv_P0[1,l,k]);
+let temp3 :=  (sum{(vscconv,n) in VSCCONVON} vscconv_targetP[vscconv])+(sum{(l,k) in LCCCONVON} lccconv_targetP[l]);
 let global_initial_losses_ratio := (temp2-temp1-temp3)/(temp1+temp3);
 
 printf{LOG_INFO} "HVDC injections (homogeneous to loads):\n";
 for {(v,n) in VSCCONVON}
   printf{LOG_INFO} "VSC converter %Q in %Q: P0=%.1fMW is fixed, Q is variable\n",
-  vscconv_id[1,v,n],substation_id[1,bus_substation[1,n]],vscconv_P0[1,v,n];
+  vscconv_id[1,v,n],substation_id[1,bus_substation[1,n]],vscconv_targetP[v];
 for {(l,n) in LCCCONVON}
   printf{LOG_INFO} "LCC converter %Q in %Q: P0=%.1fMW is fixed, Q0=%.1fMvar is fixed\n",
-  lccconv_id[1,l,n],substation_id[1,bus_substation[1,n]],lccconv_P0[1,l,n],lccconv_Q0[1,l,n];
+  lccconv_id[1,l,n],substation_id[1,bus_substation[1,n]],lccconv_targetP[l],lccconv_q0[1,l,n];
 printf{LOG_INFO} "Sum of HVDC conv.  H: %.0f MW\n", temp3;
 printf{LOG_INFO} "Sum of loads       C: %.0f MW\n", temp1;
 printf{LOG_INFO} "Sum of generations P: %.0f MW\n", temp2;

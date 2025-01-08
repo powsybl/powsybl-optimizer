@@ -3,7 +3,12 @@
 ## Network data
 
 Files with the prefix `ampl_` contain the data and the parameters of the network on which the reactive OPF is executed.
-These files are obtained by using the [V2 of the extended version of PowSyBl AMPL export](https://github.com/powsybl/powsybl-core/blob/main/ampl-converter/src/main/java/com/powsybl/ampl/converter/version/ExtendedAmplExporterV2.java), which is the default version.
+
+These files are obtained by using the [V2 of the extended version of PowSyBl AMPL export](https://github.com/powsybl/powsybl-core/blob/main/ampl-converter/src/main/java/com/powsybl/ampl/converter/version/ExtendedAmplExporterV2.java), which is the default version.  
+
+Note that from release `0.10.0` of OpenReac, the active target of VSC and LCC converter stations is calculated using HVDC line active set point 
+and the converter mode, both specified in `ampl_network_hvdc.txt`. The losses related to rectifier/inverter conversion, and HVDC line **are ignored**.
+
 
 ## Configuration of the run
 

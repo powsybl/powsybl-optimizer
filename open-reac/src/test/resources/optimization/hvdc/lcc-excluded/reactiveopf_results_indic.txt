@@ -59,7 +59,7 @@ nb_svc_up_and_operating 0
 nb_vsc_converter_in_data_file 0
 nb_vsc_converter_up_and_running 0
 nb_lcc_converter_in_data_file 2
-nb_lcc_converter_up_and_running 1
+nb_lcc_converter_up_and_running 0
 nb_batteries 0
 sum_batteries_pmax 0.0
 sum_batteries_pmin 0.0
@@ -70,10 +70,10 @@ teta_max 3.00
 min_teta_dc 0.00
 min_teta_ac 0.00
 teta_min -3.00
-max_delta_teta_dc 0.001875
-max_delta_teta_ac 0.000948
-min_delta_teta_dc 0.001875
-min_delta_teta_ac 0.000948
+max_delta_teta_dc 0.000937
+max_delta_teta_ac 0.001223
+min_delta_teta_dc 0.000937
+min_delta_teta_ac 0.001223
 
 nb_reactive_slacks 0
 nb_slacks_condensator 0
