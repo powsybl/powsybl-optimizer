@@ -47,7 +47,13 @@ set BUS2:= setof {(1,n) in BUS:
 set BRANCH2:= setof {(1,qq,m,n) in BRANCH: m in BUS2 and n in BUS2} (qq,m,n);
 
 set BUSCC dimen 1 default {};
+# Branches with bus on side 1 and 2 in CC
 set BRANCHCC  := {(qq,m,n) in BRANCH2: m in BUSCC and n in BUSCC};
+# Branches with bus on side 1 in CC, and disconnected bus on side 2
+set BRANCHCC_WITH_SIDE_2_OPENED := setof {(1,qq,m,n) in BRANCH: m in BUSCC and n == -1 and m != n} (qq,m,n);
+# Branches with bus on side 2 in CC, and disconnected bus on side 1
+set BRANCHCC_WITH_SIDE_1_OPENED := setof {(1,qq,m,n) in BRANCH: m == -1 and n in BUSCC and m != n} (qq,m,n);
+set ALL_BRANCHCC := BRANCHCC union BRANCHCC_WITH_SIDE_2_OPENED union BRANCHCC_WITH_SIDE_1_OPENED;
 
 
 ###############################################################################
@@ -94,30 +100,30 @@ set LCCCONVON := setof{(t,l,n) in LCCCONV:
 
 # Branches with zero or near zero impedances
 # Notice: module of Z is equal to square root of (R^2+X^2)
-set BRANCHZNULL := {(qq,m,n) in BRANCHCC: branch_R[1,qq,m,n]^2+branch_X[1,qq,m,n]^2 <= Znull^2};
+set BRANCHZNULL := {(qq,m,n) in ALL_BRANCHCC: branch_R[1,qq,m,n]^2+branch_X[1,qq,m,n]^2 <= Znull^2};
 
 
 # If in BRANCHZNULL, then set X to ZNULL
-param branch_X_mod{(qq,m,n) in BRANCHCC} :=
+param branch_X_mod{(qq,m,n) in ALL_BRANCHCC} :=
   if (qq,m,n) in BRANCHZNULL then Znull
   else branch_X[1,qq,m,n];
-check {(qq,m,n) in BRANCHCC}: abs(branch_X_mod[qq,m,n]) > 0;
+check {(qq,m,n) in ALL_BRANCHCC}: abs(branch_X_mod[qq,m,n]) > 0;
 
 # If in BRANCHZNULL, then set Gor/Gex/Bor/Bex to 0
-param branch_Gor_mod{(qq,m,n) in BRANCHCC} :=
-    if (qq,m,n) in BRANCHZNULL then 0
+param branch_Gor_mod{(qq,m,n) in ALL_BRANCHCC} :=
+    if (qq,m,n) in BRANCHCC and (qq,m,n) in BRANCHZNULL then 0
     else branch_Gor[1,qq,m,n];
 
-param branch_Gex_mod{(qq,m,n) in BRANCHCC} :=
-    if (qq,m,n) in BRANCHZNULL then 0
+param branch_Gex_mod{(qq,m,n) in ALL_BRANCHCC} :=
+    if (qq,m,n) in BRANCHCC and (qq,m,n) in BRANCHZNULL then 0
     else branch_Gex[1,qq,m,n];
 
-param branch_Bor_mod{(qq,m,n) in BRANCHCC} :=
-    if (qq,m,n) in BRANCHZNULL then 0
+param branch_Bor_mod{(qq,m,n) in ALL_BRANCHCC} :=
+    if (qq,m,n) in BRANCHCC and (qq,m,n) in BRANCHZNULL then 0
     else branch_Bor[1,qq,m,n];
 
-param branch_Bex_mod{(qq,m,n) in BRANCHCC} :=
-    if (qq,m,n) in BRANCHZNULL then 0
+param branch_Bex_mod{(qq,m,n) in ALL_BRANCHCC} :=
+    if (qq,m,n) in BRANCHCC and (qq,m,n) in BRANCHZNULL then 0
     else branch_Bex[1,qq,m,n];
 
 # Busses with valid voltage value
@@ -125,7 +131,7 @@ set BUSVV := {n in BUSCC : bus_V0[1,n] >= min_plausible_low_voltage_limit};
 
 # Reactive
 set SHUNTCC := {(1,s,n) in SHUNT: n in BUSCC or shunt_possiblebus[1,s,n] in BUSCC}; # We want to be able to reconnect shunts
-set BRANCHCC_REGL := {(qq,m,n) in BRANCHCC diff BRANCHZNULL: branch_ptrRegl[1,qq,m,n] != -1 };
+set BRANCHCC_REGL := {(qq,m,n) in BRANCHCC union BRANCHCC_WITH_SIDE_2_OPENED diff BRANCHZNULL: branch_ptrRegl[1,qq,m,n] != -1 }; # ratio tap changers also have impact on lines with side 2 open
 set BRANCHCC_DEPH := {(qq,m,n) in BRANCHCC diff BRANCHZNULL: branch_ptrDeph[1,qq,m,n] != -1 };
 set SVCCC   := {(1,svc,n) in SVC: n in BUSCC};
 
@@ -164,6 +170,7 @@ set UNIT_FIXQ := {(g,n) in UNITON: g in PARAM_UNIT_FIXQ and abs(unit_Qc[1,g,n])<
 set BRANCHCC_REGL_VAR :=
   { (qq,m,n) in BRANCHCC_REGL:
     qq in PARAM_TRANSFORMERS_RATIO_VARIABLE
+    and (qq,m,n) not in BRANCHCC_WITH_SIDE_2_OPENED # ratio tap changers on open branches are not optimized
     and regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]] < regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]]
   };
 set BRANCHCC_REGL_FIX := BRANCHCC_REGL diff BRANCHCC_REGL_VAR;
@@ -184,18 +191,18 @@ param branch_Rdeph{(qq,m,n) in BRANCHCC_DEPH} =
   else branch_R[1,qq,m,n]
   ;
 
-param branch_angper{(qq,m,n) in BRANCHCC} =
+param branch_angper{(qq,m,n) in ALL_BRANCHCC} =
   if (qq,m,n) in BRANCHCC_DEPH
   then atan2(branch_Rdeph[qq,m,n], branch_Xdeph[qq,m,n])
   else atan2(branch_R[1,qq,m,n]  , branch_X_mod[qq,m,n]  );
 
-param branch_admi {(qq,m,n) in BRANCHCC} =
+param branch_admi {(qq,m,n) in ALL_BRANCHCC} =
   if (qq,m,n) in BRANCHCC_DEPH
   then 1./sqrt(branch_Rdeph[qq,m,n]^2 + branch_Xdeph[qq,m,n]^2 )
   else 1./sqrt(branch_R[1,qq,m,n]^2   + branch_X_mod[qq,m,n]^2   );
 
 # Later in this file, a variable branch_Ror_var will be created, to replace branch_Ror when it is not variable
-param branch_Ror {(qq,m,n) in BRANCHCC} =
+param branch_Ror {(qq,m,n) in ALL_BRANCHCC} =
     ( if ((qq,m,n) in BRANCHCC_REGL)
       then tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]]
       else 1.0
@@ -205,13 +212,13 @@ param branch_Ror {(qq,m,n) in BRANCHCC} =
       else 1.0
     )
   * (branch_cstratio[1,qq,m,n]);
-param branch_Rex {(q,m,n) in BRANCHCC} = 1; # In IIDM, everything is in bus1 so ratio at bus2 is always 1
+param branch_Rex {(q,m,n) in ALL_BRANCHCC} = 1; # In IIDM, everything is in bus1 so ratio at bus2 is always 1
 
-param branch_dephor {(qq,m,n) in BRANCHCC} =
+param branch_dephor {(qq,m,n) in ALL_BRANCHCC} =
   if ((qq,m,n) in BRANCHCC_DEPH)
   then tap_angle [1,deph_table[1,branch_ptrDeph[1,qq,m,n]],deph_tap0[1,branch_ptrDeph[1,qq,m,n]]]
   else 0;
-param branch_dephex {(qq,m,n) in BRANCHCC} = 0; # In IIDM, everything is in bus1 so dephase at bus2 is always 0
+param branch_dephex {(qq,m,n) in ALL_BRANCHCC} = 0; # In IIDM, everything is in bus1 so dephase at bus2 is always 0
 
 
 ###############################################################################
