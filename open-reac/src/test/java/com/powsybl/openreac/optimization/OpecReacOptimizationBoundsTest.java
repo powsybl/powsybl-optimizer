@@ -7,6 +7,7 @@
  */
 package com.powsybl.openreac.optimization;
 
+
 import com.powsybl.commons.report.ReportNode;
 import com.powsybl.iidm.network.*;
 import com.powsybl.openreac.network.VoltageControlNetworkFactory;
@@ -86,6 +87,7 @@ class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
 
     @Test
     void testGeneratorQmaxPmaxRatioBounds() throws IOException {
+
         Network network = VoltageControlNetworkFactory.createWithTwoVoltageControls();
         network.getLine("l45").disconnect();
         network.getLoad("l4").setP0(4).setQ0(2);
