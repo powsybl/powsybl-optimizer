@@ -16,6 +16,7 @@ Please note that:
   even if the user designates these generators as fixed in the parameter file `param_generators_reactive.txt` (see [Configuration of the run](inputs.md#configuration-of-the-run)).
   Therefore, when the optimization results are exported, **these generators are exported with a reactive power target of $0$**.
 - **Neither current limits nor power limits** on branches are considered in the optimization.
+- Branches with one side open are considered in optimization. 
 
 ## Constraints
 

@@ -229,26 +229,26 @@ let fileOut := "reactiveopf_results_indic.txt";
 printf "%s %s\n","final_status",final_status > (fileOut);
 printf "%s %s\n","dcopf_status",dcopf_status > (fileOut);
 
-printf "\n" > (fileOut);
-printf "%s %Q\n","ctime_start",ctime_start > (fileOut);
-printf "%s %i\n","last_solve_result_num",solve_result_num > (fileOut);
-printf "%s %i\n","nb_iter_last",nb_iter_last > (fileOut);
-printf "%s %i\n","nb_iter_total",nb_iter_total > (fileOut);
-printf "%s %f\n","_ampl_elapsed_time",_ampl_elapsed_time > (fileOut);
-printf "%s %f\n","_total_solve_time",_total_solve_time > (fileOut);
-printf "%s %i\n","total_time",_total_solve_time+_ampl_elapsed_time > (fileOut);
+printf{LOG_DEBUG} "\n" > (fileOut);
+printf{LOG_DEBUG} "%s %Q\n","ctime_start",ctime_start > (fileOut);
+printf{LOG_DEBUG} "%s %i\n","last_solve_result_num",solve_result_num > (fileOut);
+printf{LOG_DEBUG} "%s %i\n","nb_iter_last",nb_iter_last > (fileOut);
+printf{LOG_DEBUG} "%s %i\n","nb_iter_total",nb_iter_total > (fileOut);
+printf{LOG_DEBUG} "%s %f\n","_ampl_elapsed_time",_ampl_elapsed_time > (fileOut);
+printf{LOG_DEBUG} "%s %f\n","_total_solve_time",_total_solve_time > (fileOut);
+printf{LOG_DEBUG} "%s %i\n","total_time",_total_solve_time+_ampl_elapsed_time > (fileOut);
 
-printf "\n" > (fileOut);
-printf "%s %s\n","operatingSystem",operatingSystem > (fileOut);
+printf{LOG_DEBUG} "\n" > (fileOut);
+printf{LOG_DEBUG} "%s %s\n","operatingSystem",operatingSystem > (fileOut);
 if length($OS) > 0 then {
-  printf "%s %Q\n","OS",$OS > (fileOut); # Windows
-  printf "%s %Q\n","COMPUTERNAME",$COMPUTERNAME > (fileOut);
+  printf{LOG_DEBUG} "%s %Q\n","OS",$OS > (fileOut); # Windows
+  printf{LOG_DEBUG} "%s %Q\n","COMPUTERNAME",$COMPUTERNAME > (fileOut);
 }
 if length($SHELL) > 0 then {
-  printf "%s %Q\n","SHELL",$SHELL > (fileOut); # Linux
-  printf "%s %Q\n","HOSTNAME",$HOSTNAME > (fileOut);
+  printf{LOG_DEBUG} "%s %Q\n","SHELL",$SHELL > (fileOut); # Linux
+  printf{LOG_DEBUG} "%s %Q\n","HOSTNAME",$HOSTNAME > (fileOut);
 }
-printf "%s %Q\n","directory",_cd > (fileOut);
+printf{LOG_DEBUG} "%s %Q\n","directory",_cd > (fileOut);
 
 printf "\n" > (fileOut);
 printf "%s %s\n","log_level_ampl",log_level_ampl > (fileOut);
@@ -286,8 +286,10 @@ printf "%s %i\n","nb_bus_with_voltage_value",card(BUSVV) > (fileOut);
 printf "%s %i\n","nb_bus_with_reactive_slacks",card(BUSCC_SLACK) > (fileOut);
 printf "%s %i\n","nb_bus_without_reactive_slacks",card(BUSCC diff BUSCC_SLACK) > (fileOut);
 printf "%s %i\n","nb_branch_in_data_file",card(BRANCH) > (fileOut);
-printf "%s %i\n","nb_branch_in_AC_CC",card(BRANCHCC) > (fileOut);
-printf "%s %i\n","nb_branch_with_nonsmall_impedance",card(BRANCHCC diff BRANCHZNULL) > (fileOut);
+printf "%s %i\n","nb_branch_in_AC_CC",card(ALL_BRANCHCC) > (fileOut);
+printf "%s %i\n","nb_branch_in_AC_CC_side_1_opened",card(BRANCHCC_WITH_SIDE_1_OPENED) > (fileOut);
+printf "%s %i\n","nb_branch_in_AC_CC_side_2_opened",card(BRANCHCC_WITH_SIDE_2_OPENED) > (fileOut);
+printf "%s %i\n","nb_branch_with_nonsmall_impedance",card(ALL_BRANCHCC diff BRANCHZNULL) > (fileOut);
 printf "%s %i\n","nb_branch_with_zero_or_small_impedance",card(BRANCHZNULL) > (fileOut);
 printf "%s %i\n","nb_unit_in_data_file",card(UNIT) > (fileOut);
 printf "%s %i\n","nb_unit_in_AC_CC",card(UNITCC) > (fileOut);
@@ -374,5 +376,39 @@ for {(g,n) in UNITCC diff UNITON}
     unit_Q0[1,g,n],
     '"' & unit_id[1,g,n] & '"',
     '"' & bus_id[1,n] & '"'
+    > (fileOut);
+close (fileOut);
+
+# write flows on the branches
+let fileOut := "reactiveopf_results_branches.csv";
+printf{LOG_DEBUG} "#qq;m;n;P1;Q1;P2;Q2;branch_id;\n" > (fileOut);
+for {(qq,m,n) in ALL_BRANCHCC}
+  printf{LOG_DEBUG} "%i;%i;%i;%.3f;%.3f;%.3f;%.3f;%s;\n",
+    qq,m,n,
+    # p1 flow
+    if (qq,m,n) in BRANCHCC 
+    then base100MVA * V[m] * Red_Tran_Act_Dir[qq,m,n]
+    else if (qq,m,n) in BRANCHCC_WITH_SIDE_2_OPENED
+    then base100MVA * V[m] * Red_Tran_Act_Dir_Side_2_Opened[qq,m,n]
+    else 0, # no flow as branch is opened on side 1
+    # q1 flow
+    if (qq,m,n) in BRANCHCC 
+    then base100MVA * V[m] * Red_Tran_Rea_Dir[qq,m,n]
+    else if (qq,m,n) in BRANCHCC_WITH_SIDE_2_OPENED
+    then base100MVA * V[m] * Red_Tran_Rea_Dir_Side_2_Opened[qq,m,n]
+    else 0, # no flow as branch is opened on side 1
+    # p2 flow
+    if (qq,m,n) in BRANCHCC 
+    then base100MVA * V[n] * Red_Tran_Act_Inv[qq,m,n]
+    else if (qq,m,n) in BRANCHCC_WITH_SIDE_1_OPENED
+    then base100MVA * V[n] * Red_Tran_Act_Inv_Side_1_Opened[qq,m,n]
+    else 0, # no flow as branch is opened on side 2
+    # q2 flow
+    if (qq,m,n) in BRANCHCC 
+    then base100MVA * V[n] * Red_Tran_Rea_Inv[qq,m,n]
+    else if (qq,m,n) in BRANCHCC_WITH_SIDE_1_OPENED
+    then base100MVA * V[n] * Red_Tran_Rea_Inv_Side_1_Opened[qq,m,n]
+    else 0, # no flow as branch is opened on side 2
+    '"' & branch_id[1,qq,m,n] & '"'
     > (fileOut);
 close (fileOut);

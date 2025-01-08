@@ -124,7 +124,6 @@ check {(t,g,n) in UNIT}: t in TIME;
 check {(t,g,n) in UNIT}: (t,n) in BUS or n==-1;
 check {(t,g,n) in UNIT}: (t,unit_substation[t,g,n]) in SUBSTATIONS;
 check {(t,g,n) in UNIT}: (t,unit_vregul_bus[t,g,n]) in BUS or unit_vregul_bus[t,g,n] == -1;
-check {(t,g,n) in UNIT}: unit_Pmax[t,g,n] >= -Pnull;
 check {(t,g,n) in UNIT}: unit_Pmax[t,g,n] >= unit_Pmin[t,g,n];
 # Checks below are useless since values will be corrected for units in UNITON
 #check {(t,g,n) in UNIT}: unit_Qp[t,g,n] >= unit_qp[t,g,n];
