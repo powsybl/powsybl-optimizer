@@ -204,7 +204,6 @@ param branch_admi {(qq,m,n) in ALL_BRANCHCC} =
 # Later in this file, a variable branch_Ror_var will be created, to replace branch_Ror when it is not variable
 param branch_Ror {(qq,m,n) in ALL_BRANCHCC} =
     ( if (branch_ptrRegl[1,qq,m,n] != -1)
-
       then tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]]
       else 1.0
     )
@@ -229,7 +228,9 @@ param corrected_unit_Pmin{UNITON} default defaultPmin;
 param corrected_unit_Pmax{UNITON} default defaultPmax;
 param corrected_unit_qP  {UNITON} default defaultQmin;
 param corrected_unit_qp  {UNITON} default defaultQmin;
+param corrected_unit_qp0  {UNITON} default defaultQmin;
 param corrected_unit_QP  {UNITON} default defaultQmax;
 param corrected_unit_Qp  {UNITON} default defaultQmax;
+param corrected_unit_Qp0  {UNITON} default defaultQmax;
 param corrected_unit_Qmin{UNITON} default defaultQmin;
 param corrected_unit_Qmax{UNITON} default defaultQmax;

@@ -143,17 +143,21 @@ abstract class AbstractOpenReacRunnerTest {
         }
     }
 
+    protected void setDefaultVoltageLimits(Network network) {
+        setDefaultVoltageLimits(network, 0.5, 1.5);
+    }
+
     /**
      * Add voltage limits to voltage levels with undefined limits.
      * OpenReac needs voltage limits to run optimization.
      */
-    protected void setDefaultVoltageLimits(Network network) {
+    protected void setDefaultVoltageLimits(Network network, double thresholdMin, double thresholdMax) {
         for (VoltageLevel vl : network.getVoltageLevels()) {
             if (vl.getLowVoltageLimit() <= 0 || Double.isNaN(vl.getLowVoltageLimit())) {
-                vl.setLowVoltageLimit(0.5 * vl.getNominalV());
+                vl.setLowVoltageLimit(thresholdMin * vl.getNominalV());
             }
             if (Double.isNaN(vl.getHighVoltageLimit())) {
-                vl.setHighVoltageLimit(1.5 * vl.getNominalV());
+                vl.setHighVoltageLimit(thresholdMax * vl.getNominalV());
             }
         }
     }
