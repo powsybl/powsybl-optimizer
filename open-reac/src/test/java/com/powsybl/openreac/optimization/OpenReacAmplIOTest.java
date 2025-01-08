@@ -133,7 +133,7 @@ class OpenReacAmplIOTest extends AbstractOpenReacRunnerTest {
             assertEquals(1, openReacResult.getVscModifications().size());
             assertEquals(7, openReacResult.getGeneratorModifications().size());
             assertEquals(3, openReacResult.getVoltageProfile().size());
-            assertEquals(87, openReacResult.getIndicators().size());
+            assertEquals(76, openReacResult.getIndicators().size());
             assertTrue(openReacResult.getReactiveSlacks().isEmpty());
         }
     }
