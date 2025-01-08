@@ -108,6 +108,7 @@ param unit_Qp          {UNIT};
 param unit_vregul      {UNIT} symbolic; # Does unit do voltage regulation, or PQ bus?
 param unit_vregul_bus  {UNIT} integer; # Bus regulated by unit, if it does voltage regulation
 param unit_Vc          {UNIT}; # Voltage set point (in case of voltage regulation)
+param unit_condenser   {UNIT} symbolic; # Is unit a condenser
 param unit_Pc          {UNIT}; # Active  power set point
 param unit_Qc          {UNIT}; # Rective power set point (in case no voltage regulation)
 param unit_fault       {UNIT};
@@ -417,6 +418,7 @@ check {(t,cs,n) in VSCCONV}: vscconv_qP[t,cs,n]   <= vscconv_QP[t,cs,n];
 set LCCCONV dimen 3; # [variant, num, bus]
 param lccconv_possiblebus {LCCCONV} integer;
 param lccconv_substation  {LCCCONV} integer;
+param lccconv_q0          {LCCCONV}; # Load target q of lcc converter station
 param lccconv_loss_factor {LCCCONV};
 param lccconv_power_factor{LCCCONV};
 param lccconv_fault       {LCCCONV};
@@ -440,7 +442,10 @@ param hvdc_conv2          {HVDC} integer;
 param hvdc_r              {HVDC};
 param hvdc_Vnom           {HVDC};
 param hvdc_convertersMode {HVDC} symbolic;
+param hvdc_ac_emul        {HVDC} symbolic; # Is the line emulating in AC
 param hvdc_targetP        {HVDC};
+param hvdc_p0             {HVDC}; # Active power offset of ac emulation
+param hvdc_k              {HVDC};
 param hvdc_Pmax           {HVDC};
 param hvdc_fault          {HVDC};
 param hvdc_curative       {HVDC};
