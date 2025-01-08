@@ -204,6 +204,7 @@ param branch_admi {(qq,m,n) in ALL_BRANCHCC} =
 # Later in this file, a variable branch_Ror_var will be created, to replace branch_Ror when it is not variable
 param branch_Ror {(qq,m,n) in ALL_BRANCHCC} =
     ( if (branch_ptrRegl[1,qq,m,n] != -1)
+
       then tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]]
       else 1.0
     )
