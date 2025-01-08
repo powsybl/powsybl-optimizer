@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @author Pierre ARVY {@literal <pierre.arvy at artelys.com>}
  */
-class OpecReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
+class OpenReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
 
     private OpenReacParameters parameters;
 
