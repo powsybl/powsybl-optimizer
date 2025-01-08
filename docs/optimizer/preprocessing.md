@@ -14,10 +14,11 @@ Let $V_{s}^{min}$ (resp. $V_{s}^{max}$) be the low (resp. high) voltage limit of
 
 Branches with an impedance magnitude, **calculated in per unit**, lower than the configurable threshold `Znull` (see section [Configuration of the run](inputs.md#configuration-of-the-run)) are considered as non-impedant. 
 These branches will have their reactance replaced by the threshold `Znull` (in p.u.), **even if the reactance specified in `ampl_network_branches.txt` is negative**.
+Note that for lines considered as non-impedant and connecting two different nominal voltage levels, the conductances and susceptances are cancelled in order to avoid numerical instabilities.
 
 ## Impedance of transformers
 
-In the calculations of the ACOPF (see [AC optimal powerflow](acOptimalPowerflow.md)), the transformers with an impedance (specified in `ampl_network_branches.txt`) considered as null (see [Zero-impedance threshold](#zero-impedance-threshold))  **are treated as lines**. Then, the transformation ratios/phase shifts are ignored, as well as the impedance specified in the tap changer table `ampl_network_tct.txt`.
+In the calculations of the ACOPF (see [AC optimal powerflow](acOptimalPowerflow.md)), the impedance specified in tap changer table `ampl_network_tct.txt` is ignored for transformers with an impedance (specified in `ampl_network_branches.txt`) considered as null (see [Zero-impedance threshold](#zero-impedance-threshold)). Note that the transformer ratios and phase shiftings are considered anyway.
 
 For phase shifters transformers considered as impedant, the reactance values from the tap changer table (in `ampl_network_tct.txt`) replace the reactance specified in `ampl_network_branches.txt`. The resistance is then calculated proportionally. 
 For the ratio tap changers, the impedance stays as specified in `ampl_network_branches.txt`. **Please notice there is no specified handling for cases where resistance and/or reactance is negative or if there is both a ratio tap changer and a  phase shift transformer on the same branch.**

@@ -109,21 +109,21 @@ param branch_X_mod{(qq,m,n) in ALL_BRANCHCC} :=
   else branch_X[1,qq,m,n];
 check {(qq,m,n) in ALL_BRANCHCC}: abs(branch_X_mod[qq,m,n]) > 0;
 
-# If in BRANCHZNULL, then set Gor/Gex/Bor/Bex to 0
+# If in BRANCHZNULL and Vnom1 != Vnom2, then set Gor/Gex/Bor/Bex to 0
 param branch_Gor_mod{(qq,m,n) in ALL_BRANCHCC} :=
-    if (qq,m,n) in BRANCHCC and (qq,m,n) in BRANCHZNULL then 0
+    if (qq,m,n) in BRANCHCC and (qq,m,n) in BRANCHZNULL and substation_Vnomi[1,bus_substation[1,m]] != substation_Vnomi[1,bus_substation[1,n]] then 0
     else branch_Gor[1,qq,m,n];
 
 param branch_Gex_mod{(qq,m,n) in ALL_BRANCHCC} :=
-    if (qq,m,n) in BRANCHCC and (qq,m,n) in BRANCHZNULL then 0
+    if (qq,m,n) in BRANCHCC and (qq,m,n) in BRANCHZNULL and substation_Vnomi[1,bus_substation[1,m]] != substation_Vnomi[1,bus_substation[1,n]] then 0
     else branch_Gex[1,qq,m,n];
 
 param branch_Bor_mod{(qq,m,n) in ALL_BRANCHCC} :=
-    if (qq,m,n) in BRANCHCC and (qq,m,n) in BRANCHZNULL then 0
+    if (qq,m,n) in BRANCHCC and (qq,m,n) in BRANCHZNULL and substation_Vnomi[1,bus_substation[1,m]] != substation_Vnomi[1,bus_substation[1,n]] then 0
     else branch_Bor[1,qq,m,n];
 
 param branch_Bex_mod{(qq,m,n) in ALL_BRANCHCC} :=
-    if (qq,m,n) in BRANCHCC and (qq,m,n) in BRANCHZNULL then 0
+    if (qq,m,n) in BRANCHCC and (qq,m,n) in BRANCHZNULL and substation_Vnomi[1,bus_substation[1,m]] != substation_Vnomi[1,bus_substation[1,n]] then 0
     else branch_Bex[1,qq,m,n];
 
 # Busses with valid voltage value
@@ -203,11 +203,12 @@ param branch_admi {(qq,m,n) in ALL_BRANCHCC} =
 
 # Later in this file, a variable branch_Ror_var will be created, to replace branch_Ror when it is not variable
 param branch_Ror {(qq,m,n) in ALL_BRANCHCC} =
-    ( if ((qq,m,n) in BRANCHCC_REGL)
+    ( if (branch_ptrRegl[1,qq,m,n] != -1)
+
       then tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]]
       else 1.0
     )
-  * ( if ((qq,m,n) in BRANCHCC_DEPH)
+  * ( if (branch_ptrDeph[1,qq,m,n] != -1)
       then tap_ratio[1,deph_table[1,branch_ptrDeph[1,qq,m,n]],deph_tap0[1,branch_ptrDeph[1,qq,m,n]]]
       else 1.0
     )
@@ -215,7 +216,7 @@ param branch_Ror {(qq,m,n) in ALL_BRANCHCC} =
 param branch_Rex {(q,m,n) in ALL_BRANCHCC} = 1; # In IIDM, everything is in bus1 so ratio at bus2 is always 1
 
 param branch_dephor {(qq,m,n) in ALL_BRANCHCC} =
-  if ((qq,m,n) in BRANCHCC_DEPH)
+  if (branch_ptrDeph[1,qq,m,n] != -1)
   then tap_angle [1,deph_table[1,branch_ptrDeph[1,qq,m,n]],deph_tap0[1,branch_ptrDeph[1,qq,m,n]]]
   else 0;
 param branch_dephex {(qq,m,n) in ALL_BRANCHCC} = 0; # In IIDM, everything is in bus1 so dephase at bus2 is always 0
