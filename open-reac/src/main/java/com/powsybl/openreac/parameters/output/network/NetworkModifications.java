@@ -53,6 +53,10 @@ public class NetworkModifications {
         return batteryOutput.getModifications();
     }
 
+    public ShuntCompensatorNetworkOutput getShuntsOutput() {
+        return shuntsOutput;
+    }
+
     public List<ShuntCompensatorModification> getShuntModifications() {
         return shuntsOutput.getModifications();
     }

@@ -15,9 +15,7 @@ import com.powsybl.iidm.network.ShuntCompensator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
@@ -32,6 +30,8 @@ public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCo
     private static final int BUS_COLUMN_INDEX = 2;
     private final List<ShuntWithDeltaDiscreteOptimalOverThreshold> shuntWithDeltaDiscreteOptimalOverThresholds = new ArrayList<>();
     private final double shuntCompensatorActivationAlertThreshold;
+    public double susceptanceDifferenceBeforeAfterRound = 0;
+    public Map<ShuntCompensator, Double> susceptanceDifferenceByShunt = new HashMap<>();
 
     public record ShuntWithDeltaDiscreteOptimalOverThreshold(String id, int maximumSectionCount, double discretizedReactiveValue, double optimalReactiveValue) { }
 
@@ -86,6 +86,8 @@ public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCo
         if (Math.abs(discretizedReactiveValue - optimalReactiveValue) > shuntCompensatorActivationAlertThreshold) {
             shuntWithDeltaDiscreteOptimalOverThresholds.add(new ShuntWithDeltaDiscreteOptimalOverThreshold(sc.getId(), sc.getMaximumSectionCount(), discretizedReactiveValue, optimalReactiveValue));
         }
+        susceptanceDifferenceBeforeAfterRound += minDistance;
+        susceptanceDifferenceByShunt.put(sc, minDistance);
         return sectionCount;
     }
 
