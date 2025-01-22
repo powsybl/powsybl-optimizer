@@ -44,6 +44,10 @@ public class NetworkModifications {
         return generatorNetworkOutput.getModifications();
     }
 
+    public ShuntCompensatorNetworkOutput getShuntsOutput() {
+        return shuntsOutput;
+    }
+
     public List<ShuntCompensatorModification> getShuntModifications() {
         return shuntsOutput.getModifications();
     }

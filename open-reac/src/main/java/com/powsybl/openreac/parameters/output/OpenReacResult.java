@@ -12,6 +12,7 @@ import com.powsybl.iidm.modification.tapchanger.RatioTapPositionModification;
 import com.powsybl.iidm.network.*;
 import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput.ReactiveSlack;
+import com.powsybl.openreac.parameters.output.network.ShuntCompensatorNetworkOutput;
 import org.jgrapht.alg.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +36,7 @@ public class OpenReacResult {
     private final List<StaticVarCompensatorModification> svcModifications;
     private final List<RatioTapPositionModification> tapPositionModifications;
     private final HashMap<String, Pair<Double, Double>> voltageProfile;
+    private final ShuntCompensatorNetworkOutput shuntsOutput;
     private boolean updateNetworkWithVoltages = true;
 
     /**
@@ -53,6 +55,7 @@ public class OpenReacResult {
         this.svcModifications = List.copyOf(amplIOFiles.getNetworkModifications().getSvcModifications());
         this.tapPositionModifications = List.copyOf(amplIOFiles.getNetworkModifications().getTapPositionModifications());
         this.voltageProfile = new HashMap<>(amplIOFiles.getVoltageProfileOutput().getVoltageProfile());
+        this.shuntsOutput = amplIOFiles.getNetworkModifications().getShuntsOutput();
     }
 
     public OpenReacStatus getStatus() {
@@ -89,6 +92,10 @@ public class OpenReacResult {
 
     public Map<String, Pair<Double, Double>> getVoltageProfile() {
         return voltageProfile;
+    }
+
+    public ShuntCompensatorNetworkOutput getShuntsOutput() {
+        return shuntsOutput;
     }
 
     public boolean isUpdateNetworkWithVoltages() {
