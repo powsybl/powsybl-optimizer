@@ -1,5 +1,7 @@
 # Alternative current optimal power flow
 
+TODO : update documentation
+
 ## Generalities
 
 The goal of the reactive ACOPF is to compute voltage values on each bus, as well as control values for reactive equipment and controllers of the grid. 
