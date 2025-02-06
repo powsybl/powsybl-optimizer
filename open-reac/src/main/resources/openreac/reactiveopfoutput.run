@@ -74,27 +74,29 @@ if final_status == "OK" then {
 let fileOut := "reactiveopf_results_generators.csv";
 printf "#variant;num;bus;vRegul;V(pu);targetP(MW);targetQ(Mvar);P(MW);Q(MW);\n" > (fileOut);
 
-# Units running
-printf{(g,n) in UNITON} "%i;%i;%i;%Q;%.3f;%.1f;%.1f;%.1f;%.1f;\n",
+for {(g,n) in UNITON} {
+printf "%i;%i;%i;%Q;%.3f;%.1f;%.1f;%.1f;%.1f;\n",
   1,g,n,
   unit_vregul[1,g,n],
-  V[n],
+  V[if unit_vregul[1,g,n] == "true" then unit_vregul_bus[1,g,n] else n],
   unit_Pc[1,g,n],
   if (g,n) in UNIT_FIXQ then unit_Qc[1,g,n] else Q[g,n],
   -P[g,n], # sign convention is strange, but this '-' is mandatory
   if (g,n) in UNIT_FIXQ then -unit_Qc[1,g,n] else -Q[g,n] # sign convention is strange, but these '-' are mandatory
   > (fileOut);
+}
 
-# Units connected to the grid but not running
-printf{(g,n) in UNITCC diff UNITON} "%i;%i;%i;%Q;%.3f;%i;%i;%i;%i;\n",
+for {(g,n) in UNITCC diff UNITON} {
+printf "%i;%i;%i;%Q;%.3f;%i;%i%i;%i;\n",
   1,g,n,
-  'false',
-  V[n],
+  unit_vregul[1,g,n],
+  V[if unit_vregul[1,g,n] == "true" then unit_vregul_bus[1,g,n] else n],
   0,
   0,
   0,
   0
   > (fileOut);
+}
 close (fileOut);
 
 }
