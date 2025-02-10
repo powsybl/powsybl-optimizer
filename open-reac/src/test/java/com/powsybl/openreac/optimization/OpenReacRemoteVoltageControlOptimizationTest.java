@@ -7,8 +7,8 @@
  */
 package com.powsybl.openreac.optimization;
 
-import com.powsybl.iidm.network.Bus;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.StaticVarCompensator;
 import com.powsybl.openreac.network.VoltageControlNetworkFactory;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
@@ -22,8 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Test the remote voltage control in OpenReac optimization.
- * It is not considered in optimization model, but the output of
- * optimization should take this into account when updating voltage targets.
+ * Note that it is not taken into account in optimization model, but the output of
+ * should consider this when updating voltage targets.
  *
  * @author Pierre ARVY {@literal <pierre.arvy at artelys.com>}
  */
@@ -33,19 +33,46 @@ class OpenReacRemoteVoltageControlOptimizationTest extends AbstractOpenReacRunne
     void testGeneratorRemoteVoltageControl() throws IOException {
         Network network = VoltageControlNetworkFactory.createWithGeneratorRemoteControl();
         OpenReacParameters parameters = new OpenReacParameters();
-        parameters.addConstantQGenerators(List.of("g2"));
+        parameters.addConstantQGenerators(List.of("g3"));
 
-        // run open reac and apply results
-        OpenReacResult result = runOpenReac(network, "", false);
+        OpenReacResult result = runOpenReac(network, "optimization/remote-voltage-control/generator", parameters, false);
         assertEquals(OpenReacStatus.OK, result.getStatus());
-        // TODO : verify directly the results of open reac
+        assertEquals(3, result.getGeneratorModifications().size());
+
+        double targetV = result.getVoltageProfile().get("vl4_0").getFirst() * network.getVoltageLevel("vl4").getNominalV();
+        // verify generators modification include remote voltage target modification
+        assertEquals(targetV, result.getGeneratorModifications().get(0).getModifs().getTargetV());
+        assertEquals(targetV, result.getGeneratorModifications().get(1).getModifs().getTargetV());
+        // same with generator indicated as constant Q
+        assertEquals(targetV, result.getGeneratorModifications().get(2).getModifs().getTargetV());
 
         result.applyAllModifications(network);
-        Bus b4 = network.getBusBreakerView().getBus("b4");
-        assertEquals(b4.getV(), network.getGenerator("g1").getTargetV());
-        // verify V target of fixed Q generator has also been updated
-        assertEquals(b4.getV(), network.getGenerator("g2").getTargetV());
-        assertEquals(b4.getV(), network.getGenerator("g3").getTargetV());
+        assertEquals(targetV, network.getGenerator("g1").getTargetV());
+        assertEquals(targetV, network.getGenerator("g2").getTargetV());
+        assertEquals(targetV, network.getGenerator("g3").getTargetV());
     }
 
+    @Test
+    void testStaticVarCompensatorRemoteVoltageControl() throws IOException {
+        Network network = VoltageControlNetworkFactory.createWithStaticVarCompensator();
+        network.getGenerator("g1")
+                .setTargetQ(5);
+        StaticVarCompensator svc = network.getStaticVarCompensator("svc1");
+        svc.setVoltageSetpoint(390)
+            .setRegulationMode(StaticVarCompensator.RegulationMode.VOLTAGE)
+            .setRegulatingTerminal(network.getGenerator("g1").getTerminal());
+
+        OpenReacParameters parameters = new OpenReacParameters();
+        parameters.addConstantQGenerators(List.of("g1")); // fix Q of g1 to ensure voltage difference
+
+        OpenReacResult result = runOpenReac(network, "optimization/remote-voltage-control/svc", parameters, false);
+        assertEquals(OpenReacStatus.OK, result.getStatus());
+        assertEquals(1, result.getSvcModifications().size());
+
+        double targetV = result.getVoltageProfile().get("vl1_0").getFirst() * network.getVoltageLevel("vl1").getNominalV();
+        assertEquals(targetV, result.getSvcModifications().get(0).getVoltageSetpoint());
+
+        result.applyAllModifications(network);
+        assertEquals(targetV, svc.getVoltageSetpoint());
+    }
 }
