@@ -126,6 +126,7 @@ abstract class AbstractOpenReacRunnerTest {
         List<String> outputFileNames = new ArrayList<>(List.of(subFolder + "/reactiveopf_results_indic.txt"));
         if (!onlyIndicators) {
             outputFileNames.addAll(List.of(
+                    subFolder + "/reactiveopf_results_generators.csv",
                     subFolder + "/reactiveopf_results_rtc.csv",
                     subFolder + "/reactiveopf_results_shunts.csv",
                     subFolder + "/reactiveopf_results_static_var_compensators.csv",
