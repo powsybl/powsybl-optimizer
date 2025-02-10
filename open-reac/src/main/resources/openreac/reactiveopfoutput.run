@@ -74,6 +74,7 @@ if final_status == "OK" then {
 let fileOut := "reactiveopf_results_generators.csv";
 printf "#variant;num;bus;vRegul;V(pu);targetP(MW);targetQ(Mvar);P(MW);Q(MW);\n" > (fileOut);
 
+# Units running
 for {(g,n) in UNITON} {
 printf "%i;%i;%i;%Q;%.3f;%.1f;%.1f;%.1f;%.1f;\n",
   1,g,n,
@@ -86,6 +87,7 @@ printf "%i;%i;%i;%Q;%.3f;%.1f;%.1f;%.1f;%.1f;\n",
   > (fileOut);
 }
 
+# Units connected to the grid but not running
 for {(g,n) in UNITCC diff UNITON} {
 printf "%i;%i;%i;%Q;%.3f;%i;%i%i;%i;\n",
   1,g,n,

@@ -1,7 +1,5 @@
 # Alternative current optimal power flow
 
-TODO : update documentation
-
 ## Generalities
 
 The goal of the reactive ACOPF is to compute voltage values on each bus, as well as control values for reactive equipment and controllers of the grid. 
@@ -19,6 +17,8 @@ Please note that:
   Therefore, when the optimization results are exported, **these generators are exported with a reactive power target of $0$**.
 - **Neither current limits nor power limits** on branches are considered in the optimization.
 - Branches with one side open are considered in optimization. 
+- The voltage controls are not taken into account in the optimization model, as its purpose is to determine them (see [OpenReac](index.md#openreac)).
+  However, the remote control of generators and static var compensators is taken into account in the export of equipment's voltage target (see [Outputs](outputs.md#in-case-of-convergence)).
 
 ## Constraints
 
