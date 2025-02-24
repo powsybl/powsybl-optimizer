@@ -193,6 +193,30 @@ class VoltageLevelLimitsOverrideInputTest {
         assertEquals("Override on voltage level " + vl.getId() + " leads to low voltage limit >= high voltage limit.", e3.getMessage());
     }
 
+    @Test
+    void testVoltageOverrideOrder() {
+        Network network = IeeeCdfNetworkFactory.create57();
+        setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
+        VoltageLevel vl = network.getVoltageLevels().iterator().next();
+        vl.setHighVoltageLimit(480);
+        vl.setLowVoltageLimit(400);
+
+        VoltageLimitOverride lowOverride = new VoltageLimitOverride(vl.getId(), VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, false, 390);
+        VoltageLimitOverride highOverride = new VoltageLimitOverride(vl.getId(), VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, false, 395);
+
+        // verify no error if order is respect limits
+        List<VoltageLimitOverride> voltageLimitsOverride = new ArrayList<>();
+        voltageLimitsOverride.add(lowOverride);
+        voltageLimitsOverride.add(highOverride);
+        assertDoesNotThrow(() -> new VoltageLevelLimitsOverrideInput(voltageLimitsOverride, network, ReportNode.NO_OP));
+
+        // verify error if order does not respect limits
+        List<VoltageLimitOverride> voltageLimitsOverride2 = new ArrayList<>();
+        voltageLimitsOverride2.add(highOverride);
+        voltageLimitsOverride2.add(lowOverride);
+        assertThrows(InvalidParametersException.class, () -> new VoltageLevelLimitsOverrideInput(voltageLimitsOverride2, network, ReportNode.NO_OP));
+    }
+
     private static boolean checkReportWithKey(String key, ReportNode reportNode) {
         if (reportNode.getMessageKey() != null && reportNode.getMessageKey().equals(key)) {
             return true;
