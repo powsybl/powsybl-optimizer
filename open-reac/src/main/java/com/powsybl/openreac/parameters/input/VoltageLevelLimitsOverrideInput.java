@@ -9,7 +9,6 @@ package com.powsybl.openreac.parameters.input;
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.commons.report.ReportNode;
-import com.powsybl.commons.report.TypedValue;
 import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VoltageLevel;
@@ -19,13 +18,12 @@ import org.jgrapht.alg.util.Pair;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+
+import static com.powsybl.openreac.Reports.reportVoltageLevelsWithLimitsOutOfNominalVRange;
 
 /**
  * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
@@ -40,7 +38,6 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
     private static final double VOLTAGE_LIMIT_LOW_THRESHOLD = 0.85;
     private static final double VOLTAGE_LIMIT_HIGH_THRESHOLD = 1.15;
     private static final double VOLTAGE_LIMIT_TOLERANCE = 5;
-    private static final DecimalFormat LIMIT_VALUE_FORMAT = new DecimalFormat("0.0", DecimalFormatSymbols.getInstance(Locale.ROOT));
 
     public VoltageLevelLimitsOverrideInput(List<VoltageLimitOverride> voltageLimitsOverrides, Network network, ReportNode reportNode) {
         Objects.requireNonNull(voltageLimitsOverrides);
@@ -51,7 +48,7 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
 
     private void checkLimitsInNominalVoltageRange(Network network, ReportNode reportNode) {
         // check that the limits are in the nominal voltage range [0.85 * nominal_V - 5, 1.15 * nominal_V + 5]
-        Map<String, VoltageLevelLimitsInfos> voltageLevelsWithLimitsOutOfNominalVRange = new HashMap<>();
+        Map<String, VoltageLevelLimitInfo> voltageLevelsWithLimitsOutOfNominalVRange = new HashMap<>();
         for (Map.Entry<String, Pair<Double, Double>> entry : normalizedVoltageLimitsOverride.entrySet()) {
             String voltageLevelId = entry.getKey();
             VoltageLevel voltageLevel = network.getVoltageLevel(voltageLevelId);
@@ -63,26 +60,11 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
                 lowLimit > VOLTAGE_LIMIT_HIGH_THRESHOLD * nominalV + VOLTAGE_LIMIT_TOLERANCE ||
                 highLimit < VOLTAGE_LIMIT_LOW_THRESHOLD * nominalV - VOLTAGE_LIMIT_TOLERANCE ||
                 highLimit > VOLTAGE_LIMIT_HIGH_THRESHOLD * nominalV + VOLTAGE_LIMIT_TOLERANCE) {
-                voltageLevelsWithLimitsOutOfNominalVRange.put(voltageLevelId, new VoltageLevelLimitsInfos(voltageLevelId, lowLimit, highLimit, nominalV));
+                voltageLevelsWithLimitsOutOfNominalVRange.put(voltageLevelId, new VoltageLevelLimitInfo(voltageLevelId, lowLimit, highLimit, nominalV));
             }
         }
 
-        if (!voltageLevelsWithLimitsOutOfNominalVRange.isEmpty()) {
-            reportNode.newReportNode()
-                .withMessageTemplate("nbVoltageLevelsWithLimitsOutOfNominalVRange", "Acceptable voltage range for ${size} voltage levels seems to be inconsistent with nominal voltage")
-                .withSeverity(TypedValue.WARN_SEVERITY)
-                .withUntypedValue("size", voltageLevelsWithLimitsOutOfNominalVRange.size())
-                .add();
-
-            voltageLevelsWithLimitsOutOfNominalVRange.forEach((voltageLevelId, voltageLevelLimitsInfos) -> reportNode.newReportNode()
-                .withMessageTemplate("voltageLevelWithLimitsOutOfNominalVRange", "Acceptable voltage range for voltage level ${vID} seems to be inconsistent with nominal voltage : low voltage limit = ${lowVoltageLimit} kV, high voltage limit = ${highVoltageLimit} kV, nominal voltage = ${nominalVoltage} kV")
-                .withSeverity(TypedValue.TRACE_SEVERITY)
-                .withUntypedValue("vID", voltageLevelLimitsInfos.voltageLevelId())
-                .withUntypedValue("lowVoltageLimit", LIMIT_VALUE_FORMAT.format(voltageLevelLimitsInfos.lowLimit()))
-                .withUntypedValue("highVoltageLimit", LIMIT_VALUE_FORMAT.format(voltageLevelLimitsInfos.highLimit()))
-                .withUntypedValue("nominalVoltage", voltageLevelLimitsInfos.nominalV())
-                .add());
-        }
+        reportVoltageLevelsWithLimitsOutOfNominalVRange(reportNode, voltageLevelsWithLimitsOutOfNominalVRange);
     }
 
     /**
