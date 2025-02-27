@@ -210,11 +210,11 @@ class VoltageLevelLimitsOverrideInputTest {
         voltageLimitsOverride.add(highOverride);
         assertDoesNotThrow(() -> new VoltageLevelLimitsOverrideInput(voltageLimitsOverride, network, ReportNode.NO_OP));
 
-        // verify error if order does not respect limits
+        // verify no error if order does not respect limits
         List<VoltageLimitOverride> voltageLimitsOverride2 = new ArrayList<>();
         voltageLimitsOverride2.add(highOverride);
         voltageLimitsOverride2.add(lowOverride);
-        assertThrows(InvalidParametersException.class, () -> new VoltageLevelLimitsOverrideInput(voltageLimitsOverride2, network, ReportNode.NO_OP));
+        assertDoesNotThrow(() -> new VoltageLevelLimitsOverrideInput(voltageLimitsOverride2, network, ReportNode.NO_OP));
     }
 
     private static boolean checkReportWithKey(String key, ReportNode reportNode) {
