@@ -37,6 +37,10 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
     private static final double VOLTAGE_LIMIT_HIGH_THRESHOLD = 1.15;
     private static final double VOLTAGE_LIMIT_TOLERANCE = 5;
 
+    public VoltageLevelLimitsOverrideInput(List<VoltageLimitOverride> voltageLimitsOverrides, Network network) {
+        this(voltageLimitsOverrides, network, ReportNode.NO_OP);
+    }
+
     public VoltageLevelLimitsOverrideInput(List<VoltageLimitOverride> voltageLimitsOverrides, Network network, ReportNode reportNode) {
         Objects.requireNonNull(voltageLimitsOverrides);
         Objects.requireNonNull(network);
