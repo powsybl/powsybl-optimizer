@@ -54,10 +54,10 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
             double lowLimit = entry.getValue().getFirst() * nominalV;
             double highLimit = entry.getValue().getSecond() * nominalV;
 
-            if (lowLimit < VOLTAGE_LIMIT_LOW_THRESHOLD * nominalV - VOLTAGE_LIMIT_TOLERANCE ||
-                    lowLimit > VOLTAGE_LIMIT_HIGH_THRESHOLD * nominalV + VOLTAGE_LIMIT_TOLERANCE ||
-                    highLimit < VOLTAGE_LIMIT_LOW_THRESHOLD * nominalV - VOLTAGE_LIMIT_TOLERANCE ||
-                    highLimit > VOLTAGE_LIMIT_HIGH_THRESHOLD * nominalV + VOLTAGE_LIMIT_TOLERANCE) {
+            double minAllowed = VOLTAGE_LIMIT_LOW_THRESHOLD * nominalV - VOLTAGE_LIMIT_TOLERANCE;
+            double maxAllowed = VOLTAGE_LIMIT_HIGH_THRESHOLD * nominalV + VOLTAGE_LIMIT_TOLERANCE;
+            if (lowLimit < minAllowed || lowLimit > maxAllowed || 
+                    highLimit < minAllowed || highLimit > maxAllowed) {
                 voltageLevelsWithLimitsOutOfNominalVRange.put(voltageLevelId, new VoltageLevelLimitInfo(voltageLevelId, lowLimit, highLimit, nominalV));
             }
         }
