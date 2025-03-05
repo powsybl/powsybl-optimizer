@@ -193,18 +193,6 @@ class VoltageLevelLimitsOverrideInputTest {
         assertEquals("Override on voltage level " + vl.getId() + " leads to low voltage limit >= high voltage limit.", e3.getMessage());
     }
 
-    private static boolean checkReportWithKey(String key, ReportNode reportNode) {
-        if (reportNode.getMessageKey() != null && reportNode.getMessageKey().equals(key)) {
-            return true;
-        }
-        boolean found = false;
-        Iterator<ReportNode> reportersIterator = reportNode.getChildren().iterator();
-        while (!found && reportersIterator.hasNext()) {
-            found = checkReportWithKey(key, reportersIterator.next());
-        }
-        return found;
-    }
-
     @Test
     void testVoltageOverrideOrder() {
         Network network = IeeeCdfNetworkFactory.create57();

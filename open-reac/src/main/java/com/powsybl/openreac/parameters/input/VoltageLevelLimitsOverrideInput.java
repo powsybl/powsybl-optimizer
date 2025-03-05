@@ -18,10 +18,11 @@ import org.jgrapht.alg.util.Pair;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
-
-import static com.powsybl.openreac.Reports.reportVoltageLevelsWithLimitsOutOfNominalVRange;
 
 import static com.powsybl.openreac.Reports.reportVoltageLevelsWithLimitsOutOfNominalVRange;
 
@@ -80,7 +81,6 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
         Map<String, List<VoltageLimitOverride>> voltageLimitOverridesPerVoltageLevelId = voltageLimitsOverrides.stream().collect(Collectors.groupingBy(VoltageLimitOverride::getVoltageLevelId));
         for (Map.Entry<String, List<VoltageLimitOverride>> entry : voltageLimitOverridesPerVoltageLevelId.entrySet()) {
             String voltageLevelId = entry.getKey();
-          
             double nominalV = network.getVoltageLevel(voltageLevelId).getNominalV();
             double previousNormalizedLowVoltageLimit = network.getVoltageLevel(voltageLevelId).getLowVoltageLimit() / nominalV;
             double previousNormalizedHighVoltageLimit = network.getVoltageLevel(voltageLevelId).getHighVoltageLimit() / nominalV;
