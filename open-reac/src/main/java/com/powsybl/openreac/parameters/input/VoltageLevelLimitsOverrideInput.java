@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static com.powsybl.openreac.Reports.reportVoltageLevelsWithLimitsOutOfNominalVRange;
 
@@ -38,6 +39,10 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
     private static final double VOLTAGE_LIMIT_LOW_THRESHOLD = 0.85;
     private static final double VOLTAGE_LIMIT_HIGH_THRESHOLD = 1.15;
     private static final double VOLTAGE_LIMIT_TOLERANCE = 5;
+
+    public VoltageLevelLimitsOverrideInput(List<VoltageLimitOverride> voltageLimitsOverrides, Network network) {
+        this(voltageLimitsOverrides, network, ReportNode.NO_OP);
+    }
 
     public VoltageLevelLimitsOverrideInput(List<VoltageLimitOverride> voltageLimitsOverrides, Network network, ReportNode reportNode) {
         Objects.requireNonNull(voltageLimitsOverrides);
@@ -56,10 +61,11 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
             double lowLimit = entry.getValue().getFirst() * nominalV;
             double highLimit = entry.getValue().getSecond() * nominalV;
 
-            if (lowLimit < VOLTAGE_LIMIT_LOW_THRESHOLD * nominalV - VOLTAGE_LIMIT_TOLERANCE ||
-                lowLimit > VOLTAGE_LIMIT_HIGH_THRESHOLD * nominalV + VOLTAGE_LIMIT_TOLERANCE ||
-                highLimit < VOLTAGE_LIMIT_LOW_THRESHOLD * nominalV - VOLTAGE_LIMIT_TOLERANCE ||
-                highLimit > VOLTAGE_LIMIT_HIGH_THRESHOLD * nominalV + VOLTAGE_LIMIT_TOLERANCE) {
+            double minAllowed = VOLTAGE_LIMIT_LOW_THRESHOLD * nominalV - VOLTAGE_LIMIT_TOLERANCE;
+            double maxAllowed = VOLTAGE_LIMIT_HIGH_THRESHOLD * nominalV + VOLTAGE_LIMIT_TOLERANCE;
+            if (lowLimit < minAllowed || lowLimit > maxAllowed ||
+                    highLimit < minAllowed || highLimit > maxAllowed) {
+
                 voltageLevelsWithLimitsOutOfNominalVRange.put(voltageLevelId, new VoltageLevelLimitInfo(voltageLevelId, lowLimit, highLimit, nominalV));
             }
         }
@@ -72,26 +78,26 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
      * This function compute limits in pair-unit quantities.
      */
     private void transformToNormalizedVoltage(List<VoltageLimitOverride> voltageLimitsOverrides, Network network, ReportNode reportNode) {
-        for (VoltageLimitOverride voltageLimitOverride : voltageLimitsOverrides) {
-            // get previous voltage limit values
-            String voltageLevelId = voltageLimitOverride.getVoltageLevelId();
+        Map<String, List<VoltageLimitOverride>> voltageLimitOverridesPerVoltageLevelId = voltageLimitsOverrides.stream().collect(Collectors.groupingBy(VoltageLimitOverride::getVoltageLevelId));
+        for (Map.Entry<String, List<VoltageLimitOverride>> entry : voltageLimitOverridesPerVoltageLevelId.entrySet()) {
+            String voltageLevelId = entry.getKey();
             double nominalV = network.getVoltageLevel(voltageLevelId).getNominalV();
             double previousNormalizedLowVoltageLimit = network.getVoltageLevel(voltageLevelId).getLowVoltageLimit() / nominalV;
             double previousNormalizedHighVoltageLimit = network.getVoltageLevel(voltageLevelId).getHighVoltageLimit() / nominalV;
-
-            // get or create voltage limit override of the voltage level
+            // Get or create voltage limit override of the voltage level
             Pair<Double, Double> newLimits = normalizedVoltageLimitsOverride.containsKey(voltageLevelId) ? normalizedVoltageLimitsOverride.get(voltageLevelId)
                     : new Pair<>(previousNormalizedLowVoltageLimit, previousNormalizedHighVoltageLimit);
-            if (voltageLimitOverride.getVoltageLimitType() == VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT) {
-                double value = (voltageLimitOverride.isRelative() ? newLimits.getFirst() : 0.0) + voltageLimitOverride.getLimit() / nominalV;
-                newLimits.setFirst(value);
-            } else if (voltageLimitOverride.getVoltageLimitType() == VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT) {
-                double value = (voltageLimitOverride.isRelative() ? newLimits.getSecond() : 0.0) + voltageLimitOverride.getLimit() / nominalV;
-                newLimits.setSecond(value);
-            } else {
-                throw new UnsupportedOperationException("Unsupported voltage limit type: " + voltageLimitOverride.getVoltageLimitType());
+            for (VoltageLimitOverride voltageLimitOverride : entry.getValue()) {
+                if (voltageLimitOverride.getVoltageLimitType() == VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT) {
+                    double value = (voltageLimitOverride.isRelative() ? newLimits.getFirst() : 0.0) + voltageLimitOverride.getLimit() / nominalV;
+                    newLimits.setFirst(value);
+                } else if (voltageLimitOverride.getVoltageLimitType() == VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT) {
+                    double value = (voltageLimitOverride.isRelative() ? newLimits.getSecond() : 0.0) + voltageLimitOverride.getLimit() / nominalV;
+                    newLimits.setSecond(value);
+                } else {
+                    throw new UnsupportedOperationException("Unsupported voltage limit type: " + voltageLimitOverride.getVoltageLimitType());
+                }
             }
-
             if (newLimits.getFirst() >= newLimits.getSecond()) {
                 throw new InvalidParametersException(OVERRIDE_ON_VOLTAGE_LEVEL + voltageLevelId + " leads to low voltage limit >= high voltage limit.");
             }

@@ -100,6 +100,7 @@ public final class Reports {
                 .add();
 
             // Do not change this report key "nbVoltageLevelsWithLimitsOutOfNominalVRange", as it is used elsewhere
+
             reportLimitsOutOfRange.newReportNode()
                 .withMessageTemplate("nbVoltageLevelsWithLimitsOutOfNominalVRange", "Acceptable voltage range for ${size} voltage levels seems to be inconsistent with nominal voltage")
                 .withSeverity(TypedValue.WARN_SEVERITY)
