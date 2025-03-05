@@ -91,7 +91,7 @@ printf "%i;%i;%i;%Q;%.3f;%.1f;%.1f;%.1f;%.1f;\n",
 for {(g,n) in UNITCC diff UNITON} {
 printf "%i;%i;%i;%Q;%.3f;%i;%i%i;%i;\n",
   1,g,n,
-  unit_vregul[1,g,n], # TODO : clarify which value should be given here
+  'false',
   V[if unit_vregul[1,g,n] == "true" then unit_vregul_bus[1,g,n] else n],
   0,
   0,
