@@ -23,6 +23,8 @@ import java.util.stream.Collectors;
 
 import static com.powsybl.openreac.Reports.reportVoltageLevelsWithLimitsOutOfNominalVRange;
 
+import static com.powsybl.openreac.Reports.reportVoltageLevelsWithLimitsOutOfNominalVRange;
+
 /**
  * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
  */
@@ -62,6 +64,7 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
             double maxAllowed = VOLTAGE_LIMIT_HIGH_THRESHOLD * nominalV + VOLTAGE_LIMIT_TOLERANCE;
             if (lowLimit < minAllowed || lowLimit > maxAllowed ||
                     highLimit < minAllowed || highLimit > maxAllowed) {
+
                 voltageLevelsWithLimitsOutOfNominalVRange.put(voltageLevelId, new VoltageLevelLimitInfo(voltageLevelId, lowLimit, highLimit, nominalV));
             }
         }
@@ -77,6 +80,7 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
         Map<String, List<VoltageLimitOverride>> voltageLimitOverridesPerVoltageLevelId = voltageLimitsOverrides.stream().collect(Collectors.groupingBy(VoltageLimitOverride::getVoltageLevelId));
         for (Map.Entry<String, List<VoltageLimitOverride>> entry : voltageLimitOverridesPerVoltageLevelId.entrySet()) {
             String voltageLevelId = entry.getKey();
+          
             double nominalV = network.getVoltageLevel(voltageLevelId).getNominalV();
             double previousNormalizedLowVoltageLimit = network.getVoltageLevel(voltageLevelId).getLowVoltageLimit() / nominalV;
             double previousNormalizedHighVoltageLimit = network.getVoltageLevel(voltageLevelId).getHighVoltageLimit() / nominalV;
@@ -99,6 +103,7 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
             }
             normalizedVoltageLimitsOverride.put(voltageLevelId, newLimits);
         }
+
         checkLimitsInNominalVoltageRange(network, reportNode);
     }
 

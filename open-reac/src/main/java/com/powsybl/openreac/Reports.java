@@ -99,6 +99,8 @@ public final class Reports {
                 .withMessageTemplate("voltageLevelsLimitsOutOfNominalVRange", "Voltage levels limits out of nominal voltage range")
                 .add();
 
+            // Do not change this report key "nbVoltageLevelsWithLimitsOutOfNominalVRange", as it is used elsewhere
+
             reportLimitsOutOfRange.newReportNode()
                 .withMessageTemplate("nbVoltageLevelsWithLimitsOutOfNominalVRange", "Acceptable voltage range for ${size} voltage levels seems to be inconsistent with nominal voltage")
                 .withSeverity(TypedValue.WARN_SEVERITY)
