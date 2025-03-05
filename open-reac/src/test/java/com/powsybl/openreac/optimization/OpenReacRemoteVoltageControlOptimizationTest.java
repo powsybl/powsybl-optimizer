@@ -22,8 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Test the remote voltage control in OpenReac optimization.
- * Note that it is not taken into account in optimization model, but the output of
- * should consider this when updating voltage targets.
+ * Note that it is not taken into account in optimization model,
+ * but the output should consider it when updating voltage targets.
  *
  * @author Pierre ARVY {@literal <pierre.arvy at artelys.com>}
  */
