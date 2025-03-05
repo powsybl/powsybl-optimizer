@@ -8,6 +8,7 @@ package com.powsybl.openreac;
 
 import com.powsybl.commons.report.ReportNode;
 import com.powsybl.commons.report.TypedValue;
+import com.powsybl.openreac.parameters.input.VoltageLevelLimitInfo;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 import com.powsybl.openreac.parameters.output.network.ShuntCompensatorNetworkOutput;
 
@@ -15,6 +16,7 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * @author Joris Mancini {@literal <joris.mancini_externe at rte-france.com>}
@@ -22,7 +24,7 @@ import java.util.Locale;
 public final class Reports {
 
     private static final String NETWORK_ID = "networkId";
-    private static final DecimalFormat REACTIVE_VALUE_FORMAT = new DecimalFormat("0.0", DecimalFormatSymbols.getInstance(Locale.ROOT));
+    private static final DecimalFormat VALUE_FORMAT = new DecimalFormat("0.0", DecimalFormatSymbols.getInstance(Locale.ROOT));
 
     private Reports() {
         // Should not be instantiated
@@ -30,34 +32,34 @@ public final class Reports {
 
     public static ReportNode createOpenReacReporter(ReportNode reportNode, String networkId, OpenReacOptimisationObjective objective) {
         return reportNode.newReportNode()
-                .withMessageTemplate("openReac", "Open Reac on network '${networkId}' with ${objective} objective")
-                .withUntypedValue(NETWORK_ID, networkId)
-                .withUntypedValue("objective", objective.toString())
-                .add();
+            .withMessageTemplate("openReac", "Open Reac on network '${networkId}' with ${objective} objective")
+            .withUntypedValue(NETWORK_ID, networkId)
+            .withUntypedValue("objective", objective.toString())
+            .add();
     }
 
     public static void reportConstantQGeneratorsSize(ReportNode reportNode, int constantQGeneratorsSize) {
         reportNode.newReportNode()
-                .withMessageTemplate("constantQGeneratorsSize", "Reactive power target is considered fixed for ${size} generators")
-                .withSeverity(TypedValue.INFO_SEVERITY)
-                .withUntypedValue("size", constantQGeneratorsSize)
-                .add();
+            .withMessageTemplate("constantQGeneratorsSize", "Reactive power target is considered fixed for ${size} generators")
+            .withSeverity(TypedValue.INFO_SEVERITY)
+            .withUntypedValue("size", constantQGeneratorsSize)
+            .add();
     }
 
     public static void reportVariableTwoWindingsTransformersSize(ReportNode reportNode, int variableTwoWindingsTransformersSize) {
         reportNode.newReportNode()
-                .withMessageTemplate("variableTwoWindingsTransformersSize", "There are ${size} two-winding transformers with tap position considered as variable")
-                .withSeverity(TypedValue.INFO_SEVERITY)
-                .withUntypedValue("size", variableTwoWindingsTransformersSize)
-                .add();
+            .withMessageTemplate("variableTwoWindingsTransformersSize", "There are ${size} two-winding transformers with tap position considered as variable")
+            .withSeverity(TypedValue.INFO_SEVERITY)
+            .withUntypedValue("size", variableTwoWindingsTransformersSize)
+            .add();
     }
 
     public static void reportVariableShuntCompensatorsSize(ReportNode reportNode, int variableShuntCompensatorsSize) {
         reportNode.newReportNode()
-                .withMessageTemplate("variableShuntCompensatorsSize", "There are ${size} shunt compensators with section considered as variable")
-                .withSeverity(TypedValue.INFO_SEVERITY)
-                .withUntypedValue("size", variableShuntCompensatorsSize)
-                .add();
+            .withMessageTemplate("variableShuntCompensatorsSize", "There are ${size} shunt compensators with section considered as variable")
+            .withSeverity(TypedValue.INFO_SEVERITY)
+            .withUntypedValue("size", variableShuntCompensatorsSize)
+            .add();
     }
 
     public static ReportNode createParameterIntegrityReporter(ReportNode reportNode, String networkId) {
@@ -84,10 +86,34 @@ public final class Reports {
                     .withMessageTemplate("shuntCompensatorDeltaDiscretizedOptimizedOverThreshold", "After discretization, shunt compensator ${shuntCompensatorId} with ${maxSectionCount} available section(s) has been set to ${discretizedValue} MVar (optimal value : ${optimalValue} MVar)")
                     .withUntypedValue("shuntCompensatorId", shunt.id())
                     .withUntypedValue("maxSectionCount", shunt.maximumSectionCount())
-                    .withUntypedValue("discretizedValue", REACTIVE_VALUE_FORMAT.format(shunt.discretizedReactiveValue()))
-                    .withUntypedValue("optimalValue", REACTIVE_VALUE_FORMAT.format(shunt.optimalReactiveValue()))
+                    .withUntypedValue("discretizedValue", VALUE_FORMAT.format(shunt.discretizedReactiveValue()))
+                    .withUntypedValue("optimalValue", VALUE_FORMAT.format(shunt.optimalReactiveValue()))
                     .withSeverity(TypedValue.TRACE_SEVERITY)
                     .add());
+        }
+    }
+
+    public static void reportVoltageLevelsWithLimitsOutOfNominalVRange(ReportNode reportNode, Map<String, VoltageLevelLimitInfo> voltageLevelsWithLimitsOutOfNominalVRange) {
+        if (!voltageLevelsWithLimitsOutOfNominalVRange.isEmpty()) {
+            ReportNode reportLimitsOutOfRange = reportNode.newReportNode()
+                .withMessageTemplate("voltageLevelsLimitsOutOfNominalVRange", "Voltage levels limits out of nominal voltage range")
+                .add();
+
+            // Do not change this report key "nbVoltageLevelsWithLimitsOutOfNominalVRange", as it is used elsewhere
+            reportLimitsOutOfRange.newReportNode()
+                .withMessageTemplate("nbVoltageLevelsWithLimitsOutOfNominalVRange", "Acceptable voltage range for ${size} voltage levels seems to be inconsistent with nominal voltage")
+                .withSeverity(TypedValue.WARN_SEVERITY)
+                .withUntypedValue("size", voltageLevelsWithLimitsOutOfNominalVRange.size())
+                .add();
+
+            voltageLevelsWithLimitsOutOfNominalVRange.forEach((voltageLevelId, voltageLevelLimitInfo) -> reportLimitsOutOfRange.newReportNode()
+                .withMessageTemplate("voltageLevelWithLimitsOutOfNominalVRange", "Acceptable voltage range for voltage level ${vID} seems to be inconsistent with nominal voltage : low voltage limit = ${lowVoltageLimit} kV, high voltage limit = ${highVoltageLimit} kV, nominal voltage = ${nominalVoltage} kV")
+                .withSeverity(TypedValue.TRACE_SEVERITY)
+                .withUntypedValue("vID", voltageLevelLimitInfo.voltageLevelId())
+                .withUntypedValue("lowVoltageLimit", VALUE_FORMAT.format(voltageLevelLimitInfo.lowLimit()))
+                .withUntypedValue("highVoltageLimit", VALUE_FORMAT.format(voltageLevelLimitInfo.highLimit()))
+                .withUntypedValue("nominalVoltage", voltageLevelLimitInfo.nominalV())
+                .add());
         }
     }
 }

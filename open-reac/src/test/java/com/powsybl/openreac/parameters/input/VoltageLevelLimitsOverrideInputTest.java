@@ -9,6 +9,7 @@ package com.powsybl.openreac.parameters.input;
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.ampl.converter.AmplUtil;
 import com.powsybl.commons.PowsyblException;
+import com.powsybl.commons.report.ReportNode;
 import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
 import com.powsybl.iidm.network.Network;
@@ -22,6 +23,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -45,7 +47,7 @@ class VoltageLevelLimitsOverrideInputTest {
         voltageLimitsOverride.add(new VoltageLimitOverride("VLGEN", VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, true, -1));
         voltageLimitsOverride.add(new VoltageLimitOverride("VLGEN", VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, true, 2));
 
-        VoltageLevelLimitsOverrideInput input = new VoltageLevelLimitsOverrideInput(voltageLimitsOverride, network);
+        VoltageLevelLimitsOverrideInput input = new VoltageLevelLimitsOverrideInput(voltageLimitsOverride, network, ReportNode.NO_OP);
         StringToIntMapper<AmplSubset> mapper = AmplUtil.createMapper(network);
         try (Writer w = new StringWriter();
              BufferedWriter writer = new BufferedWriter(w)) {
@@ -71,7 +73,7 @@ class VoltageLevelLimitsOverrideInputTest {
         voltageLimitsOverride.add(new VoltageLimitOverride("VLGEN", VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, false, 20));
         voltageLimitsOverride.add(new VoltageLimitOverride("VLGEN", VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, false, 26));
 
-        VoltageLevelLimitsOverrideInput input = new VoltageLevelLimitsOverrideInput(voltageLimitsOverride, network);
+        VoltageLevelLimitsOverrideInput input = new VoltageLevelLimitsOverrideInput(voltageLimitsOverride, network, ReportNode.NO_OP);
         StringToIntMapper<AmplSubset> mapper = AmplUtil.createMapper(network);
 
         try (Writer w = new StringWriter();
@@ -183,16 +185,28 @@ class VoltageLevelLimitsOverrideInputTest {
         voltageLimitsOverride3.add(new VoltageLimitOverride(vl.getId(), VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, false, 390));
 
         // if after relative override, low limit > high limit, wrong parameters
-        InvalidParametersException e = assertThrows(InvalidParametersException.class, () -> new VoltageLevelLimitsOverrideInput(voltageLimitsOverride, network));
+        InvalidParametersException e = assertThrows(InvalidParametersException.class, () -> new VoltageLevelLimitsOverrideInput(voltageLimitsOverride, network, ReportNode.NO_OP));
         assertEquals("Override on voltage level " + vl.getId() + " leads to low voltage limit >= high voltage limit.", e.getMessage());
-        InvalidParametersException e2 = assertThrows(InvalidParametersException.class, () -> new VoltageLevelLimitsOverrideInput(voltageLimitsOverride2, network));
+        InvalidParametersException e2 = assertThrows(InvalidParametersException.class, () -> new VoltageLevelLimitsOverrideInput(voltageLimitsOverride2, network, ReportNode.NO_OP));
         assertEquals("Override on voltage level " + vl.getId() + " leads to low voltage limit >= high voltage limit.", e2.getMessage());
-        InvalidParametersException e3 = assertThrows(InvalidParametersException.class, () -> new VoltageLevelLimitsOverrideInput(voltageLimitsOverride3, network));
+        InvalidParametersException e3 = assertThrows(InvalidParametersException.class, () -> new VoltageLevelLimitsOverrideInput(voltageLimitsOverride3, network, ReportNode.NO_OP));
         assertEquals("Override on voltage level " + vl.getId() + " leads to low voltage limit >= high voltage limit.", e3.getMessage());
     }
 
+    private static boolean checkReportWithKey(String key, ReportNode reportNode) {
+        if (reportNode.getMessageKey() != null && reportNode.getMessageKey().equals(key)) {
+            return true;
+        }
+        boolean found = false;
+        Iterator<ReportNode> reportersIterator = reportNode.getChildren().iterator();
+        while (!found && reportersIterator.hasNext()) {
+            found = checkReportWithKey(key, reportersIterator.next());
+        }
+        return found;
+    }
+
     @Test
-    void testVoltageOverrideWithLowLimitGreaterThanNominalVoltage() {
+    void testVoltageOverrideWithLowLimitOutOfNominalVoltageRange() {
         Network network = IeeeCdfNetworkFactory.create57();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
 
@@ -204,13 +218,21 @@ class VoltageLevelLimitsOverrideInputTest {
         List<VoltageLimitOverride> voltageLimitsOverride = new ArrayList<>();
         voltageLimitsOverride.add(new VoltageLimitOverride(vl.getId(), VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, false, 390.));
 
-        // if after override, low limit > nominal voltage, wrong parameters
-        InvalidParametersException e = assertThrows(InvalidParametersException.class, () -> new VoltageLevelLimitsOverrideInput(voltageLimitsOverride, network));
-        assertEquals("Override on voltage level " + vl.getId() + " leads to low voltage limit > nominal voltage.", e.getMessage());
+        // if after override, low limit is in the nominal voltage range, no specific report has been created
+        ReportNode reportNode = ReportNode.newRootReportNode().withMessageTemplate("openReac", "openReac").build();
+        new VoltageLevelLimitsOverrideInput(voltageLimitsOverride, network, reportNode);
+        assertFalse(checkReportWithKey("nbVoltageLevelsWithLimitsOutOfNominalVRange", reportNode));
+
+        // if after override, low limit is out of nominal voltage range, a specific report has been created
+        reportNode = ReportNode.newRootReportNode().withMessageTemplate("openReac", "openReac").build();
+        voltageLimitsOverride.clear();
+        voltageLimitsOverride.add(new VoltageLimitOverride(vl.getId(), VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, false, 317.));
+        new VoltageLevelLimitsOverrideInput(voltageLimitsOverride, network, reportNode);
+        assertTrue(checkReportWithKey("nbVoltageLevelsWithLimitsOutOfNominalVRange", reportNode));
     }
 
     @Test
-    void testVoltageOverrideWithHighLimitLessThanNominalVoltage() {
+    void testVoltageOverrideWithHighLimitOutOfNominalVoltageRange() {
         Network network = IeeeCdfNetworkFactory.create57();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
 
@@ -220,11 +242,19 @@ class VoltageLevelLimitsOverrideInputTest {
         vl.setNominalV(380);
 
         List<VoltageLimitOverride> voltageLimitsOverride = new ArrayList<>();
-        voltageLimitsOverride.add(new VoltageLimitOverride(vl.getId(), VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, false, 360.));
+        voltageLimitsOverride.add(new VoltageLimitOverride(vl.getId(), VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, false, 420.));
 
-        // if after override, high limit < nominal voltage, wrong parameters
-        InvalidParametersException e = assertThrows(InvalidParametersException.class, () -> new VoltageLevelLimitsOverrideInput(voltageLimitsOverride, network));
-        assertEquals("Override on voltage level " + vl.getId() + " leads to high voltage limit < nominal voltage.", e.getMessage());
+        // if after override, high limit is in the nominal voltage range, no specific report has been created
+        ReportNode reportNode = ReportNode.newRootReportNode().withMessageTemplate("openReac", "openReac").build();
+        new VoltageLevelLimitsOverrideInput(voltageLimitsOverride, network, reportNode);
+        assertFalse(checkReportWithKey("nbVoltageLevelsWithLimitsOutOfNominalVRange", reportNode));
+
+        // if after override, high limit is out of nominal voltage range, a specific report has been created
+        reportNode = ReportNode.newRootReportNode().withMessageTemplate("openReac", "openReac").build();
+        voltageLimitsOverride.clear();
+        voltageLimitsOverride.add(new VoltageLimitOverride(vl.getId(), VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, false, 445.));
+        new VoltageLevelLimitsOverrideInput(voltageLimitsOverride, network, reportNode);
+        assertTrue(checkReportWithKey("nbVoltageLevelsWithLimitsOutOfNominalVRange", reportNode));
     }
 
     @Test

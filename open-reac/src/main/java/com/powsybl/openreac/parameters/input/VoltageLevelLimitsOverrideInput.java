@@ -8,13 +8,13 @@ package com.powsybl.openreac.parameters.input;
 
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.ampl.executor.AmplInputFile;
+import com.powsybl.commons.report.ReportNode;
 import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
 import com.powsybl.openreac.parameters.AmplIOUtils;
 import org.jgrapht.alg.util.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -22,6 +22,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import static com.powsybl.openreac.Reports.reportVoltageLevelsWithLimitsOutOfNominalVRange;
 
 /**
  * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
@@ -32,21 +34,44 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
 
     private final Map<String, Pair<Double, Double>> normalizedVoltageLimitsOverride;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(VoltageLevelLimitsOverrideInput.class);
     private static final String OVERRIDE_ON_VOLTAGE_LEVEL = "Override on voltage level ";
+    private static final double VOLTAGE_LIMIT_LOW_THRESHOLD = 0.85;
+    private static final double VOLTAGE_LIMIT_HIGH_THRESHOLD = 1.15;
+    private static final double VOLTAGE_LIMIT_TOLERANCE = 5;
 
-    public VoltageLevelLimitsOverrideInput(List<VoltageLimitOverride> voltageLimitsOverrides, Network network) {
+    public VoltageLevelLimitsOverrideInput(List<VoltageLimitOverride> voltageLimitsOverrides, Network network, ReportNode reportNode) {
         Objects.requireNonNull(voltageLimitsOverrides);
         Objects.requireNonNull(network);
         this.normalizedVoltageLimitsOverride = new HashMap<>();
-        transformToNormalizedVoltage(voltageLimitsOverrides, network);
+        transformToNormalizedVoltage(voltageLimitsOverrides, network, reportNode);
+    }
+
+    private void checkLimitsInNominalVoltageRange(Network network, ReportNode reportNode) {
+        // check that the limits are in the nominal voltage range [0.85 * nominal_V - 5, 1.15 * nominal_V + 5]
+        Map<String, VoltageLevelLimitInfo> voltageLevelsWithLimitsOutOfNominalVRange = new HashMap<>();
+        for (Map.Entry<String, Pair<Double, Double>> entry : normalizedVoltageLimitsOverride.entrySet()) {
+            String voltageLevelId = entry.getKey();
+            VoltageLevel voltageLevel = network.getVoltageLevel(voltageLevelId);
+            double nominalV = voltageLevel.getNominalV();
+            double lowLimit = entry.getValue().getFirst() * nominalV;
+            double highLimit = entry.getValue().getSecond() * nominalV;
+
+            if (lowLimit < VOLTAGE_LIMIT_LOW_THRESHOLD * nominalV - VOLTAGE_LIMIT_TOLERANCE ||
+                lowLimit > VOLTAGE_LIMIT_HIGH_THRESHOLD * nominalV + VOLTAGE_LIMIT_TOLERANCE ||
+                highLimit < VOLTAGE_LIMIT_LOW_THRESHOLD * nominalV - VOLTAGE_LIMIT_TOLERANCE ||
+                highLimit > VOLTAGE_LIMIT_HIGH_THRESHOLD * nominalV + VOLTAGE_LIMIT_TOLERANCE) {
+                voltageLevelsWithLimitsOutOfNominalVRange.put(voltageLevelId, new VoltageLevelLimitInfo(voltageLevelId, lowLimit, highLimit, nominalV));
+            }
+        }
+
+        reportVoltageLevelsWithLimitsOutOfNominalVRange(reportNode, voltageLevelsWithLimitsOutOfNominalVRange);
     }
 
     /**
      * voltageLimitsOverride contains absolute voltage limits.
      * This function compute limits in pair-unit quantities.
      */
-    private void transformToNormalizedVoltage(List<VoltageLimitOverride> voltageLimitsOverrides, Network network) {
+    private void transformToNormalizedVoltage(List<VoltageLimitOverride> voltageLimitsOverrides, Network network, ReportNode reportNode) {
         for (VoltageLimitOverride voltageLimitOverride : voltageLimitsOverrides) {
             // get previous voltage limit values
             String voltageLevelId = voltageLimitOverride.getVoltageLevelId();
@@ -70,24 +95,10 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
             if (newLimits.getFirst() >= newLimits.getSecond()) {
                 throw new InvalidParametersException(OVERRIDE_ON_VOLTAGE_LEVEL + voltageLevelId + " leads to low voltage limit >= high voltage limit.");
             }
-            if (newLimits.getFirst() < 0.5) {
-                LOGGER.warn("Voltage level {} has a low voltage limit lower than 0.5 PU ({} PU)", voltageLevelId, newLimits.getFirst());
-            }
-            if (newLimits.getSecond() > 1.5) {
-                LOGGER.warn("Voltage level {} has a high voltage limit greater than 1.5 PU ({} PU)", voltageLevelId, newLimits.getSecond());
-            }
             normalizedVoltageLimitsOverride.put(voltageLevelId, newLimits);
         }
 
-        for (Map.Entry<String, Pair<Double, Double>> entry : normalizedVoltageLimitsOverride.entrySet()) {
-            String voltageLevelId = entry.getKey();
-            if (entry.getValue().getFirst() > 1.) {
-                throw new InvalidParametersException(OVERRIDE_ON_VOLTAGE_LEVEL + voltageLevelId + " leads to low voltage limit > nominal voltage.");
-            }
-            if (entry.getValue().getSecond() < 1.) {
-                throw new InvalidParametersException(OVERRIDE_ON_VOLTAGE_LEVEL + voltageLevelId + " leads to high voltage limit < nominal voltage.");
-            }
-        }
+        checkLimitsInNominalVoltageRange(network, reportNode);
     }
 
     @Override

@@ -65,3 +65,7 @@ In addition to the elements specified in section [Configuration of the run](#con
 
 Format of `ampl_network_substations_override.txt`: 4 columns  
 \#"num" "minV (pu)" "maxV (pu)" "id"
+
+When overriding the voltage limits, checks are also done to verify, for each voltage level, that "minV (kV)" and "maxV (kV)" are in the following range : $[0.85 * Vnom - 5, 1.15 * Vnom + 5]$
+
+If it's not the case, reports are created to indicate the number of voltage levels concerned, and the detailed information for each of these voltage levels.
