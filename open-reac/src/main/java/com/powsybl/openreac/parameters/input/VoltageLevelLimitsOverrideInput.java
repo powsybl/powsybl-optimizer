@@ -11,7 +11,6 @@ import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.commons.report.ReportNode;
 import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.iidm.network.Network;
-import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
 import com.powsybl.openreac.parameters.AmplIOUtils;
 import org.jgrapht.alg.util.Pair;
@@ -54,21 +53,25 @@ public class VoltageLevelLimitsOverrideInput implements AmplInputFile {
     private void checkLimitsInNominalVoltageRange(Network network, ReportNode reportNode) {
         // check that the limits are in the nominal voltage range [0.85 * nominal_V - 5, 1.15 * nominal_V + 5]
         Map<String, VoltageLevelLimitInfo> voltageLevelsWithLimitsOutOfNominalVRange = new HashMap<>();
-        for (Map.Entry<String, Pair<Double, Double>> entry : normalizedVoltageLimitsOverride.entrySet()) {
-            String voltageLevelId = entry.getKey();
-            VoltageLevel voltageLevel = network.getVoltageLevel(voltageLevelId);
+        network.getVoltageLevelStream().forEach(voltageLevel -> {
+            String voltageLevelId = voltageLevel.getId();
             double nominalV = voltageLevel.getNominalV();
-            double lowLimit = entry.getValue().getFirst() * nominalV;
-            double highLimit = entry.getValue().getSecond() * nominalV;
+            double lowLimit = voltageLevel.getLowVoltageLimit();
+            double highLimit = voltageLevel.getHighVoltageLimit();
+
+            Pair<Double, Double> limitsOverride = normalizedVoltageLimitsOverride.get(voltageLevelId);
+            if (limitsOverride != null) {
+                lowLimit = limitsOverride.getFirst() * nominalV;
+                highLimit = limitsOverride.getSecond() * nominalV;
+            }
 
             double minAllowed = VOLTAGE_LIMIT_LOW_THRESHOLD * nominalV - VOLTAGE_LIMIT_TOLERANCE;
             double maxAllowed = VOLTAGE_LIMIT_HIGH_THRESHOLD * nominalV + VOLTAGE_LIMIT_TOLERANCE;
             if (lowLimit < minAllowed || lowLimit > maxAllowed ||
-                    highLimit < minAllowed || highLimit > maxAllowed) {
-
+                highLimit < minAllowed || highLimit > maxAllowed) {
                 voltageLevelsWithLimitsOutOfNominalVRange.put(voltageLevelId, new VoltageLevelLimitInfo(voltageLevelId, lowLimit, highLimit, nominalV));
             }
-        }
+        });
 
         reportVoltageLevelsWithLimitsOutOfNominalVRange(reportNode, voltageLevelsWithLimitsOutOfNominalVRange);
     }
