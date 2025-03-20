@@ -589,9 +589,7 @@ public class OpenReacParameters {
         if (!integrityVoltageLevelLimits || !integrityVoltageLimitOverrides) {
             if (!voltageLevelsWithMissingLimits.isEmpty()) {
                 Reports.reportNbVoltageLevelsWithMissingLimits(reportNode, voltageLevelsWithMissingLimits.size());
-                voltageLevelsWithMissingLimits.forEach((vlId, value) -> {
-                    Reports.reportMissingLimitsOnVoltageLevel(reportNode, getMessageKey(value), vlId);
-                });
+                voltageLevelsWithMissingLimits.forEach((vlId, value) -> Reports.reportMissingLimitsOnVoltageLevel(reportNode, getMessageKey(value), vlId));
             }
             if (!voltageLevelsWithInconsistentLimits.isEmpty()) {
                 Reports.reportNbVoltageLevelsWithInconsistentLimits(reportNode, voltageLevelsWithInconsistentLimits.size());
