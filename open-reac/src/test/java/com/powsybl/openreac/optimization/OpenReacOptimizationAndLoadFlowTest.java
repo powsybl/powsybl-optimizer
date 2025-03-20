@@ -8,6 +8,7 @@ package com.powsybl.openreac.optimization;
 
 import com.powsybl.commons.report.ReportNode;
 import com.powsybl.commons.report.TypedValue;
+import com.powsybl.commons.test.PowsyblCoreTestReportResourceBundle;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.computation.local.LocalCommandExecutor;
 import com.powsybl.computation.local.LocalComputationConfig;
@@ -99,18 +100,18 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
 
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.addVariableShuntCompensators(List.of(shunt.getId()));
-        ReportNode reportNode = ReportNode.newRootReportNode().withMessageTemplate("openReac", "openReac").build();
+        ReportNode reportNode = ReportNode.newRootReportNode().withResourceBundles(PowsyblCoreTestReportResourceBundle.TEST_BASE_NAME).withMessageTemplate("optimizer.openreac.openReac").build();
         testAllModifAndLoadFlow(network, "optimization/loadflow/openreac-output-shunt", parameters, reportNode);
 
         assertEquals(3, reportNode.getChildren().size());
         ReportNode reportShunts = reportNode.getChildren().get(2);
         assertEquals(2, reportShunts.getChildren().size());
-        assertEquals("shuntCompensatorDeltaOverThresholdCount", reportShunts.getChildren().get(0).getMessageKey());
+        assertEquals("optimizer.openreac.shuntCompensatorDeltaOverThresholdCount", reportShunts.getChildren().get(0).getMessageKey());
         Map<String, TypedValue> values = reportShunts.getChildren().get(0).getValues();
         assertEquals("1", values.get("shuntsCount").toString());
         assertEquals(TypedValue.INFO_SEVERITY.getValue(), values.get("reportSeverity").toString());
 
-        assertEquals("shuntCompensatorDeltaDiscretizedOptimizedOverThreshold", reportShunts.getChildren().get(1).getMessageKey());
+        assertEquals("optimizer.openreac.shuntCompensatorDeltaDiscretizedOptimizedOverThreshold", reportShunts.getChildren().get(1).getMessageKey());
         values = reportShunts.getChildren().get(1).getValues();
         assertEquals("SHUNT", values.get("shuntCompensatorId").toString());
         assertEquals("25", values.get("maxSectionCount").toString());
@@ -132,7 +133,7 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.setShuntCompensatorActivationAlertThreshold(100.);
         parameters.addVariableShuntCompensators(List.of(shunt.getId()));
-        ReportNode reportNode = ReportNode.newRootReportNode().withMessageTemplate("openReac", "openReac").build();
+        ReportNode reportNode = ReportNode.newRootReportNode().withResourceBundles(PowsyblCoreTestReportResourceBundle.TEST_BASE_NAME).withMessageTemplate("optimizer.openreac.openReac").build();
         testAllModifAndLoadFlow(network, "optimization/loadflow/openreac-output-shunt", parameters, reportNode);
 
         assertEquals(2, reportNode.getChildren().size());
