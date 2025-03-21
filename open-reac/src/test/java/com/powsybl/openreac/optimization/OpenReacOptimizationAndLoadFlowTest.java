@@ -8,13 +8,15 @@ package com.powsybl.openreac.optimization;
 
 import com.powsybl.commons.report.ReportNode;
 import com.powsybl.commons.report.TypedValue;
-import com.powsybl.commons.test.PowsyblCoreTestReportResourceBundle;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.computation.local.LocalCommandExecutor;
 import com.powsybl.computation.local.LocalComputationConfig;
 import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
-import com.powsybl.iidm.network.*;
+import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.RatioTapChanger;
+import com.powsybl.iidm.network.ShuntCompensator;
+import com.powsybl.iidm.network.StaticVarCompensator;
 import com.powsybl.openreac.OpenReacConfig;
 import com.powsybl.openreac.OpenReacRunner;
 import com.powsybl.openreac.network.HvdcNetworkFactory;
@@ -32,7 +34,6 @@ import java.util.concurrent.ForkJoinPool;
 
 import static com.powsybl.openreac.network.ShuntNetworkFactory.createWithLinearModel;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
@@ -100,7 +101,7 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
 
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.addVariableShuntCompensators(List.of(shunt.getId()));
-        ReportNode reportNode = ReportNode.newRootReportNode().withResourceBundles(PowsyblCoreTestReportResourceBundle.TEST_BASE_NAME).withMessageTemplate("optimizer.openreac.openReac").build();
+        ReportNode reportNode = ReportNode.newRootReportNode().withAllResourceBundlesFromClasspath().withMessageTemplate("optimizer.openreac.openReac").build();
         testAllModifAndLoadFlow(network, "optimization/loadflow/openreac-output-shunt", parameters, reportNode);
 
         assertEquals(3, reportNode.getChildren().size());
@@ -133,7 +134,7 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.setShuntCompensatorActivationAlertThreshold(100.);
         parameters.addVariableShuntCompensators(List.of(shunt.getId()));
-        ReportNode reportNode = ReportNode.newRootReportNode().withResourceBundles(PowsyblCoreTestReportResourceBundle.TEST_BASE_NAME).withMessageTemplate("optimizer.openreac.openReac").build();
+        ReportNode reportNode = ReportNode.newRootReportNode().withAllResourceBundlesFromClasspath().withMessageTemplate("optimizer.openreac.openReac").build();
         testAllModifAndLoadFlow(network, "optimization/loadflow/openreac-output-shunt", parameters, reportNode);
 
         assertEquals(2, reportNode.getChildren().size());

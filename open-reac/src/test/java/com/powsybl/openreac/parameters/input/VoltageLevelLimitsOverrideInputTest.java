@@ -10,7 +10,6 @@ import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.ampl.converter.AmplUtil;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.report.ReportNode;
-import com.powsybl.commons.test.PowsyblCoreTestReportResourceBundle;
 import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
 import com.powsybl.iidm.network.Network;
@@ -244,12 +243,12 @@ class VoltageLevelLimitsOverrideInputTest {
         voltageLimitsOverride.add(new VoltageLimitOverride(vl.getId(), VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, false, 390.));
 
         // if after override, low limit is in the nominal voltage range, no specific report has been created
-        ReportNode reportNode = ReportNode.newRootReportNode().withResourceBundles(PowsyblCoreTestReportResourceBundle.TEST_BASE_NAME).withMessageTemplate("optimizer.openreac.openReac").build();
+        ReportNode reportNode = ReportNode.newRootReportNode().withAllResourceBundlesFromClasspath().withMessageTemplate("optimizer.openreac.openReac").build();
         new VoltageLevelLimitsOverrideInput(voltageLimitsOverride, network, reportNode);
         assertFalse(checkReportWithKey("optimizer.openreac.nbVoltageLevelsWithLimitsOutOfNominalVRange", reportNode));
 
         // if after override, low limit is out of nominal voltage range, a specific report has been created
-        reportNode = ReportNode.newRootReportNode().withResourceBundles(PowsyblCoreTestReportResourceBundle.TEST_BASE_NAME).withMessageTemplate("optimizer.openreac.openReac").build();
+        reportNode = ReportNode.newRootReportNode().withAllResourceBundlesFromClasspath().withMessageTemplate("optimizer.openreac.openReac").build();
         voltageLimitsOverride.clear();
         voltageLimitsOverride.add(new VoltageLimitOverride(vl.getId(), VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, false, 317.));
         new VoltageLevelLimitsOverrideInput(voltageLimitsOverride, network, reportNode);
@@ -270,12 +269,12 @@ class VoltageLevelLimitsOverrideInputTest {
         voltageLimitsOverride.add(new VoltageLimitOverride(vl.getId(), VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, false, 420.));
 
         // if after override, high limit is in the nominal voltage range, no specific report has been created
-        ReportNode reportNode = ReportNode.newRootReportNode().withResourceBundles(PowsyblCoreTestReportResourceBundle.TEST_BASE_NAME).withMessageTemplate("optimizer.openreac.openReac").build();
+        ReportNode reportNode = ReportNode.newRootReportNode().withAllResourceBundlesFromClasspath().withMessageTemplate("optimizer.openreac.openReac").build();
         new VoltageLevelLimitsOverrideInput(voltageLimitsOverride, network, reportNode);
         assertFalse(checkReportWithKey("optimizer.openreac.nbVoltageLevelsWithLimitsOutOfNominalVRange", reportNode));
 
         // if after override, high limit is out of nominal voltage range, a specific report has been created
-        reportNode = ReportNode.newRootReportNode().withResourceBundles(PowsyblCoreTestReportResourceBundle.TEST_BASE_NAME).withMessageTemplate("optimizer.openreac.openReac").build();
+        reportNode = ReportNode.newRootReportNode().withAllResourceBundlesFromClasspath().withMessageTemplate("optimizer.openreac.openReac").build();
         voltageLimitsOverride.clear();
         voltageLimitsOverride.add(new VoltageLimitOverride(vl.getId(), VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, false, 445.));
         new VoltageLevelLimitsOverrideInput(voltageLimitsOverride, network, reportNode);
