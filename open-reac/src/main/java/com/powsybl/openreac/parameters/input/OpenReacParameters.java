@@ -589,7 +589,7 @@ public class OpenReacParameters {
         if (!integrityVoltageLevelLimits || !integrityVoltageLimitOverrides) {
             if (!voltageLevelsWithMissingLimits.isEmpty()) {
                 Reports.reportNbVoltageLevelsWithMissingLimits(reportNode, voltageLevelsWithMissingLimits.size());
-                voltageLevelsWithMissingLimits.forEach((vlId, value) -> Reports.reportMissingLimitsOnVoltageLevel(reportNode, getMessageKey(value), vlId));
+                voltageLevelsWithMissingLimits.forEach((vlId, value) -> Reports.reportMissingLimitsOnVoltageLevel(reportNode, getMissingLimitsMessageKey(value), vlId));
             }
             if (!voltageLevelsWithInconsistentLimits.isEmpty()) {
                 Reports.reportNbVoltageLevelsWithInconsistentLimits(reportNode, voltageLevelsWithInconsistentLimits.size());
@@ -604,7 +604,11 @@ public class OpenReacParameters {
         }
     }
 
-    private static String getMessageKey(Pair<Integer, Integer> value) {
+    private static String getMissingLimitsMessageKey(Pair<Integer, Integer> value) {
+        // Determining the message key for missing limits according to value
+        // If the left value is superior to 0, the lower limit is missing
+        // If the right value is superior to 0, the upper limit is missing
+
         int leftLimit = value.getLeft();
         int rightLimit = value.getRight();
 
