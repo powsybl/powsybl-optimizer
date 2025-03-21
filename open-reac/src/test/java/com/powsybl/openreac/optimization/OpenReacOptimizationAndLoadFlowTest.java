@@ -13,7 +13,10 @@ import com.powsybl.computation.local.LocalCommandExecutor;
 import com.powsybl.computation.local.LocalComputationConfig;
 import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
-import com.powsybl.iidm.network.*;
+import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.RatioTapChanger;
+import com.powsybl.iidm.network.ShuntCompensator;
+import com.powsybl.iidm.network.StaticVarCompensator;
 import com.powsybl.openreac.OpenReacConfig;
 import com.powsybl.openreac.OpenReacRunner;
 import com.powsybl.openreac.network.HvdcNetworkFactory;
@@ -31,7 +34,6 @@ import java.util.concurrent.ForkJoinPool;
 
 import static com.powsybl.openreac.network.ShuntNetworkFactory.createWithLinearModel;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
@@ -99,18 +101,18 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
 
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.addVariableShuntCompensators(List.of(shunt.getId()));
-        ReportNode reportNode = ReportNode.newRootReportNode().withMessageTemplate("openReac", "openReac").build();
+        ReportNode reportNode = ReportNode.newRootReportNode().withAllResourceBundlesFromClasspath().withMessageTemplate("optimizer.openreac.openReac").build();
         testAllModifAndLoadFlow(network, "optimization/loadflow/openreac-output-shunt", parameters, reportNode);
 
         assertEquals(3, reportNode.getChildren().size());
         ReportNode reportShunts = reportNode.getChildren().get(2);
         assertEquals(2, reportShunts.getChildren().size());
-        assertEquals("shuntCompensatorDeltaOverThresholdCount", reportShunts.getChildren().get(0).getMessageKey());
+        assertEquals("optimizer.openreac.shuntCompensatorDeltaOverThresholdCount", reportShunts.getChildren().get(0).getMessageKey());
         Map<String, TypedValue> values = reportShunts.getChildren().get(0).getValues();
         assertEquals("1", values.get("shuntsCount").toString());
         assertEquals(TypedValue.INFO_SEVERITY.getValue(), values.get("reportSeverity").toString());
 
-        assertEquals("shuntCompensatorDeltaDiscretizedOptimizedOverThreshold", reportShunts.getChildren().get(1).getMessageKey());
+        assertEquals("optimizer.openreac.shuntCompensatorDeltaDiscretizedOptimizedOverThreshold", reportShunts.getChildren().get(1).getMessageKey());
         values = reportShunts.getChildren().get(1).getValues();
         assertEquals("SHUNT", values.get("shuntCompensatorId").toString());
         assertEquals("25", values.get("maxSectionCount").toString());
@@ -132,7 +134,7 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.setShuntCompensatorActivationAlertThreshold(100.);
         parameters.addVariableShuntCompensators(List.of(shunt.getId()));
-        ReportNode reportNode = ReportNode.newRootReportNode().withMessageTemplate("openReac", "openReac").build();
+        ReportNode reportNode = ReportNode.newRootReportNode().withAllResourceBundlesFromClasspath().withMessageTemplate("optimizer.openreac.openReac").build();
         testAllModifAndLoadFlow(network, "optimization/loadflow/openreac-output-shunt", parameters, reportNode);
 
         assertEquals(2, reportNode.getChildren().size());
