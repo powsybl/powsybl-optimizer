@@ -1,4 +1,6 @@
-package reports; /**
+package com.powsybl.optimizer.commons.report;
+
+/**
  * Copyright (c) 2025, RTE (http://www.rte-france.com)
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,9 +16,9 @@ import com.powsybl.commons.report.ReportResourceBundle;
  */
 
 @AutoService(ReportResourceBundle.class)
-public class PowsyblOptimizerReportResourceBundle implements ReportResourceBundle {
+public final class PowsyblOptimizerReportResourceBundle implements ReportResourceBundle {
 
-    public static final String BASE_NAME = "com.powsybl.optimizer.commons";
+    public static final String BASE_NAME = "com.powsybl.optimizer.commons.reports";
 
     public String getBaseName() {
         return BASE_NAME;
