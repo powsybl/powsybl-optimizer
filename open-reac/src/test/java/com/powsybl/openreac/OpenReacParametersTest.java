@@ -324,6 +324,14 @@ class OpenReacParametersTest {
     }
 
     @Test
+    void testIsOptimizationAfterRounding() {
+        OpenReacParameters parameters = new OpenReacParameters();
+        assertTrue(parameters.isOptimizationAfterRounding());
+        parameters.setOptimizationAfterRounding(false);
+        assertFalse(parameters.isOptimizationAfterRounding());
+    }
+
+    @Test
     void testAlgorithmParams() {
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE);
@@ -348,9 +356,10 @@ class OpenReacParametersTest {
         parameters.setReactiveSlackVariableScalingFactor(1e-2);
         parameters.setTwoWindingTransformerRatioVariableScalingFactor(0.0001);
         parameters.setShuntVariableScalingFactor(3e-2);
+        parameters.setOptimizationAfterRounding(false);
 
         List<OpenReacAlgoParam> algoParams = parameters.getAllAlgorithmParams();
-        assertEquals(22, algoParams.size());
+        assertEquals(23, algoParams.size());
         assertEquals("2", algoParams.get(0).getValue());
         assertEquals("0.4", algoParams.get(1).getValue());
         assertEquals("DEBUG", algoParams.get(2).getValue());
@@ -373,6 +382,7 @@ class OpenReacParametersTest {
         assertEquals("0.01", algoParams.get(19).getValue());
         assertEquals("1.0E-4", algoParams.get(20).getValue());
         assertEquals("0.03", algoParams.get(21).getValue());
+        assertEquals("false", algoParams.get(22).getValue());
     }
 
     @Test
@@ -413,6 +423,7 @@ class OpenReacParametersTest {
         assertEquals(1e-1, parameters.getReactiveSlackVariableScalingFactor());
         assertEquals(1e-3, parameters.getTwoWindingTransformerRatioVariableScalingFactor());
         assertEquals(1e-1, parameters.getShuntVariableScalingFactor());
+        assertTrue(parameters.isOptimizationAfterRounding());
         assertTrue(parameters.checkAlgorithmParametersIntegrity());
     }
 
@@ -425,7 +436,7 @@ class OpenReacParametersTest {
         assertEquals(0, parameters.getConstantQGenerators().size(), "ConstantQGenerators should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getVariableShuntCompensators().size(), "VariableShuntCompensators should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getConfiguredReactiveSlackBuses().size(), "ConfiguredReactiveSlackBuses should be empty when using default OpenReacParameter constructor.");
-        assertEquals(21, parameters.getAllAlgorithmParams().size());
+        assertEquals(22, parameters.getAllAlgorithmParams().size());
     }
 
     @Test
