@@ -1,0 +1,37 @@
+###############################################################################
+#
+# Copyright (c) 2022 2023 2024, RTE (http://www.rte-france.com)
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+# SPDX-License-Identifier: MPL-2.0
+#
+###############################################################################
+
+###############################################################################
+# Reactive OPF
+# Author:  Jean Maeght 2022 2023
+# Author:  Manuel Ruiz 2023 2024
+###############################################################################
+
+# Round all the taps of the optimized transformers
+for{(qq,m,n) in BRANCHCC_REGL_VAR}{
+    let temp1 := min{(1,regl_table[1,branch_ptrRegl[1,qq,m,n]],tap) in TAPS}
+            abs(branch_Ror_var[qq,m,n]-tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],tap]);
+    let temp2 := min{(1,regl_table[1,branch_ptrRegl[1,qq,m,n]],tap) in TAPS:
+            abs(branch_Ror_var[qq,m,n]-tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],tap])<=1.00001*temp1}tap;
+
+    # TODO : update string
+    printf{LOG_DEBUG} "Due to rounding, rtc %s transformer ratio := %.3f, rounded := %.3f\n",   branch_id[1,qq,m,n], branch_Ror_var[qq,m,n],  tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],temp2];
+    let branch_Ror_var[qq,m,n] := tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],temp2]; # the variable is rounded to closest tap
+}
+# fix all variable transformer ratio for next optimization
+fix{(qq,m,n) in BRANCHCC_REGL_VAR} branch_Ror_var[qq,m,n];
+
+# TODO : ensure the value is coherent ?
+
+# solves acopf with new transformer ratios
+solve problem_acopf_objective;
+
+# TODO : in the indicators, due we have to update the way of calculating them ??
+# or compute new indicators ?

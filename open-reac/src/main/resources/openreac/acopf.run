@@ -66,6 +66,10 @@ if (log_level_knitro <= 1) then {
   solve problem_acopf_objective;
 }
 
+# if user asks for 2 optimizations, round the taps of all optimized transformers and conduct another optimization
+if optimization_after_rounding and card(BRANCHCC_REGL_VAR) > 0 then {
+    include "acopf_2nd.run";
+}
 
 let nb_iter_last := problem_acopf_objective.numiters;
 let nb_iter_total := nb_iter_total + nb_iter_last;
