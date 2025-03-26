@@ -14,18 +14,23 @@
 # Author:  Manuel Ruiz 2023 2024
 ###############################################################################
 
+printf{LOG_DEBUG} "\n* Rounding the transformers taps\n";
 # Round all the taps of the optimized transformers
 for{(qq,m,n) in BRANCHCC_REGL_VAR}{
     let temp1 := min{(1,regl_table[1,branch_ptrRegl[1,qq,m,n]],tap) in TAPS}
             abs(branch_Ror_var[qq,m,n]-tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],tap]);
     let temp2 := min{(1,regl_table[1,branch_ptrRegl[1,qq,m,n]],tap) in TAPS:
-            abs(branch_Ror_var[qq,m,n]-tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],tap])<=1.00001*temp1}tap;
+            abs(branch_Ror_var[qq,m,n]-tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],tap])<=1.00001*temp1}tap; # closest tap
+    let temp1 := tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],temp2]; # transformer ratio of closest tap
 
-    # TODO : update string
-    printf{LOG_DEBUG} "Due to rounding, rtc %s transformer ratio := %.3f, rounded := %.3f\n",   branch_id[1,qq,m,n], branch_Ror_var[qq,m,n],  tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],temp2];
-    let branch_Ror_var[qq,m,n] := tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],temp2]; # the variable is rounded to closest tap
+    printf{LOG_DEBUG} "REGL=%Q ptrRegl=%i regl_table=%i Ror_var=%f -> tap=%i tap_ratio=%f err=%f\n",
+        branch_id[1,qq,m,n],branch_ptrRegl[1,qq,m,n],regl_table[1,branch_ptrRegl[1,qq,m,n]],
+        branch_Ror_var[qq,m,n], temp2, temp1,
+        abs(branch_Ror_var[qq,m,n]-temp1);
+    let branch_Ror_var[qq,m,n] := temp1;
 }
-# fix all variable transformer ratio for next optimization
+
+printf{LOG_DEBUG} "* Fixing all variable transformer ratios in next optimization\n\n";
 fix{(qq,m,n) in BRANCHCC_REGL_VAR} branch_Ror_var[qq,m,n];
 
 # TODO : ensure the value is coherent ?
