@@ -19,5 +19,5 @@ default_constraint_scaling_factor 1.0
 reactive_slack_variable_scaling_factor 0.1
 transformer_ratio_variable_scaling_factor 0.001
 shunt_variable_scaling_factor 0.1
-optimization_after_rounding true
+optimization_after_rounding false
 

@@ -326,9 +326,9 @@ class OpenReacParametersTest {
     @Test
     void testIsOptimizationAfterRounding() {
         OpenReacParameters parameters = new OpenReacParameters();
-        assertTrue(parameters.isOptimizationAfterRounding());
-        parameters.setOptimizationAfterRounding(false);
         assertFalse(parameters.isOptimizationAfterRounding());
+        parameters.setOptimizationAfterRounding(true);
+        assertTrue(parameters.isOptimizationAfterRounding());
     }
 
     @Test
@@ -356,7 +356,7 @@ class OpenReacParametersTest {
         parameters.setReactiveSlackVariableScalingFactor(1e-2);
         parameters.setTwoWindingTransformerRatioVariableScalingFactor(0.0001);
         parameters.setShuntVariableScalingFactor(3e-2);
-        parameters.setOptimizationAfterRounding(false);
+        parameters.setOptimizationAfterRounding(true);
 
         List<OpenReacAlgoParam> algoParams = parameters.getAllAlgorithmParams();
         assertEquals(23, algoParams.size());
@@ -382,7 +382,7 @@ class OpenReacParametersTest {
         assertEquals("0.01", algoParams.get(19).getValue());
         assertEquals("1.0E-4", algoParams.get(20).getValue());
         assertEquals("0.03", algoParams.get(21).getValue());
-        assertEquals("false", algoParams.get(22).getValue());
+        assertEquals("true", algoParams.get(22).getValue());
     }
 
     @Test
@@ -423,7 +423,7 @@ class OpenReacParametersTest {
         assertEquals(1e-1, parameters.getReactiveSlackVariableScalingFactor());
         assertEquals(1e-3, parameters.getTwoWindingTransformerRatioVariableScalingFactor());
         assertEquals(1e-1, parameters.getShuntVariableScalingFactor());
-        assertTrue(parameters.isOptimizationAfterRounding());
+        assertFalse(parameters.isOptimizationAfterRounding());
         assertTrue(parameters.checkAlgorithmParametersIntegrity());
     }
 

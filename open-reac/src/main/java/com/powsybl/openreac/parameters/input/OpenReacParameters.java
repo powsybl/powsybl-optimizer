@@ -124,7 +124,7 @@ public class OpenReacParameters {
 
     private static final String OPTIMIZATION_AFTER_ROUNDING = "optimization_after_rounding";
 
-    private boolean optimizationAfterRounding = true;
+    private boolean optimizationAfterRounding = false;
 
     // Shunt compensator alert threshold
     // (to help reporting the shunt compensators with a delta between optimized and discretized reactive value over this threshold in MVar)

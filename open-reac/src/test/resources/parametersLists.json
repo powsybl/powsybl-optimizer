@@ -46,5 +46,5 @@
   "reactiveSlackVariableScalingFactor" : 0.1,
   "twoWindingTransformerRatioVariableScalingFactor" : 0.001,
   "shuntVariableScalingFactor" : 0.1,
-  "optimizationAfterRounding" : true
+  "optimizationAfterRounding" : false
 }

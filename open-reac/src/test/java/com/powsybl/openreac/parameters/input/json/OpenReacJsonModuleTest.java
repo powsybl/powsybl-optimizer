@@ -22,8 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
@@ -97,7 +96,7 @@ class OpenReacJsonModuleTest {
         parameters.setDefaultConstraintScalingFactor(0.888);
         parameters.setReactiveSlackVariableScalingFactor(1e-2);
         parameters.setTwoWindingTransformerRatioVariableScalingFactor(0.005);
-        parameters.setOptimizationAfterRounding(false);
+        parameters.setOptimizationAfterRounding(true);
 
         String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(parameters);
         ComparisonUtils.assertTxtEquals(Objects.requireNonNull(getClass().getResourceAsStream("/parametersThresholds.json")), json);
@@ -124,6 +123,6 @@ class OpenReacJsonModuleTest {
         assertEquals(0.888, parameters2.getDefaultConstraintScalingFactor());
         assertEquals(1e-2, parameters2.getReactiveSlackVariableScalingFactor());
         assertEquals(0.005, parameters2.getTwoWindingTransformerRatioVariableScalingFactor());
-        assertFalse(parameters2.isOptimizationAfterRounding());
+        assertTrue(parameters2.isOptimizationAfterRounding());
     }
 }
