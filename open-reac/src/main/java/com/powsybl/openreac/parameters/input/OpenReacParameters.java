@@ -7,9 +7,9 @@
 package com.powsybl.openreac.parameters.input;
 
 import com.powsybl.commons.report.ReportNode;
-import com.powsybl.commons.report.TypedValue;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VoltageLevel;
+import com.powsybl.openreac.Reports;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
 import com.powsybl.openreac.parameters.input.algo.*;
 import org.apache.commons.lang3.tuple.Pair;
@@ -605,11 +605,7 @@ public class OpenReacParameters {
 
         if (!integrityVoltageLevelLimits || !integrityVoltageLimitOverrides) {
             if (!voltageLevelsWithMissingLimits.isEmpty()) {
-                reportNode.newReportNode()
-                    .withMessageTemplate("nbVoltageLevelsWithMissingLimits", "${size} voltage level(s) have undefined low and/or high voltage limits")
-                    .withSeverity(TypedValue.ERROR_SEVERITY)
-                    .withUntypedValue("size", voltageLevelsWithMissingLimits.size())
-                    .add();
+                Reports.reportNbVoltageLevelsWithMissingLimits(reportNode, voltageLevelsWithMissingLimits.size());
                 voltageLevelsWithMissingLimits.forEach((key, value) -> {
                     String messageKey = "voltageLevelWithBothLimitsMissing";
                     String messageSuffix = "has undefined low and high voltage limits";
@@ -620,26 +616,12 @@ public class OpenReacParameters {
                         messageKey = "voltageLevelWithLowerLimitMissing";
                         messageSuffix = "has undefined low voltage limit";
                     }
-                    reportNode.newReportNode()
-                        .withMessageTemplate(messageKey, "${vlId} " + messageSuffix)
-                        .withSeverity(TypedValue.TRACE_SEVERITY)
-                        .withUntypedValue("vlId", key)
-                        .add();
+                    Reports.reportMissingLimitsOnVoltageLevel(reportNode, messageKey, key, messageSuffix);
                 });
             }
             if (!voltageLevelsWithInconsistentLimits.isEmpty()) {
-                reportNode.newReportNode()
-                    .withMessageTemplate("nbVoltageLevelsWithInconsistentLimits", "${size} voltage level(s) have inconsistent low and/or high voltage limits")
-                    .withSeverity(TypedValue.ERROR_SEVERITY)
-                    .withUntypedValue("size", voltageLevelsWithInconsistentLimits.size())
-                    .add();
-                voltageLevelsWithInconsistentLimits.forEach((key, value) -> reportNode.newReportNode()
-                    .withMessageTemplate("voltageLevelWithInconsistentLimits", "${vlId} has one or two inconsistent voltage limits (low voltage limit = ${low}, high voltage limit = ${high})")
-                    .withSeverity(TypedValue.TRACE_SEVERITY)
-                    .withUntypedValue("vlId", key)
-                    .withUntypedValue("low", value.getLeft())
-                    .withUntypedValue("high", value.getRight())
-                    .add());
+                Reports.reportNbVoltageLevelsWithInconsistentLimits(reportNode, voltageLevelsWithInconsistentLimits.size());
+                voltageLevelsWithInconsistentLimits.forEach((key, value) -> Reports.reportInconsistentLimitsOnVoltageLevel(reportNode, key, value));
             }
 
             if (!integrityVoltageLevelLimits) {
