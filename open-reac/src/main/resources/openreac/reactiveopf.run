@@ -290,7 +290,7 @@ if "shunt_variable_scaling_factor" in PARAM_ALGO_KEYS then let shunt_variable_sc
 printf{LOG_INFO} "Parameter: scaling factor for shunt variables := %.3f\n",shunt_variable_scaling_factor;
 check shunt_variable_scaling_factor > 0;
 
-param optimization_after_rounding default 'false';
+param optimization_after_rounding symbolic default "true";
 if "optimization_after_rounding" in PARAM_ALGO_KEYS then let optimization_after_rounding := PARAM_ALGO_VALUES["optimization_after_rounding"];
 printf{LOG_INFO} "Parameter: optimization after rounding := %s\n", optimization_after_rounding;
 check optimization_after_rounding in {"false", "true"}; # boolean value
