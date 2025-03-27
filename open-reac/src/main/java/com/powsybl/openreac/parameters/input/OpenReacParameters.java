@@ -589,18 +589,7 @@ public class OpenReacParameters {
         if (!integrityVoltageLevelLimits || !integrityVoltageLimitOverrides) {
             if (!voltageLevelsWithMissingLimits.isEmpty()) {
                 Reports.reportNbVoltageLevelsWithMissingLimits(reportNode, voltageLevelsWithMissingLimits.size());
-                voltageLevelsWithMissingLimits.forEach((key, value) -> {
-                    String messageKey = "voltageLevelWithBothLimitsMissing";
-                    String messageSuffix = "has undefined low and high voltage limits";
-                    if (value.getLeft() == 0) {
-                        messageKey = "voltageLevelWithUpperLimitMissing";
-                        messageSuffix = "has undefined high voltage limit";
-                    } else if (value.getRight() == 0) {
-                        messageKey = "voltageLevelWithLowerLimitMissing";
-                        messageSuffix = "has undefined low voltage limit";
-                    }
-                    Reports.reportMissingLimitsOnVoltageLevel(reportNode, messageKey, key, messageSuffix);
-                });
+                voltageLevelsWithMissingLimits.forEach((vlId, value) -> Reports.reportMissingLimitsOnVoltageLevel(reportNode, getMissingLimitsMessageKey(value), vlId));
             }
             if (!voltageLevelsWithInconsistentLimits.isEmpty()) {
                 Reports.reportNbVoltageLevelsWithInconsistentLimits(reportNode, voltageLevelsWithInconsistentLimits.size());
@@ -613,6 +602,25 @@ public class OpenReacParameters {
                 throw new InvalidParametersException("At least one voltage limit override is inconsistent.");
             }
         }
+    }
+
+    private static String getMissingLimitsMessageKey(Pair<Integer, Integer> value) {
+        // Determining the message key for missing limits according to value
+        // If the left value is superior to 0, the lower limit is missing
+        // If the right value is superior to 0, the upper limit is missing
+
+        int leftLimit = value.getLeft();
+        int rightLimit = value.getRight();
+
+        int index = (leftLimit > 0 && rightLimit > 0 ? 1 : 0) << 1
+                | (leftLimit == 0 && rightLimit > 0 ? 1 : 0);
+
+        return switch (index) {
+            case 0b10 -> "optimizer.openreac.voltageLevelWithBothLimitsMissing";
+            case 0b01 -> "optimizer.openreac.voltageLevelWithUpperLimitMissing";
+            case 0b00 -> "optimizer.openreac.voltageLevelWithLowerLimitMissing";
+            default -> throw new IllegalStateException();
+        };
     }
 
     /**
