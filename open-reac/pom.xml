@@ -13,7 +13,7 @@
     <parent>
         <groupId>com.powsybl</groupId>
         <artifactId>powsybl-optimizer</artifactId>
-        <version>0.12.0-SNAPSHOT</version>
+        <version>0.13.0-SNAPSHOT</version>
     </parent>
 
     <packaging>jar</packaging>
@@ -22,8 +22,7 @@
     <description>OpenReac optimizer</description>
 
     <properties>
-        <powsybl-core.version>6.6.1</powsybl-core.version>
-        <powsybl-open-loadflow.version>1.14.1</powsybl-open-loadflow.version>
+        <powsybl-open-loadflow.version>1.15.0</powsybl-open-loadflow.version>
     </properties>
 
     <developers>
@@ -63,18 +62,6 @@
         </plugins>
     </build>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>com.powsybl</groupId>
-                <artifactId>powsybl-core</artifactId>
-                <version>${powsybl-core.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <dependencies>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -100,6 +87,12 @@
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-loadflow-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-optimizer-commons</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>
