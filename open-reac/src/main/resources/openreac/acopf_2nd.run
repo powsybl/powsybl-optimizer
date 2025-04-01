@@ -33,10 +33,8 @@ for{(qq,m,n) in BRANCHCC_REGL_VAR}{
 printf{LOG_DEBUG} "* Fixing all variable transformer ratios in next optimization\n\n";
 fix{(qq,m,n) in BRANCHCC_REGL_VAR} branch_Ror_var[qq,m,n];
 
-# TODO : ensure the value is coherent ?
-
 # solves acopf with new transformer ratios
 solve problem_acopf_objective;
 
-# TODO : in the indicators, due we have to update the way of calculating them ??
-# or compute new indicators ?
+# add iterations of the second acopf solving
+let nb_iter_total := nb_iter_total + nb_iter_last;
