@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test the indicators returned by OpenReac optimization.
@@ -61,7 +61,8 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
                 .setDefaultConstraintScalingFactor(0.999)
                 .setReactiveSlackVariableScalingFactor(1e-2)
                 .setTwoWindingTransformerRatioVariableScalingFactor(2e-3)
-                .setShuntVariableScalingFactor(0.11);
+                .setShuntVariableScalingFactor(0.11)
+                .setOptimizationAfterRounding(true);
         OpenReacResult result = runOpenReac(network, "optimization/indicators/input-parameters-test", parameters, true);
 
         assertEquals("WARNING", result.getIndicators().get("log_level_ampl"));
@@ -88,6 +89,7 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
         assertEquals(0.01, Double.parseDouble(result.getIndicators().get("reactive_slack_variable_scaling_factor")));
         assertEquals(0.002, Double.parseDouble(result.getIndicators().get("transformer_ratio_variable_scaling_factor")));
         assertEquals(0.11, Double.parseDouble(result.getIndicators().get("shunt_variable_scaling_factor")));
+        assertTrue(Boolean.parseBoolean(result.getIndicators().get("optimization_after_rounding")));
     }
 
     @Test
