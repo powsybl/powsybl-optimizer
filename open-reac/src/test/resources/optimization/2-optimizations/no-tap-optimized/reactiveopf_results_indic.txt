@@ -1,7 +1,20 @@
 final_status OK
 dcopf_status OK
 
-log_level_ampl INFO
+ctime_start 'Wed Apr 02 18:02:20 2025'
+last_solve_result_num 0
+nb_iter_last 4
+nb_iter_total 4
+_ampl_elapsed_time 0.063000
+_total_solve_time 0.109375
+total_time 0
+
+operatingSystem windows
+OS 'Windows_NT'
+COMPUTERNAME 'a computer name'
+directory 'a directory'
+
+log_level_ampl DEBUG
 log_level_knitro 2
 objective_choice 0
 ratio_voltage_target 0.500000
@@ -25,37 +38,39 @@ default_constraint_scaling_factor 1.000000
 reactive_slack_variable_scaling_factor 0.100000
 transformer_ratio_variable_scaling_factor 0.001000
 shunt_variable_scaling_factor 0.100000
-optimization_after_rounding false
+optimization_after_rounding true
 
-nb_substations 42
-nb_bus_in_data_file 58
-nb_bus_in_ACDC_CC 57
-nb_bus_in_AC_CC 57
+nb_substations 3
+nb_bus_in_data_file 3
+nb_bus_in_ACDC_CC 3
+nb_bus_in_AC_CC 3
 nb_bus_in_ACDC_but_out_AC_CC 0
-nb_bus_with_voltage_value 57
-nb_bus_with_reactive_slacks 57
+nb_bus_with_voltage_value 0
+nb_bus_with_reactive_slacks 3
 nb_bus_without_reactive_slacks 0
-nb_branch_in_data_file 80
-nb_branch_in_AC_CC 80
-nb_branch_with_nonsmall_impedance 80
+nb_branch_in_data_file 3
+nb_branch_in_AC_CC 3
+nb_branch_in_AC_CC_side_1_opened 0
+nb_branch_in_AC_CC_side_2_opened 0
+nb_branch_with_nonsmall_impedance 3
 nb_branch_with_zero_or_small_impedance 0
-nb_unit_in_data_file 7
-nb_unit_in_AC_CC 7
-nb_unit_up_and_running 4
-nb_unit_with_variable_reactive_power 4
+nb_unit_in_data_file 1
+nb_unit_in_AC_CC 1
+nb_unit_up_and_running 1
+nb_unit_with_variable_reactive_power 1
 nb_unit_with_fixed_reactive_power 0
-nb_load_in_data_file 42
-nb_load_in_AC_CC 42
-nb_shunt_in_data_file 3
-nb_shunt_connectable_or_in_AC_CC 3
-nb_shunt_with_fixed_value 3
+nb_load_in_data_file 2
+nb_load_in_AC_CC 2
+nb_shunt_in_data_file 0
+nb_shunt_connectable_or_in_AC_CC 0
+nb_shunt_with_fixed_value 0
 nb_shunt_with_variable_value 0
 nb_transformers_with_variable_ratio 0
-nb_transformers_with_fixed_ratio 17
-nb_svc_in_data_file 1
+nb_transformers_with_fixed_ratio 2
+nb_svc_in_data_file 0
 nb_svc_in_AC_CC 0
 nb_svc_up_and_operating 0
-nb_vsc_converter_in_data_file 1
+nb_vsc_converter_in_data_file 0
 nb_vsc_converter_up_and_running 0
 nb_lcc_converter_in_data_file 0
 nb_lcc_converter_up_and_running 0
@@ -63,16 +78,16 @@ nb_batteries 0
 sum_batteries_pmax 0.0
 sum_batteries_pmin 0.0
 
-max_teta_dc 0.21
-max_teta_ac 0.09
-teta_max 3.21
-min_teta_dc -0.17
-min_teta_ac -0.08
-teta_min -3.17
-max_delta_teta_dc 0.146072
-max_delta_teta_ac 0.069420
-min_delta_teta_dc -0.144911
-min_delta_teta_ac -0.059976
+max_teta_dc 0.01
+max_teta_ac 0.02
+teta_max 3.01
+min_teta_dc -0.02
+min_teta_ac -0.04
+teta_min -3.02
+max_delta_teta_dc 0.022957
+max_delta_teta_ac 0.037401
+min_delta_teta_dc 0.009298
+min_delta_teta_ac 0.016903
 
 nb_reactive_slacks 0
 nb_slacks_condensator 0
