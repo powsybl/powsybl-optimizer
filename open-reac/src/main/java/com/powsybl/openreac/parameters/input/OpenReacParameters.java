@@ -122,6 +122,10 @@ public class OpenReacParameters {
 
     private double shuntVariableScalingFactor = 1e-1;
 
+    private static final String OPTIMIZATION_AFTER_ROUNDING = "optimization_after_rounding";
+
+    private boolean optimizationAfterRounding = false;
+
     // Shunt compensator alert threshold
     // (to help reporting the shunt compensators with a delta between optimized and discretized reactive value over this threshold in MVar)
 
@@ -519,6 +523,18 @@ public class OpenReacParameters {
     }
 
     /**
+     * @return the boolean indicating if a second optimization after tap roundings should be conducted in ACOPF solving.
+     */
+    public boolean isOptimizationAfterRounding() {
+        return optimizationAfterRounding;
+    }
+
+    public OpenReacParameters setOptimizationAfterRounding(boolean optimizationAfterRounding) {
+        this.optimizationAfterRounding = optimizationAfterRounding;
+        return this;
+    }
+
+    /**
      * @return the scaling value of shunt variables in ACOPF.
      */
     public double getShuntVariableScalingFactor() {
@@ -574,6 +590,7 @@ public class OpenReacParameters {
         allAlgoParams.add(new OpenReacAlgoParamImpl(REACTIVE_SLACK_VARIABLE_SCALING_FACTOR, Double.toString(reactiveSlackVariableScalingFactor)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(TWO_WINDING_TRANSFORMER_RATIO_VARIABLE_SCALING_FACTOR, Double.toString(twoWindingTransformerRatioVariableScalingFactor)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(SHUNT_VARIABLE_SCALING_FACTOR_KEY, Double.toString(shuntVariableScalingFactor)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(OPTIMIZATION_AFTER_ROUNDING, Boolean.toString(optimizationAfterRounding)));
         return allAlgoParams;
     }
 
