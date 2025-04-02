@@ -33,11 +33,11 @@ for{(qq,m,n) in BRANCHCC_REGL_VAR} {
     let branch_Ror_var[qq,m,n] := temp1;
 }
 
-printf{LOG_DEBUG} "\n* Fixing all variable transformer ratios in next optimization\n\n";
+printf{LOG_DEBUG} "\n* Fixing all variable transformer ratios in next optimization\n";
 fix{(qq,m,n) in BRANCHCC_REGL_VAR} branch_Ror_var[qq,m,n];
 
 # solves acopf with new transformer ratios
 solve problem_acopf_objective;
 
 # add iterations of the second acopf solving
-let nb_iter_total := nb_iter_total + nb_iter_last;
+let nb_iter_total := nb_iter_total + problem_acopf_objective.numiters;
