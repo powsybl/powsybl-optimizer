@@ -19,6 +19,8 @@ Please note that:
 - Branches with one side open are considered in optimization. 
 - The voltage controls are not taken into account in the optimization model, as its purpose is to determine them (see [OpenReac](index.md#openreac)).
   However, the remote control of generators and static var compensators is taken into account in the export of equipment's voltage target (see [Outputs](outputs.md#in-case-of-convergence)).
+- The AC emulation of HVDC lines is not considered in the optimization. 
+Also, the losses due to the line and the converter stations themselves are not accounted for in the target used in the optimization.
 
 ## Constraints
 
@@ -95,3 +97,12 @@ produced (see [Constraints](#constraints)), leaving these variables free within 
 
 If ACOPF solving fails another time, the script `reactiveopfexit.run` is executed (see [In case of inconsistency](outputs.md#in-case-of-inconsistency)).
 
+### Troubleshooting
+
+If the ACOPF does not converge, the following elements are provided as guidance to help the user:
+- The parameter `buses_with_reactive_slacks` should allow for reactive slack on a sufficient number of buses. 
+If the network is unbalanced and too few buses can admit slack, this may prevent the optimization from converging (see [Constraints](acOptimalPowerflow.md#constraints)).
+- Changing the value of `coeff_alpha` can provide more flexibility in adjusting the active power setpoints of generators. 
+The closer it is to zero, the more freedom the setpoints have (see [Configuration of the run](inputs.md#configuration-of-the-run)).
+- Adjusting the optimization scaling parameters (see [Configuration of the run](inputs.md#configuration-of-the-run)) can help improve convergence. 
+The default parameters are based on empirical tests using real data.
