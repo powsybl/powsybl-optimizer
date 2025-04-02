@@ -22,6 +22,8 @@ Please note that:
 - The transformation ratios $\boldsymbol{\rho_{ij}}$ and the shunt susceptances $\boldsymbol{b_{i,s}}$ are continuous in the optimization. 
 At the end, these variables may differ from the values associated with the discrete taps of the equipment (see [Network data](inputs.md#network-data)), and rounding may be necessary. 
 In the case of transformers, a second optimization can be carried out to adjust the voltage plan to the new transformation ratios after rounding (see [Solving](acOptimalPowerflow.md#solving)). 
+- The AC emulation of HVDC lines is not considered in the optimization. 
+Also, the losses due to the line and the converter stations themselves are not accounted for in the target used in the optimization.
 
 ## Constraints
 
@@ -100,3 +102,13 @@ Without this optimization, note that power flows can vary significantly before a
 
 If the ACOPF resolution(s) are successfully completed, the script `reactiveopfoutput.run` is executed (see [In case of convergence](outputs.md#in-case-of-convergence)). 
 Otherwise, the script `reactiveopfexit.run` is executed (see [In case of inconsistency](outputs.md#in-case-of-inconsistency)).
+
+### Troubleshooting
+
+If the ACOPF does not converge, the following elements are provided as guidance to help the user:
+- The parameter `buses_with_reactive_slacks` should allow for reactive slack on a sufficient number of buses. 
+If the network is unbalanced and too few buses can admit slack, this may prevent the optimization from converging (see [Constraints](acOptimalPowerflow.md#constraints)).
+- Changing the value of `coeff_alpha` can provide more flexibility in adjusting the active power setpoints of generators. 
+The closer it is to zero, the more freedom the setpoints have (see [Configuration of the run](inputs.md#configuration-of-the-run)).
+- Adjusting the optimization scaling parameters (see [Configuration of the run](inputs.md#configuration-of-the-run)) can help improve convergence. 
+The default parameters are based on empirical tests using real data.
