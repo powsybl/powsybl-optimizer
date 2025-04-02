@@ -19,8 +19,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * In the optimization of ACOPF, the transformer tap ratios are continuous.
@@ -31,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *
  * @author Pierre ARVY {@literal <pierre.arvy at artelys.com>}
  */
-public class OpenReac2ConsecutiveOptimizationsTest extends AbstractOpenReacRunnerTest {
+class OpenReac2ConsecutiveOptimizationsTest extends AbstractOpenReacRunnerTest {
 
     @Test
     void test2ConsecutiveOptimizationWithTransformerTapRounding() throws IOException {
@@ -42,6 +41,7 @@ public class OpenReac2ConsecutiveOptimizationsTest extends AbstractOpenReacRunne
 
         // run only one optimization
         OpenReacResult result = runOpenReac(network, "optimization/2-optimizations/option-not-activated/", parameters, true);
+        assertFalse(Boolean.parseBoolean(result.getIndicators().get("optimization_after_rounding")));
 
         // verify only 1 optimization was conducted by comparing the numbers of iterations
         int totalNumberOfIterations = Integer.parseInt(result.getIndicators().get("nb_iter_total"));
@@ -51,6 +51,8 @@ public class OpenReac2ConsecutiveOptimizationsTest extends AbstractOpenReacRunne
         // allows for 2 consecutive optimizations
         parameters.setOptimizationAfterRounding(true);
         result = runOpenReac(network, "optimization/2-optimizations/option-activated/", parameters, true);
+        assertTrue(Boolean.parseBoolean(result.getIndicators().get("optimization_after_rounding")));
+
         // verify the rtc has been optimized successfully
         assertEquals(OpenReacStatus.OK, result.getStatus());
         assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_transformers_with_variable_ratio")));
@@ -69,9 +71,10 @@ public class OpenReac2ConsecutiveOptimizationsTest extends AbstractOpenReacRunne
 
         // even if the option is activated, 2 optimizations are performed only if at least one transformer is optimized
         parameters.setOptimizationAfterRounding(true);
+        OpenReacResult result = runOpenReac(network, "optimization/2-optimizations/no-tap-optimized/", parameters, true);
+        assertTrue(Boolean.parseBoolean(result.getIndicators().get("optimization_after_rounding")));
 
         // verify only 1 optimization was conducted by comparing the numbers of iterations
-        OpenReacResult result = runOpenReac(network, "optimization/2-optimizations/no-tap-optimized/", parameters, true);
         int totalNumberOfIterations = Integer.parseInt(result.getIndicators().get("nb_iter_total"));
         int numberOfIterationsOfLastAcopfRun = Integer.parseInt(result.getIndicators().get("nb_iter_last"));
         assertEquals(numberOfIterationsOfLastAcopfRun, totalNumberOfIterations);
@@ -95,9 +98,10 @@ public class OpenReac2ConsecutiveOptimizationsTest extends AbstractOpenReacRunne
 
         // even if the option is activated, 2 optimizations are performed only if the first one converged
         parameters.setOptimizationAfterRounding(true);
+        OpenReacResult result = runOpenReac(network, "optimization/2-optimizations/no-convergence-1st-optim/", parameters, true);
+        assertTrue(Boolean.parseBoolean(result.getIndicators().get("optimization_after_rounding")));
 
         // verify only 1 optimization was conducted by comparing the numbers of iterations
-        OpenReacResult result = runOpenReac(network, "optimization/2-optimizations/no-convergence-1st-optim/", parameters, true);
         int totalNumberOfIterations = Integer.parseInt(result.getIndicators().get("nb_iter_total"));
         int numberOfIterationsOfLastAcopfRun = Integer.parseInt(result.getIndicators().get("nb_iter_last"));
         assertEquals(numberOfIterationsOfLastAcopfRun, totalNumberOfIterations);
