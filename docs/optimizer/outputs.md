@@ -18,10 +18,11 @@ After the solving of the ACOPF, the script `reactiveopfoutput.run` is executed a
 If ACOPF solving is not successful, the user can export the following optional files (which help to analyze the ACOPF results) by specifying the
  ampl log parameter to a debug level (see [Configuration of the run](inputs.md#configuration-of-the-run)):
 
-| File                                       | Content                                                                                                                | Format                                                                                                                  |
-|--------------------------------------------|------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|
-| `debug_bus.csv`                            | Information on calculated voltages (values, bounds, repartition, etc.).                                                | 13 columns #"bus_id" "Vnom" "V" "Vlb" "Vub" "Vmin_mod" "Vmax_mod" "Vmin_OK" "Vmax_OK" "Vmin_ori" "Vmax_ori" "sQ1" "sQ2" |
+| File                                       | Content                                                                                                               | Format                                                                                                                  |
+|--------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|
+| `debug_bus.csv`                            | Information on calculated voltages (values, bounds, repartition, etc.).                                               | 13 columns #"bus_id" "Vnom" "V" "Vlb" "Vub" "Vmin_mod" "Vmax_mod" "Vmin_OK" "Vmax_OK" "Vmin_ori" "Vmax_ori" "sQ1" "sQ2" |
 | `reactiveopf_results_generators_Pnull.csv` | Information on units that are excluded from the solving of ACOPF (see [AC Optimal Powerflow](acOptimalPowerflow.md)). | 11 columns #"variant" "num" "bus" "vRegul" "V(pu)" "targetP(MW)" "targetQ(Mvar)" "P(MW)" "Q(MW)" "id" "bus_id"          |
+| `reactiveopf_results_branches.csv`         | Flow calculated by the optimization on the different branches of the network (including those open on one side)       | 8 columns #"qq" "m" "n" "P1" "Q1" "P2" "Q2" "branch_id"                                                                 |
 
 ## In case of inconsistency
 
