@@ -63,11 +63,10 @@ The `objective_choice` parameter modifies the values of penalties $\beta_1$, $\b
 if `objective_choice` $= i$, then $\beta_i = 1$ and $\beta_j = 0.01$ for $j \neq i$.
 
 Specifically, if `objective_choice` takes on:
-- $0$, the minimization of active power production $\sum\limits_{i,g}\boldsymbol{P_{i,g}}$ is prioritized, thereby contributing to loss reduction in the network.
+- $0$, the minimization of active power production $\sum\limits_{i,g}\boldsymbol{P_{i,g}}$ is prioritized.
 - $1$, the minimization of $\sum\limits_{i} \boldsymbol{V_i}-(\rho V_i^{c,max} - (1-\rho)V_i^{c,min})^2$ is prioritized ($\rho$ 
-equals the configurable parameter `ratio_voltage_target`), centering the voltage plan computed by optimization at a given level within the operational limits. 
-- $2$, the minimization of $\sum\limits_{i} (\boldsymbol{V_i} - V_i^t)^2$ is prioritized, in order to minimize the gap between teh optimized voltage profile
-and the input voltages.
+equals the configurable parameter `ratio_voltage_target`). 
+- $2$, the minimization of $\sum\limits_{i} (\boldsymbol{V_i} - V_i^t)^2$ is prioritized.
 
 The objective function of the ACOPF is:
 
@@ -110,11 +109,11 @@ Otherwise, the script `reactiveopfexit.run` is executed (see [In case of inconsi
 
 ### Troubleshooting
 
-If the ACOPF does not converge, the following elements are provided as guidance to help the user:
+If the ACOPF solving does not converge, the following elements are provided as guidance to help the user:
 - The parameter `buses_with_reactive_slacks` should allow for reactive slack on a sufficient number of buses. 
 If the network is unbalanced and too few buses can admit slack, this may prevent the optimization from converging (see [Constraints](acOptimalPowerflow.md#constraints)).
-Il est recommandé d'utiliser la configuration par défaut, autorisant des slacks sur tous les bus du réseau. 
+  It is recommended to use the default configuration, which allows slacks on all network buses.
 - Changing the value of `coeff_alpha` can provide more flexibility in adjusting the active power setpoints of generators. 
 The closer it is to zero, the more freedom the setpoints have (see [Configuration of the run](inputs.md#configuration-of-the-run)).
 - Adjusting the optimization scaling parameters (see [Configuration of the run](inputs.md#configuration-of-the-run)) can help improve convergence. 
-The default parameters are based on empirical tests using real data. A moins que l'utilisateur comprenne réellement ce qu'il fait, il est conseillé de ne pas changer ces valeurs.
+The default parameters are based on empirical tests using real data. Nevertheless, changing these values is not recommended unless the user clearly understands what they are doing.
