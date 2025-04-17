@@ -75,7 +75,8 @@ class OpenReacParametrizationTest extends AbstractOpenReacRunnerTest {
                 .setDefaultConstraintScalingFactor(0.7889)
                 .setReactiveSlackVariableScalingFactor(0.2)
                 .setTwoWindingTransformerRatioVariableScalingFactor(0.0045)
-                .setShuntVariableScalingFactor(0.101);
+                .setShuntVariableScalingFactor(0.101)
+                .setOptimizationAfterRounding(true);
 
         LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
                 List.of("empty_case/reactiveopf_results_indic.txt"));

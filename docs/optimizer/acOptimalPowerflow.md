@@ -7,7 +7,7 @@ Then, the following values will be variable in the optimization:
 - $\boldsymbol{V_i}$ and $\boldsymbol{\theta_i}$ the voltage magnitude and phase of bus $i$.
 - $\boldsymbol{P_{i,g}}$ (resp. $\boldsymbol{Q_{i,g}}$) the active (resp. reactive) power produced by variable generator $g$ of bus $i$.
 - $\boldsymbol{Q_{i,vsc}}$ the reactive power produced by voltage source converter stations $vsc$ of bus $i$.
-- $\boldsymbol{b_{i,g}}$ (resp. $\boldsymbol{b_{i,svc}}$) the susceptance of shunt $s$ (resp. of static var compensator $svc$) of bus $i$.
+- $\boldsymbol{b_{i,s}}$ (resp. $\boldsymbol{b_{i,svc}}$) the susceptance of shunt $s$ (resp. of static var compensator $svc$) of bus $i$.
 - $\boldsymbol{\rho_{ij}}$ the transformer ratio of the ratio tap changer on branch $ij$, 
 specified as variable by the user (see [Configuration of the run](inputs.md#configuration-of-the-run)).
 
@@ -19,6 +19,9 @@ Please note that:
 - Branches with one side open are considered in optimization. 
 - The voltage controls are not taken into account in the optimization model, as its purpose is to determine them (see [OpenReac](index.md#openreac)).
   However, the remote control of generators and static var compensators is taken into account in the export of equipment's voltage target (see [Outputs](outputs.md#in-case-of-convergence)).
+- The transformation ratios $\boldsymbol{\rho_{ij}}$ and the shunt susceptances $\boldsymbol{b_{i,s}}$ are continuous in the optimization. 
+At the end, these variables may differ from the values associated with the discrete taps of the equipment (see [Network data](inputs.md#network-data)), and rounding may be necessary. 
+In the case of transformers, a second optimization can be carried out to adjust the voltage plan to the new transformation ratios after rounding (see [Solving](acOptimalPowerflow.md#solving)). 
 
 ## Constraints
 
@@ -87,11 +90,13 @@ Before solving the ACOPF, the voltage magnitudes $\boldsymbol{V_i}$ are warm-sta
 (specified in `ampl_network_buses.txt`), as well as the voltage phases $\boldsymbol{\theta_i}$ with the results of the DCOPF (see [DC optimal powerflow](dcOptimalPowerflow.md)).
 Please also note that a scaling is applied with user-defined values before solving the ACOPF.
 
-The solving is considered as successful if the non-linear solver employed (see [Non-linear optimization solver](../gettingStarted.md#non-linear-optimization-solver)) finds a feasible approximate solution (**even if the sum of slacks is important**), and the script `reactiveopfoutput.run` is executed (see [In case of convergence](outputs.md#in-case-of-convergence)). 
+A solving is considered as successful if the non-linear solver employed (see [Non-linear optimization solver](../gettingStarted.md#non-linear-optimization-solver)) finds a feasible approximate solution (**even if the sum of slacks is important**).
 
-Note that if the solving of ACOPF fails, and the $\alpha$ parameter is set to $1$ (default value),
-then a new resolution is attempted, with $\alpha$ set to zero. This gives more freedom to the active powers
-produced (see [Constraints](#constraints)), leaving these variables free within their respective bounds.
+At the user's request (see [Configuration of the run](inputs.md#configuration-of-the-run)), and if at least one transformer is optimized, 
+a second ACOPF optimization can be performed after rounding the transformer ratios (which, as a reminder, are continuous in the solving) 
+to the nearest tap in the input data (see [Network data](inputs.md#network-data)). 
+This allows the voltage plan to be readjusted to the new fixed transformation ratios in the second optimization. 
+Without this optimization, note that power flows can vary significantly before and after rounding the taps, particularly for transformers with low impedance.
 
-If ACOPF solving fails another time, the script `reactiveopfexit.run` is executed (see [In case of inconsistency](outputs.md#in-case-of-inconsistency)).
-
+If the ACOPF resolution(s) are successfully completed, the script `reactiveopfoutput.run` is executed (see [In case of convergence](outputs.md#in-case-of-convergence)). 
+Otherwise, the script `reactiveopfexit.run` is executed (see [In case of inconsistency](outputs.md#in-case-of-inconsistency)).
