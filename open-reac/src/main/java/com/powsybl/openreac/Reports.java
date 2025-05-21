@@ -65,7 +65,7 @@ public final class Reports {
                             .withUntypedValue("maxSectionCount", shunt.maximumSectionCount())
                             .withUntypedValue("discretizedValue", VALUE_FORMAT.format(shunt.discretizedReactiveValue()))
                             .withUntypedValue("optimalValue", VALUE_FORMAT.format(shunt.optimalReactiveValue()))
-                            .withSeverity(TypedValue.TRACE_SEVERITY)
+                            .withSeverity(TypedValue.DETAIL_SEVERITY)
                             .add());
         }
     }
@@ -81,7 +81,7 @@ public final class Reports {
     public static void reportInconsistentLimitsOnVoltageLevel(ReportNode reportNode, String vlId, Pair<Double, Double> limits) {
         reportNode.newReportNode()
                 .withMessageTemplate("optimizer.openreac.voltageLevelWithInconsistentLimits")
-                .withSeverity(TypedValue.TRACE_SEVERITY)
+                .withSeverity(TypedValue.DETAIL_SEVERITY)
                 .withUntypedValue("vlId", vlId)
                 .withUntypedValue("low", limits.getLeft())
                 .withUntypedValue("high", limits.getRight())
@@ -91,7 +91,7 @@ public final class Reports {
     public static void reportMissingLimitsOnVoltageLevel(ReportNode reportNode, String messageKey, String vlId) {
         reportNode.newReportNode()
                 .withMessageTemplate(messageKey)
-                .withSeverity(TypedValue.TRACE_SEVERITY)
+                .withSeverity(TypedValue.DETAIL_SEVERITY)
                 .withUntypedValue("vlId", vlId)
                 .add();
     }
@@ -144,7 +144,7 @@ public final class Reports {
 
             voltageLevelsWithLimitsOutOfNominalVRange.forEach((voltageLevelId, voltageLevelLimitInfo) -> reportLimitsOutOfRange.newReportNode()
                 .withMessageTemplate("optimizer.openreac.voltageLevelWithLimitsOutOfNominalVRange")
-                .withSeverity(TypedValue.TRACE_SEVERITY)
+                .withSeverity(TypedValue.DETAIL_SEVERITY)
                 .withUntypedValue("vID", voltageLevelLimitInfo.voltageLevelId())
                 .withUntypedValue("lowVoltageLimit", VALUE_FORMAT.format(voltageLevelLimitInfo.lowLimit()))
                 .withUntypedValue("highVoltageLimit", VALUE_FORMAT.format(voltageLevelLimitInfo.highLimit()))
