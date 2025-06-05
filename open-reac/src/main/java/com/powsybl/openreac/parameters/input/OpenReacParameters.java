@@ -48,6 +48,10 @@ public class OpenReacParameters {
 
     private OpenReacSolverLogLevel logLevelSolver = OpenReacSolverLogLevel.EVERYTHING;
 
+    private static final String DEBUG_DIR_KEY = "debug_dir";
+
+    private String debugDir = null;
+
     private static final String OBJECTIVE_DISTANCE_KEY = "ratio_voltage_target";
 
     private Double objectiveDistance; // between 0 and 100
@@ -263,6 +267,21 @@ public class OpenReacParameters {
      */
     public OpenReacParameters setLogLevelSolver(OpenReacSolverLogLevel logLevelSolver) {
         this.logLevelSolver = Objects.requireNonNull(logLevelSolver);
+        return this;
+    }
+
+    /**
+     * @return debug directory.
+     */
+    public String getDebugDir() {
+        return this.debugDir;
+    }
+
+    /**
+     * @param debugDir the debug directory.
+     */
+    public OpenReacParameters setDebugDir(String debugDir) {
+        this.debugDir = Objects.requireNonNull(debugDir);
         return this;
     }
 
@@ -572,6 +591,9 @@ public class OpenReacParameters {
         }
         allAlgoParams.add(this.logLevelAmpl.toParam());
         allAlgoParams.add(this.logLevelSolver.toParam());
+        if (debugDir != null) {
+            allAlgoParams.add(new OpenReacAlgoParamImpl(DEBUG_DIR_KEY, debugDir));
+        }
         allAlgoParams.add(new OpenReacAlgoParamImpl(MIN_PLAUSIBLE_LOW_VOLTAGE_LIMIT_KEY, Double.toString(minPlausibleLowVoltageLimit)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(MAX_PLAUSIBLE_HIGH_VOLTAGE_LIMIT_KEY, Double.toString(maxPlausibleHighVoltageLimit)));
         allAlgoParams.add(reactiveSlackBusesMode.toParam());
