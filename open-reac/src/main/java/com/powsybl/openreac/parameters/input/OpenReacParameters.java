@@ -591,9 +591,6 @@ public class OpenReacParameters {
         }
         allAlgoParams.add(this.logLevelAmpl.toParam());
         allAlgoParams.add(this.logLevelSolver.toParam());
-        if (debugDir != null) {
-            allAlgoParams.add(new OpenReacAlgoParamImpl(DEBUG_DIR_KEY, debugDir));
-        }
         allAlgoParams.add(new OpenReacAlgoParamImpl(MIN_PLAUSIBLE_LOW_VOLTAGE_LIMIT_KEY, Double.toString(minPlausibleLowVoltageLimit)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(MAX_PLAUSIBLE_HIGH_VOLTAGE_LIMIT_KEY, Double.toString(maxPlausibleHighVoltageLimit)));
         allAlgoParams.add(reactiveSlackBusesMode.toParam());

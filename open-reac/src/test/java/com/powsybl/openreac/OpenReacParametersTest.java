@@ -360,31 +360,30 @@ class OpenReacParametersTest {
         parameters.setOptimizationAfterRounding(true);
 
         List<OpenReacAlgoParam> algoParams = parameters.getAllAlgorithmParams();
-        assertEquals(24, algoParams.size());
+        assertEquals(23, algoParams.size());
         assertEquals("2", algoParams.get(0).getValue());
         assertEquals("0.4", algoParams.get(1).getValue());
         assertEquals("DEBUG", algoParams.get(2).getValue());
         assertEquals("0", algoParams.get(3).getValue());
-        assertEquals("/tmp/debugDir", algoParams.get(4).getValue());
-        assertEquals("0.8", algoParams.get(5).getValue());
-        assertEquals("1.2", algoParams.get(6).getValue());
-        assertEquals("ALL", algoParams.get(7).getValue());
-        assertEquals("0.56", algoParams.get(8).getValue());
-        assertEquals("0.5", algoParams.get(9).getValue());
-        assertEquals("1.0E-5", algoParams.get(10).getValue());
-        assertEquals("10.0", algoParams.get(11).getValue());
-        assertEquals("5.0", algoParams.get(12).getValue());
-        assertEquals("8555.3", algoParams.get(13).getValue());
-        assertEquals("99.2", algoParams.get(14).getValue());
-        assertEquals("1144.0", algoParams.get(15).getValue());
-        assertEquals("0.4", algoParams.get(16).getValue());
-        assertEquals("1.1", algoParams.get(17).getValue());
-        assertEquals("0.5", algoParams.get(18).getValue());
-        assertEquals("0.75", algoParams.get(19).getValue());
-        assertEquals("0.01", algoParams.get(20).getValue());
-        assertEquals("1.0E-4", algoParams.get(21).getValue());
-        assertEquals("0.03", algoParams.get(22).getValue());
-        assertEquals("true", algoParams.get(23).getValue());
+        assertEquals("0.8", algoParams.get(4).getValue());
+        assertEquals("1.2", algoParams.get(5).getValue());
+        assertEquals("ALL", algoParams.get(6).getValue());
+        assertEquals("0.56", algoParams.get(7).getValue());
+        assertEquals("0.5", algoParams.get(8).getValue());
+        assertEquals("1.0E-5", algoParams.get(9).getValue());
+        assertEquals("10.0", algoParams.get(10).getValue());
+        assertEquals("5.0", algoParams.get(11).getValue());
+        assertEquals("8555.3", algoParams.get(12).getValue());
+        assertEquals("99.2", algoParams.get(13).getValue());
+        assertEquals("1144.0", algoParams.get(14).getValue());
+        assertEquals("0.4", algoParams.get(15).getValue());
+        assertEquals("1.1", algoParams.get(16).getValue());
+        assertEquals("0.5", algoParams.get(17).getValue());
+        assertEquals("0.75", algoParams.get(18).getValue());
+        assertEquals("0.01", algoParams.get(19).getValue());
+        assertEquals("1.0E-4", algoParams.get(20).getValue());
+        assertEquals("0.03", algoParams.get(21).getValue());
+        assertEquals("true", algoParams.get(22).getValue());
     }
 
     @Test
