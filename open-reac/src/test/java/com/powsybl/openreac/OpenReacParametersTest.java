@@ -338,6 +338,7 @@ class OpenReacParametersTest {
         parameters.setObjectiveDistance(40);
         parameters.setLogLevelAmpl(OpenReacAmplLogLevel.DEBUG);
         parameters.setLogLevelSolver(OpenReacSolverLogLevel.NOTHING);
+        parameters.setDebugDir("/tmp/debugDir");
         parameters.setMinPlausibleLowVoltageLimit(0.8);
         parameters.setMaxPlausibleHighVoltageLimit(1.2);
         parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL);

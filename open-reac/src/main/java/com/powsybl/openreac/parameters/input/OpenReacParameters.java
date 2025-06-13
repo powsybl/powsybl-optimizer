@@ -48,6 +48,8 @@ public class OpenReacParameters {
 
     private OpenReacSolverLogLevel logLevelSolver = OpenReacSolverLogLevel.EVERYTHING;
 
+    private String debugDir;
+
     private static final String OBJECTIVE_DISTANCE_KEY = "ratio_voltage_target";
 
     private Double objectiveDistance; // between 0 and 100
@@ -263,6 +265,21 @@ public class OpenReacParameters {
      */
     public OpenReacParameters setLogLevelSolver(OpenReacSolverLogLevel logLevelSolver) {
         this.logLevelSolver = Objects.requireNonNull(logLevelSolver);
+        return this;
+    }
+
+    /**
+     * @return debug directory.
+     */
+    public String getDebugDir() {
+        return this.debugDir;
+    }
+
+    /**
+     * @param debugDir the debug directory.
+     */
+    public OpenReacParameters setDebugDir(String debugDir) {
+        this.debugDir = Objects.requireNonNull(debugDir);
         return this;
     }
 
