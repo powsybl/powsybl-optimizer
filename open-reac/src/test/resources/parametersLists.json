@@ -28,7 +28,6 @@
   "objective" : "MIN_GENERATION",
   "logLevelAmpl" : "INFO",
   "logLevelSolver" : "EVERYTHING",
-  "debugDir" : null,
   "minPlausibleLowVoltageLimit" : 0.5,
   "maxPlausibleHighVoltageLimit" : 1.5,
   "reactiveSlackBusesMode" : "CONFIGURED",

@@ -8,7 +8,6 @@
   "objectiveDistance" : 5.0,
   "logLevelAmpl" : "WARNING",
   "logLevelSolver" : "NOTHING",
-  "debugDir" : null,
   "minPlausibleLowVoltageLimit" : 0.755,
   "maxPlausibleHighVoltageLimit" : 1.236,
   "reactiveSlackBusesMode" : "ALL",
