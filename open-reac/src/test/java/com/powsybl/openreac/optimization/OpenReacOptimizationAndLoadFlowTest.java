@@ -118,7 +118,7 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
         assertEquals("25", values.get("maxSectionCount").toString());
         assertEquals("160.0", values.get("discretizedValue").toString());
         assertEquals("123.4", values.get("optimalValue").toString());
-        assertEquals(TypedValue.TRACE_SEVERITY.getValue(), values.get("reportSeverity").toString());
+        assertEquals(TypedValue.DETAIL_SEVERITY.getValue(), values.get("reportSeverity").toString());
 
         assertTrue(shunt.getTerminal().isConnected()); // shunt has been reconnected
         assertEquals(420.8, shunt.getTargetV()); // targetV has been updated

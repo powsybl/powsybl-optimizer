@@ -48,9 +48,7 @@ public class OpenReacParameters {
 
     private OpenReacSolverLogLevel logLevelSolver = OpenReacSolverLogLevel.EVERYTHING;
 
-    private static final String DEBUG_DIR_KEY = "debug_dir";
-
-    private String debugDir = null;
+    private String debugDir;
 
     private static final String OBJECTIVE_DISTANCE_KEY = "ratio_voltage_target";
 
