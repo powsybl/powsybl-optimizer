@@ -237,6 +237,7 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
                 .setBus("b2")
                 .setRegulationMode(StaticVarCompensator.RegulationMode.VOLTAGE)
                 .setVoltageSetpoint(400)
+                .setRegulating(true)
                 .setBmin(-0.008)
                 .setBmax(0.008)
                 .add();

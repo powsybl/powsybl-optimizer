@@ -100,7 +100,8 @@ class OpenReacAmplIOTest extends AbstractOpenReacRunnerTest {
                 .setBus("bus-1")
                 .setBmin(1.1)
                 .setBmax(1.3)
-                .setRegulationMode(StaticVarCompensator.RegulationMode.OFF)
+                .setRegulationMode(StaticVarCompensator.RegulationMode.VOLTAGE)
+                .setRegulating(false)
                 .add();
         // VSC
         vl.newVscConverterStation()
