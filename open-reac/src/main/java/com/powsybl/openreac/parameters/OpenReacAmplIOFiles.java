@@ -123,7 +123,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
 
     @Override
     public String getDebugDir() {
-        return "";
+        return null;
         //TODO
     }
 }
