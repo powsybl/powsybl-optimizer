@@ -119,12 +119,12 @@ public class OpenReacAmplIOFiles implements AmplParameters {
     }
 
     @Override
-    public String getDebugDir() {
-        return debugDir;
+    public AmplExportConfig getAmplExportConfig() {
+        return amplExportConfig;
     }
 
     @Override
-    public AmplExportConfig getAmplExportConfig() {
-        return amplExportConfig;
+    public String getDebugDir() {
+        return debugDir;
     }
 }
