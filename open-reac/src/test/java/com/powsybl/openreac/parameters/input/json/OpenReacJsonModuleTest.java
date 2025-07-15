@@ -49,6 +49,7 @@ class OpenReacJsonModuleTest {
         parameters.addVariableShuntCompensators(List.of("sc1", "sc2"));
         parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.CONFIGURED);
         parameters.addConfiguredReactiveSlackBuses(List.of("bus1", "bus2"));
+        parameters.setDebugDir("/tmp/debugDir");
 
         String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(parameters);
         ComparisonUtils.assertTxtEquals(Objects.requireNonNull(getClass().getResourceAsStream("/parametersLists.json")), json);
