@@ -968,7 +968,8 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
                 .setId("svc1")
                 .setConnectableBus("b2")
                 .setBus("b2")
-                .setRegulationMode(StaticVarCompensator.RegulationMode.OFF)
+                .setRegulationMode(StaticVarCompensator.RegulationMode.VOLTAGE)
+                .setRegulating(false)
                 .setBmin(-0.008)
                 .setBmax(0.008)
                 .add();
