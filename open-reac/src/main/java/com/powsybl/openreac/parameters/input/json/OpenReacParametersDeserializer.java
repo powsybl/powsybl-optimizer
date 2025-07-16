@@ -77,7 +77,7 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                 parameters.setLogLevelSolver(OpenReacSolverLogLevel.valueOf(parser.getText()))
             )),
             entry("debugDir", safeRead((parser, parameters) ->
-                parameters.setDebugDir(parser.readValueAs(new TypeReference<String>() { }))
+                parameters.setDebugDir(parser.getText())
             )),
             entry("minPlausibleLowVoltageLimit", safeRead((parser, parameters) ->
                 parameters.setMinPlausibleLowVoltageLimit(parser.readValueAs(Double.class))
