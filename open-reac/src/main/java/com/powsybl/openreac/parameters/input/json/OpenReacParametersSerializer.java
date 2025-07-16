@@ -44,6 +44,9 @@ public class OpenReacParametersSerializer extends StdSerializer<OpenReacParamete
         }
         serializerProvider.defaultSerializeField("logLevelAmpl", openReacParameters.getLogLevelAmpl(), jsonGenerator);
         serializerProvider.defaultSerializeField("logLevelSolver", openReacParameters.getLogLevelSolver(), jsonGenerator);
+        if (openReacParameters.getDebugDir() != null) {
+            serializerProvider.defaultSerializeField("debugDir", openReacParameters.getDebugDir(), jsonGenerator);
+        }
         serializerProvider.defaultSerializeField("minPlausibleLowVoltageLimit", openReacParameters.getMinPlausibleLowVoltageLimit(), jsonGenerator);
         serializerProvider.defaultSerializeField("maxPlausibleHighVoltageLimit", openReacParameters.getMaxPlausibleHighVoltageLimit(), jsonGenerator);
         serializerProvider.defaultSerializeField("reactiveSlackBusesMode", openReacParameters.getReactiveSlackBusesMode().name(), jsonGenerator);

@@ -46,6 +46,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
     private final NetworkModifications networkModifications;
     private final VoltageProfileOutput voltageProfileOutput;
     private final boolean debug;
+    private final String debugDir;
     private final AmplExportConfig amplExportConfig;
 
     public OpenReacAmplIOFiles(OpenReacParameters params, AmplExportConfig amplExportConfig, Network network, boolean debug, ReportNode reportNode) {
@@ -65,6 +66,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
         this.voltageProfileOutput = new VoltageProfileOutput();
 
         this.debug = debug;
+        this.debugDir = params.getDebugDir();
 
         Reports.reportConstantQGeneratorsSize(reportNode, params.getConstantQGenerators().size());
         Reports.reportVariableTwoWindingsTransformersSize(reportNode, params.getVariableTwoWindingsTransformers().size());
@@ -123,7 +125,6 @@ public class OpenReacAmplIOFiles implements AmplParameters {
 
     @Override
     public String getDebugDir() {
-        return null;
-        //TODO
+        return debugDir;
     }
 }
