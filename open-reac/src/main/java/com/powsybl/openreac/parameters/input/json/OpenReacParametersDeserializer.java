@@ -154,9 +154,16 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
             if (consumer == null) {
                 throw new IllegalStateException("Unexpected field: " + parser.currentName());
             }
-            consumer.accept(parser, parameters);
+            try {
+                consumer.accept(parser, parameters);
+            } catch (PowsyblException powsyblException) {
+                if (powsyblException.getCause() instanceof IOException ioException) {
+                    throw ioException;
+                } else {
+                    throw powsyblException;
+                }
+            }
         }
         return parameters;
     }
-
 }
