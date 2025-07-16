@@ -11,6 +11,7 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.powsybl.commons.PowsyblException;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAmplLogLevel;
@@ -41,7 +42,7 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                 parser.nextToken();
                 consumer.accept(parser, parameters);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new PowsyblException(e);
             }
         };
     }
@@ -149,9 +150,9 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
     @Override
     public OpenReacParameters deserialize(JsonParser parser, DeserializationContext deserializationContext, OpenReacParameters parameters) throws IOException {
         while (parser.nextToken() != JsonToken.END_OBJECT) {
-            BiConsumer<JsonParser, OpenReacParameters> consumer = FIELD_PROCESSORS.get(parser.getCurrentName());
+            BiConsumer<JsonParser, OpenReacParameters> consumer = FIELD_PROCESSORS.get(parser.currentName());
             if (consumer == null) {
-                throw new IllegalStateException("Unexpected field: " + parser.getCurrentName());
+                throw new IllegalStateException("Unexpected field: " + parser.currentName());
             }
             consumer.accept(parser, parameters);
         }
