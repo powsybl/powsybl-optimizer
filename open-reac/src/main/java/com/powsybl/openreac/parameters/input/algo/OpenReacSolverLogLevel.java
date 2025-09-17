@@ -17,7 +17,6 @@ public enum OpenReacSolverLogLevel {
 
     EVERYTHING(2);
 
-
     private static final String LOG_SOLVER_PARAM_KEY = "log_level_knitro";
 
     private final int amplKey;
