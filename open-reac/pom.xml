@@ -21,10 +21,6 @@
     <name>OpenReac</name>
     <description>OpenReac optimizer</description>
 
-    <properties>
-        <powsybl-open-loadflow.version>1.16.0</powsybl-open-loadflow.version>
-    </properties>
-
     <developers>
         <developer>
             <name>Nicolas PIERRE</name>
