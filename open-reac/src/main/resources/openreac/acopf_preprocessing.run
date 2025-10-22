@@ -10,8 +10,9 @@
 
 ###############################################################################
 # Reactive OPF
-# Author:  Jean Maeght 2022 2023
-# Author:  Manuel Ruiz 2023 2024
+# Author:  Jean Maeght   2022 2023
+# Author:  Manuel Ruiz   2023 2024
+# Author:  Oscar Lamolet 2025
 ###############################################################################
 
 
@@ -44,18 +45,37 @@ let temp1 := min{(t,r) in REGL} regl_ratio_min[1,r];
 let temp2 := max{(t,r) in REGL} regl_ratio_max[1,r];
 printf{LOG_INFO} "Minimal transformer ratio : %.3f\n",temp1;
 printf{LOG_INFO} "Maximal transformer ratio : %.3f\n",temp2;
-for {(qq,m,n) in BRANCHCC_REGL: qq in PARAM_TRANSFORMERS_RATIO_VARIABLE
-  and not regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]] < regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]]}
-{
-  let messageInfo := sprintf (
-    "Transformer %Q %Q(%ikV)->%Q(%ikV) cstratio=%.3f ratio_min=%.3f ratio_max=%.3f should have variable ratio but min and max are equal",
-    branch_id[1,qq,m,n],
-    substation_id[1,bus_substation[1,m]],substation_Vnomi[1,bus_substation[1,m]],
-    substation_id[1,bus_substation[1,n]],substation_Vnomi[1,bus_substation[1,n]],
-    branch_cstratio[1,qq,m,n],
-    regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]],regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]]);
-  printf{LOG_WARNING} "%s\n",messageInfo;
-  let messagesInfo := messagesInfo union {messageInfo};
+param subex_idx;
+for {(qq,m,n) in BRANCHCC_REGL_FIX: qq in PARAM_TRANSFORMERS_RATIO_VARIABLE} {
+  # Determination of substation side 2 (side 2 open case management)
+  if n != -1 then {
+    let subex_idx := bus_substation[1,n];
+  } else {
+    let subex_idx := branch_subex[1,qq,m,n];
+  }
+  # Case 1: RTC with side 2 disconnected
+  if (qq,m,n) in BRANCHCC_WITH_SIDE_2_OPENED then {
+    let messageInfo := sprintf(
+      "Transformer %Q %Q(%ikV)->%Q(%ikV) has side 2 disconnected, RTC will be fixed in optimization",
+      branch_id[1,qq,m,n],
+      substation_id[1,bus_substation[1,m]], substation_Vnomi[1,bus_substation[1,m]],
+      substation_id[1,subex_idx], substation_Vnomi[1,subex_idx]);
+    printf{LOG_WARNING} "%s\n", messageInfo;
+    let messagesInfo := messagesInfo union {messageInfo};
+  }
+  # Case 2: RTC with min=max
+  else if not (regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]] < regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]]) then {
+    let messageInfo := sprintf(
+      "Transformer %Q %Q(%ikV)->%Q(%ikV) cstratio=%.3f ratio_min=%.3f ratio_max=%.3f should have variable ratio but min and max are equal",
+      branch_id[1,qq,m,n],
+      substation_id[1,bus_substation[1,m]], substation_Vnomi[1,bus_substation[1,m]],
+      substation_id[1,subex_idx], substation_Vnomi[1,subex_idx],
+      branch_cstratio[1,qq,m,n],
+      regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]],
+      regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]]);
+    printf{LOG_WARNING} "%s\n", messageInfo;
+    let messagesInfo := messagesInfo union {messageInfo};
+  }
 }
 for {(qq,m,n) in BRANCHCC_REGL: regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]] <= temp1 * 1.01
   or regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]] >= temp2 * 0.99 }
