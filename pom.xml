@@ -63,7 +63,8 @@
     <properties>
         <java.version>21</java.version>
         <autoservice.version>1.1.1</autoservice.version>
-        <powsybl-core.version>6.8.1</powsybl-core.version>
+        <powsybl-core.version>7.0.1</powsybl-core.version>
+        <powsybl-open-loadflow.version>2.0.0</powsybl-open-loadflow.version> <!-- For test purposes -->
     </properties>
 
     <dependencyManagement>

@@ -91,7 +91,6 @@ class OpenReacOptimizationHvdcTest extends AbstractOpenReacRunnerTest {
                 .setActivePowerSetpoint(2)
                 .setConvertersMode(HvdcLine.ConvertersMode.SIDE_1_INVERTER_SIDE_2_RECTIFIER);
         testAllModifAndLoadFlow(network, "optimization/hvdc/vsc-in-optimization/inverter", new OpenReacParameters(), ReportNode.NO_OP);
-
     }
 
     @Test

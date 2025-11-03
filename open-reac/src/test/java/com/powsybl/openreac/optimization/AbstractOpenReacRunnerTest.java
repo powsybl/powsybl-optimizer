@@ -16,7 +16,9 @@ import com.powsybl.computation.local.LocalComputationConfig;
 import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.iidm.network.*;
 import com.powsybl.loadflow.LoadFlow;
+import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.loadflow.LoadFlowResult;
+import com.powsybl.openloadflow.OpenLoadFlowParameters;
 import com.powsybl.openreac.OpenReacConfig;
 import com.powsybl.openreac.OpenReacRunner;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
@@ -77,7 +79,12 @@ abstract class AbstractOpenReacRunnerTest {
      */
     protected void testAllModifAndLoadFlow(Network network, String subFolder, OpenReacParameters parameters, ReportNode reportNode) throws IOException {
         runAndApplyAllModifications(network, subFolder, parameters, true, reportNode);
-        LoadFlowResult loadFlowResult = LoadFlow.run(network);
+
+        LoadFlowParameters lfParams = new LoadFlowParameters();
+        OpenLoadFlowParameters olfParams = new OpenLoadFlowParameters()
+                .setSlackDistributionFailureBehavior(OpenLoadFlowParameters.SlackDistributionFailureBehavior.LEAVE_ON_SLACK_BUS);
+        lfParams.addExtension(OpenLoadFlowParameters.class, olfParams);
+        LoadFlowResult loadFlowResult = LoadFlow.run(network, lfParams);
         assertTrue(loadFlowResult.isFullyConverged());
     }
 
