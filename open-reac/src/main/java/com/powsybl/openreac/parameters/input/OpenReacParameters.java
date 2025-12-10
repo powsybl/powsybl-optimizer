@@ -136,6 +136,12 @@ public class OpenReacParameters {
 
     private double shuntCompensatorActivationAlertThreshold;
 
+    // Redundant strings
+
+    private static final String TRANSFORMERS_KEY = "Two windings transformer";
+
+    private static final String LINES_KEY = "Line";
+
     /**
      * Override some voltage level limits in the network. This will NOT modify the network object.
      * <p>
@@ -694,18 +700,16 @@ public class OpenReacParameters {
 
             double ratio = r / Math.abs(x);
 
-            if (isFrench) {
-                if (ratio > 10) {
+            if (ratio > 1) {
+                if (isFrench && ratio > 10) {
                     violatingFrenchBranches.add(new BranchImpedanceInfo(
-                        line.getId(), "Line", r, x, ratio, vNom1, vNom2));
-                } else if (ratio > 1) {
+                        line.getId(), LINES_KEY, r, x, ratio, vNom1, vNom2));
+                } else if (isFrench) {
                     problematicFrenchBranches.add(new BranchImpedanceInfo(
-                        line.getId(), "Line", r, x, ratio, vNom1, vNom2));
-                }
-            } else {
-                if (ratio > 1) {
+                        line.getId(), LINES_KEY, r, x, ratio, vNom1, vNom2));
+                } else {
                     problematicNonFrenchBranches.add(new BranchImpedanceInfo(
-                        line.getId(), "Line", r, x, ratio, vNom1, vNom2));
+                        line.getId(), LINES_KEY, r, x, ratio, vNom1, vNom2));
                 }
             }
         });
@@ -725,18 +729,16 @@ public class OpenReacParameters {
 
             double ratio = r / Math.abs(x);
 
-            if (isFrench) {
-                if (ratio > 10) {
+            if (ratio > 1) {
+                if (isFrench && ratio > 10) {
                     violatingFrenchBranches.add(new BranchImpedanceInfo(
-                        transformer.getId(), "Two windings transformer", r, x, ratio, vNom1, vNom2));
-                } else if (ratio > 1) {
+                        transformer.getId(), TRANSFORMERS_KEY, r, x, ratio, vNom1, vNom2));
+                } else if (isFrench) {
                     problematicFrenchBranches.add(new BranchImpedanceInfo(
-                        transformer.getId(), "Two windings transformer", r, x, ratio, vNom1, vNom2));
-                }
-            } else {
-                if (ratio > 1) {
+                        transformer.getId(), TRANSFORMERS_KEY, r, x, ratio, vNom1, vNom2));
+                } else {
                     problematicNonFrenchBranches.add(new BranchImpedanceInfo(
-                        transformer.getId(), "Two windings transformer", r, x, ratio, vNom1, vNom2));
+                        transformer.getId(), TRANSFORMERS_KEY, r, x, ratio, vNom1, vNom2));
                 }
             }
         });

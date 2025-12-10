@@ -26,6 +26,13 @@ import java.util.Map;
 public final class Reports {
 
     private static final String NETWORK_ID = "networkId";
+    private static final String SIZE = "size";
+    private static final String BRANCH_ID = "branchId";
+    private static final String BRANCH_TYPE = "branchType";
+    private static final String RESISTANCE = "r";
+    private static final String REACTANCE = "x";
+    private static final String RATIO = "ratio";
+
     private static final DecimalFormat VALUE_FORMAT = new DecimalFormat("0.0", DecimalFormatSymbols.getInstance(Locale.ROOT));
 
     private Reports() {
@@ -75,7 +82,7 @@ public final class Reports {
         reportNode.newReportNode()
             .withMessageTemplate("optimizer.openreac.constantQGeneratorsSize")
             .withSeverity(TypedValue.INFO_SEVERITY)
-            .withUntypedValue("size", constantQGeneratorsSize)
+            .withUntypedValue(SIZE, constantQGeneratorsSize)
             .add();
     }
 
@@ -101,7 +108,7 @@ public final class Reports {
         reportNode.newReportNode()
                 .withMessageTemplate("optimizer.openreac.nbVoltageLevelsWithInconsistentLimits")
                 .withSeverity(TypedValue.ERROR_SEVERITY)
-                .withUntypedValue("size", voltageLevelsWithInconsistentLimitsSize)
+                .withUntypedValue(SIZE, voltageLevelsWithInconsistentLimitsSize)
                 .add();
     }
 
@@ -109,7 +116,7 @@ public final class Reports {
         reportNode.newReportNode()
                 .withMessageTemplate("optimizer.openreac.nbVoltageLevelsWithMissingLimits")
                 .withSeverity(TypedValue.ERROR_SEVERITY)
-                .withUntypedValue("size", voltageLevelsWithMissingLimitsSize)
+                .withUntypedValue(SIZE, voltageLevelsWithMissingLimitsSize)
                 .add();
     }
 
@@ -117,7 +124,7 @@ public final class Reports {
         reportNode.newReportNode()
                 .withMessageTemplate("optimizer.openreac.variableShuntCompensatorsSize")
                 .withSeverity(TypedValue.INFO_SEVERITY)
-                .withUntypedValue("size", variableShuntCompensatorsSize)
+                .withUntypedValue(SIZE, variableShuntCompensatorsSize)
                 .add();
     }
 
@@ -125,7 +132,7 @@ public final class Reports {
         reportNode.newReportNode()
             .withMessageTemplate("optimizer.openreac.variableTwoWindingsTransformersSize")
             .withSeverity(TypedValue.INFO_SEVERITY)
-            .withUntypedValue("size", variableTwoWindingsTransformersSize)
+            .withUntypedValue(SIZE, variableTwoWindingsTransformersSize)
             .add();
     }
 
@@ -140,7 +147,7 @@ public final class Reports {
             reportLimitsOutOfRange.newReportNode()
                 .withMessageTemplate("optimizer.openreac.nbVoltageLevelsWithLimitsOutOfNominalVRange")
                 .withSeverity(TypedValue.WARN_SEVERITY)
-                .withUntypedValue("size", voltageLevelsWithLimitsOutOfNominalVRange.size())
+                .withUntypedValue(SIZE, voltageLevelsWithLimitsOutOfNominalVRange.size())
                 .add();
 
             voltageLevelsWithLimitsOutOfNominalVRange.forEach((voltageLevelId, voltageLevelLimitInfo) -> reportLimitsOutOfRange.newReportNode()
@@ -158,7 +165,7 @@ public final class Reports {
         reportNode.newReportNode()
                 .withMessageTemplate("optimizer.openreac.nbFrenchBranchesWithHighImpedanceRatio")
                 .withSeverity(TypedValue.ERROR_SEVERITY)
-                .withUntypedValue("size", size)
+                .withUntypedValue(SIZE, size)
                 .add();
     }
 
@@ -167,11 +174,11 @@ public final class Reports {
         reportNode.newReportNode()
                 .withMessageTemplate("optimizer.openreac.frenchBranchWithHighImpedanceRatio")
                 .withSeverity(TypedValue.DETAIL_SEVERITY)
-                .withUntypedValue("branchId", branchId)
-                .withUntypedValue("branchType", branchType)
-                .withUntypedValue("r", VALUE_FORMAT.format(r))
-                .withUntypedValue("x", VALUE_FORMAT.format(x))
-                .withUntypedValue("ratio", VALUE_FORMAT.format(ratio))
+                .withUntypedValue(BRANCH_ID, branchId)
+                .withUntypedValue(BRANCH_TYPE, branchType)
+                .withUntypedValue(RESISTANCE, VALUE_FORMAT.format(r))
+                .withUntypedValue(REACTANCE, VALUE_FORMAT.format(x))
+                .withUntypedValue(RATIO, VALUE_FORMAT.format(ratio))
                 .add();
     }
 
@@ -179,7 +186,7 @@ public final class Reports {
         reportNode.newReportNode()
                 .withMessageTemplate("optimizer.openreac.nbFrenchBranchesWithAcceptableHighImpedanceRatio")
                 .withSeverity(TypedValue.WARN_SEVERITY)
-                .withUntypedValue("size", size)
+                .withUntypedValue(SIZE, size)
                 .add();
     }
 
@@ -188,11 +195,11 @@ public final class Reports {
         reportNode.newReportNode()
                 .withMessageTemplate("optimizer.openreac.frenchBranchWithAcceptableHighImpedanceRatio")
                 .withSeverity(TypedValue.DETAIL_SEVERITY)
-                .withUntypedValue("branchId", branchId)
-                .withUntypedValue("branchType", branchType)
-                .withUntypedValue("r", VALUE_FORMAT.format(r))
-                .withUntypedValue("x", VALUE_FORMAT.format(x))
-                .withUntypedValue("ratio", VALUE_FORMAT.format(ratio))
+                .withUntypedValue(BRANCH_ID, branchId)
+                .withUntypedValue(BRANCH_TYPE, branchType)
+                .withUntypedValue(RESISTANCE, VALUE_FORMAT.format(r))
+                .withUntypedValue(REACTANCE, VALUE_FORMAT.format(x))
+                .withUntypedValue(RATIO, VALUE_FORMAT.format(ratio))
                 .add();
     }
 
@@ -200,7 +207,7 @@ public final class Reports {
         reportNode.newReportNode()
                 .withMessageTemplate("optimizer.openreac.nbNonFrenchBranchesWithHighImpedanceRatio")
                 .withSeverity(TypedValue.WARN_SEVERITY)
-                .withUntypedValue("size", size)
+                .withUntypedValue(SIZE, size)
                 .add();
     }
 
@@ -209,11 +216,11 @@ public final class Reports {
         reportNode.newReportNode()
                 .withMessageTemplate("optimizer.openreac.nonFrenchBranchWithHighImpedanceRatio")
                 .withSeverity(TypedValue.DETAIL_SEVERITY)
-                .withUntypedValue("branchId", branchId)
-                .withUntypedValue("branchType", branchType)
-                .withUntypedValue("r", VALUE_FORMAT.format(r))
-                .withUntypedValue("x", VALUE_FORMAT.format(x))
-                .withUntypedValue("ratio", VALUE_FORMAT.format(ratio))
+                .withUntypedValue(BRANCH_ID, branchId)
+                .withUntypedValue(BRANCH_TYPE, branchType)
+                .withUntypedValue(RESISTANCE, VALUE_FORMAT.format(r))
+                .withUntypedValue(REACTANCE, VALUE_FORMAT.format(x))
+                .withUntypedValue(RATIO, VALUE_FORMAT.format(ratio))
                 .add();
     }
 }
