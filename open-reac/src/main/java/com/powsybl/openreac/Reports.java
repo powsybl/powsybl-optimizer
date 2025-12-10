@@ -21,6 +21,7 @@ import java.util.Map;
 
 /**
  * @author Joris Mancini {@literal <joris.mancini_externe at rte-france.com>}
+ * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
  */
 public final class Reports {
 
@@ -151,5 +152,68 @@ public final class Reports {
                 .withUntypedValue("nominalVoltage", voltageLevelLimitInfo.nominalV())
                 .add());
         }
+    }
+
+    public static void reportNbFrenchBranchesWithHighImpedanceRatio(ReportNode reportNode, int size) {
+        reportNode.newReportNode()
+                .withMessageTemplate("optimizer.openreac.nbFrenchBranchesWithHighImpedanceRatio")
+                .withSeverity(TypedValue.ERROR_SEVERITY)
+                .withUntypedValue("size", size)
+                .add();
+    }
+
+    public static void reportFrenchBranchWithHighImpedanceRatio(ReportNode reportNode, String branchId, String branchType,
+                                                                double r, double x, double ratio) {
+        reportNode.newReportNode()
+                .withMessageTemplate("optimizer.openreac.frenchBranchWithHighImpedanceRatio")
+                .withSeverity(TypedValue.DETAIL_SEVERITY)
+                .withUntypedValue("branchId", branchId)
+                .withUntypedValue("branchType", branchType)
+                .withUntypedValue("r", VALUE_FORMAT.format(r))
+                .withUntypedValue("x", VALUE_FORMAT.format(x))
+                .withUntypedValue("ratio", VALUE_FORMAT.format(ratio))
+                .add();
+    }
+
+    public static void reportNbFrenchBranchesWithAcceptableHighImpedanceRatio(ReportNode reportNode, int size) {
+        reportNode.newReportNode()
+                .withMessageTemplate("optimizer.openreac.nbFrenchBranchesWithAcceptableHighImpedanceRatio")
+                .withSeverity(TypedValue.WARN_SEVERITY)
+                .withUntypedValue("size", size)
+                .add();
+    }
+
+    public static void reportFrenchBranchWithAcceptableHighImpedanceRatio(ReportNode reportNode, String branchId, String branchType,
+                                                                          double r, double x, double ratio) {
+        reportNode.newReportNode()
+                .withMessageTemplate("optimizer.openreac.frenchBranchWithAcceptableHighImpedanceRatio")
+                .withSeverity(TypedValue.DETAIL_SEVERITY)
+                .withUntypedValue("branchId", branchId)
+                .withUntypedValue("branchType", branchType)
+                .withUntypedValue("r", VALUE_FORMAT.format(r))
+                .withUntypedValue("x", VALUE_FORMAT.format(x))
+                .withUntypedValue("ratio", VALUE_FORMAT.format(ratio))
+                .add();
+    }
+
+    public static void reportNbNonFrenchBranchesWithHighImpedanceRatio(ReportNode reportNode, int size) {
+        reportNode.newReportNode()
+                .withMessageTemplate("optimizer.openreac.nbNonFrenchBranchesWithHighImpedanceRatio")
+                .withSeverity(TypedValue.WARN_SEVERITY)
+                .withUntypedValue("size", size)
+                .add();
+    }
+
+    public static void reportNonFrenchBranchWithHighImpedanceRatio(ReportNode reportNode, String branchId, String branchType,
+                                                                   double r, double x, double ratio) {
+        reportNode.newReportNode()
+                .withMessageTemplate("optimizer.openreac.nonFrenchBranchWithHighImpedanceRatio")
+                .withSeverity(TypedValue.DETAIL_SEVERITY)
+                .withUntypedValue("branchId", branchId)
+                .withUntypedValue("branchType", branchType)
+                .withUntypedValue("r", VALUE_FORMAT.format(r))
+                .withUntypedValue("x", VALUE_FORMAT.format(x))
+                .withUntypedValue("ratio", VALUE_FORMAT.format(ratio))
+                .add();
     }
 }

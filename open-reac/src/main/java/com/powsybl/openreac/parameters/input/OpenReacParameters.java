@@ -7,7 +7,9 @@
 package com.powsybl.openreac.parameters.input;
 
 import com.powsybl.commons.report.ReportNode;
+import com.powsybl.iidm.network.Country;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.Substation;
 import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.openreac.Reports;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
@@ -23,6 +25,7 @@ import java.util.*;
  *
  * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
  * @author Pierre Arvy {@literal <pierre.arvy at artelys.com>}
+ * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
  */
 public class OpenReacParameters {
 
@@ -658,6 +661,165 @@ public class OpenReacParameters {
     }
 
     /**
+     * Check that all branches in the network respect the impedance constraint
+     *
+     * For French branches (both substations in France):
+     *   - Test: r > 10 * |x| -> ERROR (stops execution)
+     *   - Test: r > |x|      -> WARNING (does not stop execution)
+     *
+     * For non-French branches (at least one substation outside France):
+     *   - Test: r > |x|      -> WARNING (does not stop execution)
+     *
+     * @param network the network on which branches are verified
+     * @param reportNode aggregates functional logging
+     * @throws InvalidParametersException if at least one French branch violates the constraint
+     */
+    private void checkBranchImpedanceRatio(Network network, ReportNode reportNode) throws InvalidParametersException {
+        List<BranchImpedanceInfo> violatingFrenchBranches = new ArrayList<>();
+        List<BranchImpedanceInfo> problematicFrenchBranches = new ArrayList<>();
+        List<BranchImpedanceInfo> problematicNonFrenchBranches = new ArrayList<>();
+
+        // Check lines
+        network.getLineStream().forEach(line -> {
+            double r = line.getR();  // in Ohms
+            double x = line.getX();  // in Ohms
+            double vNom1 = line.getTerminal1().getVoltageLevel().getNominalV();
+            double vNom2 = line.getTerminal2().getVoltageLevel().getNominalV();
+
+            // Check if both substations are in France
+            boolean isFrench = isFrenchBranch(
+                line.getTerminal1().getVoltageLevel().getSubstation().orElse(null),
+                line.getTerminal2().getVoltageLevel().getSubstation().orElse(null)
+            );
+
+            double ratio = r / Math.abs(x);
+
+            if (isFrench) {
+                if (ratio > 10) {
+                    violatingFrenchBranches.add(new BranchImpedanceInfo(
+                        line.getId(), "Line", r, x, ratio, vNom1, vNom2));
+                } else if (ratio > 1) {
+                    problematicFrenchBranches.add(new BranchImpedanceInfo(
+                        line.getId(), "Line", r, x, ratio, vNom1, vNom2));
+                }
+            } else {
+                if (ratio > 1) {
+                    problematicNonFrenchBranches.add(new BranchImpedanceInfo(
+                        line.getId(), "Line", r, x, ratio, vNom1, vNom2));
+                }
+            }
+        });
+
+        // Check two windings transformers
+        network.getTwoWindingsTransformerStream().forEach(transformer -> {
+            double r = transformer.getR();  // in Ohms
+            double x = transformer.getX();  // in Ohms
+            double vNom1 = transformer.getTerminal1().getVoltageLevel().getNominalV();
+            double vNom2 = transformer.getTerminal2().getVoltageLevel().getNominalV();
+
+            // Check if both substations are in France
+            boolean isFrench = isFrenchBranch(
+                transformer.getTerminal1().getVoltageLevel().getSubstation().orElse(null),
+                transformer.getTerminal2().getVoltageLevel().getSubstation().orElse(null)
+            );
+
+            double ratio = r / Math.abs(x);
+
+            if (isFrench) {
+                if (ratio > 10) {
+                    violatingFrenchBranches.add(new BranchImpedanceInfo(
+                        transformer.getId(), "Two windings transformer", r, x, ratio, vNom1, vNom2));
+                } else if (ratio > 1) {
+                    problematicFrenchBranches.add(new BranchImpedanceInfo(
+                        transformer.getId(), "Two windings transformer", r, x, ratio, vNom1, vNom2));
+                }
+            } else {
+                if (ratio > 1) {
+                    problematicNonFrenchBranches.add(new BranchImpedanceInfo(
+                        transformer.getId(), "Two windings transformer", r, x, ratio, vNom1, vNom2));
+                }
+            }
+        });
+
+        // Report warnings for French branches
+        if (!problematicFrenchBranches.isEmpty()) {
+            Reports.reportNbFrenchBranchesWithAcceptableHighImpedanceRatio(reportNode, problematicFrenchBranches.size());
+            problematicFrenchBranches.forEach(branch -> {
+                Reports.reportFrenchBranchWithAcceptableHighImpedanceRatio(reportNode, branch.id, branch.type,
+                                                                      branch.r, branch.x, branch.ratio);
+                LOGGER.warn("French branch with high impedance ratio: {} '{}': r={} Ω, x={} Ω (r/|x|={}) [Vnom1={} kV, Vnom2={} kV]",
+                    branch.type, branch.id, branch.r, branch.x, branch.ratio, branch.vNom1, branch.vNom2);
+            });
+        }
+
+        // Report warnings for non-French branches
+        if (!problematicNonFrenchBranches.isEmpty()) {
+            Reports.reportNbNonFrenchBranchesWithHighImpedanceRatio(reportNode, problematicNonFrenchBranches.size());
+            problematicNonFrenchBranches.forEach(branch -> {
+                Reports.reportNonFrenchBranchWithHighImpedanceRatio(reportNode, branch.id, branch.type,
+                                                                      branch.r, branch.x, branch.ratio);
+                LOGGER.warn("Non-French branch with high impedance ratio: {} '{}': r={} Ω, x={} Ω (r/|x|={}) [Vnom1={} kV, Vnom2={} kV]",
+                    branch.type, branch.id, branch.r, branch.x, branch.ratio, branch.vNom1, branch.vNom2);
+            });
+        }
+
+        // Report and throw error for French branches
+        if (!violatingFrenchBranches.isEmpty()) {
+            Reports.reportNbFrenchBranchesWithHighImpedanceRatio(reportNode, violatingFrenchBranches.size());
+            StringBuilder errorMessage = new StringBuilder();
+            errorMessage.append("The following French branches have r > 10 * |x|, which is not supported by OpenReac:\n");
+            violatingFrenchBranches.forEach(branch -> {
+                Reports.reportFrenchBranchWithHighImpedanceRatio(reportNode, branch.id, branch.type,
+                                                                   branch.r, branch.x, branch.ratio);
+                String message = String.format("%s '%s': r=%.6f Ω, x=%.6f Ω (r/|x|=%.2f) [Vnom1=%.1f kV, Vnom2=%.1f kV]",
+                    branch.type, branch.id, branch.r, branch.x, branch.ratio, branch.vNom1, branch.vNom2);
+                errorMessage.append("  - ").append(message).append("\n");
+                LOGGER.error("French branch impedance validation failed: {}", message);
+            });
+            throw new InvalidParametersException(errorMessage.toString());
+        }
+    }
+
+    /**
+     * Internal class to store branch impedance information
+     */
+    private static class BranchImpedanceInfo {
+        final String id;
+        final String type;
+        final double r;
+        final double x;
+        final double ratio;
+        final double vNom1;
+        final double vNom2;
+
+        BranchImpedanceInfo(String id, String type, double r, double x, double ratio, double vNom1, double vNom2) {
+            this.id = id;
+            this.type = type;
+            this.r = r;
+            this.x = x;
+            this.ratio = ratio;
+            this.vNom1 = vNom1;
+            this.vNom2 = vNom2;
+        }
+    }
+
+    /**
+     * Check if a branch is French (both substations in France)
+     *
+     * @param substation1 the first substation
+     * @param substation2 the second substation
+     * @return true if both substations are in France, false otherwise
+     */
+    private boolean isFrenchBranch(Substation substation1, Substation substation2) {
+        if (substation1 == null || substation2 == null) {
+            return false;
+        }
+        Country country1 = substation1.getCountry().orElse(null);
+        Country country2 = substation2.getCountry().orElse(null);
+        return country1 == Country.FR && country2 == Country.FR;
+    }
+
+    /**
      * Do some checks on the parameters given, such as provided IDs must correspond to the given network element
      *
      * @param network     Network on which ID are going to be infered
@@ -687,6 +849,9 @@ public class OpenReacParameters {
                 throw new InvalidParametersException("Bus " + busId + NOT_FOUND_IN_NETWORK);
             }
         }
+
+        // Check branch impedance ratio constraint
+        checkBranchImpedanceRatio(network, reportNode);
 
         // Check integrity of voltage overrides
         boolean integrityVoltageLimitOverrides = checkVoltageLimitOverrides(network, voltageLevelsWithInconsistentLimits);
