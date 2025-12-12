@@ -28,12 +28,12 @@ public final class Reports {
     private static final String NETWORK_ID = "networkId";
     private static final String SIZE = "size";
     private static final String BRANCH_ID = "branchId";
-    private static final String BRANCH_TYPE = "branchType";
     private static final String RESISTANCE = "r";
     private static final String REACTANCE = "x";
     private static final String RATIO = "ratio";
 
     private static final DecimalFormat VALUE_FORMAT = new DecimalFormat("0.0", DecimalFormatSymbols.getInstance(Locale.ROOT));
+    private static final DecimalFormat VALUE_FORMAT_ACCURATE = new DecimalFormat("0.00", DecimalFormatSymbols.getInstance(Locale.ROOT));
 
     private Reports() {
         // Should not be instantiated
@@ -169,16 +169,15 @@ public final class Reports {
                 .add();
     }
 
-    public static void reportFrenchBranchWithHighImpedanceRatio(ReportNode reportNode, String branchId, String branchType,
+    public static void reportFrenchBranchWithHighImpedanceRatio(ReportNode reportNode, String branchId,
                                                                 double r, double x, double ratio) {
         reportNode.newReportNode()
                 .withMessageTemplate("optimizer.openreac.frenchBranchWithHighImpedanceRatio")
                 .withSeverity(TypedValue.DETAIL_SEVERITY)
                 .withUntypedValue(BRANCH_ID, branchId)
-                .withUntypedValue(BRANCH_TYPE, branchType)
-                .withUntypedValue(RESISTANCE, VALUE_FORMAT.format(r))
-                .withUntypedValue(REACTANCE, VALUE_FORMAT.format(x))
-                .withUntypedValue(RATIO, VALUE_FORMAT.format(ratio))
+                .withUntypedValue(RESISTANCE, VALUE_FORMAT_ACCURATE.format(r))
+                .withUntypedValue(REACTANCE, VALUE_FORMAT_ACCURATE.format(x))
+                .withUntypedValue(RATIO, VALUE_FORMAT_ACCURATE.format(ratio))
                 .add();
     }
 
@@ -190,16 +189,15 @@ public final class Reports {
                 .add();
     }
 
-    public static void reportFrenchBranchWithAcceptableHighImpedanceRatio(ReportNode reportNode, String branchId, String branchType,
+    public static void reportFrenchBranchWithAcceptableHighImpedanceRatio(ReportNode reportNode, String branchId,
                                                                           double r, double x, double ratio) {
         reportNode.newReportNode()
                 .withMessageTemplate("optimizer.openreac.frenchBranchWithAcceptableHighImpedanceRatio")
                 .withSeverity(TypedValue.DETAIL_SEVERITY)
                 .withUntypedValue(BRANCH_ID, branchId)
-                .withUntypedValue(BRANCH_TYPE, branchType)
-                .withUntypedValue(RESISTANCE, VALUE_FORMAT.format(r))
-                .withUntypedValue(REACTANCE, VALUE_FORMAT.format(x))
-                .withUntypedValue(RATIO, VALUE_FORMAT.format(ratio))
+                .withUntypedValue(RESISTANCE, VALUE_FORMAT_ACCURATE.format(r))
+                .withUntypedValue(REACTANCE, VALUE_FORMAT_ACCURATE.format(x))
+                .withUntypedValue(RATIO, VALUE_FORMAT_ACCURATE.format(ratio))
                 .add();
     }
 
@@ -211,16 +209,15 @@ public final class Reports {
                 .add();
     }
 
-    public static void reportNonFrenchBranchWithHighImpedanceRatio(ReportNode reportNode, String branchId, String branchType,
+    public static void reportNonFrenchBranchWithHighImpedanceRatio(ReportNode reportNode, String branchId,
                                                                    double r, double x, double ratio) {
         reportNode.newReportNode()
                 .withMessageTemplate("optimizer.openreac.nonFrenchBranchWithHighImpedanceRatio")
                 .withSeverity(TypedValue.DETAIL_SEVERITY)
                 .withUntypedValue(BRANCH_ID, branchId)
-                .withUntypedValue(BRANCH_TYPE, branchType)
-                .withUntypedValue(RESISTANCE, VALUE_FORMAT.format(r))
-                .withUntypedValue(REACTANCE, VALUE_FORMAT.format(x))
-                .withUntypedValue(RATIO, VALUE_FORMAT.format(ratio))
+                .withUntypedValue(RESISTANCE, VALUE_FORMAT_ACCURATE.format(r))
+                .withUntypedValue(REACTANCE, VALUE_FORMAT_ACCURATE.format(x))
+                .withUntypedValue(RATIO, VALUE_FORMAT_ACCURATE.format(ratio))
                 .add();
     }
 }

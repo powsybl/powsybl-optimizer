@@ -11,6 +11,7 @@ import com.powsybl.iidm.network.*;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
 import org.junit.jupiter.api.Test;
 
+import static com.powsybl.openreac.parameters.input.ReportTestHelper.hasReportWithKey;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -23,7 +24,7 @@ class BranchImpedanceValidationTest {
      */
     private ReportNode createReportNode() {
         return ReportNode.newRootReportNode()
-                .withMessageTemplate("branchImpedanceValidationTest", "Branch Impedance Validation Test")
+                .withMessageTemplate("branchImpedanceValidationTest")
                 .build();
     }
 
@@ -38,10 +39,10 @@ class BranchImpedanceValidationTest {
         ReportNode reportNode = createReportNode();
 
         InvalidParametersException exception = assertThrows(InvalidParametersException.class,
-                () -> params.checkIntegrity(network, reportNode));
+                () -> params.checkIntegrity(network, reportNode.NO_OP));
 
         assertTrue(exception.getMessage().contains("French branches have r > 10 * |x|"));
-        assertTrue(exception.getMessage().contains("Line 'LINE_FR'"));
+        assertTrue(exception.getMessage().contains("'LINE_FR'"));
     }
 
     /**
@@ -58,8 +59,7 @@ class BranchImpedanceValidationTest {
         assertDoesNotThrow(() -> params.checkIntegrity(network, reportNode));
 
         // Should have warning in ReportNode
-        boolean hasWarning = hasReportWithKey(reportNode, "optimizer.openreac.nbFrenchBranchesWithAcceptableHighImpedanceRatio");
-        assertTrue(hasWarning, "Expected warning report for French branch with moderate impedance ratio");
+        assertTrue(hasReportWithKey(reportNode, "optimizer.openreac.nbFrenchBranchesWithAcceptableHighImpedanceRatio"));
     }
 
     /**
@@ -76,8 +76,7 @@ class BranchImpedanceValidationTest {
         assertDoesNotThrow(() -> params.checkIntegrity(network, reportNode));
 
         // Should have no warnings about impedance
-        boolean hasWarning = hasReportWithKey(reportNode, "optimizer.openreac.nbFrenchBranchesWithAcceptableHighImpedanceRatio");
-        assertFalse(hasWarning, "Should not have warning for French branch with low impedance ratio");
+        assertFalse(hasReportWithKey(reportNode, "optimizer.openreac.nbFrenchBranchesWithAcceptableHighImpedanceRatio"));
     }
 
     /**
@@ -94,8 +93,7 @@ class BranchImpedanceValidationTest {
         assertDoesNotThrow(() -> params.checkIntegrity(network, reportNode));
 
         // Should have warning in ReportNode
-        boolean hasWarning = hasReportWithKey(reportNode, "optimizer.openreac.nbNonFrenchBranchesWithHighImpedanceRatio");
-        assertTrue(hasWarning, "Expected warning report for non-French branch with high impedance ratio");
+        assertTrue(hasReportWithKey(reportNode, "optimizer.openreac.nbNonFrenchBranchesWithHighImpedanceRatio"));
     }
 
     /**
@@ -112,8 +110,7 @@ class BranchImpedanceValidationTest {
         assertDoesNotThrow(() -> params.checkIntegrity(network, reportNode));
 
         // Should have no warnings about non-French branches
-        boolean hasWarning = hasReportWithKey(reportNode, "optimizer.openreac.nbNonFrenchBranchesWithHighImpedanceRatio");
-        assertFalse(hasWarning, "Should not have warning for non-French branch with low impedance ratio");
+        assertFalse(hasReportWithKey(reportNode, "optimizer.openreac.nbNonFrenchBranchesWithHighImpedanceRatio"));
     }
 
     /**
@@ -130,7 +127,7 @@ class BranchImpedanceValidationTest {
                 () -> params.checkIntegrity(network, reportNode));
 
         assertTrue(exception.getMessage().contains("French branches have r > 10 * |x|"));
-        assertTrue(exception.getMessage().contains("Two windings transformer"));
+        assertTrue(exception.getMessage().contains("'TRANSFO_FR'"));
     }
 
     /**
@@ -167,8 +164,7 @@ class BranchImpedanceValidationTest {
         assertDoesNotThrow(() -> params.checkIntegrity(network, reportNode));
 
         // Should have warning (1 < 5 <= 10)
-        boolean hasWarning = hasReportWithKey(reportNode, "optimizer.openreac.nbFrenchBranchesWithAcceptableHighImpedanceRatio");
-        assertTrue(hasWarning);
+        assertTrue(hasReportWithKey(reportNode, "optimizer.openreac.nbFrenchBranchesWithAcceptableHighImpedanceRatio"));
     }
 
     // ========== Helper methods to create test networks ==========
@@ -421,20 +417,5 @@ class BranchImpedanceValidationTest {
                 .add();
 
         return network;
-    }
-
-    /**
-     * Helper method to check if a ReportNode tree contains a report with a specific message key
-     */
-    private boolean hasReportWithKey(ReportNode node, String messageKey) {
-        if (messageKey.equals(node.getMessageKey())) {
-            return true;
-        }
-        for (ReportNode child : node.getChildren()) {
-            if (hasReportWithKey(child, messageKey)) {
-                return true;
-            }
-        }
-        return false;
     }
 }
