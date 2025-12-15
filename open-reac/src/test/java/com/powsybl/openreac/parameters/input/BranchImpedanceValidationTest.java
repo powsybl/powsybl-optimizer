@@ -36,10 +36,9 @@ class BranchImpedanceValidationTest {
         Network network = createNetworkWithFrenchLine(12.0, 1.0); // ratio = 12 > 10
 
         OpenReacParameters params = new OpenReacParameters();
-        ReportNode reportNode = createReportNode();
 
         InvalidParametersException exception = assertThrows(InvalidParametersException.class,
-                () -> params.checkIntegrity(network, reportNode.NO_OP));
+                () -> params.checkIntegrity(network, ReportNode.NO_OP));
 
         assertTrue(exception.getMessage().contains("French branches have r > 10 * |x|"));
         assertTrue(exception.getMessage().contains("'LINE_FR'"));
@@ -121,10 +120,9 @@ class BranchImpedanceValidationTest {
         Network network = createNetworkWithFrenchTransformer(15.0, 1.0); // ratio = 15 > 10
 
         OpenReacParameters params = new OpenReacParameters();
-        ReportNode reportNode = createReportNode();
 
         InvalidParametersException exception = assertThrows(InvalidParametersException.class,
-                () -> params.checkIntegrity(network, reportNode));
+                () -> params.checkIntegrity(network, ReportNode.NO_OP));
 
         assertTrue(exception.getMessage().contains("French branches have r > 10 * |x|"));
         assertTrue(exception.getMessage().contains("'TRANSFO_FR'"));
@@ -138,10 +136,9 @@ class BranchImpedanceValidationTest {
         Network network = createMixedNetwork();
 
         OpenReacParameters params = new OpenReacParameters();
-        ReportNode reportNode = createReportNode();
 
         InvalidParametersException exception = assertThrows(InvalidParametersException.class,
-                () -> params.checkIntegrity(network, reportNode));
+                () -> params.checkIntegrity(network, ReportNode.NO_OP));
 
         // Should mention French branch error
         assertTrue(exception.getMessage().contains("French branches have r > 10 * |x|"));

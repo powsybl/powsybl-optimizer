@@ -689,9 +689,9 @@ public class OpenReacParameters {
         List<BranchImpedanceInfo> problematicNonFrenchBranches = new ArrayList<>();
 
         // Check all branches
-        Stream.concat(
-                network.getLineStream().map(l -> (Branch<?>) l),
-                network.getTwoWindingsTransformerStream().map(t -> (Branch<?>) t)
+        Stream.<Branch<?>>concat(
+                network.getLineStream(),
+                network.getTwoWindingsTransformerStream()
         ).forEach(branch -> {
             double r = getR(branch);  // in Ohms
             double x = getX(branch);  // in Ohms
