@@ -34,6 +34,7 @@ public final class Reports {
 
     private static final DecimalFormat VALUE_FORMAT = new DecimalFormat("0.0", DecimalFormatSymbols.getInstance(Locale.ROOT));
     private static final DecimalFormat VALUE_FORMAT_ACCURATE = new DecimalFormat("0.00", DecimalFormatSymbols.getInstance(Locale.ROOT));
+    private static final DecimalFormat VALUE_FORMAT_SCIENTIFIC = new DecimalFormat("0.00E00", DecimalFormatSymbols.getInstance(Locale.ROOT));
 
     private Reports() {
         // Should not be instantiated
@@ -218,6 +219,25 @@ public final class Reports {
                 .withUntypedValue(RESISTANCE, VALUE_FORMAT_ACCURATE.format(r))
                 .withUntypedValue(REACTANCE, VALUE_FORMAT_ACCURATE.format(x))
                 .withUntypedValue(RATIO, VALUE_FORMAT_ACCURATE.format(ratio))
+                .add();
+    }
+
+    public static void reportNbBranchesWithLowReactance(ReportNode reportNode, int size) {
+        reportNode.newReportNode()
+                .withMessageTemplate("optimizer.openreac.nbBranchesWithLowReactance")
+                .withSeverity(TypedValue.WARN_SEVERITY)
+                .withUntypedValue(SIZE, size)
+                .add();
+    }
+
+    public static void reportBranchWithLowReactance(ReportNode reportNode, String branchId,
+                                                    double x, double threshold) {
+        reportNode.newReportNode()
+                .withMessageTemplate("optimizer.openreac.branchWithLowReactance")
+                .withSeverity(TypedValue.DETAIL_SEVERITY)
+                .withUntypedValue(BRANCH_ID, branchId)
+                .withUntypedValue(REACTANCE, VALUE_FORMAT_SCIENTIFIC.format(x))
+                .withUntypedValue("threshold", VALUE_FORMAT_SCIENTIFIC.format(threshold))
                 .add();
     }
 }

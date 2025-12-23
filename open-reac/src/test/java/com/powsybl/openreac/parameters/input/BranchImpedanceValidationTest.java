@@ -165,6 +165,27 @@ class BranchImpedanceValidationTest {
         assertTrue(hasReportWithKey(reportNode, "optimizer.openreac.nbFrenchBranchesWithAcceptableHighImpedanceRatio"));
     }
 
+    /**
+     * Test that branches with very low reactance generate a warning and skip ratio check
+     */
+    @Test
+    void testBranchWithVeryLowReactanceGeneratesWarning() {
+        Network network = createNetworkWithFrenchLine(10.0, 1e-6); // x = 1e-6 < threshold
+
+        OpenReacParameters params = new OpenReacParameters();
+        ReportNode reportNode = createReportNode();
+
+        // Should not throw (even though r/|x| would be very high)
+        assertDoesNotThrow(() -> params.checkIntegrity(network, reportNode));
+
+        // Should have warning about low reactance
+        assertTrue(hasReportWithKey(reportNode, "optimizer.openreac.nbBranchesWithLowReactance"));
+
+        // Should NOT have ratio warnings (ratio check was skipped)
+        assertFalse(hasReportWithKey(reportNode, "optimizer.openreac.nbFrenchBranchesWithHighImpedanceRatio"));
+        assertFalse(hasReportWithKey(reportNode, "optimizer.openreac.nbFrenchBranchesWithAcceptableHighImpedanceRatio"));
+    }
+
     // ========== Helper methods to create test networks ==========
 
     /**

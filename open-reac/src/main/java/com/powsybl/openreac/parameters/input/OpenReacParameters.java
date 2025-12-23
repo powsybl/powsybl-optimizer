@@ -687,6 +687,7 @@ public class OpenReacParameters {
         List<BranchImpedanceInfo> violatingFrenchBranches = new ArrayList<>();
         List<BranchImpedanceInfo> problematicFrenchBranches = new ArrayList<>();
         List<BranchImpedanceInfo> problematicNonFrenchBranches = new ArrayList<>();
+        List<BranchImpedanceInfo> branchesWithLowReactance = new ArrayList<>();
 
         // Check all branches
         Stream.<Branch<?>>concat(
@@ -697,6 +698,12 @@ public class OpenReacParameters {
             double x = getX(branch);  // in Ohms
             double vNom1 = branch.getTerminal1().getVoltageLevel().getNominalV();
             double vNom2 = branch.getTerminal2().getVoltageLevel().getNominalV();
+
+            // Check if reactance is too low
+            if (Math.abs(x) < lowImpedanceThreshold) {
+                branchesWithLowReactance.add(new BranchImpedanceInfo(branch.getId(), r, x, 0.0, vNom1, vNom2));
+                return;  // Skip ratio check for this branch
+            }
 
             // Check if both substations are in France
             boolean isFrench = isFrenchBranch(
@@ -716,6 +723,16 @@ public class OpenReacParameters {
                 }
             }
         });
+
+        // Report branches with low reactance
+        if (!branchesWithLowReactance.isEmpty()) {
+            Reports.reportNbBranchesWithLowReactance(reportNode, branchesWithLowReactance.size());
+            branchesWithLowReactance.forEach(branch -> {
+                Reports.reportBranchWithLowReactance(reportNode, branch.id, branch.x, lowImpedanceThreshold);
+                LOGGER.warn("Branch with low reactance: '{}': x={} Ω (threshold={} Ω) [Vnom1={} kV, Vnom2={} kV]",
+                    branch.id, branch.x, lowImpedanceThreshold, branch.vNom1, branch.vNom2);
+            });
+        }
 
         // Report warnings for French branches
         if (!problematicFrenchBranches.isEmpty()) {
