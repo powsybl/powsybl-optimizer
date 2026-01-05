@@ -674,7 +674,7 @@ public class OpenReacParameters {
      *  <li>WARNING (does not stop execution)</li>
      * </ul></p>
      * <br/>
-     * <p>Also:</p>
+     * <p>After that:</p>
      * <br/>
      * <p>For French branches (both substations in France):
      * <ul>
