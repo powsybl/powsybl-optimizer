@@ -668,23 +668,24 @@ public class OpenReacParameters {
     /**
      * <p>Check that all branches in the network respect the impedance constraint.</p>
      * <br/>
-     * <p>For all branches, when <code>|x| < threshold</code>:
+     * <p>For all branches:
      * <ul>
-     *  <li><code>|x| = threshold</code></li>
-     *  <li>WARNING (does not stop execution)</li>
-     * </ul></p>
-     * <br/>
-     * <p>After that:</p>
-     * <br/>
-     * <p>For French branches (both substations in France):
-     * <ul>
-     *   <li>When <code>r > 10 * |x|</code>: ERROR (stops execution)</li>
-     *   <li>When <code>r > |x|</code>: WARNING (does not stop execution)</li>
-     * </ul></p>
-     * <br/>
-     * <p>For non-French branches (at least one substation outside France):
-     * <ul>
-     *   <li>When <code>r > |x|</code>: WARNING (does not stop execution)</li>
+     *   <li>When <code>|x| < threshold</code>:</li>
+     *   <ul>
+     *     <li><code>x = threshold</code></li>
+     *     <li>WARNING (does not stop execution)</li>
+     *   </ul>
+     *   <br/>
+     *   <li>When the branch is French (both substations in France):</li>
+     *   <ul>
+     *     <li>When <code>r > 10 * |x|</code>: ERROR (stops execution)</li>
+     *     <li>When <code>r > |x|</code>: WARNING (does not stop execution)</li>
+     *   </ul>
+     *   <br/>
+     *   <li>When the branch is non-French (at least one substation outside France):</li>
+     *   <ul>
+     *     <li>When <code>r > |x|</code>: WARNING (does not stop execution)</li>
+     *   </ul>
      * </ul></p>
      *
      * @param network the network on which branches are verified
