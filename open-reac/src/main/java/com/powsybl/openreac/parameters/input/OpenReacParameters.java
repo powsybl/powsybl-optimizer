@@ -668,6 +668,14 @@ public class OpenReacParameters {
     /**
      * <p>Check that all branches in the network respect the impedance constraint.</p>
      * <br/>
+     * <p>For all branches, when <code>|x| < threshold</code>:
+     * <ul>
+     *  <li><code>|x| = threshold</code></li>
+     *  <li>WARNING (does not stop execution)</li>
+     * </ul></p>
+     * <br/>
+     * <p>Also:</p>
+     * <br/>
      * <p>For French branches (both substations in France):
      * <ul>
      *   <li>When <code>r > 10 * |x|</code>: ERROR (stops execution)</li>
@@ -702,7 +710,7 @@ public class OpenReacParameters {
             // Check if reactance is too low
             if (Math.abs(x) < lowImpedanceThreshold) {
                 branchesWithLowReactance.add(new BranchImpedanceInfo(branch.getId(), r, x, 0.0, vNom1, vNom2));
-                return;  // Skip ratio check for this branch
+                x = lowImpedanceThreshold;
             }
 
             // Check if both substations are in France

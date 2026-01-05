@@ -166,24 +166,66 @@ class BranchImpedanceValidationTest {
     }
 
     /**
-     * Test that branches with very low reactance generate a warning and skip ratio check
+     * Test that branches with very low reactance generate a warning and use threshold for ratio check
      */
     @Test
-    void testBranchWithVeryLowReactanceGeneratesWarning() {
-        Network network = createNetworkWithFrenchLine(10.0, 1e-6); // x = 1e-6 < threshold
+    void testBranchWithVeryLowReactanceGeneratesWarningAndUsesThreshold() {
+        // x = 1e-5 < threshold (1e-4), so x will be replaced by 1e-4
+        // ratio = 10.0 / 1e-4 = 100,000 >> 10, so this should throw
+        Network network = createNetworkWithFrenchLine(10.0, 1e-5);
+
+        OpenReacParameters params = new OpenReacParameters();
+
+        // Should throw because ratio with threshold is still very high (100,000 > 10)
+        InvalidParametersException exception = assertThrows(InvalidParametersException.class,
+                () -> params.checkIntegrity(network, ReportNode.NO_OP));
+
+        assertTrue(exception.getMessage().contains("French branches have r > 10 * |x|"));
+    }
+
+    /**
+     * Test that branches with low reactance that result in acceptable ratio after threshold replacement
+     */
+    @Test
+    void testBranchWithLowReactanceButAcceptableRatioAfterThreshold() {
+        // x = 1e-5 < threshold (1e-4), so x will be replaced by 1e-4
+        // ratio = 5e-4 / 1e-4 = 5, which is acceptable (1 < 5 <= 10)
+        Network network = createNetworkWithFrenchLine(5e-4, 1e-5);
 
         OpenReacParameters params = new OpenReacParameters();
         ReportNode reportNode = createReportNode();
 
-        // Should not throw (even though r/|x| would be very high)
+        // Should not throw (ratio with threshold is 5, which is acceptable)
         assertDoesNotThrow(() -> params.checkIntegrity(network, reportNode));
 
         // Should have warning about low reactance
         assertTrue(hasReportWithKey(reportNode, "optimizer.openreac.nbBranchesWithLowReactance"));
 
-        // Should NOT have ratio warnings (ratio check was skipped)
-        assertFalse(hasReportWithKey(reportNode, "optimizer.openreac.nbFrenchBranchesWithHighImpedanceRatio"));
+        // Should also have warning about acceptable high ratio (1 < 5 <= 10)
+        assertTrue(hasReportWithKey(reportNode, "optimizer.openreac.nbFrenchBranchesWithAcceptableHighImpedanceRatio"));
+    }
+
+    /**
+     * Test that branches with low reactance and low resistance pass all checks with only low reactance warning
+     */
+    @Test
+    void testBranchWithLowReactanceAndLowResistance() {
+        // x = 1e-5 < threshold (1e-4), so x will be replaced by 1e-4
+        // ratio = 5e-5 / 1e-4 = 0.5 < 1, which passes
+        Network network = createNetworkWithFrenchLine(5e-5, 1e-5);
+
+        OpenReacParameters params = new OpenReacParameters();
+        ReportNode reportNode = createReportNode();
+
+        // Should not throw (ratio with threshold is 0.5 < 1)
+        assertDoesNotThrow(() -> params.checkIntegrity(network, reportNode));
+
+        // Should have warning about low reactance
+        assertTrue(hasReportWithKey(reportNode, "optimizer.openreac.nbBranchesWithLowReactance"));
+
+        // Should NOT have ratio warnings (ratio < 1)
         assertFalse(hasReportWithKey(reportNode, "optimizer.openreac.nbFrenchBranchesWithAcceptableHighImpedanceRatio"));
+        assertFalse(hasReportWithKey(reportNode, "optimizer.openreac.nbFrenchBranchesWithHighImpedanceRatio"));
     }
 
     // ========== Helper methods to create test networks ==========
