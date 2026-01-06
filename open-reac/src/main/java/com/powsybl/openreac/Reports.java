@@ -222,20 +222,21 @@ public final class Reports {
                 .add();
     }
 
-    public static void reportNbBranchesWithLowReactance(ReportNode reportNode, int size) {
+    public static void reportNbBranchesWithLowImpedance(ReportNode reportNode, int size) {
         reportNode.newReportNode()
-                .withMessageTemplate("optimizer.openreac.nbBranchesWithLowReactance")
+                .withMessageTemplate("optimizer.openreac.nbBranchesWithLowImpedance")
                 .withSeverity(TypedValue.WARN_SEVERITY)
                 .withUntypedValue(SIZE, size)
                 .add();
     }
 
-    public static void reportBranchWithLowReactance(ReportNode reportNode, String branchId,
-                                                    double x, double threshold) {
+    public static void reportBranchWithLowImpedance(ReportNode reportNode, String branchId,
+                                                    double r, double x, double threshold) {
         reportNode.newReportNode()
-                .withMessageTemplate("optimizer.openreac.branchWithLowReactance")
+                .withMessageTemplate("optimizer.openreac.branchWithLowImpedance")
                 .withSeverity(TypedValue.DETAIL_SEVERITY)
                 .withUntypedValue(BRANCH_ID, branchId)
+                .withUntypedValue(RESISTANCE, VALUE_FORMAT_SCIENTIFIC.format(r))
                 .withUntypedValue(REACTANCE, VALUE_FORMAT_SCIENTIFIC.format(x))
                 .withUntypedValue("threshold", VALUE_FORMAT_SCIENTIFIC.format(threshold))
                 .add();

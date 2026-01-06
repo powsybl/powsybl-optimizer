@@ -670,7 +670,7 @@ public class OpenReacParameters {
      * <br/>
      * <p>For all branches:
      * <ul>
-     *   <li>When <code>|x| < threshold</code>:</li>
+     *   <li>When <code>r² + x² <= threshold²</code>:</li>
      *   <ul>
      *     <li><code>x = threshold</code></li>
      *     <li>WARNING (does not stop execution)</li>
@@ -696,7 +696,7 @@ public class OpenReacParameters {
         List<BranchImpedanceInfo> violatingFrenchBranches = new ArrayList<>();
         List<BranchImpedanceInfo> problematicFrenchBranches = new ArrayList<>();
         List<BranchImpedanceInfo> problematicNonFrenchBranches = new ArrayList<>();
-        List<BranchImpedanceInfo> branchesWithLowReactance = new ArrayList<>();
+        List<LowImpedanceBranchInfo> branchesWithLowImpedances = new ArrayList<>();
 
         // Check all branches
         Stream.<Branch<?>>concat(
@@ -708,10 +708,13 @@ public class OpenReacParameters {
             double vNom1 = branch.getTerminal1().getVoltageLevel().getNominalV();
             double vNom2 = branch.getTerminal2().getVoltageLevel().getNominalV();
 
-            // Check if reactance is too low
-            if (Math.abs(x) < lowImpedanceThreshold) {
-                branchesWithLowReactance.add(new BranchImpedanceInfo(branch.getId(), r, x, 0.0, vNom1, vNom2));
-                x = lowImpedanceThreshold;
+            // Conversion of the threshold into Ohms
+            double lowImpedanceThresholdOhms = calculateImpedanceThresholdOhms(vNom1);
+
+            // Check if impedance is too low
+            if (r * r + x * x <= lowImpedanceThresholdOhms * lowImpedanceThresholdOhms) {
+                branchesWithLowImpedances.add(new LowImpedanceBranchInfo(branch.getId(), r, x, vNom1, vNom2, lowImpedanceThresholdOhms));
+                x = lowImpedanceThresholdOhms;
             }
 
             // Check if both substations are in France
@@ -733,13 +736,13 @@ public class OpenReacParameters {
             }
         });
 
-        // Report branches with low reactance
-        if (!branchesWithLowReactance.isEmpty()) {
-            Reports.reportNbBranchesWithLowReactance(reportNode, branchesWithLowReactance.size());
-            branchesWithLowReactance.forEach(branch -> {
-                Reports.reportBranchWithLowReactance(reportNode, branch.id, branch.x, lowImpedanceThreshold);
-                LOGGER.warn("Branch with low reactance: '{}': x={} Ω (threshold={} Ω) [Vnom1={} kV, Vnom2={} kV]",
-                    branch.id, branch.x, lowImpedanceThreshold, branch.vNom1, branch.vNom2);
+        // Report branches with low impedance
+        if (!branchesWithLowImpedances.isEmpty()) {
+            Reports.reportNbBranchesWithLowImpedance(reportNode, branchesWithLowImpedances.size());
+            branchesWithLowImpedances.forEach(branch -> {
+                Reports.reportBranchWithLowImpedance(reportNode, branch.id, branch.r, branch.x, branch.thresholdOhms);
+                LOGGER.warn("Branch with low impedance: '{}': r={} Ω, x={} Ω (threshold={} Ω) [Vnom1={} kV, Vnom2={} kV]",
+                    branch.id, branch.r, branch.x, branch.thresholdOhms, branch.vNom1, branch.vNom2);
             });
         }
 
@@ -801,10 +804,29 @@ public class OpenReacParameters {
     }
 
     /**
+     * Calculate impedance threshold in Ohms for a given nominal voltage
+     *
+     * @param nominalVoltageKv Nominal voltage in kV
+     * @return Impedance threshold in Ohms
+     */
+    private double calculateImpedanceThresholdOhms(double nominalVoltageKv) {
+        double sBase = 100.0;  // MVA (standard base power)
+        double zBase = (nominalVoltageKv * nominalVoltageKv) / sBase;
+        return lowImpedanceThreshold * zBase;
+    }
+
+    /**
      * Record to store branch information for impedance ratio validation and reporting
      * Used to collect and report branches with high r/|x| ratios during the validation
      */
     private record BranchImpedanceInfo(String id, double r, double x, double ratio, double vNom1, double vNom2) {
+    }
+
+    /**
+     * Record to store branch information for impedance value validation and reporting
+     * Used to collect and report branches with low impedance
+     */
+    private record LowImpedanceBranchInfo(String id, double r, double x, double vNom1, double vNom2, double thresholdOhms) {
     }
 
     /**
