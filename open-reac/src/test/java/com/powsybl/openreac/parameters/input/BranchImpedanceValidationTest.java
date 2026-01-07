@@ -226,7 +226,7 @@ class BranchImpedanceValidationTest {
     @Test
     void testBranchWithImpedanceAtThresholdAndMaxX() {
         // After replacement x = 0.16, ratio = 0/0.16 = 0.0
-        Network network = createNetworkWithFrenchLine(0.16, 0.0);
+        Network network = createNetworkWithFrenchLine(0.0, 0.16);
 
         OpenReacParameters params = new OpenReacParameters();
         ReportNode reportNode = createReportNode();
