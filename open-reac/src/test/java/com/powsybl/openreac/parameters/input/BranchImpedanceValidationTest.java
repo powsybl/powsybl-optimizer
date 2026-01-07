@@ -215,7 +215,7 @@ class BranchImpedanceValidationTest {
      */
     @Test
     void testBranchWithImpedanceAtThreshold() {
-        // At the boundary: should NOT trigger low impedance warning (condition is <=, but 0.16 == 0.16)
+        // At the boundary: should trigger low impedance warning (condition is <=, but 0.16 == 0.16)
         Network network = createNetworkWithFrenchLine(0.16, 0.0);
 
         OpenReacParameters params = new OpenReacParameters();
