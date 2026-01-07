@@ -60,6 +60,7 @@ class BranchImpedanceValidationTest {
 
         // Should have warning in ReportNode
         assertTrue(hasReportWithKey(reportNode, "optimizer.openreac.nbFrenchBranchesWithAcceptableHighImpedanceRatio"));
+        assertTrue(hasReportWithKey(reportNode, "optimizer.openreac.frenchBranchWithAcceptableHighImpedanceRatio"));
     }
 
     /**
@@ -77,6 +78,7 @@ class BranchImpedanceValidationTest {
 
         // Should have no warnings about impedance ratio
         assertFalse(hasReportWithKey(reportNode, "optimizer.openreac.nbFrenchBranchesWithAcceptableHighImpedanceRatio"));
+        assertFalse(hasReportWithKey(reportNode, "optimizer.openreac.frenchBranchWithAcceptableHighImpedanceRatio"));
     }
 
     /**
@@ -94,6 +96,7 @@ class BranchImpedanceValidationTest {
 
         // Should have warning in ReportNode
         assertTrue(hasReportWithKey(reportNode, "optimizer.openreac.nbNonFrenchBranchesWithHighImpedanceRatio"));
+        assertTrue(hasReportWithKey(reportNode, "optimizer.openreac.nonFrenchBranchWithHighImpedanceRatio"));
     }
 
     /**
@@ -111,6 +114,7 @@ class BranchImpedanceValidationTest {
 
         // Should have no warnings about non-French branches
         assertFalse(hasReportWithKey(reportNode, "optimizer.openreac.nbNonFrenchBranchesWithHighImpedanceRatio"));
+        assertFalse(hasReportWithKey(reportNode, "optimizer.openreac.nonFrenchBranchWithHighImpedanceRatio"));
     }
 
     /**
@@ -163,6 +167,7 @@ class BranchImpedanceValidationTest {
 
         // Should have warning (1 < 5 <= 10)
         assertTrue(hasReportWithKey(reportNode, "optimizer.openreac.nbFrenchBranchesWithAcceptableHighImpedanceRatio"));
+        assertTrue(hasReportWithKey(reportNode, "optimizer.openreac.frenchBranchWithAcceptableHighImpedanceRatio"));
     }
 
     // ========== Tests for low impedance detection (sqrt(r² + x²) <= threshold) ==========
@@ -189,33 +194,16 @@ class BranchImpedanceValidationTest {
 
         // Should NOT have ratio warnings (ratio < 1)
         assertFalse(hasReportWithKey(reportNode, "optimizer.openreac.nbFrenchBranchesWithAcceptableHighImpedanceRatio"));
-        assertFalse(hasReportWithKey(reportNode, "optimizer.openreac.nbFrenchBranchesWithHighImpedanceRatio"));
+        assertFalse(hasReportWithKey(reportNode, "optimizer.openreac.frenchBranchWithAcceptableHighImpedanceRatio"));
     }
 
     /**
-     * Test branch with very small impedance in all directions
+     * Test branch with impedance exactly at threshold boundary with maximum possible r
+     * r=0.16, x=0 -> sqrt(0.0256 + 0.0) = 0.16 Ω (exactly at threshold)
      */
     @Test
-    void testBranchWithVerySmallImpedance() {
-        // r=0.05, x=0.05 -> sqrt(0.0025 + 0.0025) = 0.071 Ω << 0.16 Ω
-        Network network = createNetworkWithFrenchLine(0.05, 0.05);
-
-        OpenReacParameters params = new OpenReacParameters();
-        ReportNode reportNode = createReportNode();
-
-        assertDoesNotThrow(() -> params.checkIntegrity(network, reportNode));
-
-        // Should have warning about low impedance
-        assertTrue(hasReportWithKey(reportNode, "optimizer.openreac.nbBranchesWithLowImpedance"));
-    }
-
-    /**
-     * Test branch with impedance exactly at threshold boundary
-     * r=0.16, x=0 -> sqrt(0.0256) = 0.16 Ω (exactly at threshold)
-     */
-    @Test
-    void testBranchWithImpedanceAtThreshold() {
-        // At the boundary: should trigger low impedance warning (condition is <=, but 0.16 == 0.16)
+    void testBranchWithImpedanceAtThresholdAndMaxR() {
+        // After replacement x = 0.16, ratio = 0.16/0.16 = 1.0 (boundary)
         Network network = createNetworkWithFrenchLine(0.16, 0.0);
 
         OpenReacParameters params = new OpenReacParameters();
@@ -225,10 +213,36 @@ class BranchImpedanceValidationTest {
 
         // Should have low impedance warning (0.16 <= 0.16 is true)
         assertTrue(hasReportWithKey(reportNode, "optimizer.openreac.nbBranchesWithLowImpedance"));
+
+        // Should NOT have ratio warning (1 <= 1 after threshold replacement)
+        assertFalse(hasReportWithKey(reportNode, "optimizer.openreac.nbNonFrenchBranchesWithHighImpedanceRatio"));
+        assertFalse(hasReportWithKey(reportNode, "optimizer.openreac.nonFrenchBranchWithHighImpedanceRatio"));
     }
 
     /**
-     * Test branch with impedance just above threshold
+     * Test branch with impedance exactly at threshold boundary with maximum possible x
+     * r=0, x=0.16 -> sqrt(0.0 + 0.0256) = 0.16 Ω (exactly at threshold)
+     */
+    @Test
+    void testBranchWithImpedanceAtThresholdAndMaxX() {
+        // After replacement x = 0.16, ratio = 0/0.16 = 0.0
+        Network network = createNetworkWithFrenchLine(0.16, 0.0);
+
+        OpenReacParameters params = new OpenReacParameters();
+        ReportNode reportNode = createReportNode();
+
+        assertDoesNotThrow(() -> params.checkIntegrity(network, reportNode));
+
+        // Should have low impedance warning (0.16 <= 0.16 is true)
+        assertTrue(hasReportWithKey(reportNode, "optimizer.openreac.nbBranchesWithLowImpedance"));
+
+        // Should NOT have ratio warning (0 <= 1 after threshold replacement)
+        assertFalse(hasReportWithKey(reportNode, "optimizer.openreac.nbNonFrenchBranchesWithHighImpedanceRatio"));
+        assertFalse(hasReportWithKey(reportNode, "optimizer.openreac.nonFrenchBranchWithHighImpedanceRatio"));
+    }
+
+    /**
+     * Test branch with impedance above threshold
      * r=2.0, x=0.2 -> sqrt(4 + 0.04) = 2.01 Ω > 0.16 Ω -> normal check applies
      */
     @Test
@@ -247,6 +261,7 @@ class BranchImpedanceValidationTest {
 
         // Should have warning about acceptable high ratio (1 < 10 <= 10)
         assertTrue(hasReportWithKey(reportNode, "optimizer.openreac.nbFrenchBranchesWithAcceptableHighImpedanceRatio"));
+        assertTrue(hasReportWithKey(reportNode, "optimizer.openreac.frenchBranchWithAcceptableHighImpedanceRatio"));
     }
 
     /**
@@ -267,50 +282,7 @@ class BranchImpedanceValidationTest {
 
         // Should NOT have ratio warning (ratio < 1 after threshold replacement)
         assertFalse(hasReportWithKey(reportNode, "optimizer.openreac.nbNonFrenchBranchesWithHighImpedanceRatio"));
-    }
-
-    /**
-     * Test that low impedance with maximum possible r still results in ratio <= 1
-     * This validates the mathematical constraint: if sqrt(r²+x²) <= threshold,
-     * then after x replacement, ratio = r/threshold <= 1
-     */
-    @Test
-    void testLowImpedanceMaxRatioConstraint() {
-        // Maximum r for low impedance: r ≈ 0.16, x ≈ 0
-        // sqrt(0.0256 + 0) = 0.16 Ω, at threshold
-        // After replacement x = 0.16, ratio = 0.16/0.16 = 1.0 (boundary)
-        Network network = createNetworkWithFrenchLine(0.159, 0.01);
-
-        OpenReacParameters params = new OpenReacParameters();
-        ReportNode reportNode = createReportNode();
-
-        assertDoesNotThrow(() -> params.checkIntegrity(network, reportNode));
-
-        // Should have low impedance warning
-        assertTrue(hasReportWithKey(reportNode, "optimizer.openreac.nbBranchesWithLowImpedance"));
-
-        // Should NOT have ratio warning (ratio ≈ 0.99 < 1)
-        assertFalse(hasReportWithKey(reportNode, "optimizer.openreac.nbFrenchBranchesWithAcceptableHighImpedanceRatio"));
-    }
-
-    /**
-     * Test branch with low impedance due to very small x (but r is larger)
-     * r=0.15, x=0.05 -> sqrt(0.0225 + 0.0025) = 0.158 Ω < 0.16 Ω
-     */
-    @Test
-    void testLowImpedanceWithAsymmetricValues() {
-        Network network = createNetworkWithFrenchLine(0.15, 0.05);
-
-        OpenReacParameters params = new OpenReacParameters();
-        ReportNode reportNode = createReportNode();
-
-        assertDoesNotThrow(() -> params.checkIntegrity(network, reportNode));
-
-        // Should have low impedance warning
-        assertTrue(hasReportWithKey(reportNode, "optimizer.openreac.nbBranchesWithLowImpedance"));
-
-        // After x -> 0.16, ratio = 0.15/0.16 = 0.938 < 1, no ratio warning
-        assertFalse(hasReportWithKey(reportNode, "optimizer.openreac.nbFrenchBranchesWithAcceptableHighImpedanceRatio"));
+        assertFalse(hasReportWithKey(reportNode, "optimizer.openreac.nonFrenchBranchWithHighImpedanceRatio"));
     }
 
     // ========== Helper methods to create test networks ==========
