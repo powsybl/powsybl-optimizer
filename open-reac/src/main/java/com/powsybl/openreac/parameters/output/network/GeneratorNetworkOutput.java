@@ -20,6 +20,7 @@ public class GeneratorNetworkOutput extends AbstractNetworkOutput<GeneratorModif
     private static final int ID_COLUMN_INDEX = 1;
     private static final int TARGET_V_COLUMN_INDEX = 4;
     private static final int TARGET_Q_COLUMN_INDEX = 6;
+    private static final int TARGET_P_COLUMN_INDEX = 7;
 
     public GeneratorNetworkOutput(Network network) {
         super(network);
@@ -39,9 +40,13 @@ public class GeneratorNetworkOutput extends AbstractNetworkOutput<GeneratorModif
     protected void readLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
         String id = stringToIntMapper.getId(AmplSubset.GENERATOR, Integer.parseInt(tokens[ID_COLUMN_INDEX]));
         double targetV = readDouble(tokens[TARGET_V_COLUMN_INDEX]) * network.getGenerator(id).getRegulatingTerminal().getVoltageLevel().getNominalV();
+        double targetP = -readDouble(tokens[TARGET_P_COLUMN_INDEX]);
         double targetQ = readDouble(tokens[TARGET_Q_COLUMN_INDEX]);
 
         GeneratorModification.Modifs modifs = new GeneratorModification.Modifs();
+        if (targetP != network.getGenerator(id).getTargetP()) {
+            modifs.setTargetP(targetP);
+        }
         if (targetQ != network.getGenerator(id).getTargetQ()) {
             modifs.setTargetQ(targetQ);
         }

@@ -33,7 +33,7 @@ if final_status == "OK" then {
     0 #shunt_sections_count[1,s,n] # don't know what this is, so write 0
     > (fileOut);
   # Shunts which were not connected, and which have been reconnected by reactiveopf, with variable value
-  printf {(s,n) in SHUNT_VAR: (1,s,-1) in SHUNT} "%i;%i;%i;%.3f;%.3f;%i;\n",
+  printf {(s,n) in SHUNT_VAR: (1,s,-1) in SHUNT} "%i;%i;%i;%.10f;%.10f;%i;\n",
     1,s,n,shunt_var[s,n],base100MVA * shunt_var[s,n] * V[n]^2,
     0 #shunt_sections_count[1,s,-1] # don't know what this is, so write 0
     > (fileOut);
@@ -52,7 +52,7 @@ if final_status == "OK" then {
 
 let fileOut := "reactiveopf_results_static_var_compensators.csv";
 printf "#variant;num;bus;vRegul;V(pu);Q(Mvar);\n" > (fileOut);
-printf{(s,n) in SVCON} "%i;%i;%i;%Q;%.3f;%.1f;\n",
+printf{(s,n) in SVCON} "%i;%i;%i;%Q;%.10f;%.10f;\n",
   1,s,n,
   svc_vregul[1,s,n],
   V[if svc_vregul[1,s,n] == "true" then svc_vregul_bus[1,s,n] else n],
@@ -76,7 +76,7 @@ printf "#variant;num;bus;vRegul;V(pu);targetP(MW);targetQ(Mvar);P(MW);Q(MW);\n" 
 
 # Units running
 for {(g,n) in UNITON} {
-printf "%i;%i;%i;%Q;%.3f;%.1f;%.1f;%.1f;%.1f;\n",
+printf "%i;%i;%i;%Q;%.10f;%.10f;%.10f;%.10f;%.10f;\n",
   1,g,n,
   unit_vregul[1,g,n],
   V[if unit_vregul[1,g,n] == "true" then unit_vregul_bus[1,g,n] else n],
@@ -89,7 +89,7 @@ printf "%i;%i;%i;%Q;%.3f;%.1f;%.1f;%.1f;%.1f;\n",
 
 # Units connected to the grid but not running
 for {(g,n) in UNITCC diff UNITON} {
-printf "%i;%i;%i;%Q;%.3f;%i;%i%i;%i;\n",
+printf "%i;%i;%i;%Q;%.10f;%i;%i%i;%i;\n",
   1,g,n,
   'false',
   V[if unit_vregul[1,g,n] == "true" then unit_vregul_bus[1,g,n] else n],
@@ -114,7 +114,7 @@ if final_status == "OK" then {
 
 let fileOut := "reactiveopf_results_vsc_converter_stations.csv";
 printf "#variant;num;bus;vRegul;targetV(pu);targetQ(Mvar);P(MW);Q(Mvar);\n" > (fileOut);
-printf{(v,n) in VSCCONVON} "%i;%i;%i;%Q;%.3f;%.1f;%.1f;%.1f;\n",
+printf{(v,n) in VSCCONVON} "%i;%i;%i;%Q;%.10f;%.10f;%.10f;%.10f;\n",
   1,v,n,
   vscconv_vregul[1,v,n],
   V[n],
@@ -205,7 +205,7 @@ if final_status == "OK" then {
 
   let fileOut := "reactiveopf_results_voltages.csv";
   printf "#variant;bus;V(pu);theta(rad);id;\n" > (fileOut);
-  printf {n in BUSCC} "%i;%i;%.3f;%.3f;%s;\n",
+  printf {n in BUSCC} "%i;%i;%.10f;%.10f;%s;\n",
     1, n, V[n], teta[n], '"' & bus_id[1,n] & '"'
     > (fileOut);
   close (fileOut);
@@ -317,8 +317,8 @@ printf "%s %i\n","nb_vsc_converter_up_and_running",card(VSCCONVON) > (fileOut);
 printf "%s %i\n","nb_lcc_converter_in_data_file",card(LCCCONV) > (fileOut);
 printf "%s %i\n","nb_lcc_converter_up_and_running",card(LCCCONVON) > (fileOut);
 printf "%s %i\n","nb_batteries",card(BATTERYCC) > (fileOut);
-printf "%s %.1f\n","sum_batteries_pmax",sum{(b,k) in BATTERYCC} battery_Pmax[1,b,k] > (fileOut);
-printf "%s %.1f\n","sum_batteries_pmin",sum{(b,k) in BATTERYCC} battery_Pmin[1,b,k] > (fileOut);
+printf "%s %.10f\n","sum_batteries_pmax",sum{(b,k) in BATTERYCC} battery_Pmax[1,b,k] > (fileOut);
+printf "%s %.10f\n","sum_batteries_pmin",sum{(b,k) in BATTERYCC} battery_Pmin[1,b,k] > (fileOut);
 
 printf "\n" > (fileOut);
 printf "max_teta_dc %.2f\n",max({n in BUSCC} teta_dc[n]) > (fileOut);
@@ -335,9 +335,9 @@ printf "min_delta_teta_ac %2f\n",min({(qq,m,n) in BRANCHCC} (teta[m]-teta[n])) >
 printf "\n" > (fileOut);
 printf "%s %i\n","nb_reactive_slacks",card({n in BUSCC_SLACK: slack1_balance_Q[n]>Pnull or slack2_balance_Q[n]>Pnull}) > (fileOut);
 printf "%s %i\n","nb_slacks_condensator",card({n in BUSCC_SLACK: slack1_balance_Q[n]>Pnull}) > (fileOut);
-printf "%s %.1f\n","sum_slacks_condensator",sum{n in BUSCC_SLACK} slack1_balance_Q[n] > (fileOut);
+printf "%s %.10f\n","sum_slacks_condensator",sum{n in BUSCC_SLACK} slack1_balance_Q[n] > (fileOut);
 printf "%s %i\n","nb_slacks_self",card({n in BUSCC_SLACK: slack2_balance_Q[n]>Pnull}) > (fileOut);
-printf "%s %.1f\n","sum_slacks_self",sum{n in BUSCC_SLACK} slack2_balance_Q[n] > (fileOut);
+printf "%s %.10f\n","sum_slacks_self",sum{n in BUSCC_SLACK} slack2_balance_Q[n] > (fileOut);
 
 # All messages added in messages container
 if card(messagesInfo) > 0 then {
@@ -371,7 +371,7 @@ close (fileOut);
 let fileOut := "reactiveopf_results_generators_Pnull.csv";
 printf{LOG_DEBUG} "#variant;num;bus;vRegul;V(pu);targetP(MW);targetQ(Mvar);P(MW);Q(MW);id;bus_id;\n" > (fileOut);
 for {(g,n) in UNITCC diff UNITON}
-  printf{LOG_DEBUG} "%i;%i;%i;%Q;%.3f;%.3f;%.3f;%.3f;%.3f;%s;%s;\n",
+  printf{LOG_DEBUG} "%i;%i;%i;%Q;%.10f;%.10f;%.10f;%.10f;%.10f;%s;%s;\n",
     1,g,n,
     unit_vregul[1,g,n],
     V[n],
@@ -388,7 +388,7 @@ close (fileOut);
 let fileOut := "reactiveopf_results_branches.csv";
 printf{LOG_DEBUG} "#qq;m;n;P1;Q1;P2;Q2;branch_id;\n" > (fileOut);
 for {(qq,m,n) in ALL_BRANCHCC}
-  printf{LOG_DEBUG} "%i;%i;%i;%.3f;%.3f;%.3f;%.3f;%s;\n",
+  printf{LOG_DEBUG} "%i;%i;%i;%.10f;%.10f;%.10f;%.10f;%s;\n",
     qq,m,n,
     # p1 flow
     if (qq,m,n) in BRANCHCC 
