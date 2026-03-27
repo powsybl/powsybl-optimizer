@@ -23,9 +23,9 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
+import static com.powsybl.openreac.parameters.input.ReportTestHelper.hasReportWithKey;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -217,18 +217,6 @@ class VoltageLevelLimitsOverrideInputTest {
         assertDoesNotThrow(() -> new VoltageLevelLimitsOverrideInput(voltageLimitsOverride2, network, ReportNode.NO_OP));
     }
 
-    private static boolean checkReportWithKey(String key, ReportNode reportNode) {
-        if (reportNode.getMessageKey() != null && reportNode.getMessageKey().equals(key)) {
-            return true;
-        }
-        boolean found = false;
-        Iterator<ReportNode> reportersIterator = reportNode.getChildren().iterator();
-        while (!found && reportersIterator.hasNext()) {
-            found = checkReportWithKey(key, reportersIterator.next());
-        }
-        return found;
-    }
-
     @Test
     void testVoltageOverrideWithLowLimitOutOfNominalVoltageRange() {
         Network network = IeeeCdfNetworkFactory.create57();
@@ -245,14 +233,14 @@ class VoltageLevelLimitsOverrideInputTest {
         // if after override, low limit is in the nominal voltage range, no specific report has been created
         ReportNode reportNode = ReportNode.newRootReportNode().withAllResourceBundlesFromClasspath().withMessageTemplate("optimizer.openreac.openReac").build();
         new VoltageLevelLimitsOverrideInput(voltageLimitsOverride, network, reportNode);
-        assertFalse(checkReportWithKey("optimizer.openreac.nbVoltageLevelsWithLimitsOutOfNominalVRange", reportNode));
+        assertFalse(hasReportWithKey(reportNode, "optimizer.openreac.nbVoltageLevelsWithLimitsOutOfNominalVRange"));
 
         // if after override, low limit is out of nominal voltage range, a specific report has been created
         reportNode = ReportNode.newRootReportNode().withAllResourceBundlesFromClasspath().withMessageTemplate("optimizer.openreac.openReac").build();
         voltageLimitsOverride.clear();
         voltageLimitsOverride.add(new VoltageLimitOverride(vl.getId(), VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT, false, 317.));
         new VoltageLevelLimitsOverrideInput(voltageLimitsOverride, network, reportNode);
-        assertTrue(checkReportWithKey("optimizer.openreac.nbVoltageLevelsWithLimitsOutOfNominalVRange", reportNode));
+        assertTrue(hasReportWithKey(reportNode, "optimizer.openreac.nbVoltageLevelsWithLimitsOutOfNominalVRange"));
     }
 
     @Test
@@ -271,14 +259,14 @@ class VoltageLevelLimitsOverrideInputTest {
         // if after override, high limit is in the nominal voltage range, no specific report has been created
         ReportNode reportNode = ReportNode.newRootReportNode().withAllResourceBundlesFromClasspath().withMessageTemplate("optimizer.openreac.openReac").build();
         new VoltageLevelLimitsOverrideInput(voltageLimitsOverride, network, reportNode);
-        assertFalse(checkReportWithKey("optimizer.openreac.nbVoltageLevelsWithLimitsOutOfNominalVRange", reportNode));
+        assertFalse(hasReportWithKey(reportNode, "optimizer.openreac.nbVoltageLevelsWithLimitsOutOfNominalVRange"));
 
         // if after override, high limit is out of nominal voltage range, a specific report has been created
         reportNode = ReportNode.newRootReportNode().withAllResourceBundlesFromClasspath().withMessageTemplate("optimizer.openreac.openReac").build();
         voltageLimitsOverride.clear();
         voltageLimitsOverride.add(new VoltageLimitOverride(vl.getId(), VoltageLimitOverride.VoltageLimitType.HIGH_VOLTAGE_LIMIT, false, 445.));
         new VoltageLevelLimitsOverrideInput(voltageLimitsOverride, network, reportNode);
-        assertTrue(checkReportWithKey("optimizer.openreac.nbVoltageLevelsWithLimitsOutOfNominalVRange", reportNode));
+        assertTrue(hasReportWithKey(reportNode, "optimizer.openreac.nbVoltageLevelsWithLimitsOutOfNominalVRange"));
     }
 
     @Test
