@@ -10,8 +10,9 @@
 
 ###############################################################################
 # Reactive OPF
-# Author:  Jean Maeght 2022 2023
-# Author:  Manuel Ruiz 2023 2024
+# Author:  Jean Maeght   2022 2023
+# Author:  Manuel Ruiz   2023 2024
+# Author:  Oscar Lamolet 2025
 ###############################################################################
 
 
@@ -170,5 +171,128 @@ then {
         slack1_balance_Q[n],slack2_balance_Q[n],
         voltage_lower_bound[1,bus_substation[1,n]],V[n],voltage_upper_bound[1,bus_substation[1,n]];
 }
+
+
+###############################################################################
+# Objective function breakdown and network losses
+###############################################################################
+
+printf{LOG_INFO} "\n######################################################################\n";
+printf{LOG_INFO} "** Objective function breakdown\n";
+printf{LOG_INFO} "######################################################################\n";
+
+# Term 2: Active power
+let temp1 := (if objective_choice==1 or objective_choice==2 then penalty_active_power_low else penalty_active_power_high)
+  * sum{(g,n) in UNITON} (coeff_alpha * P[g,n] + (1-coeff_alpha)*( (P[g,n]-unit_Pc[1,g,n])/max(1,abs(unit_Pc[1,g,n])) )**2 );
+printf{LOG_INFO} "  %-55s = %+.6f\n", "Active power", temp1;
+let tempo := temp1;
+
+# Term 1: Reactive slack penalty
+let temp1 := sum{n in BUSCC_SLACK} (
+    penalty_invest_rea_pos * base100MVA * slack1_shunt_B[n]
+    + penalty_invest_rea_neg * base100MVA * slack2_shunt_B[n]
+  );
+printf{LOG_INFO} "  %-55s = %+.6f\n", "Reactive slack penalty", temp1;
+let tempo := tempo + temp1;
+
+# Term 5: Reactive power of generating units
+let temp1 := penalty_units_reactive
+  * sum{(g,n) in UNITON} (Q[g,n]/max(1,abs(corrected_unit_Qmin[g,n]),abs(corrected_unit_Qmax[g,n])))**2;
+printf{LOG_INFO} "  %-55s = %+.6f\n", "Generating units reactive power", temp1;
+let tempo := tempo + temp1;
+
+# Term 6: Transformer ratio deviation
+let temp1 := penalty_transfo_ratio
+  * sum{(qq,m,n) in BRANCHCC_REGL_VAR} (branch_Ror[qq,m,n]-branch_Ror_var[qq,m,n])**2;
+printf{LOG_INFO} "  %-55s = %+.6f\n", "Transformer ratio deviation", temp1;
+let tempo := tempo + temp1;
+
+# Term 3: Voltage target (ratio between Vmin and Vmax)
+let temp1 := (if objective_choice==1 then penalty_voltage_target_high else penalty_voltage_target_low)
+  * target_voltage_ratio;
+printf{LOG_INFO} "  %-55s = %+.6f\n", "Voltage target (ratio Vmin/Vmax)", temp1;
+let tempo := tempo + temp1;
+
+# Term 4: Voltage target (input data V0)
+let temp1 := (if objective_choice==2 then penalty_voltage_target_high else penalty_voltage_target_low)
+  * target_voltage_data;
+printf{LOG_INFO} "  %-55s = %+.6f\n", "Voltage target (input data V0)", temp1;
+let tempo := tempo + temp1;
+
+printf{LOG_INFO} "  %s\n", "-------------------------------------------------------";
+printf{LOG_INFO} "  %-55s = %+.6f\n", "Total (sum of all terms)", tempo;
+printf{LOG_INFO} "  %-55s = %+.6f\n", "Objective value (from solver)", problem_acopf_objective;
+
+# Active power penalties and associated weights (for reference)
+printf{LOG_INFO} "\n  Weights: slack_pos=%g slack_neg=%g act_power=%g volt_ratio=%g volt_data=%g react_unit=%g transfo=%g\n",
+  penalty_invest_rea_pos, penalty_invest_rea_neg,
+  (if objective_choice==1 or objective_choice==2 then penalty_active_power_low else penalty_active_power_high),
+  (if objective_choice==1 then penalty_voltage_target_high else penalty_voltage_target_low),
+  (if objective_choice==2 then penalty_voltage_target_high else penalty_voltage_target_low),
+  penalty_units_reactive,
+  penalty_transfo_ratio;
+
+# Active power balance breakdown and losses
+printf{LOG_INFO} "\n** Active power balance breakdown\n";
+
+# Losses on branches with both sides connected (P1_dir + P2_inv)
+let temp1 := sum{(qq,m,n) in BRANCHCC} (
+    base100MVA * V[m] * Red_Tran_Act_Dir[qq,m,n]
+    + base100MVA * V[n] * Red_Tran_Act_Inv[qq,m,n]
+  );
+printf{LOG_INFO} "  %-55s = %.4f MW\n", "Active losses on connected branches", temp1;
+
+# Losses on branches with side 2 opened (shunt losses from side 1)
+let temp2 := sum{(qq,m,n) in BRANCHCC_WITH_SIDE_2_OPENED} (
+    base100MVA * V[m] * Red_Tran_Act_Dir_Side_2_Opened[qq,m,n]
+  );
+printf{LOG_INFO} "  %-55s = %.4f MW\n", "Active losses on branches (side 2 opened)", temp2;
+
+# Losses on branches with side 1 opened (shunt losses from side 2)
+let temp3 := sum{(qq,m,n) in BRANCHCC_WITH_SIDE_1_OPENED} (
+    base100MVA * V[n] * Red_Tran_Act_Inv_Side_1_Opened[qq,m,n]
+  );
+printf{LOG_INFO} "  %-55s = %.4f MW\n", "Active losses on branches (side 1 opened)", temp3;
+
+# tempo = total losses (kept for mismatch computation at the end)
+let tempo := temp1 + temp2 + temp3;
+printf{LOG_INFO} "  %-55s = %.4f MW\n", "Total active losses (all branches)", tempo;
+
+printf{LOG_INFO} "\n** Active power injections / withdrawals\n";
+
+# Total generation -> temp1, start accumulating balance in temp2
+let temp1 := sum{(g,n) in UNITON} P[g,n];
+printf{LOG_INFO} "  %-55s = %.4f MW\n", "Total active generation (UNITON)", temp1;
+let temp2 := temp1;
+
+# Batteries
+let temp1 := sum{(b,n) in BATTERYCC} battery_p0[1,b,n];
+printf{LOG_INFO} "  %-55s = %.4f MW\n", "Total battery injection", temp1;
+let temp2 := temp2 + temp1;
+
+# Total load
+let temp1 := sum{(c,n) in LOADCC} load_PFix[1,c,n];
+printf{LOG_INFO} "  %-55s = %.4f MW\n", "Total active load", temp1;
+let temp2 := temp2 - temp1;
+
+# VSC converters
+let temp1 := sum{(v,n) in VSCCONVON} vscconv_targetP[v];
+printf{LOG_INFO} "  %-55s = %.4f MW\n", "Total VSC converter injection", temp1;
+let temp2 := temp2 - temp1;
+
+# LCC converters
+let temp1 := sum{(l,n) in LCCCONVON} lccconv_targetP[l];
+printf{LOG_INFO} "  %-55s = %.4f MW\n", "Total LCC converter injection", temp1;
+let temp2 := temp2 - temp1;
+
+# Balance check: Generation + Batteries - Load - VSC - LCC = Losses
+# From ctr_balance_P summed over all buses:
+#   Losses = Generation + Batteries - Load - VSC - LCC
+# temp2 = accumulated balance, tempo = total losses from branch flows
+printf{LOG_INFO} "  %-55s = %.4f MW\n", "Balance: Gen + Batt - Load - VSC - LCC", temp2;
+printf{LOG_INFO} "  %-55s = %.4f MW\n", "Total losses (from branch flows)", tempo;
+printf{LOG_INFO} "  %-55s = %.4f MW\n", "Mismatch (balance - losses)", temp2 - tempo;
+
+printf{LOG_INFO} "######################################################################\n";
 
 let PROBLEM_ACOPF := { };
