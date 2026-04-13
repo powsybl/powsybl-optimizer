@@ -10,8 +10,9 @@
 
 ###############################################################################
 # Reactive OPF
-# Author:  Jean Maeght 2022 2023
-# Author:  Manuel Ruiz 2023 2024
+# Author:  Jean Maeght   2022 2023
+# Author:  Manuel Ruiz   2023 2024
+# Author:  Oscar Lamolet 2025
 ###############################################################################
 
 
@@ -67,7 +68,7 @@ var P{(g,n) in UNITON} =
 
 #
 # Reactive generation
-# 
+#
 # todo: add trapeze or hexagone constraints for reactive power
 var Q{(g,n) in UNITON} <= corrected_unit_Qmax[g,n], >= corrected_unit_Qmin[g,n];
 
@@ -134,7 +135,7 @@ var Red_Tran_Rea_Inv{(qq,m,n) in BRANCHCC } =
 
 var Red_Tran_Act_Dir_Side_2_Opened{(qq,m,n) in BRANCHCC_WITH_SIDE_2_OPENED} =
     (branch_Ror[qq,m,n])**2 * V[m] * (branch_Gor_mod[qq,m,n] + (branch_admi[qq,m,n])**2 * branch_Gex_mod[qq,m,n] / ( (branch_Gex_mod[qq,m,n] + branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]))**2
-    + (- branch_Bex_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 ) 
+    + (- branch_Bex_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 )
     + ((branch_Bex_mod[qq,m,n])**2 + (branch_Gex_mod[qq,m,n])**2) * branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]) / ( (branch_Gex_mod[qq,m,n] + branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]))**2
     + (- branch_Bex_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 ))
   ;
@@ -243,13 +244,8 @@ var target_voltage_data = sum{n in BUSVV} (V[n] - bus_V0[1,n])**2;
 #
 # Objective function and penalties
 #
-param penalty_invest_rea_pos := 10;
-param penalty_invest_rea_neg := 10;
 param penalty_units_reactive := 0.1;
 param penalty_transfo_ratio  := 0.1;
-
-param penalty_active_power_high := 1;
-param penalty_active_power_low  := 0.01;
 
 param penalty_voltage_target_high := 1;
 param penalty_voltage_target_low  := 0.01;
@@ -262,7 +258,7 @@ minimize problem_acopf_objective:
 
   # coeff_alpha == 1 : minimize sum of generation, all generating units vary with 1 unique variable alpha
   # coeff_alpha == 0 : minimize sum of squared difference between target and value
-  + (if objective_choice==1 or objective_choice==2 then penalty_active_power_low else penalty_active_power_high)
+  + penalty_active_power
   * sum{(g,n) in UNITON} (coeff_alpha * P[g,n] + (1-coeff_alpha)*( (P[g,n]-unit_Pc[1,g,n])/max(1,abs(unit_Pc[1,g,n])) )**2 )
 
   # Voltage for busses, ratio between Vmin and Vmax
@@ -281,6 +277,6 @@ minimize problem_acopf_objective:
   ;
 
 
-# 
+#
 param solve_result_num_limit := 200;
 param output_results binary default 0;
