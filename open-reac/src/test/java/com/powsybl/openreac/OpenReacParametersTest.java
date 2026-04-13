@@ -26,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Nicolas PIERRE {@literal <nicolas.pierre at artelys.com>}
  * @author Pierre ARVY {@literal <pierre.arvy at artelys.com>}
+ * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
  */
 class OpenReacParametersTest {
 
@@ -360,7 +361,7 @@ class OpenReacParametersTest {
         parameters.setOptimizationAfterRounding(true);
 
         List<OpenReacAlgoParam> algoParams = parameters.getAllAlgorithmParams();
-        assertEquals(23, algoParams.size());
+        assertEquals(26, algoParams.size());
         assertEquals("2", algoParams.get(0).getValue());
         assertEquals("0.4", algoParams.get(1).getValue());
         assertEquals("DEBUG", algoParams.get(2).getValue());
@@ -383,7 +384,10 @@ class OpenReacParametersTest {
         assertEquals("0.01", algoParams.get(19).getValue());
         assertEquals("1.0E-4", algoParams.get(20).getValue());
         assertEquals("0.03", algoParams.get(21).getValue());
-        assertEquals("true", algoParams.get(22).getValue());
+        assertEquals("10.0", algoParams.get(22).getValue());
+        assertEquals("10.0", algoParams.get(23).getValue());
+        assertEquals("0.01", algoParams.get(24).getValue());
+        assertEquals("true", algoParams.get(25).getValue());
     }
 
     @Test
@@ -437,7 +441,7 @@ class OpenReacParametersTest {
         assertEquals(0, parameters.getConstantQGenerators().size(), "ConstantQGenerators should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getVariableShuntCompensators().size(), "VariableShuntCompensators should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getConfiguredReactiveSlackBuses().size(), "ConfiguredReactiveSlackBuses should be empty when using default OpenReacParameter constructor.");
-        assertEquals(22, parameters.getAllAlgorithmParams().size());
+        assertEquals(25, parameters.getAllAlgorithmParams().size());
     }
 
     @Test

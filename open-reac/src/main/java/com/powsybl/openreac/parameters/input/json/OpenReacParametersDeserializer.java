@@ -28,6 +28,7 @@ import static java.util.Map.entry;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
+ * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
  */
 
 public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacParameters> {
@@ -132,6 +133,15 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
             )),
             entry("shuntVariableScalingFactor", safeRead((parser, parameters) ->
                 parameters.setShuntVariableScalingFactor(parser.readValueAs(Double.class))
+            )),
+            entry("penaltyInvestReaPos", safeRead((parser, parameters) ->
+                parameters.setPenaltyInvestReaPos(parser.readValueAs(Double.class))
+            )),
+            entry("penaltyInvestReaNeg", safeRead((parser, parameters) ->
+                parameters.setPenaltyInvestReaNeg(parser.readValueAs(Double.class))
+            )),
+            entry("penaltyActivePower", safeRead((parser, parameters) ->
+                parameters.setPenaltyActivePower(parser.readValueAs(Double.class))
             )),
             entry("optimizationAfterRounding", safeRead((parser, parameters) ->
                 parameters.setOptimizationAfterRounding(parser.getValueAsBoolean())

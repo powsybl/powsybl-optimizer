@@ -16,6 +16,7 @@ import java.io.IOException;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
+ * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
  */
 public class OpenReacParametersSerializer extends StdSerializer<OpenReacParameters> {
 
@@ -65,6 +66,9 @@ public class OpenReacParametersSerializer extends StdSerializer<OpenReacParamete
         serializerProvider.defaultSerializeField("reactiveSlackVariableScalingFactor", openReacParameters.getReactiveSlackVariableScalingFactor(), jsonGenerator);
         serializerProvider.defaultSerializeField("twoWindingTransformerRatioVariableScalingFactor", openReacParameters.getTwoWindingTransformerRatioVariableScalingFactor(), jsonGenerator);
         serializerProvider.defaultSerializeField("shuntVariableScalingFactor", openReacParameters.getShuntVariableScalingFactor(), jsonGenerator);
+        serializerProvider.defaultSerializeField("penaltyInvestReaPos", openReacParameters.getPenaltyInvestReaPos(), jsonGenerator);
+        serializerProvider.defaultSerializeField("penaltyInvestReaNeg", openReacParameters.getPenaltyInvestReaNeg(), jsonGenerator);
+        serializerProvider.defaultSerializeField("penaltyActivePower", openReacParameters.getPenaltyActivePower(), jsonGenerator);
         serializerProvider.defaultSerializeField("optimizationAfterRounding", openReacParameters.isOptimizationAfterRounding(), jsonGenerator);
         jsonGenerator.writeEndObject();
     }

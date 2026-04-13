@@ -132,6 +132,17 @@ public class OpenReacParameters {
 
     private double shuntVariableScalingFactor = 1e-1;
 
+    private static final String PENALTY_INVEST_REA_POS_KEY = "penalty_invest_rea_pos";
+    private double penaltyInvestReaPos = 10;
+
+    private static final String PENALTY_INVEST_REA_NEG_KEY = "penalty_invest_rea_neg";
+    private double penaltyInvestReaNeg = 10;
+
+    private static final String PENALTY_ACTIVE_POWER_KEY = "penalty_active_power";
+    // Null = default depends on objective (back-compat): 1 for MIN_GENERATION, 0.01 otherwise.
+    // Non-null = explicit override set by the user.
+    private Double penaltyActivePower = null;
+
     private static final String OPTIMIZATION_AFTER_ROUNDING = "optimization_after_rounding";
 
     private boolean optimizationAfterRounding = false;
@@ -574,6 +585,51 @@ public class OpenReacParameters {
         return this;
     }
 
+    public double getPenaltyInvestReaPos() {
+        return penaltyInvestReaPos;
+    }
+
+    public OpenReacParameters setPenaltyInvestReaPos(double penaltyInvestReaPos) {
+        if (penaltyInvestReaPos < 0 || Double.isNaN(penaltyInvestReaPos)) {
+            throw new IllegalArgumentException("Penalty for positive reactive slack investment must be >= 0 and defined to be consistent.");
+        }
+        this.penaltyInvestReaPos = penaltyInvestReaPos;
+        return this;
+    }
+
+    public double getPenaltyInvestReaNeg() {
+        return penaltyInvestReaNeg;
+    }
+
+    public OpenReacParameters setPenaltyInvestReaNeg(double penaltyInvestReaNeg) {
+        if (penaltyInvestReaNeg < 0 || Double.isNaN(penaltyInvestReaNeg)) {
+            throw new IllegalArgumentException("Penalty for negative reactive slack investment must be >= 0 and defined to be consistent.");
+        }
+        this.penaltyInvestReaNeg = penaltyInvestReaNeg;
+        return this;
+    }
+
+    /**
+     * @return the user-configured penalty for active power generation in the ACOPF objective,
+     *         or {@code null} if the historical default (depending on the objective) should be used.
+     */
+    public Double getPenaltyActivePower() {
+        return penaltyActivePower;
+    }
+
+    /**
+     * Sets the penalty for active power generation in the ACOPF objective.
+     * Passing {@code null} restores the historical default (1 for {@link OpenReacOptimisationObjective#MIN_GENERATION},
+     * 0.01 otherwise).
+     */
+    public OpenReacParameters setPenaltyActivePower(Double penaltyActivePower) {
+        if (penaltyActivePower != null && (penaltyActivePower < 0 || Double.isNaN(penaltyActivePower))) {
+            throw new IllegalArgumentException("Penalty for active power generation must be >= 0 and defined to be consistent.");
+        }
+        this.penaltyActivePower = penaltyActivePower;
+        return this;
+    }
+
     /**
      * @return the shunt compensator activation alert threshold
      */
@@ -615,6 +671,12 @@ public class OpenReacParameters {
         allAlgoParams.add(new OpenReacAlgoParamImpl(REACTIVE_SLACK_VARIABLE_SCALING_FACTOR, Double.toString(reactiveSlackVariableScalingFactor)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(TWO_WINDING_TRANSFORMER_RATIO_VARIABLE_SCALING_FACTOR, Double.toString(twoWindingTransformerRatioVariableScalingFactor)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(SHUNT_VARIABLE_SCALING_FACTOR_KEY, Double.toString(shuntVariableScalingFactor)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_INVEST_REA_POS_KEY, Double.toString(penaltyInvestReaPos)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_INVEST_REA_NEG_KEY, Double.toString(penaltyInvestReaNeg)));
+        double effectivePenaltyActivePower = penaltyActivePower != null
+                ? penaltyActivePower
+                : (objective == OpenReacOptimisationObjective.MIN_GENERATION ? 1.0 : 0.01);
+        allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_ACTIVE_POWER_KEY, Double.toString(effectivePenaltyActivePower)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(OPTIMIZATION_AFTER_ROUNDING, Boolean.toString(optimizationAfterRounding)));
         return allAlgoParams;
     }
