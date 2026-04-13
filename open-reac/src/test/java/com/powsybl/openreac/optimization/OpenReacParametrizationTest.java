@@ -29,6 +29,7 @@ import java.util.concurrent.ForkJoinPool;
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
  * @author Nicolas PIERRE {@literal <nicolas.pierre at artelys.com>}
+ * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
  */
 class OpenReacParametrizationTest extends AbstractOpenReacRunnerTest {
 
@@ -89,4 +90,23 @@ class OpenReacParametrizationTest extends AbstractOpenReacRunnerTest {
         }
     }
 
+    @Test
+    void testObjectivePenaltiesOverrideParamAlgoExport() throws IOException {
+        Network network = IeeeCdfNetworkFactory.create57();
+        setDefaultVoltageLimits(network);
+        OpenReacParameters parameters = new OpenReacParameters()
+                .setPenaltyInvestReaPos(5.5)
+                .setPenaltyInvestReaNeg(7.25)
+                .setPenaltyActivePower(0.42);
+
+        LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(
+                List.of("empty_case/reactiveopf_results_indic.txt"));
+        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
+                localCommandExecutor, ForkJoinPool.commonPool())) {
+            OpenReacRunner.run(network, network.getVariantManager().getWorkingVariantId(), parameters,
+                    new OpenReacConfig(true), computationManager);
+            Path execFolder = getAmplExecPath();
+            assertEqualsToRef(execFolder.resolve("param_algo.txt"), "/openreac-input-algo-parameters/objective_penalties_override.txt");
+        }
+    }
 }

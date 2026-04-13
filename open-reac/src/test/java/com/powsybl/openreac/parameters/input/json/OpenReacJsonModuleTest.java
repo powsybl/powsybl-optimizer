@@ -26,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
+ * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
  */
 class OpenReacJsonModuleTest {
 
@@ -125,5 +126,34 @@ class OpenReacJsonModuleTest {
         assertEquals(1e-2, parameters2.getReactiveSlackVariableScalingFactor());
         assertEquals(0.005, parameters2.getTwoWindingTransformerRatioVariableScalingFactor());
         assertTrue(parameters2.isOptimizationAfterRounding());
+    }
+
+    @Test
+    void testOpenReacParametersObjectivePenalties() throws IOException {
+        ObjectMapper objectMapper = JsonUtil.createObjectMapper()
+                .registerModule(new OpenReactJsonModule());
+        OpenReacParameters parameters = new OpenReacParameters();
+
+        // Explicitly override all three objective penalties with non-default values
+        parameters.setPenaltyInvestReaPos(5.5);
+        parameters.setPenaltyInvestReaNeg(7.25);
+        parameters.setPenaltyActivePower(0.42);
+
+        String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(parameters);
+        ComparisonUtils.assertTxtEquals(Objects.requireNonNull(getClass().getResourceAsStream("/parametersObjectivePenalties.json")), json);
+
+        OpenReacParameters parameters2 = objectMapper.readValue(json, OpenReacParameters.class);
+
+        assertEquals(5.5, parameters2.getPenaltyInvestReaPos());
+        assertEquals(7.25, parameters2.getPenaltyInvestReaNeg());
+        assertEquals(0.42, parameters2.getPenaltyActivePower());
+
+        // Round-trip null restoration: setting penaltyActivePower to null should survive JSON serialization
+        parameters2.setPenaltyActivePower(null);
+        String json2 = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(parameters2);
+        OpenReacParameters parameters3 = objectMapper.readValue(json2, OpenReacParameters.class);
+        assertNull(parameters3.getPenaltyActivePower());
+        assertEquals(5.5, parameters3.getPenaltyInvestReaPos());
+        assertEquals(7.25, parameters3.getPenaltyInvestReaNeg());
     }
 }
