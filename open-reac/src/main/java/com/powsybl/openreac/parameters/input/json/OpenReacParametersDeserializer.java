@@ -160,7 +160,7 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
 
     @Override
     public OpenReacParameters deserialize(JsonParser parser, DeserializationContext deserializationContext, OpenReacParameters parameters) throws IOException {
-        String version = null;
+        String version = OpenReacParametersSerializer.VERSION;
         while (parser.nextToken() != JsonToken.END_OBJECT) {
             String fieldName = parser.currentName();
 

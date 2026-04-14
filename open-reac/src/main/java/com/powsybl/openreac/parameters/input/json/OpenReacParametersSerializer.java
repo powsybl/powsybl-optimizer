@@ -20,7 +20,7 @@ import java.io.IOException;
  */
 public class OpenReacParametersSerializer extends StdSerializer<OpenReacParameters> {
 
-    private static final String VERSION = "1.1";
+    static final String VERSION = "1.1";
 
     public OpenReacParametersSerializer() {
         super(OpenReacParameters.class);
