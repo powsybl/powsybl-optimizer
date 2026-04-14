@@ -69,6 +69,10 @@ public class OpenReacParametersSerializer extends StdSerializer<OpenReacParamete
         serializerProvider.defaultSerializeField("penaltyInvestReaPos", openReacParameters.getPenaltyInvestReaPos(), jsonGenerator);
         serializerProvider.defaultSerializeField("penaltyInvestReaNeg", openReacParameters.getPenaltyInvestReaNeg(), jsonGenerator);
         serializerProvider.defaultSerializeField("penaltyActivePower", openReacParameters.getPenaltyActivePower(), jsonGenerator);
+        serializerProvider.defaultSerializeField("penaltyUnitsReactive", openReacParameters.getPenaltyUnitsReactive(), jsonGenerator);
+        serializerProvider.defaultSerializeField("penaltyTransfoRatio", openReacParameters.getPenaltyTransfoRatio(), jsonGenerator);
+        serializerProvider.defaultSerializeField("penaltyVoltageTargetRatio", openReacParameters.getPenaltyVoltageTargetRatio(), jsonGenerator);
+        serializerProvider.defaultSerializeField("penaltyVoltageTargetData", openReacParameters.getPenaltyVoltageTargetData(), jsonGenerator);
         serializerProvider.defaultSerializeField("optimizationAfterRounding", openReacParameters.isOptimizationAfterRounding(), jsonGenerator);
         jsonGenerator.writeEndObject();
     }

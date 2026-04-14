@@ -12,7 +12,7 @@
 # Reactive OPF
 # Author:  Jean Maeght   2022 2023
 # Author:  Manuel Ruiz   2023 2024
-# Author:  Oscar Lamolet 2025
+# Author:  Oscar Lamolet 2025 2026
 ###############################################################################
 
 # Exit procedure
@@ -77,6 +77,10 @@ printf "%s %f\n","shunt_variable_scaling_factor",shunt_variable_scaling_factor >
 printf "%s %f\n","penalty_invest_rea_pos",penalty_invest_rea_pos > (fileOut);
 printf "%s %f\n","penalty_invest_rea_neg",penalty_invest_rea_neg > (fileOut);
 printf "%s %f\n","penalty_active_power",penalty_active_power > (fileOut);
+printf "%s %f\n","penalty_units_reactive",penalty_units_reactive > (fileOut);
+printf "%s %f\n","penalty_transfo_ratio",penalty_transfo_ratio > (fileOut);
+printf "%s %f\n","penalty_voltage_target_ratio",penalty_voltage_target_ratio > (fileOut);
+printf "%s %f\n","penalty_voltage_target_data",penalty_voltage_target_data > (fileOut);
 printf "%s %s\n","optimization_after_rounding",optimization_after_rounding > (fileOut);
 
 close (fileOut);

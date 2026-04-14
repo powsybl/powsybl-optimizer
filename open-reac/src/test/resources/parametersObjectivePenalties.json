@@ -28,5 +28,9 @@
   "penaltyInvestReaPos" : 5.5,
   "penaltyInvestReaNeg" : 7.25,
   "penaltyActivePower" : 0.42,
+  "penaltyUnitsReactive" : 0.2,
+  "penaltyTransfoRatio" : 0.3,
+  "penaltyVoltageTargetRatio" : 0.8,
+  "penaltyVoltageTargetData" : 0.9,
   "optimizationAfterRounding" : false
 }

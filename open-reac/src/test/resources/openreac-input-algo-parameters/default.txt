@@ -22,5 +22,9 @@ shunt_variable_scaling_factor 0.1
 penalty_invest_rea_pos 10.0
 penalty_invest_rea_neg 10.0
 penalty_active_power 1.0
+penalty_units_reactive 0.1
+penalty_transfo_ratio 0.1
+penalty_voltage_target_ratio 0.01
+penalty_voltage_target_data 0.01
 optimization_after_rounding false
 

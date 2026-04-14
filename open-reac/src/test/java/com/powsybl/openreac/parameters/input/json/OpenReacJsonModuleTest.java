@@ -138,6 +138,10 @@ class OpenReacJsonModuleTest {
         parameters.setPenaltyInvestReaPos(5.5);
         parameters.setPenaltyInvestReaNeg(7.25);
         parameters.setPenaltyActivePower(0.42);
+        parameters.setPenaltyUnitsReactive(0.2);
+        parameters.setPenaltyTransfoRatio(0.3);
+        parameters.setPenaltyVoltageTargetRatio(0.8);
+        parameters.setPenaltyVoltageTargetData(0.9);
 
         String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(parameters);
         ComparisonUtils.assertTxtEquals(Objects.requireNonNull(getClass().getResourceAsStream("/parametersObjectivePenalties.json")), json);
@@ -147,12 +151,20 @@ class OpenReacJsonModuleTest {
         assertEquals(5.5, parameters2.getPenaltyInvestReaPos());
         assertEquals(7.25, parameters2.getPenaltyInvestReaNeg());
         assertEquals(0.42, parameters2.getPenaltyActivePower());
+        assertEquals(0.2, parameters2.getPenaltyUnitsReactive());
+        assertEquals(0.3, parameters2.getPenaltyTransfoRatio());
+        assertEquals(0.8, parameters2.getPenaltyVoltageTargetRatio());
+        assertEquals(0.9, parameters2.getPenaltyVoltageTargetData());
 
         // Round-trip null restoration: setting penaltyActivePower to null should survive JSON serialization
         parameters2.setPenaltyActivePower(null);
+        parameters2.setPenaltyVoltageTargetRatio(null);
+        parameters2.setPenaltyVoltageTargetData(null);
         String json2 = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(parameters2);
         OpenReacParameters parameters3 = objectMapper.readValue(json2, OpenReacParameters.class);
         assertNull(parameters3.getPenaltyActivePower());
+        assertNull(parameters3.getPenaltyVoltageTargetRatio());
+        assertNull(parameters3.getPenaltyVoltageTargetData());
         assertEquals(5.5, parameters3.getPenaltyInvestReaPos());
         assertEquals(7.25, parameters3.getPenaltyInvestReaNeg());
     }
@@ -172,6 +184,10 @@ class OpenReacJsonModuleTest {
         assertEquals(10, parameters.getPenaltyInvestReaPos());
         assertEquals(10, parameters.getPenaltyInvestReaNeg());
         assertNull(parameters.getPenaltyActivePower());
+        assertEquals(0.1, parameters.getPenaltyUnitsReactive());
+        assertEquals(0.1, parameters.getPenaltyTransfoRatio());
+        assertNull(parameters.getPenaltyVoltageTargetRatio());
+        assertNull(parameters.getPenaltyVoltageTargetData());
 
         // Spot-check a few pre-existing fields to confirm the rest of the deserialization still works
         assertEquals(OpenReacOptimisationObjective.MIN_GENERATION, parameters.getObjective());

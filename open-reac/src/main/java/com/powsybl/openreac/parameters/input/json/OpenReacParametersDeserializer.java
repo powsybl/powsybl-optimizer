@@ -144,6 +144,18 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
             entry("penaltyActivePower", safeRead((parser, parameters) ->
                 parameters.setPenaltyActivePower(parser.readValueAs(Double.class))
             )),
+            entry("penaltyUnitsReactive", safeRead((parser, parameters) ->
+                parameters.setPenaltyUnitsReactive(parser.readValueAs(Double.class))
+            )),
+            entry("penaltyTransfoRatio", safeRead((parser, parameters) ->
+                parameters.setPenaltyTransfoRatio(parser.readValueAs(Double.class))
+            )),
+            entry("penaltyVoltageTargetRatio", safeRead((parser, parameters) ->
+                parameters.setPenaltyVoltageTargetRatio(parser.readValueAs(Double.class))
+            )),
+            entry("penaltyVoltageTargetData", safeRead((parser, parameters) ->
+                parameters.setPenaltyVoltageTargetData(parser.readValueAs(Double.class))
+            )),
             entry("optimizationAfterRounding", safeRead((parser, parameters) ->
                 parameters.setOptimizationAfterRounding(parser.getValueAsBoolean())
             ))
@@ -173,7 +185,9 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
 
             // Version-gated fields: these were introduced in 1.1
             switch (fieldName) {
-                case "penaltyInvestReaPos", "penaltyInvestReaNeg", "penaltyActivePower" ->
+                case "penaltyInvestReaPos", "penaltyInvestReaNeg", "penaltyActivePower",
+                     "penaltyUnitsReactive", "penaltyTransfoRatio",
+                     "penaltyVoltageTargetRatio", "penaltyVoltageTargetData" ->
                     JsonUtil.assertGreaterOrEqualThanReferenceVersion("OpenReacParameters", fieldName, version, "1.1");
                 default -> { /* no version gate */ }
             }

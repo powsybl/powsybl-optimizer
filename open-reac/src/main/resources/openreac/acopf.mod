@@ -12,7 +12,7 @@
 # Reactive OPF
 # Author:  Jean Maeght   2022 2023
 # Author:  Manuel Ruiz   2023 2024
-# Author:  Oscar Lamolet 2025
+# Author:  Oscar Lamolet 2025 2026
 ###############################################################################
 
 
@@ -242,14 +242,8 @@ var target_voltage_data = sum{n in BUSVV} (V[n] - bus_V0[1,n])**2;
 
 
 #
-# Objective function and penalties
+# Objective function
 #
-param penalty_units_reactive := 0.1;
-param penalty_transfo_ratio  := 0.1;
-
-param penalty_voltage_target_high := 1;
-param penalty_voltage_target_low  := 0.01;
-
 minimize problem_acopf_objective:
   sum{n in BUSCC_SLACK} (
         penalty_invest_rea_pos * base100MVA * slack1_shunt_B[n]
@@ -262,12 +256,10 @@ minimize problem_acopf_objective:
   * sum{(g,n) in UNITON} (coeff_alpha * P[g,n] + (1-coeff_alpha)*( (P[g,n]-unit_Pc[1,g,n])/max(1,abs(unit_Pc[1,g,n])) )**2 )
 
   # Voltage for busses, ratio between Vmin and Vmax
-  + (if objective_choice==1 then penalty_voltage_target_high else penalty_voltage_target_low)
-  * target_voltage_ratio
+  + penalty_voltage_target_ratio * target_voltage_ratio
 
   # Voltage target : value V0 in input data
-  + (if objective_choice==2 then penalty_voltage_target_high else penalty_voltage_target_low)
-  * target_voltage_data
+  + penalty_voltage_target_data * target_voltage_data
 
   # Reactive power of units
   + penalty_units_reactive * sum{(g,n) in UNITON} (Q[g,n]/max(1,abs(corrected_unit_Qmin[g,n]),abs(corrected_unit_Qmax[g,n])))**2
