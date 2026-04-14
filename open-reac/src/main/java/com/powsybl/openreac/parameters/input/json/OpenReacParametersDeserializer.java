@@ -12,6 +12,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.powsybl.commons.PowsyblException;
+import com.powsybl.commons.json.JsonUtil;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAmplLogLevel;
@@ -159,10 +160,27 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
 
     @Override
     public OpenReacParameters deserialize(JsonParser parser, DeserializationContext deserializationContext, OpenReacParameters parameters) throws IOException {
+        String version = null;
         while (parser.nextToken() != JsonToken.END_OBJECT) {
-            BiConsumer<JsonParser, OpenReacParameters> consumer = FIELD_PROCESSORS.get(parser.currentName());
+            String fieldName = parser.currentName();
+
+            // Capture the version inline so it can be used for version-gated field checks
+            if ("version".equals(fieldName)) {
+                parser.nextToken();
+                version = parser.getValueAsString();
+                continue;
+            }
+
+            // Version-gated fields: these were introduced in 1.1
+            switch (fieldName) {
+                case "penaltyInvestReaPos", "penaltyInvestReaNeg", "penaltyActivePower" ->
+                    JsonUtil.assertGreaterOrEqualThanReferenceVersion("OpenReacParameters", fieldName, version, "1.1");
+                default -> { /* no version gate */ }
+            }
+
+            BiConsumer<JsonParser, OpenReacParameters> consumer = FIELD_PROCESSORS.get(fieldName);
             if (consumer == null) {
-                throw new IllegalStateException("Unexpected field: " + parser.currentName());
+                throw new IllegalStateException("Unexpected field: " + fieldName);
             }
             try {
                 consumer.accept(parser, parameters);

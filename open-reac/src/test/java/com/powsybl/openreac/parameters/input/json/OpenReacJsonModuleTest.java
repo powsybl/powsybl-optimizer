@@ -156,4 +156,27 @@ class OpenReacJsonModuleTest {
         assertEquals(5.5, parameters3.getPenaltyInvestReaPos());
         assertEquals(7.25, parameters3.getPenaltyInvestReaNeg());
     }
+
+    @Test
+    void testOpenReacParametersBackwardCompatibilityV1dot0() throws IOException {
+        ObjectMapper objectMapper = JsonUtil.createObjectMapper()
+                .registerModule(new OpenReactJsonModule());
+
+        // Read a v1.0 file, which pre-dates the three penalty fields introduced in v1.1.
+        // This must succeed, and the new fields must take their default values.
+        OpenReacParameters parameters = objectMapper.readValue(
+                Objects.requireNonNull(getClass().getResourceAsStream("/parametersV1dot0.json")),
+                OpenReacParameters.class);
+
+        // The three v1.1 fields must fall back to their defaults when reading a v1.0 file
+        assertEquals(10, parameters.getPenaltyInvestReaPos());
+        assertEquals(10, parameters.getPenaltyInvestReaNeg());
+        assertNull(parameters.getPenaltyActivePower());
+
+        // Spot-check a few pre-existing fields to confirm the rest of the deserialization still works
+        assertEquals(OpenReacOptimisationObjective.MIN_GENERATION, parameters.getObjective());
+        assertEquals(ReactiveSlackBusesMode.CONFIGURED, parameters.getReactiveSlackBusesMode());
+        assertEquals(List.of("g1", "g2"), parameters.getConstantQGenerators());
+        assertEquals(0.1, parameters.getShuntVariableScalingFactor());
+    }
 }

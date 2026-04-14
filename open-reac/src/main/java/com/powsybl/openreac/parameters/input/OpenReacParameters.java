@@ -673,9 +673,9 @@ public class OpenReacParameters {
         allAlgoParams.add(new OpenReacAlgoParamImpl(SHUNT_VARIABLE_SCALING_FACTOR_KEY, Double.toString(shuntVariableScalingFactor)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_INVEST_REA_POS_KEY, Double.toString(penaltyInvestReaPos)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_INVEST_REA_NEG_KEY, Double.toString(penaltyInvestReaNeg)));
-        double effectivePenaltyActivePower = penaltyActivePower != null
-                ? penaltyActivePower
-                : (objective == OpenReacOptimisationObjective.MIN_GENERATION ? 1.0 : 0.01);
+        double effectivePenaltyActivePower = Objects.requireNonNullElseGet(
+                penaltyActivePower,
+                () -> objective == OpenReacOptimisationObjective.MIN_GENERATION ? 1.0 : 0.01);
         allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_ACTIVE_POWER_KEY, Double.toString(effectivePenaltyActivePower)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(OPTIMIZATION_AFTER_ROUNDING, Boolean.toString(optimizationAfterRounding)));
         return allAlgoParams;
