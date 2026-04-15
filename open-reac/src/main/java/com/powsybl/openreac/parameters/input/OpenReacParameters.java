@@ -132,6 +132,31 @@ public class OpenReacParameters {
 
     private double shuntVariableScalingFactor = 1e-1;
 
+    private static final String PENALTY_INVEST_REA_POS_KEY = "penalty_invest_rea_pos";
+    private double penaltyInvestReaPos = 10;
+
+    private static final String PENALTY_INVEST_REA_NEG_KEY = "penalty_invest_rea_neg";
+    private double penaltyInvestReaNeg = 10;
+
+    private static final String PENALTY_ACTIVE_POWER_KEY = "penalty_active_power";
+    // Null = default depends on objective (back-compat): 1 for MIN_GENERATION, 0.01 otherwise.
+    // Non-null = explicit override set by the user.
+    private Double penaltyActivePower = null;
+
+    private static final String PENALTY_UNITS_REACTIVE_KEY = "penalty_units_reactive";
+    private double penaltyUnitsReactive = 0.1;
+
+    private static final String PENALTY_TRANSFO_RATIO_KEY = "penalty_transfo_ratio";
+    private double penaltyTransfoRatio = 0.1;
+
+    private static final String PENALTY_VOLTAGE_TARGET_RATIO_KEY = "penalty_voltage_target_ratio";
+    // Null = default depends on objective: 1 for BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT, 0.01 otherwise.
+    private Double penaltyVoltageTargetRatio = null;
+
+    private static final String PENALTY_VOLTAGE_TARGET_DATA_KEY = "penalty_voltage_target_data";
+    // Null = default depends on objective: 1 for SPECIFIC_VOLTAGE_PROFILE, 0.01 otherwise.
+    private Double penaltyVoltageTargetData = null;
+
     private static final String OPTIMIZATION_AFTER_ROUNDING = "optimization_after_rounding";
 
     private boolean optimizationAfterRounding = false;
@@ -574,6 +599,119 @@ public class OpenReacParameters {
         return this;
     }
 
+    public double getPenaltyInvestReaPos() {
+        return penaltyInvestReaPos;
+    }
+
+    public OpenReacParameters setPenaltyInvestReaPos(double penaltyInvestReaPos) {
+        if (penaltyInvestReaPos < 0 || Double.isNaN(penaltyInvestReaPos)) {
+            throw new IllegalArgumentException("Penalty for positive reactive slack investment must be >= 0 and defined to be consistent.");
+        }
+        this.penaltyInvestReaPos = penaltyInvestReaPos;
+        return this;
+    }
+
+    public double getPenaltyInvestReaNeg() {
+        return penaltyInvestReaNeg;
+    }
+
+    public OpenReacParameters setPenaltyInvestReaNeg(double penaltyInvestReaNeg) {
+        if (penaltyInvestReaNeg < 0 || Double.isNaN(penaltyInvestReaNeg)) {
+            throw new IllegalArgumentException("Penalty for negative reactive slack investment must be >= 0 and defined to be consistent.");
+        }
+        this.penaltyInvestReaNeg = penaltyInvestReaNeg;
+        return this;
+    }
+
+    /**
+     * @return the user-configured penalty for active power generation in the ACOPF objective,
+     *         or {@code null} if the historical default (depending on the objective) should be used.
+     */
+    public Double getPenaltyActivePower() {
+        return penaltyActivePower;
+    }
+
+    /**
+     * Sets the penalty for active power generation in the ACOPF objective.
+     * Passing {@code null} restores the historical default (1 for {@link OpenReacOptimisationObjective#MIN_GENERATION},
+     * 0.01 otherwise).
+     */
+    public OpenReacParameters setPenaltyActivePower(Double penaltyActivePower) {
+        if (penaltyActivePower != null && (penaltyActivePower < 0 || Double.isNaN(penaltyActivePower))) {
+            throw new IllegalArgumentException("Penalty for active power generation must be >= 0 and defined to be consistent.");
+        }
+        this.penaltyActivePower = penaltyActivePower;
+        return this;
+    }
+
+    public double getPenaltyUnitsReactive() {
+        return penaltyUnitsReactive;
+    }
+
+    public OpenReacParameters setPenaltyUnitsReactive(double penaltyUnitsReactive) {
+        if (penaltyUnitsReactive < 0 || Double.isNaN(penaltyUnitsReactive)) {
+            throw new IllegalArgumentException("Penalty for reactive power of units must be >= 0 and defined to be consistent.");
+        }
+        this.penaltyUnitsReactive = penaltyUnitsReactive;
+        return this;
+    }
+
+    public double getPenaltyTransfoRatio() {
+        return penaltyTransfoRatio;
+    }
+
+    public OpenReacParameters setPenaltyTransfoRatio(double penaltyTransfoRatio) {
+        if (penaltyTransfoRatio < 0 || Double.isNaN(penaltyTransfoRatio)) {
+            throw new IllegalArgumentException("Penalty for transformer ratio must be >= 0 and defined to be consistent.");
+        }
+        this.penaltyTransfoRatio = penaltyTransfoRatio;
+        return this;
+    }
+
+    /**
+     * @return the user-configured penalty for the voltage target ratio term (Vmin/Vmax normalized target)
+     *         in the ACOPF objective, or {@code null} if the historical default (depending on the objective)
+     *         should be used.
+     */
+    public Double getPenaltyVoltageTargetRatio() {
+        return penaltyVoltageTargetRatio;
+    }
+
+    /**
+     * Sets the penalty for the voltage target ratio term in the ACOPF objective.
+     * Passing {@code null} restores the historical default (1 for
+     * {@link OpenReacOptimisationObjective#BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT}, 0.01 otherwise).
+     */
+    public OpenReacParameters setPenaltyVoltageTargetRatio(Double penaltyVoltageTargetRatio) {
+        if (penaltyVoltageTargetRatio != null && (penaltyVoltageTargetRatio < 0 || Double.isNaN(penaltyVoltageTargetRatio))) {
+            throw new IllegalArgumentException("Penalty for voltage target ratio term must be >= 0 and defined to be consistent.");
+        }
+        this.penaltyVoltageTargetRatio = penaltyVoltageTargetRatio;
+        return this;
+    }
+
+    /**
+     * @return the user-configured penalty for the voltage target data term (V0 input value targeting)
+     *         in the ACOPF objective, or {@code null} if the historical default (depending on the objective)
+     *         should be used.
+     */
+    public Double getPenaltyVoltageTargetData() {
+        return penaltyVoltageTargetData;
+    }
+
+    /**
+     * Sets the penalty for the voltage target data term in the ACOPF objective.
+     * Passing {@code null} restores the historical default (1 for
+     * {@link OpenReacOptimisationObjective#SPECIFIC_VOLTAGE_PROFILE}, 0.01 otherwise).
+     */
+    public OpenReacParameters setPenaltyVoltageTargetData(Double penaltyVoltageTargetData) {
+        if (penaltyVoltageTargetData != null && (penaltyVoltageTargetData < 0 || Double.isNaN(penaltyVoltageTargetData))) {
+            throw new IllegalArgumentException("Penalty for voltage target data term must be >= 0 and defined to be consistent.");
+        }
+        this.penaltyVoltageTargetData = penaltyVoltageTargetData;
+        return this;
+    }
+
     /**
      * @return the shunt compensator activation alert threshold
      */
@@ -615,6 +753,22 @@ public class OpenReacParameters {
         allAlgoParams.add(new OpenReacAlgoParamImpl(REACTIVE_SLACK_VARIABLE_SCALING_FACTOR, Double.toString(reactiveSlackVariableScalingFactor)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(TWO_WINDING_TRANSFORMER_RATIO_VARIABLE_SCALING_FACTOR, Double.toString(twoWindingTransformerRatioVariableScalingFactor)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(SHUNT_VARIABLE_SCALING_FACTOR_KEY, Double.toString(shuntVariableScalingFactor)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_INVEST_REA_POS_KEY, Double.toString(penaltyInvestReaPos)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_INVEST_REA_NEG_KEY, Double.toString(penaltyInvestReaNeg)));
+        double effectivePenaltyActivePower = Objects.requireNonNullElseGet(
+                penaltyActivePower,
+                () -> objective == OpenReacOptimisationObjective.MIN_GENERATION ? 1.0 : 0.01);
+        allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_ACTIVE_POWER_KEY, Double.toString(effectivePenaltyActivePower)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_UNITS_REACTIVE_KEY, Double.toString(penaltyUnitsReactive)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_TRANSFO_RATIO_KEY, Double.toString(penaltyTransfoRatio)));
+        double effectivePenaltyVoltageTargetRatio = Objects.requireNonNullElseGet(
+                penaltyVoltageTargetRatio,
+                () -> objective == OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT ? 1.0 : 0.01);
+        allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_VOLTAGE_TARGET_RATIO_KEY, Double.toString(effectivePenaltyVoltageTargetRatio)));
+        double effectivePenaltyVoltageTargetData = Objects.requireNonNullElseGet(
+                penaltyVoltageTargetData,
+                () -> objective == OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE ? 1.0 : 0.01);
+        allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_VOLTAGE_TARGET_DATA_KEY, Double.toString(effectivePenaltyVoltageTargetData)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(OPTIMIZATION_AFTER_ROUNDING, Boolean.toString(optimizationAfterRounding)));
         return allAlgoParams;
     }

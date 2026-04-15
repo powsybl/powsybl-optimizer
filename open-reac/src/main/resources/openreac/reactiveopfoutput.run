@@ -10,8 +10,9 @@
 
 ###############################################################################
 # Reactive OPF
-# Author:  Jean Maeght 2022 2023
-# Author:  Manuel Ruiz 2023 2024
+# Author:  Jean Maeght   2022 2023
+# Author:  Manuel Ruiz   2023 2024
+# Author:  Oscar Lamolet 2025 2026
 ###############################################################################
 
 
@@ -166,7 +167,7 @@ if 0 then {
     substation_Vnomi[1,bus_substation[1,m]]>21 and substation_Vnomi[1,bus_substation[1,m]]<300 and
     substation_Vnomi[1,bus_substation[1,n]]>21 and substation_Vnomi[1,bus_substation[1,n]]<300 and
     (substation_Vnomi[1,bus_substation[1,m]]>120 or substation_Vnomi[1,bus_substation[1,n]]>120) and
-    (substation_Vnomi[1,bus_substation[1,m]]<120 or substation_Vnomi[1,bus_substation[1,n]]<120)}{ 
+    (substation_Vnomi[1,bus_substation[1,m]]<120 or substation_Vnomi[1,bus_substation[1,n]]<120)}{
       printf{LOG_DEBUG} "1 %i %i %i %Q\n",qq,m,n,branch_id[1,qq,m,n] > param_transformers.txtt;
   }
 }
@@ -279,6 +280,13 @@ printf "%s %f\n","default_constraint_scaling_factor",default_constraint_scaling_
 printf "%s %f\n","reactive_slack_variable_scaling_factor",reactive_slack_variable_scaling_factor > (fileOut);
 printf "%s %f\n","transformer_ratio_variable_scaling_factor",transformer_ratio_variable_scaling_factor > (fileOut);
 printf "%s %f\n","shunt_variable_scaling_factor",shunt_variable_scaling_factor > (fileOut);
+printf "%s %f\n","penalty_invest_rea_pos",penalty_invest_rea_pos > (fileOut);
+printf "%s %f\n","penalty_invest_rea_neg",penalty_invest_rea_neg > (fileOut);
+printf "%s %f\n","penalty_active_power",penalty_active_power > (fileOut);
+printf "%s %f\n","penalty_units_reactive",penalty_units_reactive > (fileOut);
+printf "%s %f\n","penalty_transfo_ratio",penalty_transfo_ratio > (fileOut);
+printf "%s %f\n","penalty_voltage_target_ratio",penalty_voltage_target_ratio > (fileOut);
+printf "%s %f\n","penalty_voltage_target_data",penalty_voltage_target_data > (fileOut);
 printf "%s %s\n","optimization_after_rounding",optimization_after_rounding > (fileOut);
 
 printf "\n" > (fileOut);
@@ -391,25 +399,25 @@ for {(qq,m,n) in ALL_BRANCHCC}
   printf{LOG_DEBUG} "%i;%i;%i;%.3f;%.3f;%.3f;%.3f;%s;\n",
     qq,m,n,
     # p1 flow
-    if (qq,m,n) in BRANCHCC 
+    if (qq,m,n) in BRANCHCC
     then base100MVA * V[m] * Red_Tran_Act_Dir[qq,m,n]
     else if (qq,m,n) in BRANCHCC_WITH_SIDE_2_OPENED
     then base100MVA * V[m] * Red_Tran_Act_Dir_Side_2_Opened[qq,m,n]
     else 0, # no flow as branch is opened on side 1
     # q1 flow
-    if (qq,m,n) in BRANCHCC 
+    if (qq,m,n) in BRANCHCC
     then base100MVA * V[m] * Red_Tran_Rea_Dir[qq,m,n]
     else if (qq,m,n) in BRANCHCC_WITH_SIDE_2_OPENED
     then base100MVA * V[m] * Red_Tran_Rea_Dir_Side_2_Opened[qq,m,n]
     else 0, # no flow as branch is opened on side 1
     # p2 flow
-    if (qq,m,n) in BRANCHCC 
+    if (qq,m,n) in BRANCHCC
     then base100MVA * V[n] * Red_Tran_Act_Inv[qq,m,n]
     else if (qq,m,n) in BRANCHCC_WITH_SIDE_1_OPENED
     then base100MVA * V[n] * Red_Tran_Act_Inv_Side_1_Opened[qq,m,n]
     else 0, # no flow as branch is opened on side 2
     # q2 flow
-    if (qq,m,n) in BRANCHCC 
+    if (qq,m,n) in BRANCHCC
     then base100MVA * V[n] * Red_Tran_Rea_Inv[qq,m,n]
     else if (qq,m,n) in BRANCHCC_WITH_SIDE_1_OPENED
     then base100MVA * V[n] * Red_Tran_Rea_Inv_Side_1_Opened[qq,m,n]

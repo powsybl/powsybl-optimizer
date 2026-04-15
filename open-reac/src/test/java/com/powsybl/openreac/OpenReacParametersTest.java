@@ -26,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Nicolas PIERRE {@literal <nicolas.pierre at artelys.com>}
  * @author Pierre ARVY {@literal <pierre.arvy at artelys.com>}
+ * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
  */
 class OpenReacParametersTest {
 
@@ -280,6 +281,245 @@ class OpenReacParametersTest {
     }
 
     @Test
+    void testPenaltyInvestReaPosIntegrity() {
+        OpenReacParameters parameters = new OpenReacParameters();
+
+        // Default value
+        assertEquals(10, parameters.getPenaltyInvestReaPos());
+
+        // Zero is allowed (>= 0)
+        parameters.setPenaltyInvestReaPos(0);
+        assertEquals(0, parameters.getPenaltyInvestReaPos());
+
+        // Positive value
+        parameters.setPenaltyInvestReaPos(42.5);
+        assertEquals(42.5, parameters.getPenaltyInvestReaPos());
+
+        // Invalid values
+        IllegalArgumentException e1 = assertThrows(IllegalArgumentException.class, () -> parameters.setPenaltyInvestReaPos(-0.25));
+        assertEquals("Penalty for positive reactive slack investment must be >= 0 and defined to be consistent.", e1.getMessage());
+        IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class, () -> parameters.setPenaltyInvestReaPos(Double.NaN));
+        assertEquals("Penalty for positive reactive slack investment must be >= 0 and defined to be consistent.", e2.getMessage());
+    }
+
+    @Test
+    void testPenaltyInvestReaNegIntegrity() {
+        OpenReacParameters parameters = new OpenReacParameters();
+
+        // Default value
+        assertEquals(10, parameters.getPenaltyInvestReaNeg());
+
+        // Zero is allowed (>= 0)
+        parameters.setPenaltyInvestReaNeg(0);
+        assertEquals(0, parameters.getPenaltyInvestReaNeg());
+
+        // Positive value
+        parameters.setPenaltyInvestReaNeg(7.3);
+        assertEquals(7.3, parameters.getPenaltyInvestReaNeg());
+
+        // Invalid values
+        IllegalArgumentException e1 = assertThrows(IllegalArgumentException.class, () -> parameters.setPenaltyInvestReaNeg(-1));
+        assertEquals("Penalty for negative reactive slack investment must be >= 0 and defined to be consistent.", e1.getMessage());
+        IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class, () -> parameters.setPenaltyInvestReaNeg(Double.NaN));
+        assertEquals("Penalty for negative reactive slack investment must be >= 0 and defined to be consistent.", e2.getMessage());
+    }
+
+    @Test
+    void testPenaltyActivePowerIntegrity() {
+        OpenReacParameters parameters = new OpenReacParameters();
+
+        // Default: null means "use historical default depending on objective"
+        assertNull(parameters.getPenaltyActivePower());
+
+        // null is explicitly allowed (restores default behavior)
+        parameters.setPenaltyActivePower(null);
+        assertNull(parameters.getPenaltyActivePower());
+
+        // Zero is allowed (>= 0)
+        parameters.setPenaltyActivePower(0.0);
+        assertEquals(0.0, parameters.getPenaltyActivePower());
+
+        // Positive value
+        parameters.setPenaltyActivePower(0.42);
+        assertEquals(0.42, parameters.getPenaltyActivePower());
+
+        // Invalid values
+        IllegalArgumentException e1 = assertThrows(IllegalArgumentException.class, () -> parameters.setPenaltyActivePower(-0.1));
+        assertEquals("Penalty for active power generation must be >= 0 and defined to be consistent.", e1.getMessage());
+        IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class, () -> parameters.setPenaltyActivePower(Double.NaN));
+        assertEquals("Penalty for active power generation must be >= 0 and defined to be consistent.", e2.getMessage());
+
+        // --- Conditional default depending on the objective (option c) ---
+        OpenReacParameters p = new OpenReacParameters();
+        assertNull(p.getPenaltyActivePower());
+
+        // MIN_GENERATION (default objective) → resolved default is 1.0
+        p.setObjective(OpenReacOptimisationObjective.MIN_GENERATION);
+        assertEquals("1.0", findAlgoParam(p, "penalty_active_power"));
+
+        // SPECIFIC_VOLTAGE_PROFILE → resolved default is 0.01
+        p.setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE);
+        assertEquals("0.01", findAlgoParam(p, "penalty_active_power"));
+
+        // BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT → resolved default is 0.01
+        p.setObjective(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT)
+                .setObjectiveDistance(50);
+        assertEquals("0.01", findAlgoParam(p, "penalty_active_power"));
+
+        // --- Explicit override wins regardless of objective ---
+        p.setPenaltyActivePower(0.25);
+        assertEquals("0.25", findAlgoParam(p, "penalty_active_power"));
+        p.setObjective(OpenReacOptimisationObjective.MIN_GENERATION);
+        assertEquals("0.25", findAlgoParam(p, "penalty_active_power"));
+        p.setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE);
+        assertEquals("0.25", findAlgoParam(p, "penalty_active_power"));
+
+        // --- Setting back to null restores the conditional default ---
+        p.setPenaltyActivePower(null);
+        assertEquals("0.01", findAlgoParam(p, "penalty_active_power")); // still SPECIFIC_VOLTAGE_PROFILE
+        p.setObjective(OpenReacOptimisationObjective.MIN_GENERATION);
+        assertEquals("1.0", findAlgoParam(p, "penalty_active_power"));
+    }
+
+    private static String findAlgoParam(OpenReacParameters parameters, String key) {
+        return parameters.getAllAlgorithmParams().stream()
+                .filter(p -> p.getName().equals(key))
+                .map(OpenReacAlgoParam::getValue)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Algo param not found: " + key));
+    }
+
+    @Test
+    void testPenaltyUnitsReactiveIntegrity() {
+        OpenReacParameters parameters = new OpenReacParameters();
+
+        assertEquals(0.1, parameters.getPenaltyUnitsReactive());
+
+        parameters.setPenaltyUnitsReactive(0);
+        assertEquals(0, parameters.getPenaltyUnitsReactive());
+        parameters.setPenaltyUnitsReactive(2.5);
+        assertEquals(2.5, parameters.getPenaltyUnitsReactive());
+
+        IllegalArgumentException e1 = assertThrows(IllegalArgumentException.class, () -> parameters.setPenaltyUnitsReactive(-0.1));
+        assertEquals("Penalty for reactive power of units must be >= 0 and defined to be consistent.", e1.getMessage());
+        IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class, () -> parameters.setPenaltyUnitsReactive(Double.NaN));
+        assertEquals("Penalty for reactive power of units must be >= 0 and defined to be consistent.", e2.getMessage());
+    }
+
+    @Test
+    void testPenaltyTransfoRatioIntegrity() {
+        OpenReacParameters parameters = new OpenReacParameters();
+
+        assertEquals(0.1, parameters.getPenaltyTransfoRatio());
+
+        parameters.setPenaltyTransfoRatio(0);
+        assertEquals(0, parameters.getPenaltyTransfoRatio());
+        parameters.setPenaltyTransfoRatio(3.14);
+        assertEquals(3.14, parameters.getPenaltyTransfoRatio());
+
+        IllegalArgumentException e1 = assertThrows(IllegalArgumentException.class, () -> parameters.setPenaltyTransfoRatio(-1));
+        assertEquals("Penalty for transformer ratio must be >= 0 and defined to be consistent.", e1.getMessage());
+        IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class, () -> parameters.setPenaltyTransfoRatio(Double.NaN));
+        assertEquals("Penalty for transformer ratio must be >= 0 and defined to be consistent.", e2.getMessage());
+    }
+
+    @Test
+    void testPenaltyVoltageTargetRatioIntegrity() {
+        OpenReacParameters parameters = new OpenReacParameters();
+
+        assertNull(parameters.getPenaltyVoltageTargetRatio());
+
+        parameters.setPenaltyVoltageTargetRatio(null);
+        assertNull(parameters.getPenaltyVoltageTargetRatio());
+        parameters.setPenaltyVoltageTargetRatio(0.0);
+        assertEquals(0.0, parameters.getPenaltyVoltageTargetRatio());
+        parameters.setPenaltyVoltageTargetRatio(0.33);
+        assertEquals(0.33, parameters.getPenaltyVoltageTargetRatio());
+
+        IllegalArgumentException e1 = assertThrows(IllegalArgumentException.class, () -> parameters.setPenaltyVoltageTargetRatio(-0.1));
+        assertEquals("Penalty for voltage target ratio term must be >= 0 and defined to be consistent.", e1.getMessage());
+        IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class, () -> parameters.setPenaltyVoltageTargetRatio(Double.NaN));
+        assertEquals("Penalty for voltage target ratio term must be >= 0 and defined to be consistent.", e2.getMessage());
+
+        // --- Conditional default depending on the objective ---
+        OpenReacParameters p = new OpenReacParameters();
+        assertNull(p.getPenaltyVoltageTargetRatio());
+
+        // MIN_GENERATION → 0.01 (not the "high" objective for the ratio term)
+        p.setObjective(OpenReacOptimisationObjective.MIN_GENERATION);
+        assertEquals("0.01", findAlgoParam(p, "penalty_voltage_target_ratio"));
+
+        // BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT → 1.0 (this is the "high" case for the ratio term)
+        p.setObjective(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT)
+                .setObjectiveDistance(50);
+        assertEquals("1.0", findAlgoParam(p, "penalty_voltage_target_ratio"));
+
+        // SPECIFIC_VOLTAGE_PROFILE → 0.01
+        p.setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE);
+        assertEquals("0.01", findAlgoParam(p, "penalty_voltage_target_ratio"));
+
+        // Explicit override wins regardless of objective
+        p.setPenaltyVoltageTargetRatio(0.42);
+        assertEquals("0.42", findAlgoParam(p, "penalty_voltage_target_ratio"));
+        p.setObjective(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT);
+        assertEquals("0.42", findAlgoParam(p, "penalty_voltage_target_ratio"));
+
+        // null restores conditional default
+        p.setPenaltyVoltageTargetRatio(null);
+        assertEquals("1.0", findAlgoParam(p, "penalty_voltage_target_ratio")); // BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT
+        p.setObjective(OpenReacOptimisationObjective.MIN_GENERATION);
+        assertEquals("0.01", findAlgoParam(p, "penalty_voltage_target_ratio"));
+    }
+
+    @Test
+    void testPenaltyVoltageTargetDataIntegrity() {
+        OpenReacParameters parameters = new OpenReacParameters();
+
+        assertNull(parameters.getPenaltyVoltageTargetData());
+
+        parameters.setPenaltyVoltageTargetData(null);
+        assertNull(parameters.getPenaltyVoltageTargetData());
+        parameters.setPenaltyVoltageTargetData(0.0);
+        assertEquals(0.0, parameters.getPenaltyVoltageTargetData());
+        parameters.setPenaltyVoltageTargetData(0.77);
+        assertEquals(0.77, parameters.getPenaltyVoltageTargetData());
+
+        IllegalArgumentException e1 = assertThrows(IllegalArgumentException.class, () -> parameters.setPenaltyVoltageTargetData(-0.1));
+        assertEquals("Penalty for voltage target data term must be >= 0 and defined to be consistent.", e1.getMessage());
+        IllegalArgumentException e2 = assertThrows(IllegalArgumentException.class, () -> parameters.setPenaltyVoltageTargetData(Double.NaN));
+        assertEquals("Penalty for voltage target data term must be >= 0 and defined to be consistent.", e2.getMessage());
+
+        // --- Conditional default depending on the objective ---
+        OpenReacParameters p = new OpenReacParameters();
+        assertNull(p.getPenaltyVoltageTargetData());
+
+        // MIN_GENERATION → 0.01
+        p.setObjective(OpenReacOptimisationObjective.MIN_GENERATION);
+        assertEquals("0.01", findAlgoParam(p, "penalty_voltage_target_data"));
+
+        // BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT → 0.01
+        p.setObjective(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT)
+                .setObjectiveDistance(50);
+        assertEquals("0.01", findAlgoParam(p, "penalty_voltage_target_data"));
+
+        // SPECIFIC_VOLTAGE_PROFILE → 1.0 (this is the "high" case for the data term)
+        p.setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE);
+        assertEquals("1.0", findAlgoParam(p, "penalty_voltage_target_data"));
+
+        // Explicit override wins regardless of objective
+        p.setPenaltyVoltageTargetData(0.25);
+        assertEquals("0.25", findAlgoParam(p, "penalty_voltage_target_data"));
+        p.setObjective(OpenReacOptimisationObjective.MIN_GENERATION);
+        assertEquals("0.25", findAlgoParam(p, "penalty_voltage_target_data"));
+
+        // null restores conditional default
+        p.setPenaltyVoltageTargetData(null);
+        assertEquals("0.01", findAlgoParam(p, "penalty_voltage_target_data")); // MIN_GENERATION
+        p.setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE);
+        assertEquals("1.0", findAlgoParam(p, "penalty_voltage_target_data"));
+    }
+
+    @Test
     void testReactiveSlackVariablesScalingFactorsIntegrity() {
         OpenReacParameters parameters = new OpenReacParameters();
 
@@ -360,7 +600,7 @@ class OpenReacParametersTest {
         parameters.setOptimizationAfterRounding(true);
 
         List<OpenReacAlgoParam> algoParams = parameters.getAllAlgorithmParams();
-        assertEquals(23, algoParams.size());
+        assertEquals(30, algoParams.size());
         assertEquals("2", algoParams.get(0).getValue());
         assertEquals("0.4", algoParams.get(1).getValue());
         assertEquals("DEBUG", algoParams.get(2).getValue());
@@ -383,7 +623,14 @@ class OpenReacParametersTest {
         assertEquals("0.01", algoParams.get(19).getValue());
         assertEquals("1.0E-4", algoParams.get(20).getValue());
         assertEquals("0.03", algoParams.get(21).getValue());
-        assertEquals("true", algoParams.get(22).getValue());
+        assertEquals("10.0", algoParams.get(22).getValue());
+        assertEquals("10.0", algoParams.get(23).getValue());
+        assertEquals("0.01", algoParams.get(24).getValue());
+        assertEquals("0.1", algoParams.get(25).getValue());
+        assertEquals("0.1", algoParams.get(26).getValue());
+        assertEquals("0.01", algoParams.get(27).getValue());
+        assertEquals("1.0", algoParams.get(28).getValue());
+        assertEquals("true", algoParams.get(29).getValue());
     }
 
     @Test
@@ -424,6 +671,13 @@ class OpenReacParametersTest {
         assertEquals(1e-1, parameters.getReactiveSlackVariableScalingFactor());
         assertEquals(1e-3, parameters.getTwoWindingTransformerRatioVariableScalingFactor());
         assertEquals(1e-1, parameters.getShuntVariableScalingFactor());
+        assertEquals(10.0, parameters.getPenaltyInvestReaPos());
+        assertEquals(10.0, parameters.getPenaltyInvestReaNeg());
+        assertNull(parameters.getPenaltyActivePower());
+        assertEquals(0.1, parameters.getPenaltyUnitsReactive());
+        assertEquals(0.1, parameters.getPenaltyTransfoRatio());
+        assertNull(parameters.getPenaltyVoltageTargetRatio());
+        assertNull(parameters.getPenaltyVoltageTargetData());
         assertFalse(parameters.isOptimizationAfterRounding());
         assertTrue(parameters.checkAlgorithmParametersIntegrity());
     }
@@ -437,7 +691,7 @@ class OpenReacParametersTest {
         assertEquals(0, parameters.getConstantQGenerators().size(), "ConstantQGenerators should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getVariableShuntCompensators().size(), "VariableShuntCompensators should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getConfiguredReactiveSlackBuses().size(), "ConfiguredReactiveSlackBuses should be empty when using default OpenReacParameter constructor.");
-        assertEquals(22, parameters.getAllAlgorithmParams().size());
+        assertEquals(29, parameters.getAllAlgorithmParams().size());
     }
 
     @Test
