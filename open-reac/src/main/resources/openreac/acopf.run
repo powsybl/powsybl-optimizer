@@ -182,7 +182,7 @@ printf{LOG_INFO} "** Objective function breakdown\n";
 printf{LOG_INFO} "######################################################################\n";
 
 # Term 2: Active power
-let temp1 := (if objective_choice==1 or objective_choice==2 then penalty_active_power_low else penalty_active_power_high)
+let temp1 := penalty_active_power
   * sum{(g,n) in UNITON} (coeff_alpha * P[g,n] + (1-coeff_alpha)*( (P[g,n]-unit_Pc[1,g,n])/max(1,abs(unit_Pc[1,g,n])) )**2 );
 printf{LOG_INFO} "  %-55s = %+.6f\n", "Active power", temp1;
 let tempo := temp1;
@@ -208,14 +208,12 @@ printf{LOG_INFO} "  %-55s = %+.6f\n", "Transformer ratio deviation", temp1;
 let tempo := tempo + temp1;
 
 # Term 3: Voltage target (ratio between Vmin and Vmax)
-let temp1 := (if objective_choice==1 then penalty_voltage_target_high else penalty_voltage_target_low)
-  * target_voltage_ratio;
+let temp1 := penalty_voltage_target_ratio * target_voltage_ratio;
 printf{LOG_INFO} "  %-55s = %+.6f\n", "Voltage target (ratio Vmin/Vmax)", temp1;
 let tempo := tempo + temp1;
 
 # Term 4: Voltage target (input data V0)
-let temp1 := (if objective_choice==2 then penalty_voltage_target_high else penalty_voltage_target_low)
-  * target_voltage_data;
+let temp1 := penalty_voltage_target_data * target_voltage_data;
 printf{LOG_INFO} "  %-55s = %+.6f\n", "Voltage target (input data V0)", temp1;
 let tempo := tempo + temp1;
 
@@ -226,9 +224,9 @@ printf{LOG_INFO} "  %-55s = %+.6f\n", "Objective value (from solver)", problem_a
 # Active power penalties and associated weights (for reference)
 printf{LOG_INFO} "\n  Weights: slack_pos=%g slack_neg=%g act_power=%g volt_ratio=%g volt_data=%g react_unit=%g transfo=%g\n",
   penalty_invest_rea_pos, penalty_invest_rea_neg,
-  (if objective_choice==1 or objective_choice==2 then penalty_active_power_low else penalty_active_power_high),
-  (if objective_choice==1 then penalty_voltage_target_high else penalty_voltage_target_low),
-  (if objective_choice==2 then penalty_voltage_target_high else penalty_voltage_target_low),
+  penalty_active_power,
+  penalty_voltage_target_ratio,
+  penalty_voltage_target_data,
   penalty_units_reactive,
   penalty_transfo_ratio;
 
