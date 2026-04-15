@@ -134,7 +134,7 @@ class OpenReacJsonModuleTest {
                 .registerModule(new OpenReactJsonModule());
         OpenReacParameters parameters = new OpenReacParameters();
 
-        // Explicitly override all three objective penalties with non-default values
+        // Explicitly override all seven objective penalties with non-default values
         parameters.setPenaltyInvestReaPos(5.5);
         parameters.setPenaltyInvestReaNeg(7.25);
         parameters.setPenaltyActivePower(0.42);
