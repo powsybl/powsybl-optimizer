@@ -8,6 +8,10 @@ package com.powsybl.openreac;
 
 import com.powsybl.commons.report.ReportNode;
 import com.powsybl.commons.report.TypedValue;
+import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.RatioTapChanger;
+import com.powsybl.iidm.network.RatioTapChangerStep;
+import com.powsybl.iidm.network.TwoWindingsTransformer;
 import com.powsybl.openreac.parameters.input.VoltageLevelLimitInfo;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 import com.powsybl.openreac.parameters.output.network.ShuntCompensatorNetworkOutput;
@@ -15,9 +19,11 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Joris Mancini {@literal <joris.mancini_externe at rte-france.com>}
@@ -35,6 +41,28 @@ public final class Reports {
     private static final DecimalFormat VALUE_FORMAT = new DecimalFormat("0.0", DecimalFormatSymbols.getInstance(Locale.ROOT));
     private static final DecimalFormat VALUE_FORMAT_ACCURATE = new DecimalFormat("0.00", DecimalFormatSymbols.getInstance(Locale.ROOT));
     private static final DecimalFormat VALUE_FORMAT_SCIENTIFIC = new DecimalFormat("0.00E00", DecimalFormatSymbols.getInstance(Locale.ROOT));
+
+    private static final double RHO_INTERSECTION_EPSILON = 1e-4;
+
+    private record RhoIntersection(double low, double high, IntersectionStatus status) {
+        enum IntersectionStatus { LARGE, POINT, EMPTY }
+
+        static RhoIntersection compute(List<double[]> ranges, double epsilon) {
+            double low = Double.NEGATIVE_INFINITY;
+            double high = Double.POSITIVE_INFINITY;
+            for (double[] r : ranges) {
+                low = Math.max(low, r[0]);
+                high = Math.min(high, r[1]);
+            }
+            if (high < low - epsilon) {
+                return new RhoIntersection(low, high, IntersectionStatus.EMPTY);
+            }
+            if (high - low <= epsilon) {
+                return new RhoIntersection(low, high, IntersectionStatus.POINT);
+            }
+            return new RhoIntersection(low, high, IntersectionStatus.LARGE);
+        }
+    }
 
     private Reports() {
         // Should not be instantiated
@@ -240,5 +268,76 @@ public final class Reports {
                 .withUntypedValue(REACTANCE, VALUE_FORMAT_SCIENTIFIC.format(x))
                 .withUntypedValue("threshold", VALUE_FORMAT_SCIENTIFIC.format(threshold))
                 .add();
+    }
+
+    public static void reportParallelTwoWindingsTransformers(ReportNode reportNode,
+                                                             List<Set<String>> groups,
+                                                             Network network,
+                                                             Set<String> variableTransformerIds) {
+        if (groups.isEmpty()) {
+            return;
+        }
+        int totalTransformers = groups.stream().mapToInt(Set::size).sum();
+        ReportNode root = reportNode.newReportNode()
+                .withMessageTemplate("optimizer.openreac.parallelTwoWindingsTransformers")
+                .withUntypedValue("groupsCount", groups.size())
+                .withUntypedValue("transformersCount", totalTransformers)
+                .withSeverity(TypedValue.INFO_SEVERITY)
+                .add();
+
+        int groupIndex = 0;
+        for (Set<String> group : groups) {
+            // Compute the rho intersection across all transformers of the group.
+            List<double[]> ranges = new ArrayList<>();
+            for (String twtId : group) {
+                TwoWindingsTransformer twt = network.getTwoWindingsTransformer(twtId);
+                RatioTapChanger rtc = twt != null ? twt.getRatioTapChanger() : null;
+                if (rtc == null) {
+                    continue;
+                }
+                double rhoMin = rtc.getAllSteps().values().stream().mapToDouble(RatioTapChangerStep::getRho).min().orElse(Double.NaN);
+                double rhoMax = rtc.getAllSteps().values().stream().mapToDouble(RatioTapChangerStep::getRho).max().orElse(Double.NaN);
+                if (!Double.isNaN(rhoMin) && !Double.isNaN(rhoMax)) {
+                    ranges.add(new double[]{rhoMin, rhoMax});
+                }
+            }
+            RhoIntersection intersection = RhoIntersection.compute(ranges, RHO_INTERSECTION_EPSILON);
+
+            TypedValue groupSeverity = switch (intersection.status()) {
+                case LARGE -> TypedValue.DETAIL_SEVERITY;
+                case POINT, EMPTY -> TypedValue.WARN_SEVERITY;
+            };
+
+            String range = intersection.status() == RhoIntersection.IntersectionStatus.EMPTY
+                ? "(no overlap)"
+                : "[" + VALUE_FORMAT_ACCURATE.format(intersection.low()) + ", " + VALUE_FORMAT_ACCURATE.format(intersection.high()) + "]";
+
+            ReportNode groupNode = root.newReportNode()
+                    .withMessageTemplate("optimizer.openreac.parallelTwoWindingsTransformersGroup")
+                    .withUntypedValue("groupIndex", groupIndex++)
+                    .withUntypedValue("count", group.size())
+                    .withUntypedValue("intersectionStatus", intersection.status().name())
+                    .withUntypedValue("intersectionRange", range)
+                    .withSeverity(groupSeverity)
+                    .add();
+
+            group.stream().sorted().forEach(twtId -> {
+                TwoWindingsTransformer twt = network.getTwoWindingsTransformer(twtId);
+                RatioTapChanger rtc = twt != null ? twt.getRatioTapChanger() : null;
+                double rhoMin = rtc == null ? Double.NaN
+                    : rtc.getAllSteps().values().stream().mapToDouble(RatioTapChangerStep::getRho).min().orElse(Double.NaN);
+                double rhoMax = rtc == null ? Double.NaN
+                    : rtc.getAllSteps().values().stream().mapToDouble(RatioTapChangerStep::getRho).max().orElse(Double.NaN);
+                String status = variableTransformerIds.contains(twtId) ? "VARIABLE" : "FIXED";
+                groupNode.newReportNode()
+                        .withMessageTemplate("optimizer.openreac.parallelTwoWindingsTransformerItem")
+                        .withUntypedValue("transformerId", twtId)
+                        .withUntypedValue("ratioStatus", status)
+                        .withUntypedValue("rhoMin", Double.isNaN(rhoMin) ? "N/A" : VALUE_FORMAT_ACCURATE.format(rhoMin))
+                        .withUntypedValue("rhoMax", Double.isNaN(rhoMax) ? "N/A" : VALUE_FORMAT_ACCURATE.format(rhoMax))
+                        .withSeverity(TypedValue.DETAIL_SEVERITY)
+                        .add();
+            });
+        }
     }
 }

@@ -19,10 +19,13 @@ import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput;
 import com.powsybl.openreac.parameters.output.VoltageProfileOutput;
 import com.powsybl.openreac.parameters.output.network.NetworkModifications;
+import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * OpenReacAmplIOFiles will interface all inputs and outputs needed for OpenReac to the abstracted Ampl Executor.
@@ -48,6 +51,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
     private final boolean debug;
     private final String debugDir;
     private final AmplExportConfig amplExportConfig;
+    private final ParallelTwoWindingsTransformersGroups parallelTwoWindingsTransformersGroups;
 
     public OpenReacAmplIOFiles(OpenReacParameters params, AmplExportConfig amplExportConfig, Network network, boolean debug, ReportNode reportNode) {
 
@@ -67,6 +71,11 @@ public class OpenReacAmplIOFiles implements AmplParameters {
 
         this.debug = debug;
         this.debugDir = params.getDebugDir();
+
+        List<Set<String>> parallelGroups = ParallelTwoWindingsTransformersDetector.detect(network);
+        this.parallelTwoWindingsTransformersGroups = new ParallelTwoWindingsTransformersGroups(parallelGroups);
+        Reports.reportParallelTwoWindingsTransformers(reportNode, parallelGroups, network,
+            new HashSet<>(params.getVariableTwoWindingsTransformers()));
 
         Reports.reportConstantQGeneratorsSize(reportNode, params.getConstantQGenerators().size());
         Reports.reportVariableTwoWindingsTransformersSize(reportNode, params.getVariableTwoWindingsTransformers().size());
@@ -88,7 +97,8 @@ public class OpenReacAmplIOFiles implements AmplParameters {
     @Override
     public Collection<AmplInputFile> getInputParameters() {
         return List.of(constantQGenerators, variableShuntCompensators, variableTwoWindingsTransformers,
-                algorithmParams, voltageLimitsOverride, configuredReactiveSlackBuses);
+                algorithmParams, voltageLimitsOverride, configuredReactiveSlackBuses,
+                parallelTwoWindingsTransformersGroups);
     }
 
     @Override
