@@ -76,9 +76,14 @@ public class FixedRatioTwoWindingsTransformers implements AmplInputFile {
     }
 
     private void addEmptyGroup(ParallelGroup group, Network network) {
-        // For EMPTY: low > high. Center of the gap is (low + high) / 2.
-        // Each transformer goes to the bound of its own domain closest to
-        // the gap center.
+        // For EMPTY: low > high. The center of the gap is (low + high) / 2
+        // Each transformer is independently set as close to that center as its
+        // own domain allows: clamp(center, rhoMin_i, rhoMax_i). Concretely:
+        //   - if the center lies inside the transformer's domain, fix at center;
+        //   - if the domain lies entirely below the center, fix at rhoMax_i;
+        //   - if the domain lies entirely above the center, fix at rhoMin_i.
+        // Note that an EMPTY status only requires one pair of disjoint domains;
+        // other transformers in the group may well contain the center.
         double center = (group.low() + group.high()) / 2.0;
         for (String twtId : group.transformerIds()) {
             TwoWindingsTransformer twt = network.getTwoWindingsTransformer(twtId);
@@ -88,10 +93,7 @@ public class FixedRatioTwoWindingsTransformers implements AmplInputFile {
             RatioTapChanger rtc = twt.getRatioTapChanger();
             double rhoMin = rtc.getAllSteps().values().stream().mapToDouble(RatioTapChangerStep::getRho).min().orElse(Double.NaN);
             double rhoMax = rtc.getAllSteps().values().stream().mapToDouble(RatioTapChangerStep::getRho).max().orElse(Double.NaN);
-            // If the whole domain is below the center, snap up to rhoMax.
-            // If it's above, snap down to rhoMin.
-            // (One of these holds by construction, since the domains are disjoint.)
-            double fixedRho = (rhoMax <= center) ? rhoMax : rhoMin;
+            double fixedRho = Math.max(rhoMin, Math.min(rhoMax, center));
             fixedTransformers.add(new FixedTransformer(twtId, fixedRho));
         }
     }
