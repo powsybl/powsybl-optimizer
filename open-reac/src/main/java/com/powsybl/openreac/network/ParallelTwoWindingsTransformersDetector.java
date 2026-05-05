@@ -10,6 +10,8 @@ import com.powsybl.iidm.network.Bus;
 import com.powsybl.iidm.network.Identifiable;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.Substation;
+import com.powsybl.iidm.network.RatioTapChanger;
+import com.powsybl.iidm.network.RatioTapChangerStep;
 import com.powsybl.iidm.network.TwoWindingsTransformer;
 
 import java.util.ArrayDeque;
@@ -46,6 +48,21 @@ import java.util.stream.Collectors;
  */
 public final class ParallelTwoWindingsTransformersDetector {
 
+    private static final double RHO_INTERSECTION_EPSILON = 1e-4;
+
+    public enum IntersectionStatus { LARGE, POINT, EMPTY }
+
+    /**
+     * A detected group of parallel transformers, annotated with the intersection
+     * status of their rho ranges. The (low, high) values are the raw intersection
+     * bounds: max(rhoMin_i) and min(rhoMax_i). For LARGE: low < high. For POINT:
+     * low ≈ high. For EMPTY: low > high.
+     */
+    public record ParallelGroup(Set<String> transformerIds,
+                                IntersectionStatus status,
+                                double low,
+                                double high) { }
+
     private ParallelTwoWindingsTransformersDetector() {
         // utility class
     }
@@ -76,6 +93,40 @@ public final class ParallelTwoWindingsTransformersDetector {
 
         // Merge overlapping sets transitively
         return mergeOverlappingSets(all);
+    }
+
+    public static List<ParallelGroup> detectAndAnalyze(Network network) {
+        List<Set<String>> rawGroups = detect(network);
+        List<ParallelGroup> result = new ArrayList<>(rawGroups.size());
+        for (Set<String> group : rawGroups) {
+            result.add(analyzeGroup(group, network));
+        }
+        return result;
+    }
+
+    private static ParallelGroup analyzeGroup(Set<String> group, Network network) {
+        double low = Double.NEGATIVE_INFINITY;
+        double high = Double.POSITIVE_INFINITY;
+        for (String twtId : group) {
+            TwoWindingsTransformer twt = network.getTwoWindingsTransformer(twtId);
+            if (twt == null || twt.getRatioTapChanger() == null) {
+                continue;
+            }
+            RatioTapChanger rtc = twt.getRatioTapChanger();
+            double rhoMin = rtc.getAllSteps().values().stream().mapToDouble(RatioTapChangerStep::getRho).min().orElse(Double.NaN);
+            double rhoMax = rtc.getAllSteps().values().stream().mapToDouble(RatioTapChangerStep::getRho).max().orElse(Double.NaN);
+            low = Math.max(low, rhoMin);
+            high = Math.min(high, rhoMax);
+        }
+        IntersectionStatus status;
+        if (high < low - RHO_INTERSECTION_EPSILON) {
+            status = IntersectionStatus.EMPTY;
+        } else if (high - low <= RHO_INTERSECTION_EPSILON) {
+            status = IntersectionStatus.POINT;
+        } else {
+            status = IntersectionStatus.LARGE;
+        }
+        return new ParallelGroup(group, status, low, high);
     }
 
     // ---- Step 1: simple parallels (same pair of BusView buses) ----

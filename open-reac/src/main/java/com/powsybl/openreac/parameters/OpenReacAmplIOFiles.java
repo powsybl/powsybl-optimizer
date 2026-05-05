@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * OpenReacAmplIOFiles will interface all inputs and outputs needed for OpenReac to the abstracted Ampl Executor.
@@ -52,6 +51,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
     private final String debugDir;
     private final AmplExportConfig amplExportConfig;
     private final ParallelTwoWindingsTransformersGroups parallelTwoWindingsTransformersGroups;
+    private final FixedRatioTwoWindingsTransformers fixedRatioTwoWindingsTransformers;
 
     public OpenReacAmplIOFiles(OpenReacParameters params, AmplExportConfig amplExportConfig, Network network, boolean debug, ReportNode reportNode) {
 
@@ -72,8 +72,10 @@ public class OpenReacAmplIOFiles implements AmplParameters {
         this.debug = debug;
         this.debugDir = params.getDebugDir();
 
-        List<Set<String>> parallelGroups = ParallelTwoWindingsTransformersDetector.detect(network);
+        List<ParallelTwoWindingsTransformersDetector.ParallelGroup> parallelGroups =
+            ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network);
         this.parallelTwoWindingsTransformersGroups = new ParallelTwoWindingsTransformersGroups(parallelGroups);
+        this.fixedRatioTwoWindingsTransformers = new FixedRatioTwoWindingsTransformers(parallelGroups, network);
         Reports.reportParallelTwoWindingsTransformers(reportNode, parallelGroups, network,
             new HashSet<>(params.getVariableTwoWindingsTransformers()));
 
@@ -98,7 +100,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
     public Collection<AmplInputFile> getInputParameters() {
         return List.of(constantQGenerators, variableShuntCompensators, variableTwoWindingsTransformers,
                 algorithmParams, voltageLimitsOverride, configuredReactiveSlackBuses,
-                parallelTwoWindingsTransformersGroups);
+                parallelTwoWindingsTransformersGroups, fixedRatioTwoWindingsTransformers);
     }
 
     @Override

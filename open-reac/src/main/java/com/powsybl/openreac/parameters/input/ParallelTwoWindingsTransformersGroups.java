@@ -1,24 +1,23 @@
-/**
- * Copyright (c) 2026, RTE (http://www.rte-france.com)
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- */
 package com.powsybl.openreac.parameters.input;
 
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.commons.util.StringToIntMapper;
+import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector.IntersectionStatus;
+import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector.ParallelGroup;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
- * Writes the parallel two-windings transformers groups in a 2D form to be read
- * by AMPL: each line contains the group index and the AMPL branch id of one
- * transformer of that group.
+ * Writes parallel transformer groups whose rho intersection is LARGE — those
+ * that can be tied under a shared decision variable in the optimization.
+ *
+ * <p>POINT and EMPTY groups are written by
+ * {@link FixedRatioTwoWindingsTransformers} instead, since their transformers
+ * must be fixed rather than tied.
  *
  * <p>Format:
  * <pre>
@@ -35,10 +34,15 @@ public class ParallelTwoWindingsTransformersGroups implements AmplInputFile {
 
     public static final String PARAM_PARALLEL_TRANSFORMERS_FILE_NAME = "param_parallel_transformers.txt";
 
-    private final List<Set<String>> groups;
+    private final List<ParallelGroup> largeGroups;
 
-    public ParallelTwoWindingsTransformersGroups(List<Set<String>> groups) {
-        this.groups = groups;
+    public ParallelTwoWindingsTransformersGroups(List<ParallelGroup> allGroups) {
+        this.largeGroups = new ArrayList<>();
+        for (ParallelGroup group : allGroups) {
+            if (group.status() == IntersectionStatus.LARGE) {
+                largeGroups.add(group);
+            }
+        }
     }
 
     @Override
@@ -50,8 +54,8 @@ public class ParallelTwoWindingsTransformersGroups implements AmplInputFile {
     public void write(BufferedWriter writer, StringToIntMapper<AmplSubset> stringToIntMapper) throws IOException {
         writer.write("#num_group num_branch\n");
         int groupIndex = 1;
-        for (Set<String> group : groups) {
-            for (String transformerId : group.stream().sorted().toList()) {
+        for (ParallelGroup group : largeGroups) {
+            for (String transformerId : group.transformerIds().stream().sorted().toList()) {
                 int amplBranchId = stringToIntMapper.getInt(AmplSubset.BRANCH, transformerId);
                 writer.write(groupIndex + " " + amplBranchId);
                 writer.newLine();
