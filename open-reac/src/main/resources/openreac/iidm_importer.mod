@@ -10,8 +10,9 @@
 
 ###############################################################################
 # Reactive OPF
-# Author:  Jean Maeght 2022 2023
-# Author:  Manuel Ruiz 2023 2024
+# Author:  Jean Maeght   2022 2023
+# Author:  Manuel Ruiz   2023 2024
+# Author:  Oscar Lamolet 2025 2026
 ###############################################################################
 
 
@@ -230,30 +231,33 @@ check {(t,svc,n) in SVC}: (t,svc_vregul_bus[t,svc,n]) in BUS or svc_vregul_bus[t
 set BATTERY dimen 3; # [variant, battery, bus]
 param battery_possiblebus{BATTERY} integer;
 param battery_substation {BATTERY} integer;
-param battery_p0      {BATTERY}; # current P of the battery, P0 <= 0 if batterie is charging
-param battery_q0      {BATTERY};
-param battery_Pmin    {BATTERY};
-param battery_Pmax    {BATTERY};
-param battery_qP      {BATTERY};
-param battery_qp0     {BATTERY};
-param battery_qp      {BATTERY};
-param battery_QP      {BATTERY};
-param battery_Qp0     {BATTERY};
-param battery_Qp      {BATTERY};
-param battery_fault   {BATTERY};
-param battery_curative{BATTERY};
-param battery_id      {BATTERY} symbolic;
-param battery_name    {BATTERY} symbolic;
-param battery_P0      {BATTERY};
-param battery_Q0      {BATTERY};
+param battery_p0         {BATTERY}; # current P of the battery, P0 <= 0 if batterie is charging
+param battery_q0         {BATTERY};
+param battery_Pmin       {BATTERY};
+param battery_Pmax       {BATTERY};
+param battery_qP         {BATTERY};
+param battery_qp0        {BATTERY};
+param battery_qp         {BATTERY};
+param battery_QP         {BATTERY};
+param battery_Qp0        {BATTERY};
+param battery_Qp         {BATTERY};
+param battery_vregul     {BATTERY} symbolic; # Does battery do voltage regulation, or PQ bus?
+param battery_Vc         {BATTERY}; # Voltage set point (in case of voltage regulation)
+param battery_vregul_bus {BATTERY} integer; # Bus regulated by battery, if it does voltage regulation
+param battery_fault      {BATTERY};
+param battery_curative   {BATTERY};
+param battery_id         {BATTERY} symbolic;
+param battery_name       {BATTERY} symbolic;
+param battery_P0         {BATTERY};
+param battery_Q0         {BATTERY};
 
 # Consistency checks
-check {(t,b,n) in BATTERY} : (t,n) in BUS union {(t,-1)};
-check {(t,b,n) in BATTERY} : (t,battery_substation[t,b,n]) in SUBSTATIONS;
-check {(t,b,n) in BATTERY: (t,n) in BUS} : battery_substation[t,b,n] == bus_substation[t,n];
-check {(t,b,n) in BATTERY} : battery_Pmin[t,b,n] <= battery_Pmax[t,b,n] ;
-check {(t,b,n) in BATTERY} : abs(battery_p0[t,b,n]) <= PQmax;
-check {(t,b,n) in BATTERY} : abs(battery_q0[t,b,n]) <= PQmax;
+check {(t,b,n) in BATTERY}: (t,n) in BUS union {(t,-1)};
+check {(t,b,n) in BATTERY}: (t,battery_substation[t,b,n]) in SUBSTATIONS;
+check {(t,b,n) in BATTERY}: (t,battery_vregul_bus[t,b,n]) in BUS or battery_vregul_bus[t,b,n] == -1;
+check {(t,b,n) in BATTERY}: battery_Pmin[t,b,n] <= battery_Pmax[t,b,n] ;
+check {(t,b,n) in BATTERY}: abs(battery_p0[t,b,n]) <= PQmax;
+check {(t,b,n) in BATTERY}: abs(battery_q0[t,b,n]) <= PQmax;
 
 
 
@@ -463,4 +467,3 @@ check {(t,h) in HVDC}: hvdc_Vnom[t,h] >= epsilon_nominal_voltage;
 check {(t,h) in HVDC}: hvdc_convertersMode[t,h] == "SIDE_1_RECTIFIER_SIDE_2_INVERTER" or hvdc_convertersMode[t,h] == "SIDE_1_INVERTER_SIDE_2_RECTIFIER";
 check {(t,h) in HVDC}: hvdc_targetP[t,h] >= 0.0;
 check {(t,h) in HVDC}: hvdc_targetP[t,h] <= hvdc_Pmax[t,h];
-

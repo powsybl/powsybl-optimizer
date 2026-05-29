@@ -10,14 +10,15 @@
 
 ###############################################################################
 # Reactive OPF
-# Author:  Jean Maeght 2022 2023
-# Author:  Manuel Ruiz 2023 2024
+# Author:  Jean Maeght   2022 2023
+# Author:  Manuel Ruiz   2023 2024
+# Author:  Oscar Lamolet 2025 2026
 ###############################################################################
 
 data;
 
 # ampl_network_substations.txt
-#"variant" "num" "horizon" "reference date distance (minutes)" "nomV (KV)" "minV (pu)" "maxV (pu)" "fault" "curative" "country" "id" "description" 
+#"variant" "num" "horizon" "reference date distance (minutes)" "nomV (KV)" "minV (pu)" "maxV (pu)" "fault" "curative" "country" "id" "description"
 param: SUBSTATIONS: substation_horizon substation_fodist substation_Vnomi substation_Vmin substation_Vmax substation_fault substation_curative substation_country substation_id substation_description := include ampl_network_substations.txt;
 
 # ampl_network_buses.txt
@@ -41,20 +42,20 @@ param: SHUNT: shunt_possiblebus shunt_substation shunt_valmin shunt_valmax shunt
 param: SVC: svc_possiblebus svc_substation svc_bmin svc_bmax svc_vregul svc_vregul_bus svc_targetV svc_targetQ svc_fault svc_curative svc_id svc_description svc_P0 svc_Q0 := include ampl_network_static_var_compensators.txt;
 
 # ampl_network_batteries.txt
-#"variant" "num" "bus" "con. bus" "substation" "p0 (MW)" "q0 (MVar)" "minP (MW)" "maxP (MW)" "minQmaxP (MVar)" "minQ0 (MVar)" "minQminP (MVar)" "maxQmaxP (MVar)" "maxQ0 (MVar)" "maxQminP (MVar)" "fault" "curative" "id" "description" "P (MW)" "Q (MVar)"
-param: BATTERY: battery_possiblebus battery_substation battery_p0 battery_q0 battery_Pmin battery_Pmax battery_qP battery_qp0 battery_qp battery_QP battery_Qp0 battery_Qp battery_fault battery_curative battery_id battery_name battery_P0 battery_Q0 := include ampl_network_batteries.txt;
+#"variant" "num" "bus" "con. bus" "substation" "p0 (MW)" "q0 (MVar)" "minP (MW)" "maxP (MW)" "minQmaxP (MVar)" "minQ0 (MVar)" "minQminP (MVar)" "maxQmaxP (MVar)" "maxQ0 (MVar)" "maxQminP (MVar)" "v regul." "targetV (pu)" "v regul. bus" "fault" "curative" "id" "description" "P (MW)" "Q (MVar)"
+param: BATTERY: battery_possiblebus battery_substation battery_p0 battery_q0 battery_Pmin battery_Pmax battery_qP battery_qp0 battery_qp battery_QP battery_Qp0 battery_Qp battery_vregul battery_Vc battery_vregul_bus battery_fault battery_curative battery_id battery_name battery_P0 battery_Q0 := include ampl_network_batteries.txt;
 
 # ampl_network_tct.txt
 #"variant" "num" "tap" "var ratio" "r (pu)" "x (pu)" "g (pu)" "b (pu)" "angle (rad)" "fault" "curative"
 param: TAPS: tap_ratio tap_r tap_x tap_g tap_b tap_angle tap_fault tap_curative := include ampl_network_tct.txt;
 
 # ampl_network_rtc.txt
-#"num" "tap" "table" "onLoad" "targetV" "fault" "curative" "id" 
+#"num" "tap" "table" "onLoad" "targetV" "fault" "curative" "id"
 #param: REGL: regl_tap0 regl_table regl_onLoad regl_V regl_fault regl_curative regl_id := include ampl_network_rtc.txt;
 param: REGL: regl_tap0 regl_table regl_onLoad regl_V regl_fault regl_id := include ampl_network_rtc.txt;
 
 # ampl_network_ptc.txt
-#"num" "tap" "table" "fault" "curative" "id" 
+#"num" "tap" "table" "fault" "curative" "id"
 param: DEPH: deph_tap0 deph_table deph_fault deph_curative deph_id := include ampl_network_ptc.txt;
 
 # ampl_network_vsc_converter_stations.txt
@@ -71,7 +72,7 @@ param: LCCCONV: lccconv_possiblebus lccconv_substation lccconv_q0 lccconv_loss_f
 param: HVDC: hvdc_type hvdc_conv1 hvdc_conv2 hvdc_r hvdc_Vnom hvdc_convertersMode hvdc_ac_emul hvdc_targetP hvdc_p0 hvdc_k hvdc_Pmax hvdc_fault hvdc_curative hvdc_id hvdc_description := include ampl_network_hvdc.txt;
 
 # ampl_network_branches.txt
-#"variant" "num" "bus1" "bus2" "3wt num" "sub.1" "sub.2" "r (pu)" "x (pu)" "g1 (pu)" "g2 (pu)" "b1 (pu)" "b2 (pu)" "cst ratio (pu)" "ratio tc" "phase tc" "p1 (MW)" "p2 (MW)" "q1 (MVar)" "q2 (MVar)" "patl1 (A)" "patl2 (A)" "merged" "fault" "curative" "id" "description" 
+#"variant" "num" "bus1" "bus2" "3wt num" "sub.1" "sub.2" "r (pu)" "x (pu)" "g1 (pu)" "g2 (pu)" "b1 (pu)" "b2 (pu)" "cst ratio (pu)" "ratio tc" "phase tc" "p1 (MW)" "p2 (MW)" "q1 (MVar)" "q2 (MVar)" "patl1 (A)" "patl2 (A)" "merged" "fault" "curative" "id" "description"
 param: BRANCH: branch_3wt branch_subor branch_subex branch_R branch_X branch_Gor branch_Gex branch_Bor branch_Bex branch_cstratio branch_ptrRegl branch_ptrDeph branch_Por branch_Pex branch_Qor branch_Qex branch_patl1 branch_patl2 branch_merged branch_fault branch_curative branch_id branch_name := include ampl_network_branches.txt;
 
 # ampl_network_substations_override.txt
