@@ -10,6 +10,7 @@ import com.powsybl.iidm.modification.*;
 import com.powsybl.iidm.modification.tapchanger.AbstractTapPositionModification;
 import com.powsybl.iidm.modification.tapchanger.RatioTapPositionModification;
 import com.powsybl.iidm.network.*;
+import com.powsybl.iidm.network.extensions.VoltageRegulation;
 import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput.ReactiveSlack;
 import org.jgrapht.alg.util.Pair;
@@ -30,6 +31,7 @@ public class OpenReacResult {
     private final List<ReactiveSlack> reactiveSlacks;
     private final Map<String, String> indicators;
     private final List<GeneratorModification> generatorModifications;
+    private final List<BatteryModification> batteryModifications;
     private final List<ShuntCompensatorModification> shuntsModifications;
     private final List<VscConverterStationModification> vscModifications;
     private final List<StaticVarCompensatorModification> svcModifications;
@@ -48,6 +50,7 @@ public class OpenReacResult {
         this.indicators = Map.copyOf(Objects.requireNonNull(indicators));
         this.reactiveSlacks = List.copyOf(amplIOFiles.getReactiveSlackOutput().getSlacks());
         this.generatorModifications = List.copyOf(amplIOFiles.getNetworkModifications().getGeneratorModifications());
+        this.batteryModifications = List.copyOf(amplIOFiles.getNetworkModifications().getBatteryModifications());
         this.shuntsModifications = List.copyOf(amplIOFiles.getNetworkModifications().getShuntModifications());
         this.vscModifications = List.copyOf(amplIOFiles.getNetworkModifications().getVscModifications());
         this.svcModifications = List.copyOf(amplIOFiles.getNetworkModifications().getSvcModifications());
@@ -69,6 +72,10 @@ public class OpenReacResult {
 
     public List<GeneratorModification> getGeneratorModifications() {
         return generatorModifications;
+    }
+
+    public List<BatteryModification> getBatteryModifications() {
+        return batteryModifications;
     }
 
     public List<ShuntCompensatorModification> getShuntsModifications() {
@@ -101,11 +108,13 @@ public class OpenReacResult {
 
     public List<NetworkModification> getAllNetworkModifications() {
         List<NetworkModification> modifs = new ArrayList<>(getGeneratorModifications().size() +
+            getBatteryModifications().size() +
             getShuntsModifications().size() +
             getSvcModifications().size() +
             getTapPositionModifications().size() +
             getVscModifications().size());
         modifs.addAll(getGeneratorModifications());
+        modifs.addAll(getBatteryModifications());
         modifs.addAll(getShuntsModifications());
         modifs.addAll(getSvcModifications());
         modifs.addAll(getTapPositionModifications());
@@ -147,6 +156,28 @@ public class OpenReacResult {
                         Pair<Double, Double> busUpdate = voltageProfile.get(b.getId());
                         if (busUpdate != null) {
                             shunt.setTargetV(busUpdate.getFirst() * b.getVoltageLevel().getNominalV());
+                        } else {
+                            throw new IllegalStateException("Voltage profile not found for bus " + b.getId());
+                        }
+                    });
+                });
+
+        // update target voltage of regulating batteries (via VoltageRegulation extension,
+        // since Battery has no native setTargetV; symmetric to the shunts/RTC pattern above)
+        getBatteryModifications().stream()
+                .map(BatteryModification::getBatteryId)
+                .map(network::getBattery)
+                .filter(Objects::nonNull)
+                .forEach(battery -> {
+                    VoltageRegulation vr = battery.getExtension(VoltageRegulation.class);
+                    if (vr == null || !vr.isVoltageRegulatorOn()) {
+                        return;
+                    }
+                    Optional<Bus> bus = getRegulatingBus(vr.getRegulatingTerminal(), battery.getId());
+                    bus.ifPresent(b -> {
+                        Pair<Double, Double> busUpdate = voltageProfile.get(b.getId());
+                        if (busUpdate != null) {
+                            vr.setTargetV(busUpdate.getFirst() * b.getVoltageLevel().getNominalV());
                         } else {
                             throw new IllegalStateException("Voltage profile not found for bus " + b.getId());
                         }

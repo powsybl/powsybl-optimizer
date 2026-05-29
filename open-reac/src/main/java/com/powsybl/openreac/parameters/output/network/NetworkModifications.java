@@ -7,6 +7,7 @@
 package com.powsybl.openreac.parameters.output.network;
 
 import com.powsybl.ampl.executor.AmplOutputFile;
+import com.powsybl.iidm.modification.BatteryModification;
 import com.powsybl.iidm.modification.GeneratorModification;
 import com.powsybl.iidm.modification.ShuntCompensatorModification;
 import com.powsybl.iidm.modification.StaticVarCompensatorModification;
@@ -23,6 +24,7 @@ import java.util.List;
 public class NetworkModifications {
 
     private final GeneratorNetworkOutput generatorNetworkOutput;
+    private final BatteryNetworkOutput batteryOutput;
     private final ShuntCompensatorNetworkOutput shuntsOutput;
     private final VscNetworkOutput vscOutput;
     private final SvcNetworkOutput svcOutput;
@@ -30,6 +32,7 @@ public class NetworkModifications {
 
     public NetworkModifications(Network network, double shuntCompensatorActivationAlertThreshold) {
         generatorNetworkOutput = new GeneratorNetworkOutput(network);
+        batteryOutput = new BatteryNetworkOutput(network);
         shuntsOutput = new ShuntCompensatorNetworkOutput(network, shuntCompensatorActivationAlertThreshold);
         vscOutput = new VscNetworkOutput(network);
         svcOutput = new SvcNetworkOutput(network);
@@ -37,11 +40,15 @@ public class NetworkModifications {
     }
 
     public List<AmplOutputFile> getOutputFiles() {
-        return List.of(generatorNetworkOutput, shuntsOutput, vscOutput, svcOutput, tapPositionOutput);
+        return List.of(generatorNetworkOutput, batteryOutput, shuntsOutput, vscOutput, svcOutput, tapPositionOutput);
     }
 
     public List<GeneratorModification> getGeneratorModifications() {
         return generatorNetworkOutput.getModifications();
+    }
+
+    public List<BatteryModification> getBatteryModifications() {
+        return batteryOutput.getModifications();
     }
 
     public List<ShuntCompensatorModification> getShuntModifications() {
