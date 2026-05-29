@@ -12,7 +12,7 @@
 # Reactive OPF
 # Author:  Jean Maeght   2022 2023
 # Author:  Manuel Ruiz   2023 2024
-# Author:  Oscar Lamolet 2025
+# Author:  Oscar Lamolet 2025 2026
 ###############################################################################
 
 
@@ -164,7 +164,6 @@ if tempo > 0.5 then {
   let final_status := "NOK";
   include reactiveopfexit.run;
 }
-
 
 
 ###############################################################################
@@ -377,3 +376,222 @@ printf{LOG_INFO} "Corrected extremal values: %Q <= %Q <= %Q\n",min({(g,n) in UNI
 printf{LOG_INFO} "Corrected extremal values: %Q <= %Q <= %Q\n",min({(g,n) in UNITON} corrected_unit_qp[g,n]),  "corrected_unit_qp",  max({(g,n) in UNITON} corrected_unit_qp[g,n]);
 printf{LOG_INFO} "Corrected extremal values: %Q <= %Q <= %Q\n",min({(g,n) in UNITON} corrected_unit_QP[g,n]),  "corrected_unit_QP",  max({(g,n) in UNITON} corrected_unit_QP[g,n]);
 printf{LOG_INFO} "Corrected extremal values: %Q <= %Q <= %Q\n",min({(g,n) in UNITON} corrected_unit_Qp[g,n]),  "corrected_unit_Qp",  max({(g,n) in UNITON} corrected_unit_Qp[g,n]);
+
+
+###############################################################################
+# Correction of batteries' Q domains
+###############################################################################
+# Transposed from the units' correction block above. Differences with units:
+#  - The operating point at which the reactive diagram is read is battery_p0
+#    (the battery's active power is NOT a variable, it stays fixed in the balance).
+#  - BATTERYON is not gated by an active-power threshold, so a regulating battery
+#    can sit at P ~ 0. The units' interpolation cascade assumes |Pc| >= Pnull and
+#    has no clean P==0 branch (it would fall through to the default case), so we
+#    add a dedicated idle-battery branch reading the diagram at its P=0 corner.
+#  - corrected_battery_Pmin/Pmax are kept: the interpolation reads the diagram
+#    between Pmin, 0 and Pmax. They are correction fallbacks only, not variables.
+
+printf{LOG_WARNING} "\nWARNING Correction of Q batteries domains:\n";
+for {(b,n) in BATTERYON} {
+
+  if abs(battery_Pmax[1,b,n]) >= PQmax then {
+    let corrected_battery_Pmax[b,n] := max(defaultPmax,battery_p0[1,b,n]);
+    printf{LOG_WARNING} "%Q for %Q is %Q -> corrected to %Q\n","battery_Pmax",battery_id[1,b,n],battery_Pmax[1,b,n],corrected_battery_Pmax[b,n];
+  }
+  else let corrected_battery_Pmax[b,n] := battery_Pmax[1,b,n];
+
+  if abs(battery_Pmin[1,b,n]) >= PQmax then {
+    let corrected_battery_Pmin[b,n] := min(defaultPmin,battery_p0[1,b,n]);
+    printf{LOG_WARNING} "%Q for %Q is %Q -> corrected to %Q\n","battery_Pmin",battery_id[1,b,n],battery_Pmin[1,b,n],corrected_battery_Pmin[b,n];
+  }
+  else let corrected_battery_Pmin[b,n] := battery_Pmin[1,b,n];
+
+  if abs(corrected_battery_Pmax[b,n]-corrected_battery_Pmin[b,n]) <= minimalQPrange then {
+    if abs(battery_p0[1,b,n]) > 1 then
+      printf{LOG_WARNING} "Battery %Q has Pmin=%.1f and Pmax=%.1f too close -> we set Pmin=Pmax=p0=%Q\n",
+      battery_id[1,b,n],corrected_battery_Pmin[b,n],corrected_battery_Pmax[b,n],battery_p0[1,b,n];
+    let corrected_battery_Pmin[b,n] := battery_p0[1,b,n];
+    let corrected_battery_Pmax[b,n] := battery_p0[1,b,n];
+  }
+
+  # correct qp value of battery if needed
+  if abs(battery_qp[1,b,n]) >= PQmax then {
+    let corrected_battery_qp[b,n] := -defaultQmaxPmaxRatio * corrected_battery_Pmax[b,n];
+    printf{LOG_DEBUG} "%Q for %Q is %Q -> corrected to %Q\n","battery_qp",battery_id[1,b,n],battery_qp[1,b,n],corrected_battery_qp[b,n];
+  }
+  else let corrected_battery_qp[b,n] := battery_qp[1,b,n];
+
+  # correct qP value of battery if needed
+  if abs(battery_qP[1,b,n]) >= PQmax then {
+    let corrected_battery_qP[b,n] := -defaultQmaxPmaxRatio * corrected_battery_Pmax[b,n];
+    printf{LOG_DEBUG} "%Q for %Q is %Q -> corrected to %Q\n","battery_qP",battery_id[1,b,n],battery_qP[1,b,n],corrected_battery_qP[b,n];
+  }
+  else let corrected_battery_qP[b,n] := battery_qP[1,b,n];
+
+  # correct qp0 value of battery if needed
+  if abs(battery_qp0[1,b,n]) >= PQmax then {
+    let corrected_battery_qp0[b,n] := -defaultQmaxPmaxRatio * corrected_battery_Pmax[b,n];
+    printf{LOG_DEBUG} "%Q for %Q is %Q -> corrected to %Q\n","battery_qp0",battery_id[1,b,n],battery_qp0[1,b,n],corrected_battery_qp0[b,n];
+  }
+  else let corrected_battery_qp0[b,n] := battery_qp0[1,b,n];
+
+  # correct Qp value of battery if needed
+  if abs(battery_Qp[1,b,n]) >= PQmax then {
+    let corrected_battery_Qp[b,n] := defaultQmaxPmaxRatio * corrected_battery_Pmax[b,n];
+    printf{LOG_DEBUG} "%Q for %Q is %Q -> corrected to %Q\n","battery_Qp",battery_id[1,b,n],battery_Qp[1,b,n],corrected_battery_Qp[b,n];
+  }
+  else let corrected_battery_Qp[b,n] := battery_Qp[1,b,n];
+
+  # correct QP value of battery if needed
+  if abs(battery_QP[1,b,n]) >= PQmax then {
+    let corrected_battery_QP[b,n] := defaultQmaxPmaxRatio * corrected_battery_Pmax[b,n];
+    printf{LOG_DEBUG} "%Q for %Q is %Q -> corrected to %Q\n","battery_QP",battery_id[1,b,n],battery_QP[1,b,n],corrected_battery_QP[b,n];
+  }
+  else let corrected_battery_QP[b,n] := battery_QP[1,b,n];
+
+  # correct Qp0 value of battery if needed
+  if abs(battery_Qp0[1,b,n]) >= PQmax then {
+    let corrected_battery_Qp0[b,n] := defaultQmaxPmaxRatio * corrected_battery_Pmax[b,n];
+    printf{LOG_DEBUG} "%Q for %Q is %Q -> corrected to %Q\n","battery_Qp0",battery_id[1,b,n],battery_Qp0[1,b,n],corrected_battery_Qp0[b,n];
+  }
+  else let corrected_battery_Qp0[b,n] := battery_Qp0[1,b,n];
+
+  # invert qp and Qp values if needed
+  if corrected_battery_qp[b,n] > corrected_battery_Qp[b,n] then {
+    printf{LOG_WARNING} "Warning battery %Q : battery_qp > battery_Qp -> we invert them",battery_id[1,b,n];
+    let tempo := corrected_battery_qp[b,n];
+    let corrected_battery_qp[b,n] := corrected_battery_Qp[b,n];
+    let corrected_battery_Qp[b,n] := tempo;
+  }
+
+  # invert qP and QP values if needed
+  if corrected_battery_qP[b,n] > corrected_battery_QP[b,n] then {
+    printf{LOG_WARNING} "Warning battery %Q : battery_qP > battery_QP -> we invert them",battery_id[1,b,n];
+    let tempo := corrected_battery_qP[b,n];
+    let corrected_battery_qP[b,n] := corrected_battery_QP[b,n];
+    let corrected_battery_QP[b,n] := tempo;
+  }
+
+  # invert qp0 and Qp0 value if needed
+  if corrected_battery_qp0[b,n] > corrected_battery_Qp0[b,n] then {
+    printf{LOG_WARNING} "Warning battery %Q : battery_qp0 > battery_Qp0 -> we invert them",battery_id[1,b,n];
+    let tempo := corrected_battery_qp0[b,n];
+    let corrected_battery_qp0[b,n] := corrected_battery_Qp0[b,n];
+    let corrected_battery_Qp0[b,n] := tempo;
+  }
+
+  # If reactive diagram between pmin and 0 is too small, fix it
+  if    abs(corrected_battery_qp0[b,n]-corrected_battery_Qp0[b,n]) <= minimalQPrange
+    and abs(corrected_battery_qp[b,n]-corrected_battery_Qp[b,n]) <= minimalQPrange
+    and abs(corrected_battery_Qp0[b,n]-corrected_battery_qp[b,n]) <= minimalQPrange
+  then {
+    let tempo := 0.25*(corrected_battery_Qp0[b,n]+corrected_battery_qp0[b,n]+corrected_battery_qp[b,n]+corrected_battery_Qp[b,n]);
+    printf{LOG_DEBUG} "Battery %Q has reactive diagram too small between Pmin=%.1f and 0 -> we set qp=qp0=Qp=Qp0=%Q (p0=%Q)\n",
+      battery_id[1,b,n],corrected_battery_Pmin[b,n],tempo,battery_p0[1,b,n];
+    let corrected_battery_Qp0[b,n] := tempo;
+    let corrected_battery_qp0[b,n] := tempo;
+    let corrected_battery_qp[b,n] := tempo;
+    let corrected_battery_Qp[b,n] := tempo;
+  }
+
+  # If reactive diagram between 0 and pmax is too small, fix it
+  if    abs(corrected_battery_qP[b,n]-corrected_battery_QP[b,n]) <= minimalQPrange
+    and abs(corrected_battery_qp0[b,n]-corrected_battery_Qp0[b,n]) <= minimalQPrange
+    and abs(corrected_battery_QP[b,n]-corrected_battery_qp0[b,n]) <= minimalQPrange
+  then {
+    let tempo := 0.25*(corrected_battery_qP[b,n]+corrected_battery_QP[b,n]+corrected_battery_qp0[b,n]+corrected_battery_Qp0[b,n]);
+    printf{LOG_DEBUG} "Battery %Q has reactive diagram too small between 0 and Pmax=%.1f -> we set qp0=qP=Qp0=QP=%Q (p0=%Q)\n",
+      battery_id[1,b,n],corrected_battery_Pmax[b,n],tempo,battery_p0[1,b,n];
+    let corrected_battery_qP[b,n] := tempo;
+    let corrected_battery_QP[b,n] := tempo;
+    let corrected_battery_qp0[b,n] := tempo;
+    let corrected_battery_Qp0[b,n] := tempo;
+  }
+
+  # If reactive diagram between pmin and pmax is too small, fix it
+  if    abs(corrected_battery_qP[b,n]-corrected_battery_QP[b,n]) <= minimalQPrange
+    and abs(corrected_battery_qp[b,n]-corrected_battery_Qp[b,n]) <= minimalQPrange
+    and abs(corrected_battery_QP[b,n]-corrected_battery_qp[b,n]) <= minimalQPrange
+  then {
+    let tempo := 0.25*(corrected_battery_qP[b,n]+corrected_battery_QP[b,n]+corrected_battery_qp[b,n]+corrected_battery_Qp[b,n]);
+    printf{LOG_DEBUG} "Battery %Q has reactive diagram too small between Pmin=%.1f and Pmax=%.1f -> we set qp=qP=Qp=QP=%Q (p0=%Q)\n",
+      battery_id[1,b,n],corrected_battery_Pmin[b,n],corrected_battery_Pmax[b,n],tempo,battery_p0[1,b,n];
+    let corrected_battery_qP[b,n] := tempo;
+    let corrected_battery_QP[b,n] := tempo;
+    let corrected_battery_qp[b,n] := tempo;
+    let corrected_battery_Qp[b,n] := tempo;
+  }
+
+  # BATTERY-SPECIFIC: idle battery (p0 ~ 0). Contrary to units, BATTERYON is not
+  # gated on |P| >= Pnull, so this case is reachable. Read the reactive diagram at
+  # its P=0 corner (qp0/Qp0) instead of falling through to the default branch.
+  if abs(battery_p0[1,b,n]) < Pnull then {
+    let corrected_battery_Qmin[b,n] := corrected_battery_qp0[b,n];
+    let corrected_battery_Qmax[b,n] := corrected_battery_Qp0[b,n];
+
+  # cases when Qmin/Qmax are interpolated between pmin and pmax
+  } else if (battery_p0[1,b,n] >= corrected_battery_Pmin[b,n] and battery_p0[1,b,n] <= corrected_battery_Pmax[b,n] and (corrected_battery_Pmin[b,n] >= 0 or corrected_battery_Pmax[b,n] <= 0)) then {
+    # if Pmin/Pmax are too close, compute Qmin/Qmax as the mean of diagram values
+    if (abs((corrected_battery_Pmax[b,n] - corrected_battery_Pmin[b,n])) < Pnull) then {
+      let corrected_battery_Qmin[b,n] := (corrected_battery_qp[b,n] + corrected_battery_qP[b,n]) / 2;
+      let corrected_battery_Qmax[b,n] := (corrected_battery_Qp[b,n] + corrected_battery_QP[b,n]) / 2;
+    } else {
+      let corrected_battery_Qmin[b,n] := corrected_battery_qp[b,n] + (battery_p0[1,b,n] - corrected_battery_Pmin[b,n]) / (corrected_battery_Pmax[b,n] - corrected_battery_Pmin[b,n]) * (corrected_battery_qP[b,n] - corrected_battery_qp[b,n]);
+      let corrected_battery_Qmax[b,n] := corrected_battery_Qp[b,n] + (battery_p0[1,b,n] - corrected_battery_Pmin[b,n]) / (corrected_battery_Pmax[b,n] - corrected_battery_Pmin[b,n]) * (corrected_battery_QP[b,n] - corrected_battery_Qp[b,n]);
+    }
+
+  # cases when Qmin/Qmax are interpolated between 0 and Pmax
+  } else if ((battery_p0[1,b,n] >= corrected_battery_Pmin[b,n] and battery_p0[1,b,n] <= corrected_battery_Pmax[b,n] and battery_p0[1,b,n] > 0)
+            or (battery_p0[1,b,n] < 0 and battery_p0[1,b,n] >= corrected_battery_Pmax[b,n])) then {
+    # if 0/Pmax are too close, compute Qmin/Qmax as the mean of diagram values
+    if (abs(corrected_battery_Pmax[b,n]) < Pnull) then {
+      let corrected_battery_Qmin[b,n] := (corrected_battery_qp0[b,n] + corrected_battery_qP[b,n]) / 2;
+      let corrected_battery_Qmax[b,n] := (corrected_battery_Qp0[b,n] + corrected_battery_QP[b,n]) / 2;
+    } else {
+      let corrected_battery_Qmin[b,n] := corrected_battery_qp0[b,n] + (battery_p0[1,b,n] - 0) / (corrected_battery_Pmax[b,n] - 0) * (corrected_battery_qP[b,n] - corrected_battery_qp0[b,n]);
+      let corrected_battery_Qmax[b,n] := corrected_battery_Qp0[b,n] + (battery_p0[1,b,n] - 0) / (corrected_battery_Pmax[b,n] - 0) * (corrected_battery_QP[b,n] - corrected_battery_Qp0[b,n]);
+    }
+
+  # cases when Qmin/Qmax are interpolated between 0 and Pmin
+  } else if ((battery_p0[1,b,n] >= corrected_battery_Pmin[b,n] and battery_p0[1,b,n] <= corrected_battery_Pmax[b,n] and battery_p0[1,b,n] < 0)
+            or (battery_p0[1,b,n] > 0 and battery_p0[1,b,n] <= corrected_battery_Pmin[b,n])) then {
+    # if Pmin/0 are too close, compute Qmin/Qmax as the mean of diagram values
+    if (abs(corrected_battery_Pmin[b,n]) < Pnull) then {
+      let corrected_battery_Qmin[b,n] := (corrected_battery_qp0[b,n] + corrected_battery_qp[b,n]) / 2;
+      let corrected_battery_Qmax[b,n] := (corrected_battery_Qp0[b,n] + corrected_battery_Qp[b,n]) / 2;
+    } else {
+      let corrected_battery_Qmin[b,n] := corrected_battery_qp[b,n] + (battery_p0[1,b,n] - corrected_battery_Pmin[b,n]) / (0 - corrected_battery_Pmin[b,n]) * (corrected_battery_qp0[b,n] - corrected_battery_qp[b,n]);
+      let corrected_battery_Qmax[b,n] := corrected_battery_Qp[b,n] + (battery_p0[1,b,n] - corrected_battery_Pmin[b,n]) / (0 - corrected_battery_Pmin[b,n]) * (corrected_battery_Qp0[b,n] - corrected_battery_Qp[b,n]);
+    }
+
+  # cases when Qmin/Qmax are equals to qP/QP
+  } else if (battery_p0[1,b,n] >= corrected_battery_Pmax[b,n] and corrected_battery_Pmax[b,n] > 0) then {
+    let corrected_battery_Qmin[b,n] := corrected_battery_qP[b,n];
+    let corrected_battery_Qmax[b,n] := corrected_battery_QP[b,n];
+
+  # cases when Qmin/Qmax are equals to qp/Qp
+  } else if (battery_p0[1,b,n] <= corrected_battery_Pmin[b,n] and corrected_battery_Pmin[b,n] < 0) then {
+    let corrected_battery_Qmin[b,n] := corrected_battery_qp[b,n];
+    let corrected_battery_Qmax[b,n] := corrected_battery_Qp[b,n];
+
+  # default case
+  } else {
+    let corrected_battery_Qmin[b,n] := min(corrected_battery_qP[b,n],corrected_battery_qp[b,n]);
+    let corrected_battery_Qmax[b,n] := min(corrected_battery_QP[b,n],corrected_battery_Qp[b,n]);
+  }
+
+  if battery_p0[1,b,n] > corrected_battery_Pmax[b,n] or battery_p0[1,b,n] < corrected_battery_Pmin[b,n]
+  then printf{LOG_WARNING} "Warning battery %Q p0=%Q not in bounds [ Pmin=%Q ; Pmax=%Q ]\n",
+    battery_id[1,b,n],battery_p0[1,b,n],corrected_battery_Pmin[b,n],corrected_battery_Pmax[b,n];
+
+  if abs(corrected_battery_Qmin[b,n] - corrected_battery_Qmax[b,n]) >= minimalQPrange
+     and ( corrected_battery_Qmin[b,n] > 0 or corrected_battery_Qmax[b,n] < 0 )
+  then printf{LOG_WARNING} "Warning battery %Q: 0 not in bounds [ Qmin=%Q ; Qmax=%Q ]\n",
+    battery_id[1,b,n],corrected_battery_Qmin[b,n],corrected_battery_Qmax[b,n];
+}
+
+if card(BATTERYON) > 0 then {
+  printf{LOG_INFO} "\nFew information on Q batteries domains:\n";
+  printf{LOG_INFO} "Corrected extremal values: %Q <= %Q <= %Q\n",min({(b,n) in BATTERYON} corrected_battery_Qmin[b,n]),"corrected_battery_Qmin",max({(b,n) in BATTERYON} corrected_battery_Qmin[b,n]);
+  printf{LOG_INFO} "Corrected extremal values: %Q <= %Q <= %Q\n",min({(b,n) in BATTERYON} corrected_battery_Qmax[b,n]),"corrected_battery_Qmax",max({(b,n) in BATTERYON} corrected_battery_Qmax[b,n]);
+}
