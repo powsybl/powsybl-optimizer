@@ -23,6 +23,7 @@ import java.util.*;
  * OpenReac user interface to get results information.
  *
  * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
+ * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
  */
 public class OpenReacResult {
 

@@ -19,7 +19,9 @@ import java.util.List;
 
 /**
  * Data class to store all outputs resulting of NetworkModification.
+ *
  * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
+ * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
  */
 public class NetworkModifications {
 
