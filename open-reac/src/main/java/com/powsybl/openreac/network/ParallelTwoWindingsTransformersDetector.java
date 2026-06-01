@@ -8,16 +8,19 @@ package com.powsybl.openreac.network;
 
 import com.powsybl.iidm.network.Bus;
 import com.powsybl.iidm.network.Identifiable;
+import com.powsybl.iidm.network.Line;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.Substation;
 import com.powsybl.iidm.network.RatioTapChanger;
 import com.powsybl.iidm.network.RatioTapChangerStep;
+import com.powsybl.iidm.network.Terminal;
 import com.powsybl.iidm.network.TwoWindingsTransformer;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -103,7 +106,14 @@ public final class ParallelTwoWindingsTransformersDetector {
                 .collect(Collectors.toList());
 
         // Merge overlapping sets transitively
-        return mergeOverlappingSets(all);
+        List<Set<String>> merged = mergeOverlappingSets(all);
+
+        // Deterministic ordering, mirroring the notebook (largest groups first), with a
+        // stable tie-break so the AMPL group numbering is reproducible across runs.
+        merged.sort(Comparator
+                .comparingInt((Set<String> s) -> s.size()).reversed()
+                .thenComparing(s -> s.stream().min(Comparator.naturalOrder()).orElse("")));
+        return merged;
     }
 
     public static List<ParallelGroup> detectAndAnalyze(Network network) {
@@ -177,9 +187,22 @@ public final class ParallelTwoWindingsTransformersDetector {
     // ---- Step 2: complex parallels (chordless cycles ≤ 4 inside substations) ----
 
     private static List<Set<String>> detectComplexParallels(Network network) {
+        // Intra-substation lines take part in the graph as plain edges so they can close
+        // cycles, exactly like the reference notebook (graph built from get_branches()).
+        // Their ids are later dropped by the ratio-tap-changer filter in detect(), so a
+        // line never ends up inside a returned group; it only contributes connectivity.
+        Map<String, List<Line>> intraSubstationLines = new HashMap<>();
+        for (Line line : network.getLines()) {
+            Substation s1 = line.getTerminal1().getVoltageLevel().getSubstation().orElse(null);
+            Substation s2 = line.getTerminal2().getVoltageLevel().getSubstation().orElse(null);
+            if (s1 != null && s1 == s2) {
+                intraSubstationLines.computeIfAbsent(s1.getId(), k -> new ArrayList<>()).add(line);
+            }
+        }
         List<Set<String>> result = new ArrayList<>();
         for (Substation substation : network.getSubstations()) {
-            IntraSubstationGraph graph = buildIntraSubstationGraph(substation);
+            IntraSubstationGraph graph = buildIntraSubstationGraph(substation,
+                    intraSubstationLines.getOrDefault(substation.getId(), List.of()));
             if (graph.adjacency.size() < 3) {
                 continue; // No cycle of length ≥ 3 possible
             }
@@ -253,19 +276,26 @@ public final class ParallelTwoWindingsTransformersDetector {
 
     // ---- Graph construction ----
 
-    private static IntraSubstationGraph buildIntraSubstationGraph(Substation substation) {
+    private static IntraSubstationGraph buildIntraSubstationGraph(Substation substation, List<Line> intraSubstationLines) {
         IntraSubstationGraph graph = new IntraSubstationGraph();
         for (TwoWindingsTransformer twt : substation.getTwoWindingsTransformers()) {
-            Bus b1 = twt.getTerminal1().getBusView().getBus();
-            Bus b2 = twt.getTerminal2().getBusView().getBus();
-            if (b1 == null || b2 == null || b1.getId().equals(b2.getId())) {
-                continue;
-            }
-            double v1 = twt.getTerminal1().getVoltageLevel().getNominalV();
-            double v2 = twt.getTerminal2().getVoltageLevel().getNominalV();
-            graph.addEdge(b1.getId(), b2.getId(), twt.getId(), NominalVoltagePair.of(v1, v2));
+            addBranchEdge(graph, twt.getId(), twt.getTerminal1(), twt.getTerminal2());
+        }
+        for (Line line : intraSubstationLines) {
+            addBranchEdge(graph, line.getId(), line.getTerminal1(), line.getTerminal2());
         }
         return graph;
+    }
+
+    private static void addBranchEdge(IntraSubstationGraph graph, String branchId, Terminal terminal1, Terminal terminal2) {
+        Bus b1 = terminal1.getBusView().getBus();
+        Bus b2 = terminal2.getBusView().getBus();
+        if (b1 == null || b2 == null || b1.getId().equals(b2.getId())) {
+            return;
+        }
+        double v1 = terminal1.getVoltageLevel().getNominalV();
+        double v2 = terminal2.getVoltageLevel().getNominalV();
+        graph.addEdge(b1.getId(), b2.getId(), branchId, NominalVoltagePair.of(v1, v2));
     }
 
     // ---- Step 3: merge overlapping sets transitively ----
