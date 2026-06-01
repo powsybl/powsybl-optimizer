@@ -9,13 +9,11 @@ package com.powsybl.openreac;
 import com.powsybl.commons.report.ReportNode;
 import com.powsybl.commons.report.TypedValue;
 import com.powsybl.iidm.network.Network;
-import com.powsybl.iidm.network.RatioTapChanger;
-import com.powsybl.iidm.network.RatioTapChangerStep;
-import com.powsybl.iidm.network.TwoWindingsTransformer;
 import com.powsybl.openreac.parameters.input.VoltageLevelLimitInfo;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 import com.powsybl.openreac.parameters.output.network.ShuntCompensatorNetworkOutput;
 import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector;
+import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector.RhoBounds;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.text.DecimalFormat;
@@ -284,19 +282,14 @@ public final class Reports {
                     .add();
 
             group.transformerIds().stream().sorted().forEach(twtId -> {
-                TwoWindingsTransformer twt = network.getTwoWindingsTransformer(twtId);
-                RatioTapChanger rtc = twt != null ? twt.getRatioTapChanger() : null;
-                double rhoMin = rtc == null ? Double.NaN
-                    : rtc.getAllSteps().values().stream().mapToDouble(RatioTapChangerStep::getRho).min().orElse(Double.NaN);
-                double rhoMax = rtc == null ? Double.NaN
-                    : rtc.getAllSteps().values().stream().mapToDouble(RatioTapChangerStep::getRho).max().orElse(Double.NaN);
+                RhoBounds bounds = ParallelTwoWindingsTransformersDetector.rhoBounds(network.getTwoWindingsTransformer(twtId));
                 String status = variableTransformerIds.contains(twtId) ? "VARIABLE" : "FIXED";
                 groupNode.newReportNode()
                         .withMessageTemplate("optimizer.openreac.parallelTwoWindingsTransformerItem")
                         .withUntypedValue("transformerId", twtId)
                         .withUntypedValue("ratioStatus", status)
-                        .withUntypedValue("rhoMin", Double.isNaN(rhoMin) ? "N/A" : VALUE_FORMAT_ACCURATE.format(rhoMin))
-                        .withUntypedValue("rhoMax", Double.isNaN(rhoMax) ? "N/A" : VALUE_FORMAT_ACCURATE.format(rhoMax))
+                        .withUntypedValue("rhoMin", bounds.isPresent() ? VALUE_FORMAT_ACCURATE.format(bounds.min()) : "N/A")
+                        .withUntypedValue("rhoMax", bounds.isPresent() ? VALUE_FORMAT_ACCURATE.format(bounds.max()) : "N/A")
                         .withSeverity(TypedValue.DETAIL_SEVERITY)
                         .add();
             });

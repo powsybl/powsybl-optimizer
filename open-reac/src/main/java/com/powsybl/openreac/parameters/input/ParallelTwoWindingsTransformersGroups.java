@@ -12,6 +12,7 @@ import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector.IntersectionStatus;
 import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector.ParallelGroup;
+import com.powsybl.openreac.parameters.AmplIOUtils;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -75,11 +76,13 @@ public class ParallelTwoWindingsTransformersGroups implements AmplInputFile {
 
     @Override
     public void write(BufferedWriter writer, StringToIntMapper<AmplSubset> stringToIntMapper) throws IOException {
-        writer.write("#num_group num_branch group_rho_min group_rho_max\n");
+        writer.write("#num_group num_branch group_rho_min group_rho_max id");
+        writer.newLine();
         for (TransformerInGroup row : rows) {
             int amplBranchId = stringToIntMapper.getInt(AmplSubset.BRANCH, row.transformerId());
             writer.write(row.groupIndex() + " " + amplBranchId + " "
-                + RHO_FORMAT.format(row.groupRhoLow()) + " " + RHO_FORMAT.format(row.groupRhoHigh()));
+                + RHO_FORMAT.format(row.groupRhoLow()) + " " + RHO_FORMAT.format(row.groupRhoHigh())
+                + " " + AmplIOUtils.addQuotes(row.transformerId()));
             writer.newLine();
         }
         writer.newLine();

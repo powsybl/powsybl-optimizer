@@ -44,9 +44,9 @@ class ParallelTransformersInputFilesTest {
             int t2 = mapper.getInt(AmplSubset.BRANCH, "T2");
             // Both transformers have ranges [0.95, 1.05], so the group intersection is also [0.95, 1.05]
             String ref = String.join(System.lineSeparator(),
-                "#num_group num_branch group_rho_min group_rho_max",
-                "1 " + t1 + " 0.950000 1.050000",
-                "1 " + t2 + " 0.950000 1.050000") + System.lineSeparator() + System.lineSeparator();
+                "#num_group num_branch group_rho_min group_rho_max id",
+                "1 " + t1 + " 0.950000 1.050000 \"T1\"",
+                "1 " + t2 + " 0.950000 1.050000 \"T2\"") + System.lineSeparator() + System.lineSeparator();
             assertEquals(ref, data);
         }
     }
@@ -64,7 +64,7 @@ class ParallelTransformersInputFilesTest {
             input.write(writer, mapper);
             String data = w.toString();
             // Only the header and the trailing blank line — no data row
-            String ref = "#num_group num_branch group_rho_min group_rho_max" + System.lineSeparator() + System.lineSeparator();
+            String ref = "#num_group num_branch group_rho_min group_rho_max id" + System.lineSeparator() + System.lineSeparator();
             assertEquals(ref, data);
         }
     }
@@ -81,7 +81,7 @@ class ParallelTransformersInputFilesTest {
             input.write(writer, mapper);
             String data = w.toString();
             // 2 groups * 2 transfos = 4 data lines
-            assertTrue(data.startsWith("#num_group num_branch group_rho_min group_rho_max"));
+            assertTrue(data.startsWith("#num_group num_branch group_rho_min group_rho_max id"));
             long dataLines = data.lines().filter(l -> !l.isBlank() && !l.startsWith("#")).count();
             assertEquals(4, dataLines);
             // Each group index should appear on exactly two lines
@@ -124,8 +124,8 @@ class ParallelTransformersInputFilesTest {
             String data = w.toString();
             int t1 = mapper.getInt(AmplSubset.BRANCH, "T1");
             int t2 = mapper.getInt(AmplSubset.BRANCH, "T2");
-            assertTrue(data.contains(t1 + " 0.990000"), "T1 should be fixed at rhoMax = 0.99");
-            assertTrue(data.contains(t2 + " 1.010000"), "T2 should be fixed at rhoMin = 1.01");
+            assertTrue(data.contains(t1 + " 0.990000 \"T1\""), "T1 should be fixed at rhoMax = 0.99");
+            assertTrue(data.contains(t2 + " 1.010000 \"T2\""), "T2 should be fixed at rhoMin = 1.01");
         }
     }
 
@@ -145,9 +145,9 @@ class ParallelTransformersInputFilesTest {
             int t1 = mapper.getInt(AmplSubset.BRANCH, "T1");
             int t2 = mapper.getInt(AmplSubset.BRANCH, "T2");
             int t3 = mapper.getInt(AmplSubset.BRANCH, "T3");
-            assertTrue(data.contains(t1 + " 0.990000"), "T1 should snap to rhoMax = 0.99");
-            assertTrue(data.contains(t2 + " 1.010000"), "T2 should snap to rhoMin = 1.01");
-            assertTrue(data.contains(t3 + " 1.000000"), "T3 should be fixed at the gap center 1.00");
+            assertTrue(data.contains(t1 + " 0.990000 \"T1\""), "T1 should snap to rhoMax = 0.99");
+            assertTrue(data.contains(t2 + " 1.010000 \"T2\""), "T2 should snap to rhoMin = 1.01");
+            assertTrue(data.contains(t3 + " 1.000000 \"T3\""), "T3 should be fixed at the gap center 1.00");
         }
     }
 
@@ -163,7 +163,7 @@ class ParallelTransformersInputFilesTest {
              BufferedWriter writer = new BufferedWriter(w)) {
             input.write(writer, mapper);
             String data = w.toString();
-            String ref = "#num_branch fixed_rho" + System.lineSeparator() + System.lineSeparator();
+            String ref = "#num_branch fixed_rho id" + System.lineSeparator() + System.lineSeparator();
             assertEquals(ref, data);
         }
     }

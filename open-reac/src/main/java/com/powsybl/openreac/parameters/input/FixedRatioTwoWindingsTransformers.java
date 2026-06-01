@@ -10,10 +10,10 @@ import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.iidm.network.Network;
-import com.powsybl.iidm.network.RatioTapChanger;
-import com.powsybl.iidm.network.RatioTapChangerStep;
-import com.powsybl.iidm.network.TwoWindingsTransformer;
+import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector;
 import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector.ParallelGroup;
+import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector.RhoBounds;
+import com.powsybl.openreac.parameters.AmplIOUtils;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -86,14 +86,11 @@ public class FixedRatioTwoWindingsTransformers implements AmplInputFile {
         // other transformers in the group may well contain the center.
         double center = (group.low() + group.high()) / 2.0;
         for (String twtId : group.transformerIds()) {
-            TwoWindingsTransformer twt = network.getTwoWindingsTransformer(twtId);
-            if (twt == null || twt.getRatioTapChanger() == null) {
+            RhoBounds bounds = ParallelTwoWindingsTransformersDetector.rhoBounds(network.getTwoWindingsTransformer(twtId));
+            if (!bounds.isPresent()) {
                 continue;
             }
-            RatioTapChanger rtc = twt.getRatioTapChanger();
-            double rhoMin = rtc.getAllSteps().values().stream().mapToDouble(RatioTapChangerStep::getRho).min().orElse(Double.NaN);
-            double rhoMax = rtc.getAllSteps().values().stream().mapToDouble(RatioTapChangerStep::getRho).max().orElse(Double.NaN);
-            double fixedRho = Math.max(rhoMin, Math.min(rhoMax, center));
+            double fixedRho = Math.max(bounds.min(), Math.min(bounds.max(), center));
             fixedTransformers.add(new FixedTransformer(twtId, fixedRho));
         }
     }
@@ -105,10 +102,12 @@ public class FixedRatioTwoWindingsTransformers implements AmplInputFile {
 
     @Override
     public void write(BufferedWriter writer, StringToIntMapper<AmplSubset> stringToIntMapper) throws IOException {
-        writer.write("#num_branch fixed_rho\n");
+        writer.write("#num_branch fixed_rho id");
+        writer.newLine();
         for (FixedTransformer ft : fixedTransformers) {
             int amplBranchId = stringToIntMapper.getInt(AmplSubset.BRANCH, ft.transformerId());
-            writer.write(amplBranchId + " " + RHO_FORMAT.format(ft.fixedRho()));
+            writer.write(amplBranchId + " " + RHO_FORMAT.format(ft.fixedRho())
+                + " " + AmplIOUtils.addQuotes(ft.transformerId()));
             writer.newLine();
         }
         writer.newLine();

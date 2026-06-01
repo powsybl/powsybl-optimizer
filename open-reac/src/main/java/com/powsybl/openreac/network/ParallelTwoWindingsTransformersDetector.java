@@ -63,6 +63,17 @@ public final class ParallelTwoWindingsTransformersDetector {
                                 double low,
                                 double high) { }
 
+    /**
+     * The [min, max] rho span of a transformer's ratio tap changer. When the
+     * transformer is null or carries no ratio tap changer, both bounds are
+     * {@link Double#NaN} and {@link #isPresent()} returns {@code false}.
+     */
+    public record RhoBounds(double min, double max) {
+        public boolean isPresent() {
+            return !Double.isNaN(min);
+        }
+    }
+
     private ParallelTwoWindingsTransformersDetector() {
         // utility class
     }
@@ -104,19 +115,31 @@ public final class ParallelTwoWindingsTransformersDetector {
         return result;
     }
 
+    /**
+     * @return the min/max rho over all ratio tap changer steps of {@code twt},
+     *         or an absent {@link RhoBounds} if {@code twt} is null or has no
+     *         ratio tap changer.
+     */
+    public static RhoBounds rhoBounds(TwoWindingsTransformer twt) {
+        if (twt == null || twt.getRatioTapChanger() == null) {
+            return new RhoBounds(Double.NaN, Double.NaN);
+        }
+        RatioTapChanger rtc = twt.getRatioTapChanger();
+        double min = rtc.getAllSteps().values().stream().mapToDouble(RatioTapChangerStep::getRho).min().orElse(Double.NaN);
+        double max = rtc.getAllSteps().values().stream().mapToDouble(RatioTapChangerStep::getRho).max().orElse(Double.NaN);
+        return new RhoBounds(min, max);
+    }
+
     private static ParallelGroup analyzeGroup(Set<String> group, Network network) {
         double low = Double.NEGATIVE_INFINITY;
         double high = Double.POSITIVE_INFINITY;
         for (String twtId : group) {
-            TwoWindingsTransformer twt = network.getTwoWindingsTransformer(twtId);
-            if (twt == null || twt.getRatioTapChanger() == null) {
+            RhoBounds bounds = rhoBounds(network.getTwoWindingsTransformer(twtId));
+            if (!bounds.isPresent()) {
                 continue;
             }
-            RatioTapChanger rtc = twt.getRatioTapChanger();
-            double rhoMin = rtc.getAllSteps().values().stream().mapToDouble(RatioTapChangerStep::getRho).min().orElse(Double.NaN);
-            double rhoMax = rtc.getAllSteps().values().stream().mapToDouble(RatioTapChangerStep::getRho).max().orElse(Double.NaN);
-            low = Math.max(low, rhoMin);
-            high = Math.min(high, rhoMax);
+            low = Math.max(low, bounds.min());
+            high = Math.min(high, bounds.max());
         }
         IntersectionStatus status;
         if (high < low - RHO_INTERSECTION_EPSILON) {
