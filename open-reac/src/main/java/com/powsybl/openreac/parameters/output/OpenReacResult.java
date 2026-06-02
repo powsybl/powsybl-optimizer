@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.function.DoubleConsumer;
 
 /**
  * OpenReac user interface to get results information.
@@ -135,15 +136,7 @@ public class OpenReacResult {
                 .forEach(transformer -> {
                     RatioTapChanger ratioTapChanger = transformer.getRatioTapChanger();
                     if (ratioTapChanger != null) {
-                        Optional<Bus> bus = getRegulatingBus(ratioTapChanger.getRegulationTerminal(), transformer.getId());
-                        bus.ifPresent(b -> {
-                            Pair<Double, Double> busUpdate = voltageProfile.get(b.getId());
-                            if (busUpdate != null) {
-                                ratioTapChanger.setTargetV(busUpdate.getFirst() * b.getVoltageLevel().getNominalV());
-                            } else {
-                                throw new IllegalStateException("Voltage profile not found for bus " + b.getId());
-                            }
-                        });
+                        updateTargetV(ratioTapChanger.getRegulationTerminal(), transformer.getId(), ratioTapChanger::setTargetV);
                     }
                 });
 
@@ -151,20 +144,10 @@ public class OpenReacResult {
         getShuntsModifications().stream()
                 .map(ShuntCompensatorModification::getShuntCompensatorId)
                 .map(network::getShuntCompensator)
-                .forEach(shunt -> {
-                    Optional<Bus> bus = getRegulatingBus(shunt.getRegulatingTerminal(), shunt.getId());
-                    bus.ifPresent(b -> {
-                        Pair<Double, Double> busUpdate = voltageProfile.get(b.getId());
-                        if (busUpdate != null) {
-                            shunt.setTargetV(busUpdate.getFirst() * b.getVoltageLevel().getNominalV());
-                        } else {
-                            throw new IllegalStateException("Voltage profile not found for bus " + b.getId());
-                        }
-                    });
-                });
+                .forEach(shunt ->
+                        updateTargetV(shunt.getRegulatingTerminal(), shunt.getId(), shunt::setTargetV));
 
-        // update target voltage of regulating batteries (via VoltageRegulation extension,
-        // since Battery has no native setTargetV; symmetric to the shunts/RTC pattern above)
+        // update target voltage of regulating batteries
         getBatteryModifications().stream()
                 .map(BatteryModification::getBatteryId)
                 .map(network::getBattery)
@@ -174,15 +157,7 @@ public class OpenReacResult {
                     if (vr == null || !vr.isVoltageRegulatorOn()) {
                         return;
                     }
-                    Optional<Bus> bus = getRegulatingBus(vr.getRegulatingTerminal(), battery.getId());
-                    bus.ifPresent(b -> {
-                        Pair<Double, Double> busUpdate = voltageProfile.get(b.getId());
-                        if (busUpdate != null) {
-                            vr.setTargetV(busUpdate.getFirst() * b.getVoltageLevel().getNominalV());
-                        } else {
-                            throw new IllegalStateException("Voltage profile not found for bus " + b.getId());
-                        }
-                    });
+                    updateTargetV(vr.getRegulatingTerminal(), battery.getId(), vr::setTargetV);
                 });
 
         // update voltages of the buses
@@ -199,6 +174,18 @@ public class OpenReacResult {
                     });
             }
         }
+    }
+
+    private void updateTargetV(Terminal regulatingTerminal, String elementId, DoubleConsumer targetVSetter) {
+        Optional<Bus> bus = getRegulatingBus(regulatingTerminal, elementId);
+        bus.ifPresent(b -> {
+            Pair<Double, Double> busUpdate = voltageProfile.get(b.getId());
+            if (busUpdate != null) {
+                targetVSetter.accept(busUpdate.getFirst() * b.getVoltageLevel().getNominalV());
+            } else {
+                throw new IllegalStateException("Voltage profile not found for bus " + b.getId());
+            }
+        });
     }
 
     Optional<Bus> getRegulatingBus(Terminal terminal, String elementId) {

@@ -38,7 +38,7 @@ class BatteryNetworkOutputTest {
              BufferedReader reader = new BufferedReader(in)) {
             output.read(reader, mapper);
             assertEquals(1, output.getModifications().size());
-            BatteryModification modif = output.getModifications().get(0);
+            BatteryModification modif = output.getModifications().getFirst();
             assertEquals("BATTERY", modif.getBatteryId());
             // Active power is not optimized by OpenReac for batteries.
             assertNull(modif.getTargetP());
