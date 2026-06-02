@@ -84,3 +84,7 @@ this bound is greater (resp. smaller) than $0$, then the corrected reactive boun
 Please note that in the end, the corrected bounds are used in the reactive OPF (see [AC optimal powerflow](acOptimalPowerflow.md). 
 In addition, note that bounds $qP_{g}^0$ and $Qp_{g}^0$ are only used to interpolate the corrected bounds $Q_{g}^{min,c}$ and $Q_{g}^{max,c}$, 
 as generators with zero active power are excluded from the optimisation (see [AC optimal powerflow](acOptimalPowerflow.md#generalities)).
+
+The same reactive-domain correction applies to batteries that regulate voltage, interpolated at their fixed active power $P_b^0$ instead of a generator target. 
+There is one difference: contrary to generators, a voltage-regulating battery is **not** excluded from the optimization when its active power is null. 
+In that case (i.e. $|P_b^0| < \text{Pnull}$), its corrected reactive bounds are taken directly at the $P=0$ vertices of its reactive diagram ($qp0_b^c$ and $Qp0_b^c$).
