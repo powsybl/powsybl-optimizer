@@ -103,6 +103,12 @@ var branch_Ror_var{(qq,m,n) in BRANCHCC_REGL_VAR}
   >= regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]],
   <= regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]];
 
+# Shared ratio variable for parallel transformer groups: every variable member of a
+# tie-able group is forced to this single ratio (see ctr_parallel_group_ratio).
+var group_Ror_var{g in PARALLEL_GROUPS}
+  >= parallel_group_rho_min[g],
+  <= parallel_group_rho_max[g];
+
 #
 # Flows
 #
@@ -239,6 +245,15 @@ var target_voltage_ratio = sum{n in BUSCC: substation_Vnomi[1,bus_substation[1,n
 
 # Voltage target : value V0 in input data
 var target_voltage_data = sum{n in BUSVV} (V[n] - bus_V0[1,n])**2;
+
+
+# Parallel groups: tie every variable member to its group's shared ratio.
+subject to ctr_parallel_group_ratio{PROBLEM_ACOPF, (qq,m,n) in BRANCHCC_REGL_VAR: qq in PARALLEL_BRANCHES}:
+  branch_Ror_var[qq,m,n] = group_Ror_var[parallel_group_of[qq]];
+
+# POINT/EMPTY groups: pin each variable member to its target rho.
+subject to ctr_fixed_ratio{PROBLEM_ACOPF, (qq,m,n) in BRANCHCC_REGL_VAR: qq in PARAM_FIXED_RATIO_TRANSFORMERS}:
+  branch_Ror_var[qq,m,n] = param_fixed_ratio_transformers_rho[qq];
 
 
 #

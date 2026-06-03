@@ -208,6 +208,30 @@ set BRANCHCC_REGL_FIX := BRANCHCC_REGL diff BRANCHCC_REGL_VAR;
 
 
 ###############################################################################
+# Parallel transformer groups (shared ratio)
+###############################################################################
+# Branch nums the optimization can actually move this run.
+set BRANCHCC_REGL_VAR_NUM := setof {(qq,m,n) in BRANCHCC_REGL_VAR} qq;
+
+set PARALLEL_GROUPS_ALL := setof {(g,qq) in PARAM_PARALLEL_TRANSFORMERS} g;
+
+# A group is tie-able only if EVERY member is a variable-ratio branch this run. A member
+# can be silently demoted to fixed by the model (zero impedance, out of the main connected
+# component, ...), which the Java side cannot foresee; in that case the group is not tied
+# (defensive guard against a silent partial tie).
+set PARALLEL_GROUPS := {g in PARALLEL_GROUPS_ALL:
+    card({(gg,qq) in PARAM_PARALLEL_TRANSFORMERS: gg == g and qq not in BRANCHCC_REGL_VAR_NUM}) == 0};
+set PARALLEL_GROUPS_DROPPED := PARALLEL_GROUPS_ALL diff PARALLEL_GROUPS;
+
+set PARALLEL_BRANCHES := setof {(g,qq) in PARAM_PARALLEL_TRANSFORMERS: g in PARALLEL_GROUPS} qq;
+param parallel_group_of{qq in PARALLEL_BRANCHES} := max {(g,qqq) in PARAM_PARALLEL_TRANSFORMERS: qqq == qq} g;
+
+# Shared-ratio bounds per group (constant per group in the file).
+param parallel_group_rho_min{g in PARALLEL_GROUPS} := min {(gg,qq) in PARAM_PARALLEL_TRANSFORMERS: gg == g} param_parallel_transformers_rho_min[gg,qq];
+param parallel_group_rho_max{g in PARALLEL_GROUPS} := min {(gg,qq) in PARAM_PARALLEL_TRANSFORMERS: gg == g} param_parallel_transformers_rho_max[gg,qq];
+
+
+###############################################################################
 # Transformers and Phase shifter transformers parameters
 ###############################################################################
 

@@ -67,6 +67,30 @@ check {(t,qq,m,n) in BRANCH: qq in PARAM_TRANSFORMERS_RATIO_VARIABLE}: branch_id
 
 
 ###############################################################################
+# Controls for parallel transformer groups
+###############################################################################
+# param_parallel_transformers.txt
+# Members of a LARGE parallel group: all branches sharing a num_group are tied to a
+# single shared ratio variable, bounded by [group_rho_min, group_rho_max] (the rho
+# intersection, repeated on every row). Indexed by (num_group, num_branch).
+#"num_group" "num_branch" "group_rho_min" "group_rho_max" "id"
+set PARAM_PARALLEL_TRANSFORMERS  dimen 2 default {};
+param param_parallel_transformers_rho_min{PARAM_PARALLEL_TRANSFORMERS};
+param param_parallel_transformers_rho_max{PARAM_PARALLEL_TRANSFORMERS};
+param param_parallel_transformers_id     {PARAM_PARALLEL_TRANSFORMERS} symbolic;
+# No id check here: LARGE-group members are all variable-ratio, hence already covered
+# by the PARAM_TRANSFORMERS_RATIO_VARIABLE id check above.
+
+# param_fixed_ratio_transformers.txt
+# Members of POINT/EMPTY parallel groups: each variable member is fixed to fixed_rho.
+#"num_branch" "fixed_rho" "id"
+set PARAM_FIXED_RATIO_TRANSFORMERS  dimen 1 default {};
+param param_fixed_ratio_transformers_rho{PARAM_FIXED_RATIO_TRANSFORMERS};
+param param_fixed_ratio_transformers_id {PARAM_FIXED_RATIO_TRANSFORMERS} symbolic;
+check {(t,qq,m,n) in BRANCH: qq in PARAM_FIXED_RATIO_TRANSFORMERS}: branch_id[t,qq,m,n] == param_fixed_ratio_transformers_id[qq];
+
+
+###############################################################################
 # Buses with reactive slacks
 ###############################################################################
 # param_buses_with_reactive_slack.txt

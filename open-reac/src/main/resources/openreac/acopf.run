@@ -37,6 +37,10 @@ let {(shunt,n) in SHUNT_VAR} shunt_var[shunt,n] := min{(1,shunt,k) in SHUNT} shu
 let {(svc,n) in SVCON} svc_qvar[svc,n] := 0.1;
 let {(v,n) in VSCCONVON} vscconv_qvar[v,n] := if abs(vscconv_targetQ[1,v,n]) < PQmax then vscconv_targetQ[1,v,n] else 0;
 let {(qq,m,n) in BRANCHCC_REGL_VAR} branch_Ror_var[qq,m,n] := branch_Ror[qq,m,n];
+let {g in PARALLEL_GROUPS} group_Ror_var[g] := (parallel_group_rho_min[g] + parallel_group_rho_max[g]) / 2;
+for {g in PARALLEL_GROUPS_DROPPED} {
+  printf{LOG_WARNING} "Parallel group %i not tied: a member is not an optimized variable-ratio transformer this run\n", g;
+}
 
 
 ###############################################################################
@@ -57,6 +61,7 @@ let {n in BUSCC_SLACK} slack1_shunt_B[n].xscalefactor := reactive_slack_variable
 let {n in BUSCC_SLACK} slack2_shunt_B[n].xscalefactor := reactive_slack_variable_scaling_factor;
 
 let {(qq,m,n) in BRANCHCC_REGL_VAR} branch_Ror_var[qq,m,n].xscalefactor := transformer_ratio_variable_scaling_factor;
+let {g in PARALLEL_GROUPS} group_Ror_var[g].xscalefactor := transformer_ratio_variable_scaling_factor;
 
 let {(shunt,n) in SHUNT_VAR} shunt_var[shunt,n].xscalefactor := shunt_variable_scaling_factor;
 

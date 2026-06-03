@@ -17,7 +17,7 @@
 data;
 
 # ampl_network_substations.txt
-#"variant" "num" "horizon" "reference date distance (minutes)" "nomV (KV)" "minV (pu)" "maxV (pu)" "fault" "curative" "country" "id" "description" 
+#"variant" "num" "horizon" "reference date distance (minutes)" "nomV (KV)" "minV (pu)" "maxV (pu)" "fault" "curative" "country" "id" "description"
 param: SUBSTATIONS: substation_horizon substation_fodist substation_Vnomi substation_Vmin substation_Vmax substation_fault substation_curative substation_country substation_id substation_description := include ampl_network_substations.txt;
 
 # ampl_network_buses.txt
@@ -49,12 +49,12 @@ param: BATTERY: battery_possiblebus battery_substation battery_p0 battery_q0 bat
 param: TAPS: tap_ratio tap_r tap_x tap_g tap_b tap_angle tap_fault tap_curative := include ampl_network_tct.txt;
 
 # ampl_network_rtc.txt
-#"num" "tap" "table" "onLoad" "targetV" "fault" "curative" "id" 
+#"num" "tap" "table" "onLoad" "targetV" "fault" "curative" "id"
 #param: REGL: regl_tap0 regl_table regl_onLoad regl_V regl_fault regl_curative regl_id := include ampl_network_rtc.txt;
 param: REGL: regl_tap0 regl_table regl_onLoad regl_V regl_fault regl_id := include ampl_network_rtc.txt;
 
 # ampl_network_ptc.txt
-#"num" "tap" "table" "fault" "curative" "id" 
+#"num" "tap" "table" "fault" "curative" "id"
 param: DEPH: deph_tap0 deph_table deph_fault deph_curative deph_id := include ampl_network_ptc.txt;
 
 # ampl_network_vsc_converter_stations.txt
@@ -71,7 +71,7 @@ param: LCCCONV: lccconv_possiblebus lccconv_substation lccconv_q0 lccconv_loss_f
 param: HVDC: hvdc_type hvdc_conv1 hvdc_conv2 hvdc_r hvdc_Vnom hvdc_convertersMode hvdc_ac_emul hvdc_targetP hvdc_p0 hvdc_k hvdc_Pmax hvdc_fault hvdc_curative hvdc_id hvdc_description := include ampl_network_hvdc.txt;
 
 # ampl_network_branches.txt
-#"variant" "num" "bus1" "bus2" "3wt num" "sub.1" "sub.2" "r (pu)" "x (pu)" "g1 (pu)" "g2 (pu)" "b1 (pu)" "b2 (pu)" "cst ratio (pu)" "ratio tc" "phase tc" "p1 (MW)" "p2 (MW)" "q1 (MVar)" "q2 (MVar)" "patl1 (A)" "patl2 (A)" "merged" "fault" "curative" "id" "description" 
+#"variant" "num" "bus1" "bus2" "3wt num" "sub.1" "sub.2" "r (pu)" "x (pu)" "g1 (pu)" "g2 (pu)" "b1 (pu)" "b2 (pu)" "cst ratio (pu)" "ratio tc" "phase tc" "p1 (MW)" "p2 (MW)" "q1 (MVar)" "q2 (MVar)" "patl1 (A)" "patl2 (A)" "merged" "fault" "curative" "id" "description"
 param: BRANCH: branch_3wt branch_subor branch_subex branch_R branch_X branch_Gor branch_Gex branch_Bor branch_Bex branch_cstratio branch_ptrRegl branch_ptrDeph branch_Por branch_Pex branch_Qor branch_Qex branch_patl1 branch_patl2 branch_merged branch_fault branch_curative branch_id branch_name := include ampl_network_branches.txt;
 
 # ampl_network_substations_override.txt
@@ -89,6 +89,14 @@ param: PARAM_UNIT_FIXQ: param_unit_fixq_id := include param_generators_reactive.
 # param_transformers.txt
 #"num" "id"
 param: PARAM_TRANSFORMERS_RATIO_VARIABLE: param_transformers_ratio_variable_id := include param_transformers.txt;
+
+# param_parallel_transformers.txt
+#"num_group" "num_branch" "group_rho_min" "group_rho_max" "id"
+param: PARAM_PARALLEL_TRANSFORMERS: param_parallel_transformers_rho_min param_parallel_transformers_rho_max param_parallel_transformers_id := include param_parallel_transformers.txt;
+
+# param_fixed_ratio_transformers.txt
+#"num_branch" "fixed_rho" "id"
+param: PARAM_FIXED_RATIO_TRANSFORMERS: param_fixed_ratio_transformers_rho param_fixed_ratio_transformers_id := include param_fixed_ratio_transformers.txt;
 
 # param_buses_with_reactive_slack.txt
 #"num" "id"
