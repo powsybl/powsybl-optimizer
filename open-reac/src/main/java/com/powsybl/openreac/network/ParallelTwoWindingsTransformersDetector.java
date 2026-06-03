@@ -117,10 +117,15 @@ public final class ParallelTwoWindingsTransformersDetector {
     }
 
     public static List<ParallelGroup> detectAndAnalyze(Network network) {
+        // Backward-compatible: analyse assuming every detected transformer is optimisable.
+        return detectAndAnalyze(network, null);
+    }
+
+    public static List<ParallelGroup> detectAndAnalyze(Network network, Set<String> variableTransformerIds) {
         List<Set<String>> rawGroups = detect(network);
         List<ParallelGroup> result = new ArrayList<>(rawGroups.size());
         for (Set<String> group : rawGroups) {
-            result.add(analyzeGroup(group, network));
+            result.add(analyzeGroup(group, network, variableTransformerIds));
         }
         return result;
     }
@@ -140,11 +145,32 @@ public final class ParallelTwoWindingsTransformersDetector {
         return new RhoBounds(min, max);
     }
 
-    private static ParallelGroup analyzeGroup(Set<String> group, Network network) {
+    /**
+     * @return the current rho of {@code twt} as a degenerate {@link RhoBounds} (min == max).
+     *         Used to pin a transformer that cannot be moved by OpenReac (e.g. a non-variable
+     *         member of a group) to the single ratio it is frozen at: its current tap. This is
+     *         exactly the value AMPL keeps for a fixed-ratio transformer (regl_tap0).
+     */
+    public static RhoBounds currentRhoBounds(TwoWindingsTransformer twt) {
+        if (twt == null || twt.getRatioTapChanger() == null) {
+            return new RhoBounds(Double.NaN, Double.NaN);
+        }
+        double rho = twt.getRatioTapChanger().getCurrentStep().getRho();
+        return new RhoBounds(rho, rho);
+    }
+
+    private static ParallelGroup analyzeGroup(Set<String> group, Network network, Set<String> variableTransformerIds) {
         double low = Double.NEGATIVE_INFINITY;
         double high = Double.POSITIVE_INFINITY;
         for (String twtId : group) {
-            RhoBounds bounds = rhoBounds(network.getTwoWindingsTransformer(twtId));
+            TwoWindingsTransformer twt = network.getTwoWindingsTransformer(twtId);
+            // A non-variable member cannot be moved by OpenReac: it stays at its current tap.
+            // We therefore pin it to a single point (its current rho), so the group intersection
+            // must coincide with that value. A pinned member collapses the interval to a point
+            // (POINT) or makes it empty (EMPTY), and can never yield LARGE — which is why a LARGE
+            // group is always made of optimisable members only.
+            boolean variable = variableTransformerIds == null || variableTransformerIds.contains(twtId);
+            RhoBounds bounds = variable ? rhoBounds(twt) : currentRhoBounds(twt);
             if (!bounds.isPresent()) {
                 continue;
             }

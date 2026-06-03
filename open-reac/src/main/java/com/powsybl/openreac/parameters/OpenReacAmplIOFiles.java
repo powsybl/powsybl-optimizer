@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * OpenReacAmplIOFiles will interface all inputs and outputs needed for OpenReac to the abstracted Ampl Executor.
@@ -72,12 +73,18 @@ public class OpenReacAmplIOFiles implements AmplParameters {
         this.debug = debug;
         this.debugDir = params.getDebugDir();
 
+        Set<String> variableTransformerIds = new HashSet<>(params.getVariableTwoWindingsTransformers());
+        // Non-variable members (transformers the user excluded from optimisation) cannot be moved,
+        // so they are pinned to their current ratio inside the analysis: a group keeps every member,
+        // but a pinned member collapses the shared interval to a POINT or makes it EMPTY, never LARGE.
+        // A group with no optimisable member at all cannot be acted upon and is dropped.
         List<ParallelTwoWindingsTransformersDetector.ParallelGroup> parallelGroups =
-            ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network);
+            ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network, variableTransformerIds).stream()
+                .filter(group -> group.transformerIds().stream().anyMatch(variableTransformerIds::contains))
+                .toList();
         this.parallelTwoWindingsTransformersGroups = new ParallelTwoWindingsTransformersGroups(parallelGroups);
-        this.fixedRatioTwoWindingsTransformers = new FixedRatioTwoWindingsTransformers(parallelGroups, network);
-        Reports.reportParallelTwoWindingsTransformers(reportNode, parallelGroups, network,
-            new HashSet<>(params.getVariableTwoWindingsTransformers()));
+        this.fixedRatioTwoWindingsTransformers = new FixedRatioTwoWindingsTransformers(parallelGroups, network, variableTransformerIds);
+        Reports.reportParallelTwoWindingsTransformers(reportNode, parallelGroups, network, variableTransformerIds);
 
         Reports.reportConstantQGeneratorsSize(reportNode, params.getConstantQGenerators().size());
         Reports.reportVariableTwoWindingsTransformersSize(reportNode, params.getVariableTwoWindingsTransformers().size());

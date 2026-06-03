@@ -22,6 +22,7 @@ import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * Writes the transformers whose rho must be fixed in the optimization,
@@ -55,11 +56,15 @@ public class FixedRatioTwoWindingsTransformers implements AmplInputFile {
     private record FixedTransformer(String transformerId, double fixedRho) { }
 
     public FixedRatioTwoWindingsTransformers(List<ParallelGroup> allGroups, Network network) {
+        this(allGroups, network, null);
+    }
+
+    public FixedRatioTwoWindingsTransformers(List<ParallelGroup> allGroups, Network network, Set<String> variableTransformerIds) {
         this.fixedTransformers = new ArrayList<>();
         for (ParallelGroup group : allGroups) {
             switch (group.status()) {
-                case POINT -> addPointGroup(group);
-                case EMPTY -> addEmptyGroup(group, network);
+                case POINT -> addPointGroup(group, variableTransformerIds);
+                case EMPTY -> addEmptyGroup(group, network, variableTransformerIds);
                 case LARGE -> {
                     // Not fixed — handled by ParallelTwoWindingsTransformersGroups.
                 }
@@ -67,15 +72,23 @@ public class FixedRatioTwoWindingsTransformers implements AmplInputFile {
         }
     }
 
-    private void addPointGroup(ParallelGroup group) {
-        // For POINT: low ≈ high, pick either as the fixed value.
+    private static boolean isVariable(Set<String> variableTransformerIds, String twtId) {
+        return variableTransformerIds == null || variableTransformerIds.contains(twtId);
+    }
+
+    private void addPointGroup(ParallelGroup group, Set<String> variableTransformerIds) {
+        // For POINT: low ≈ high, the single shared value. Only optimisable members are written;
+        // a non-variable member is already frozen by the model at this very value (its current
+        // tap), which is precisely what collapsed the group to a POINT.
         double fixedRho = group.low();
         for (String twtId : group.transformerIds()) {
-            fixedTransformers.add(new FixedTransformer(twtId, fixedRho));
+            if (isVariable(variableTransformerIds, twtId)) {
+                fixedTransformers.add(new FixedTransformer(twtId, fixedRho));
+            }
         }
     }
 
-    private void addEmptyGroup(ParallelGroup group, Network network) {
+    private void addEmptyGroup(ParallelGroup group, Network network, Set<String> variableTransformerIds) {
         // For EMPTY: low > high. The center of the gap is (low + high) / 2
         // Each transformer is independently set as close to that center as its
         // own domain allows: clamp(center, rhoMin_i, rhoMax_i). Concretely:
@@ -86,6 +99,9 @@ public class FixedRatioTwoWindingsTransformers implements AmplInputFile {
         // other transformers in the group may well contain the center.
         double center = (group.low() + group.high()) / 2.0;
         for (String twtId : group.transformerIds()) {
+            if (!isVariable(variableTransformerIds, twtId)) {
+                continue; // non-variable: already frozen at its current tap, nothing to write
+            }
             RhoBounds bounds = ParallelTwoWindingsTransformersDetector.rhoBounds(network.getTwoWindingsTransformer(twtId));
             if (!bounds.isPresent()) {
                 continue;
