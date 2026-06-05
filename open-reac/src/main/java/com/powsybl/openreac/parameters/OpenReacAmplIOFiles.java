@@ -52,7 +52,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
     private final boolean debug;
     private final String debugDir;
     private final AmplExportConfig amplExportConfig;
-    private final ParallelTwoWindingsTransformersGroups parallelTwoWindingsTransformersGroups;
+    private final ParallelTwoWindingsTransformersBundles parallelTwoWindingsTransformersBundles;
     private final FixedRatioTwoWindingsTransformers fixedRatioTwoWindingsTransformers;
 
     public OpenReacAmplIOFiles(OpenReacParameters params, AmplExportConfig amplExportConfig, Network network, boolean debug, ReportNode reportNode) {
@@ -76,16 +76,16 @@ public class OpenReacAmplIOFiles implements AmplParameters {
 
         Set<String> variableTransformerIds = new HashSet<>(params.getVariableTwoWindingsTransformers());
         // Non-variable members (transformers the user excluded from optimisation) cannot be moved,
-        // so they are pinned to their current ratio inside the analysis: a group keeps every member,
+        // so they are pinned to their current ratio inside the analysis: a bundle keeps every member,
         // but a pinned member collapses the shared interval to a POINT or makes it EMPTY, never LARGE.
-        // A group with no optimisable member at all cannot be acted upon and is dropped.
-        List<ParallelTwoWindingsTransformersDetector.ParallelGroup> parallelGroups =
+        // A bundle with no optimisable member at all cannot be acted upon and is dropped.
+        List<ParallelTwoWindingsTransformersDetector.ParallelBundle> parallelBundles =
             ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network, variableTransformerIds).stream()
-                .filter(group -> group.transformerIds().stream().anyMatch(variableTransformerIds::contains))
+                .filter(bundle -> bundle.transformerIds().stream().anyMatch(variableTransformerIds::contains))
                 .toList();
-        this.parallelTwoWindingsTransformersGroups = new ParallelTwoWindingsTransformersGroups(parallelGroups);
-        this.fixedRatioTwoWindingsTransformers = new FixedRatioTwoWindingsTransformers(parallelGroups, network, variableTransformerIds);
-        Reports.reportParallelTwoWindingsTransformers(reportNode, parallelGroups, network, variableTransformerIds);
+        this.parallelTwoWindingsTransformersBundles = new ParallelTwoWindingsTransformersBundles(parallelBundles);
+        this.fixedRatioTwoWindingsTransformers = new FixedRatioTwoWindingsTransformers(parallelBundles, network, variableTransformerIds);
+        Reports.reportParallelTwoWindingsTransformers(reportNode, parallelBundles, network, variableTransformerIds);
 
         Reports.reportConstantQGeneratorsSize(reportNode, params.getConstantQGenerators().size());
         Reports.reportVariableTwoWindingsTransformersSize(reportNode, params.getVariableTwoWindingsTransformers().size());
@@ -108,7 +108,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
     public Collection<AmplInputFile> getInputParameters() {
         return List.of(constantQGenerators, variableShuntCompensators, variableTwoWindingsTransformers,
                 algorithmParams, voltageLimitsOverride, configuredReactiveSlackBuses,
-                parallelTwoWindingsTransformersGroups, fixedRatioTwoWindingsTransformers);
+                parallelTwoWindingsTransformersBundles, fixedRatioTwoWindingsTransformers);
     }
 
     @Override

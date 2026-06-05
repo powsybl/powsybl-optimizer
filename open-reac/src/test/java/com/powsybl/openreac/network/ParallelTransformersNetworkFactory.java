@@ -22,7 +22,7 @@ public final class ParallelTransformersNetworkFactory {
 
     /**
      * Two transformers in parallel between buses B1 (225 kV) and B2 (90 kV),
-     * both with overlapping rho ranges -> one LARGE group of size 2
+     * both with overlapping rho ranges -> one LARGE bundle of size 2
      */
     public static Network createSimpleParallel() {
         Network network = Network.create("simple-parallel", "test");
@@ -35,7 +35,7 @@ public final class ParallelTransformersNetworkFactory {
     }
 
     /**
-     * Three transformers between the same pair of buses -> one LARGE group of size 3
+     * Three transformers between the same pair of buses -> one LARGE bundle of size 3
      */
     public static Network createThreeParallel() {
         Network network = Network.create("three-parallel", "test");
@@ -51,7 +51,7 @@ public final class ParallelTransformersNetworkFactory {
     /**
      * Square A-B-C-D-A, with A and C at 225 kV and B and D at 90 kV
      * Each edge is a transformer 225/90 kV. No chord between A-C or B-D
-     * -> one LARGE group of size 4
+     * -> one LARGE bundle of size 4
      */
     public static Network createSquareCycle() {
         Network network = Network.create("square-cycle", "test");
@@ -68,12 +68,12 @@ public final class ParallelTransformersNetworkFactory {
     }
 
     /**
-     * Two transformers between B1-B2 (group 1) and two transformers between B2-B3 (group 2)
-     * Pure topological detection: groups are NOT merged because they don't share
+     * Two transformers between B1-B2 (bundle 1) and two transformers between B2-B3 (bundle 2)
+     * Pure topological detection: bundles are NOT merged because they don't share
      * a transformer — only a bus
      */
-    public static Network createTwoSeparateGroups() {
-        Network network = Network.create("two-separate-groups", "test");
+    public static Network createTwoSeparateBundles() {
+        Network network = Network.create("two-separate-bundles", "test");
         Substation s = network.newSubstation().setId("S").add();
         addBus(s, "VL1", 225.0, "B1");
         addBus(s, "VL2", 90.0, "B2");
@@ -87,7 +87,7 @@ public final class ParallelTransformersNetworkFactory {
 
     /**
      * Two transformers between same bus pair, but only one has a ratio tap changer
-     * -> no group (RTC filtering brings the count below 2)
+     * -> no bundle (RTC filtering brings the count below 2)
      */
     public static Network createOneRtcOneFixed() {
         Network network = Network.create("one-rtc-one-fixed", "test");

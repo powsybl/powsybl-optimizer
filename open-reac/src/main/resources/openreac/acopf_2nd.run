@@ -39,7 +39,7 @@ fix{(qq,m,n) in BRANCHCC_REGL_VAR} branch_Ror_var[qq,m,n];
 
 # Ratios are now fixed to their independently-rounded discrete values; a tie/fix
 # constraint could contradict that, so relax them for the post-rounding solve.
-drop ctr_parallel_group_ratio;
+drop ctr_parallel_bundle_ratio;
 drop ctr_fixed_ratio;
 
 # solves acopf with new transformer ratios

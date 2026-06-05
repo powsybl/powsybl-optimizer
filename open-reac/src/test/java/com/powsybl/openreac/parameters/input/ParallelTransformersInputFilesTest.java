@@ -13,7 +13,7 @@ import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.openreac.network.ParallelTransformersNetworkFactory;
 import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector;
-import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector.ParallelGroup;
+import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector.ParallelBundle;
 import org.junit.jupiter.api.Test;
 
 import java.io.BufferedWriter;
@@ -30,10 +30,10 @@ import static org.junit.jupiter.api.Assertions.*;
 class ParallelTransformersInputFilesTest {
 
     @Test
-    void parallelGroupsLargeOnly() throws IOException {
+    void parallelBundlesLargeOnly() throws IOException {
         Network network = ParallelTransformersNetworkFactory.createSimpleParallel();
-        List<ParallelGroup> groups = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network);
-        ParallelTwoWindingsTransformersGroups input = new ParallelTwoWindingsTransformersGroups(groups);
+        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network);
+        ParallelTwoWindingsTransformersBundles input = new ParallelTwoWindingsTransformersBundles(bundles);
         StringToIntMapper<AmplSubset> mapper = AmplUtil.createMapper(network);
 
         try (Writer w = new StringWriter();
@@ -42,9 +42,9 @@ class ParallelTransformersInputFilesTest {
             String data = w.toString();
             int t1 = mapper.getInt(AmplSubset.BRANCH, "T1");
             int t2 = mapper.getInt(AmplSubset.BRANCH, "T2");
-            // Both transformers have ranges [0.95, 1.05], so the group intersection is also [0.95, 1.05]
+            // Both transformers have ranges [0.95, 1.05], so the bundle intersection is also [0.95, 1.05]
             String ref = String.join(System.lineSeparator(),
-                "#num_group num_branch group_rho_min group_rho_max id",
+                "#num_bundle num_branch bundle_rho_min bundle_rho_max id",
                 "1 " + t1 + " 0.950000 1.050000 \"T1\"",
                 "1 " + t2 + " 0.950000 1.050000 \"T2\"") + System.lineSeparator() + System.lineSeparator();
             assertEquals(ref, data);
@@ -52,11 +52,11 @@ class ParallelTransformersInputFilesTest {
     }
 
     @Test
-    void parallelGroupsExcludesPointAndEmpty() throws IOException {
-        // POINT group -> should not appear in this file
+    void parallelBundlesExcludesPointAndEmpty() throws IOException {
+        // POINT bundle -> should not appear in this file
         Network network = ParallelTransformersNetworkFactory.createPointIntersection();
-        List<ParallelGroup> groups = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network);
-        ParallelTwoWindingsTransformersGroups input = new ParallelTwoWindingsTransformersGroups(groups);
+        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network);
+        ParallelTwoWindingsTransformersBundles input = new ParallelTwoWindingsTransformersBundles(bundles);
         StringToIntMapper<AmplSubset> mapper = AmplUtil.createMapper(network);
 
         try (Writer w = new StringWriter();
@@ -64,37 +64,37 @@ class ParallelTransformersInputFilesTest {
             input.write(writer, mapper);
             String data = w.toString();
             // Only the header and the trailing blank line — no data row
-            String ref = "#num_group num_branch group_rho_min group_rho_max id" + System.lineSeparator() + System.lineSeparator();
+            String ref = "#num_bundle num_branch bundle_rho_min bundle_rho_max id" + System.lineSeparator() + System.lineSeparator();
             assertEquals(ref, data);
         }
     }
 
     @Test
-    void parallelGroupsTwoSeparateGroups() throws IOException {
-        Network network = ParallelTransformersNetworkFactory.createTwoSeparateGroups();
-        List<ParallelGroup> groups = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network);
-        ParallelTwoWindingsTransformersGroups input = new ParallelTwoWindingsTransformersGroups(groups);
+    void parallelBundlesTwoSeparateBundles() throws IOException {
+        Network network = ParallelTransformersNetworkFactory.createTwoSeparateBundles();
+        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network);
+        ParallelTwoWindingsTransformersBundles input = new ParallelTwoWindingsTransformersBundles(bundles);
         StringToIntMapper<AmplSubset> mapper = AmplUtil.createMapper(network);
 
         try (Writer w = new StringWriter();
              BufferedWriter writer = new BufferedWriter(w)) {
             input.write(writer, mapper);
             String data = w.toString();
-            // 2 groups * 2 transfos = 4 data lines
-            assertTrue(data.startsWith("#num_group num_branch group_rho_min group_rho_max id"));
+            // 2 bundles * 2 transfos = 4 data lines
+            assertTrue(data.startsWith("#num_bundle num_branch bundle_rho_min bundle_rho_max id"));
             long dataLines = data.lines().filter(l -> !l.isBlank() && !l.startsWith("#")).count();
             assertEquals(4, dataLines);
-            // Each group index should appear on exactly two lines
+            // Each bundle index should appear on exactly two lines
             assertEquals(2, data.lines().filter(l -> l.startsWith("1 ")).count());
             assertEquals(2, data.lines().filter(l -> l.startsWith("2 ")).count());
         }
     }
 
     @Test
-    void fixedRatioForPointGroup() throws IOException {
+    void fixedRatioForPointBundle() throws IOException {
         Network network = ParallelTransformersNetworkFactory.createPointIntersection();
-        List<ParallelGroup> groups = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network);
-        FixedRatioTwoWindingsTransformers input = new FixedRatioTwoWindingsTransformers(groups, network);
+        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network);
+        FixedRatioTwoWindingsTransformers input = new FixedRatioTwoWindingsTransformers(bundles, network);
         StringToIntMapper<AmplSubset> mapper = AmplUtil.createMapper(network);
 
         try (Writer w = new StringWriter();
@@ -109,13 +109,13 @@ class ParallelTransformersInputFilesTest {
     }
 
     @Test
-    void fixedRatioForEmptyGroup() throws IOException {
+    void fixedRatioForEmptyBundle() throws IOException {
         // T1 in [0.95, 0.99], T2 in [1.01, 1.05]. Center of gap = 1.00
         // T1 (entirely below 1.00) snaps to rhoMax = 0.99
         // T2 (entirely above) snaps to rhoMin = 1.01
         Network network = ParallelTransformersNetworkFactory.createEmptyIntersection();
-        List<ParallelGroup> groups = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network);
-        FixedRatioTwoWindingsTransformers input = new FixedRatioTwoWindingsTransformers(groups, network);
+        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network);
+        FixedRatioTwoWindingsTransformers input = new FixedRatioTwoWindingsTransformers(bundles, network);
         StringToIntMapper<AmplSubset> mapper = AmplUtil.createMapper(network);
 
         try (Writer w = new StringWriter();
@@ -130,12 +130,12 @@ class ParallelTransformersInputFilesTest {
     }
 
     @Test
-    void fixedRatioForEmptyGroupWithStraddler() throws IOException {
-        // Center of gap = 1.00. T1 (below) → 0.99. T2 (above) → 1.01
-        // T3's domain [0.97, 1.03] contains 1.00 → fixed at 1.00, not at one of its bounds
+    void fixedRatioForEmptyBundleWithStraddler() throws IOException {
+        // Center of gap = 1.00. T1 (below) -> 0.99. T2 (above) -> 1.01
+        // T3's domain [0.97, 1.03] contains 1.00 -> fixed at 1.00, not at one of its bounds
         Network network = ParallelTransformersNetworkFactory.createEmptyIntersectionWithStraddler();
-        List<ParallelGroup> groups = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network);
-        FixedRatioTwoWindingsTransformers input = new FixedRatioTwoWindingsTransformers(groups, network);
+        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network);
+        FixedRatioTwoWindingsTransformers input = new FixedRatioTwoWindingsTransformers(bundles, network);
         StringToIntMapper<AmplSubset> mapper = AmplUtil.createMapper(network);
 
         try (Writer w = new StringWriter();
@@ -153,10 +153,10 @@ class ParallelTransformersInputFilesTest {
 
     @Test
     void fixedRatioEmptyForLargeOnly() throws IOException {
-        // Only LARGE groups present -> fixed ratio file should be empty (header only)
+        // Only LARGE bundles present -> fixed ratio file should be empty (header only)
         Network network = ParallelTransformersNetworkFactory.createSimpleParallel();
-        List<ParallelGroup> groups = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network);
-        FixedRatioTwoWindingsTransformers input = new FixedRatioTwoWindingsTransformers(groups, network);
+        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network);
+        FixedRatioTwoWindingsTransformers input = new FixedRatioTwoWindingsTransformers(bundles, network);
         StringToIntMapper<AmplSubset> mapper = AmplUtil.createMapper(network);
 
         try (Writer w = new StringWriter();

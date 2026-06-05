@@ -38,13 +38,13 @@ import java.util.stream.Collectors;
  *       in the {@code BusView}.</li>
  *   <li><b>Complex parallels</b>: 2WTs belonging to a chordless cycle of size
  *       3 or 4 inside a single substation, filtered by nominal voltage pair so
- *       that only transformers performing the same conversion are grouped
+ *       that only transformers performing the same conversion are bundled
  *       together. Connected components of the resulting per-voltage-pair
  *       subgraph yield the sets.</li>
  * </ol>
  *
  * <p>Only transformers carrying a ratio tap changer are returned. Detected
- * groups that share at least one transformer are merged transitively
+ * bundles that share at least one transformer are merged transitively
  * (if {@code A // B} and {@code B // C}, then {@code A // B // C}).
  *
  * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
@@ -56,12 +56,12 @@ public final class ParallelTwoWindingsTransformersDetector {
     public enum IntersectionStatus { LARGE, POINT, EMPTY }
 
     /**
-     * A detected group of parallel transformers, annotated with the intersection
+     * A detected bundle of parallel transformers, annotated with the intersection
      * status of their rho ranges. The (low, high) values are the raw intersection
      * bounds: max(rhoMin_i) and min(rhoMax_i). For LARGE: low < high. For POINT:
      * low ≈ high. For EMPTY: low > high.
      */
-    public record ParallelGroup(Set<String> transformerIds,
+    public record ParallelBundle(Set<String> transformerIds,
                                 IntersectionStatus status,
                                 double low,
                                 double high) { }
@@ -82,7 +82,7 @@ public final class ParallelTwoWindingsTransformersDetector {
     }
 
     /**
-     * @return groups of parallel ratio-tap-changer-bearing transformers,
+     * @return bundles of parallel ratio-tap-changer-bearing transformers,
      *         each as a set of transformer ids. Singletons are filtered out.
      */
     public static List<Set<String>> detect(Network network) {
@@ -108,24 +108,24 @@ public final class ParallelTwoWindingsTransformersDetector {
         // Merge overlapping sets transitively
         List<Set<String>> merged = mergeOverlappingSets(all);
 
-        // Deterministic ordering, mirroring the notebook (largest groups first), with a
-        // stable tie-break so the AMPL group numbering is reproducible across runs.
+        // Deterministic ordering, mirroring the notebook (largest bundles first), with a
+        // stable tie-break so the AMPL bundle numbering is reproducible across runs.
         merged.sort(Comparator
                 .comparingInt((Set<String> s) -> s.size()).reversed()
                 .thenComparing(s -> s.stream().min(Comparator.naturalOrder()).orElse("")));
         return merged;
     }
 
-    public static List<ParallelGroup> detectAndAnalyze(Network network) {
+    public static List<ParallelBundle> detectAndAnalyze(Network network) {
         // Backward-compatible: analyse assuming every detected transformer is optimisable.
         return detectAndAnalyze(network, null);
     }
 
-    public static List<ParallelGroup> detectAndAnalyze(Network network, Set<String> variableTransformerIds) {
-        List<Set<String>> rawGroups = detect(network);
-        List<ParallelGroup> result = new ArrayList<>(rawGroups.size());
-        for (Set<String> group : rawGroups) {
-            result.add(analyzeGroup(group, network, variableTransformerIds));
+    public static List<ParallelBundle> detectAndAnalyze(Network network, Set<String> variableTransformerIds) {
+        List<Set<String>> rawBundles = detect(network);
+        List<ParallelBundle> result = new ArrayList<>(rawBundles.size());
+        for (Set<String> bundle : rawBundles) {
+            result.add(analyzeBundle(bundle, network, variableTransformerIds));
         }
         return result;
     }
@@ -148,7 +148,7 @@ public final class ParallelTwoWindingsTransformersDetector {
     /**
      * @return the current rho of {@code twt} as a degenerate {@link RhoBounds} (min == max).
      *         Used to pin a transformer that cannot be moved by OpenReac (e.g. a non-variable
-     *         member of a group) to the single ratio it is frozen at: its current tap. This is
+     *         member of a bundle) to the single ratio it is frozen at: its current tap. This is
      *         exactly the value AMPL keeps for a fixed-ratio transformer (regl_tap0).
      */
     public static RhoBounds currentRhoBounds(TwoWindingsTransformer twt) {
@@ -159,16 +159,16 @@ public final class ParallelTwoWindingsTransformersDetector {
         return new RhoBounds(rho, rho);
     }
 
-    private static ParallelGroup analyzeGroup(Set<String> group, Network network, Set<String> variableTransformerIds) {
+    private static ParallelBundle analyzeBundle(Set<String> bundle, Network network, Set<String> variableTransformerIds) {
         double low = Double.NEGATIVE_INFINITY;
         double high = Double.POSITIVE_INFINITY;
-        for (String twtId : group) {
+        for (String twtId : bundle) {
             TwoWindingsTransformer twt = network.getTwoWindingsTransformer(twtId);
             // A non-variable member cannot be moved by OpenReac: it stays at its current tap.
-            // We therefore pin it to a single point (its current rho), so the group intersection
+            // We therefore pin it to a single point (its current rho), so the bundle intersection
             // must coincide with that value. A pinned member collapses the interval to a point
             // (POINT) or makes it empty (EMPTY), and can never yield LARGE — which is why a LARGE
-            // group is always made of optimisable members only.
+            // bundle is always made of optimisable members only.
             boolean variable = variableTransformerIds == null || variableTransformerIds.contains(twtId);
             RhoBounds bounds = variable ? rhoBounds(twt) : currentRhoBounds(twt);
             if (!bounds.isPresent()) {
@@ -185,7 +185,7 @@ public final class ParallelTwoWindingsTransformersDetector {
         } else {
             status = IntersectionStatus.LARGE;
         }
-        return new ParallelGroup(group, status, low, high);
+        return new ParallelBundle(bundle, status, low, high);
     }
 
     // ---- Step 1: simple parallels (same pair of BusView buses) ----
@@ -216,7 +216,7 @@ public final class ParallelTwoWindingsTransformersDetector {
         // Intra-substation lines take part in the graph as plain edges so they can close
         // cycles, exactly like the reference notebook (graph built from get_branches()).
         // Their ids are later dropped by the ratio-tap-changer filter in detect(), so a
-        // line never ends up inside a returned group; it only contributes connectivity.
+        // line never ends up inside a returned bundle; it only contributes connectivity.
         Map<String, List<Line>> intraSubstationLines = new HashMap<>();
         for (Line line : network.getLines()) {
             Substation s1 = line.getTerminal1().getVoltageLevel().getSubstation().orElse(null);
@@ -240,7 +240,7 @@ public final class ParallelTwoWindingsTransformersDetector {
     }
 
     private static void processCycle(IntraSubstationGraph graph, List<String> cycleNodes, List<Set<String>> result) {
-        // Edges of the cycle, grouped by their nominal voltage pair
+        // Edges of the cycle, bundled by their nominal voltage pair
         Map<NominalVoltagePair, List<EdgeKey>> edgesByVoltage = new HashMap<>();
         int n = cycleNodes.size();
         for (int i = 0; i < n; i++) {

@@ -247,44 +247,44 @@ public final class Reports {
     }
 
     public static void reportParallelTwoWindingsTransformers(ReportNode reportNode,
-                                                             List<ParallelTwoWindingsTransformersDetector.ParallelGroup> groups,
+                                                             List<ParallelTwoWindingsTransformersDetector.ParallelBundle> bundles,
                                                              Network network,
                                                              Set<String> variableTransformerIds) {
-        if (groups.isEmpty()) {
+        if (bundles.isEmpty()) {
             return;
         }
-        int totalTransformers = groups.stream().mapToInt(g -> g.transformerIds().size()).sum();
+        int totalTransformers = bundles.stream().mapToInt(g -> g.transformerIds().size()).sum();
         ReportNode root = reportNode.newReportNode()
                 .withMessageTemplate("optimizer.openreac.parallelTwoWindingsTransformers")
-                .withUntypedValue("groupsCount", groups.size())
+                .withUntypedValue("bundlesCount", bundles.size())
                 .withUntypedValue("transformersCount", totalTransformers)
                 .withSeverity(TypedValue.INFO_SEVERITY)
                 .add();
 
-        int groupIndex = 0;
-        for (var group : groups) {
-            TypedValue groupSeverity = switch (group.status()) {
+        int bundleIndex = 0;
+        for (var bundle : bundles) {
+            TypedValue bundleSeverity = switch (bundle.status()) {
                 case LARGE -> TypedValue.DETAIL_SEVERITY;
                 case POINT, EMPTY -> TypedValue.WARN_SEVERITY;
             };
 
-            String range = group.status() == ParallelTwoWindingsTransformersDetector.IntersectionStatus.EMPTY
+            String range = bundle.status() == ParallelTwoWindingsTransformersDetector.IntersectionStatus.EMPTY
                 ? "(no overlap)"
-                : "[" + VALUE_FORMAT_ACCURATE.format(group.low()) + ", " + VALUE_FORMAT_ACCURATE.format(group.high()) + "]";
+                : "[" + VALUE_FORMAT_ACCURATE.format(bundle.low()) + ", " + VALUE_FORMAT_ACCURATE.format(bundle.high()) + "]";
 
-            ReportNode groupNode = root.newReportNode()
-                    .withMessageTemplate("optimizer.openreac.parallelTwoWindingsTransformersGroup")
-                    .withUntypedValue("groupIndex", groupIndex++)
-                    .withUntypedValue("count", group.transformerIds().size())
-                    .withUntypedValue("intersectionStatus", group.status().name())
+            ReportNode bundleNode = root.newReportNode()
+                    .withMessageTemplate("optimizer.openreac.parallelTwoWindingsTransformersBundle")
+                    .withUntypedValue("bundleIndex", bundleIndex++)
+                    .withUntypedValue("count", bundle.transformerIds().size())
+                    .withUntypedValue("intersectionStatus", bundle.status().name())
                     .withUntypedValue("intersectionRange", range)
-                    .withSeverity(groupSeverity)
+                    .withSeverity(bundleSeverity)
                     .add();
 
-            group.transformerIds().stream().sorted().forEach(twtId -> {
+            bundle.transformerIds().stream().sorted().forEach(twtId -> {
                 RhoBounds bounds = ParallelTwoWindingsTransformersDetector.rhoBounds(network.getTwoWindingsTransformer(twtId));
                 String status = variableTransformerIds.contains(twtId) ? "VARIABLE" : "FIXED";
-                groupNode.newReportNode()
+                bundleNode.newReportNode()
                         .withMessageTemplate("optimizer.openreac.parallelTwoWindingsTransformerItem")
                         .withUntypedValue("transformerId", twtId)
                         .withUntypedValue("ratioStatus", status)

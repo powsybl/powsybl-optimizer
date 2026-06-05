@@ -11,7 +11,7 @@ import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector;
-import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector.ParallelGroup;
+import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector.ParallelBundle;
 import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector.RhoBounds;
 import com.powsybl.openreac.parameters.AmplIOUtils;
 
@@ -26,13 +26,13 @@ import java.util.Set;
 
 /**
  * Writes the transformers whose rho must be fixed in the optimization,
- * because they belong to a parallel group whose rho intersection is
+ * because they belong to a parallel bundle whose rho intersection is
  * degenerate (POINT or EMPTY).
  *
- * <p>For POINT groups, all transformers are fixed at the unique intersection
+ * <p>For POINT bundles, all transformers are fixed at the unique intersection
  * value (which equals max(rhoMin_i) = min(rhoMax_i) up to epsilon).
  *
- * <p>For EMPTY groups, each transformer is fixed at the bound of its own
+ * <p>For EMPTY bundles, each transformer is fixed at the bound of its own
  * domain closest to the center of the disjoint gap: at rhoMax_i if the
  * transformer's domain lies below the center, at rhoMin_i if it lies above.
  *
@@ -55,18 +55,18 @@ public class FixedRatioTwoWindingsTransformers implements AmplInputFile {
 
     private record FixedTransformer(String transformerId, double fixedRho) { }
 
-    public FixedRatioTwoWindingsTransformers(List<ParallelGroup> allGroups, Network network) {
-        this(allGroups, network, null);
+    public FixedRatioTwoWindingsTransformers(List<ParallelBundle> allBundles, Network network) {
+        this(allBundles, network, null);
     }
 
-    public FixedRatioTwoWindingsTransformers(List<ParallelGroup> allGroups, Network network, Set<String> variableTransformerIds) {
+    public FixedRatioTwoWindingsTransformers(List<ParallelBundle> allBundles, Network network, Set<String> variableTransformerIds) {
         this.fixedTransformers = new ArrayList<>();
-        for (ParallelGroup group : allGroups) {
-            switch (group.status()) {
-                case POINT -> addPointGroup(group, variableTransformerIds);
-                case EMPTY -> addEmptyGroup(group, network, variableTransformerIds);
+        for (ParallelBundle bundle : allBundles) {
+            switch (bundle.status()) {
+                case POINT -> addPointBundle(bundle, variableTransformerIds);
+                case EMPTY -> addEmptyBundle(bundle, network, variableTransformerIds);
                 case LARGE -> {
-                    // Not fixed — handled by ParallelTwoWindingsTransformersGroups.
+                    // Not fixed — handled by ParallelTwoWindingsTransformersBundles.
                 }
             }
         }
@@ -76,19 +76,19 @@ public class FixedRatioTwoWindingsTransformers implements AmplInputFile {
         return variableTransformerIds == null || variableTransformerIds.contains(twtId);
     }
 
-    private void addPointGroup(ParallelGroup group, Set<String> variableTransformerIds) {
+    private void addPointBundle(ParallelBundle bundle, Set<String> variableTransformerIds) {
         // For POINT: low ≈ high, the single shared value. Only optimisable members are written;
         // a non-variable member is already frozen by the model at this very value (its current
-        // tap), which is precisely what collapsed the group to a POINT.
-        double fixedRho = group.low();
-        for (String twtId : group.transformerIds()) {
+        // tap), which is precisely what collapsed the bundle to a POINT.
+        double fixedRho = bundle.low();
+        for (String twtId : bundle.transformerIds()) {
             if (isVariable(variableTransformerIds, twtId)) {
                 fixedTransformers.add(new FixedTransformer(twtId, fixedRho));
             }
         }
     }
 
-    private void addEmptyGroup(ParallelGroup group, Network network, Set<String> variableTransformerIds) {
+    private void addEmptyBundle(ParallelBundle bundle, Network network, Set<String> variableTransformerIds) {
         // For EMPTY: low > high. The center of the gap is (low + high) / 2
         // Each transformer is independently set as close to that center as its
         // own domain allows: clamp(center, rhoMin_i, rhoMax_i). Concretely:
@@ -96,9 +96,9 @@ public class FixedRatioTwoWindingsTransformers implements AmplInputFile {
         //   - if the domain lies entirely below the center, fix at rhoMax_i;
         //   - if the domain lies entirely above the center, fix at rhoMin_i.
         // Note that an EMPTY status only requires one pair of disjoint domains;
-        // other transformers in the group may well contain the center.
-        double center = (group.low() + group.high()) / 2.0;
-        for (String twtId : group.transformerIds()) {
+        // other transformers in the bundle may well contain the center.
+        double center = (bundle.low() + bundle.high()) / 2.0;
+        for (String twtId : bundle.transformerIds()) {
             if (!isVariable(variableTransformerIds, twtId)) {
                 continue; // non-variable: already frozen at its current tap, nothing to write
             }
