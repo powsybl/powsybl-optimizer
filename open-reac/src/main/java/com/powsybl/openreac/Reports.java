@@ -261,7 +261,7 @@ public final class Reports {
                 .withSeverity(TypedValue.INFO_SEVERITY)
                 .add();
 
-        int bundleIndex = 0;
+        int tiedBundleIndex = 0;
         for (var bundle : bundles) {
             TypedValue bundleSeverity = switch (bundle.status()) {
                 case LARGE -> TypedValue.DETAIL_SEVERITY;
@@ -272,9 +272,13 @@ public final class Reports {
                 ? "(no overlap)"
                 : "[" + VALUE_FORMAT_ACCURATE.format(bundle.low()) + ", " + VALUE_FORMAT_ACCURATE.format(bundle.high()) + "]";
 
+            String bundleRef = bundle.status() == ParallelTwoWindingsTransformersDetector.IntersectionStatus.LARGE
+                ? "#" + (++tiedBundleIndex)   // == num_bundle AMPL
+                : "(fixed)";
+
             ReportNode bundleNode = root.newReportNode()
                     .withMessageTemplate("optimizer.openreac.parallelTwoWindingsTransformersBundle")
-                    .withUntypedValue("bundleIndex", bundleIndex++)
+                    .withUntypedValue("bundleRef", bundleRef)   // <-- au lieu de bundleIndex++
                     .withUntypedValue("count", bundle.transformerIds().size())
                     .withUntypedValue("intersectionStatus", bundle.status().name())
                     .withUntypedValue("intersectionRange", range)
