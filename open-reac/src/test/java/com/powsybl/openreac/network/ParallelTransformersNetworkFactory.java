@@ -49,6 +49,24 @@ public final class ParallelTransformersNetworkFactory {
     }
 
     /**
+     * Triangle A-B-C inside one substation. T1 (A 225 kV - C 90 kV) and T2 (B 225 kV - C 90 kV)
+     * are both 225/90 transformers sharing bus C; the cycle is closed by a 225 kV line A-B.
+     * The complex (chordless-cycle) detection must bundle T1 and T2, while the line — a different
+     * nominal voltage pair, and not a ratio tap changer — is filtered out.
+     */
+    public static Network createTriangleCycle() {
+        Network network = Network.create("triangle-cycle", "test");
+        Substation s = network.newSubstation().setId("S").add();
+        addBus(s, "VL_A", 225.0, "A");
+        addBus(s, "VL_B", 225.0, "B");
+        addBus(s, "VL_C", 90.0, "C");
+        addRtcTransformer(s, "T1", "VL_A", "A", "VL_C", "C", 225.0, 90.0, 0.95, 1.05);
+        addRtcTransformer(s, "T2", "VL_B", "B", "VL_C", "C", 225.0, 90.0, 0.95, 1.05);
+        addLine(network, "L_AB", "VL_A", "A", "VL_B", "B");
+        return network;
+    }
+
+    /**
      * Square A-B-C-D-A, with A and C at 225 kV and B and D at 90 kV
      * Each edge is a transformer 225/90 kV. No chord between A-C or B-D
      * -> one LARGE bundle of size 4
@@ -162,6 +180,16 @@ public final class ParallelTransformersNetworkFactory {
                 .setTopologyKind(TopologyKind.BUS_BREAKER)
                 .add();
         vl.getBusBreakerView().newBus().setId(busId).add();
+    }
+
+    private static void addLine(Network network, String id,
+                                String vl1, String bus1, String vl2, String bus2) {
+        network.newLine()
+                .setId(id)
+                .setVoltageLevel1(vl1).setBus1(bus1).setConnectableBus1(bus1)
+                .setVoltageLevel2(vl2).setBus2(bus2).setConnectableBus2(bus2)
+                .setR(0.1).setX(1.0).setG1(0).setB1(0).setG2(0).setB2(0)
+                .add();
     }
 
     private static void addRtcTransformer(Substation s, String id,

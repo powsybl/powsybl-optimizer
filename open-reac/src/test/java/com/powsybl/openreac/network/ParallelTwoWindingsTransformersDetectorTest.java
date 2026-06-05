@@ -46,6 +46,14 @@ class ParallelTwoWindingsTransformersDetectorTest {
     }
 
     @Test
+    void complexParallelOnTriangleCycle() {
+        Network network = ParallelTransformersNetworkFactory.createTriangleCycle();
+        List<Set<String>> bundles = ParallelTwoWindingsTransformersDetector.detect(network);
+        assertEquals(1, bundles.size());
+        assertEquals(Set.of("T1", "T2"), bundles.get(0));
+    }
+
+    @Test
     void complexParallelOnSquareCycle() {
         Network network = ParallelTransformersNetworkFactory.createSquareCycle();
         List<Set<String>> bundles = ParallelTwoWindingsTransformersDetector.detect(network);
