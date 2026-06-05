@@ -401,71 +401,83 @@ public final class ParallelTwoWindingsTransformersDetector {
          * neighbors of that node, we pick the smaller-rank as the second node.
          */
         List<List<String>> findChordlessCyclesUpToSize4() {
-            List<List<String>> cycles = new ArrayList<>();
             List<String> nodes = new ArrayList<>(adjacency.keySet());
             Collections.sort(nodes);
             Map<String, Integer> rank = new HashMap<>();
             for (int i = 0; i < nodes.size(); i++) {
                 rank.put(nodes.get(i), i);
             }
+            List<List<String>> cycles = new ArrayList<>();
+            collectTriangles(nodes, rank, cycles);
+            collectChordlessSquares(nodes, rank, cycles);
+            return cycles;
+        }
 
-            // Triangles: (a, b, c) with rank(a) < rank(b) < rank(c)
+        // Triangles are chordless by definition. Emitted once as (a, b, c) with rank(a) < rank(b) < rank(c).
+        private void collectTriangles(List<String> nodes, Map<String, Integer> rank, List<List<String>> cycles) {
             for (String a : nodes) {
                 int ra = rank.get(a);
                 for (String b : adjacency.get(a)) {
-                    if (rank.get(b) <= ra) {
-                        continue;
-                    }
-                    for (String c : adjacency.get(b)) {
-                        if (rank.get(c) <= rank.get(b)) {
-                            continue;
-                        }
-                        if (hasEdge(a, c)) {
-                            cycles.add(List.of(a, b, c));
-                        }
+                    if (rank.get(b) > ra) {
+                        collectTrianglesThrough(a, b, rank, cycles);
                     }
                 }
             }
+        }
 
-            // Squares chordless: cycle a-b-c-d-a with a = smallest rank, rank(b) < rank(d),
-            // and no chord a-c or b-d.
-            for (String a : nodes) {
-                int ra = rank.get(a);
-                List<String> nbrA = new ArrayList<>(adjacency.get(a));
-                Collections.sort(nbrA);
-                for (int i = 0; i < nbrA.size(); i++) {
-                    String b = nbrA.get(i);
-                    if (rank.get(b) <= ra) {
-                        continue;
-                    }
-                    for (int j = i + 1; j < nbrA.size(); j++) {
-                        String d = nbrA.get(j);
-                        if (rank.get(d) <= ra) {
-                            continue;
-                        }
-                        if (hasEdge(b, d)) {
-                            continue; // chord b-d
-                        }
-                        Set<String> nbrD = adjacency.get(d);
-                        for (String c : adjacency.get(b)) {
-                            if (rank.get(c) <= ra) {
-                                continue;
-                            }
-                            if (c.equals(a) || c.equals(d)) {
-                                continue;
-                            }
-                            if (!nbrD.contains(c)) {
-                                continue;
-                            }
-                            if (hasEdge(a, c)) {
-                                continue; // chord a-c
-                            }
-                            cycles.add(List.of(a, b, c, d));
-                        }
-                    }
+        private void collectTrianglesThrough(String a, String b, Map<String, Integer> rank, List<List<String>> cycles) {
+            int rb = rank.get(b);
+            for (String c : adjacency.get(b)) {
+                if (rank.get(c) > rb && hasEdge(a, c)) {
+                    cycles.add(List.of(a, b, c));
                 }
             }
-            return cycles;
+        }
+
+        // Chordless squares a-b-c-d-a: a has smallest rank, rank(b) < rank(d), no chord a-c or b-d.
+        // Emitted once as (a, b, c, d), a valid cycle walk.
+        private void collectChordlessSquares(List<String> nodes, Map<String, Integer> rank, List<List<String>> cycles) {
+            for (String a : nodes) {
+                collectSquaresAt(a, rank, cycles);
+            }
+        }
+
+        private void collectSquaresAt(String a, Map<String, Integer> rank, List<List<String>> cycles) {
+            int ra = rank.get(a);
+            List<String> higherNeighbors = sortedNeighborsAbove(a, ra, rank);
+            for (int i = 0; i < higherNeighbors.size(); i++) {
+                for (int j = i + 1; j < higherNeighbors.size(); j++) {
+                    collectSquare(a, ra, higherNeighbors.get(i), higherNeighbors.get(j), rank, cycles);
+                }
+            }
+        }
+
+        private void collectSquare(String a, int ra, String b, String d, Map<String, Integer> rank, List<List<String>> cycles) {
+            if (hasEdge(b, d)) {
+                return; // chord b-d: not chordless
+            }
+            Set<String> neighborsOfD = adjacency.get(d);
+            for (String c : adjacency.get(b)) {
+                boolean closesChordlessSquare = rank.get(c) > ra
+                        && !c.equals(a) && !c.equals(d)
+                        && neighborsOfD.contains(c)
+                        && !hasEdge(a, c); // no chord a-c
+                if (closesChordlessSquare) {
+                    cycles.add(List.of(a, b, c, d));
+                }
+            }
+        }
+
+        // Neighbors of {@code node} with rank strictly greater than {@code minRank}, sorted.
+        private List<String> sortedNeighborsAbove(String node, int minRank, Map<String, Integer> rank) {
+            List<String> result = new ArrayList<>();
+            for (String neighbor : adjacency.get(node)) {
+                if (rank.get(neighbor) > minRank) {
+                    result.add(neighbor);
+                }
+            }
+            Collections.sort(result);
+            return result;
         }
     }
 }
