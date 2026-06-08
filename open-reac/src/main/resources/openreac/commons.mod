@@ -221,14 +221,14 @@ set PARALLEL_BUNDLES_ALL := setof {(g,qq) in PARAM_PARALLEL_TRANSFORMERS} g;
 # component, ...), which the Java side cannot foresee; in that case the bundle is not tied
 # (defensive guard against a silent partial tie).
 set PARALLEL_BUNDLES := {g in PARALLEL_BUNDLES_ALL:
-    card({(gg,qq) in PARAM_PARALLEL_TRANSFORMERS: gg == g and qq not in BRANCHCC_REGL_VAR_NUM}) == 0};
+  card({(gg,qq) in PARAM_PARALLEL_TRANSFORMERS: gg == g and qq not in BRANCHCC_REGL_VAR_NUM}) == 0};
 set PARALLEL_BUNDLES_DROPPED := PARALLEL_BUNDLES_ALL diff PARALLEL_BUNDLES;
 
 set PARALLEL_BRANCHES := setof {(g,qq) in PARAM_PARALLEL_TRANSFORMERS: g in PARALLEL_BUNDLES} qq;
 param parallel_bundle_of{qq in PARALLEL_BRANCHES} := max {(g,qqq) in PARAM_PARALLEL_TRANSFORMERS: qqq == qq} g;
 
 # Shared-ratio bounds per bundle (constant per bundle in the file).
-param parallel_bundle_rho_min{g in PARALLEL_BUNDLES} := min {(gg,qq) in PARAM_PARALLEL_TRANSFORMERS: gg == g} param_parallel_transformers_rho_min[gg,qq];
+param parallel_bundle_rho_min{g in PARALLEL_BUNDLES} := max {(gg,qq) in PARAM_PARALLEL_TRANSFORMERS: gg == g} param_parallel_transformers_rho_min[gg,qq];
 param parallel_bundle_rho_max{g in PARALLEL_BUNDLES} := min {(gg,qq) in PARAM_PARALLEL_TRANSFORMERS: gg == g} param_parallel_transformers_rho_max[gg,qq];
 
 
