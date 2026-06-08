@@ -39,16 +39,19 @@ let {(v,n) in VSCCONVON} vscconv_qvar[v,n] := if abs(vscconv_targetQ[1,v,n]) < P
 let {(qq,m,n) in BRANCHCC_REGL_VAR} branch_Ror_var[qq,m,n] := branch_Ror[qq,m,n];
 let {g in PARALLEL_BUNDLES} bundle_Ror_var[g] := (parallel_bundle_rho_min[g] + parallel_bundle_rho_max[g]) / 2;
 for {g in PARALLEL_BUNDLES_DROPPED} {
-  printf{LOG_INFO} "Parallel bundle %i not tied: not all members are optimized variable-ratio transformers in this run\n", g;
-  for {(gg,qq) in PARAM_PARALLEL_TRANSFORMERS: gg == g} {
-    printf{LOG_DEBUG}
-      "  bundle %i branch %i: in_CC=%i znull=%i in_REGL=%i in_REGL_VAR=%i in_PARAM_VAR=%i\n",
-      g, qq,
-      card({(q,m,n) in BRANCHCC: q == qq}),
-      card({(q,m,n) in BRANCHZNULL: q == qq}),
-      card({(q,m,n) in BRANCHCC_REGL: q == qq}),
-      card({(q,m,n) in BRANCHCC_REGL_VAR: q == qq}),
-      (if qq in PARAM_TRANSFORMERS_RATIO_VARIABLE then 1 else 0);
+  printf{LOG_WARNING} "Parallel bundle %i not tied (released): at least one member is not an optimized variable-ratio transformer in this run\n", g;
+  for {(gg,qq) in PARAM_PARALLEL_TRANSFORMERS: gg == g and qq not in BRANCHCC_REGL_VAR_NUM} {
+    printf{LOG_WARNING}
+      "  released because of transformer %Q (%s)\n",
+      param_parallel_transformers_id[gg,qq],
+      (if card({(q,m,n) in BRANCHZNULL: q == qq}) > 0 then
+         "near-zero impedance (znull)"
+       else if card({(q,m,n) in BRANCHCC: q == qq}) == 0 then
+         "out of main connected component"
+       else if card({(q,m,n) in BRANCHCC_REGL: q == qq}) == 0 then
+         "not a regulating transformer in this run"
+       else
+         "fixed ratio (e.g. regl_min == regl_max, or side 2 opened)");
   }
 }
 
