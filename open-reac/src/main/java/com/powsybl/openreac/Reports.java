@@ -274,12 +274,12 @@ public final class Reports {
                 : "[" + VALUE_FORMAT_ACCURATE.format(bundle.low()) + ", " + VALUE_FORMAT_ACCURATE.format(bundle.high()) + "]";
 
             String bundleRef = bundle.status() == ParallelTwoWindingsTransformersDetector.IntersectionStatus.LARGE
-                ? "#" + (++tiedBundleIndex)   // == num_bundle AMPL
+                ? "#" + (++tiedBundleIndex)
                 : "(fixed)";
 
             ReportNode bundleNode = root.newReportNode()
                     .withMessageTemplate("optimizer.openreac.parallelTwoWindingsTransformersBundle")
-                    .withUntypedValue("bundleRef", bundleRef)   // <-- au lieu de bundleIndex++
+                    .withUntypedValue("bundleRef", bundleRef)
                     .withUntypedValue("count", bundle.transformerIds().size())
                     .withUntypedValue("intersectionStatus", bundle.status().name())
                     .withUntypedValue("intersectionRange", range)
