@@ -265,7 +265,8 @@ public final class Reports {
         for (var bundle : bundles) {
             TypedValue bundleSeverity = switch (bundle.status()) {
                 case LARGE -> TypedValue.DETAIL_SEVERITY;
-                case POINT, EMPTY -> TypedValue.WARN_SEVERITY;
+                case POINT -> TypedValue.INFO_SEVERITY;
+                case EMPTY -> TypedValue.WARN_SEVERITY;
             };
 
             String range = bundle.status() == ParallelTwoWindingsTransformersDetector.IntersectionStatus.EMPTY
