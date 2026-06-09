@@ -65,7 +65,7 @@ The shared variable is bounded by the intersection of the members' ranges, $\bol
 
 Depending on this intersection, a bundle is handled in one of three ways:
 - **non-empty interval** ($\rho_B^{min} < \rho_B^{max}$): the ratios are tied through constraint $(7)$.
-- **single point** ($\rho_B^{min} \approx \rho_B^{max}$): the only feasible common ratio is fixed; every member is set to $\rho_B^{min}$.
+- **single point** ($\rho_B^{min} \approx \rho_B^{max}$): there is essentially one feasible common ratio. Each member $ij$ is fixed at $\frac{\rho_B^{min} + \rho_B^{max}}{2}$ clamped to its own range $[\rho_{ij}^{min}, \rho_{ij}^{max}]$ — the same rule as the empty case below. Since both bounds nearly coincide, this value is essentially the shared ratio $\rho_B^{min} \approx \rho_B^{max}$.
 - **empty interval** ($\rho_B^{min} > \rho_B^{max}$): the members' ranges are disjoint, which signals inconsistent input data. The optimizer falls back to a best-effort behavior, fixing each member as close as possible to the center of the gap $\frac{\rho_B^{min} + \rho_B^{max}}{2}$, clamped to its own range $[\rho_{ij}^{min}, \rho_{ij}^{max}]$.
 
 A bundle is tied through $(7)$ only if **all** its members are optimized variable-ratio transformers (specified in `param_transformers.txt`, see [Configuration of the run](inputs.md#configuration-of-the-run)). A member that is not optimized is frozen at its current tap, which pins the shared ratio to that value and collapses the bundle to the single-point or empty case above. As a consequence, declaring only a subset of a parallel group as variable does not optimize that subset freely: those transformers are fixed at the common ratio, again to avoid circulating flows.

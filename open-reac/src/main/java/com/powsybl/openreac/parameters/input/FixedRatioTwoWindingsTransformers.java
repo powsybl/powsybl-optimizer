@@ -29,12 +29,14 @@ import java.util.Set;
  * because they belong to a parallel bundle whose rho intersection is
  * degenerate (POINT or EMPTY).
  *
- * <p>For POINT bundles, all transformers are fixed at the unique intersection
- * value (which equals max(rhoMin_i) = min(rhoMax_i) up to epsilon).
- *
- * <p>For EMPTY bundles, each transformer is fixed at the bound of its own
- * domain closest to the center of the disjoint gap: at rhoMax_i if the
- * transformer's domain lies below the center, at rhoMin_i if it lies above.
+ * <p>Both POINT and EMPTY bundles are handled the same way: each variable
+ * transformer is fixed at the value of its own domain closest to the center
+ * of the intersection bounds, i.e. {@code clamp(center, rhoMin_i, rhoMax_i)}.
+ * For a POINT bundle the center lies inside every member's range, so all
+ * members collapse to the single shared value; for an EMPTY bundle members
+ * snap to the bound of their own domain facing the gap. Clamping to each
+ * member's own range guarantees the fixed value is always feasible, even when
+ * the intersection is degenerate within {@code RHO_INTERSECTION_EPSILON}.
  *
  * <p>Format:
  * <pre>
@@ -63,10 +65,13 @@ public class FixedRatioTwoWindingsTransformers implements AmplInputFile {
         this.fixedTransformers = new ArrayList<>();
         for (ParallelBundle bundle : allBundles) {
             switch (bundle.status()) {
-                case POINT -> addPointBundle(bundle, variableTransformerIds);
-                case EMPTY -> addEmptyBundle(bundle, network, variableTransformerIds);
+                // POINT is the boundary of EMPTY: write both with the same per-member
+                // clamp, so the fixed value can never fall outside the member's own
+                // [rhoMin, rhoMax] (avoids an infeasible fix when the intersection is
+                // degenerate within RHO_INTERSECTION_EPSILON).
+                case POINT, EMPTY -> addFixedClampedToCenter(bundle, network, variableTransformerIds);
                 case LARGE -> {
-                    // Not fixed — handled by ParallelTwoWindingsTransformersBundles.
+                    // Tied — handled by ParallelTwoWindingsTransformersBundles.
                 }
             }
         }
@@ -76,27 +81,16 @@ public class FixedRatioTwoWindingsTransformers implements AmplInputFile {
         return variableTransformerIds == null || variableTransformerIds.contains(twtId);
     }
 
-    private void addPointBundle(ParallelBundle bundle, Set<String> variableTransformerIds) {
-        // For POINT: low ≈ high, the single shared value. Only optimisable members are written;
-        // a non-variable member is already frozen by the model at this very value (its current
-        // tap), which is precisely what collapsed the bundle to a POINT.
-        double fixedRho = bundle.low();
-        for (String twtId : bundle.transformerIds()) {
-            if (isVariable(variableTransformerIds, twtId)) {
-                fixedTransformers.add(new FixedTransformer(twtId, fixedRho));
-            }
-        }
-    }
-
-    private void addEmptyBundle(ParallelBundle bundle, Network network, Set<String> variableTransformerIds) {
-        // For EMPTY: low > high. The center of the gap is (low + high) / 2
-        // Each transformer is independently set as close to that center as its
-        // own domain allows: clamp(center, rhoMin_i, rhoMax_i). Concretely:
-        //   - if the center lies inside the transformer's domain, fix at center;
-        //   - if the domain lies entirely below the center, fix at rhoMax_i;
-        //   - if the domain lies entirely above the center, fix at rhoMin_i.
-        // Note that an EMPTY status only requires one pair of disjoint domains;
-        // other transformers in the bundle may well contain the center.
+    private void addFixedClampedToCenter(ParallelBundle bundle, Network network, Set<String> variableTransformerIds) {
+        // Degenerate intersection (POINT or EMPTY): fix each variable member as close
+        // to the gap center as its own [rhoMin, rhoMax] allows. For a true point the
+        // center lies in every member's range, so all members collapse to it.
+        // Concretely, clamp(center, rhoMin_i, rhoMax_i):
+        //   - center inside the member's domain -> fix at center;
+        //   - domain entirely below the center  -> fix at rhoMax_i;
+        //   - domain entirely above the center  -> fix at rhoMin_i.
+        // (An EMPTY status only needs one pair of disjoint domains; other members
+        // may well contain the center.)
         double center = (bundle.low() + bundle.high()) / 2.0;
         for (String twtId : bundle.transformerIds()) {
             if (!isVariable(variableTransformerIds, twtId)) {
