@@ -32,7 +32,7 @@ class ParallelTransformersInputFilesTest {
     @Test
     void parallelBundlesLargeOnly() throws IOException {
         Network network = ParallelTransformersNetworkFactory.createSimpleParallel();
-        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network);
+        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network, null);
         ParallelTwoWindingsTransformersBundles input = new ParallelTwoWindingsTransformersBundles(bundles);
         StringToIntMapper<AmplSubset> mapper = AmplUtil.createMapper(network);
 
@@ -55,7 +55,7 @@ class ParallelTransformersInputFilesTest {
     void parallelBundlesExcludesPointAndEmpty() throws IOException {
         // POINT bundle -> should not appear in this file
         Network network = ParallelTransformersNetworkFactory.createPointIntersection();
-        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network);
+        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network, null);
         ParallelTwoWindingsTransformersBundles input = new ParallelTwoWindingsTransformersBundles(bundles);
         StringToIntMapper<AmplSubset> mapper = AmplUtil.createMapper(network);
 
@@ -72,7 +72,7 @@ class ParallelTransformersInputFilesTest {
     @Test
     void parallelBundlesTwoSeparateBundles() throws IOException {
         Network network = ParallelTransformersNetworkFactory.createTwoSeparateBundles();
-        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network);
+        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network, null);
         ParallelTwoWindingsTransformersBundles input = new ParallelTwoWindingsTransformersBundles(bundles);
         StringToIntMapper<AmplSubset> mapper = AmplUtil.createMapper(network);
 
@@ -93,7 +93,7 @@ class ParallelTransformersInputFilesTest {
     @Test
     void fixedRatioForPointBundle() throws IOException {
         Network network = ParallelTransformersNetworkFactory.createPointIntersection();
-        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network);
+        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network, null);
         FixedRatioTwoWindingsTransformers input = new FixedRatioTwoWindingsTransformers(bundles, network);
         StringToIntMapper<AmplSubset> mapper = AmplUtil.createMapper(network);
 
@@ -114,7 +114,7 @@ class ParallelTransformersInputFilesTest {
         // T1 (entirely below 1.00) snaps to rhoMax = 0.99
         // T2 (entirely above) snaps to rhoMin = 1.01
         Network network = ParallelTransformersNetworkFactory.createEmptyIntersection();
-        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network);
+        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network, null);
         FixedRatioTwoWindingsTransformers input = new FixedRatioTwoWindingsTransformers(bundles, network);
         StringToIntMapper<AmplSubset> mapper = AmplUtil.createMapper(network);
 
@@ -134,7 +134,7 @@ class ParallelTransformersInputFilesTest {
         // Center of gap = 1.00. T1 (below) -> 0.99. T2 (above) -> 1.01
         // T3's domain [0.97, 1.03] contains 1.00 -> fixed at 1.00, not at one of its bounds
         Network network = ParallelTransformersNetworkFactory.createEmptyIntersectionWithStraddler();
-        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network);
+        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network, null);
         FixedRatioTwoWindingsTransformers input = new FixedRatioTwoWindingsTransformers(bundles, network);
         StringToIntMapper<AmplSubset> mapper = AmplUtil.createMapper(network);
 
@@ -155,7 +155,7 @@ class ParallelTransformersInputFilesTest {
     void fixedRatioEmptyForLargeOnly() throws IOException {
         // Only LARGE bundles present -> fixed ratio file should be empty (header only)
         Network network = ParallelTransformersNetworkFactory.createSimpleParallel();
-        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network);
+        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network, null);
         FixedRatioTwoWindingsTransformers input = new FixedRatioTwoWindingsTransformers(bundles, network);
         StringToIntMapper<AmplSubset> mapper = AmplUtil.createMapper(network);
 

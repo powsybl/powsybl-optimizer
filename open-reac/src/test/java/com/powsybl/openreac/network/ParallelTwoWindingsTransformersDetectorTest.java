@@ -82,7 +82,7 @@ class ParallelTwoWindingsTransformersDetectorTest {
     @Test
     void analyzeLargeIntersection() {
         Network network = ParallelTransformersNetworkFactory.createSimpleParallel();
-        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network);
+        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network, null);
         assertEquals(1, bundles.size());
         ParallelBundle g = bundles.get(0);
         assertEquals(IntersectionStatus.LARGE, g.status());
@@ -93,7 +93,7 @@ class ParallelTwoWindingsTransformersDetectorTest {
     @Test
     void analyzePointIntersection() {
         Network network = ParallelTransformersNetworkFactory.createPointIntersection();
-        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network);
+        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network, null);
         assertEquals(1, bundles.size());
         ParallelBundle g = bundles.get(0);
         assertEquals(IntersectionStatus.POINT, g.status());
@@ -104,7 +104,7 @@ class ParallelTwoWindingsTransformersDetectorTest {
     @Test
     void analyzeEmptyIntersection() {
         Network network = ParallelTransformersNetworkFactory.createEmptyIntersection();
-        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network);
+        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network, null);
         assertEquals(1, bundles.size());
         ParallelBundle g = bundles.get(0);
         assertEquals(IntersectionStatus.EMPTY, g.status());

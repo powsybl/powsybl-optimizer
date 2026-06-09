@@ -55,7 +55,7 @@ public class FixedRatioTwoWindingsTransformers implements AmplInputFile {
 
     private record FixedTransformer(String transformerId, double fixedRho) { }
 
-    public FixedRatioTwoWindingsTransformers(List<ParallelBundle> allBundles, Network network) {
+    FixedRatioTwoWindingsTransformers(List<ParallelBundle> allBundles, Network network) {
         this(allBundles, network, null);
     }
 

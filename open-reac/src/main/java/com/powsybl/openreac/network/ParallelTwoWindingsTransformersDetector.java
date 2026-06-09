@@ -85,7 +85,7 @@ public final class ParallelTwoWindingsTransformersDetector {
      * @return bundles of parallel ratio-tap-changer-bearing transformers,
      *         each as a set of transformer ids. Singletons are filtered out.
      */
-    public static List<Set<String>> detect(Network network) {
+    static List<Set<String>> detect(Network network) {
         Set<String> ratioTapChangerIds = network.getTwoWindingsTransformerStream()
                 .filter(t -> t.getRatioTapChanger() != null)
                 .map(Identifiable::getId)
@@ -114,11 +114,6 @@ public final class ParallelTwoWindingsTransformersDetector {
                 .comparingInt((Set<String> s) -> s.size()).reversed()
                 .thenComparing(s -> s.stream().min(Comparator.naturalOrder()).orElse("")));
         return merged;
-    }
-
-    public static List<ParallelBundle> detectAndAnalyze(Network network) {
-        // Backward-compatible: analyse assuming every detected transformer is optimisable.
-        return detectAndAnalyze(network, null);
     }
 
     public static List<ParallelBundle> detectAndAnalyze(Network network, Set<String> variableTransformerIds) {
