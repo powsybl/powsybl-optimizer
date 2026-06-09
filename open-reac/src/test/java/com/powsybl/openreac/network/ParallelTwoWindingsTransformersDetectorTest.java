@@ -114,6 +114,37 @@ class ParallelTwoWindingsTransformersDetectorTest {
     }
 
     @Test
+    void analyzeHybridPointWhenMemberFrozen() {
+        // T1 optimisable, T2 not: T2 is pinned to its current tap (rho = 1.00, the mid step
+        // of [0.95, 1.05]). That single point collapses to POINT what would be a LARGE bundle
+        // if both were variable. Java-side equivalent of a member the optimiser cannot move
+        // (AMPL znull / non-REGL_VAR member): a frozen member forces the shared ratio to its value.
+        Network network = ParallelTransformersNetworkFactory.createSimpleParallel();
+        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network, Set.of("T1"));
+        assertEquals(1, bundles.size());
+        ParallelBundle g = bundles.get(0);
+        assertEquals(IntersectionStatus.POINT, g.status());
+        assertEquals(1.000, g.low(), 1e-6);
+        assertEquals(1.000, g.high(), 1e-6);
+    }
+
+    @Test
+    void analyzeHybridEmptyWhenFrozenMemberOutOfReach() {
+        // T1 optimisable in [0.95, 0.99]; T2 not optimisable, pinned at its current tap
+        // (rho = 1.03, the mid step of [1.01, 1.05]). The frozen point 1.03 sits above T1's
+        // whole domain -> disjoint -> EMPTY, with low = 1.03 (the pin) and high = 0.99.
+        // Differs from the all-variable EMPTY (low = 1.01): the pin uses T2's current tap,
+        // not its full range.
+        Network network = ParallelTransformersNetworkFactory.createEmptyIntersection();
+        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network, Set.of("T1"));
+        assertEquals(1, bundles.size());
+        ParallelBundle g = bundles.get(0);
+        assertEquals(IntersectionStatus.EMPTY, g.status());
+        assertEquals(1.03, g.low(), 1e-6);
+        assertEquals(0.99, g.high(), 1e-6);
+    }
+
+    @Test
     void mergeOverlappingSetsTransitive() {
         // Direct unit test of the merge utility
         List<Set<String>> input = List.of(

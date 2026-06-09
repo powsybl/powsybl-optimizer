@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -87,6 +88,24 @@ class ParallelTransformersInputFilesTest {
             // Each bundle index should appear on exactly two lines
             assertEquals(2, data.lines().filter(l -> l.startsWith("1 ")).count());
             assertEquals(2, data.lines().filter(l -> l.startsWith("2 ")).count());
+        }
+    }
+
+    @Test
+    void parallelBundlesEmptyWhenMemberFrozenCollapsesToPoint() throws IOException {
+        // Only T1 is optimisable; T2 frozen -> bundle collapses to POINT, hence absent from
+        // the parallel (LARGE) file.
+        Network network = ParallelTransformersNetworkFactory.createSimpleParallel();
+        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network, Set.of("T1"));
+        ParallelTwoWindingsTransformersBundles input = new ParallelTwoWindingsTransformersBundles(bundles);
+        StringToIntMapper<AmplSubset> mapper = AmplUtil.createMapper(network);
+
+        try (Writer w = new StringWriter();
+                BufferedWriter writer = new BufferedWriter(w)) {
+            input.write(writer, mapper);
+            String data = w.toString();
+            String ref = "#num_bundle num_branch bundle_rho_min bundle_rho_max id" + System.lineSeparator() + System.lineSeparator();
+            assertEquals(ref, data);
         }
     }
 
@@ -165,6 +184,48 @@ class ParallelTransformersInputFilesTest {
             String data = w.toString();
             String ref = "#num_branch fixed_rho id" + System.lineSeparator() + System.lineSeparator();
             assertEquals(ref, data);
+        }
+    }
+
+    @Test
+    void fixedRatioHybridPointWritesOnlyVariableMember() throws IOException {
+        // POINT collapse: only T1 (variable) is written, fixed at the frozen value 1.00.
+        // T2 (non-variable) is already frozen by the model and must not be written.
+        Network network = ParallelTransformersNetworkFactory.createSimpleParallel();
+        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network, Set.of("T1"));
+        FixedRatioTwoWindingsTransformers input = new FixedRatioTwoWindingsTransformers(bundles, network, Set.of("T1"));
+        StringToIntMapper<AmplSubset> mapper = AmplUtil.createMapper(network);
+
+        try (Writer w = new StringWriter();
+                BufferedWriter writer = new BufferedWriter(w)) {
+            input.write(writer, mapper);
+            String data = w.toString();
+            int t1 = mapper.getInt(AmplSubset.BRANCH, "T1");
+            assertTrue(data.contains(t1 + " 1.000000 \"T1\""), "T1 should be fixed at the frozen ratio 1.00");
+            assertFalse(data.contains("\"T2\""), "T2 is non-variable and must not be written");
+            long dataLines = data.lines().filter(l -> !l.isBlank() && !l.startsWith("#")).count();
+            assertEquals(1, dataLines);
+        }
+    }
+
+    @Test
+    void fixedRatioHybridEmptyWritesOnlyVariableMember() throws IOException {
+        // EMPTY driven by the frozen T2 (pinned at 1.03). Gap center = (1.03 + 0.99)/2 = 1.01.
+        // T1 (variable, [0.95, 0.99]) is clamped to its rhoMax = 0.99. T2 is not written.
+        Network network = ParallelTransformersNetworkFactory.createEmptyIntersection();
+        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network, Set.of("T1"));
+        FixedRatioTwoWindingsTransformers input = new FixedRatioTwoWindingsTransformers(bundles, network, Set.of("T1"));
+        StringToIntMapper<AmplSubset> mapper = AmplUtil.createMapper(network);
+
+        try (Writer w = new StringWriter();
+                BufferedWriter writer = new BufferedWriter(w)) {
+            input.write(writer, mapper);
+            String data = w.toString();
+            int t1 = mapper.getInt(AmplSubset.BRANCH, "T1");
+            assertTrue(data.contains(t1 + " 0.990000 \"T1\""), "T1 should be clamped to its rhoMax = 0.99");
+            assertFalse(data.contains("\"T2\""), "T2 is non-variable and must not be written");
+            long dataLines = data.lines().filter(l -> !l.isBlank() && !l.startsWith("#")).count();
+            assertEquals(1, dataLines);
         }
     }
 }
