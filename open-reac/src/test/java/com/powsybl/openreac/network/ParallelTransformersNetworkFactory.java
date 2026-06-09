@@ -161,6 +161,21 @@ public final class ParallelTransformersNetworkFactory {
     }
 
     /**
+     * Domains disjoint by less than RHO_INTERSECTION_EPSILON: classified POINT, but
+     * low (1.00005) > high (1.0000). The old code fixed every member at low, pushing
+     * T1 above its own rhoMax; the clamp keeps each member inside its range.
+     */
+    public static Network createNearlyTouchingDomains() {
+        Network network = Network.create("nearly-touching", "test");
+        Substation s = network.newSubstation().setId("S").add();
+        addBus(s, "VL1", 225.0, "B1");
+        addBus(s, "VL2", 90.0, "B2");
+        addRtcTransformer(s, "T1", "VL1", "B1", "VL2", "B2", 225.0, 90.0, 0.95, 1.00000);
+        addRtcTransformer(s, "T2", "VL1", "B1", "VL2", "B2", 225.0, 90.0, 1.00005, 1.05);
+        return network;
+    }
+
+    /**
      * No transformer at all -> empty result
      */
     public static Network createNoTransformer() {

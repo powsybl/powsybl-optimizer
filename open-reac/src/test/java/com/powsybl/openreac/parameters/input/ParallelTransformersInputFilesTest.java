@@ -228,4 +228,27 @@ class ParallelTransformersInputFilesTest {
             assertEquals(1, dataLines);
         }
     }
+
+    @Test
+    void fixedRatioPointWithinEpsilonStaysInEachDomain() throws IOException {
+        Network network = ParallelTransformersNetworkFactory.createNearlyTouchingDomains();
+        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network, null);
+        FixedRatioTwoWindingsTransformers input = new FixedRatioTwoWindingsTransformers(bundles, network);
+        StringToIntMapper<AmplSubset> mapper = AmplUtil.createMapper(network);
+
+        try (Writer w = new StringWriter();
+             BufferedWriter writer = new BufferedWriter(w)) {
+            input.write(writer, mapper);
+            String data = w.toString();
+            int t1 = mapper.getInt(AmplSubset.BRANCH, "T1");
+            int t2 = mapper.getInt(AmplSubset.BRANCH, "T2");
+            // center = (1.00005 + 1.0000)/2 = 1.000025
+            // T1 clamps to its rhoMax 1.000000 (never exceeds its own bound)
+            // T2 clamps to its rhoMin 1.000050
+            assertTrue(data.contains(t1 + " 1.000000 \"T1\""), "T1 must stay at its rhoMax");
+            assertTrue(data.contains(t2 + " 1.000050 \"T2\""), "T2 must stay at its rhoMin");
+            long dataLines = data.lines().filter(l -> !l.isBlank() && !l.startsWith("#")).count();
+            assertEquals(2, dataLines);
+        }
+    }
 }
