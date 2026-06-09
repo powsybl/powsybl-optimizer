@@ -60,6 +60,15 @@ All of these files share the same format: 2 columns #"num" "id".
 Once again, the user can directly execute the AMPL code without passing these parameters files as input. 
 If so, empty files will be created during execution.
 
+## Parallel transformers
+
+The optimizer automatically detects groups of transformers connected in parallel and generates two files consumed by the AMPL code (see [Parallel transformers](acOptimalPowerflow.md#parallel-transformers) for the resulting behavior). These files are derived from the detection and from the variable-ratio transformers of `param_transformers.txt`; they are not provided by the user. Unlike the parameter files above, they do not follow the `#"num" "id"` format:
+
+| File                                 | Format (columns)                                          | Description                                                                            |
+|--------------------------------------|-----------------------------------------------------------|----------------------------------------------------------------------------------------|
+| `param_parallel_transformers.txt`    | `#num_bundle num_branch bundle_rho_min bundle_rho_max id` | Transformers whose ratios are tied to one shared variable per bundle (`num_bundle`).   |
+| `param_fixed_ratio_transformers.txt` | `#num_branch fixed_rho id`                                | Transformers whose ratio is fixed (single-point or empty-intersection bundles).        |
+
 ## New voltage limits
 
 In addition to the elements specified in section [Configuration of the run](#configuration-of-the-run), the user may choose to override the voltage limits of specified voltage levels. These values must be defined in `ampl_network_substations_override.txt` and are employed to establish the new voltage limits as specified in section [Voltage level limit consistency](preprocessing.md#voltage-level-limit-consistency). 

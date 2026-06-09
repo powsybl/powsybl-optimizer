@@ -22,6 +22,7 @@ Please note that:
 - The transformation ratios $\boldsymbol{\rho_{ij}}$ and the shunt susceptances $\boldsymbol{b_{i,s}}$ are continuous in the optimization. 
 At the end, these variables may differ from the values associated with the discrete taps of the equipment (see [Network data](inputs.md#network-data)), and rounding may be necessary. 
 In the case of transformers, a second optimization can be carried out to adjust the voltage plan to the new transformation ratios after rounding (see [Solving](acOptimalPowerflow.md#solving)). 
+- Transformers connected in parallel are grouped and constrained to a common transformation ratio (see [Parallel transformers](#parallel-transformers)). 
 
 ## Constraints
 
@@ -51,6 +52,27 @@ Otherwise, all active powers evolve proportionally to their initial point $P_{i,
 $\boldsymbol{P_{i,g}} = P_{i,g}^t + \boldsymbol{\gamma} (P_{g}^{max,c} - P_{i,g}^t)$, where $\boldsymbol{\gamma}$ is optimized and lies in $[-1;1]$.
 - The reactive power $\boldsymbol{Q_{i,vsc}}$ produced by voltage source converter station $vsc$ is included in $[\min(qP_{vsc}, qp_{vsc}, qp_{vsc}^0)$; $\max(QP_{vsc}, Qp_{vsc}, Qp_{vsc}^0)]$.
 **The bounds are therefore rectangular, not trapezoidal.**
+
+## Parallel transformers
+
+Transformers connected in parallel (sharing the same pair of buses, or forming a closed loop of transformers inside a single substation) should keep the same transformation ratio: letting them diverge would create circulating reactive flows between the parallel branches. The optimizer therefore detects such groups (called *bundles*) automatically, and constrains each bundle to a single shared ratio.
+
+For a bundle $B$ whose members are all optimized variable-ratio transformers, all the ratios are tied to one shared variable $\boldsymbol{\rho_B}$:
+
+$$\boldsymbol{\rho_{ij}} = \boldsymbol{\rho_B}, \quad ij \in B \quad (7)$$
+
+The shared variable is bounded by the intersection of the members' ranges, $\boldsymbol{\rho_B} \in [\rho_B^{min}, \rho_B^{max}]$ with $\rho_B^{min} = \max\limits_{ij \in B} \rho_{ij}^{min}$ and $\rho_B^{max} = \min\limits_{ij \in B} \rho_{ij}^{max}$.
+
+Depending on this intersection, a bundle is handled in one of three ways:
+- **non-empty interval** ($\rho_B^{min} < \rho_B^{max}$): the ratios are tied through constraint $(7)$.
+- **single point** ($\rho_B^{min} \approx \rho_B^{max}$): the only feasible common ratio is fixed; every member is set to $\rho_B^{min}$.
+- **empty interval** ($\rho_B^{min} > \rho_B^{max}$): the members' ranges are disjoint, which signals inconsistent input data. The optimizer falls back to a best-effort behavior, fixing each member as close as possible to the center of the gap $\frac{\rho_B^{min} + \rho_B^{max}}{2}$, clamped to its own range $[\rho_{ij}^{min}, \rho_{ij}^{max}]$.
+
+A bundle is tied through $(7)$ only if **all** its members are optimized variable-ratio transformers (specified in `param_transformers.txt`, see [Configuration of the run](inputs.md#configuration-of-the-run)). A member that is not optimized is frozen at its current tap, which pins the shared ratio to that value and collapses the bundle to the single-point or empty case above. As a consequence, declaring only a subset of a parallel group as variable does not optimize that subset freely: those transformers are fixed at the common ratio, again to avoid circulating flows.
+
+This grouping interacts with the second optimization after tap rounding (see [Solving](#solving)): constraint $(7)$ is released before rounding, so each transformer is rounded to the nearest tap of its own table independently. Members of a bundle may therefore end up on different discrete taps if their tap tables differ; the shared ratio is guaranteed only for the continuous solving.
+
+Finally, if at solve time a member of a tied bundle turns out not to be an optimized variable-ratio branch — for instance because it lies outside the main connex component, or has a near-zero impedance — the whole bundle is released: its members are optimized independently for that run, and the event is logged.
 
 ## Objective function
 
