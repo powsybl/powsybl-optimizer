@@ -7,11 +7,16 @@
  */
 package com.powsybl.openreac.network;
 
+import com.powsybl.ampl.converter.AmplExportConfig;
+import com.powsybl.ampl.converter.AmplNetworkWriter;
+import com.powsybl.commons.datasource.MemDataSource;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector.IntersectionStatus;
 import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector.ParallelBundle;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
 
@@ -156,5 +161,58 @@ class ParallelTwoWindingsTransformersDetectorTest {
         assertEquals(2, merged.size());
         assertTrue(merged.contains(Set.of("A", "B", "C")));
         assertTrue(merged.contains(Set.of("D", "E")));
+    }
+
+    @Test
+    void analyzeShiftedEffectiveIntersection() {
+        // Identical raw tap domains [0.95, 1.05] but T2 carries cstRatio 225/222.75.
+        // The intersection must be computed in effective space: [0.95 * 225/222.75, 1.05].
+        // A raw-rho analysis would report [0.95, 1.05].
+        Network network = ParallelTransformersNetworkFactory.createShiftedEffectiveIntersection();
+        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network, null);
+        assertEquals(1, bundles.size());
+        ParallelBundle g = bundles.get(0);
+        assertEquals(IntersectionStatus.LARGE, g.status());
+        assertEquals(0.95 * 225.0 / 222.75, g.low(), 1e-9);
+        assertEquals(1.05, g.high(), 1e-9);
+    }
+
+    @Test
+    void analyzeEmptyEffectiveIntersection() {
+        // Identical raw tap domains, but cstRatios 1 vs 1.125 push the effective domains
+        // apart: [0.95, 1.05] vs [1.06875, 1.18125] -> EMPTY. A raw-rho analysis would
+        // classify this bundle LARGE and tie it, enforcing a constant effective-ratio
+        // mismatch of 12.5% — exactly the circulating-flow situation to avoid.
+        Network network = ParallelTransformersNetworkFactory.createEmptyEffectiveIntersection();
+        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network, null);
+        assertEquals(1, bundles.size());
+        ParallelBundle g = bundles.get(0);
+        assertEquals(IntersectionStatus.EMPTY, g.status());
+        assertEquals(0.95 * 1.125, g.low(), 1e-9);
+        assertEquals(1.05, g.high(), 1e-9);
+    }
+
+    @Test
+    void cstRatioMatchesAmplExporterContract() throws IOException {
+        // cstRatio() duplicates the formula of the powsybl-core AMPL exporter
+        // ("cst ratio (pu)" column of ampl_network_branches.txt). This test locks the
+        // contract: if the exporter convention ever changes, this fails loudly instead
+        // of letting the bundle analysis silently diverge from the AMPL model.
+        Network network = ParallelTransformersNetworkFactory.createEmptyEffectiveIntersection();
+        MemDataSource dataSource = new MemDataSource();
+        new AmplNetworkWriter(network, dataSource,
+            new AmplExportConfig(AmplExportConfig.ExportScope.ALL, false, AmplExportConfig.ExportActionType.CURATIVE))
+            .write();
+        String branches = new String(dataSource.getData("_network_branches", "txt"), StandardCharsets.UTF_8);
+        for (String twtId : List.of("T1", "T2")) {
+            // Columns: variant num bus1 bus2 3wt sub.1 sub.2 r x g1 g2 b1 b2 "cst ratio (pu)" ...
+            String row = branches.lines()
+                .filter(l -> !l.startsWith("#") && l.contains("\"" + twtId + "\""))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("no exported row for " + twtId));
+            double expected = Double.parseDouble(row.trim().split("\\s+")[13]);
+            double actual = ParallelTwoWindingsTransformersDetector.cstRatio(network.getTwoWindingsTransformer(twtId));
+            assertEquals(expected, actual, 1e-9, "cstRatio(" + twtId + ") diverges from the AMPL exporter");
+        }
     }
 }

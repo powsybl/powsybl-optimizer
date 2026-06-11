@@ -251,4 +251,53 @@ class ParallelTransformersInputFilesTest {
             assertEquals(2, dataLines);
         }
     }
+
+    @Test
+    void parallelBundlesBoundsAreEffectiveRatios() throws IOException {
+        // T1 cstRatio = 1, T2 cstRatio = 225/222.75: identical raw domains [0.95, 1.05],
+        // but the written bounds must be the EFFECTIVE intersection [0.95 * 225/222.75, 1.05].
+        Network network = ParallelTransformersNetworkFactory.createShiftedEffectiveIntersection();
+        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network, null);
+        ParallelTwoWindingsTransformersBundles input = new ParallelTwoWindingsTransformersBundles(bundles);
+        StringToIntMapper<AmplSubset> mapper = AmplUtil.createMapper(network);
+
+        try (Writer w = new StringWriter();
+             BufferedWriter writer = new BufferedWriter(w)) {
+            input.write(writer, mapper);
+            String data = w.toString();
+            int t1 = mapper.getInt(AmplSubset.BRANCH, "T1");
+            int t2 = mapper.getInt(AmplSubset.BRANCH, "T2");
+            // 0.95 * 225 / 222.75 = 0.95959595... -> 0.959596
+            String ref = String.join(System.lineSeparator(),
+                "#num_bundle num_branch bundle_rho_min bundle_rho_max id",
+                "1 " + t1 + " 0.959596 1.050000 \"T1\"",
+                "1 " + t2 + " 0.959596 1.050000 \"T2\"") + System.lineSeparator() + System.lineSeparator();
+            assertEquals(ref, data);
+        }
+    }
+
+    @Test
+    void fixedRatioForEmptyEffectiveIntersection() throws IOException {
+        // Identical raw domains but cstRatios 1 vs 1.125: effective domains [0.95, 1.05]
+        // and [1.06875, 1.18125] are disjoint -> EMPTY. Each member is clamped to its own
+        // EFFECTIVE bound facing the gap center (1.059375): T1 at 1.05, T2 at 1.06875.
+        // A raw-rho pipeline would have classified this bundle LARGE and tied it instead.
+        Network network = ParallelTransformersNetworkFactory.createEmptyEffectiveIntersection();
+        List<ParallelBundle> bundles = ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network, null);
+        assertEquals(ParallelTwoWindingsTransformersDetector.IntersectionStatus.EMPTY, bundles.get(0).status());
+        FixedRatioTwoWindingsTransformers input = new FixedRatioTwoWindingsTransformers(bundles, network);
+        StringToIntMapper<AmplSubset> mapper = AmplUtil.createMapper(network);
+
+        try (Writer w = new StringWriter();
+             BufferedWriter writer = new BufferedWriter(w)) {
+            input.write(writer, mapper);
+            String data = w.toString();
+            int t1 = mapper.getInt(AmplSubset.BRANCH, "T1");
+            int t2 = mapper.getInt(AmplSubset.BRANCH, "T2");
+            assertTrue(data.contains(t1 + " 1.050000 \"T1\""), "T1 must be fixed at its effective max");
+            assertTrue(data.contains(t2 + " 1.068750 \"T2\""), "T2 must be fixed at its effective min");
+            long dataLines = data.lines().filter(l -> !l.isBlank() && !l.startsWith("#")).count();
+            assertEquals(2, dataLines);
+        }
+    }
 }

@@ -186,6 +186,41 @@ public final class ParallelTransformersNetworkFactory {
         return network;
     }
 
+    /**
+     * Two parallel transformers with identical raw tap domains [0.95, 1.05] but a mildly
+     * different rated voltage on side 1: T1 has cstRatio 1, T2 has cstRatio 225/222.75 ≈ 1.0101.
+     * Effective domains: T1 [0.95, 1.05], T2 [0.959596, 1.060606] -> LARGE with the
+     * intersection [0.959596, 1.05] in effective space. A raw-rho analysis would wrongly
+     * report [0.95, 1.05].
+     */
+    public static Network createShiftedEffectiveIntersection() {
+        Network network = Network.create("shifted-effective", "test");
+        Substation s = network.newSubstation().setId("S").add();
+        addBus(s, "VL1", 225.0, "B1");
+        addBus(s, "VL2", 90.0, "B2");
+        addRtcTransformer(s, "T1", "VL1", "B1", "VL2", "B2", 225.0, 90.0, 0.95, 1.05);
+        addRtcTransformer(s, "T2", "VL1", "B1", "VL2", "B2", 222.75, 90.0, 0.95, 1.05);
+        return network;
+    }
+
+    /**
+     * Two parallel transformers with identical raw tap domains [0.95, 1.05] but strongly
+     * different rated voltages: T1 has cstRatio 1, T2 has cstRatio 225/200 = 1.125.
+     * Effective domains: T1 [0.95, 1.05], T2 [1.06875, 1.18125] -> disjoint, hence EMPTY.
+     * A raw-rho analysis would wrongly classify this bundle LARGE and tie it, enforcing a
+     * constant effective-ratio mismatch — the circulating-flow situation the feature exists
+     * to prevent.
+     */
+    public static Network createEmptyEffectiveIntersection() {
+        Network network = Network.create("empty-effective", "test");
+        Substation s = network.newSubstation().setId("S").add();
+        addBus(s, "VL1", 225.0, "B1");
+        addBus(s, "VL2", 90.0, "B2");
+        addRtcTransformer(s, "T1", "VL1", "B1", "VL2", "B2", 225.0, 90.0, 0.95, 1.05);
+        addRtcTransformer(s, "T2", "VL1", "B1", "VL2", "B2", 200.0, 90.0, 0.95, 1.05);
+        return network;
+    }
+
     // --- Helpers ---
 
     private static void addBus(Substation s, String vlId, double nominalV, String busId) {
