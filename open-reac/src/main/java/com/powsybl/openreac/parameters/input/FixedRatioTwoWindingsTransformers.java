@@ -92,7 +92,7 @@ public class FixedRatioTwoWindingsTransformers implements AmplInputFile {
         // (An EMPTY status only needs one pair of disjoint domains; other members
         // may well contain the center.)
         double center = (bundle.low() + bundle.high()) / 2.0;
-        for (String twtId : bundle.transformerIds()) {
+        for (String twtId : bundle.transformerIds().stream().sorted().toList()) {
             if (!isVariable(variableTransformerIds, twtId)) {
                 continue; // non-variable: already frozen at its current tap, nothing to write
             }
