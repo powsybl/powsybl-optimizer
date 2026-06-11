@@ -8,9 +8,11 @@
 package com.powsybl.openreac.network;
 
 import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.Battery;
 import com.powsybl.iidm.network.Substation;
 import com.powsybl.iidm.network.TopologyKind;
 import com.powsybl.iidm.network.VoltageLevel;
+import com.powsybl.iidm.network.extensions.VoltageRegulationAdder;
 
 /**
  * Minimal network with a single battery, used to exercise BatteryNetworkOutput parsing.
@@ -43,6 +45,21 @@ public final class BatteryNetworkFactory {
                 .setMaxP(100.0)
                 .setTargetP(10.0)
                 .setTargetQ(0.0)
+                .add();
+        return network;
+    }
+
+    /**
+     * Same network, with the battery carrying a VoltageRegulation extension
+     * (regulator on, local regulation, targetV = 400 kV).
+     */
+    public static Network createWithVoltageRegulationOn() {
+        Network network = create();
+        Battery battery = network.getBattery("BATTERY");
+        battery.newExtension(VoltageRegulationAdder.class)
+                .withVoltageRegulatorOn(true)
+                .withTargetV(400.0)
+                .withRegulatingTerminal(battery.getTerminal())
                 .add();
         return network;
     }
