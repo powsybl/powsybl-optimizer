@@ -71,7 +71,7 @@ equals the configurable parameter `ratio_voltage_target`).
 
 The objective function of the ACOPF is:
 
-$
+$$
 \begin{aligned}
 \text{minimize} \quad &
 10 \sum\limits_{i} (\boldsymbol{\sigma_{i}^{Q,+}} + \boldsymbol{\sigma_{i}^{Q,-}}) \\
@@ -80,7 +80,8 @@ $
 & + 0.1 \sum\limits_{g} \left(\frac{\boldsymbol{Q_{i,g}}}{\max(1,Q_{g}^{\text{min,c}}, Q_{g}^{\text{max,c}})}\right)^2
 + 0.1 \sum\limits_{b} \left(\frac{\boldsymbol{Q_{i,b}}}{\max(1,Q_{b}^{\text{min,c}}, Q_{b}^{\text{max,c}})}\right)^2 \\
 & + 0.1 \sum\limits_{ij} (\boldsymbol{\rho_{ij}} - \rho_{ij})^2
-$
+\end{aligned}
+$$
 
 
 where: 
