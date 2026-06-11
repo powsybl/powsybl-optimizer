@@ -26,19 +26,26 @@ import java.util.Set;
 
 /**
  * Writes the transformers whose rho must be fixed in the optimization,
- * because they belong to a parallel bundle whose rho intersection is
- * degenerate (POINT or EMPTY).
+ * because they belong to a parallel bundle whose effective-rho intersection
+ * is degenerate (POINT or EMPTY).
+ *
+ * <p>All values are expressed in <em>effective-ratio</em> space (tap rho
+ * scaled by the constant per-unit ratio of the transformer, see
+ * {@code ParallelTwoWindingsTransformersDetector#cstRatio}): this is the
+ * quantity whose mismatch drives circulating flows between parallel branches,
+ * and the AMPL constraint divides back by {@code branch_cstratio} implicitly
+ * by tying {@code branch_Ror_var * branch_cstratio} to the written value.
  *
  * <p>Both POINT and EMPTY bundles are handled the same way: each variable
- * transformer is fixed at the value of its own domain closest to the center
- * of the intersection bounds, i.e. {@code clamp(center, rhoMin_i, rhoMax_i)}.
+ * transformer is fixed at the value of its own effective domain closest to
+ * the center of the intersection bounds, i.e. {@code clamp(center, effMin_i, effMax_i)}.
  * For a POINT bundle the center lies inside every member's range, so all
  * members collapse to the single shared value; for an EMPTY bundle members
  * snap to the bound of their own domain facing the gap. Clamping to each
  * member's own range guarantees the fixed value is always feasible, even when
  * the intersection is degenerate within {@code RHO_INTERSECTION_EPSILON}.
  *
- * <p>Format:
+ * <p>Format (fixed_rho is an effective ratio):
  * <pre>
  * #num_branch fixed_rho
  * 142 1.0000
@@ -83,12 +90,14 @@ public class FixedRatioTwoWindingsTransformers implements AmplInputFile {
 
     private void addFixedClampedToCenter(ParallelBundle bundle, Network network, Set<String> variableTransformerIds) {
         // Degenerate intersection (POINT or EMPTY): fix each variable member as close
-        // to the gap center as its own [rhoMin, rhoMax] allows. For a true point the
-        // center lies in every member's range, so all members collapse to it.
-        // Concretely, clamp(center, rhoMin_i, rhoMax_i):
-        //   - center inside the member's domain -> fix at center;
-        //   - domain entirely below the center  -> fix at rhoMax_i;
-        //   - domain entirely above the center  -> fix at rhoMin_i.
+        // to the gap center as its own effective range allows. Everything here lives in
+        // effective-ratio space (tap rho * cst ratio, see Detector#cstRatio), the quantity
+        // whose mismatch drives circulating flows. For a true point the center lies in
+        // every member's effective range, so all members collapse to it.
+        // Concretely, clamp(center, effMin_i, effMax_i):
+        //   - center inside the member's effective domain -> fix at center;
+        //   - domain entirely below the center             -> fix at effMax_i;
+        //   - domain entirely above the center             -> fix at effMin_i.
         // (An EMPTY status only needs one pair of disjoint domains; other members
         // may well contain the center.)
         double center = (bundle.low() + bundle.high()) / 2.0;
@@ -96,7 +105,7 @@ public class FixedRatioTwoWindingsTransformers implements AmplInputFile {
             if (!isVariable(variableTransformerIds, twtId)) {
                 continue; // non-variable: already frozen at its current tap, nothing to write
             }
-            RhoBounds bounds = ParallelTwoWindingsTransformersDetector.rhoBounds(network.getTwoWindingsTransformer(twtId));
+            RhoBounds bounds = ParallelTwoWindingsTransformersDetector.effectiveRhoBounds(network.getTwoWindingsTransformer(twtId));
             if (!bounds.isPresent()) {
                 continue;
             }

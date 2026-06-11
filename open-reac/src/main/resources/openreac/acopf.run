@@ -38,6 +38,9 @@ let {(svc,n) in SVCON} svc_qvar[svc,n] := 0.1;
 let {(v,n) in VSCCONVON} vscconv_qvar[v,n] := if abs(vscconv_targetQ[1,v,n]) < PQmax then vscconv_targetQ[1,v,n] else 0;
 let {(qq,m,n) in BRANCHCC_REGL_VAR} branch_Ror_var[qq,m,n] := branch_Ror[qq,m,n];
 let {g in PARALLEL_BUNDLES} bundle_Ror_var[g] := (parallel_bundle_rho_min[g] + parallel_bundle_rho_max[g]) / 2;
+for {g in PARALLEL_BUNDLES_DEGENERATE} {
+  printf{LOG_WARNING} "Parallel bundle %i not tied (released): effective rho intersection is degenerate at AMPL data precision\n", g;
+}
 for {g in PARALLEL_BUNDLES_DROPPED} {
   printf{LOG_WARNING} "Parallel bundle %i not tied (released): at least one member is not an optimized variable-ratio transformer in this run\n", g;
   for {(gg,qq) in PARAM_PARALLEL_TRANSFORMERS: gg == g and qq not in BRANCHCC_REGL_VAR_NUM} {

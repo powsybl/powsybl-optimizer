@@ -287,7 +287,8 @@ public final class Reports {
                     .add();
 
             bundle.transformerIds().stream().sorted().forEach(twtId -> {
-                RhoBounds bounds = ParallelTwoWindingsTransformersDetector.rhoBounds(network.getTwoWindingsTransformer(twtId));
+                // Effective bounds, so member ranges remain comparable with the bundle intersection above.
+                RhoBounds bounds = ParallelTwoWindingsTransformersDetector.effectiveRhoBounds(network.getTwoWindingsTransformer(twtId));
                 String status = variableTransformerIds.contains(twtId) ? "VARIABLE" : "FIXED";
                 bundleNode.newReportNode()
                         .withMessageTemplate("optimizer.openreac.parallelTwoWindingsTransformerItem")

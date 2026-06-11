@@ -220,16 +220,34 @@ set PARALLEL_BUNDLES_ALL := setof {(g,qq) in PARAM_PARALLEL_TRANSFORMERS} g;
 # can be silently demoted to fixed by the model (zero impedance, out of the main connected
 # component, ...), which the Java side cannot foresee; in that case the bundle is not tied
 # (defensive guard against a silent partial tie).
-set PARALLEL_BUNDLES := {g in PARALLEL_BUNDLES_ALL:
+set PARALLEL_BUNDLES_GUARDED := {g in PARALLEL_BUNDLES_ALL:
   card({(gg,qq) in PARAM_PARALLEL_TRANSFORMERS: gg == g and qq not in BRANCHCC_REGL_VAR_NUM}) == 0};
-set PARALLEL_BUNDLES_DROPPED := PARALLEL_BUNDLES_ALL diff PARALLEL_BUNDLES;
+set PARALLEL_BUNDLES_DROPPED := PARALLEL_BUNDLES_ALL diff PARALLEL_BUNDLES_GUARDED;
+
+# Shared-ratio bounds per bundle, in EFFECTIVE-ratio space, recomputed here from AMPL's
+# own data (branch_cstratio and the tap tables) rather than read from the file. The
+# bundle_rho_min/bundle_rho_max columns of param_parallel_transformers.txt carry the same
+# intersection computed by Java in full double precision; they are kept as informative
+# values only. Reusing AMPL's own parameters guarantees that the bounds deduced on
+# branch_Ror_var through ctr_parallel_bundle_ratio simplify exactly back to its declared
+# [regl_ratio_min, regl_ratio_max] bounds, immune to the text-precision round-trip of
+# cstratio and tap ratios (which otherwise trips the solver presolve by a few 1e-6).
+param parallel_bundle_rho_min{g in PARALLEL_BUNDLES_GUARDED} :=
+  max {(gg,qq) in PARAM_PARALLEL_TRANSFORMERS, (qq2,m,n) in BRANCHCC_REGL_VAR: gg == g and qq2 == qq}
+    branch_cstratio[1,qq2,m,n] * regl_ratio_min[1,branch_ptrRegl[1,qq2,m,n]];
+param parallel_bundle_rho_max{g in PARALLEL_BUNDLES_GUARDED} :=
+  min {(gg,qq) in PARAM_PARALLEL_TRANSFORMERS, (qq2,m,n) in BRANCHCC_REGL_VAR: gg == g and qq2 == qq}
+    branch_cstratio[1,qq2,m,n] * regl_ratio_max[1,branch_ptrRegl[1,qq2,m,n]];
+
+# At AMPL data precision the effective intersection of a Java-classified LARGE bundle may
+# collapse (borderline POINT); such bundles are released rather than tied with degenerate
+# variable bounds.
+set PARALLEL_BUNDLES := {g in PARALLEL_BUNDLES_GUARDED:
+  parallel_bundle_rho_min[g] < parallel_bundle_rho_max[g]};
+set PARALLEL_BUNDLES_DEGENERATE := PARALLEL_BUNDLES_GUARDED diff PARALLEL_BUNDLES;
 
 set PARALLEL_BRANCHES := setof {(g,qq) in PARAM_PARALLEL_TRANSFORMERS: g in PARALLEL_BUNDLES} qq;
 param parallel_bundle_of{qq in PARALLEL_BRANCHES} := max {(g,qqq) in PARAM_PARALLEL_TRANSFORMERS: qqq == qq} g;
-
-# Shared-ratio bounds per bundle (constant per bundle in the file).
-param parallel_bundle_rho_min{g in PARALLEL_BUNDLES} := max {(gg,qq) in PARAM_PARALLEL_TRANSFORMERS: gg == g} param_parallel_transformers_rho_min[gg,qq];
-param parallel_bundle_rho_max{g in PARALLEL_BUNDLES} := min {(gg,qq) in PARAM_PARALLEL_TRANSFORMERS: gg == g} param_parallel_transformers_rho_max[gg,qq];
 
 
 ###############################################################################

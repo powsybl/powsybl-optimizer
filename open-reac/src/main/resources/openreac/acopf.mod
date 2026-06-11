@@ -103,8 +103,10 @@ var branch_Ror_var{(qq,m,n) in BRANCHCC_REGL_VAR}
   >= regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]],
   <= regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]];
 
-# Shared ratio variable for parallel transformer bundles: every variable member of a
-# tie-able bundle is forced to this single ratio (see ctr_parallel_bundle_ratio).
+# Shared ratio variable for parallel transformer bundles, in EFFECTIVE-ratio space
+# (tap rho * branch_cstratio): every variable member of a tie-able bundle is forced
+# to this single effective ratio (see ctr_parallel_bundle_ratio). The bounds read
+# from param_parallel_transformers.txt are effective as well.
 var bundle_Ror_var{g in PARALLEL_BUNDLES}
   >= parallel_bundle_rho_min[g],
   <= parallel_bundle_rho_max[g];
@@ -247,13 +249,24 @@ var target_voltage_ratio = sum{n in BUSCC: substation_Vnomi[1,bus_substation[1,n
 var target_voltage_data = sum{n in BUSVV} (V[n] - bus_V0[1,n])**2;
 
 
-# Parallel bundles: tie every variable member to its bundle's shared ratio.
+# Parallel bundles: tie every variable member to its bundle's shared EFFECTIVE ratio.
+# The flow equations use branch_Ror_var * branch_cstratio as the transformation ratio;
+# circulating flows between parallel branches are driven by mismatches of this effective
+# quantity, so this is what must be equalized. When all members share the same cstratio
+# (identical units), this reduces exactly to equal tap rhos.
 subject to ctr_parallel_bundle_ratio{PROBLEM_ACOPF, (qq,m,n) in BRANCHCC_REGL_VAR: qq in PARALLEL_BRANCHES}:
-  branch_Ror_var[qq,m,n] = bundle_Ror_var[parallel_bundle_of[qq]];
+  branch_Ror_var[qq,m,n] * branch_cstratio[1,qq,m,n] = bundle_Ror_var[parallel_bundle_of[qq]];
 
-# POINT/EMPTY bundles: pin each variable member to its target rho.
+# POINT/EMPTY bundles: pin each variable member to its target EFFECTIVE rho. The target
+# written by Java is re-clamped here into the member's own effective domain computed from
+# AMPL's data (cstratio * regl_ratio bounds): the value deduced for branch_Ror_var then
+# simplifies exactly back inside its declared bounds, immune to the text-precision
+# round-trip of cstratio and tap ratios between Java and AMPL.
 subject to ctr_fixed_ratio{PROBLEM_ACOPF, (qq,m,n) in BRANCHCC_REGL_VAR: qq in PARAM_FIXED_RATIO_TRANSFORMERS}:
-  branch_Ror_var[qq,m,n] = param_fixed_ratio_transformers_rho[qq];
+  branch_Ror_var[qq,m,n] * branch_cstratio[1,qq,m,n] =
+    max(branch_cstratio[1,qq,m,n] * regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]],
+    min(branch_cstratio[1,qq,m,n] * regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]],
+        param_fixed_ratio_transformers_rho[qq]));
 
 
 #

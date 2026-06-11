@@ -57,9 +57,11 @@ public final class ParallelTwoWindingsTransformersDetector {
 
     /**
      * A detected bundle of parallel transformers, annotated with the intersection
-     * status of their rho ranges. The (low, high) values are the raw intersection
-     * bounds: max(rhoMin_i) and min(rhoMax_i). For LARGE: low < high. For POINT:
-     * low ≈ high. For EMPTY: low > high.
+     * status of their <em>effective</em> rho ranges (tap rho scaled by the constant
+     * per-unit ratio, see {@link #cstRatio}). The (low, high) values are the raw
+     * intersection bounds in effective-ratio space: max(cst_i * rhoMin_i) and
+     * min(cst_i * rhoMax_i). For LARGE: low < high. For POINT: low ≈ high.
+     * For EMPTY: low > high.
      */
     public record ParallelBundle(Set<String> transformerIds,
                                 IntersectionStatus status,
@@ -154,18 +156,64 @@ public final class ParallelTwoWindingsTransformersDetector {
         return new RhoBounds(rho, rho);
     }
 
+    /**
+     * @return the constant (off-tap) per-unit ratio of {@code twt}, i.e. the value exported by
+     *         the AMPL converter in the "cst ratio (pu)" column of {@code ampl_network_branches.txt}:
+     *         {@code (ratedU2 / vnom2) / (ratedU1 / vnom1)}. In the ACOPF flow equations the
+     *         transformation ratio of a branch is {@code tapRho * cstRatio}; circulating flows
+     *         between parallel transformers are driven by mismatches of this <em>effective</em>
+     *         ratio, not of the raw tap rho. The bundle analysis is therefore carried out in
+     *         effective-ratio space (see {@link #effectiveRhoBounds}).
+     *         This formula must stay aligned with the powsybl-core AMPL exporter; the contract
+     *         is locked by a dedicated test against the exported branches file.
+     */
+    public static double cstRatio(TwoWindingsTransformer twt) {
+        double vnom1 = twt.getTerminal1().getVoltageLevel().getNominalV();
+        double vnom2 = twt.getTerminal2().getVoltageLevel().getNominalV();
+        return twt.getRatedU2() / vnom2 / (twt.getRatedU1() / vnom1);
+    }
+
+    /**
+     * @return {@link #rhoBounds} scaled to effective-ratio space, i.e. multiplied by
+     *         {@link #cstRatio}. Two parallel transformers see the same transformation
+     *         when their effective ratios coincide; when the constant ratios of the members
+     *         are equal (identical units), effective and raw spaces only differ by a common
+     *         positive factor and the analysis is unchanged.
+     */
+    public static RhoBounds effectiveRhoBounds(TwoWindingsTransformer twt) {
+        return scaleByCstRatio(rhoBounds(twt), twt);
+    }
+
+    /**
+     * @return {@link #currentRhoBounds} scaled to effective-ratio space (see {@link #effectiveRhoBounds}).
+     */
+    public static RhoBounds currentEffectiveRhoBounds(TwoWindingsTransformer twt) {
+        return scaleByCstRatio(currentRhoBounds(twt), twt);
+    }
+
+    private static RhoBounds scaleByCstRatio(RhoBounds raw, TwoWindingsTransformer twt) {
+        if (!raw.isPresent()) {
+            return raw;
+        }
+        // cstRatio is strictly positive (rated and nominal voltages are), so min/max order is preserved.
+        double c = cstRatio(twt);
+        return new RhoBounds(c * raw.min(), c * raw.max());
+    }
+
     private static ParallelBundle analyzeBundle(Set<String> bundle, Network network, Set<String> variableTransformerIds) {
         double low = Double.NEGATIVE_INFINITY;
         double high = Double.POSITIVE_INFINITY;
         for (String twtId : bundle) {
             TwoWindingsTransformer twt = network.getTwoWindingsTransformer(twtId);
-            // A non-variable member cannot be moved by OpenReac: it stays at its current tap.
-            // We therefore pin it to a single point (its current rho), so the bundle intersection
-            // must coincide with that value. A pinned member collapses the interval to a point
+            // The analysis is carried out in effective-ratio space (tap rho * cst ratio), the
+            // quantity that actually drives circulating flows; see cstRatio(). A non-variable
+            // member cannot be moved by OpenReac: it stays at its current tap. We therefore pin
+            // it to a single point (its current effective rho), so the bundle intersection must
+            // coincide with that value. A pinned member collapses the interval to a point
             // (POINT) or makes it empty (EMPTY), and can never yield LARGE — which is why a LARGE
             // bundle is always made of optimisable members only.
             boolean variable = variableTransformerIds == null || variableTransformerIds.contains(twtId);
-            RhoBounds bounds = variable ? rhoBounds(twt) : currentRhoBounds(twt);
+            RhoBounds bounds = variable ? effectiveRhoBounds(twt) : currentEffectiveRhoBounds(twt);
             if (!bounds.isPresent()) {
                 continue;
             }

@@ -30,8 +30,12 @@ import java.util.Locale;
  * {@link FixedRatioTwoWindingsTransformers} instead, since their transformers
  * must be fixed rather than tied.
  *
- * <p>Each row carries the bundle rho intersection bounds, which AMPL uses as
- * the bounds of the single shared rho variable for the bundle. The bounds are
+ * <p>Each row carries the bundle rho intersection bounds, expressed in
+ * <em>effective-ratio</em> space (tap rho scaled by the constant per-unit
+ * ratio of each member, see {@code ParallelTwoWindingsTransformersDetector#cstRatio}).
+ * AMPL uses them as the bounds of the single shared effective-rho variable for
+ * the bundle, and ties each member through
+ * {@code branch_Ror_var * branch_cstratio = bundle_Ror_var}. The bounds are
  * repeated on every row of the same bundle for read simplicity.
  *
  * <p>Format:

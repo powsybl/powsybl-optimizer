@@ -72,8 +72,13 @@ check {(t,qq,m,n) in BRANCH: qq in PARAM_TRANSFORMERS_RATIO_VARIABLE}: branch_id
 ###############################################################################
 # param_parallel_transformers.txt
 # Members of a LARGE parallel bundle: all branches sharing a num_bundle are tied to a
-# single shared ratio variable, bounded by [bundle_rho_min, bundle_rho_max] (the rho
-# intersection, repeated on every row). Indexed by (num_bundle, num_branch).
+# single shared ratio variable. All values are EFFECTIVE per-unit ratios, i.e.
+# tap rho * cst ratio (the "cst ratio (pu)" column of ampl_network_branches.txt);
+# the tie constraint multiplies branch_Ror_var by branch_cstratio accordingly.
+# The bundle_rho_min/bundle_rho_max columns are informative (Java's full-precision
+# intersection): the actual variable bounds are recomputed in commons.mod from AMPL's
+# own cstratio and tap-table data, for exact numerical consistency with the constraints.
+# Indexed by (num_bundle, num_branch).
 #"num_bundle" "num_branch" "bundle_rho_min" "bundle_rho_max" "id"
 set PARAM_PARALLEL_TRANSFORMERS  dimen 2 default {};
 param param_parallel_transformers_rho_min{PARAM_PARALLEL_TRANSFORMERS};
@@ -83,7 +88,9 @@ param param_parallel_transformers_id     {PARAM_PARALLEL_TRANSFORMERS} symbolic;
 # by the PARAM_TRANSFORMERS_RATIO_VARIABLE id check above.
 
 # param_fixed_ratio_transformers.txt
-# Members of POINT/EMPTY parallel bundles: each variable member is fixed to fixed_rho.
+# Members of POINT/EMPTY parallel bundles: each variable member is fixed to fixed_rho,
+# an EFFECTIVE per-unit ratio (tap rho * cst ratio); the constraint multiplies
+# branch_Ror_var by branch_cstratio accordingly.
 #"num_branch" "fixed_rho" "id"
 set PARAM_FIXED_RATIO_TRANSFORMERS  dimen 1 default {};
 param param_fixed_ratio_transformers_rho{PARAM_FIXED_RATIO_TRANSFORMERS};
