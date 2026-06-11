@@ -66,8 +66,8 @@ The optimizer automatically detects groups of transformers connected in parallel
 
 | File                                 | Format (columns)                                          | Description                                                                            |
 |--------------------------------------|-----------------------------------------------------------|----------------------------------------------------------------------------------------|
-| `param_parallel_transformers.txt`    | `#num_bundle num_branch bundle_rho_min bundle_rho_max id` | Transformers whose ratios are tied to one shared variable per bundle (`num_bundle`).   |
-| `param_fixed_ratio_transformers.txt` | `#num_branch fixed_rho id`                                | Transformers whose ratio is fixed (single-point or empty-intersection bundles).        |
+| `param_parallel_transformers.txt`    | `#num_bundle num_branch bundle_rho_min bundle_rho_max id` | Transformers whose effective ratios are tied to one shared variable per bundle (`num_bundle`). Bounds are effective per-unit ratios (tap rho times the constant ratio of the member), written for information: the variable bounds actually used are recomputed by the AMPL code from its own data, for exact numerical consistency with the constraints. |
+| `param_fixed_ratio_transformers.txt` | `#num_branch fixed_rho id`                                | Transformers whose effective ratio is fixed (single-point or empty-intersection bundles). `fixed_rho` is an effective per-unit ratio.        |
 
 ## New voltage limits
 
