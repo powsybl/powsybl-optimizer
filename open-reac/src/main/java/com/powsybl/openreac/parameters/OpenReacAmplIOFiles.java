@@ -15,6 +15,7 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.openreac.Reports;
 import com.powsybl.openreac.parameters.input.*;
 import com.powsybl.openreac.parameters.input.algo.AlgorithmInput;
+import com.powsybl.openreac.parameters.output.FixedParallelTransformersOutput;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput;
 import com.powsybl.openreac.parameters.output.VoltageProfileOutput;
@@ -53,7 +54,7 @@ public class OpenReacAmplIOFiles implements AmplParameters {
     private final String debugDir;
     private final AmplExportConfig amplExportConfig;
     private final ParallelTwoWindingsTransformersBundles parallelTwoWindingsTransformersBundles;
-    private final FixedRatioTwoWindingsTransformers fixedRatioTwoWindingsTransformers;
+    private final FixedParallelTransformersOutput fixedParallelTransformersOutput;
 
     public OpenReacAmplIOFiles(OpenReacParameters params, AmplExportConfig amplExportConfig, Network network, boolean debug, ReportNode reportNode) {
 
@@ -74,18 +75,16 @@ public class OpenReacAmplIOFiles implements AmplParameters {
         this.debug = debug;
         this.debugDir = params.getDebugDir();
 
-        Set<String> variableTransformerIds = new HashSet<>(params.getVariableTwoWindingsTransformers());
-        // Non-variable members (transformers the user excluded from optimisation) cannot be moved,
-        // so they are pinned to their current ratio inside the analysis: a bundle keeps every member,
-        // but a pinned member collapses the shared interval to a POINT or makes it EMPTY, never LARGE.
-        // A bundle with no optimisable member at all cannot be acted upon and is dropped.
-        List<ParallelTwoWindingsTransformersDetector.ParallelBundle> parallelBundles =
-            ParallelTwoWindingsTransformersDetector.detectAndAnalyze(network, variableTransformerIds).stream()
-                .filter(bundle -> bundle.transformerIds().stream().anyMatch(variableTransformerIds::contains))
-                .toList();
+        // Parallel transformer bundles are detected topologically here; ALL detected bundles are
+        // sent to AMPL as a plain membership relation (every member, no classification). The numeric
+        // qualification (tie / fix / release) and all bounds are derived in the AMPL model from its
+        // own data, so the classification and the constraints can never disagree. Transformers that
+        // AMPL ends up fixing (POINT/EMPTY bundles) are read back from fixedParallelTransformersOutput.
+        List<Set<String>> parallelBundles = ParallelTwoWindingsTransformersDetector.detect(network);
         this.parallelTwoWindingsTransformersBundles = new ParallelTwoWindingsTransformersBundles(parallelBundles);
-        this.fixedRatioTwoWindingsTransformers = new FixedRatioTwoWindingsTransformers(parallelBundles, network, variableTransformerIds);
-        Reports.reportParallelTwoWindingsTransformers(reportNode, parallelBundles, network, variableTransformerIds);
+        this.fixedParallelTransformersOutput = new FixedParallelTransformersOutput();
+        Set<String> variableTransformerIds = new HashSet<>(params.getVariableTwoWindingsTransformers());
+        Reports.reportParallelTwoWindingsTransformers(reportNode, parallelBundles, variableTransformerIds);
 
         Reports.reportConstantQGeneratorsSize(reportNode, params.getConstantQGenerators().size());
         Reports.reportVariableTwoWindingsTransformersSize(reportNode, params.getVariableTwoWindingsTransformers().size());
@@ -104,21 +103,26 @@ public class OpenReacAmplIOFiles implements AmplParameters {
         return voltageProfileOutput;
     }
 
+    public FixedParallelTransformersOutput getFixedParallelTransformersOutput() {
+        return fixedParallelTransformersOutput;
+    }
+
     @Override
     public Collection<AmplInputFile> getInputParameters() {
         return List.of(constantQGenerators, variableShuntCompensators, variableTwoWindingsTransformers,
                 algorithmParams, voltageLimitsOverride, configuredReactiveSlackBuses,
-                parallelTwoWindingsTransformersBundles, fixedRatioTwoWindingsTransformers);
+                parallelTwoWindingsTransformersBundles);
     }
 
     @Override
     public Collection<AmplOutputFile> getOutputParameters(boolean isConvergenceOk) {
         if (isConvergenceOk) {
             List<AmplOutputFile> networkModificationsOutputFiles = networkModifications.getOutputFiles();
-            List<AmplOutputFile> list = new ArrayList<>(networkModificationsOutputFiles.size() + 2);
+            List<AmplOutputFile> list = new ArrayList<>(networkModificationsOutputFiles.size() + 3);
             list.addAll(networkModificationsOutputFiles);
             list.add(reactiveSlackOutput);
             list.add(voltageProfileOutput);
+            list.add(fixedParallelTransformersOutput);
             return list;
         }
         return List.of();

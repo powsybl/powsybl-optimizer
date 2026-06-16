@@ -99,7 +99,6 @@ if operatingSystem == "linux" then {
   shell "if [ ! -f param_generators_reactive.txt ];         then touch param_generators_reactive.txt ;fi";
   shell "if [ ! -f param_transformers.txt ];                then touch param_transformers.txt ;fi";
   shell "if [ ! -f param_parallel_transformers.txt ];       then touch param_parallel_transformers.txt ;fi";
-  shell "if [ ! -f param_fixed_ratio_transformers.txt ];    then touch param_fixed_ratio_transformers.txt ;fi";
   shell "if [ ! -f param_buses_with_reactive_slack.txt ];   then touch param_buses_with_reactive_slack.txt ;fi";
   shell "if [ ! -f ampl_network_substations_override.txt ]; then touch ampl_network_substations_override.txt ;fi";
   shell "chmod a+rX . * 2>/dev/null";
@@ -110,7 +109,6 @@ if operatingSystem == "windows" then {
   shell "if not exist param_generators_reactive.txt         echo #empty > param_generators_reactive.txt";
   shell "if not exist param_transformers.txt                echo #empty > param_transformers.txt";
   shell "if not exist param_parallel_transformers.txt       echo #empty > param_parallel_transformers.txt";
-  shell "if not exist param_fixed_ratio_transformers.txt    echo #empty > param_fixed_ratio_transformers.txt";
   shell "if not exist param_buses_with_reactive_slack.txt   echo #empty > param_buses_with_reactive_slack.txt";
   shell "if not exist ampl_network_substations_override.txt echo #empty > ampl_network_substations_override.txt";
 }

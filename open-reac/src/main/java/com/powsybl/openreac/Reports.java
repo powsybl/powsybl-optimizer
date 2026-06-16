@@ -8,12 +8,9 @@ package com.powsybl.openreac;
 
 import com.powsybl.commons.report.ReportNode;
 import com.powsybl.commons.report.TypedValue;
-import com.powsybl.iidm.network.Network;
 import com.powsybl.openreac.parameters.input.VoltageLevelLimitInfo;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 import com.powsybl.openreac.parameters.output.network.ShuntCompensatorNetworkOutput;
-import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector;
-import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector.RhoBounds;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.text.DecimalFormat;
@@ -247,13 +244,12 @@ public final class Reports {
     }
 
     public static void reportParallelTwoWindingsTransformers(ReportNode reportNode,
-                                                             List<ParallelTwoWindingsTransformersDetector.ParallelBundle> bundles,
-                                                             Network network,
+                                                             List<Set<String>> bundles,
                                                              Set<String> variableTransformerIds) {
         if (bundles.isEmpty()) {
             return;
         }
-        int totalTransformers = bundles.stream().mapToInt(g -> g.transformerIds().size()).sum();
+        int totalTransformers = bundles.stream().mapToInt(Set::size).sum();
         ReportNode root = reportNode.newReportNode()
                 .withMessageTemplate("optimizer.openreac.parallelTwoWindingsTransformers")
                 .withUntypedValue("bundlesCount", bundles.size())
@@ -261,41 +257,26 @@ public final class Reports {
                 .withSeverity(TypedValue.INFO_SEVERITY)
                 .add();
 
-        int tiedBundleIndex = 0;
-        for (var bundle : bundles) {
-            TypedValue bundleSeverity = switch (bundle.status()) {
-                case LARGE -> TypedValue.DETAIL_SEVERITY;
-                case POINT -> TypedValue.INFO_SEVERITY;
-                case EMPTY -> TypedValue.WARN_SEVERITY;
-            };
-
-            String range = bundle.status() == ParallelTwoWindingsTransformersDetector.IntersectionStatus.EMPTY
-                ? "(no overlap)"
-                : "[" + VALUE_FORMAT_ACCURATE.format(bundle.low()) + ", " + VALUE_FORMAT_ACCURATE.format(bundle.high()) + "]";
-
-            String bundleRef = bundle.status() == ParallelTwoWindingsTransformersDetector.IntersectionStatus.LARGE
-                ? "#" + (++tiedBundleIndex)
-                : "(fixed)";
-
+        // Bundles are reported in detection order; the 1-based index matches both the
+        // membership written for AMPL and the num_bundle of the AMPL result files. Only the
+        // user-declared ratio status (variable / fixed) is shown here: whether a bundle is
+        // ultimately tied or fixed is decided in the AMPL model (see FixedParallelTransformersOutput).
+        int bundleIndex = 0;
+        for (Set<String> bundle : bundles) {
+            bundleIndex++;
             ReportNode bundleNode = root.newReportNode()
                     .withMessageTemplate("optimizer.openreac.parallelTwoWindingsTransformersBundle")
-                    .withUntypedValue("bundleRef", bundleRef)
-                    .withUntypedValue("count", bundle.transformerIds().size())
-                    .withUntypedValue("intersectionStatus", bundle.status().name())
-                    .withUntypedValue("intersectionRange", range)
-                    .withSeverity(bundleSeverity)
+                    .withUntypedValue("bundleRef", "#" + bundleIndex)
+                    .withUntypedValue("count", bundle.size())
+                    .withSeverity(TypedValue.DETAIL_SEVERITY)
                     .add();
 
-            bundle.transformerIds().stream().sorted().forEach(twtId -> {
-                // Effective bounds, so member ranges remain comparable with the bundle intersection above.
-                RhoBounds bounds = ParallelTwoWindingsTransformersDetector.effectiveRhoBounds(network.getTwoWindingsTransformer(twtId));
+            bundle.stream().sorted().forEach(twtId -> {
                 String status = variableTransformerIds.contains(twtId) ? "VARIABLE" : "FIXED";
                 bundleNode.newReportNode()
                         .withMessageTemplate("optimizer.openreac.parallelTwoWindingsTransformerItem")
                         .withUntypedValue("transformerId", twtId)
                         .withUntypedValue("ratioStatus", status)
-                        .withUntypedValue("rhoMin", bounds.isPresent() ? VALUE_FORMAT_ACCURATE.format(bounds.min()) : "N/A")
-                        .withUntypedValue("rhoMax", bounds.isPresent() ? VALUE_FORMAT_ACCURATE.format(bounds.max()) : "N/A")
                         .withSeverity(TypedValue.DETAIL_SEVERITY)
                         .add();
             });

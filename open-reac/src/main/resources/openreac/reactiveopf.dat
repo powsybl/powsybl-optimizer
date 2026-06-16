@@ -92,12 +92,8 @@ param: PARAM_UNIT_FIXQ: param_unit_fixq_id := include param_generators_reactive.
 param: PARAM_TRANSFORMERS_RATIO_VARIABLE: param_transformers_ratio_variable_id := include param_transformers.txt;
 
 # param_parallel_transformers.txt
-#"num_bundle" "num_branch" "bundle_rho_min" "bundle_rho_max" "id"
-param: PARAM_PARALLEL_TRANSFORMERS: param_parallel_transformers_rho_min param_parallel_transformers_rho_max param_parallel_transformers_id := include param_parallel_transformers.txt;
-
-# param_fixed_ratio_transformers.txt
-#"num_branch" "fixed_rho" "id"
-param: PARAM_FIXED_RATIO_TRANSFORMERS: param_fixed_ratio_transformers_rho param_fixed_ratio_transformers_id := include param_fixed_ratio_transformers.txt;
+#"num_bundle" "num_branch" "id"
+param: PARAM_PARALLEL_TRANSFORMERS: param_parallel_transformers_id := include param_parallel_transformers.txt;
 
 # param_buses_with_reactive_slack.txt
 #"num" "id"

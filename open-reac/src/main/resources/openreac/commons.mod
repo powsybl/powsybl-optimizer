@@ -211,43 +211,83 @@ set BRANCHCC_REGL_FIX := BRANCHCC_REGL diff BRANCHCC_REGL_VAR;
 ###############################################################################
 # Parallel transformer bundles (shared ratio)
 ###############################################################################
+# Bundles of parallel transformers are detected topologically on the Java side and passed
+# as a plain membership relation (num_bundle, num_branch). EVERYTHING numeric is derived
+# here, once, from AMPL's own data: the per-member effective rho bounds, the bundle
+# intersection, the LARGE / POINT / EMPTY qualification, the shared-ratio variable bounds
+# and the fixed targets. Having a single authority means the qualification and the
+# constraints can never disagree (no Java<->AMPL text round-trip on cstratio and tap ratios,
+# which used to trip the solver presolve by a few 1e-6).
+#
+# Everything lives in EFFECTIVE-ratio space: the ratio entering the flow equations is
+# branch_Ror_var * branch_cstratio, and circulating flows between parallel branches are
+# driven by mismatches of this effective quantity.
+
 # Branch nums the optimization can actually move this run.
 set BRANCHCC_REGL_VAR_NUM := setof {(qq,m,n) in BRANCHCC_REGL_VAR} qq;
 
 set PARALLEL_BUNDLES_ALL := setof {(g,qq) in PARAM_PARALLEL_TRANSFORMERS} g;
 
-# A bundle is tie-able only if EVERY member is a variable-ratio branch this run. A member
-# can be silently demoted to fixed by the model (zero impedance, out of the main connected
-# component, ...), which the Java side cannot foresee; in that case the bundle is not tied
-# (defensive guard against a silent partial tie).
+# Width below which an effective intersection is treated as degenerate (a single point, or
+# empty). Single source of truth, formerly the Java RHO_INTERSECTION_EPSILON.
+param parallel_rho_intersection_epsilon := 1e-4;
+
+# Effective rho bounds of a bundle = intersection of its members' effective ranges, taken
+# over the connected-component RTC branches (where branch_cstratio and the tap tables are
+# defined):
+#  - a user-variable member (its num is in PARAM_TRANSFORMERS_RATIO_VARIABLE) spans its full
+#    tap range [cstratio * regl_ratio_min, cstratio * regl_ratio_max];
+#  - a user-fixed member cannot be moved and is pinned to its current tap, i.e. the single
+#    point cstratio * tap_ratio(current tap) -- exactly the value AMPL otherwise freezes it at.
+# This reproduces the former Java analysis member by member. A member outside BRANCHCC_REGL
+# (near-zero impedance, out of the main component) contributes nothing here; such a member
+# necessarily fails the tie guard below, so its bundle is released regardless of these bounds.
+param parallel_bundle_rho_min{g in PARALLEL_BUNDLES_ALL} :=
+  max {(gg,qq) in PARAM_PARALLEL_TRANSFORMERS, (qq2,m,n) in BRANCHCC_REGL: gg == g and qq2 == qq}
+    branch_cstratio[1,qq2,m,n] *
+    (if qq2 in PARAM_TRANSFORMERS_RATIO_VARIABLE
+       then regl_ratio_min[1,branch_ptrRegl[1,qq2,m,n]]
+       else tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq2,m,n]],regl_tap0[1,branch_ptrRegl[1,qq2,m,n]]]);
+param parallel_bundle_rho_max{g in PARALLEL_BUNDLES_ALL} :=
+  min {(gg,qq) in PARAM_PARALLEL_TRANSFORMERS, (qq2,m,n) in BRANCHCC_REGL: gg == g and qq2 == qq}
+    branch_cstratio[1,qq2,m,n] *
+    (if qq2 in PARAM_TRANSFORMERS_RATIO_VARIABLE
+       then regl_ratio_max[1,branch_ptrRegl[1,qq2,m,n]]
+       else tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq2,m,n]],regl_tap0[1,branch_ptrRegl[1,qq2,m,n]]]);
+
+# LARGE: the effective intersection is wider than epsilon (a usable shared interval).
+# Otherwise the bundle is degenerate (POINT/EMPTY) and its members are fixed (see below).
+set PARALLEL_BUNDLES_LARGE := {g in PARALLEL_BUNDLES_ALL:
+  parallel_bundle_rho_max[g] - parallel_bundle_rho_min[g] > parallel_rho_intersection_epsilon};
+
+# A bundle is tie-able only if EVERY member is a variable-ratio branch this run. A member can
+# be silently demoted to fixed by the model (zero impedance, out of the main connected
+# component, single-tap table, side opened, ...), which the topological detection cannot
+# foresee; in that case the bundle is not tied (defensive guard against a silent partial tie).
 set PARALLEL_BUNDLES_GUARDED := {g in PARALLEL_BUNDLES_ALL:
   card({(gg,qq) in PARAM_PARALLEL_TRANSFORMERS: gg == g and qq not in BRANCHCC_REGL_VAR_NUM}) == 0};
-set PARALLEL_BUNDLES_DROPPED := PARALLEL_BUNDLES_ALL diff PARALLEL_BUNDLES_GUARDED;
 
-# Shared-ratio bounds per bundle, in EFFECTIVE-ratio space, recomputed here from AMPL's
-# own data (branch_cstratio and the tap tables) rather than read from the file. The
-# bundle_rho_min/bundle_rho_max columns of param_parallel_transformers.txt carry the same
-# intersection computed by Java in full double precision; they are kept as informative
-# values only. Reusing AMPL's own parameters guarantees that the bounds deduced on
-# branch_Ror_var through ctr_parallel_bundle_ratio simplify exactly back to its declared
-# [regl_ratio_min, regl_ratio_max] bounds, immune to the text-precision round-trip of
-# cstratio and tap ratios (which otherwise trips the solver presolve by a few 1e-6).
-param parallel_bundle_rho_min{g in PARALLEL_BUNDLES_GUARDED} :=
-  max {(gg,qq) in PARAM_PARALLEL_TRANSFORMERS, (qq2,m,n) in BRANCHCC_REGL_VAR: gg == g and qq2 == qq}
-    branch_cstratio[1,qq2,m,n] * regl_ratio_min[1,branch_ptrRegl[1,qq2,m,n]];
-param parallel_bundle_rho_max{g in PARALLEL_BUNDLES_GUARDED} :=
-  min {(gg,qq) in PARAM_PARALLEL_TRANSFORMERS, (qq2,m,n) in BRANCHCC_REGL_VAR: gg == g and qq2 == qq}
-    branch_cstratio[1,qq2,m,n] * regl_ratio_max[1,branch_ptrRegl[1,qq2,m,n]];
-
-# At AMPL data precision the effective intersection of a Java-classified LARGE bundle may
-# collapse (borderline POINT); such bundles are released rather than tied with degenerate
-# variable bounds.
-set PARALLEL_BUNDLES := {g in PARALLEL_BUNDLES_GUARDED:
-  parallel_bundle_rho_min[g] < parallel_bundle_rho_max[g]};
-set PARALLEL_BUNDLES_DEGENERATE := PARALLEL_BUNDLES_GUARDED diff PARALLEL_BUNDLES;
+# Tied bundles: a wide intersection and every member movable this run.
+set PARALLEL_BUNDLES := PARALLEL_BUNDLES_LARGE inter PARALLEL_BUNDLES_GUARDED;
+# Released bundles: a wide intersection would let us tie them, but a member cannot be moved
+# this run, so nothing is tied and the run optimizes them independently (logged in acopf.run).
+set PARALLEL_BUNDLES_DROPPED := PARALLEL_BUNDLES_LARGE diff PARALLEL_BUNDLES_GUARDED;
+# Degenerate bundles (POINT/EMPTY): their movable members are fixed, member by member, below.
+set PARALLEL_BUNDLES_FIXED := PARALLEL_BUNDLES_ALL diff PARALLEL_BUNDLES_LARGE;
 
 set PARALLEL_BRANCHES := setof {(g,qq) in PARAM_PARALLEL_TRANSFORMERS: g in PARALLEL_BUNDLES} qq;
 param parallel_bundle_of{qq in PARALLEL_BRANCHES} := max {(g,qqq) in PARAM_PARALLEL_TRANSFORMERS: qqq == qq} g;
+
+# Members of a degenerate bundle that are still movable this run: each is fixed to the gap
+# centre clamped into its own effective domain (see ctr_fixed_ratio in acopf.mod). User-fixed
+# members are already frozen at their current tap by the model and need no constraint.
+set PARALLEL_FIXED_BRANCHES := setof
+  {(g,qq) in PARAM_PARALLEL_TRANSFORMERS, (qq2,m,n) in BRANCHCC_REGL_VAR: g in PARALLEL_BUNDLES_FIXED and qq2 == qq} qq;
+param parallel_fixed_bundle_of{qq in PARALLEL_FIXED_BRANCHES} := max {(g,qqq) in PARAM_PARALLEL_TRANSFORMERS: qqq == qq} g;
+# Common target effective ratio of a degenerate bundle: the centre of its (point or empty)
+# intersection. ctr_fixed_ratio clamps it into each member's own effective range.
+param parallel_bundle_center{g in PARALLEL_BUNDLES_FIXED} :=
+  (parallel_bundle_rho_min[g] + parallel_bundle_rho_max[g]) / 2;
 
 
 ###############################################################################

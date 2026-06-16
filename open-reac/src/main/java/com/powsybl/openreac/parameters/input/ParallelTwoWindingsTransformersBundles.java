@@ -10,41 +10,32 @@ package com.powsybl.openreac.parameters.input;
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.commons.util.StringToIntMapper;
-import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector.IntersectionStatus;
-import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector.ParallelBundle;
 import com.powsybl.openreac.parameters.AmplIOUtils;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
+import java.util.Set;
 
 /**
- * Writes parallel transformer bundles whose rho intersection is LARGE — those
- * that can be tied under a single shared ratio variable in the optimization.
+ * Writes the topological membership of the detected parallel transformer bundles:
+ * every branch sharing a {@code num_bundle} is parallel to the others of that bundle.
  *
- * <p>POINT and EMPTY bundles are written by
- * {@link FixedRatioTwoWindingsTransformers} instead, since their transformers
- * must be fixed rather than tied.
- *
- * <p>Each row carries the bundle rho intersection bounds, expressed in
- * <em>effective-ratio</em> space (tap rho scaled by the constant per-unit
- * ratio of each member, see {@code ParallelTwoWindingsTransformersDetector#cstRatio}).
- * AMPL uses them as the bounds of the single shared effective-rho variable for
- * the bundle, and ties each member through
- * {@code branch_Ror_var * branch_cstratio = bundle_Ror_var}. The bounds are
- * repeated on every row of the same bundle for read simplicity.
+ * <p>This file carries the membership only. The numeric qualification of each bundle —
+ * the effective-rho intersection, the LARGE / POINT / EMPTY classification, the shared-ratio
+ * bounds and the fixed targets — is derived entirely in the AMPL model from its own data
+ * (see {@code commons.mod}), so that the classification and the constraints can never
+ * disagree. Bundles are written in the order produced by the detector, and the 1-based
+ * {@code num_bundle} index is reused as-is by AMPL.
  *
  * <p>Format:
  * <pre>
- * #num_bundle num_branch bundle_rho_min bundle_rho_max
- * 1 142 0.970000 1.030000
- * 1 287 0.970000 1.030000
- * 2 95 0.950000 1.020000
- * 2 96 0.950000 1.020000
+ * #num_bundle num_branch id
+ * 1 142 "T1"
+ * 1 287 "T2"
+ * 2 95 "T3"
+ * 2 96 "T4"
  * </pre>
  *
  * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
@@ -53,21 +44,16 @@ public class ParallelTwoWindingsTransformersBundles implements AmplInputFile {
 
     public static final String PARAM_PARALLEL_TRANSFORMERS_FILE_NAME = "param_parallel_transformers.txt";
 
-    private static final DecimalFormat RHO_FORMAT = new DecimalFormat("0.000000", DecimalFormatSymbols.getInstance(Locale.ROOT));
-
     private final List<TransformerInBundle> rows;
 
-    private record TransformerInBundle(int bundleIndex, String transformerId, double bundleRhoLow, double bundleRhoHigh) { }
+    private record TransformerInBundle(int bundleIndex, String transformerId) { }
 
-    public ParallelTwoWindingsTransformersBundles(List<ParallelBundle> allBundles) {
+    public ParallelTwoWindingsTransformersBundles(List<Set<String>> bundles) {
         this.rows = new ArrayList<>();
         int bundleIndex = 1;
-        for (ParallelBundle bundle : allBundles) {
-            if (bundle.status() != IntersectionStatus.LARGE) {
-                continue;
-            }
-            for (String transformerId : bundle.transformerIds().stream().sorted().toList()) {
-                rows.add(new TransformerInBundle(bundleIndex, transformerId, bundle.low(), bundle.high()));
+        for (Set<String> bundle : bundles) {
+            for (String transformerId : bundle.stream().sorted().toList()) {
+                rows.add(new TransformerInBundle(bundleIndex, transformerId));
             }
             bundleIndex++;
         }
@@ -80,13 +66,11 @@ public class ParallelTwoWindingsTransformersBundles implements AmplInputFile {
 
     @Override
     public void write(BufferedWriter writer, StringToIntMapper<AmplSubset> stringToIntMapper) throws IOException {
-        writer.write("#num_bundle num_branch bundle_rho_min bundle_rho_max id");
+        writer.write("#num_bundle num_branch id");
         writer.newLine();
         for (TransformerInBundle row : rows) {
             int amplBranchId = stringToIntMapper.getInt(AmplSubset.BRANCH, row.transformerId());
-            writer.write(row.bundleIndex() + " " + amplBranchId + " "
-                + RHO_FORMAT.format(row.bundleRhoLow()) + " " + RHO_FORMAT.format(row.bundleRhoHigh())
-                + " " + AmplIOUtils.addQuotes(row.transformerId()));
+            writer.write(row.bundleIndex() + " " + amplBranchId + " " + AmplIOUtils.addQuotes(row.transformerId()));
             writer.newLine();
         }
         writer.newLine();
