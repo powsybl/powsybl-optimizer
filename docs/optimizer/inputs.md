@@ -62,12 +62,11 @@ If so, empty files will be created during execution.
 
 ## Parallel transformers
 
-The optimizer automatically detects groups of transformers connected in parallel and generates two files consumed by the AMPL code (see [Parallel transformers](acOptimalPowerflow.md#parallel-transformers) for the resulting behavior). These files are derived from the detection and from the variable-ratio transformers of `param_transformers.txt`; they are not provided by the user. Unlike the parameter files above, they do not follow the `#"num" "id"` format:
+The optimizer automatically detects groups of transformers connected in parallel and generates a file consumed by the AMPL code (see [Parallel transformers](acOptimalPowerflow.md#parallel-transformers) for the resulting behavior). This file is derived from the detection only and is not provided by the user: it carries the topological membership of the bundles (every detected member), while the qualification (tie / fix / release) and all the effective-ratio bounds are computed by the AMPL code from its own data. Unlike the parameter files above, it does not follow the `#"num" "id"` format:
 
-| File                                 | Format (columns)                                          | Description                                                                            |
-|--------------------------------------|-----------------------------------------------------------|----------------------------------------------------------------------------------------|
-| `param_parallel_transformers.txt`    | `#num_bundle num_branch bundle_rho_min bundle_rho_max id` | Transformers whose effective ratios are tied to one shared variable per bundle (`num_bundle`). Bounds are effective per-unit ratios (tap rho times the constant ratio of the member), written for information: the variable bounds actually used are recomputed by the AMPL code from its own data, for exact numerical consistency with the constraints. |
-| `param_fixed_ratio_transformers.txt` | `#num_branch fixed_rho id`                                | Transformers whose effective ratio is fixed (single-point or empty-intersection bundles). `fixed_rho` is an effective per-unit ratio.        |
+| File                                 | Format (columns)            | Description                                                                            |
+|--------------------------------------|-----------------------------|----------------------------------------------------------------------------------------|
+| `param_parallel_transformers.txt`    | `#num_bundle num_branch id` | Topological membership of the detected parallel bundles: all branches sharing a `num_bundle` are parallel. Whether a bundle is tied, fixed (single-point/empty intersection) or released, together with all the effective per-unit ratio bounds, is derived by the AMPL code. |
 
 ## New voltage limits
 
