@@ -34,6 +34,7 @@ import java.io.InputStreamReader;
 import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
@@ -214,6 +215,7 @@ class OpenReacResultsTest {
 
         // targetQ is applied, no targetV update is attempted and no exception is raised
         assertEquals(5., battery.getTargetQ());
+        assertNull(battery.getExtension(VoltageRegulation.class));
     }
 
     private OpenReacAmplIOFiles getIOWithMockVoltageProfile(Network network) throws IOException {
