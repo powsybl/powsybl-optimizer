@@ -856,39 +856,9 @@ public class OpenReacParameters {
         Stream.<Branch<?>>concat(
                 network.getLineStream(),
                 network.getTwoWindingsTransformerStream()
-        ).forEach(branch -> {
-            double r = getR(branch);  // in Ohms
-            double x = getX(branch);  // in Ohms
-            double vNom1 = branch.getTerminal1().getVoltageLevel().getNominalV();
-            double vNom2 = branch.getTerminal2().getVoltageLevel().getNominalV();
-
-            // Conversion of the threshold into Ohms
-            double lowImpedanceThresholdOhms = calculateImpedanceThresholdOhms(vNom1);
-
-            // Check if impedance is too low
-            if (r * r + x * x <= lowImpedanceThresholdOhms * lowImpedanceThresholdOhms) {
-                branchesWithLowImpedances.add(new LowImpedanceBranchInfo(branch.getId(), r, x, vNom1, vNom2, lowImpedanceThresholdOhms));
-                x = lowImpedanceThresholdOhms;
-            }
-
-            // Check if both substations are in France
-            boolean isFrench = isFrenchBranch(
-                    branch.getTerminal1().getVoltageLevel().getSubstation().orElse(null),
-                    branch.getTerminal2().getVoltageLevel().getSubstation().orElse(null)
-            );
-
-            double ratio = r / Math.abs(x);
-
-            if (ratio > 1) {
-                if (isFrench && ratio > 10) {
-                    violatingFrenchBranches.add(new BranchImpedanceInfo(branch.getId(), r, x, ratio, vNom1, vNom2));
-                } else if (isFrench) {
-                    problematicFrenchBranches.add(new BranchImpedanceInfo(branch.getId(), r, x, ratio, vNom1, vNom2));
-                } else {
-                    problematicNonFrenchBranches.add(new BranchImpedanceInfo(branch.getId(), r, x, ratio, vNom1, vNom2));
-                }
-            }
-        });
+        ).forEach(branch ->
+            checkBranchImpedanceRatio(branch, branchesWithLowImpedances, violatingFrenchBranches, problematicFrenchBranches, problematicNonFrenchBranches)
+        );
 
         // Report branches with low impedance
         if (!branchesWithLowImpedances.isEmpty()) {
@@ -936,6 +906,42 @@ public class OpenReacParameters {
                 LOGGER.error("French branch impedance validation failed: {}", message);
             });
             throw new InvalidParametersException(errorMessage.toString());
+        }
+    }
+
+    private void checkBranchImpedanceRatio(Branch<?> branch, List<LowImpedanceBranchInfo> branchesWithLowImpedances,
+                                           List<BranchImpedanceInfo> violatingFrenchBranches, List<BranchImpedanceInfo> problematicFrenchBranches,
+                                           List<BranchImpedanceInfo> problematicNonFrenchBranches) {
+        double r = getR(branch);  // in Ohms
+        double x = getX(branch);  // in Ohms
+        double vNom1 = branch.getTerminal1().getVoltageLevel().getNominalV();
+        double vNom2 = branch.getTerminal2().getVoltageLevel().getNominalV();
+
+        // Conversion of the threshold into Ohms
+        double lowImpedanceThresholdOhms = calculateImpedanceThresholdOhms(vNom1);
+
+        // Check if impedance is too low
+        if (r * r + x * x <= lowImpedanceThresholdOhms * lowImpedanceThresholdOhms) {
+            branchesWithLowImpedances.add(new LowImpedanceBranchInfo(branch.getId(), r, x, vNom1, vNom2, lowImpedanceThresholdOhms));
+            x = lowImpedanceThresholdOhms;
+        }
+
+        // Check if both substations are in France
+        boolean isFrench = isFrenchBranch(
+                branch.getTerminal1().getVoltageLevel().getSubstation().orElse(null),
+                branch.getTerminal2().getVoltageLevel().getSubstation().orElse(null)
+        );
+
+        double ratio = r / Math.abs(x);
+
+        if (ratio > 1) {
+            if (isFrench && ratio > 10) {
+                violatingFrenchBranches.add(new BranchImpedanceInfo(branch.getId(), r, x, ratio, vNom1, vNom2));
+            } else if (isFrench) {
+                problematicFrenchBranches.add(new BranchImpedanceInfo(branch.getId(), r, x, ratio, vNom1, vNom2));
+            } else {
+                problematicNonFrenchBranches.add(new BranchImpedanceInfo(branch.getId(), r, x, ratio, vNom1, vNom2));
+            }
         }
     }
 
@@ -1192,9 +1198,11 @@ public class OpenReacParameters {
     private void checkAbsoluteVoltageLimitOverrides(VoltageLimitOverride voltageLimitOverride, VoltageLevel voltageLevel,
                                                     Map<String, Pair<Double, Double>> voltageLevelsLimitsAfterOverride) {
         if (voltageLimitOverride.getVoltageLimitType() == VoltageLimitOverride.VoltageLimitType.LOW_VOLTAGE_LIMIT) {
-            voltageLevelsLimitsAfterOverride.merge(voltageLevel.getId(), Pair.of(voltageLimitOverride.getLimit(), voltageLevel.getHighVoltageLimit()), (old, newValue) -> Pair.of(voltageLimitOverride.getLimit(), old.getRight()));
+            voltageLevelsLimitsAfterOverride.merge(voltageLevel.getId(), Pair.of(voltageLimitOverride.getLimit(), voltageLevel.getHighVoltageLimit()),
+                    (old, newValue) -> Pair.of(voltageLimitOverride.getLimit(), old.getRight()));
         } else {
-            voltageLevelsLimitsAfterOverride.merge(voltageLevel.getId(), Pair.of(voltageLevel.getLowVoltageLimit(), voltageLimitOverride.getLimit()), (old, newValue) -> Pair.of(old.getLeft(), voltageLimitOverride.getLimit()));
+            voltageLevelsLimitsAfterOverride.merge(voltageLevel.getId(), Pair.of(voltageLevel.getLowVoltageLimit(), voltageLimitOverride.getLimit()),
+                    (old, newValue) -> Pair.of(old.getLeft(), voltageLimitOverride.getLimit()));
         }
     }
 
@@ -1231,7 +1239,8 @@ public class OpenReacParameters {
             for (Map.Entry<String, Pair<Double, Double>> entry : voltageLevelsLimitsAfterOverride.entrySet()) {
                 String vlId = entry.getKey();
                 if (entry.getValue().getLeft() > entry.getValue().getRight()) {
-                    voltageLevelsWithInconsistentLimits.merge(vlId, Pair.of(entry.getValue().getLeft(), entry.getValue().getRight()), (old, newValue) -> Pair.of(entry.getValue().getLeft(), entry.getValue().getRight()));
+                    voltageLevelsWithInconsistentLimits.merge(vlId, Pair.of(entry.getValue().getLeft(), entry.getValue().getRight()),
+                            (old, newValue) -> Pair.of(entry.getValue().getLeft(), entry.getValue().getRight()));
                     integrityVoltageLimitOverrides = false;
                 }
             }
