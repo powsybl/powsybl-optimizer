@@ -202,6 +202,12 @@ let temp1 := penalty_units_reactive
 printf{LOG_INFO} "  %-55s = %+.6f\n", "Generating units reactive power", temp1;
 let tempo := tempo + temp1;
 
+# Term 5bis: Reactive power of regulating batteries
+let temp1 := penalty_units_reactive
+  * sum{(b,n) in BATTERYON} (battery_qvar[b,n]/max(1,abs(corrected_battery_Qmin[b,n]),abs(corrected_battery_Qmax[b,n])))**2;
+printf{LOG_INFO} "  %-55s = %+.6f\n", "Batteries reactive power", temp1;
+let tempo := tempo + temp1;
+
 # Term 6: Transformer ratio deviation
 let temp1 := penalty_transfo_ratio
   * sum{(qq,m,n) in BRANCHCC_REGL_VAR} (branch_Ror[qq,m,n]-branch_Ror_var[qq,m,n])**2;
