@@ -353,6 +353,7 @@ printf "%s %i\n","nb_vsc_converter_up_and_running",card(VSCCONVON) > (fileOut);
 printf "%s %i\n","nb_lcc_converter_in_data_file",card(LCCCONV) > (fileOut);
 printf "%s %i\n","nb_lcc_converter_up_and_running",card(LCCCONVON) > (fileOut);
 printf "%s %i\n","nb_batteries",card(BATTERYCC) > (fileOut);
+printf "%s %i\n","nb_batteries_with_variable_reactive_power",card(BATTERYON) > (fileOut);
 printf "%s %.1f\n","sum_batteries_pmax",sum{(b,k) in BATTERYCC} battery_Pmax[1,b,k] > (fileOut);
 printf "%s %.1f\n","sum_batteries_pmin",sum{(b,k) in BATTERYCC} battery_Pmin[1,b,k] > (fileOut);
 
