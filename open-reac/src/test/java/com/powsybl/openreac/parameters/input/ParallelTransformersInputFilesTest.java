@@ -19,16 +19,15 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.List;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * The bundles file now carries the topological membership only (num_bundle, num_branch, id),
- * for every member of every detected bundle. All numeric qualification happens in the AMPL
- * model, so there is nothing else to assert on this file.
+ * The bundles file carries the topological membership and the member orientation only
+ * (num_bundle, num_branch, orientation, id), for every member of every orientable bundle.
+ * All numeric qualification happens in the AMPL model, so there is nothing else to assert
+ * on this file.
  *
  * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
  */
@@ -37,8 +36,8 @@ class ParallelTransformersInputFilesTest {
     @Test
     void membershipSimpleParallel() throws IOException {
         Network network = ParallelTransformersNetworkFactory.createSimpleParallel();
-        List<Set<String>> bundles = ParallelTwoWindingsTransformersDetector.detect(network);
-        ParallelTwoWindingsTransformersBundles input = new ParallelTwoWindingsTransformersBundles(bundles);
+        ParallelTwoWindingsTransformersDetector.DetectionResult detection = ParallelTwoWindingsTransformersDetector.detect(network);
+        ParallelTwoWindingsTransformersBundles input = new ParallelTwoWindingsTransformersBundles(detection.bundles());
         StringToIntMapper<AmplSubset> mapper = AmplUtil.createMapper(network);
 
         try (Writer w = new StringWriter();
@@ -48,9 +47,9 @@ class ParallelTransformersInputFilesTest {
             int t1 = mapper.getInt(AmplSubset.BRANCH, "T1");
             int t2 = mapper.getInt(AmplSubset.BRANCH, "T2");
             String ref = String.join(System.lineSeparator(),
-                "#num_bundle num_branch id",
-                "1 " + t1 + " \"T1\"",
-                "1 " + t2 + " \"T2\"") + System.lineSeparator() + System.lineSeparator();
+                "#num_bundle num_branch orientation id",
+                "1 " + t1 + " 1 \"T1\"",
+                "1 " + t2 + " 1 \"T2\"") + System.lineSeparator() + System.lineSeparator();
             assertEquals(ref, data);
         }
     }
@@ -58,8 +57,8 @@ class ParallelTransformersInputFilesTest {
     @Test
     void membershipTwoSeparateBundles() throws IOException {
         Network network = ParallelTransformersNetworkFactory.createTwoSeparateBundles();
-        List<Set<String>> bundles = ParallelTwoWindingsTransformersDetector.detect(network);
-        ParallelTwoWindingsTransformersBundles input = new ParallelTwoWindingsTransformersBundles(bundles);
+        ParallelTwoWindingsTransformersDetector.DetectionResult detection = ParallelTwoWindingsTransformersDetector.detect(network);
+        ParallelTwoWindingsTransformersBundles input = new ParallelTwoWindingsTransformersBundles(detection.bundles());
         StringToIntMapper<AmplSubset> mapper = AmplUtil.createMapper(network);
 
         try (Writer w = new StringWriter();
@@ -67,7 +66,7 @@ class ParallelTransformersInputFilesTest {
             input.write(writer, mapper);
             String data = w.toString();
             // 2 bundles * 2 transformers = 4 data lines, every member written (no classification)
-            assertTrue(data.startsWith("#num_bundle num_branch id"));
+            assertTrue(data.startsWith("#num_bundle num_branch orientation id"));
             long dataLines = data.lines().filter(l -> !l.isBlank() && !l.startsWith("#")).count();
             assertEquals(4, dataLines);
             // Each bundle index should appear on exactly two lines
@@ -79,15 +78,15 @@ class ParallelTransformersInputFilesTest {
     @Test
     void membershipEmptyWhenNoBundle() throws IOException {
         Network network = ParallelTransformersNetworkFactory.createNoTransformer();
-        List<Set<String>> bundles = ParallelTwoWindingsTransformersDetector.detect(network);
-        ParallelTwoWindingsTransformersBundles input = new ParallelTwoWindingsTransformersBundles(bundles);
+        ParallelTwoWindingsTransformersDetector.DetectionResult detection = ParallelTwoWindingsTransformersDetector.detect(network);
+        ParallelTwoWindingsTransformersBundles input = new ParallelTwoWindingsTransformersBundles(detection.bundles());
         StringToIntMapper<AmplSubset> mapper = AmplUtil.createMapper(network);
 
         try (Writer w = new StringWriter();
              BufferedWriter writer = new BufferedWriter(w)) {
             input.write(writer, mapper);
             String data = w.toString();
-            String ref = "#num_bundle num_branch id" + System.lineSeparator() + System.lineSeparator();
+            String ref = "#num_bundle num_branch orientation id" + System.lineSeparator() + System.lineSeparator();
             assertEquals(ref, data);
         }
     }

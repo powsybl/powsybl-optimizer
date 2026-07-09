@@ -92,8 +92,8 @@ param: PARAM_UNIT_FIXQ: param_unit_fixq_id := include param_generators_reactive.
 param: PARAM_TRANSFORMERS_RATIO_VARIABLE: param_transformers_ratio_variable_id := include param_transformers.txt;
 
 # param_parallel_transformers.txt
-#"num_bundle" "num_branch" "id"
-param: PARAM_PARALLEL_TRANSFORMERS: param_parallel_transformers_id := include param_parallel_transformers.txt;
+#"num_bundle" "num_branch" "orientation" "id"
+param: PARAM_PARALLEL_TRANSFORMERS: param_parallel_transformers_orientation param_parallel_transformers_id := include param_parallel_transformers.txt;
 
 # param_buses_with_reactive_slack.txt
 #"num" "id"

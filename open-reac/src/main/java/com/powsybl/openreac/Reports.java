@@ -8,6 +8,7 @@ package com.powsybl.openreac;
 
 import com.powsybl.commons.report.ReportNode;
 import com.powsybl.commons.report.TypedValue;
+import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector;
 import com.powsybl.openreac.parameters.input.VoltageLevelLimitInfo;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 import com.powsybl.openreac.parameters.output.network.ShuntCompensatorNetworkOutput;
@@ -244,12 +245,12 @@ public final class Reports {
     }
 
     public static void reportParallelTwoWindingsTransformers(ReportNode reportNode,
-                                                             List<Set<String>> bundles,
+                                                             List<ParallelTwoWindingsTransformersDetector.Bundle> bundles,
                                                              Set<String> variableTransformerIds) {
         if (bundles.isEmpty()) {
             return;
         }
-        int totalTransformers = bundles.stream().mapToInt(Set::size).sum();
+        int totalTransformers = bundles.stream().mapToInt(ParallelTwoWindingsTransformersDetector.Bundle::size).sum();
         ReportNode root = reportNode.newReportNode()
                 .withMessageTemplate("optimizer.openreac.parallelTwoWindingsTransformers")
                 .withUntypedValue("bundlesCount", bundles.size())
@@ -262,7 +263,7 @@ public final class Reports {
         // user-declared ratio status (variable / fixed) is shown here: whether a bundle is
         // ultimately tied or fixed is decided in the AMPL model (see FixedParallelTransformersOutput).
         int bundleIndex = 0;
-        for (Set<String> bundle : bundles) {
+        for (ParallelTwoWindingsTransformersDetector.Bundle bundle : bundles) {
             bundleIndex++;
             ReportNode bundleNode = root.newReportNode()
                     .withMessageTemplate("optimizer.openreac.parallelTwoWindingsTransformersBundle")
@@ -271,15 +272,30 @@ public final class Reports {
                     .withSeverity(TypedValue.DETAIL_SEVERITY)
                     .add();
 
-            bundle.stream().sorted().forEach(twtId -> {
-                String status = variableTransformerIds.contains(twtId) ? "VARIABLE" : "FIXED";
+            for (ParallelTwoWindingsTransformersDetector.Member member : bundle.members()) {
+                String status = variableTransformerIds.contains(member.transformerId()) ? "VARIABLE" : "FIXED";
                 bundleNode.newReportNode()
                         .withMessageTemplate("optimizer.openreac.parallelTwoWindingsTransformerItem")
-                        .withUntypedValue("transformerId", twtId)
+                        .withUntypedValue("transformerId", member.transformerId())
                         .withUntypedValue("ratioStatus", status)
                         .withSeverity(TypedValue.DETAIL_SEVERITY)
                         .add();
-            });
+            }
+        }
+    }
+
+    /**
+     * Bundles whose member orientation cannot be established (degenerate nominal-voltage
+     * pair inside a cycle): they are not passed to the AMPL model and their members are
+     * optimized independently, which the user should be warned about.
+     */
+    public static void reportUndecidedOrientationParallelBundles(ReportNode reportNode, List<Set<String>> undecidedBundles) {
+        for (Set<String> bundle : undecidedBundles) {
+            reportNode.newReportNode()
+                    .withMessageTemplate("optimizer.openreac.parallelTwoWindingsTransformersUndecidedBundle")
+                    .withUntypedValue("transformerIds", String.join(", ", bundle.stream().sorted().toList()))
+                    .withSeverity(TypedValue.WARN_SEVERITY)
+                    .add();
         }
     }
 }

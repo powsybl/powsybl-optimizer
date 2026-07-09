@@ -176,6 +176,55 @@ public final class ParallelTransformersNetworkFactory {
     }
 
     /**
+     * Two physically parallel transformers between B1 (225 kV) and B2 (90 kV), but T2 is
+     * declared with swapped terminals (90 kV side first). Legal in IIDM; the detector must
+     * flag T2 as reversed relative to T1
+     */
+    public static Network createAntiParallel() {
+        Network network = Network.create("anti-parallel", "test");
+        Substation s = network.newSubstation().setId("S").add();
+        addBus(s, "VL1", 225.0, "B1");
+        addBus(s, "VL2", 90.0, "B2");
+        addRtcTransformer(s, "T1", "VL1", "B1", "VL2", "B2", 225.0, 90.0, 0.95, 1.05);
+        addRtcTransformer(s, "T2", "VL2", "B2", "VL1", "B1", 90.0, 225.0, 0.95, 1.05);
+        return network;
+    }
+
+    /**
+     * Two coupling transformers (both sides at 225 kV) between the same pair of buses,
+     * T2 declared with swapped terminals. Nominal voltage cannot orient a degenerate
+     * pair; the shared bus pair can
+     */
+    public static Network createEqualVoltageAntiParallel() {
+        Network network = Network.create("equal-voltage-anti-parallel", "test");
+        Substation s = network.newSubstation().setId("S").add();
+        addBus(s, "VL1", 225.0, "B1");
+        addBus(s, "VL2", 225.0, "B2");
+        addRtcTransformer(s, "T1", "VL1", "B1", "VL2", "B2", 225.0, 225.0, 0.95, 1.05);
+        addRtcTransformer(s, "T2", "VL2", "B2", "VL1", "B1", 225.0, 225.0, 0.95, 1.05);
+        return network;
+    }
+
+    /**
+     * Square A-B-C-D-A of coupling transformers, every voltage level at 225 kV.
+     * Degenerate nominal-voltage pair and no shared bus pair: the orientation of the
+     * members is undecidable -> the bundle must be released and reported
+     */
+    public static Network createEqualVoltageSquareCycle() {
+        Network network = Network.create("equal-voltage-square-cycle", "test");
+        Substation s = network.newSubstation().setId("S").add();
+        addBus(s, "VL_A", 225.0, "A");
+        addBus(s, "VL_B", 225.0, "B");
+        addBus(s, "VL_C", 225.0, "C");
+        addBus(s, "VL_D", 225.0, "D");
+        addRtcTransformer(s, "T_AB", "VL_A", "A", "VL_B", "B", 225.0, 225.0, 0.95, 1.05);
+        addRtcTransformer(s, "T_BC", "VL_B", "B", "VL_C", "C", 225.0, 225.0, 0.95, 1.05);
+        addRtcTransformer(s, "T_CD", "VL_C", "C", "VL_D", "D", 225.0, 225.0, 0.95, 1.05);
+        addRtcTransformer(s, "T_DA", "VL_D", "D", "VL_A", "A", 225.0, 225.0, 0.95, 1.05);
+        return network;
+    }
+
+    /**
      * No transformer at all -> empty result
      */
     public static Network createNoTransformer() {

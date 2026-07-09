@@ -8,77 +8,129 @@
 package com.powsybl.openreac.network;
 
 import com.powsybl.iidm.network.Network;
+import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector.Bundle;
+import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector.DetectionResult;
+import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector.Member;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Topological detection only. The numeric qualification of a bundle (shared-ratio interval,
- * tie / fix / release) is performed in the AMPL model and validated there.
+ * Topological detection and orientation only. The numeric qualification of a bundle
+ * (shared-ratio interval, tie / fix / release) is performed in the AMPL model and
+ * validated there.
  *
  * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
  */
 class ParallelTwoWindingsTransformersDetectorTest {
 
+    private static Set<String> ids(Bundle bundle) {
+        return bundle.members().stream().map(Member::transformerId).collect(Collectors.toSet());
+    }
+
+    private static Map<String, Integer> orientations(Bundle bundle) {
+        return bundle.members().stream().collect(Collectors.toMap(Member::transformerId, Member::orientation));
+    }
+
     @Test
     void noTransformer() {
         Network network = ParallelTransformersNetworkFactory.createNoTransformer();
-        List<Set<String>> bundles = ParallelTwoWindingsTransformersDetector.detect(network);
-        assertTrue(bundles.isEmpty());
+        DetectionResult result = ParallelTwoWindingsTransformersDetector.detect(network);
+        assertTrue(result.bundles().isEmpty());
+        assertTrue(result.undecidedBundles().isEmpty());
     }
 
     @Test
     void simpleParallel() {
         Network network = ParallelTransformersNetworkFactory.createSimpleParallel();
-        List<Set<String>> bundles = ParallelTwoWindingsTransformersDetector.detect(network);
-        assertEquals(1, bundles.size());
-        assertEquals(Set.of("T1", "T2"), bundles.get(0));
+        DetectionResult result = ParallelTwoWindingsTransformersDetector.detect(network);
+        assertEquals(1, result.bundles().size());
+        // Homogeneous declaration -> every member aligned with the reference (+1)
+        assertEquals(Map.of("T1", 1, "T2", 1), orientations(result.bundles().get(0)));
     }
 
     @Test
     void threeParallel() {
         Network network = ParallelTransformersNetworkFactory.createThreeParallel();
-        List<Set<String>> bundles = ParallelTwoWindingsTransformersDetector.detect(network);
-        assertEquals(1, bundles.size());
-        assertEquals(Set.of("T1", "T2", "T3"), bundles.get(0));
+        DetectionResult result = ParallelTwoWindingsTransformersDetector.detect(network);
+        assertEquals(1, result.bundles().size());
+        assertEquals(Map.of("T1", 1, "T2", 1, "T3", 1), orientations(result.bundles().get(0)));
     }
 
     @Test
     void complexParallelOnTriangleCycle() {
         Network network = ParallelTransformersNetworkFactory.createTriangleCycle();
-        List<Set<String>> bundles = ParallelTwoWindingsTransformersDetector.detect(network);
-        assertEquals(1, bundles.size());
-        assertEquals(Set.of("T1", "T2"), bundles.get(0));
+        DetectionResult result = ParallelTwoWindingsTransformersDetector.detect(network);
+        assertEquals(1, result.bundles().size());
+        assertEquals(Map.of("T1", 1, "T2", 1), orientations(result.bundles().get(0)));
     }
 
     @Test
     void complexParallelOnSquareCycle() {
         Network network = ParallelTransformersNetworkFactory.createSquareCycle();
-        List<Set<String>> bundles = ParallelTwoWindingsTransformersDetector.detect(network);
-        assertEquals(1, bundles.size());
-        assertEquals(Set.of("T_AB", "T_BC", "T_CD", "T_DA"), bundles.get(0));
+        DetectionResult result = ParallelTwoWindingsTransformersDetector.detect(network);
+        assertEquals(1, result.bundles().size());
+        // The factory alternates the declaration direction around the cycle: T_AB and T_CD
+        // are declared HV->LV, T_BC and T_DA LV->HV. Reference (first id) is T_AB.
+        assertEquals(Map.of("T_AB", 1, "T_BC", -1, "T_CD", 1, "T_DA", -1),
+                orientations(result.bundles().get(0)));
     }
 
     @Test
     void twoSeparateBundlesAreNotMerged() {
         Network network = ParallelTransformersNetworkFactory.createTwoSeparateBundles();
-        List<Set<String>> bundles = ParallelTwoWindingsTransformersDetector.detect(network);
-        assertEquals(2, bundles.size());
+        DetectionResult result = ParallelTwoWindingsTransformersDetector.detect(network);
+        assertEquals(2, result.bundles().size());
         // Order is not guaranteed; check by content
-        assertTrue(bundles.contains(Set.of("T1", "T2")));
-        assertTrue(bundles.contains(Set.of("T3", "T4")));
+        List<Set<String>> idSets = result.bundles().stream().map(ParallelTwoWindingsTransformersDetectorTest::ids).toList();
+        assertTrue(idSets.contains(Set.of("T1", "T2")));
+        assertTrue(idSets.contains(Set.of("T3", "T4")));
     }
 
     @Test
     void transformersWithoutRtcAreFiltered() {
         Network network = ParallelTransformersNetworkFactory.createOneRtcOneFixed();
-        List<Set<String>> bundles = ParallelTwoWindingsTransformersDetector.detect(network);
+        DetectionResult result = ParallelTwoWindingsTransformersDetector.detect(network);
         // Only T1 has an RTC, so the bundle falls below the size-2 threshold
-        assertTrue(bundles.isEmpty());
+        assertTrue(result.bundles().isEmpty());
+        assertTrue(result.undecidedBundles().isEmpty());
+    }
+
+    @Test
+    void antiParallelDeclarationIsOriented() {
+        Network network = ParallelTransformersNetworkFactory.createAntiParallel();
+        DetectionResult result = ParallelTwoWindingsTransformersDetector.detect(network);
+        assertEquals(1, result.bundles().size());
+        // T2 is declared with swapped terminals relative to T1 (the reference)
+        assertEquals(Map.of("T1", 1, "T2", -1), orientations(result.bundles().get(0)));
+        assertTrue(result.undecidedBundles().isEmpty());
+    }
+
+    @Test
+    void equalVoltageSimpleParallelIsOrientedByBusPair() {
+        Network network = ParallelTransformersNetworkFactory.createEqualVoltageAntiParallel();
+        DetectionResult result = ParallelTwoWindingsTransformersDetector.detect(network);
+        assertEquals(1, result.bundles().size());
+        // Degenerate nominal-voltage pair: orientation falls back to the terminal-1 bus,
+        // still able to spot that T2 is declared reversed
+        assertEquals(Map.of("T1", 1, "T2", -1), orientations(result.bundles().get(0)));
+    }
+
+    @Test
+    void equalVoltageCycleIsUndecided() {
+        Network network = ParallelTransformersNetworkFactory.createEqualVoltageSquareCycle();
+        DetectionResult result = ParallelTwoWindingsTransformersDetector.detect(network);
+        // Coupling transformers in a cycle: no nominal-voltage side and no shared bus
+        // pair to orient the members -> released, reported as undecided
+        assertTrue(result.bundles().isEmpty());
+        assertEquals(1, result.undecidedBundles().size());
+        assertEquals(Set.of("T_AB", "T_BC", "T_CD", "T_DA"), result.undecidedBundles().get(0));
     }
 
     @Test

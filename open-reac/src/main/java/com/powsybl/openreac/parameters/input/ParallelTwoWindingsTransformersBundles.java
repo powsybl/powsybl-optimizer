@@ -12,30 +12,35 @@ import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.openreac.parameters.AmplIOUtils;
 
+import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Writes the topological membership of the detected parallel transformer bundles:
- * every branch sharing a {@code num_bundle} is parallel to the others of that bundle.
+ * every branch sharing a {@code num_bundle} is parallel to the others of that bundle,
+ * together with each member's orientation relative to the bundle's canonical direction
+ * (+1: terminal 1 on the canonical origin side, -1: declared in the opposite direction,
+ * see {@link com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector}).
  *
- * <p>This file carries the membership only. The numeric qualification of each bundle —
- * the effective-rho intersection, the LARGE / POINT / EMPTY classification, the shared-ratio
- * bounds and the fixed targets — is derived entirely in the AMPL model from its own data
- * (see {@code commons.mod}), so that the classification and the constraints can never
- * disagree. Bundles are written in the order produced by the detector, and the 1-based
- * {@code num_bundle} index is reused as-is by AMPL.
+ * <p>This file carries the membership and the orientation only, both purely topological.
+ * The numeric qualification of each bundle — the effective-rho intersection, the
+ * LARGE / POINT / EMPTY classification, the shared-ratio bounds and the fixed targets —
+ * is derived entirely in the AMPL model from its own data (see {@code commons.mod}),
+ * so that the classification and the constraints can never disagree. Bundles are written
+ * in the order produced by the detector, and the 1-based {@code num_bundle} index is
+ * reused as-is by AMPL.
  *
  * <p>Format:
  * <pre>
- * #num_bundle num_branch id
- * 1 142 "T1"
- * 1 287 "T2"
- * 2 95 "T3"
- * 2 96 "T4"
+ * #num_bundle num_branch orientation id
+ * 1 142 1 "T1"
+ * 1 287 -1 "T2"
+ * 2 95 1 "T3"
+ * 2 96 1 "T4"
  * </pre>
  *
  * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
@@ -46,14 +51,14 @@ public class ParallelTwoWindingsTransformersBundles implements AmplInputFile {
 
     private final List<TransformerInBundle> rows;
 
-    private record TransformerInBundle(int bundleIndex, String transformerId) { }
+    private record TransformerInBundle(int bundleIndex, String transformerId, int orientation) { }
 
-    public ParallelTwoWindingsTransformersBundles(List<Set<String>> bundles) {
+    public ParallelTwoWindingsTransformersBundles(List<ParallelTwoWindingsTransformersDetector.Bundle> bundles) {
         this.rows = new ArrayList<>();
         int bundleIndex = 1;
-        for (Set<String> bundle : bundles) {
-            for (String transformerId : bundle.stream().sorted().toList()) {
-                rows.add(new TransformerInBundle(bundleIndex, transformerId));
+        for (ParallelTwoWindingsTransformersDetector.Bundle bundle : bundles) {
+            for (ParallelTwoWindingsTransformersDetector.Member member : bundle.members()) {
+                rows.add(new TransformerInBundle(bundleIndex, member.transformerId(), member.orientation()));
             }
             bundleIndex++;
         }
@@ -66,11 +71,12 @@ public class ParallelTwoWindingsTransformersBundles implements AmplInputFile {
 
     @Override
     public void write(BufferedWriter writer, StringToIntMapper<AmplSubset> stringToIntMapper) throws IOException {
-        writer.write("#num_bundle num_branch id");
+        writer.write("#num_bundle num_branch orientation id");
         writer.newLine();
         for (TransformerInBundle row : rows) {
             int amplBranchId = stringToIntMapper.getInt(AmplSubset.BRANCH, row.transformerId());
-            writer.write(row.bundleIndex() + " " + amplBranchId + " " + AmplIOUtils.addQuotes(row.transformerId()));
+            writer.write(row.bundleIndex() + " " + amplBranchId + " " + row.orientation()
+                    + " " + AmplIOUtils.addQuotes(row.transformerId()));
             writer.newLine();
         }
         writer.newLine();

@@ -75,16 +75,19 @@ public class OpenReacAmplIOFiles implements AmplParameters {
         this.debug = debug;
         this.debugDir = params.getDebugDir();
 
-        // Parallel transformer bundles are detected topologically here; ALL detected bundles are
-        // sent to AMPL as a plain membership relation (every member, no classification). The numeric
-        // qualification (tie / fix / release) and all bounds are derived in the AMPL model from its
-        // own data, so the classification and the constraints can never disagree. Transformers that
-        // AMPL ends up fixing (POINT/EMPTY bundles) are read back from fixedParallelTransformersOutput.
-        List<Set<String>> parallelBundles = ParallelTwoWindingsTransformersDetector.detect(network);
-        this.parallelTwoWindingsTransformersBundles = new ParallelTwoWindingsTransformersBundles(parallelBundles);
+        // Parallel transformer bundles are detected topologically here; every orientable bundle is
+        // sent to AMPL as a membership + orientation relation (every member, no classification). The
+        // numeric qualification (tie / fix / release) and all bounds are derived in the AMPL model
+        // from its own data, so the classification and the constraints can never disagree. Bundles
+        // whose member orientation cannot be established (degenerate nominal-voltage pair in a cycle)
+        // are not sent and are reported as released. Transformers that AMPL ends up fixing
+        // (POINT/EMPTY bundles) are read back from fixedParallelTransformersOutput.
+        ParallelTwoWindingsTransformersDetector.DetectionResult parallelDetection = ParallelTwoWindingsTransformersDetector.detect(network);
+        this.parallelTwoWindingsTransformersBundles = new ParallelTwoWindingsTransformersBundles(parallelDetection.bundles());
         this.fixedParallelTransformersOutput = new FixedParallelTransformersOutput();
         Set<String> variableTransformerIds = new HashSet<>(params.getVariableTwoWindingsTransformers());
-        Reports.reportParallelTwoWindingsTransformers(reportNode, parallelBundles, variableTransformerIds);
+        Reports.reportParallelTwoWindingsTransformers(reportNode, parallelDetection.bundles(), variableTransformerIds);
+        Reports.reportUndecidedOrientationParallelBundles(reportNode, parallelDetection.undecidedBundles());
 
         Reports.reportConstantQGeneratorsSize(reportNode, params.getConstantQGenerators().size());
         Reports.reportVariableTwoWindingsTransformersSize(reportNode, params.getVariableTwoWindingsTransformers().size());

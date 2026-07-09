@@ -45,6 +45,29 @@ import java.util.stream.Collectors;
  * bundles that share at least one transformer are merged transitively
  * (if {@code A // B} and {@code B // C}, then {@code A // B // C}).
  *
+ * <p><b>Orientation.</b> The AMPL export assigns bus1/bus2 strictly from the IIDM
+ * terminal declaration order, with no normalization: two physically parallel
+ * transformers may be declared in opposite directions. Tying the effective ratios
+ * of anti-parallel members would enforce a physically wrong condition (the correct
+ * one being {@code eff1 * eff2 = 1}), so each member carries its orientation relative
+ * to the bundle's canonical direction, defined as the declared direction of the first
+ * member in id order (which therefore always gets {@code +1}; a homogeneous bundle is
+ * all-{@code +1}). A member is compared to that reference:
+ * <ul>
+ *   <li>when the two nominal voltages of the bundle differ: same terminal-1 side as
+ *       the reference (low or high nominal voltage) means {@code +1}, {@code -1}
+ *       otherwise;</li>
+ *   <li>when they are equal (coupling transformers) and the bundle is a simple
+ *       parallel (single shared bus pair): same terminal-1 bus as the reference
+ *       means {@code +1}, {@code -1} otherwise;</li>
+ *   <li>when they are equal and the bundle comes from a cycle (no shared bus pair),
+ *       the orientation is undecidable: the bundle is returned separately so the
+ *       caller can release it with a warning instead of tying it blindly.</li>
+ * </ul>
+ * The orientation is passed to the AMPL model, which derives the member bounds and
+ * tie constraints accordingly (direct members: {@code eff = rho_B}; reversed members:
+ * {@code eff * rho_B = 1}).
+ *
  * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
  */
 public final class ParallelTwoWindingsTransformersDetector {
@@ -54,12 +77,43 @@ public final class ParallelTwoWindingsTransformersDetector {
     }
 
     /**
-     * @return bundles of parallel ratio-tap-changer-bearing transformers,
-     *         each as a set of transformer ids. Singletons are filtered out.
-     *         Detection is purely topological; the numeric qualification of a bundle
-     *         (shared-ratio interval, tie / fix / release) is performed in the AMPL model.
+     * A transformer inside a bundle, with its orientation relative to the bundle's
+     * canonical direction (the declared direction of the first member in id order):
+     * {@code +1} when declared in the same direction, {@code -1} when reversed.
      */
-    public static List<Set<String>> detect(Network network) {
+    public record Member(String transformerId, int orientation) { }
+
+    /** A bundle of parallel transformers, members sorted by id. */
+    public record Bundle(List<Member> members) {
+        public Bundle {
+            members = List.copyOf(members);
+        }
+
+        public int size() {
+            return members.size();
+        }
+    }
+
+    /**
+     * Result of the detection: the bundles whose member orientations could be
+     * established, and the ones (degenerate nominal-voltage pair in a cycle) whose
+     * orientation is undecidable and which must be released with a warning.
+     */
+    public record DetectionResult(List<Bundle> bundles, List<Set<String>> undecidedBundles) {
+        public DetectionResult {
+            bundles = List.copyOf(bundles);
+            undecidedBundles = List.copyOf(undecidedBundles);
+        }
+    }
+
+    /**
+     * @return bundles of parallel ratio-tap-changer-bearing transformers, each member
+     *         carrying its orientation relative to the bundle's canonical direction.
+     *         Singletons are filtered out. Detection and orientation are purely
+     *         topological; the numeric qualification of a bundle (shared-ratio
+     *         interval, tie / fix / release) is performed in the AMPL model.
+     */
+    public static DetectionResult detect(Network network) {
         Set<String> ratioTapChangerIds = network.getTwoWindingsTransformerStream()
                 .filter(t -> t.getRatioTapChanger() != null)
                 .map(Identifiable::getId)
@@ -87,7 +141,79 @@ public final class ParallelTwoWindingsTransformersDetector {
         merged.sort(Comparator
                 .comparingInt((Set<String> s) -> s.size()).reversed()
                 .thenComparing(s -> s.stream().min(Comparator.naturalOrder()).orElse("")));
-        return merged;
+        return orientBundles(network, merged);
+    }
+
+    // ---- Step 4: orientation of each member against the bundle's canonical direction ----
+
+    private static DetectionResult orientBundles(Network network, List<Set<String>> bundles) {
+        List<Bundle> oriented = new ArrayList<>();
+        List<Set<String>> undecided = new ArrayList<>();
+        for (Set<String> bundle : bundles) {
+            List<TwoWindingsTransformer> members = bundle.stream().sorted()
+                    .map(network::getTwoWindingsTransformer)
+                    .toList();
+            List<Member> orientedMembers = orientMembers(members);
+            if (orientedMembers == null) {
+                undecided.add(bundle);
+            } else {
+                oriented.add(new Bundle(orientedMembers));
+            }
+        }
+        return new DetectionResult(oriented, undecided);
+    }
+
+    /**
+     * Orients every member against the first one (id order). Members of a bundle all
+     * share the same nominal voltage pair (guaranteed by both detection strategies and
+     * preserved by the transitive merge): when that pair is non-degenerate, the terminal-1
+     * side (low or high nominal voltage) identifies the declared direction; when it is
+     * degenerate (coupling transformers), the terminal-1 bus does, provided all members
+     * share the same bus pair. Returns null when undecidable.
+     */
+    private static List<Member> orientMembers(List<TwoWindingsTransformer> members) {
+        TwoWindingsTransformer reference = members.get(0);
+        double refV1 = reference.getTerminal1().getVoltageLevel().getNominalV();
+        double refV2 = reference.getTerminal2().getVoltageLevel().getNominalV();
+        return refV1 != refV2
+                ? orientByNominalVoltageSide(members, refV1 < refV2)
+                : orientBySharedBusPair(members, reference);
+    }
+
+    private static List<Member> orientByNominalVoltageSide(List<TwoWindingsTransformer> members, boolean referenceT1OnLowSide) {
+        List<Member> result = new ArrayList<>(members.size());
+        for (TwoWindingsTransformer twt : members) {
+            boolean t1OnLowSide = twt.getTerminal1().getVoltageLevel().getNominalV()
+                    < twt.getTerminal2().getVoltageLevel().getNominalV();
+            result.add(new Member(twt.getId(), t1OnLowSide == referenceT1OnLowSide ? 1 : -1));
+        }
+        return result;
+    }
+
+    /**
+     * Fallback for degenerate nominal-voltage pairs (coupling transformers): only a
+     * simple parallel (every member on the same bus pair) can be oriented, by comparing
+     * each member's terminal-1 bus to the reference's. A cycle-based bundle has no
+     * shared bus pair and is undecidable: returns null.
+     */
+    private static List<Member> orientBySharedBusPair(List<TwoWindingsTransformer> members, TwoWindingsTransformer reference) {
+        Bus refB1 = reference.getTerminal1().getBusView().getBus();
+        Bus refB2 = reference.getTerminal2().getBusView().getBus();
+        if (refB1 == null || refB2 == null) {
+            return null;
+        }
+        UnorderedPair referencePair = UnorderedPair.of(refB1.getId(), refB2.getId());
+        List<Member> result = new ArrayList<>(members.size());
+        for (TwoWindingsTransformer twt : members) {
+            Bus b1 = twt.getTerminal1().getBusView().getBus();
+            Bus b2 = twt.getTerminal2().getBusView().getBus();
+            if (b1 == null || b2 == null
+                    || !referencePair.equals(UnorderedPair.of(b1.getId(), b2.getId()))) {
+                return null;
+            }
+            result.add(new Member(twt.getId(), b1.getId().equals(refB1.getId()) ? 1 : -1));
+        }
+        return result;
     }
 
     // ---- Step 1: simple parallels (same pair of BusView buses) ----
