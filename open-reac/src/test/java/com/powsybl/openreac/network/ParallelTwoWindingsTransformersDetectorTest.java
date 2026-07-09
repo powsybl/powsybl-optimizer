@@ -113,6 +113,17 @@ class ParallelTwoWindingsTransformersDetectorTest {
     }
 
     @Test
+    void antiParallelTriangleIsOrientedAndKept() {
+        Network network = ParallelTransformersNetworkFactory.createAntiParallelTriangle();
+        DetectionResult result = ParallelTwoWindingsTransformersDetector.detect(network);
+        assertEquals(1, result.bundles().size());
+        // Real-data pattern: an HV->LV member looped with two LV->HV twins through another
+        // HV bus. Reference (first id) is T1; T2 and T3 are reversed relative to it.
+        assertEquals(Map.of("T1", 1, "T2", -1, "T3", -1), orientations(result.bundles().get(0)));
+        assertTrue(result.undecidedBundles().isEmpty());
+    }
+
+    @Test
     void equalVoltageSimpleParallelIsOrientedByBusPair() {
         Network network = ParallelTransformersNetworkFactory.createEqualVoltageAntiParallel();
         DetectionResult result = ParallelTwoWindingsTransformersDetector.detect(network);

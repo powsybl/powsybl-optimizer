@@ -104,9 +104,11 @@ var branch_Ror_var{(qq,m,n) in BRANCHCC_REGL_VAR}
   <= regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]];
 
 # Shared ratio variable for parallel transformer bundles, in EFFECTIVE-ratio space
-# (tap rho * branch_cstratio): every variable member of a tie-able bundle is forced
-# to this single effective ratio (see ctr_parallel_bundle_ratio). The bounds are the
-# effective intersection of the members, computed in commons.mod from AMPL's own data.
+# (tap rho * branch_cstratio) and in the bundle's CANONICAL direction: every variable
+# member of a tie-able bundle is forced to this single effective ratio, directly for a
+# direct member, through inversion for a reversed one (see ctr_parallel_bundle_ratio).
+# The bounds are the canonical effective intersection of the members, computed in
+# commons.mod from AMPL's own data.
 var bundle_Ror_var{g in PARALLEL_BUNDLES}
   >= parallel_bundle_rho_min[g],
   <= parallel_bundle_rho_max[g];
@@ -249,25 +251,38 @@ var target_voltage_ratio = sum{n in BUSCC: substation_Vnomi[1,bus_substation[1,n
 var target_voltage_data = sum{n in BUSVV} (V[n] - bus_V0[1,n])**2;
 
 
-# Parallel bundles: tie every variable member to its bundle's shared EFFECTIVE ratio.
-# The flow equations use branch_Ror_var * branch_cstratio as the transformation ratio;
-# circulating flows between parallel branches are driven by mismatches of this effective
-# quantity, so this is what must be equalized. When all members share the same cstratio
-# (identical units), this reduces exactly to equal tap rhos.
+# Parallel bundles: tie every variable member to its bundle's shared EFFECTIVE ratio,
+# expressed in the bundle's canonical direction. The flow equations use
+# branch_Ror_var * branch_cstratio as the transformation ratio; circulating flows between
+# parallel branches are driven by mismatches of this effective quantity, so this is what
+# must be equalized. A direct member (orientation +1) is tied by eff = rho_B; a reversed
+# member (orientation -1) transforms in the opposite declared direction, so the physically
+# correct condition is eff * rho_B = 1, kept in this multiplicative (bilinear) form rather
+# than a division. Around a loop of transformers this makes the product of the declared
+# transformations identically 1, whatever rho_B. The orientation is data, so AMPL resolves
+# each instance to one of the two forms at instantiation. When all members are declared in
+# the same direction and share the same cstratio (identical units), this reduces exactly
+# to equal tap rhos.
 subject to ctr_parallel_bundle_ratio{PROBLEM_ACOPF, (qq,m,n) in BRANCHCC_REGL_VAR: qq in PARALLEL_BRANCHES}:
-  branch_Ror_var[qq,m,n] * branch_cstratio[1,qq,m,n] = bundle_Ror_var[parallel_bundle_of[qq]];
+  (if parallel_branch_orientation[qq] == 1
+     then branch_Ror_var[qq,m,n] * branch_cstratio[1,qq,m,n] - bundle_Ror_var[parallel_bundle_of[qq]]
+     else branch_Ror_var[qq,m,n] * branch_cstratio[1,qq,m,n] * bundle_Ror_var[parallel_bundle_of[qq]] - 1)
+  = 0;
 
 # POINT/EMPTY bundles: pin each still-movable member to its bundle's common target
-# EFFECTIVE rho. The target is the centre of the degenerate intersection (computed in
-# commons.mod), re-clamped here into the member's own effective domain
-# (cstratio * regl_ratio bounds). Because both the centre and the clamp come from AMPL's
-# own data, the value deduced for branch_Ror_var lands exactly inside its declared bounds,
+# EFFECTIVE rho. The canonical-space target is the centre of the degenerate intersection
+# (computed in commons.mod); a reversed member receives the inverse of that centre, its
+# declared-direction equivalent. The target is then re-clamped into the member's own
+# DECLARED effective domain. Because both the centre and the clamp come from AMPL's own
+# data, the value deduced for branch_Ror_var lands exactly inside its declared bounds,
 # free of any Java<->AMPL text-precision round-trip.
 subject to ctr_fixed_ratio{PROBLEM_ACOPF, (qq,m,n) in BRANCHCC_REGL_VAR: qq in PARALLEL_FIXED_BRANCHES}:
   branch_Ror_var[qq,m,n] * branch_cstratio[1,qq,m,n] =
-    max(branch_cstratio[1,qq,m,n] * regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]],
-    min(branch_cstratio[1,qq,m,n] * regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]],
-        parallel_bundle_center[parallel_fixed_bundle_of[qq]]));
+    max(parallel_declared_rho_lo[qq,m,n],
+    min(parallel_declared_rho_hi[qq,m,n],
+        (if parallel_fixed_branch_orientation[qq] == 1
+           then parallel_bundle_center[parallel_fixed_bundle_of[qq]]
+           else 1 / parallel_bundle_center[parallel_fixed_bundle_of[qq]])));
 
 
 #

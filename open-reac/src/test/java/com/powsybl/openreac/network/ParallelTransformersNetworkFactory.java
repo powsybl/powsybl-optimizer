@@ -206,6 +206,25 @@ public final class ParallelTransformersNetworkFactory {
     }
 
     /**
+     * Mixed-orientation triangle mirroring a real autotransformer group: T1 declared
+     * HV(400)->LV(225) between A and B; T2 and T3 declared LV(225)->HV(400) between B and
+     * another 400 kV bus C; loop closed by a 400 kV line A-C. The detector must bundle the
+     * three and flag T2 and T3 as reversed relative to T1 (the reference)
+     */
+    public static Network createAntiParallelTriangle() {
+        Network network = Network.create("anti-parallel-triangle", "test");
+        Substation s = network.newSubstation().setId("S").add();
+        addBus(s, "VL_A", 400.0, "A");
+        addBus(s, "VL_B", 225.0, "B");
+        addBus(s, "VL_C", 400.0, "C");
+        addRtcTransformer(s, "T1", "VL_A", "A", "VL_B", "B", 400.0, 225.0, 0.95, 1.05);
+        addRtcTransformer(s, "T2", "VL_B", "B", "VL_C", "C", 225.0, 400.0, 0.95, 1.05);
+        addRtcTransformer(s, "T3", "VL_B", "B", "VL_C", "C", 225.0, 400.0, 0.95, 1.05);
+        addLine(network, "L_AC", "VL_A", "A", "VL_C", "C");
+        return network;
+    }
+
+    /**
      * Square A-B-C-D-A of coupling transformers, every voltage level at 225 kV.
      * Degenerate nominal-voltage pair and no shared bus pair: the orientation of the
      * members is undecidable -> the bundle must be released and reported

@@ -62,11 +62,11 @@ If so, empty files will be created during execution.
 
 ## Parallel transformers
 
-The optimizer automatically detects groups of transformers connected in parallel and generates a file consumed by the AMPL code (see [Parallel transformers](acOptimalPowerflow.md#parallel-transformers) for the resulting behavior). This file is derived from the detection only and is not provided by the user: it carries the topological membership of the bundles (every detected member), while the qualification (tie / fix / release) and all the effective-ratio bounds are computed by the AMPL code from its own data. Unlike the parameter files above, it does not follow the `#"num" "id"` format:
+The optimizer automatically detects groups of transformers connected in parallel and generates a file consumed by the AMPL code (see [Parallel transformers](acOptimalPowerflow.md#parallel-transformers) for the resulting behavior). This file is derived from the detection only and is not provided by the user: it carries the topological membership of the bundles (every member of every orientable bundle) and each member's orientation relative to the bundle's canonical direction (+1: declared in the same direction as the bundle's first member in id order, -1: declared in the opposite direction), while the qualification (tie / fix / release) and all the effective-ratio bounds are computed by the AMPL code from its own data. Unlike the parameter files above, it does not follow the `#"num" "id"` format:
 
 | File                                 | Format (columns)            | Description                                                                            |
 |--------------------------------------|-----------------------------|----------------------------------------------------------------------------------------|
-| `param_parallel_transformers.txt`    | `#num_bundle num_branch id` | Topological membership of the detected parallel bundles: all branches sharing a `num_bundle` are parallel. Whether a bundle is tied, fixed (single-point/empty intersection) or released, together with all the effective per-unit ratio bounds, is derived by the AMPL code. |
+| `param_parallel_transformers.txt`    | `#num_bundle num_branch orientation id` | Topological membership and orientation of the detected parallel bundles: all branches sharing a `num_bundle` are parallel, and `orientation` is +1 for a member declared in the bundle's canonical direction, -1 for a member declared in the opposite direction. Whether a bundle is tied, fixed (single-point/empty intersection) or released, together with all the effective per-unit ratio bounds, is derived by the AMPL code. |
 
 ## New voltage limits
 

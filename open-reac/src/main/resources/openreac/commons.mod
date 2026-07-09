@@ -212,7 +212,9 @@ set BRANCHCC_REGL_FIX := BRANCHCC_REGL diff BRANCHCC_REGL_VAR;
 # Parallel transformer bundles (shared ratio)
 ###############################################################################
 # Bundles of parallel transformers are detected topologically on the Java side and passed
-# as a plain membership relation (num_bundle, num_branch). EVERYTHING numeric is derived
+# as a membership + orientation relation (num_bundle, num_branch, orientation): +1 for a
+# member declared in the bundle's canonical direction (that of its first member in id
+# order), -1 for a member declared in the opposite direction. EVERYTHING numeric is derived
 # here, once, from AMPL's own data: the per-member effective rho bounds, the bundle
 # intersection, the LARGE / POINT / EMPTY qualification, the shared-ratio variable bounds
 # and the fixed targets. Having a single authority means the qualification and the
@@ -221,7 +223,9 @@ set BRANCHCC_REGL_FIX := BRANCHCC_REGL diff BRANCHCC_REGL_VAR;
 #
 # Everything lives in EFFECTIVE-ratio space: the ratio entering the flow equations is
 # branch_Ror_var * branch_cstratio, and circulating flows between parallel branches are
-# driven by mismatches of this effective quantity.
+# driven by mismatches of this effective quantity. Bundle-level quantities (bounds, centre,
+# shared variable) are expressed in the bundle's CANONICAL direction; a reversed member
+# maps to that space by inversion (its declared range [lo, hi] becomes [1/hi, 1/lo]).
 
 # Branch nums the optimization can actually move this run.
 set BRANCHCC_REGL_VAR_NUM := setof {(qq,m,n) in BRANCHCC_REGL_VAR} qq;
@@ -232,28 +236,44 @@ set PARALLEL_BUNDLES_ALL := setof {(g,qq) in PARAM_PARALLEL_TRANSFORMERS} g;
 # empty). Single source of truth, formerly the Java RHO_INTERSECTION_EPSILON.
 param parallel_rho_intersection_epsilon := 1e-4;
 
-# Effective rho bounds of a bundle = intersection of its members' effective ranges, taken
-# over the connected-component RTC branches (where branch_cstratio and the tap tables are
-# defined):
+# Every member num of every bundle (scopes the per-member bounds below).
+set PARALLEL_MEMBER_NUMS := setof {(g,qq) in PARAM_PARALLEL_TRANSFORMERS} qq;
+
+# Effective rho bounds of a member in its DECLARED direction, over the connected-component
+# RTC branches (where branch_cstratio and the tap tables are defined):
 #  - a user-variable member (its num is in PARAM_TRANSFORMERS_RATIO_VARIABLE) spans its full
 #    tap range [cstratio * regl_ratio_min, cstratio * regl_ratio_max];
 #  - a user-fixed member cannot be moved and is pinned to its current tap, i.e. the single
 #    point cstratio * tap_ratio(current tap) -- exactly the value AMPL otherwise freezes it at.
-# This reproduces the former Java analysis member by member. A member outside BRANCHCC_REGL
-# (near-zero impedance, out of the main component) contributes nothing here; such a member
-# necessarily fails the tie guard below, so its bundle is released regardless of these bounds.
+param parallel_declared_rho_lo{(qq,m,n) in BRANCHCC_REGL: qq in PARALLEL_MEMBER_NUMS} :=
+  branch_cstratio[1,qq,m,n] *
+  (if qq in PARAM_TRANSFORMERS_RATIO_VARIABLE
+     then regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]]
+     else tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]]);
+param parallel_declared_rho_hi{(qq,m,n) in BRANCHCC_REGL: qq in PARALLEL_MEMBER_NUMS} :=
+  branch_cstratio[1,qq,m,n] *
+  (if qq in PARAM_TRANSFORMERS_RATIO_VARIABLE
+     then regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]]
+     else tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]]);
+
+# Effective rho bounds of a bundle = intersection of its members' effective ranges, expressed
+# in the bundle's CANONICAL direction: a direct member (orientation +1) contributes its
+# declared range as-is; a reversed member (orientation -1) transforms in the opposite
+# declared direction, so it contributes the INVERSE of its declared range, bounds swapped
+# ([lo, hi] -> [1/hi, 1/lo]). This reproduces the former Java analysis member by member.
+# A member outside BRANCHCC_REGL (near-zero impedance, out of the main component) contributes
+# nothing here; such a member necessarily fails the tie guard below, so its bundle is
+# released regardless of these bounds.
 param parallel_bundle_rho_min{g in PARALLEL_BUNDLES_ALL} :=
   max {(gg,qq) in PARAM_PARALLEL_TRANSFORMERS, (qq2,m,n) in BRANCHCC_REGL: gg == g and qq2 == qq}
-    branch_cstratio[1,qq2,m,n] *
-    (if qq2 in PARAM_TRANSFORMERS_RATIO_VARIABLE
-       then regl_ratio_min[1,branch_ptrRegl[1,qq2,m,n]]
-       else tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq2,m,n]],regl_tap0[1,branch_ptrRegl[1,qq2,m,n]]]);
+    (if param_parallel_transformers_orientation[gg,qq] == 1
+       then parallel_declared_rho_lo[qq2,m,n]
+       else 1 / parallel_declared_rho_hi[qq2,m,n]);
 param parallel_bundle_rho_max{g in PARALLEL_BUNDLES_ALL} :=
   min {(gg,qq) in PARAM_PARALLEL_TRANSFORMERS, (qq2,m,n) in BRANCHCC_REGL: gg == g and qq2 == qq}
-    branch_cstratio[1,qq2,m,n] *
-    (if qq2 in PARAM_TRANSFORMERS_RATIO_VARIABLE
-       then regl_ratio_max[1,branch_ptrRegl[1,qq2,m,n]]
-       else tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq2,m,n]],regl_tap0[1,branch_ptrRegl[1,qq2,m,n]]]);
+    (if param_parallel_transformers_orientation[gg,qq] == 1
+       then parallel_declared_rho_hi[qq2,m,n]
+       else 1 / parallel_declared_rho_lo[qq2,m,n]);
 
 # LARGE: the effective intersection is wider than epsilon (a usable shared interval).
 # Otherwise the bundle is degenerate (POINT/EMPTY) and its members are fixed (see below).
@@ -277,15 +297,24 @@ set PARALLEL_BUNDLES_FIXED := PARALLEL_BUNDLES_ALL diff PARALLEL_BUNDLES_LARGE;
 
 set PARALLEL_BRANCHES := setof {(g,qq) in PARAM_PARALLEL_TRANSFORMERS: g in PARALLEL_BUNDLES} qq;
 param parallel_bundle_of{qq in PARALLEL_BRANCHES} := max {(g,qqq) in PARAM_PARALLEL_TRANSFORMERS: qqq == qq} g;
+# Orientation of a tied member relative to its bundle's canonical direction (+1 direct,
+# -1 reversed), straight from the detection file.
+param parallel_branch_orientation{qq in PARALLEL_BRANCHES} :=
+  param_parallel_transformers_orientation[parallel_bundle_of[qq],qq];
 
 # Members of a degenerate bundle that are still movable this run: each is fixed to the gap
-# centre clamped into its own effective domain (see ctr_fixed_ratio in acopf.mod). User-fixed
-# members are already frozen at their current tap by the model and need no constraint.
+# centre (mapped back to the member's declared direction, i.e. inverted for a reversed
+# member) clamped into its own declared effective domain (see ctr_fixed_ratio in acopf.mod).
+# User-fixed members are already frozen at their current tap by the model and need no
+# constraint.
 set PARALLEL_FIXED_BRANCHES := setof
   {(g,qq) in PARAM_PARALLEL_TRANSFORMERS, (qq2,m,n) in BRANCHCC_REGL_VAR: g in PARALLEL_BUNDLES_FIXED and qq2 == qq} qq;
 param parallel_fixed_bundle_of{qq in PARALLEL_FIXED_BRANCHES} := max {(g,qqq) in PARAM_PARALLEL_TRANSFORMERS: qqq == qq} g;
-# Common target effective ratio of a degenerate bundle: the centre of its (point or empty)
-# intersection. ctr_fixed_ratio clamps it into each member's own effective range.
+param parallel_fixed_branch_orientation{qq in PARALLEL_FIXED_BRANCHES} :=
+  param_parallel_transformers_orientation[parallel_fixed_bundle_of[qq],qq];
+# Common target effective ratio of a degenerate bundle, in the CANONICAL direction: the
+# centre of its (point or empty) intersection. ctr_fixed_ratio maps it to each member's
+# declared direction and clamps it into the member's own declared effective range.
 param parallel_bundle_center{g in PARALLEL_BUNDLES_FIXED} :=
   (parallel_bundle_rho_min[g] + parallel_bundle_rho_max[g]) / 2;
 
