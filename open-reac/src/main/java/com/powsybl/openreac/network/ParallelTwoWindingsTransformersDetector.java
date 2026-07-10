@@ -200,13 +200,13 @@ public final class ParallelTwoWindingsTransformersDetector {
         if (refB1 == null || refB2 == null) {
             return Optional.empty();
         }
-        UnorderedPair referencePair = UnorderedPair.of(refB1.getId(), refB2.getId());
+        BusPair referencePair = BusPair.of(refB1.getId(), refB2.getId());
         List<Member> result = new ArrayList<>(members.size());
         for (TwoWindingsTransformer twt : members) {
             Bus b1 = twt.getTerminal1().getBusView().getBus();
             Bus b2 = twt.getTerminal2().getBusView().getBus();
             if (b1 == null || b2 == null
-                    || !referencePair.equals(UnorderedPair.of(b1.getId(), b2.getId()))) {
+                    || !referencePair.equals(BusPair.of(b1.getId(), b2.getId()))) {
                 return Optional.empty();
             }
             result.add(new Member(twt.getId(), b1.getId().equals(refB1.getId()) ? 1 : -1));
@@ -217,7 +217,7 @@ public final class ParallelTwoWindingsTransformersDetector {
     // ---- Step 1: simple parallels (same pair of BusView buses) ----
 
     private static List<Set<String>> detectSimpleParallels(Network network, Set<String> ratioTapChangerIds) {
-        Map<UnorderedPair, List<String>> byBusPair = new HashMap<>();
+        Map<BusPair, List<String>> byBusPair = new HashMap<>();
         for (TwoWindingsTransformer twt : network.getTwoWindingsTransformers()) {
             if (!ratioTapChangerIds.contains(twt.getId())) {
                 continue;
@@ -225,7 +225,7 @@ public final class ParallelTwoWindingsTransformersDetector {
             Bus b1 = twt.getTerminal1().getBusView().getBus();
             Bus b2 = twt.getTerminal2().getBusView().getBus();
             if (b1 != null && b2 != null) {
-                byBusPair.computeIfAbsent(UnorderedPair.of(b1.getId(), b2.getId()), k -> new ArrayList<>())
+                byBusPair.computeIfAbsent(BusPair.of(b1.getId(), b2.getId()), k -> new ArrayList<>())
                         .add(twt.getId());
             }
         }
@@ -266,18 +266,18 @@ public final class ParallelTwoWindingsTransformersDetector {
 
     private static void processCycle(IntraSubstationGraph graph, List<String> cycleNodes, List<Set<String>> result) {
         // Edges of the cycle, bundled by their nominal voltage pair
-        Map<NominalVoltagePair, List<EdgeKey>> edgesByVoltage = new HashMap<>();
+        Map<NominalVoltagePair, List<BusPair>> edgesByVoltage = new HashMap<>();
         int n = cycleNodes.size();
         for (int i = 0; i < n; i++) {
-            EdgeKey edge = EdgeKey.of(cycleNodes.get(i), cycleNodes.get((i + 1) % n));
+            BusPair edge = BusPair.of(cycleNodes.get(i), cycleNodes.get((i + 1) % n));
             NominalVoltagePair vp = graph.edges.get(edge).voltagePair;
             edgesByVoltage.computeIfAbsent(vp, k -> new ArrayList<>()).add(edge);
         }
         // Within each voltage subgraph, find connected components
-        for (List<EdgeKey> edgesAtVoltage : edgesByVoltage.values()) {
-            for (Set<EdgeKey> component : connectedComponents(edgesAtVoltage)) {
+        for (List<BusPair> edgesAtVoltage : edgesByVoltage.values()) {
+            for (Set<BusPair> component : connectedComponents(edgesAtVoltage)) {
                 Set<String> transformerIds = new HashSet<>();
-                for (EdgeKey edge : component) {
+                for (BusPair edge : component) {
                     transformerIds.addAll(graph.edges.get(edge).transformerIds);
                 }
                 if (transformerIds.size() >= 2) {
@@ -287,7 +287,7 @@ public final class ParallelTwoWindingsTransformersDetector {
         }
     }
 
-    private static List<Set<EdgeKey>> connectedComponents(Collection<EdgeKey> edges) {
+    private static List<Set<BusPair>> connectedComponents(Collection<BusPair> edges) {
         // Build an adjacency from the edge set, then flood-fill for components.
         Map<String, Set<String>> adj = buildBusAdjacency(edges);
         Map<String, Integer> compOf = new HashMap<>();
@@ -298,19 +298,19 @@ public final class ParallelTwoWindingsTransformersDetector {
                 compIdx++;
             }
         }
-        List<Set<EdgeKey>> components = new ArrayList<>();
+        List<Set<BusPair>> components = new ArrayList<>();
         for (int i = 0; i < compIdx; i++) {
             components.add(new HashSet<>());
         }
-        for (EdgeKey e : edges) {
+        for (BusPair e : edges) {
             components.get(compOf.get(e.busId1)).add(e);
         }
         return components;
     }
 
-    private static Map<String, Set<String>> buildBusAdjacency(Collection<EdgeKey> edges) {
+    private static Map<String, Set<String>> buildBusAdjacency(Collection<BusPair> edges) {
         Map<String, Set<String>> adj = new HashMap<>();
-        for (EdgeKey e : edges) {
+        for (BusPair e : edges) {
             adj.computeIfAbsent(e.busId1, k -> new HashSet<>()).add(e.busId2);
             adj.computeIfAbsent(e.busId2, k -> new HashSet<>()).add(e.busId1);
         }
@@ -380,21 +380,16 @@ public final class ParallelTwoWindingsTransformersDetector {
 
     // ---- Internal value types ----
 
-    private record UnorderedPair(String a, String b) {
-        static UnorderedPair of(String x, String y) {
-            return x.compareTo(y) <= 0 ? new UnorderedPair(x, y) : new UnorderedPair(y, x);
-        }
-    }
-
     private record NominalVoltagePair(double low, double high) {
         static NominalVoltagePair of(double v1, double v2) {
             return v1 <= v2 ? new NominalVoltagePair(v1, v2) : new NominalVoltagePair(v2, v1);
         }
     }
 
-    private record EdgeKey(String busId1, String busId2) {
-        static EdgeKey of(String a, String b) {
-            return a.compareTo(b) <= 0 ? new EdgeKey(a, b) : new EdgeKey(b, a);
+    /** An unordered pair of bus ids, canonicalized so that (x, y) and (y, x) are equal. */
+    private record BusPair(String busId1, String busId2) {
+        static BusPair of(String a, String b) {
+            return a.compareTo(b) <= 0 ? new BusPair(a, b) : new BusPair(b, a);
         }
     }
 
@@ -406,10 +401,10 @@ public final class ParallelTwoWindingsTransformersDetector {
     private static final class IntraSubstationGraph {
 
         final Map<String, Set<String>> adjacency = new HashMap<>();
-        final Map<EdgeKey, EdgeData> edges = new HashMap<>();
+        final Map<BusPair, EdgeData> edges = new HashMap<>();
 
         void addEdge(String busA, String busB, String transformerId, NominalVoltagePair voltagePair) {
-            EdgeKey key = EdgeKey.of(busA, busB);
+            BusPair key = BusPair.of(busA, busB);
             EdgeData data = edges.computeIfAbsent(key, k -> new EdgeData());
             data.transformerIds.add(transformerId);
             if (data.voltagePair == null) {
@@ -420,7 +415,7 @@ public final class ParallelTwoWindingsTransformersDetector {
         }
 
         boolean hasEdge(String busA, String busB) {
-            return edges.containsKey(EdgeKey.of(busA, busB));
+            return edges.containsKey(BusPair.of(busA, busB));
         }
 
         /**
