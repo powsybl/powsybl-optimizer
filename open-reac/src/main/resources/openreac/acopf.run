@@ -54,6 +54,13 @@ for {g in PARALLEL_BUNDLES_DROPPED} {
          "fixed ratio (e.g. regl_min == regl_max, or side 2 opened)");
   }
 }
+printf{LOG_INFO} "Parallel bundles: %i tied, %i released (a member is not movable this run), %i degenerate (POINT/EMPTY), of which %i with movable members\n",
+  card(PARALLEL_BUNDLES), card(PARALLEL_BUNDLES_DROPPED), card(PARALLEL_BUNDLES_FIXED),
+  card(setof {qq in PARALLEL_FIXED_BRANCHES} parallel_fixed_bundle_of[qq]);
+for {g in PARALLEL_BUNDLES_FIXED} {
+  printf{LOG_DEBUG} "Parallel bundle %i degenerate: canonical effective intersection [%f, %f]\n",
+    g, parallel_bundle_rho_min[g], parallel_bundle_rho_max[g];
+}
 
 
 ###############################################################################
