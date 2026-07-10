@@ -264,9 +264,9 @@ var target_voltage_data = sum{n in BUSVV} (V[n] - bus_V0[1,n])**2;
 # the same direction and share the same cstratio (identical units), this reduces exactly
 # to equal tap rhos.
 subject to ctr_parallel_bundle_ratio{PROBLEM_ACOPF, (qq,m,n) in BRANCHCC_REGL_VAR: qq in PARALLEL_BRANCHES}:
-  (if parallel_branch_orientation[qq] == 1
-     then branch_Ror_var[qq,m,n] * branch_cstratio[1,qq,m,n] - bundle_Ror_var[parallel_bundle_of[qq]]
-     else branch_Ror_var[qq,m,n] * branch_cstratio[1,qq,m,n] * bundle_Ror_var[parallel_bundle_of[qq]] - 1)
+  (if parallel_member_orientation[qq] == 1
+     then branch_Ror_var[qq,m,n] * branch_cstratio[1,qq,m,n] - bundle_Ror_var[parallel_bundle_of_member[qq]]
+     else branch_Ror_var[qq,m,n] * branch_cstratio[1,qq,m,n] * bundle_Ror_var[parallel_bundle_of_member[qq]] - 1)
   = 0;
 
 # POINT/EMPTY bundles: pin each still-movable member to its bundle's common target
@@ -280,9 +280,9 @@ subject to ctr_fixed_ratio{PROBLEM_ACOPF, (qq,m,n) in BRANCHCC_REGL_VAR: qq in P
   branch_Ror_var[qq,m,n] * branch_cstratio[1,qq,m,n] =
     max(parallel_declared_rho_lo[qq,m,n],
     min(parallel_declared_rho_hi[qq,m,n],
-        (if parallel_fixed_branch_orientation[qq] == 1
-           then parallel_bundle_center[parallel_fixed_bundle_of[qq]]
-           else 1 / parallel_bundle_center[parallel_fixed_bundle_of[qq]])));
+        (if parallel_member_orientation[qq] == 1
+           then parallel_bundle_center[parallel_bundle_of_member[qq]]
+           else 1 / parallel_bundle_center[parallel_bundle_of_member[qq]])));
 
 
 #

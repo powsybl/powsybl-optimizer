@@ -176,7 +176,7 @@ let fileOut := "reactiveopf_results_fixed_parallel_transformers.csv";
 printf "#variant;num_bundle;num;fixed_rho;id;\n" > (fileOut);
 printf{(qq,m,n) in BRANCHCC_REGL_VAR: qq in PARALLEL_FIXED_BRANCHES} "%i;%i;%i;%.6f;%Q;\n",
   1,
-  parallel_fixed_bundle_of[qq],
+  parallel_bundle_of_member[qq],
   qq,
   branch_Ror_var[qq,m,n] * branch_cstratio[1,qq,m,n],
   branch_id[1,qq,m,n]

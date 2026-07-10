@@ -239,6 +239,15 @@ param parallel_rho_intersection_epsilon := 1e-4;
 # Every member num of every bundle (scopes the per-member bounds below).
 set PARALLEL_MEMBER_NUMS := setof {(g,qq) in PARAM_PARALLEL_TRANSFORMERS} qq;
 
+# Bundle a member belongs to, and its orientation relative to that bundle's canonical
+# direction (+1 direct, -1 reversed), straight from the detection file. Membership is a
+# function (bundles are disjoint), so the max over the singleton simply selects it. Defined
+# once for every member and reused by both the tied and the fixed constraints.
+param parallel_bundle_of_member{qq in PARALLEL_MEMBER_NUMS} :=
+  max {(g,qqq) in PARAM_PARALLEL_TRANSFORMERS: qqq == qq} g;
+param parallel_member_orientation{qq in PARALLEL_MEMBER_NUMS} :=
+  param_parallel_transformers_orientation[parallel_bundle_of_member[qq],qq];
+
 # Effective rho bounds of a member in its DECLARED direction, over the connected-component
 # RTC branches (where branch_cstratio and the tap tables are defined):
 #  - a user-variable member (its num is in PARAM_TRANSFORMERS_RATIO_VARIABLE) spans its full
@@ -296,11 +305,6 @@ set PARALLEL_BUNDLES_DROPPED := PARALLEL_BUNDLES_LARGE diff PARALLEL_BUNDLES_GUA
 set PARALLEL_BUNDLES_FIXED := PARALLEL_BUNDLES_ALL diff PARALLEL_BUNDLES_LARGE;
 
 set PARALLEL_BRANCHES := setof {(g,qq) in PARAM_PARALLEL_TRANSFORMERS: g in PARALLEL_BUNDLES} qq;
-param parallel_bundle_of{qq in PARALLEL_BRANCHES} := max {(g,qqq) in PARAM_PARALLEL_TRANSFORMERS: qqq == qq} g;
-# Orientation of a tied member relative to its bundle's canonical direction (+1 direct,
-# -1 reversed), straight from the detection file.
-param parallel_branch_orientation{qq in PARALLEL_BRANCHES} :=
-  param_parallel_transformers_orientation[parallel_bundle_of[qq],qq];
 
 # Members of a degenerate bundle that are still movable this run: each is fixed to the gap
 # centre (mapped back to the member's declared direction, i.e. inverted for a reversed
@@ -309,9 +313,6 @@ param parallel_branch_orientation{qq in PARALLEL_BRANCHES} :=
 # constraint.
 set PARALLEL_FIXED_BRANCHES := setof
   {(g,qq) in PARAM_PARALLEL_TRANSFORMERS, (qq2,m,n) in BRANCHCC_REGL_VAR: g in PARALLEL_BUNDLES_FIXED and qq2 == qq} qq;
-param parallel_fixed_bundle_of{qq in PARALLEL_FIXED_BRANCHES} := max {(g,qqq) in PARAM_PARALLEL_TRANSFORMERS: qqq == qq} g;
-param parallel_fixed_branch_orientation{qq in PARALLEL_FIXED_BRANCHES} :=
-  param_parallel_transformers_orientation[parallel_fixed_bundle_of[qq],qq];
 # Common target effective ratio of a degenerate bundle, in the CANONICAL direction: the
 # centre of its (point or empty) intersection. ctr_fixed_ratio maps it to each member's
 # declared direction and clamps it into the member's own declared effective range.
