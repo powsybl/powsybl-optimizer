@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -139,7 +140,7 @@ public final class ParallelTwoWindingsTransformersDetector {
         // Deterministic ordering, mirroring the notebook (largest bundles first), with a
         // stable tie-break so the AMPL bundle numbering is reproducible across runs.
         merged.sort(Comparator
-                .comparingInt((Set<String> s) -> s.size()).reversed()
+                .comparingInt(Set<String>::size).reversed()
                 .thenComparing(s -> s.stream().min(Comparator.naturalOrder()).orElse("")));
         return orientBundles(network, merged);
     }
@@ -153,12 +154,9 @@ public final class ParallelTwoWindingsTransformersDetector {
             List<TwoWindingsTransformer> members = bundle.stream().sorted()
                     .map(network::getTwoWindingsTransformer)
                     .toList();
-            List<Member> orientedMembers = orientMembers(members);
-            if (orientedMembers == null) {
-                undecided.add(bundle);
-            } else {
-                oriented.add(new Bundle(orientedMembers));
-            }
+            orientMembers(members).ifPresentOrElse(
+                orientedMembers -> oriented.add(new Bundle(orientedMembers)),
+                () -> undecided.add(bundle));
         }
         return new DetectionResult(oriented, undecided);
     }
@@ -169,14 +167,14 @@ public final class ParallelTwoWindingsTransformersDetector {
      * preserved by the transitive merge): when that pair is non-degenerate, the terminal-1
      * side (low or high nominal voltage) identifies the declared direction; when it is
      * degenerate (coupling transformers), the terminal-1 bus does, provided all members
-     * share the same bus pair. Returns null when undecidable.
+     * share the same bus pair. Returns empty when undecidable.
      */
-    private static List<Member> orientMembers(List<TwoWindingsTransformer> members) {
+    private static Optional<List<Member>> orientMembers(List<TwoWindingsTransformer> members) {
         TwoWindingsTransformer reference = members.get(0);
         double refV1 = reference.getTerminal1().getVoltageLevel().getNominalV();
         double refV2 = reference.getTerminal2().getVoltageLevel().getNominalV();
         return refV1 != refV2
-                ? orientByNominalVoltageSide(members, refV1 < refV2)
+                ? Optional.of(orientByNominalVoltageSide(members, refV1 < refV2))
                 : orientBySharedBusPair(members, reference);
     }
 
@@ -194,13 +192,13 @@ public final class ParallelTwoWindingsTransformersDetector {
      * Fallback for degenerate nominal-voltage pairs (coupling transformers): only a
      * simple parallel (every member on the same bus pair) can be oriented, by comparing
      * each member's terminal-1 bus to the reference's. A cycle-based bundle has no
-     * shared bus pair and is undecidable: returns null.
+     * shared bus pair and is undecidable: returns empty.
      */
-    private static List<Member> orientBySharedBusPair(List<TwoWindingsTransformer> members, TwoWindingsTransformer reference) {
+    private static Optional<List<Member>> orientBySharedBusPair(List<TwoWindingsTransformer> members, TwoWindingsTransformer reference) {
         Bus refB1 = reference.getTerminal1().getBusView().getBus();
         Bus refB2 = reference.getTerminal2().getBusView().getBus();
         if (refB1 == null || refB2 == null) {
-            return null;
+            return Optional.empty();
         }
         UnorderedPair referencePair = UnorderedPair.of(refB1.getId(), refB2.getId());
         List<Member> result = new ArrayList<>(members.size());
@@ -209,11 +207,11 @@ public final class ParallelTwoWindingsTransformersDetector {
             Bus b2 = twt.getTerminal2().getBusView().getBus();
             if (b1 == null || b2 == null
                     || !referencePair.equals(UnorderedPair.of(b1.getId(), b2.getId()))) {
-                return null;
+                return Optional.empty();
             }
             result.add(new Member(twt.getId(), b1.getId().equals(refB1.getId()) ? 1 : -1));
         }
-        return result;
+        return Optional.of(result);
     }
 
     // ---- Step 1: simple parallels (same pair of BusView buses) ----
@@ -226,11 +224,10 @@ public final class ParallelTwoWindingsTransformersDetector {
             }
             Bus b1 = twt.getTerminal1().getBusView().getBus();
             Bus b2 = twt.getTerminal2().getBusView().getBus();
-            if (b1 == null || b2 == null) {
-                continue;
+            if (b1 != null && b2 != null) {
+                byBusPair.computeIfAbsent(UnorderedPair.of(b1.getId(), b2.getId()), k -> new ArrayList<>())
+                        .add(twt.getId());
             }
-            byBusPair.computeIfAbsent(UnorderedPair.of(b1.getId(), b2.getId()), k -> new ArrayList<>())
-                    .add(twt.getId());
         }
         return byBusPair.values().stream()
                 .filter(list -> list.size() >= 2)
@@ -291,32 +288,15 @@ public final class ParallelTwoWindingsTransformersDetector {
     }
 
     private static List<Set<EdgeKey>> connectedComponents(Collection<EdgeKey> edges) {
-        // Build an adjacency from the edge set, then BFS/DFS for components
-        Map<String, Set<String>> adj = new HashMap<>();
-        for (EdgeKey e : edges) {
-            adj.computeIfAbsent(e.busId1, k -> new HashSet<>()).add(e.busId2);
-            adj.computeIfAbsent(e.busId2, k -> new HashSet<>()).add(e.busId1);
-        }
+        // Build an adjacency from the edge set, then flood-fill for components.
+        Map<String, Set<String>> adj = buildBusAdjacency(edges);
         Map<String, Integer> compOf = new HashMap<>();
         int compIdx = 0;
         for (String start : adj.keySet()) {
-            if (compOf.containsKey(start)) {
-                continue;
+            if (!compOf.containsKey(start)) {
+                floodFillComponent(start, compIdx, adj, compOf);
+                compIdx++;
             }
-            Deque<String> stack = new ArrayDeque<>();
-            stack.push(start);
-            while (!stack.isEmpty()) {
-                String node = stack.pop();
-                if (compOf.putIfAbsent(node, compIdx) != null) {
-                    continue;
-                }
-                for (String nbr : adj.getOrDefault(node, Set.of())) {
-                    if (!compOf.containsKey(nbr)) {
-                        stack.push(nbr);
-                    }
-                }
-            }
-            compIdx++;
         }
         List<Set<EdgeKey>> components = new ArrayList<>();
         for (int i = 0; i < compIdx; i++) {
@@ -326,6 +306,32 @@ public final class ParallelTwoWindingsTransformersDetector {
             components.get(compOf.get(e.busId1)).add(e);
         }
         return components;
+    }
+
+    private static Map<String, Set<String>> buildBusAdjacency(Collection<EdgeKey> edges) {
+        Map<String, Set<String>> adj = new HashMap<>();
+        for (EdgeKey e : edges) {
+            adj.computeIfAbsent(e.busId1, k -> new HashSet<>()).add(e.busId2);
+            adj.computeIfAbsent(e.busId2, k -> new HashSet<>()).add(e.busId1);
+        }
+        return adj;
+    }
+
+    // Iterative flood fill: labels start and everything reachable from it with compIdx.
+    private static void floodFillComponent(String start, int compIdx,
+                                           Map<String, Set<String>> adj, Map<String, Integer> compOf) {
+        Deque<String> stack = new ArrayDeque<>();
+        stack.push(start);
+        while (!stack.isEmpty()) {
+            String node = stack.pop();
+            if (compOf.putIfAbsent(node, compIdx) == null) {
+                for (String nbr : adj.getOrDefault(node, Set.of())) {
+                    if (!compOf.containsKey(nbr)) {
+                        stack.push(nbr);
+                    }
+                }
+            }
+        }
     }
 
     // ---- Graph construction ----
