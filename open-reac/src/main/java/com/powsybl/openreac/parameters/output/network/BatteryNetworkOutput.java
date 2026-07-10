@@ -43,7 +43,7 @@ public class BatteryNetworkOutput extends AbstractNetworkOutput<BatteryModificat
     protected void readLine(String[] tokens, StringToIntMapper<AmplSubset> stringToIntMapper) {
         String id = stringToIntMapper.getId(AmplSubset.BATTERY, Integer.parseInt(tokens[ID_COLUMN_INDEX]));
         double targetQ = readDouble(tokens[TARGET_Q_COLUMN_INDEX]);
-        // targetP = null: OpenReac does not optimize the battery active power.
+        // targetP left untouched: OpenReac does not optimize the battery active power.
         modifications.add(new BatteryModification(id, null, targetQ));
     }
 }
