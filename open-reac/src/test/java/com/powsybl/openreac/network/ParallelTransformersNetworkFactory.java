@@ -118,64 +118,6 @@ public final class ParallelTransformersNetworkFactory {
     }
 
     /**
-     * Cover the POINT case: T1 in [0.959, 1.000] and T2 in [1.000, 1.042]
-     * Intersection collapses to {1.000} -> POINT
-     */
-    public static Network createPointIntersection() {
-        Network network = Network.create("point-intersection", "test");
-        Substation s = network.newSubstation().setId("S").add();
-        addBus(s, "VL1", 225.0, "B1");
-        addBus(s, "VL2", 90.0, "B2");
-        addRtcTransformer(s, "T1", "VL1", "B1", "VL2", "B2", 225.0, 90.0, 0.959, 1.000);
-        addRtcTransformer(s, "T2", "VL1", "B1", "VL2", "B2", 225.0, 90.0, 1.000, 1.042);
-        return network;
-    }
-
-    /**
-     * Disjoint ranges: T1 in [0.95, 0.99], T2 in [1.01, 1.05] -> EMPTY
-     */
-    public static Network createEmptyIntersection() {
-        Network network = Network.create("empty-intersection", "test");
-        Substation s = network.newSubstation().setId("S").add();
-        addBus(s, "VL1", 225.0, "B1");
-        addBus(s, "VL2", 90.0, "B2");
-        addRtcTransformer(s, "T1", "VL1", "B1", "VL2", "B2", 225.0, 90.0, 0.95, 0.99);
-        addRtcTransformer(s, "T2", "VL1", "B1", "VL2", "B2", 225.0, 90.0, 1.01, 1.05);
-        return network;
-    }
-
-    /**
-     * Three transformers, only T1 and T2 cause the EMPTY status. T3's domain
-     * straddles the gap center -> it must be fixed at the center, not at one
-     * of its bounds
-     */
-    public static Network createEmptyIntersectionWithStraddler() {
-        Network network = Network.create("empty-with-straddler", "test");
-        Substation s = network.newSubstation().setId("S").add();
-        addBus(s, "VL1", 225.0, "B1");
-        addBus(s, "VL2", 90.0, "B2");
-        addRtcTransformer(s, "T1", "VL1", "B1", "VL2", "B2", 225.0, 90.0, 0.95, 0.99);
-        addRtcTransformer(s, "T2", "VL1", "B1", "VL2", "B2", 225.0, 90.0, 1.01, 1.05);
-        addRtcTransformer(s, "T3", "VL1", "B1", "VL2", "B2", 225.0, 90.0, 0.97, 1.03);
-        return network;
-    }
-
-    /**
-     * Domains disjoint by less than RHO_INTERSECTION_EPSILON: classified POINT, but
-     * low (1.00005) > high (1.0000). The old code fixed every member at low, pushing
-     * T1 above its own rhoMax; the clamp keeps each member inside its range.
-     */
-    public static Network createNearlyTouchingDomains() {
-        Network network = Network.create("nearly-touching", "test");
-        Substation s = network.newSubstation().setId("S").add();
-        addBus(s, "VL1", 225.0, "B1");
-        addBus(s, "VL2", 90.0, "B2");
-        addRtcTransformer(s, "T1", "VL1", "B1", "VL2", "B2", 225.0, 90.0, 0.95, 1.00000);
-        addRtcTransformer(s, "T2", "VL1", "B1", "VL2", "B2", 225.0, 90.0, 1.00005, 1.05);
-        return network;
-    }
-
-    /**
      * Two physically parallel transformers between B1 (225 kV) and B2 (90 kV), but T2 is
      * declared with swapped terminals (90 kV side first). Legal in IIDM; the detector must
      * flag T2 as reversed relative to T1
@@ -251,41 +193,6 @@ public final class ParallelTransformersNetworkFactory {
         Substation s = network.newSubstation().setId("S").add();
         addBus(s, "VL1", 225.0, "B1");
         addBus(s, "VL2", 90.0, "B2");
-        return network;
-    }
-
-    /**
-     * Two parallel transformers with identical raw tap domains [0.95, 1.05] but a mildly
-     * different rated voltage on side 1: T1 has cstRatio 1, T2 has cstRatio 225/222.75 ≈ 1.0101.
-     * Effective domains: T1 [0.95, 1.05], T2 [0.959596, 1.060606] -> LARGE with the
-     * intersection [0.959596, 1.05] in effective space. A raw-rho analysis would wrongly
-     * report [0.95, 1.05].
-     */
-    public static Network createShiftedEffectiveIntersection() {
-        Network network = Network.create("shifted-effective", "test");
-        Substation s = network.newSubstation().setId("S").add();
-        addBus(s, "VL1", 225.0, "B1");
-        addBus(s, "VL2", 90.0, "B2");
-        addRtcTransformer(s, "T1", "VL1", "B1", "VL2", "B2", 225.0, 90.0, 0.95, 1.05);
-        addRtcTransformer(s, "T2", "VL1", "B1", "VL2", "B2", 222.75, 90.0, 0.95, 1.05);
-        return network;
-    }
-
-    /**
-     * Two parallel transformers with identical raw tap domains [0.95, 1.05] but strongly
-     * different rated voltages: T1 has cstRatio 1, T2 has cstRatio 225/200 = 1.125.
-     * Effective domains: T1 [0.95, 1.05], T2 [1.06875, 1.18125] -> disjoint, hence EMPTY.
-     * A raw-rho analysis would wrongly classify this bundle LARGE and tie it, enforcing a
-     * constant effective-ratio mismatch — the circulating-flow situation the feature exists
-     * to prevent.
-     */
-    public static Network createEmptyEffectiveIntersection() {
-        Network network = Network.create("empty-effective", "test");
-        Substation s = network.newSubstation().setId("S").add();
-        addBus(s, "VL1", 225.0, "B1");
-        addBus(s, "VL2", 90.0, "B2");
-        addRtcTransformer(s, "T1", "VL1", "B1", "VL2", "B2", 225.0, 90.0, 0.95, 1.05);
-        addRtcTransformer(s, "T2", "VL1", "B1", "VL2", "B2", 200.0, 90.0, 0.95, 1.05);
         return network;
     }
 

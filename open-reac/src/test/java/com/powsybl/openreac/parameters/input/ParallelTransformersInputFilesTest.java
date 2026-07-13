@@ -58,6 +58,29 @@ class ParallelTransformersInputFilesTest {
     }
 
     @Test
+    void membershipAntiParallelCarriesReversedOrientation() throws IOException {
+        Network network = ParallelTransformersNetworkFactory.createAntiParallel();
+        ParallelTwoWindingsTransformersDetector.DetectionResult detection = ParallelTwoWindingsTransformersDetector.detect(network);
+        ParallelTwoWindingsTransformersBundles input = new ParallelTwoWindingsTransformersBundles(detection.bundles());
+        StringToIntMapper<AmplSubset> mapper = AmplUtil.createMapper(network);
+
+        try (Writer w = new StringWriter();
+             BufferedWriter writer = new BufferedWriter(w)) {
+            input.write(writer, mapper);
+            String data = w.toString();
+            int t1 = mapper.getInt(AmplSubset.BRANCH, "T1");
+            int t2 = mapper.getInt(AmplSubset.BRANCH, "T2");
+            // T2 is declared with swapped terminals: the -1 orientation, consumed by the AMPL
+            // check in or_param_importer.mod, must reach the file verbatim
+            String ref = String.join(System.lineSeparator(),
+                "#num_bundle num_branch orientation id",
+                "1 " + t1 + " 1 \"T1\"",
+                "1 " + t2 + " -1 \"T2\"") + System.lineSeparator() + System.lineSeparator();
+            assertEquals(ref, data);
+        }
+    }
+
+    @Test
     void membershipTwoSeparateBundles() throws IOException {
         Network network = ParallelTransformersNetworkFactory.createTwoSeparateBundles();
         ParallelTwoWindingsTransformersDetector.DetectionResult detection = ParallelTwoWindingsTransformersDetector.detect(network);
