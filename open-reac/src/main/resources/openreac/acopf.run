@@ -33,6 +33,7 @@ let {n in BUSCC_SLACK} slack2_shunt_B[n] := 0;
 let alpha := 0.01;
 let {(g,n) in UNITON} P_bounded[g,n] := max(P_dcopf[g,n],unit_Pc[1,g,n]);
 let {(g,n) in UNITON} Q[g,n] := 0.5*(corrected_unit_Qmax[g,n] + corrected_unit_Qmin[g,n]);
+let {(b,n) in BATTERYON} battery_qvar[b,n] := 0.5*(corrected_battery_Qmax[b,n] + corrected_battery_Qmin[b,n]);
 let {(shunt,n) in SHUNT_VAR} shunt_var[shunt,n] := min{(1,shunt,k) in SHUNT} shunt_valnom[1,shunt,k];
 let {(svc,n) in SVCON} svc_qvar[svc,n] := 0.1;
 let {(v,n) in VSCCONVON} vscconv_qvar[v,n] := if abs(vscconv_targetQ[1,v,n]) < PQmax then vscconv_targetQ[1,v,n] else 0;
@@ -226,6 +227,12 @@ let tempo := tempo + temp1;
 let temp1 := penalty_units_reactive
   * sum{(g,n) in UNITON} (Q[g,n]/max(1,abs(corrected_unit_Qmin[g,n]),abs(corrected_unit_Qmax[g,n])))**2;
 printf{LOG_INFO} "  %-55s = %+.6f\n", "Generating units reactive power", temp1;
+let tempo := tempo + temp1;
+
+# Term 5bis: Reactive power of regulating batteries
+let temp1 := penalty_units_reactive
+  * sum{(b,n) in BATTERYON} (battery_qvar[b,n]/max(1,abs(corrected_battery_Qmin[b,n]),abs(corrected_battery_Qmax[b,n])))**2;
+printf{LOG_INFO} "  %-55s = %+.6f\n", "Batteries reactive power", temp1;
 let tempo := tempo + temp1;
 
 # Term 6: Transformer ratio deviation

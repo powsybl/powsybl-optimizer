@@ -42,8 +42,8 @@ param: SHUNT: shunt_possiblebus shunt_substation shunt_valmin shunt_valmax shunt
 param: SVC: svc_possiblebus svc_substation svc_bmin svc_bmax svc_vregul svc_vregul_bus svc_targetV svc_targetQ svc_fault svc_curative svc_id svc_description svc_P0 svc_Q0 := include ampl_network_static_var_compensators.txt;
 
 # ampl_network_batteries.txt
-#"variant" "num" "bus" "con. bus" "substation" "p0 (MW)" "q0 (MVar)" "minP (MW)" "maxP (MW)" "minQmaxP (MVar)" "minQ0 (MVar)" "minQminP (MVar)" "maxQmaxP (MVar)" "maxQ0 (MVar)" "maxQminP (MVar)" "fault" "curative" "id" "description" "P (MW)" "Q (MVar)"
-param: BATTERY: battery_possiblebus battery_substation battery_p0 battery_q0 battery_Pmin battery_Pmax battery_qP battery_qp0 battery_qp battery_QP battery_Qp0 battery_Qp battery_fault battery_curative battery_id battery_name battery_P0 battery_Q0 := include ampl_network_batteries.txt;
+#"variant" "num" "bus" "con. bus" "substation" "p0 (MW)" "q0 (MVar)" "minP (MW)" "maxP (MW)" "minQmaxP (MVar)" "minQ0 (MVar)" "minQminP (MVar)" "maxQmaxP (MVar)" "maxQ0 (MVar)" "maxQminP (MVar)" "v regul." "targetV (pu)" "v regul. bus" "fault" "curative" "id" "description" "P (MW)" "Q (MVar)"
+param: BATTERY: battery_possiblebus battery_substation battery_p0 battery_q0 battery_Pmin battery_Pmax battery_qP battery_qp0 battery_qp battery_QP battery_Qp0 battery_Qp battery_vregul battery_Vc battery_vregul_bus battery_fault battery_curative battery_id battery_name battery_P0 battery_Q0 := include ampl_network_batteries.txt;
 
 # ampl_network_tct.txt
 #"variant" "num" "tap" "var ratio" "r (pu)" "x (pu)" "g (pu)" "b (pu)" "angle (rad)" "fault" "curative"

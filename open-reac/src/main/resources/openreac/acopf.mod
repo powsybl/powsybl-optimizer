@@ -74,6 +74,12 @@ var Q{(g,n) in UNITON} <= corrected_unit_Qmax[g,n], >= corrected_unit_Qmin[g,n];
 
 
 #
+# Reactive generation of batteries
+#
+var battery_qvar{(b,n) in BATTERYON} <= corrected_battery_Qmax[b,n], >= corrected_battery_Qmin[b,n];
+
+
+#
 # Variable shunts
 #
 var shunt_var{(shunt,n) in SHUNT_VAR}
@@ -200,7 +206,7 @@ sum{(qq,k,n) in BRANCHCC} base100MVA * V[k] * Red_Tran_Act_Dir[qq,k,n]
 
 # Reactive balance slack variables at configured nodes
 set BUSCC_SLACK := if buses_with_reactive_slacks == "ALL" then BUSCC
-                    else if buses_with_reactive_slacks == "NO_GENERATION" then {n in BUSCC: (card{(g,n) in UNITON: (g,n) not in UNIT_FIXQ}==0 and card{(svc,n) in SVCON}==0 and card{(vscconv,n) in VSCCONVON}==0)}
+                    else if buses_with_reactive_slacks == "NO_GENERATION" then {n in BUSCC: (card{(g,n) in UNITON: (g,n) not in UNIT_FIXQ}==0 and card{(svc,n) in SVCON}==0 and card{(vscconv,n) in VSCCONVON}==0 and card{(b,n) in BATTERYON}==0)}
                     else BUSCC inter PARAM_BUSES_WITH_REACTIVE_SLACK; # if = "CONFIGURED", buses given as parameter but in connex component
 var slack1_shunt_B{BUSCC_SLACK} >= 0;
 var slack2_shunt_B{BUSCC_SLACK} >= 0;
@@ -217,7 +223,8 @@ sum{(qq,k,n) in BRANCHCC} base100MVA * V[k] * Red_Tran_Rea_Dir[qq,k,n]
 - sum{(g,k) in UNITON: (g,k) not in UNIT_FIXQ } Q[g,k]
 - sum{(g,k) in UNIT_FIXQ} unit_Qc[1,g,k]
 # Batteries
-- sum{(b,k) in BATTERYCC} battery_q0[1,b,k]
+- sum{(b,k) in BATTERYON} battery_qvar[b,k]
+- sum{(b,k) in BATTERYCC: (b,k) not in BATTERYON} battery_q0[1,b,k]
 # Loads
 + sum{(c,k) in LOADCC} load_QFix[1,c,k]
 # Shunts
@@ -296,6 +303,9 @@ minimize problem_acopf_objective:
 
   # Reactive power of units
   + penalty_units_reactive * sum{(g,n) in UNITON} (Q[g,n]/max(1,abs(corrected_unit_Qmin[g,n]),abs(corrected_unit_Qmax[g,n])))**2
+
+  # Reactive power of batteries
+  + penalty_units_reactive * sum{(b,n) in BATTERYON} (battery_qvar[b,n]/max(1,abs(corrected_battery_Qmin[b,n]),abs(corrected_battery_Qmax[b,n])))**2
 
   # Ratio of transformers
   + penalty_transfo_ratio * sum{(qq,m,n) in BRANCHCC_REGL_VAR} (branch_Ror[qq,m,n]-branch_Ror_var[qq,m,n])**2

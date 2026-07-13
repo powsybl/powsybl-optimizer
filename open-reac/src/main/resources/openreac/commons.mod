@@ -73,6 +73,14 @@ set BATTERYCC := setof {(1,b,n) in BATTERY : n in BUSCC} (b,n);
 # Warning: units with Ptarget=0 are considered as out of order
 set UNITON := {(g,n) in UNITCC : abs(unit_Pc[1,g,n]) >= Pnull};
 
+# Batteries in voltage regulation mode:
+# Contrary to units, the selection is NOT based on an active power threshold: a
+# battery's reactive capability is carried by its converter, which can be online
+# even at P=0. A battery is controllable iff it lies in the main connected
+# component AND is flagged as regulating voltage. Non-regulating batteries keep
+# their fixed q0 injection (cf. acopf.mod reactive balance).
+set BATTERYON := {(b,n) in BATTERYCC : battery_vregul[1,b,n] == "true"};
+
 # Active and reactive targets of converter stations
 # Warning: the losses are ignored
 set LCCCONV_NUM := setof{(t,lcc,bus) in LCCCONV}lcc;
@@ -376,3 +384,21 @@ param corrected_unit_Qp  {UNITON} default defaultQmax;
 param corrected_unit_Qp0  {UNITON} default defaultQmax;
 param corrected_unit_Qmin{UNITON} default defaultQmin;
 param corrected_unit_Qmax{UNITON} default defaultQmax;
+
+
+###############################################################################
+# Corrected values for batteries
+###############################################################################
+# Active bounds are NOT optimization variables for batteries (P stays fixed at
+# battery_p0). corrected_battery_Pmax is kept only as a fallback for the reactive-
+# limits correction (cf. defaultQmaxPmaxRatio in acopf_preprocessing.run).
+param corrected_battery_Pmin{BATTERYON} default defaultPmin;
+param corrected_battery_Pmax{BATTERYON} default defaultPmax;
+param corrected_battery_qP  {BATTERYON} default defaultQmin;
+param corrected_battery_qp  {BATTERYON} default defaultQmin;
+param corrected_battery_qp0 {BATTERYON} default defaultQmin;
+param corrected_battery_QP  {BATTERYON} default defaultQmax;
+param corrected_battery_Qp  {BATTERYON} default defaultQmax;
+param corrected_battery_Qp0 {BATTERYON} default defaultQmax;
+param corrected_battery_Qmin{BATTERYON} default defaultQmin;
+param corrected_battery_Qmax{BATTERYON} default defaultQmax;

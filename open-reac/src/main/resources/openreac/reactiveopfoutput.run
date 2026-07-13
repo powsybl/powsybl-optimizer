@@ -108,6 +108,34 @@ close (fileOut);
 
 ###############################################################################
 #
+# Writing results for batteries
+#
+###############################################################################
+if final_status == "OK" then {
+
+let fileOut := "reactiveopf_results_batteries.csv";
+printf "#variant;num;bus;vRegul;V(pu);targetP(MW);targetQ(Mvar);P(MW);Q(MW);\n" > (fileOut);
+
+# Batteries doing voltage regulation (reactive power optimized)
+for {(b,n) in BATTERYON} {
+printf "%i;%i;%i;%Q;%.3f;%.1f;%.1f;%.1f;%.1f;\n",
+  1,b,n,
+  battery_vregul[1,b,n],
+  V[if battery_vregul[1,b,n] == "true" then battery_vregul_bus[1,b,n] else n],
+  battery_p0[1,b,n],
+  battery_qvar[b,n],
+  -battery_p0[1,b,n], # same sign convention as units
+  -battery_qvar[b,n]
+  > (fileOut);
+}
+close (fileOut);
+
+}
+
+
+
+###############################################################################
+#
 # Writing results for VSC converters
 #
 ###############################################################################
@@ -354,6 +382,7 @@ printf "%s %i\n","nb_vsc_converter_up_and_running",card(VSCCONVON) > (fileOut);
 printf "%s %i\n","nb_lcc_converter_in_data_file",card(LCCCONV) > (fileOut);
 printf "%s %i\n","nb_lcc_converter_up_and_running",card(LCCCONVON) > (fileOut);
 printf "%s %i\n","nb_batteries",card(BATTERYCC) > (fileOut);
+printf "%s %i\n","nb_batteries_with_variable_reactive_power",card(BATTERYON) > (fileOut);
 printf "%s %.1f\n","sum_batteries_pmax",sum{(b,k) in BATTERYCC} battery_Pmax[1,b,k] > (fileOut);
 printf "%s %.1f\n","sum_batteries_pmin",sum{(b,k) in BATTERYCC} battery_Pmin[1,b,k] > (fileOut);
 
