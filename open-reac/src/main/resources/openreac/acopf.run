@@ -44,16 +44,14 @@ for {g in PARALLEL_BUNDLES_DROPPED} {
     printf{LOG_WARNING}
       "  released because of transformer %Q (%s)\n",
       param_parallel_transformers_id[g,qq],
-      (if card({(qq,m,n) in BRANCHZNULL}) > 0 then
-         "near-zero impedance (znull)"
-       else if card({(qq,m,n) in BRANCHCC_WITH_SIDE_2_OPENED}) > 0 then
+      (if card({(qq,m,n) in BRANCHCC_WITH_SIDE_2_OPENED}) > 0 then
          "side 2 opened"
+       else if card({(qq,m,n) in BRANCHCC_WITH_SIDE_1_OPENED}) > 0 then
+         "side 1 opened"
        else if card({(qq,m,n) in BRANCHCC}) == 0 then
          "out of main connected component"
-       else if card({(qq,m,n) in BRANCHCC_REGL}) == 0 then
-         "not a regulating transformer in this run"
        else
-         "unexpected: a non-variable BRANCHCC_REGL member should have made the bundle degenerate");
+         "unexpected: an in-service member should have made the bundle degenerate");
   }
 }
 if card(PARALLEL_BUNDLES_ALL) > 0 then {

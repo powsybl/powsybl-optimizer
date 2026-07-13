@@ -76,7 +76,7 @@ A bundle is tied through $(7)$ only if **all** its members are optimized variabl
 
 This grouping interacts with the second optimization after tap rounding (see [Solving](#solving)): constraint $(7)$ is released before rounding, so each transformer is rounded to the nearest tap of its own table independently. Members of a bundle may therefore end up on different discrete taps if their tap tables differ; the shared ratio is guaranteed only for the continuous solving.
 
-Finally, if at solve time a member of a tied bundle turns out not to be an optimized variable-ratio branch — for instance because it lies outside the main connex component, or has a near-zero impedance — the whole bundle is released: its members are optimized independently for that run, and the event is logged.
+Finally, if at solve time a member of a bundle carries no reactive loop flow at all — one of its sides is opened, or it lies outside the main connex component — the whole bundle is released: its members are optimized independently for that run, and the event is logged. A member that is in service but that the model cannot move (near-zero impedance, single-ratio tap table) behaves instead like a non-optimized member above: its frozen effective ratio pins the bundle.
 
 ## Objective function
 
