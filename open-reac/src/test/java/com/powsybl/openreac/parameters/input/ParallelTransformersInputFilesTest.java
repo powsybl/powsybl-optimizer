@@ -9,10 +9,13 @@ package com.powsybl.openreac.parameters.input;
 
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.ampl.converter.AmplUtil;
+import com.powsybl.ampl.executor.AmplInputFile;
+import com.powsybl.commons.report.ReportNode;
 import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.openreac.network.ParallelTransformersNetworkFactory;
 import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector;
+import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import org.junit.jupiter.api.Test;
 
 import java.io.BufferedWriter;
@@ -72,6 +75,27 @@ class ParallelTransformersInputFilesTest {
             // Each bundle index should appear on exactly two lines
             assertEquals(2, data.lines().filter(l -> l.startsWith("1 ")).count());
             assertEquals(2, data.lines().filter(l -> l.startsWith("2 ")).count());
+        }
+    }
+
+    @Test
+    void membershipEmptyWhenGroupingIsOptedOut() throws IOException {
+        Network network = ParallelTransformersNetworkFactory.createSimpleParallel();
+        OpenReacParameters parameters = new OpenReacParameters().setParallelTransformersGrouping(false);
+        OpenReacAmplIOFiles io = new OpenReacAmplIOFiles(parameters, null, network, false, ReportNode.NO_OP);
+        AmplInputFile input = io.getInputParameters().stream()
+                .filter(f -> ParallelTwoWindingsTransformersBundles.PARAM_PARALLEL_TRANSFORMERS_FILE_NAME.equals(f.getFileName()))
+                .findFirst().orElseThrow();
+        StringToIntMapper<AmplSubset> mapper = AmplUtil.createMapper(network);
+
+        try (Writer w = new StringWriter();
+             BufferedWriter writer = new BufferedWriter(w)) {
+            input.write(writer, mapper);
+            String data = w.toString();
+            // Detection is skipped entirely: the membership file is header-only, a no-op for AMPL,
+            // even though the network does carry a detectable parallel bundle
+            String ref = "#num_bundle num_branch orientation id" + System.lineSeparator() + System.lineSeparator();
+            assertEquals(ref, data);
         }
     }
 

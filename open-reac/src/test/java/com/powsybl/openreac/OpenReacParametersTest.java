@@ -572,6 +572,14 @@ class OpenReacParametersTest {
     }
 
     @Test
+    void testIsParallelTransformersGrouping() {
+        OpenReacParameters parameters = new OpenReacParameters();
+        assertTrue(parameters.isParallelTransformersGrouping());
+        parameters.setParallelTransformersGrouping(false);
+        assertFalse(parameters.isParallelTransformersGrouping());
+    }
+
+    @Test
     void testAlgorithmParams() {
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE);
@@ -679,6 +687,7 @@ class OpenReacParametersTest {
         assertNull(parameters.getPenaltyVoltageTargetRatio());
         assertNull(parameters.getPenaltyVoltageTargetData());
         assertFalse(parameters.isOptimizationAfterRounding());
+        assertTrue(parameters.isParallelTransformersGrouping());
         assertTrue(parameters.checkAlgorithmParametersIntegrity());
     }
 

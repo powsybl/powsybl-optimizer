@@ -55,7 +55,7 @@ $\boldsymbol{P_{i,g}} = P_{i,g}^t + \boldsymbol{\gamma} (P_{g}^{max,c} - P_{i,g}
 
 ## Parallel transformers
 
-Transformers connected in parallel (sharing the same pair of buses, or forming a closed loop of transformers inside a single substation) should keep the same transformation ratio: letting them diverge would create circulating reactive flows between the parallel branches. The optimizer therefore detects such groups (called *bundles*) automatically, and constrains each bundle to a single shared ratio.
+Transformers connected in parallel (sharing the same pair of buses, or forming a closed loop of transformers inside a single substation) should keep the same transformation ratio: letting them diverge would create circulating reactive flows between the parallel branches. The optimizer therefore detects such groups (called *bundles*) automatically, and constrains each bundle to a single shared ratio. The grouping is enabled by default and can be opted out through the Java API (`OpenReacParameters`), in which case the detection is skipped and every transformer ratio is optimized independently.
 
 The quantity that must be equalized is the *effective* per-unit ratio $c_{ij} \boldsymbol{\rho_{ij}}$, where $c_{ij}$ is the constant (off-tap) per-unit ratio of the transformer (the "cst ratio (pu)" column of the network data): this is the ratio entering the flow equations, whose mismatch drives circulating flows. When all members of a bundle are identical units ($c_{ij}$ equal), this is equivalent to equalizing the tap ratios themselves.
 

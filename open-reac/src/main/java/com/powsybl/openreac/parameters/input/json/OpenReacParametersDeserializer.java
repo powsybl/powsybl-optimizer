@@ -158,6 +158,9 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
             )),
             entry("optimizationAfterRounding", safeRead((parser, parameters) ->
                 parameters.setOptimizationAfterRounding(parser.getValueAsBoolean())
+            )),
+            entry("parallelTransformersGrouping", safeRead((parser, parameters) ->
+                parameters.setParallelTransformersGrouping(parser.getValueAsBoolean())
             ))
     );
 
@@ -183,12 +186,14 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                 continue;
             }
 
-            // Version-gated fields: these were introduced in 1.1
+            // Version-gated fields, by the version that introduced them
             switch (fieldName) {
                 case "penaltyInvestReaPos", "penaltyInvestReaNeg", "penaltyActivePower",
                      "penaltyUnitsReactive", "penaltyTransfoRatio",
                      "penaltyVoltageTargetRatio", "penaltyVoltageTargetData" ->
                     JsonUtil.assertGreaterOrEqualThanReferenceVersion("OpenReacParameters", fieldName, version, "1.1");
+                case "parallelTransformersGrouping" ->
+                    JsonUtil.assertGreaterOrEqualThanReferenceVersion("OpenReacParameters", fieldName, version, "1.2");
                 default -> { /* no version gate */ }
             }
 

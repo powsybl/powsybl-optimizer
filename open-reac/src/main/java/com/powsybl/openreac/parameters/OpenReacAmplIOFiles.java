@@ -13,6 +13,7 @@ import com.powsybl.ampl.executor.AmplParameters;
 import com.powsybl.commons.report.ReportNode;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.openreac.Reports;
+import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector;
 import com.powsybl.openreac.parameters.input.*;
 import com.powsybl.openreac.parameters.input.algo.AlgorithmInput;
 import com.powsybl.openreac.parameters.output.FixedParallelTransformersOutput;
@@ -20,7 +21,6 @@ import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput;
 import com.powsybl.openreac.parameters.output.VoltageProfileOutput;
 import com.powsybl.openreac.parameters.output.network.NetworkModifications;
-import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -81,8 +81,12 @@ public class OpenReacAmplIOFiles implements AmplParameters {
         // from its own data, so the classification and the constraints can never disagree. Bundles
         // whose member orientation cannot be established (degenerate nominal-voltage pair in a cycle)
         // are not sent and are reported as released. Transformers that AMPL ends up fixing
-        // (POINT/EMPTY bundles) are read back from fixedParallelTransformersOutput.
-        ParallelTwoWindingsTransformersDetector.DetectionResult parallelDetection = ParallelTwoWindingsTransformersDetector.detect(network);
+        // (POINT/EMPTY bundles) are read back from fixedParallelTransformersOutput. The whole grouping
+        // can be opted out through OpenReacParameters, in which case the detection is skipped and the
+        // membership file is written header-only, a no-op for the AMPL model.
+        ParallelTwoWindingsTransformersDetector.DetectionResult parallelDetection = params.isParallelTransformersGrouping()
+                ? ParallelTwoWindingsTransformersDetector.detect(network)
+                : new ParallelTwoWindingsTransformersDetector.DetectionResult(List.of(), List.of());
         this.parallelTwoWindingsTransformersBundles = new ParallelTwoWindingsTransformersBundles(parallelDetection.bundles());
         this.fixedParallelTransformersOutput = new FixedParallelTransformersOutput();
         Set<String> variableTransformerIds = new HashSet<>(params.getVariableTwoWindingsTransformers());
