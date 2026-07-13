@@ -285,7 +285,7 @@ public final class Reports {
     }
 
     /**
-     * Bundles whose member orientation cannot be established (degenerate nominal-voltage
+     * Bundles whose member orientation cannot be established (degenerate nominal voltage
      * pair inside a cycle): they are not passed to the AMPL model and their members are
      * optimized independently, which the user should be warned about.
      */

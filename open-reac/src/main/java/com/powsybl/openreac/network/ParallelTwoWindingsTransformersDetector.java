@@ -29,44 +29,19 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Detects sets of two-windings transformers acting in parallel.
+ * Detects sets of two-windings transformers acting in parallel: transformers sharing the
+ * exact same pair of buses in the {@code BusView}, or forming a closed loop (chordless
+ * cycle of size 3 or 4) inside a single substation. Only transformers carrying a ratio
+ * tap changer are returned, overlapping sets are merged transitively, and each member
+ * carries its orientation ({@code +1}/{@code -1}) relative to its bundle's canonical
+ * direction -- the declared direction of the first member in id order -- so the AMPL
+ * model can derive the member bounds and tie constraints accordingly. Equal nominal
+ * voltage bundles coming from a cycle cannot be oriented and are returned separately so
+ * the caller can relax them with a warning instead of tying them blindly.
  *
- * <p>Two detection strategies are combined:
- * <ol>
- *   <li><b>Simple parallels</b>: 2WTs sharing the exact same pair of buses
- *       in the {@code BusView}.</li>
- *   <li><b>Complex parallels</b>: 2WTs belonging to a chordless cycle of size
- *       3 or 4 inside a single substation, filtered by nominal voltage pair so
- *       that only transformers performing the same conversion are bundled
- *       together. Connected components of the resulting per-voltage-pair
- *       subgraph yield the sets.</li>
- * </ol>
- *
- * <p>Only transformers carrying a ratio tap changer are returned. Detected
- * bundles that share at least one transformer are merged transitively
- * (if {@code A // B} and {@code B // C}, then {@code A // B // C}).
- *
- * <p><b>Orientation.</b> The AMPL export assigns bus1/bus2 strictly from the IIDM
- * terminal declaration order, with no normalization: two physically parallel
- * transformers may be declared in opposite directions. Tying the effective ratios
- * of anti-parallel members would enforce a physically wrong condition, so each member
- * carries its orientation relative
- * to the bundle's canonical direction, defined as the declared direction of the first
- * member in id order (which therefore always gets {@code +1}; a homogeneous bundle is
- * all-{@code +1}). A member is compared to that reference:
- * <ul>
- *   <li>when the two nominal voltages of the bundle differ: same terminal-1 side as
- *       the reference (low or high nominal voltage) means {@code +1}, {@code -1}
- *       otherwise;</li>
- *   <li>when they are equal (coupling transformers) and the bundle is a simple
- *       parallel (single shared bus pair): same terminal-1 bus as the reference
- *       means {@code +1}, {@code -1} otherwise;</li>
- *   <li>when they are equal and the bundle comes from a cycle (no shared bus pair),
- *       the orientation is undecidable: the bundle is returned separately so the
- *       caller can release it with a warning instead of tying it blindly.</li>
- * </ul>
- * The orientation is passed to the AMPL model, which derives the member bounds and
- * tie constraints accordingly.
+ * <p>The detection strategies, the patterns they cover and the orientation rules are
+ * described in the reference documentation ("Parallel transformers" section of the
+ * AC optimal powerflow page).
  *
  * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
  */
@@ -96,8 +71,8 @@ public final class ParallelTwoWindingsTransformersDetector {
 
     /**
      * Result of the detection: the bundles whose member orientations could be
-     * established, and the ones (degenerate nominal-voltage pair in a cycle) whose
-     * orientation is undecidable and which must be released with a warning.
+     * established, and the ones (degenerate nominal voltage pair in a cycle) whose
+     * orientation is undecidable and which must be relaxed with a warning.
      */
     public record DetectionResult(List<Bundle> bundles, List<Set<String>> undecidedBundles) {
         public DetectionResult {
@@ -111,7 +86,7 @@ public final class ParallelTwoWindingsTransformersDetector {
      *         carrying its orientation relative to the bundle's canonical direction.
      *         Singletons are filtered out. Detection and orientation are purely
      *         topological; the numeric qualification of a bundle (shared-ratio
-     *         interval, tie / fix / release) is performed in the AMPL model.
+     *         interval, tie / fix / relax) is performed in the AMPL model.
      */
     public static DetectionResult detect(Network network) {
         Set<String> ratioTapChangerIds = network.getTwoWindingsTransformerStream()
@@ -186,9 +161,9 @@ public final class ParallelTwoWindingsTransformersDetector {
     }
 
     /**
-     * Fallback for degenerate nominal-voltage pairs (coupling transformers): only a
+     * Fallback for degenerate nominal voltage pairs (coupling transformers): only a
      * simple parallel (every member on the same bus pair) can be oriented, by comparing
-     * each member's terminal-1 bus to the reference's. A cycle-based bundle has no
+     * each member's terminal 1 bus to the reference's. A cycle-based bundle has no
      * shared bus pair and is undecidable: returns empty.
      */
     private static Optional<List<Member>> orientBySharedBusPair(List<TwoWindingsTransformer> members, TwoWindingsTransformer reference) {

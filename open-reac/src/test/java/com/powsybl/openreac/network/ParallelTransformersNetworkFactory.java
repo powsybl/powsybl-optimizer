@@ -10,7 +10,7 @@ package com.powsybl.openreac.network;
 import com.powsybl.iidm.network.*;
 
 /**
- * Networks fabricated to exercise the parallel two-windings transformers detector
+ * Networks created to test the parallel two-winding transformer detector
  *
  * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
  */
@@ -168,8 +168,8 @@ public final class ParallelTransformersNetworkFactory {
 
     /**
      * Square A-B-C-D-A of coupling transformers, every voltage level at 225 kV.
-     * Degenerate nominal-voltage pair and no shared bus pair: the orientation of the
-     * members is undecidable -> the bundle must be released and reported
+     * Degenerate nominal voltage pair and no shared bus pair: the orientation of the
+     * members is undecidable -> the bundle must be relaxed and reported
      */
     public static Network createEqualVoltageSquareCycle() {
         Network network = Network.create("equal-voltage-square-cycle", "test");

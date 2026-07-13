@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Topological detection and orientation only. The numeric qualification of a bundle
- * (shared-ratio interval, tie / fix / release) is performed in the AMPL model and
+ * (shared-ratio interval, tie / fix / relax) is performed in the AMPL model and
  * validated there.
  *
  * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
@@ -128,7 +128,7 @@ class ParallelTwoWindingsTransformersDetectorTest {
         Network network = ParallelTransformersNetworkFactory.createEqualVoltageAntiParallel();
         DetectionResult result = ParallelTwoWindingsTransformersDetector.detect(network);
         assertEquals(1, result.bundles().size());
-        // Degenerate nominal-voltage pair: orientation falls back to the terminal-1 bus,
+        // Degenerate nominal voltage pair: orientation falls back to the terminal 1 bus,
         // still able to spot that T2 is declared reversed
         assertEquals(Map.of("T1", 1, "T2", -1), orientations(result.bundles().get(0)));
     }
@@ -137,8 +137,8 @@ class ParallelTwoWindingsTransformersDetectorTest {
     void equalVoltageCycleIsUndecided() {
         Network network = ParallelTransformersNetworkFactory.createEqualVoltageSquareCycle();
         DetectionResult result = ParallelTwoWindingsTransformersDetector.detect(network);
-        // Coupling transformers in a cycle: no nominal-voltage side and no shared bus
-        // pair to orient the members -> released, reported as undecided
+        // Coupling transformers in a cycle: no nominal voltage side and no shared bus
+        // pair to orient the members -> relaxed, reported as undecided
         assertTrue(result.bundles().isEmpty());
         assertEquals(1, result.undecidedBundles().size());
         assertEquals(Set.of("T_AB", "T_BC", "T_CD", "T_DA"), result.undecidedBundles().get(0));

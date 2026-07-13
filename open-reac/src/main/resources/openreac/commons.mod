@@ -316,7 +316,7 @@ param parallel_declared_rho_hi{(qq,m,n) in BRANCHCC: qq in PARALLEL_MEMBER_NUMS}
 # impedance member still carries the loop at its frozen branch_Ror and pins the bundle like
 # any other frozen member. A side-opened or out-of-component member carries no loop flow: it
 # contributes nothing here, also fails the all-variable requirement below, and its bundle is
-# released instead of being pinned to the ratio of a branch the loop cannot reach.
+# relaxed instead of being pinned to the ratio of a branch the loop cannot reach.
 param parallel_bundle_rho_min{g in PARALLEL_BUNDLES_ALL} :=
   max {(g,qq) in PARAM_PARALLEL_TRANSFORMERS, (qq,m,n) in BRANCHCC}
     (if param_parallel_transformers_orientation[g,qq] == 1

@@ -39,10 +39,10 @@ let {(v,n) in VSCCONVON} vscconv_qvar[v,n] := if abs(vscconv_targetQ[1,v,n]) < P
 let {(qq,m,n) in BRANCHCC_REGL_VAR} branch_Ror_var[qq,m,n] := branch_Ror[qq,m,n];
 let {g in PARALLEL_BUNDLES} bundle_Ror_var[g] := (parallel_bundle_rho_min[g] + parallel_bundle_rho_max[g]) / 2;
 for {g in PARALLEL_BUNDLES_DROPPED} {
-  printf{LOG_WARNING} "Parallel bundle %i not tied (released): at least one member is not an optimized variable-ratio transformer in this run\n", g;
+  printf{LOG_WARNING} "Parallel bundle %i not tied (relaxed): at least one member is not an optimized variable-ratio transformer in this run\n", g;
   for {(g,qq) in PARAM_PARALLEL_TRANSFORMERS: qq not in BRANCHCC_REGL_VAR_NUM} {
     printf{LOG_WARNING}
-      "  released because of transformer %Q (%s)\n",
+      "  relaxed because of transformer %Q (%s)\n",
       param_parallel_transformers_id[g,qq],
       (if card({(qq,m,n) in BRANCHCC_WITH_SIDE_2_OPENED}) > 0 then
          "side 2 opened"
@@ -55,7 +55,7 @@ for {g in PARALLEL_BUNDLES_DROPPED} {
   }
 }
 if card(PARALLEL_BUNDLES_ALL) > 0 then {
-  printf{LOG_INFO} "Parallel bundles: %i tied, %i released (a member is not movable this run), %i degenerate (POINT/EMPTY), of which %i with movable members\n",
+  printf{LOG_INFO} "Parallel bundles: %i tied, %i relaxed (a member is not movable this run), %i degenerate (POINT/EMPTY), of which %i with movable members\n",
     card(PARALLEL_BUNDLES), card(PARALLEL_BUNDLES_DROPPED), card(PARALLEL_BUNDLES_FIXED),
     card(setof {qq in PARALLEL_FIXED_BRANCHES} parallel_bundle_of_member[qq]);
 }

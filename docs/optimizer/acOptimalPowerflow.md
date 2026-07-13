@@ -57,9 +57,45 @@ $\boldsymbol{P_{i,g}} = P_{i,g}^t + \boldsymbol{\gamma} (P_{g}^{max,c} - P_{i,g}
 
 Transformers connected in parallel (sharing the same pair of buses, or forming a closed loop of transformers inside a single substation) should keep the same transformation ratio: letting them diverge would create circulating reactive flows between the parallel branches. The optimizer therefore detects such groups (called *bundles*) automatically, and constrains each bundle to a single shared ratio. The grouping is enabled by default and can be opted out through the Java API (`OpenReacParameters`), in which case the detection is skipped and every transformer ratio is optimized independently.
 
+### Bundle detection
+
+The detection is purely topological — the numeric qualification below (tie / fix / relax and all the ratio bounds) is entirely derived by the AMPL code. Two strategies are combined:
+
+1. **Simple parallels**: transformers sharing the exact same pair of buses in the bus view. Closed couplers merge buses in that view, so two transformers connected through closed switches on both sides are detected as well:
+
+```text
+B1 (400 kV) ───┬─────────┬───
+               T1        T2
+B2 (225 kV) ───┴─────────┴───
+```
+
+2. **Loops**: transformers belonging to a chordless cycle of size 3 or 4 inside a single substation. The cycle search runs on a graph whose nodes are the buses of the substation and whose edges are its transformers and internal lines — lines close the loop but are never members. Within a cycle, edges are grouped by nominal voltage pair (only transformers performing the same conversion can share a ratio) and, within a pair, must be adjacent (connected components of the per-pair subgraph):
+
+```text
+         A (400 kV)
+        /          \
+      T1            T2
+      /              \
+B (225 kV) ──line── C (225 kV)
+```
+
+```text
+A (225 kV) ──T1── B (90 kV)
+     │                │
+    T4               T2
+     │                │
+D (90 kV) ───T3── C (225 kV)
+```
+
+In the triangle, T1 and T2 perform the same 400/225 conversion and share bus A: they form a bundle of two, the 225 kV line closing the loop. In the square, the four transformers alternate direction around the ring and form a single bundle of four.
+
+Only transformers carrying a ratio tap changer are kept, sets sharing at least one transformer are merged transitively (if $A \parallel B$ and $B \parallel C$, then $A \parallel B \parallel C$), and the result is ordered deterministically (decreasing size, then smallest id) so that bundle numbering is stable across runs.
+
+### Bundle qualification
+
 The quantity that must be equalized is the *effective* per-unit ratio $c_{ij} \boldsymbol{\rho_{ij}}$, where $c_{ij}$ is the constant (off-tap) per-unit ratio of the transformer (the "cst ratio (pu)" column of the network data): this is the ratio entering the flow equations, whose mismatch drives circulating flows. When all members of a bundle are identical units ($c_{ij}$ equal), this is equivalent to equalizing the tap ratios themselves.
 
-The effective ratio applies from terminal 1 to terminal 2 *as declared* in the network, and nothing in the data model forces two physically parallel transformers to be declared in the same direction. Each member is therefore qualified against a canonical direction of its bundle (that of its first member in id order): a member declared in the same direction is *direct* (orientation +1), a member declared in the opposite direction is *reversed* (orientation -1). The comparison uses the nominal-voltage side of terminal 1, falling back to the terminal-1 bus for equal-nominal-voltage bundles sharing a single bus pair; an equal-nominal-voltage bundle coming from a loop cannot be oriented and is released with a warning instead of being tied blindly.
+The effective ratio applies from terminal 1 to terminal 2 *as declared* in the network, and nothing in the data model forces two physically parallel transformers to be declared in the same direction. Each member is therefore qualified against a canonical direction of its bundle (that of its first member in id order): a member declared in the same direction is *direct* (orientation +1), a member declared in the opposite direction is *reversed* (orientation -1). The comparison uses the nominal voltage side of terminal 1, falling back to the terminal 1 bus for equal nominal voltage bundles sharing a single bus pair; an equal nominal voltage bundle that comes from a loop cannot be oriented and is relaxed with a warning instead of being tied blindly.
 
 For a bundle $B$ whose members are all optimized variable-ratio transformers, all the effective ratios are tied to one shared variable $\boldsymbol{\rho_B}$, expressed in the canonical direction:
 
@@ -74,9 +110,9 @@ Depending on this intersection, a bundle is handled in one of three ways:
 
 A bundle is tied through $(7)$ only if **all** its members are optimized variable-ratio transformers (specified in `param_transformers.txt`, see [Configuration of the run](inputs.md#configuration-of-the-run)). A member that is not optimized is frozen at its current tap, which pins the shared ratio to that value and collapses the bundle to the single-point or empty case above. As a consequence, declaring only a subset of a parallel group as variable does not optimize that subset freely: those transformers are fixed at the common ratio, again to avoid circulating flows.
 
-This grouping interacts with the second optimization after tap rounding (see [Solving](#solving)): constraint $(7)$ is released before rounding, so each transformer is rounded to the nearest tap of its own table independently. Members of a bundle may therefore end up on different discrete taps if their tap tables differ; the shared ratio is guaranteed only for the continuous solving.
+This grouping interacts with the second optimization after tap rounding (see [Solving](#solving)): constraint $(7)$ is relaxed before rounding, so each transformer is rounded to the nearest tap of its own table independently. Members of a bundle may therefore end up on different discrete taps if their tap tables differ; the shared ratio is guaranteed only for the continuous solving.
 
-Finally, if at solve time a member of a bundle carries no reactive loop flow at all — one of its sides is opened, or it lies outside the main connex component — the whole bundle is released: its members are optimized independently for that run, and the event is logged. A member that is in service but that the model cannot move (near-zero impedance, single-ratio tap table) behaves instead like a non-optimized member above: its frozen effective ratio pins the bundle.
+Finally, if at solve time a member of a bundle carries no reactive loop flow at all — one of its sides is opened, or it lies outside the main connex component — the whole bundle is relaxed: its members are optimized independently for that run, and the event is logged. A member that is in service but that the model cannot move (near-zero impedance, single-ratio tap table) behaves instead like a non-optimized member above: its frozen effective ratio pins the bundle.
 
 ## Objective function
 

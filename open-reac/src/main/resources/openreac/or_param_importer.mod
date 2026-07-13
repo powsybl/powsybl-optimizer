@@ -75,7 +75,7 @@ check {(t,qq,m,n) in BRANCH: qq in PARAM_TRANSFORMERS_RATIO_VARIABLE}: branch_id
 # are parallel (same bus pair, or a closed loop of transformers within one substation).
 # Each member carries its orientation relative to the bundle's canonical direction:
 # +1 when terminal 1 (AMPL bus1) sits on the canonical origin side, -1 when the member is
-# declared in the opposite direction. The qualification (tie / fix / release) and ALL
+# declared in the opposite direction. The qualification (tie / fix / relax) and ALL
 # numeric bounds are derived in commons.mod from AMPL's own cstratio and tap-table data;
 # this file carries the membership and the orientation only, both purely topological.
 # Indexed by (num_bundle, num_branch).

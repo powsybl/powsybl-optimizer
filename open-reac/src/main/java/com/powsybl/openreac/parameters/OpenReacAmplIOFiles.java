@@ -77,10 +77,10 @@ public class OpenReacAmplIOFiles implements AmplParameters {
 
         // Parallel transformer bundles are detected topologically here; every orientable bundle is
         // sent to AMPL as a membership + orientation relation (every member, no classification). The
-        // numeric qualification (tie / fix / release) and all bounds are derived in the AMPL model
+        // numeric qualification (tie / fix / relax) and all bounds are derived in the AMPL model
         // from its own data, so the classification and the constraints can never disagree. Bundles
-        // whose member orientation cannot be established (degenerate nominal-voltage pair in a cycle)
-        // are not sent and are reported as released. Transformers that AMPL ends up fixing
+        // whose member orientation cannot be established (degenerate nominal voltage pair in a cycle)
+        // are not sent and are reported as relaxed. Transformers that AMPL ends up fixing
         // (POINT/EMPTY bundles) are read back from fixedParallelTransformersOutput. The whole grouping
         // can be opted out through OpenReacParameters, in which case the detection is skipped and the
         // membership file is written header-only, a no-op for the AMPL model.
