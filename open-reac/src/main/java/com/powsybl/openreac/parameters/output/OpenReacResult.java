@@ -10,6 +10,7 @@ import com.powsybl.iidm.modification.*;
 import com.powsybl.iidm.modification.tapchanger.AbstractTapPositionModification;
 import com.powsybl.iidm.modification.tapchanger.RatioTapPositionModification;
 import com.powsybl.iidm.network.*;
+import com.powsybl.iidm.network.extensions.VoltageRegulation;
 import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput.ReactiveSlack;
 import org.jgrapht.alg.util.Pair;
@@ -17,11 +18,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.function.DoubleConsumer;
 
 /**
  * OpenReac user interface to get results information.
  *
  * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
+ * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
  */
 public class OpenReacResult {
 
@@ -30,6 +33,7 @@ public class OpenReacResult {
     private final List<ReactiveSlack> reactiveSlacks;
     private final Map<String, String> indicators;
     private final List<GeneratorModification> generatorModifications;
+    private final List<BatteryModification> batteryModifications;
     private final List<ShuntCompensatorModification> shuntsModifications;
     private final List<VscConverterStationModification> vscModifications;
     private final List<StaticVarCompensatorModification> svcModifications;
@@ -48,6 +52,7 @@ public class OpenReacResult {
         this.indicators = Map.copyOf(Objects.requireNonNull(indicators));
         this.reactiveSlacks = List.copyOf(amplIOFiles.getReactiveSlackOutput().getSlacks());
         this.generatorModifications = List.copyOf(amplIOFiles.getNetworkModifications().getGeneratorModifications());
+        this.batteryModifications = List.copyOf(amplIOFiles.getNetworkModifications().getBatteryModifications());
         this.shuntsModifications = List.copyOf(amplIOFiles.getNetworkModifications().getShuntModifications());
         this.vscModifications = List.copyOf(amplIOFiles.getNetworkModifications().getVscModifications());
         this.svcModifications = List.copyOf(amplIOFiles.getNetworkModifications().getSvcModifications());
@@ -69,6 +74,10 @@ public class OpenReacResult {
 
     public List<GeneratorModification> getGeneratorModifications() {
         return generatorModifications;
+    }
+
+    public List<BatteryModification> getBatteryModifications() {
+        return batteryModifications;
     }
 
     public List<ShuntCompensatorModification> getShuntsModifications() {
@@ -101,11 +110,13 @@ public class OpenReacResult {
 
     public List<NetworkModification> getAllNetworkModifications() {
         List<NetworkModification> modifs = new ArrayList<>(getGeneratorModifications().size() +
+            getBatteryModifications().size() +
             getShuntsModifications().size() +
             getSvcModifications().size() +
             getTapPositionModifications().size() +
             getVscModifications().size());
         modifs.addAll(getGeneratorModifications());
+        modifs.addAll(getBatteryModifications());
         modifs.addAll(getShuntsModifications());
         modifs.addAll(getSvcModifications());
         modifs.addAll(getTapPositionModifications());
@@ -125,15 +136,7 @@ public class OpenReacResult {
                 .forEach(transformer -> {
                     RatioTapChanger ratioTapChanger = transformer.getRatioTapChanger();
                     if (ratioTapChanger != null) {
-                        Optional<Bus> bus = getRegulatingBus(ratioTapChanger.getRegulationTerminal(), transformer.getId());
-                        bus.ifPresent(b -> {
-                            Pair<Double, Double> busUpdate = voltageProfile.get(b.getId());
-                            if (busUpdate != null) {
-                                ratioTapChanger.setTargetV(busUpdate.getFirst() * b.getVoltageLevel().getNominalV());
-                            } else {
-                                throw new IllegalStateException("Voltage profile not found for bus " + b.getId());
-                            }
-                        });
+                        updateTargetV(ratioTapChanger.getRegulationTerminal(), transformer.getId(), ratioTapChanger::setTargetV);
                     }
                 });
 
@@ -141,16 +144,20 @@ public class OpenReacResult {
         getShuntsModifications().stream()
                 .map(ShuntCompensatorModification::getShuntCompensatorId)
                 .map(network::getShuntCompensator)
-                .forEach(shunt -> {
-                    Optional<Bus> bus = getRegulatingBus(shunt.getRegulatingTerminal(), shunt.getId());
-                    bus.ifPresent(b -> {
-                        Pair<Double, Double> busUpdate = voltageProfile.get(b.getId());
-                        if (busUpdate != null) {
-                            shunt.setTargetV(busUpdate.getFirst() * b.getVoltageLevel().getNominalV());
-                        } else {
-                            throw new IllegalStateException("Voltage profile not found for bus " + b.getId());
-                        }
-                    });
+                .forEach(shunt ->
+                        updateTargetV(shunt.getRegulatingTerminal(), shunt.getId(), shunt::setTargetV));
+
+        // update target voltage of regulating batteries
+        getBatteryModifications().stream()
+                .map(BatteryModification::getBatteryId)
+                .map(network::getBattery)
+                .filter(Objects::nonNull)
+                .forEach(battery -> {
+                    VoltageRegulation vr = battery.getExtension(VoltageRegulation.class);
+                    if (vr == null || !vr.isVoltageRegulatorOn()) {
+                        return;
+                    }
+                    updateTargetV(vr.getRegulatingTerminal(), battery.getId(), vr::setTargetV);
                 });
 
         // update voltages of the buses
@@ -167,6 +174,24 @@ public class OpenReacResult {
                     });
             }
         }
+    }
+
+    /**
+     * Updates the target voltage of an element from the optimized voltage profile, at its regulating bus.
+     * If the regulating bus cannot be resolved (null or disconnected regulating terminal), the update is
+     * silently skipped with a warning. If the bus is resolved but missing from the voltage profile, an
+     * {@link IllegalStateException} is thrown.
+     */
+    private void updateTargetV(Terminal regulatingTerminal, String elementId, DoubleConsumer targetVSetter) {
+        Optional<Bus> bus = getRegulatingBus(regulatingTerminal, elementId);
+        bus.ifPresent(b -> {
+            Pair<Double, Double> busUpdate = voltageProfile.get(b.getId());
+            if (busUpdate != null) {
+                targetVSetter.accept(busUpdate.getFirst() * b.getVoltageLevel().getNominalV());
+            } else {
+                throw new IllegalStateException("Voltage profile not found for bus " + b.getId());
+            }
+        });
     }
 
     Optional<Bus> getRegulatingBus(Terminal terminal, String elementId) {
