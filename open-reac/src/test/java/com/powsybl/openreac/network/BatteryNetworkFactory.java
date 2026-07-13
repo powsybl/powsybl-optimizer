@@ -15,7 +15,7 @@ import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.iidm.network.extensions.VoltageRegulationAdder;
 
 /**
- * Minimal network with a single battery, used to exercise BatteryNetworkOutput parsing.
+ * Minimal test networks with a single battery.
  *
  * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
  */
@@ -50,8 +50,7 @@ public final class BatteryNetworkFactory {
     }
 
     /**
-     * Same network, with the battery carrying a VoltageRegulation extension
-     * (regulator on, local regulation, targetV = 400 kV).
+     * Same network, with voltage regulation enabled on the battery (local regulation).
      */
     public static Network createWithVoltageRegulationOn() {
         Network network = create();

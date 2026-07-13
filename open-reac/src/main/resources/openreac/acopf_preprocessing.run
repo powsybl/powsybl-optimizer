@@ -383,13 +383,8 @@ printf{LOG_INFO} "Corrected extremal values: %Q <= %Q <= %Q\n",min({(g,n) in UNI
 ###############################################################################
 # Transposed from the units' correction block above. Differences with units:
 #  - The operating point at which the reactive diagram is read is battery_p0
-#    (the battery's active power is NOT a variable, it stays fixed in the balance).
-#  - BATTERYON is not gated by an active-power threshold, so a regulating battery
-#    can sit at P ~ 0. The units' interpolation cascade assumes |Pc| >= Pnull and
-#    has no clean P==0 branch (it would fall through to the default case), so we
-#    add a dedicated idle-battery branch reading the diagram at its P=0 corner.
-#  - corrected_battery_Pmin/Pmax are kept: the interpolation reads the diagram
-#    between Pmin, 0 and Pmax. They are correction fallbacks only, not variables.
+#    (units use their target unit_Pc).
+#  - An extra idle-battery branch handles p0 ~ 0 (see BATTERY-SPECIFIC below).
 
 printf{LOG_WARNING} "\nWARNING Correction of Q batteries domains:\n";
 for {(b,n) in BATTERYON} {
@@ -522,9 +517,10 @@ for {(b,n) in BATTERYON} {
     let corrected_battery_Qp[b,n] := tempo;
   }
 
-  # BATTERY-SPECIFIC: idle battery (p0 ~ 0). Contrary to units, BATTERYON is not
-  # gated on |P| >= Pnull, so this case is reachable. Read the reactive diagram at
-  # its P=0 corner (qp0/Qp0) instead of falling through to the default branch.
+  # BATTERY-SPECIFIC: idle battery (p0 ~ 0), reachable since BATTERYON has no
+  # |P| >= Pnull gate. Read the reactive diagram at its P=0 corner (qp0/Qp0):
+  # at p0 == 0 exactly the cascade below would land in the default case, and
+  # near-zero values would only interpolate to ~ this corner anyway.
   if abs(battery_p0[1,b,n]) < Pnull then {
     let corrected_battery_Qmin[b,n] := corrected_battery_qp0[b,n];
     let corrected_battery_Qmax[b,n] := corrected_battery_Qp0[b,n];

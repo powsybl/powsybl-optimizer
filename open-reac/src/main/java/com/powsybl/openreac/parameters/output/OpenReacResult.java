@@ -176,6 +176,12 @@ public class OpenReacResult {
         }
     }
 
+    /**
+     * Updates the target voltage of an element from the optimized voltage profile, at its regulating bus.
+     * If the regulating bus cannot be resolved (null or disconnected regulating terminal), the update is
+     * silently skipped with a warning. If the bus is resolved but missing from the voltage profile, an
+     * {@link IllegalStateException} is thrown.
+     */
     private void updateTargetV(Terminal regulatingTerminal, String elementId, DoubleConsumer targetVSetter) {
         Optional<Bus> bus = getRegulatingBus(regulatingTerminal, elementId);
         bus.ifPresent(b -> {

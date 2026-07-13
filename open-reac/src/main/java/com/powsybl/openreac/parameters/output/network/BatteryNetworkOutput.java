@@ -15,7 +15,8 @@ import com.powsybl.iidm.network.Network;
 /**
  * Reads the OpenReac results for batteries and produces the corresponding reactive
  * power modifications. Active power is not optimized by OpenReac, so only the reactive
- * setpoint (targetQ) is written back; targetP is left untouched.
+ * setpoint (targetQ) is written back; targetP is left untouched. The target voltage is
+ * updated separately, in OpenReacResult, from the optimized voltage profile.
  *
  * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
  */

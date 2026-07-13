@@ -40,7 +40,7 @@ class BatteryNetworkOutputTest {
             assertEquals(1, output.getModifications().size());
             BatteryModification modif = output.getModifications().getFirst();
             assertEquals("BATTERY", modif.getBatteryId());
-            // Active power is not optimized by OpenReac for batteries.
+            // targetP is never written back
             assertNull(modif.getTargetP());
             assertEquals(25.5, modif.getTargetQ());
         }
