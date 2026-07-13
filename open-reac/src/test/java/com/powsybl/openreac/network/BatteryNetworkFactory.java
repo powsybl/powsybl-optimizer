@@ -7,8 +7,8 @@
  */
 package com.powsybl.openreac.network;
 
-import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.Battery;
+import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.Substation;
 import com.powsybl.iidm.network.TopologyKind;
 import com.powsybl.iidm.network.VoltageLevel;
