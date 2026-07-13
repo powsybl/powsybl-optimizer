@@ -266,16 +266,18 @@ param parallel_declared_rho_hi{(qq,m,n) in BRANCHCC_REGL: qq in PARALLEL_MEMBER_
      else tap_ratio[1,regl_table[1,branch_ptrRegl[1,qq,m,n]],regl_tap0[1,branch_ptrRegl[1,qq,m,n]]]);
 
 # Canonical effective intersection of a bundle's members (direction/inversion convention: see
-# header). A member outside BRANCHCC_REGL (near-zero impedance, out of the main component)
-# contributes nothing here; such a member also fails the all-variable requirement below, so
-# its bundle is released.
+# header). A member outside BRANCHCC_REGL (near-zero impedance, out of the main component) or
+# with side 2 opened contributes nothing here: no reactive loop can flow through it, so its
+# range must not shape the intersection (an opened member frozen at its current tap would
+# otherwise collapse the bundle to POINT/EMPTY and pin the healthy members to its ratio).
+# Such a member also fails the all-variable requirement below, so its bundle is released.
 param parallel_bundle_rho_min{g in PARALLEL_BUNDLES_ALL} :=
-  max {(g,qq) in PARAM_PARALLEL_TRANSFORMERS, (qq,m,n) in BRANCHCC_REGL}
+  max {(g,qq) in PARAM_PARALLEL_TRANSFORMERS, (qq,m,n) in BRANCHCC_REGL diff BRANCHCC_WITH_SIDE_2_OPENED}
     (if param_parallel_transformers_orientation[g,qq] == 1
        then parallel_declared_rho_lo[qq,m,n]
        else 1 / parallel_declared_rho_hi[qq,m,n]);
 param parallel_bundle_rho_max{g in PARALLEL_BUNDLES_ALL} :=
-  min {(g,qq) in PARAM_PARALLEL_TRANSFORMERS, (qq,m,n) in BRANCHCC_REGL}
+  min {(g,qq) in PARAM_PARALLEL_TRANSFORMERS, (qq,m,n) in BRANCHCC_REGL diff BRANCHCC_WITH_SIDE_2_OPENED}
     (if param_parallel_transformers_orientation[g,qq] == 1
        then parallel_declared_rho_hi[qq,m,n]
        else 1 / parallel_declared_rho_lo[qq,m,n]);

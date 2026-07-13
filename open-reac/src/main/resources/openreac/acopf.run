@@ -46,12 +46,14 @@ for {g in PARALLEL_BUNDLES_DROPPED} {
       param_parallel_transformers_id[g,qq],
       (if card({(qq,m,n) in BRANCHZNULL}) > 0 then
          "near-zero impedance (znull)"
+       else if card({(qq,m,n) in BRANCHCC_WITH_SIDE_2_OPENED}) > 0 then
+         "side 2 opened"
        else if card({(qq,m,n) in BRANCHCC}) == 0 then
          "out of main connected component"
        else if card({(qq,m,n) in BRANCHCC_REGL}) == 0 then
          "not a regulating transformer in this run"
        else
-         "fixed ratio (e.g. regl_min == regl_max, or side 2 opened)");
+         "unexpected: a non-variable BRANCHCC_REGL member should have made the bundle degenerate");
   }
 }
 if card(PARALLEL_BUNDLES_ALL) > 0 then {
