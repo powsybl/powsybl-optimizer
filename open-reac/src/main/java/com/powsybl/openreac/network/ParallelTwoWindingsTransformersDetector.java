@@ -49,8 +49,8 @@ import java.util.stream.Collectors;
  * <p><b>Orientation.</b> The AMPL export assigns bus1/bus2 strictly from the IIDM
  * terminal declaration order, with no normalization: two physically parallel
  * transformers may be declared in opposite directions. Tying the effective ratios
- * of anti-parallel members would enforce a physically wrong condition (the correct
- * one being {@code eff1 * eff2 = 1}), so each member carries its orientation relative
+ * of anti-parallel members would enforce a physically wrong condition, so each member
+ * carries its orientation relative
  * to the bundle's canonical direction, defined as the declared direction of the first
  * member in id order (which therefore always gets {@code +1}; a homogeneous bundle is
  * all-{@code +1}). A member is compared to that reference:
@@ -66,8 +66,7 @@ import java.util.stream.Collectors;
  *       caller can release it with a warning instead of tying it blindly.</li>
  * </ul>
  * The orientation is passed to the AMPL model, which derives the member bounds and
- * tie constraints accordingly (direct members: {@code eff = rho_B}; reversed members:
- * {@code eff * rho_B = 1}).
+ * tie constraints accordingly.
  *
  * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
  */
@@ -162,12 +161,10 @@ public final class ParallelTwoWindingsTransformersDetector {
     }
 
     /**
-     * Orients every member against the first one (id order). Members of a bundle all
-     * share the same nominal voltage pair (guaranteed by both detection strategies and
-     * preserved by the transitive merge): when that pair is non-degenerate, the terminal-1
-     * side (low or high nominal voltage) identifies the declared direction; when it is
-     * degenerate (coupling transformers), the terminal-1 bus does, provided all members
-     * share the same bus pair. Returns empty when undecidable.
+     * Orients every member against the first (id order). All members share the same nominal
+     * voltage pair (guaranteed by detection and preserved by the transitive merge), so the
+     * reference's pair decides the strategy: by voltage side, else by bus pair (see class doc).
+     * Empty when undecidable.
      */
     private static Optional<List<Member>> orientMembers(List<TwoWindingsTransformer> members) {
         TwoWindingsTransformer reference = members.get(0);

@@ -40,23 +40,25 @@ let {(qq,m,n) in BRANCHCC_REGL_VAR} branch_Ror_var[qq,m,n] := branch_Ror[qq,m,n]
 let {g in PARALLEL_BUNDLES} bundle_Ror_var[g] := (parallel_bundle_rho_min[g] + parallel_bundle_rho_max[g]) / 2;
 for {g in PARALLEL_BUNDLES_DROPPED} {
   printf{LOG_WARNING} "Parallel bundle %i not tied (released): at least one member is not an optimized variable-ratio transformer in this run\n", g;
-  for {(gg,qq) in PARAM_PARALLEL_TRANSFORMERS: gg == g and qq not in BRANCHCC_REGL_VAR_NUM} {
+  for {(g,qq) in PARAM_PARALLEL_TRANSFORMERS: qq not in BRANCHCC_REGL_VAR_NUM} {
     printf{LOG_WARNING}
       "  released because of transformer %Q (%s)\n",
-      param_parallel_transformers_id[gg,qq],
-      (if card({(q,m,n) in BRANCHZNULL: q == qq}) > 0 then
+      param_parallel_transformers_id[g,qq],
+      (if card({(qq,m,n) in BRANCHZNULL}) > 0 then
          "near-zero impedance (znull)"
-       else if card({(q,m,n) in BRANCHCC: q == qq}) == 0 then
+       else if card({(qq,m,n) in BRANCHCC}) == 0 then
          "out of main connected component"
-       else if card({(q,m,n) in BRANCHCC_REGL: q == qq}) == 0 then
+       else if card({(qq,m,n) in BRANCHCC_REGL}) == 0 then
          "not a regulating transformer in this run"
        else
          "fixed ratio (e.g. regl_min == regl_max, or side 2 opened)");
   }
 }
-printf{LOG_INFO} "Parallel bundles: %i tied, %i released (a member is not movable this run), %i degenerate (POINT/EMPTY), of which %i with movable members\n",
-  card(PARALLEL_BUNDLES), card(PARALLEL_BUNDLES_DROPPED), card(PARALLEL_BUNDLES_FIXED),
-  card(setof {qq in PARALLEL_FIXED_BRANCHES} parallel_bundle_of_member[qq]);
+if card(PARALLEL_BUNDLES_ALL) > 0 then {
+  printf{LOG_INFO} "Parallel bundles: %i tied, %i released (a member is not movable this run), %i degenerate (POINT/EMPTY), of which %i with movable members\n",
+    card(PARALLEL_BUNDLES), card(PARALLEL_BUNDLES_DROPPED), card(PARALLEL_BUNDLES_FIXED),
+    card(setof {qq in PARALLEL_FIXED_BRANCHES} parallel_bundle_of_member[qq]);
+}
 for {g in PARALLEL_BUNDLES_FIXED} {
   printf{LOG_DEBUG} "Parallel bundle %i degenerate: canonical effective intersection [%f, %f]\n",
     g, parallel_bundle_rho_min[g], parallel_bundle_rho_max[g];

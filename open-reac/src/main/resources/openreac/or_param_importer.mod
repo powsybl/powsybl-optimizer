@@ -83,7 +83,7 @@ check {(t,qq,m,n) in BRANCH: qq in PARAM_TRANSFORMERS_RATIO_VARIABLE}: branch_id
 set PARAM_PARALLEL_TRANSFORMERS  dimen 2 default {};
 param param_parallel_transformers_orientation{PARAM_PARALLEL_TRANSFORMERS};
 param param_parallel_transformers_id{PARAM_PARALLEL_TRANSFORMERS} symbolic;
-check {(t,qq,m,n) in BRANCH, (g,qq2) in PARAM_PARALLEL_TRANSFORMERS: qq2 == qq}: branch_id[t,qq,m,n] == param_parallel_transformers_id[g,qq2];
+check {(t,qq,m,n) in BRANCH, (g,qq) in PARAM_PARALLEL_TRANSFORMERS}: branch_id[t,qq,m,n] == param_parallel_transformers_id[g,qq];
 check {(g,qq) in PARAM_PARALLEL_TRANSFORMERS}: param_parallel_transformers_orientation[g,qq] == 1 or param_parallel_transformers_orientation[g,qq] == -1;
 
 
