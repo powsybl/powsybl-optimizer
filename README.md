@@ -38,9 +38,9 @@ PowSyBl-optimizer project is partly written in Java, so you need few requirement
 
 ### AMPL
 For this project, you must also have [AMPL](https://ampl.com/) installed.
-AMPL is a proprietary tool that works as an optimization modelling language. It can be interfaced with many solvers.
+AMPL is a proprietary tool that works as an optimization modeling language. It can be interfaced with many solvers.
 
-AMPL is sold by many companies including Artelys, you can find keys [here](https://www.artelys.com/solvers/ampl/).
+AMPL is provided free of charge to [academic users](https://ampl.com/academia/). For commercial use, keys can be purchased from several vendors.
 
 You must add in your `~/.itools/config.yml` an ampl section like this:
 ```yaml
