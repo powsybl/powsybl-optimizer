@@ -172,13 +172,13 @@ public final class ParallelTwoWindingsTransformersDetector {
         if (refB1 == null || refB2 == null) {
             return Optional.empty();
         }
-        BusPair referencePair = BusPair.of(refB1.getId(), refB2.getId());
+        BusPair referencePair = new BusPair(refB1.getId(), refB2.getId());
         List<Member> result = new ArrayList<>(members.size());
         for (TwoWindingsTransformer twt : members) {
             Bus b1 = twt.getTerminal1().getBusView().getBus();
             Bus b2 = twt.getTerminal2().getBusView().getBus();
             if (b1 == null || b2 == null
-                    || !referencePair.equals(BusPair.of(b1.getId(), b2.getId()))) {
+                    || !referencePair.equals(new BusPair(b1.getId(), b2.getId()))) {
                 return Optional.empty();
             }
             result.add(new Member(twt.getId(), b1.getId().equals(refB1.getId()) ? 1 : -1));
@@ -197,7 +197,7 @@ public final class ParallelTwoWindingsTransformersDetector {
             Bus b1 = twt.getTerminal1().getBusView().getBus();
             Bus b2 = twt.getTerminal2().getBusView().getBus();
             if (b1 != null && b2 != null) {
-                byBusPair.computeIfAbsent(BusPair.of(b1.getId(), b2.getId()), k -> new ArrayList<>())
+                byBusPair.computeIfAbsent(new BusPair(b1.getId(), b2.getId()), k -> new ArrayList<>())
                         .add(twt.getId());
             }
         }
@@ -207,7 +207,7 @@ public final class ParallelTwoWindingsTransformersDetector {
                 .collect(Collectors.toList());
     }
 
-    // ---- Step 2: complex parallels (chordless cycles ≤ 4 inside substations) ----
+    // ---- Step 2: complex parallels (chordless cycles <= 4 inside substations) ----
 
     private static List<Set<String>> detectComplexParallels(Network network) {
         // Intra-substation lines take part in the graph as plain edges so they can close
@@ -227,7 +227,7 @@ public final class ParallelTwoWindingsTransformersDetector {
             IntraSubstationGraph graph = buildIntraSubstationGraph(substation,
                     intraSubstationLines.getOrDefault(substation.getId(), List.of()));
             if (graph.adjacency.size() < 3) {
-                continue; // No cycle of length ≥ 3 possible
+                continue; // No cycle of length >= 3 possible
             }
             for (List<String> cycleNodes : graph.findChordlessCyclesUpToSize4()) {
                 processCycle(graph, cycleNodes, result);
@@ -241,7 +241,7 @@ public final class ParallelTwoWindingsTransformersDetector {
         Map<NominalVoltagePair, List<BusPair>> edgesByVoltage = new HashMap<>();
         int n = cycleNodes.size();
         for (int i = 0; i < n; i++) {
-            BusPair edge = BusPair.of(cycleNodes.get(i), cycleNodes.get((i + 1) % n));
+            BusPair edge = new BusPair(cycleNodes.get(i), cycleNodes.get((i + 1) % n));
             NominalVoltagePair vp = graph.edges.get(edge).voltagePair;
             edgesByVoltage.computeIfAbsent(vp, k -> new ArrayList<>()).add(edge);
         }
@@ -261,44 +261,44 @@ public final class ParallelTwoWindingsTransformersDetector {
 
     private static List<Set<BusPair>> connectedComponents(Collection<BusPair> edges) {
         // Build an adjacency from the edge set, then flood-fill for components.
-        Map<String, Set<String>> adj = buildBusAdjacency(edges);
-        Map<String, Integer> compOf = new HashMap<>();
-        int compIdx = 0;
-        for (String start : adj.keySet()) {
-            if (!compOf.containsKey(start)) {
-                floodFillComponent(start, compIdx, adj, compOf);
-                compIdx++;
+        Map<String, Set<String>> adjacentBussesByBus = buildBusAdjacency(edges);
+        Map<String, Integer> componentIndexByBus = new HashMap<>();
+        int componentIndex = 0;
+        for (String start : adjacentBussesByBus.keySet()) {
+            if (!componentIndexByBus.containsKey(start)) {
+                floodFillComponent(start, componentIndex, adjacentBussesByBus, componentIndexByBus);
+                componentIndex++;
             }
         }
         List<Set<BusPair>> components = new ArrayList<>();
-        for (int i = 0; i < compIdx; i++) {
+        for (int i = 0; i < componentIndex; i++) {
             components.add(new HashSet<>());
         }
         for (BusPair e : edges) {
-            components.get(compOf.get(e.busId1)).add(e);
+            components.get(componentIndexByBus.get(e.busId1)).add(e);
         }
         return components;
     }
 
     private static Map<String, Set<String>> buildBusAdjacency(Collection<BusPair> edges) {
-        Map<String, Set<String>> adj = new HashMap<>();
+        Map<String, Set<String>> adjacentBussesByBus = new HashMap<>();
         for (BusPair e : edges) {
-            adj.computeIfAbsent(e.busId1, k -> new HashSet<>()).add(e.busId2);
-            adj.computeIfAbsent(e.busId2, k -> new HashSet<>()).add(e.busId1);
+            adjacentBussesByBus.computeIfAbsent(e.busId1, k -> new HashSet<>()).add(e.busId2);
+            adjacentBussesByBus.computeIfAbsent(e.busId2, k -> new HashSet<>()).add(e.busId1);
         }
-        return adj;
+        return adjacentBussesByBus;
     }
 
-    // Iterative flood fill: labels start and everything reachable from it with compIdx.
-    private static void floodFillComponent(String start, int compIdx,
-                                           Map<String, Set<String>> adj, Map<String, Integer> compOf) {
+    // Iterative flood fill: labels start and everything reachable from it with componentIndex.
+    private static void floodFillComponent(String start, int componentIndex,
+                                           Map<String, Set<String>> adjacentBussesByBus, Map<String, Integer> componentIndexByBus) {
         Deque<String> stack = new ArrayDeque<>();
         stack.push(start);
         while (!stack.isEmpty()) {
             String node = stack.pop();
-            if (compOf.putIfAbsent(node, compIdx) == null) {
-                for (String nbr : adj.getOrDefault(node, Set.of())) {
-                    if (!compOf.containsKey(nbr)) {
+            if (componentIndexByBus.putIfAbsent(node, componentIndex) == null) {
+                for (String nbr : adjacentBussesByBus.getOrDefault(node, Set.of())) {
+                    if (!componentIndexByBus.containsKey(nbr)) {
                         stack.push(nbr);
                     }
                 }
@@ -367,8 +367,14 @@ public final class ParallelTwoWindingsTransformersDetector {
 
     /** An unordered pair of bus ids, canonicalized so that (x, y) and (y, x) are equal. */
     private record BusPair(String busId1, String busId2) {
-        static BusPair of(String a, String b) {
-            return a.compareTo(b) <= 0 ? new BusPair(a, b) : new BusPair(b, a);
+        BusPair(String busId1, String busId2) {
+            if (busId1.compareTo(busId2) <= 0) {
+                this.busId1 = busId1;
+                this.busId2 = busId2;
+            } else {
+                this.busId1 = busId2;
+                this.busId2 = busId1;
+            }
         }
     }
 
@@ -383,18 +389,19 @@ public final class ParallelTwoWindingsTransformersDetector {
         final Map<BusPair, EdgeData> edges = new HashMap<>();
 
         void addEdge(String busA, String busB, String transformerId, NominalVoltagePair voltagePair) {
-            BusPair key = BusPair.of(busA, busB);
-            EdgeData data = edges.computeIfAbsent(key, k -> new EdgeData());
+            BusPair key = new BusPair(busA, busB);
+            EdgeData data = edges.computeIfAbsent(key, k -> {
+                EdgeData newData = new EdgeData();
+                newData.voltagePair = voltagePair;
+                adjacency.computeIfAbsent(busA, b -> new HashSet<>()).add(busB);
+                adjacency.computeIfAbsent(busB, b -> new HashSet<>()).add(busA);
+                return newData;
+            });
             data.transformerIds.add(transformerId);
-            if (data.voltagePair == null) {
-                data.voltagePair = voltagePair;
-            }
-            adjacency.computeIfAbsent(busA, k -> new HashSet<>()).add(busB);
-            adjacency.computeIfAbsent(busB, k -> new HashSet<>()).add(busA);
         }
 
         boolean hasEdge(String busA, String busB) {
-            return edges.containsKey(BusPair.of(busA, busB));
+            return edges.containsKey(new BusPair(busA, busB));
         }
 
         /**
@@ -445,6 +452,9 @@ public final class ParallelTwoWindingsTransformersDetector {
         // Chordless squares a-b-c-d-a: a has smallest rank, rank(b) < rank(d), no chord a-c or b-d.
         // Emitted once as (a, b, c, d), a valid cycle walk.
         private void collectChordlessSquares(List<String> nodes, Map<String, Integer> rank, List<List<String>> cycles) {
+            if (adjacency.size() < 4) {
+                return; // A chordless square needs four distinct buses
+            }
             for (String a : nodes) {
                 collectSquaresAt(a, rank, cycles);
             }
@@ -478,14 +488,10 @@ public final class ParallelTwoWindingsTransformersDetector {
 
         // Neighbors of {@code node} with rank strictly greater than {@code minRank}, sorted.
         private List<String> sortedNeighborsAbove(String node, int minRank, Map<String, Integer> rank) {
-            List<String> result = new ArrayList<>();
-            for (String neighbor : adjacency.get(node)) {
-                if (rank.get(neighbor) > minRank) {
-                    result.add(neighbor);
-                }
-            }
-            Collections.sort(result);
-            return result;
+            return adjacency.get(node).stream()
+                    .filter(neighbor -> rank.get(neighbor) > minRank)
+                    .sorted()
+                    .toList();
         }
     }
 }
