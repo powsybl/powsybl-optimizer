@@ -1,7 +1,11 @@
+# PowSyBl Optimizer documentation
+
 These are the documentation sources for PowSyBl optimizer.
 
 Please keep them up to date with your developments.  
 They are published on powsybl.readthedocs.io/ and pull requests are built and previewed automatically.
+
+## Build the documentation
 
 When modifying the website content, you can easily preview the result on your PC.
 
@@ -22,7 +26,7 @@ pip install -r requirements.txt
 sphinx-build -a . ../build-docs
 ~~~
 
-**Preview the result**
+### Preview the result
 
 Then open `build-docs/index.html` in your browser.
 
