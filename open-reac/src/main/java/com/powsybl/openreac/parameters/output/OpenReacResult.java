@@ -13,6 +13,7 @@ import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.VoltageRegulation;
 import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput.ReactiveSlack;
+import com.powsybl.openreac.parameters.output.FixedParallelTransformersOutput.FixedParallelTransformer;
 import org.jgrapht.alg.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +32,7 @@ public class OpenReacResult {
     private static final Logger LOGGER = LoggerFactory.getLogger(OpenReacResult.class);
     private final OpenReacStatus status;
     private final List<ReactiveSlack> reactiveSlacks;
+    private final List<FixedParallelTransformer> fixedParallelTransformers;
     private final Map<String, String> indicators;
     private final List<GeneratorModification> generatorModifications;
     private final List<BatteryModification> batteryModifications;
@@ -51,6 +53,7 @@ public class OpenReacResult {
         this.status = Objects.requireNonNull(status);
         this.indicators = Map.copyOf(Objects.requireNonNull(indicators));
         this.reactiveSlacks = List.copyOf(amplIOFiles.getReactiveSlackOutput().getSlacks());
+        this.fixedParallelTransformers = List.copyOf(amplIOFiles.getFixedParallelTransformersOutput().getFixedTransformers());
         this.generatorModifications = List.copyOf(amplIOFiles.getNetworkModifications().getGeneratorModifications());
         this.batteryModifications = List.copyOf(amplIOFiles.getNetworkModifications().getBatteryModifications());
         this.shuntsModifications = List.copyOf(amplIOFiles.getNetworkModifications().getShuntModifications());
@@ -66,6 +69,19 @@ public class OpenReacResult {
 
     public List<ReactiveSlack> getReactiveSlacks() {
         return reactiveSlacks;
+    }
+
+    /**
+     * The transformers pinned by the AMPL model within a degenerate parallel bundle
+     * (POINT/EMPTY effective intersection), each with the bundle it belongs to and the common
+     * effective ratio it was fixed at. Informational only: the resulting tap change is already
+     * carried by {@link #getTapPositionModifications()}, so these are not network modifications
+     * and are not part of {@link #getAllNetworkModifications()}. A transformer the user declared
+     * variable can appear here, meaning it was fixed to its bundle's shared ratio rather than
+     * optimized freely, to avoid circulating reactive flows.
+     */
+    public List<FixedParallelTransformer> getFixedParallelTransformers() {
+        return fixedParallelTransformers;
     }
 
     public Map<String, String> getIndicators() {

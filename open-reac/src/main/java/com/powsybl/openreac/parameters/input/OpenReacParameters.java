@@ -161,6 +161,8 @@ public class OpenReacParameters {
 
     private boolean optimizationAfterRounding = false;
 
+    private boolean parallelTransformersGrouping = true;
+
     // Shunt compensator alert threshold
     // (to help reporting the shunt compensators with a delta between optimized and discretized reactive value over this threshold in MVar)
 
@@ -581,6 +583,22 @@ public class OpenReacParameters {
 
     public OpenReacParameters setOptimizationAfterRounding(boolean optimizationAfterRounding) {
         this.optimizationAfterRounding = optimizationAfterRounding;
+        return this;
+    }
+
+    /**
+     * @return the boolean indicating if parallel two-windings transformers are grouped in ACOPF solving
+     *         (default true). When enabled, detected bundles of parallel transformers are constrained to a
+     *         common effective transformation ratio, to avoid circulating reactive flows between the parallel
+     *         branches. When disabled, the detection is skipped entirely and every transformer ratio is
+     *         optimized independently, as before this feature.
+     */
+    public boolean isParallelTransformersGrouping() {
+        return parallelTransformersGrouping;
+    }
+
+    public OpenReacParameters setParallelTransformersGrouping(boolean parallelTransformersGrouping) {
+        this.parallelTransformersGrouping = parallelTransformersGrouping;
         return this;
     }
 

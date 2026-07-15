@@ -24,6 +24,7 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
+ * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
  */
 public final class OpenReacRunner {
 
@@ -73,9 +74,9 @@ public final class OpenReacRunner {
     public static OpenReacResult run(Network network, String variantId, OpenReacParameters parameters, OpenReacConfig config,
                                      ComputationManager manager, ReportNode reportNode, AmplExportConfig amplExportConfig) {
         checkParameters(network, variantId, parameters, config, manager, reportNode);
+        ReportNode openReacReportNode = Reports.createOpenReacReporter(reportNode, network.getId(), parameters.getObjective());
         AmplModel reactiveOpf = OpenReacModel.buildModel();
-        OpenReacAmplIOFiles amplIoInterface = new OpenReacAmplIOFiles(parameters, amplExportConfig, network, config.isDebug(),
-                Reports.createOpenReacReporter(reportNode, network.getId(), parameters.getObjective()));
+        OpenReacAmplIOFiles amplIoInterface = buildIoFilesOnVariant(network, variantId, parameters, amplExportConfig, config, openReacReportNode);
         AmplResults run = AmplModelRunner.run(network, variantId, reactiveOpf, manager, amplIoInterface);
         OpenReacResult result = new OpenReacResult(run.isSuccess() && amplIoInterface.checkErrors() ? OpenReacStatus.OK : OpenReacStatus.NOT_OK,
                 amplIoInterface, run.getIndicators());
@@ -109,9 +110,9 @@ public final class OpenReacRunner {
     public static CompletableFuture<OpenReacResult> runAsync(Network network, String variantId, OpenReacParameters parameters,
                                                              OpenReacConfig config, ComputationManager manager, ReportNode reportNode, AmplExportConfig amplExportConfig) {
         checkParameters(network, variantId, parameters, config, manager, reportNode);
+        ReportNode openReacReportNode = Reports.createOpenReacReporter(reportNode, network.getId(), parameters.getObjective());
         AmplModel reactiveOpf = OpenReacModel.buildModel();
-        OpenReacAmplIOFiles amplIoInterface = new OpenReacAmplIOFiles(parameters, amplExportConfig, network, config.isDebug(),
-                Reports.createOpenReacReporter(reportNode, network.getId(), parameters.getObjective()));
+        OpenReacAmplIOFiles amplIoInterface = buildIoFilesOnVariant(network, variantId, parameters, amplExportConfig, config, openReacReportNode);
         CompletableFuture<AmplResults> runAsync = AmplModelRunner.runAsync(network, variantId, reactiveOpf, manager, amplIoInterface);
         return runAsync.thenApply(run -> {
             OpenReacResult result = new OpenReacResult(run.isSuccess() && amplIoInterface.checkErrors() ? OpenReacStatus.OK : OpenReacStatus.NOT_OK,
@@ -119,6 +120,24 @@ public final class OpenReacRunner {
             Reports.createShuntModificationsReporter(reportNode, network.getId(), amplIoInterface.getNetworkModifications().getShuntsWithDeltaDiscreteOptimalOverThreshold());
             return result;
         });
+    }
+
+    /**
+     * Builds the AMPL IO files on the requested variant: the parallel transformers detection
+     * reads the network through its current working variant (bus view, current taps), so the
+     * variant is set for the time of the construction and restored right after. The only
+     * lasting working-variant change remains the one performed by the AMPL executor at
+     * execution time, as before this feature.
+     */
+    private static OpenReacAmplIOFiles buildIoFilesOnVariant(Network network, String variantId, OpenReacParameters parameters,
+                                                             AmplExportConfig amplExportConfig, OpenReacConfig config, ReportNode openReacReportNode) {
+        String previousVariantId = network.getVariantManager().getWorkingVariantId();
+        network.getVariantManager().setWorkingVariant(variantId);
+        try {
+            return new OpenReacAmplIOFiles(parameters, amplExportConfig, network, config.isDebug(), openReacReportNode);
+        } finally {
+            network.getVariantManager().setWorkingVariant(previousVariantId);
+        }
     }
 
     private static void checkParameters(Network network, String variantId, OpenReacParameters parameters, OpenReacConfig config, ComputationManager manager, ReportNode reportNode) {

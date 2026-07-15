@@ -22,6 +22,7 @@ import com.powsybl.openreac.network.ShuntNetworkFactory;
 import com.powsybl.openreac.network.VoltageControlNetworkFactory;
 import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
+import com.powsybl.openreac.parameters.output.FixedParallelTransformersOutput;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.OpenReacStatus;
 import org.jgrapht.alg.util.Pair;
@@ -32,10 +33,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Pierre Arvy {@literal <pierre.arvy at artelys.com>}
@@ -121,6 +124,34 @@ class OpenReacResultsTest {
         OpenReacResult results = new OpenReacResult(OpenReacStatus.OK, io, new HashMap<>());
         IllegalStateException e = assertThrows(IllegalStateException.class, () -> results.applyAllModifications(network));
         assertEquals("Bus " + idBusNotFound + " not found in network " + network.getId(), e.getMessage());
+    }
+
+    @Test
+    void testFixedParallelTransformersExposedInResult() throws IOException {
+        Network network = IeeeCdfNetworkFactory.create14();
+        OpenReacAmplIOFiles io = new OpenReacAmplIOFiles(new OpenReacParameters(), null, network, true, ReportNode.NO_OP);
+        try (InputStream input = getClass().getResourceAsStream("/mock_outputs/reactiveopf_results_fixed_parallel_transformers.csv");
+             InputStreamReader in = new InputStreamReader(input);
+             BufferedReader reader = new BufferedReader(in)) {
+            io.getFixedParallelTransformersOutput().read(reader, null);
+        }
+
+        OpenReacResult result = new OpenReacResult(OpenReacStatus.OK, io, new HashMap<>());
+        List<FixedParallelTransformersOutput.FixedParallelTransformer> fixed = result.getFixedParallelTransformers();
+
+        // the two members of the degenerate bundle are surfaced, in file order, with their
+        // bundle, id and fixed effective ratio
+        assertEquals(2, fixed.size());
+        assertEquals(3, fixed.getFirst().getBundle());
+        assertEquals("T1", fixed.getFirst().getTransformerId());
+        assertEquals(1.043478, fixed.getFirst().getFixedEffectiveRho(), 1e-6);
+        assertEquals(3, fixed.getLast().getBundle());
+        assertEquals("T2", fixed.getLast().getTransformerId());
+        assertEquals(0.958, fixed.getLast().getFixedEffectiveRho(), 1e-6);
+
+        // informational output: the tap change is carried by tap position modifications, so
+        // fixed parallel transformers must not leak into the network modifications
+        assertTrue(result.getAllNetworkModifications().isEmpty());
     }
 
     @Test

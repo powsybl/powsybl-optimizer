@@ -99,6 +99,7 @@ class OpenReacJsonModuleTest {
         parameters.setReactiveSlackVariableScalingFactor(1e-2);
         parameters.setTwoWindingTransformerRatioVariableScalingFactor(0.005);
         parameters.setOptimizationAfterRounding(true);
+        parameters.setParallelTransformersGrouping(false);
 
         String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(parameters);
         ComparisonUtils.assertTxtEquals(Objects.requireNonNull(getClass().getResourceAsStream("/parametersThresholds.json")), json);
@@ -126,6 +127,7 @@ class OpenReacJsonModuleTest {
         assertEquals(1e-2, parameters2.getReactiveSlackVariableScalingFactor());
         assertEquals(0.005, parameters2.getTwoWindingTransformerRatioVariableScalingFactor());
         assertTrue(parameters2.isOptimizationAfterRounding());
+        assertFalse(parameters2.isParallelTransformersGrouping());
     }
 
     @Test
@@ -180,7 +182,8 @@ class OpenReacJsonModuleTest {
                 Objects.requireNonNull(getClass().getResourceAsStream("/parametersV1dot0.json")),
                 OpenReacParameters.class);
 
-        // The three v1.1 fields must fall back to their defaults when reading a v1.0 file
+        // The 1.1 and 1.2 fields must fall back to their defaults when reading a v1.0 file
+        assertTrue(parameters.isParallelTransformersGrouping());
         assertEquals(10, parameters.getPenaltyInvestReaPos());
         assertEquals(10, parameters.getPenaltyInvestReaNeg());
         assertNull(parameters.getPenaltyActivePower());
