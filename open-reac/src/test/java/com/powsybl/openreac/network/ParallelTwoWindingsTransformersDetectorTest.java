@@ -52,7 +52,7 @@ class ParallelTwoWindingsTransformersDetectorTest {
         DetectionResult result = ParallelTwoWindingsTransformersDetector.detect(network);
         assertEquals(1, result.bundles().size());
         // Homogeneous declaration -> every member aligned with the reference (+1)
-        assertEquals(Map.of("T1", 1, "T2", 1), orientations(result.bundles().get(0)));
+        assertEquals(Map.of("T1", 1, "T2", 1), orientations(result.bundles().getFirst()));
     }
 
     @Test
@@ -60,7 +60,7 @@ class ParallelTwoWindingsTransformersDetectorTest {
         Network network = ParallelTransformersNetworkFactory.createThreeParallel();
         DetectionResult result = ParallelTwoWindingsTransformersDetector.detect(network);
         assertEquals(1, result.bundles().size());
-        assertEquals(Map.of("T1", 1, "T2", 1, "T3", 1), orientations(result.bundles().get(0)));
+        assertEquals(Map.of("T1", 1, "T2", 1, "T3", 1), orientations(result.bundles().getFirst()));
     }
 
     @Test
@@ -68,7 +68,7 @@ class ParallelTwoWindingsTransformersDetectorTest {
         Network network = ParallelTransformersNetworkFactory.createTriangleCycle();
         DetectionResult result = ParallelTwoWindingsTransformersDetector.detect(network);
         assertEquals(1, result.bundles().size());
-        assertEquals(Map.of("T1", 1, "T2", 1), orientations(result.bundles().get(0)));
+        assertEquals(Map.of("T1", 1, "T2", 1), orientations(result.bundles().getFirst()));
     }
 
     @Test
@@ -79,7 +79,7 @@ class ParallelTwoWindingsTransformersDetectorTest {
         // The factory alternates the declaration direction around the cycle: T_AB and T_CD
         // are declared HV->LV, T_BC and T_DA LV->HV. Reference (first id) is T_AB.
         assertEquals(Map.of("T_AB", 1, "T_BC", -1, "T_CD", 1, "T_DA", -1),
-                orientations(result.bundles().get(0)));
+                orientations(result.bundles().getFirst()));
     }
 
     @Test
@@ -108,7 +108,7 @@ class ParallelTwoWindingsTransformersDetectorTest {
         DetectionResult result = ParallelTwoWindingsTransformersDetector.detect(network);
         assertEquals(1, result.bundles().size());
         // T2 is declared with swapped terminals relative to T1 (the reference)
-        assertEquals(Map.of("T1", 1, "T2", -1), orientations(result.bundles().get(0)));
+        assertEquals(Map.of("T1", 1, "T2", -1), orientations(result.bundles().getFirst()));
         assertTrue(result.undecidedBundles().isEmpty());
     }
 
@@ -119,7 +119,7 @@ class ParallelTwoWindingsTransformersDetectorTest {
         assertEquals(1, result.bundles().size());
         // Real-data pattern: an HV->LV member looped with two LV->HV twins through another
         // HV bus. Reference (first id) is T1; T2 and T3 are reversed relative to it.
-        assertEquals(Map.of("T1", 1, "T2", -1, "T3", -1), orientations(result.bundles().get(0)));
+        assertEquals(Map.of("T1", 1, "T2", -1, "T3", -1), orientations(result.bundles().getFirst()));
         assertTrue(result.undecidedBundles().isEmpty());
     }
 
@@ -130,7 +130,7 @@ class ParallelTwoWindingsTransformersDetectorTest {
         assertEquals(1, result.bundles().size());
         // Degenerate nominal voltage pair: orientation falls back to the terminal 1 bus,
         // still able to spot that T2 is declared reversed
-        assertEquals(Map.of("T1", 1, "T2", -1), orientations(result.bundles().get(0)));
+        assertEquals(Map.of("T1", 1, "T2", -1), orientations(result.bundles().getFirst()));
     }
 
     @Test
@@ -141,7 +141,7 @@ class ParallelTwoWindingsTransformersDetectorTest {
         // pair to orient the members -> relaxed, reported as undecided
         assertTrue(result.bundles().isEmpty());
         assertEquals(1, result.undecidedBundles().size());
-        assertEquals(Set.of("T_AB", "T_BC", "T_CD", "T_DA"), result.undecidedBundles().get(0));
+        assertEquals(Set.of("T_AB", "T_BC", "T_CD", "T_DA"), result.undecidedBundles().getFirst());
     }
 
     @Test
@@ -156,5 +156,19 @@ class ParallelTwoWindingsTransformersDetectorTest {
         assertEquals(2, merged.size());
         assertTrue(merged.contains(Set.of("A", "B", "C")));
         assertTrue(merged.contains(Set.of("D", "E")));
+    }
+
+    @Test
+    void mergeOverlappingSetsTransitive2() {
+        // Direct unit test of the merge utility. Here the last set bridges two sets that were
+        // kept apart until then: the merge must retroactively collapse the three into one.
+        List<Set<String>> input = List.of(
+            Set.of("A", "B"),
+            Set.of("D", "E"),
+            Set.of("B", "C", "E")
+        );
+        List<Set<String>> merged = ParallelTwoWindingsTransformersDetector.mergeOverlappingSets(input);
+        assertEquals(1, merged.size());
+        assertTrue(merged.contains(Set.of("A", "B", "C", "D", "E")));
     }
 }

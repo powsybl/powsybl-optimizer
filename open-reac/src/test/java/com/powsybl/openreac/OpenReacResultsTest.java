@@ -142,12 +142,12 @@ class OpenReacResultsTest {
         // the two members of the degenerate bundle are surfaced, in file order, with their
         // bundle, id and fixed effective ratio
         assertEquals(2, fixed.size());
-        assertEquals(3, fixed.get(0).getBundle());
-        assertEquals("T1", fixed.get(0).getTransformerId());
-        assertEquals(1.043478, fixed.get(0).getFixedEffectiveRho(), 1e-6);
-        assertEquals(3, fixed.get(1).getBundle());
-        assertEquals("T2", fixed.get(1).getTransformerId());
-        assertEquals(0.958, fixed.get(1).getFixedEffectiveRho(), 1e-6);
+        assertEquals(3, fixed.getFirst().getBundle());
+        assertEquals("T1", fixed.getFirst().getTransformerId());
+        assertEquals(1.043478, fixed.getFirst().getFixedEffectiveRho(), 1e-6);
+        assertEquals(3, fixed.getLast().getBundle());
+        assertEquals("T2", fixed.getLast().getTransformerId());
+        assertEquals(0.958, fixed.getLast().getFixedEffectiveRho(), 1e-6);
 
         // informational output: the tap change is carried by tap position modifications, so
         // fixed parallel transformers must not leak into the network modifications

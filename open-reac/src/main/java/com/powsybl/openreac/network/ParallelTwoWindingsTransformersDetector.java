@@ -336,16 +336,23 @@ public final class ParallelTwoWindingsTransformersDetector {
         List<Set<String>> merged = new ArrayList<>();
         for (Set<String> current : input) {
             Set<String> combined = new HashSet<>(current);
-            List<Set<String>> remaining = new ArrayList<>();
+            List<Set<String>> updatedMerged = new ArrayList<>();
+            // For each set of "input", we update the previously computed overlapping sets.
+            // To do this, we loop on those previously computed sets and check, for each one, whether it overlaps "current".
+            // "combined" then contains the merge of "current" with ALL the previously computed sets it overlaps with.
             for (Set<String> existing : merged) {
                 if (!Collections.disjoint(existing, current)) {
+                    // The current previously computed overlapping set ("existing") overlaps with "current".
+                    // It is integrated in "combined" and not preserved independently in "updatedMerged".
                     combined.addAll(existing);
                 } else {
-                    remaining.add(existing);
+                    // The current previously computed overlapping set ("existing") does not overlap with "current".
+                    // It is kept untouched.
+                    updatedMerged.add(existing);
                 }
             }
-            remaining.add(combined);
-            merged = remaining;
+            updatedMerged.add(combined);
+            merged = updatedMerged;
         }
         return merged;
     }

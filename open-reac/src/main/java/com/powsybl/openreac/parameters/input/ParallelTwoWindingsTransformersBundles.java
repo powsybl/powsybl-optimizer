@@ -79,6 +79,7 @@ public class ParallelTwoWindingsTransformersBundles implements AmplInputFile {
                     + " " + AmplIOUtils.addQuotes(row.transformerId()));
             writer.newLine();
         }
+        //add new line at the end of the file
         writer.newLine();
         writer.flush();
     }

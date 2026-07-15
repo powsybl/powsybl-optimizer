@@ -27,8 +27,8 @@ public final class ParallelTransformersNetworkFactory {
     public static Network createSimpleParallel() {
         Network network = Network.create("simple-parallel", "test");
         Substation s = network.newSubstation().setId("S").add();
-        addBus(s, "VL1", 225.0, "B1");
-        addBus(s, "VL2", 90.0, "B2");
+        createVoltageLevelAndBus(s, "VL1", 225.0, "B1");
+        createVoltageLevelAndBus(s, "VL2", 90.0, "B2");
         addRtcTransformer(s, "T1", "VL1", "B1", "VL2", "B2", 225.0, 90.0, 0.95, 1.05);
         addRtcTransformer(s, "T2", "VL1", "B1", "VL2", "B2", 225.0, 90.0, 0.95, 1.05);
         return network;
@@ -40,8 +40,8 @@ public final class ParallelTransformersNetworkFactory {
     public static Network createThreeParallel() {
         Network network = Network.create("three-parallel", "test");
         Substation s = network.newSubstation().setId("S").add();
-        addBus(s, "VL1", 225.0, "B1");
-        addBus(s, "VL2", 90.0, "B2");
+        createVoltageLevelAndBus(s, "VL1", 225.0, "B1");
+        createVoltageLevelAndBus(s, "VL2", 90.0, "B2");
         addRtcTransformer(s, "T1", "VL1", "B1", "VL2", "B2", 225.0, 90.0, 0.95, 1.05);
         addRtcTransformer(s, "T2", "VL1", "B1", "VL2", "B2", 225.0, 90.0, 0.95, 1.05);
         addRtcTransformer(s, "T3", "VL1", "B1", "VL2", "B2", 225.0, 90.0, 0.95, 1.05);
@@ -57,9 +57,9 @@ public final class ParallelTransformersNetworkFactory {
     public static Network createTriangleCycle() {
         Network network = Network.create("triangle-cycle", "test");
         Substation s = network.newSubstation().setId("S").add();
-        addBus(s, "VL_A", 225.0, "A");
-        addBus(s, "VL_B", 225.0, "B");
-        addBus(s, "VL_C", 90.0, "C");
+        createVoltageLevelAndBus(s, "VL_A", 225.0, "A");
+        createVoltageLevelAndBus(s, "VL_B", 225.0, "B");
+        createVoltageLevelAndBus(s, "VL_C", 90.0, "C");
         addRtcTransformer(s, "T1", "VL_A", "A", "VL_C", "C", 225.0, 90.0, 0.95, 1.05);
         addRtcTransformer(s, "T2", "VL_B", "B", "VL_C", "C", 225.0, 90.0, 0.95, 1.05);
         addLine(network, "L_AB", "VL_A", "A", "VL_B", "B");
@@ -74,10 +74,10 @@ public final class ParallelTransformersNetworkFactory {
     public static Network createSquareCycle() {
         Network network = Network.create("square-cycle", "test");
         Substation s = network.newSubstation().setId("S").add();
-        addBus(s, "VL_HT_A", 225.0, "A");
-        addBus(s, "VL_HT_C", 225.0, "C");
-        addBus(s, "VL_BT_B", 90.0, "B");
-        addBus(s, "VL_BT_D", 90.0, "D");
+        createVoltageLevelAndBus(s, "VL_HT_A", 225.0, "A");
+        createVoltageLevelAndBus(s, "VL_HT_C", 225.0, "C");
+        createVoltageLevelAndBus(s, "VL_BT_B", 90.0, "B");
+        createVoltageLevelAndBus(s, "VL_BT_D", 90.0, "D");
         addRtcTransformer(s, "T_AB", "VL_HT_A", "A", "VL_BT_B", "B", 225.0, 90.0, 0.95, 1.05);
         addRtcTransformer(s, "T_BC", "VL_BT_B", "B", "VL_HT_C", "C", 90.0, 225.0, 0.95, 1.05);
         addRtcTransformer(s, "T_CD", "VL_HT_C", "C", "VL_BT_D", "D", 225.0, 90.0, 0.95, 1.05);
@@ -93,9 +93,9 @@ public final class ParallelTransformersNetworkFactory {
     public static Network createTwoSeparateBundles() {
         Network network = Network.create("two-separate-bundles", "test");
         Substation s = network.newSubstation().setId("S").add();
-        addBus(s, "VL1", 225.0, "B1");
-        addBus(s, "VL2", 90.0, "B2");
-        addBus(s, "VL3", 20.0, "B3");
+        createVoltageLevelAndBus(s, "VL1", 225.0, "B1");
+        createVoltageLevelAndBus(s, "VL2", 90.0, "B2");
+        createVoltageLevelAndBus(s, "VL3", 20.0, "B3");
         addRtcTransformer(s, "T1", "VL1", "B1", "VL2", "B2", 225.0, 90.0, 0.95, 1.05);
         addRtcTransformer(s, "T2", "VL1", "B1", "VL2", "B2", 225.0, 90.0, 0.95, 1.05);
         addRtcTransformer(s, "T3", "VL2", "B2", "VL3", "B3", 90.0, 20.0, 0.95, 1.05);
@@ -104,14 +104,14 @@ public final class ParallelTransformersNetworkFactory {
     }
 
     /**
-     * Two transformers between same bus pair, but only one has a ratio tap changer
+     * Two transformers between the same bus pair, but only one has a ratio tap changer
      * -> no bundle (RTC filtering brings the count below 2)
      */
     public static Network createOneRtcOneFixed() {
         Network network = Network.create("one-rtc-one-fixed", "test");
         Substation s = network.newSubstation().setId("S").add();
-        addBus(s, "VL1", 225.0, "B1");
-        addBus(s, "VL2", 90.0, "B2");
+        createVoltageLevelAndBus(s, "VL1", 225.0, "B1");
+        createVoltageLevelAndBus(s, "VL2", 90.0, "B2");
         addRtcTransformer(s, "T1", "VL1", "B1", "VL2", "B2", 225.0, 90.0, 0.95, 1.05);
         addFixedTransformer(s, "T2", "VL1", "B1", "VL2", "B2", 225.0, 90.0);
         return network;
@@ -125,8 +125,8 @@ public final class ParallelTransformersNetworkFactory {
     public static Network createAntiParallel() {
         Network network = Network.create("anti-parallel", "test");
         Substation s = network.newSubstation().setId("S").add();
-        addBus(s, "VL1", 225.0, "B1");
-        addBus(s, "VL2", 90.0, "B2");
+        createVoltageLevelAndBus(s, "VL1", 225.0, "B1");
+        createVoltageLevelAndBus(s, "VL2", 90.0, "B2");
         addRtcTransformer(s, "T1", "VL1", "B1", "VL2", "B2", 225.0, 90.0, 0.95, 1.05);
         addRtcTransformer(s, "T2", "VL2", "B2", "VL1", "B1", 90.0, 225.0, 0.95, 1.05);
         return network;
@@ -140,8 +140,8 @@ public final class ParallelTransformersNetworkFactory {
     public static Network createEqualVoltageAntiParallel() {
         Network network = Network.create("equal-voltage-anti-parallel", "test");
         Substation s = network.newSubstation().setId("S").add();
-        addBus(s, "VL1", 225.0, "B1");
-        addBus(s, "VL2", 225.0, "B2");
+        createVoltageLevelAndBus(s, "VL1", 225.0, "B1");
+        createVoltageLevelAndBus(s, "VL2", 225.0, "B2");
         addRtcTransformer(s, "T1", "VL1", "B1", "VL2", "B2", 225.0, 225.0, 0.95, 1.05);
         addRtcTransformer(s, "T2", "VL2", "B2", "VL1", "B1", 225.0, 225.0, 0.95, 1.05);
         return network;
@@ -156,9 +156,9 @@ public final class ParallelTransformersNetworkFactory {
     public static Network createAntiParallelTriangle() {
         Network network = Network.create("anti-parallel-triangle", "test");
         Substation s = network.newSubstation().setId("S").add();
-        addBus(s, "VL_A", 400.0, "A");
-        addBus(s, "VL_B", 225.0, "B");
-        addBus(s, "VL_C", 400.0, "C");
+        createVoltageLevelAndBus(s, "VL_A", 400.0, "A");
+        createVoltageLevelAndBus(s, "VL_B", 225.0, "B");
+        createVoltageLevelAndBus(s, "VL_C", 400.0, "C");
         addRtcTransformer(s, "T1", "VL_A", "A", "VL_B", "B", 400.0, 225.0, 0.95, 1.05);
         addRtcTransformer(s, "T2", "VL_B", "B", "VL_C", "C", 225.0, 400.0, 0.95, 1.05);
         addRtcTransformer(s, "T3", "VL_B", "B", "VL_C", "C", 225.0, 400.0, 0.95, 1.05);
@@ -174,10 +174,10 @@ public final class ParallelTransformersNetworkFactory {
     public static Network createEqualVoltageSquareCycle() {
         Network network = Network.create("equal-voltage-square-cycle", "test");
         Substation s = network.newSubstation().setId("S").add();
-        addBus(s, "VL_A", 225.0, "A");
-        addBus(s, "VL_B", 225.0, "B");
-        addBus(s, "VL_C", 225.0, "C");
-        addBus(s, "VL_D", 225.0, "D");
+        createVoltageLevelAndBus(s, "VL_A", 225.0, "A");
+        createVoltageLevelAndBus(s, "VL_B", 225.0, "B");
+        createVoltageLevelAndBus(s, "VL_C", 225.0, "C");
+        createVoltageLevelAndBus(s, "VL_D", 225.0, "D");
         addRtcTransformer(s, "T_AB", "VL_A", "A", "VL_B", "B", 225.0, 225.0, 0.95, 1.05);
         addRtcTransformer(s, "T_BC", "VL_B", "B", "VL_C", "C", 225.0, 225.0, 0.95, 1.05);
         addRtcTransformer(s, "T_CD", "VL_C", "C", "VL_D", "D", 225.0, 225.0, 0.95, 1.05);
@@ -191,14 +191,14 @@ public final class ParallelTransformersNetworkFactory {
     public static Network createNoTransformer() {
         Network network = Network.create("no-transformer", "test");
         Substation s = network.newSubstation().setId("S").add();
-        addBus(s, "VL1", 225.0, "B1");
-        addBus(s, "VL2", 90.0, "B2");
+        createVoltageLevelAndBus(s, "VL1", 225.0, "B1");
+        createVoltageLevelAndBus(s, "VL2", 90.0, "B2");
         return network;
     }
 
     // --- Helpers ---
 
-    private static void addBus(Substation s, String vlId, double nominalV, String busId) {
+    private static void createVoltageLevelAndBus(Substation s, String vlId, double nominalV, String busId) {
         VoltageLevel vl = s.newVoltageLevel()
                 .setId(vlId)
                 .setNominalV(nominalV)
