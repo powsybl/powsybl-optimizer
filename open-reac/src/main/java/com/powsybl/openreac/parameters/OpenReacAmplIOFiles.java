@@ -13,8 +13,10 @@ import com.powsybl.ampl.executor.AmplParameters;
 import com.powsybl.commons.report.ReportNode;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.openreac.Reports;
+import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector;
 import com.powsybl.openreac.parameters.input.*;
 import com.powsybl.openreac.parameters.input.algo.AlgorithmInput;
+import com.powsybl.openreac.parameters.output.FixedParallelTransformersOutput;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput;
 import com.powsybl.openreac.parameters.output.VoltageProfileOutput;
@@ -22,7 +24,9 @@ import com.powsybl.openreac.parameters.output.network.NetworkModifications;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * OpenReacAmplIOFiles will interface all inputs and outputs needed for OpenReac to the abstracted Ampl Executor.
@@ -33,6 +37,7 @@ import java.util.List;
  * here through {@link OpenReacAmplIOFiles#getInputParameters} ({@link OpenReacAmplIOFiles#getOutputParameters})
  *
  * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
+ * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
  */
 public class OpenReacAmplIOFiles implements AmplParameters {
 
@@ -48,6 +53,8 @@ public class OpenReacAmplIOFiles implements AmplParameters {
     private final boolean debug;
     private final String debugDir;
     private final AmplExportConfig amplExportConfig;
+    private final ParallelTwoWindingsTransformersBundles parallelTwoWindingsTransformersBundles;
+    private final FixedParallelTransformersOutput fixedParallelTransformersOutput;
 
     public OpenReacAmplIOFiles(OpenReacParameters params, AmplExportConfig amplExportConfig, Network network, boolean debug, ReportNode reportNode) {
 
@@ -68,6 +75,24 @@ public class OpenReacAmplIOFiles implements AmplParameters {
         this.debug = debug;
         this.debugDir = params.getDebugDir();
 
+        // Parallel transformer bundles are detected topologically here; every orientable bundle is
+        // sent to AMPL as a membership + orientation relation (every member, no classification). The
+        // numeric qualification (tie / fix / relax) and all bounds are derived in the AMPL model
+        // from its own data, so the classification and the constraints can never disagree. Bundles
+        // whose member orientation cannot be established (degenerate nominal voltage pair in a cycle)
+        // are not sent and are reported as relaxed. Transformers that AMPL ends up fixing
+        // (POINT/EMPTY bundles) are read back from fixedParallelTransformersOutput. The whole grouping
+        // can be opted out through OpenReacParameters, in which case the detection is skipped and the
+        // membership file is written header-only, a no-op for the AMPL model.
+        ParallelTwoWindingsTransformersDetector.DetectionResult parallelDetection = params.isParallelTransformersGrouping()
+                ? ParallelTwoWindingsTransformersDetector.detect(network)
+                : new ParallelTwoWindingsTransformersDetector.DetectionResult(List.of(), List.of());
+        this.parallelTwoWindingsTransformersBundles = new ParallelTwoWindingsTransformersBundles(parallelDetection.bundles());
+        this.fixedParallelTransformersOutput = new FixedParallelTransformersOutput();
+        Set<String> variableTransformerIds = new HashSet<>(params.getVariableTwoWindingsTransformers());
+        Reports.reportParallelTwoWindingsTransformers(reportNode, parallelDetection.bundles(), variableTransformerIds);
+        Reports.reportUndecidedOrientationParallelBundles(reportNode, parallelDetection.undecidedBundles());
+
         Reports.reportConstantQGeneratorsSize(reportNode, params.getConstantQGenerators().size());
         Reports.reportVariableTwoWindingsTransformersSize(reportNode, params.getVariableTwoWindingsTransformers().size());
         Reports.reportVariableShuntCompensatorsSize(reportNode, params.getVariableShuntCompensators().size());
@@ -85,20 +110,26 @@ public class OpenReacAmplIOFiles implements AmplParameters {
         return voltageProfileOutput;
     }
 
+    public FixedParallelTransformersOutput getFixedParallelTransformersOutput() {
+        return fixedParallelTransformersOutput;
+    }
+
     @Override
     public Collection<AmplInputFile> getInputParameters() {
         return List.of(constantQGenerators, variableShuntCompensators, variableTwoWindingsTransformers,
-                algorithmParams, voltageLimitsOverride, configuredReactiveSlackBuses);
+                algorithmParams, voltageLimitsOverride, configuredReactiveSlackBuses,
+                parallelTwoWindingsTransformersBundles);
     }
 
     @Override
     public Collection<AmplOutputFile> getOutputParameters(boolean isConvergenceOk) {
         if (isConvergenceOk) {
             List<AmplOutputFile> networkModificationsOutputFiles = networkModifications.getOutputFiles();
-            List<AmplOutputFile> list = new ArrayList<>(networkModificationsOutputFiles.size() + 2);
+            List<AmplOutputFile> list = new ArrayList<>(networkModificationsOutputFiles.size() + 3);
             list.addAll(networkModificationsOutputFiles);
             list.add(reactiveSlackOutput);
             list.add(voltageProfileOutput);
+            list.add(fixedParallelTransformersOutput);
             return list;
         }
         return List.of();

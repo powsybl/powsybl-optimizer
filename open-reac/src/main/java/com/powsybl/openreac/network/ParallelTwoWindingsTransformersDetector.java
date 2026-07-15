@@ -1,0 +1,497 @@
+/**
+ * Copyright (c) 2026, RTE (http://www.rte-france.com)
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+package com.powsybl.openreac.network;
+
+import com.powsybl.iidm.network.Bus;
+import com.powsybl.iidm.network.Identifiable;
+import com.powsybl.iidm.network.Line;
+import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.Substation;
+import com.powsybl.iidm.network.Terminal;
+import com.powsybl.iidm.network.TwoWindingsTransformer;
+
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+/**
+ * Detects sets of two-windings transformers acting in parallel: transformers sharing the
+ * exact same pair of buses in the {@code BusView}, or forming a closed loop (chordless
+ * cycle of size 3 or 4) inside a single substation. Only transformers carrying a ratio
+ * tap changer are returned, overlapping sets are merged transitively, and each member
+ * carries its orientation ({@code +1}/{@code -1}) relative to its bundle's canonical
+ * direction -- the declared direction of the first member in id order -- so the AMPL
+ * model can derive the member bounds and tie constraints accordingly. Equal nominal
+ * voltage bundles coming from a cycle cannot be oriented and are returned separately so
+ * the caller can relax them with a warning instead of tying them blindly.
+ *
+ * <p>The detection strategies, the patterns they cover and the orientation rules are
+ * described in the reference documentation ("Parallel transformers" section of the
+ * AC optimal powerflow page).
+ *
+ * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
+ */
+public final class ParallelTwoWindingsTransformersDetector {
+
+    private ParallelTwoWindingsTransformersDetector() {
+        // utility class
+    }
+
+    /**
+     * A transformer inside a bundle, with its orientation relative to the bundle's
+     * canonical direction (the declared direction of the first member in id order):
+     * {@code +1} when declared in the same direction, {@code -1} when reversed.
+     */
+    public record Member(String transformerId, int orientation) { }
+
+    /** A bundle of parallel transformers, members sorted by id. */
+    public record Bundle(List<Member> members) {
+        public Bundle {
+            members = List.copyOf(members);
+        }
+
+        public int size() {
+            return members.size();
+        }
+    }
+
+    /**
+     * Result of the detection: the bundles whose member orientations could be
+     * established, and the ones (degenerate nominal voltage pair in a cycle) whose
+     * orientation is undecidable and which must be relaxed with a warning.
+     */
+    public record DetectionResult(List<Bundle> bundles, List<Set<String>> undecidedBundles) {
+        public DetectionResult {
+            bundles = List.copyOf(bundles);
+            undecidedBundles = List.copyOf(undecidedBundles);
+        }
+    }
+
+    /**
+     * @return bundles of parallel ratio-tap-changer-bearing transformers, each member
+     *         carrying its orientation relative to the bundle's canonical direction.
+     *         Singletons are filtered out. Detection and orientation are purely
+     *         topological; the numeric qualification of a bundle (shared-ratio
+     *         interval, tie / fix / relax) is performed in the AMPL model.
+     */
+    public static DetectionResult detect(Network network) {
+        Set<String> ratioTapChangerIds = network.getTwoWindingsTransformerStream()
+                .filter(t -> t.getRatioTapChanger() != null)
+                .map(Identifiable::getId)
+                .collect(Collectors.toSet());
+
+        List<Set<String>> all = new ArrayList<>();
+        all.addAll(detectSimpleParallels(network, ratioTapChangerIds));
+        all.addAll(detectComplexParallels(network));
+
+        // Keep only RTCs
+        all = all.stream()
+                .map(s -> {
+                    Set<String> filtered = new HashSet<>(s);
+                    filtered.retainAll(ratioTapChangerIds);
+                    return filtered;
+                })
+                .filter(s -> s.size() >= 2)
+                .collect(Collectors.toList());
+
+        // Merge overlapping sets transitively
+        List<Set<String>> merged = mergeOverlappingSets(all);
+
+        // Deterministic ordering, mirroring the notebook (largest bundles first), with a
+        // stable tie-break so the AMPL bundle numbering is reproducible across runs.
+        merged.sort(Comparator
+                .comparingInt(Set<String>::size).reversed()
+                .thenComparing(s -> s.stream().min(Comparator.naturalOrder()).orElse("")));
+        return orientBundles(network, merged);
+    }
+
+    // ---- Step 4: orientation of each member against the bundle's canonical direction ----
+
+    private static DetectionResult orientBundles(Network network, List<Set<String>> bundles) {
+        List<Bundle> oriented = new ArrayList<>();
+        List<Set<String>> undecided = new ArrayList<>();
+        for (Set<String> bundle : bundles) {
+            List<TwoWindingsTransformer> members = bundle.stream().sorted()
+                    .map(network::getTwoWindingsTransformer)
+                    .toList();
+            orientMembers(members).ifPresentOrElse(
+                orientedMembers -> oriented.add(new Bundle(orientedMembers)),
+                () -> undecided.add(bundle));
+        }
+        return new DetectionResult(oriented, undecided);
+    }
+
+    /**
+     * Orients every member against the first (id order). All members share the same nominal
+     * voltage pair (guaranteed by detection and preserved by the transitive merge), so the
+     * reference's pair decides the strategy: by voltage side, else by bus pair (see class doc).
+     * Empty when undecidable.
+     */
+    private static Optional<List<Member>> orientMembers(List<TwoWindingsTransformer> members) {
+        TwoWindingsTransformer reference = members.get(0);
+        double refV1 = reference.getTerminal1().getVoltageLevel().getNominalV();
+        double refV2 = reference.getTerminal2().getVoltageLevel().getNominalV();
+        return refV1 != refV2
+                ? Optional.of(orientByNominalVoltageSide(members, refV1 < refV2))
+                : orientBySharedBusPair(members, reference);
+    }
+
+    private static List<Member> orientByNominalVoltageSide(List<TwoWindingsTransformer> members, boolean referenceT1OnLowSide) {
+        List<Member> result = new ArrayList<>(members.size());
+        for (TwoWindingsTransformer twt : members) {
+            boolean t1OnLowSide = twt.getTerminal1().getVoltageLevel().getNominalV()
+                    < twt.getTerminal2().getVoltageLevel().getNominalV();
+            result.add(new Member(twt.getId(), t1OnLowSide == referenceT1OnLowSide ? 1 : -1));
+        }
+        return result;
+    }
+
+    /**
+     * Fallback for degenerate nominal voltage pairs (coupling transformers): only a
+     * simple parallel (every member on the same bus pair) can be oriented, by comparing
+     * each member's terminal 1 bus to the reference's. A cycle-based bundle has no
+     * shared bus pair and is undecidable: returns empty.
+     */
+    private static Optional<List<Member>> orientBySharedBusPair(List<TwoWindingsTransformer> members, TwoWindingsTransformer reference) {
+        Bus refB1 = reference.getTerminal1().getBusView().getBus();
+        Bus refB2 = reference.getTerminal2().getBusView().getBus();
+        if (refB1 == null || refB2 == null) {
+            return Optional.empty();
+        }
+        BusPair referencePair = new BusPair(refB1.getId(), refB2.getId());
+        List<Member> result = new ArrayList<>(members.size());
+        for (TwoWindingsTransformer twt : members) {
+            Bus b1 = twt.getTerminal1().getBusView().getBus();
+            Bus b2 = twt.getTerminal2().getBusView().getBus();
+            if (b1 == null || b2 == null
+                    || !referencePair.equals(new BusPair(b1.getId(), b2.getId()))) {
+                return Optional.empty();
+            }
+            result.add(new Member(twt.getId(), b1.getId().equals(refB1.getId()) ? 1 : -1));
+        }
+        return Optional.of(result);
+    }
+
+    // ---- Step 1: simple parallels (same pair of BusView buses) ----
+
+    private static List<Set<String>> detectSimpleParallels(Network network, Set<String> ratioTapChangerIds) {
+        Map<BusPair, List<String>> byBusPair = new HashMap<>();
+        for (TwoWindingsTransformer twt : network.getTwoWindingsTransformers()) {
+            if (!ratioTapChangerIds.contains(twt.getId())) {
+                continue;
+            }
+            Bus b1 = twt.getTerminal1().getBusView().getBus();
+            Bus b2 = twt.getTerminal2().getBusView().getBus();
+            if (b1 != null && b2 != null) {
+                byBusPair.computeIfAbsent(new BusPair(b1.getId(), b2.getId()), k -> new ArrayList<>())
+                        .add(twt.getId());
+            }
+        }
+        return byBusPair.values().stream()
+                .filter(list -> list.size() >= 2)
+                .map(HashSet<String>::new)
+                .collect(Collectors.toList());
+    }
+
+    // ---- Step 2: complex parallels (chordless cycles <= 4 inside substations) ----
+
+    private static List<Set<String>> detectComplexParallels(Network network) {
+        // Intra-substation lines take part in the graph as plain edges so they can close
+        // cycles, exactly like the reference notebook (graph built from get_branches()).
+        // Their ids are later dropped by the ratio-tap-changer filter in detect(), so a
+        // line never ends up inside a returned bundle; it only contributes connectivity.
+        Map<String, List<Line>> intraSubstationLines = new HashMap<>();
+        for (Line line : network.getLines()) {
+            Substation s1 = line.getTerminal1().getVoltageLevel().getSubstation().orElse(null);
+            Substation s2 = line.getTerminal2().getVoltageLevel().getSubstation().orElse(null);
+            if (s1 != null && s1 == s2) {
+                intraSubstationLines.computeIfAbsent(s1.getId(), k -> new ArrayList<>()).add(line);
+            }
+        }
+        List<Set<String>> result = new ArrayList<>();
+        for (Substation substation : network.getSubstations()) {
+            IntraSubstationGraph graph = buildIntraSubstationGraph(substation,
+                    intraSubstationLines.getOrDefault(substation.getId(), List.of()));
+            if (graph.adjacency.size() < 3) {
+                continue; // No cycle of length >= 3 possible
+            }
+            for (List<String> cycleNodes : graph.findChordlessCyclesUpToSize4()) {
+                processCycle(graph, cycleNodes, result);
+            }
+        }
+        return result;
+    }
+
+    private static void processCycle(IntraSubstationGraph graph, List<String> cycleNodes, List<Set<String>> result) {
+        // Edges of the cycle, bundled by their nominal voltage pair
+        Map<NominalVoltagePair, List<BusPair>> edgesByVoltage = new HashMap<>();
+        int n = cycleNodes.size();
+        for (int i = 0; i < n; i++) {
+            BusPair edge = new BusPair(cycleNodes.get(i), cycleNodes.get((i + 1) % n));
+            NominalVoltagePair vp = graph.edges.get(edge).voltagePair;
+            edgesByVoltage.computeIfAbsent(vp, k -> new ArrayList<>()).add(edge);
+        }
+        // Within each voltage subgraph, find connected components
+        for (List<BusPair> edgesAtVoltage : edgesByVoltage.values()) {
+            for (Set<BusPair> component : connectedComponents(edgesAtVoltage)) {
+                Set<String> transformerIds = new HashSet<>();
+                for (BusPair edge : component) {
+                    transformerIds.addAll(graph.edges.get(edge).transformerIds);
+                }
+                if (transformerIds.size() >= 2) {
+                    result.add(transformerIds);
+                }
+            }
+        }
+    }
+
+    private static List<Set<BusPair>> connectedComponents(Collection<BusPair> edges) {
+        // Build an adjacency from the edge set, then flood-fill for components.
+        Map<String, Set<String>> adjacentBussesByBus = buildBusAdjacency(edges);
+        Map<String, Integer> componentIndexByBus = new HashMap<>();
+        int componentIndex = 0;
+        for (String start : adjacentBussesByBus.keySet()) {
+            if (!componentIndexByBus.containsKey(start)) {
+                floodFillComponent(start, componentIndex, adjacentBussesByBus, componentIndexByBus);
+                componentIndex++;
+            }
+        }
+        List<Set<BusPair>> components = new ArrayList<>();
+        for (int i = 0; i < componentIndex; i++) {
+            components.add(new HashSet<>());
+        }
+        for (BusPair e : edges) {
+            components.get(componentIndexByBus.get(e.busId1)).add(e);
+        }
+        return components;
+    }
+
+    private static Map<String, Set<String>> buildBusAdjacency(Collection<BusPair> edges) {
+        Map<String, Set<String>> adjacentBussesByBus = new HashMap<>();
+        for (BusPair e : edges) {
+            adjacentBussesByBus.computeIfAbsent(e.busId1, k -> new HashSet<>()).add(e.busId2);
+            adjacentBussesByBus.computeIfAbsent(e.busId2, k -> new HashSet<>()).add(e.busId1);
+        }
+        return adjacentBussesByBus;
+    }
+
+    // Iterative flood fill: labels start and everything reachable from it with componentIndex.
+    private static void floodFillComponent(String start, int componentIndex,
+                                           Map<String, Set<String>> adjacentBussesByBus, Map<String, Integer> componentIndexByBus) {
+        Deque<String> stack = new ArrayDeque<>();
+        stack.push(start);
+        while (!stack.isEmpty()) {
+            String node = stack.pop();
+            if (componentIndexByBus.putIfAbsent(node, componentIndex) == null) {
+                for (String nbr : adjacentBussesByBus.getOrDefault(node, Set.of())) {
+                    if (!componentIndexByBus.containsKey(nbr)) {
+                        stack.push(nbr);
+                    }
+                }
+            }
+        }
+    }
+
+    // ---- Graph construction ----
+
+    private static IntraSubstationGraph buildIntraSubstationGraph(Substation substation, List<Line> intraSubstationLines) {
+        IntraSubstationGraph graph = new IntraSubstationGraph();
+        for (TwoWindingsTransformer twt : substation.getTwoWindingsTransformers()) {
+            addBranchEdge(graph, twt.getId(), twt.getTerminal1(), twt.getTerminal2());
+        }
+        for (Line line : intraSubstationLines) {
+            addBranchEdge(graph, line.getId(), line.getTerminal1(), line.getTerminal2());
+        }
+        return graph;
+    }
+
+    private static void addBranchEdge(IntraSubstationGraph graph, String branchId, Terminal terminal1, Terminal terminal2) {
+        Bus b1 = terminal1.getBusView().getBus();
+        Bus b2 = terminal2.getBusView().getBus();
+        if (b1 == null || b2 == null || b1.getId().equals(b2.getId())) {
+            return;
+        }
+        double v1 = terminal1.getVoltageLevel().getNominalV();
+        double v2 = terminal2.getVoltageLevel().getNominalV();
+        graph.addEdge(b1.getId(), b2.getId(), branchId, NominalVoltagePair.of(v1, v2));
+    }
+
+    // ---- Step 3: merge overlapping sets transitively ----
+
+    static List<Set<String>> mergeOverlappingSets(List<Set<String>> input) {
+        List<Set<String>> merged = new ArrayList<>();
+        for (Set<String> current : input) {
+            Set<String> combined = new HashSet<>(current);
+            List<Set<String>> updatedMerged = new ArrayList<>();
+            // For each set of "input", we update the previously computed overlapping sets.
+            // To do this, we loop on those previously computed sets and check, for each one, whether it overlaps "current".
+            // "combined" then contains the merge of "current" with ALL the previously computed sets it overlaps with.
+            for (Set<String> existing : merged) {
+                if (!Collections.disjoint(existing, current)) {
+                    // The current previously computed overlapping set ("existing") overlaps with "current".
+                    // It is integrated in "combined" and not preserved independently in "updatedMerged".
+                    combined.addAll(existing);
+                } else {
+                    // The current previously computed overlapping set ("existing") does not overlap with "current".
+                    // It is kept untouched.
+                    updatedMerged.add(existing);
+                }
+            }
+            updatedMerged.add(combined);
+            merged = updatedMerged;
+        }
+        return merged;
+    }
+
+    // ---- Internal value types ----
+
+    private record NominalVoltagePair(double low, double high) {
+        static NominalVoltagePair of(double v1, double v2) {
+            return v1 <= v2 ? new NominalVoltagePair(v1, v2) : new NominalVoltagePair(v2, v1);
+        }
+    }
+
+    /** An unordered pair of bus ids, canonicalized so that (x, y) and (y, x) are equal. */
+    private record BusPair(String busId1, String busId2) {
+        BusPair(String busId1, String busId2) {
+            if (busId1.compareTo(busId2) <= 0) {
+                this.busId1 = busId1;
+                this.busId2 = busId2;
+            } else {
+                this.busId1 = busId2;
+                this.busId2 = busId1;
+            }
+        }
+    }
+
+    private static final class EdgeData {
+        final List<String> transformerIds = new ArrayList<>();
+        NominalVoltagePair voltagePair;
+    }
+
+    private static final class IntraSubstationGraph {
+
+        final Map<String, Set<String>> adjacency = new HashMap<>();
+        final Map<BusPair, EdgeData> edges = new HashMap<>();
+
+        void addEdge(String busA, String busB, String transformerId, NominalVoltagePair voltagePair) {
+            BusPair key = new BusPair(busA, busB);
+            EdgeData data = edges.computeIfAbsent(key, k -> {
+                EdgeData newData = new EdgeData();
+                newData.voltagePair = voltagePair;
+                adjacency.computeIfAbsent(busA, b -> new HashSet<>()).add(busB);
+                adjacency.computeIfAbsent(busB, b -> new HashSet<>()).add(busA);
+                return newData;
+            });
+            data.transformerIds.add(transformerId);
+        }
+
+        boolean hasEdge(String busA, String busB) {
+            return edges.containsKey(new BusPair(busA, busB));
+        }
+
+        /**
+         * Enumerates all chordless cycles of length 3 or 4. Each cycle is returned
+         * exactly once, as the ordered list of its nodes.
+         *
+         * <p>Triangles are by definition chordless. Squares are filtered to exclude
+         * those carrying a chord (i.e. an edge between opposite vertices).
+         *
+         * <p>Canonical ordering is enforced by ranking nodes alphabetically and
+         * requiring the smallest-rank node to come first; among the two cycle
+         * neighbors of that node, we pick the smaller-rank as the second node.
+         */
+        List<List<String>> findChordlessCyclesUpToSize4() {
+            List<String> nodes = new ArrayList<>(adjacency.keySet());
+            Collections.sort(nodes);
+            Map<String, Integer> rank = new HashMap<>();
+            for (int i = 0; i < nodes.size(); i++) {
+                rank.put(nodes.get(i), i);
+            }
+            List<List<String>> cycles = new ArrayList<>();
+            collectTriangles(nodes, rank, cycles);
+            collectChordlessSquares(nodes, rank, cycles);
+            return cycles;
+        }
+
+        // Triangles are chordless by definition. Emitted once as (a, b, c) with rank(a) < rank(b) < rank(c).
+        private void collectTriangles(List<String> nodes, Map<String, Integer> rank, List<List<String>> cycles) {
+            for (String a : nodes) {
+                int ra = rank.get(a);
+                for (String b : adjacency.get(a)) {
+                    if (rank.get(b) > ra) {
+                        collectTrianglesThrough(a, b, rank, cycles);
+                    }
+                }
+            }
+        }
+
+        private void collectTrianglesThrough(String a, String b, Map<String, Integer> rank, List<List<String>> cycles) {
+            int rb = rank.get(b);
+            for (String c : adjacency.get(b)) {
+                if (rank.get(c) > rb && hasEdge(a, c)) {
+                    cycles.add(List.of(a, b, c));
+                }
+            }
+        }
+
+        // Chordless squares a-b-c-d-a: a has smallest rank, rank(b) < rank(d), no chord a-c or b-d.
+        // Emitted once as (a, b, c, d), a valid cycle walk.
+        private void collectChordlessSquares(List<String> nodes, Map<String, Integer> rank, List<List<String>> cycles) {
+            if (adjacency.size() < 4) {
+                return; // A chordless square needs four distinct buses
+            }
+            for (String a : nodes) {
+                collectSquaresAt(a, rank, cycles);
+            }
+        }
+
+        private void collectSquaresAt(String a, Map<String, Integer> rank, List<List<String>> cycles) {
+            int ra = rank.get(a);
+            List<String> higherNeighbors = sortedNeighborsAbove(a, ra, rank);
+            for (int i = 0; i < higherNeighbors.size(); i++) {
+                for (int j = i + 1; j < higherNeighbors.size(); j++) {
+                    collectSquare(a, ra, higherNeighbors.get(i), higherNeighbors.get(j), rank, cycles);
+                }
+            }
+        }
+
+        private void collectSquare(String a, int ra, String b, String d, Map<String, Integer> rank, List<List<String>> cycles) {
+            if (hasEdge(b, d)) {
+                return; // chord b-d: not chordless
+            }
+            Set<String> neighborsOfD = adjacency.get(d);
+            for (String c : adjacency.get(b)) {
+                boolean closesChordlessSquare = rank.get(c) > ra
+                        && !c.equals(a) && !c.equals(d)
+                        && neighborsOfD.contains(c)
+                        && !hasEdge(a, c); // no chord a-c
+                if (closesChordlessSquare) {
+                    cycles.add(List.of(a, b, c, d));
+                }
+            }
+        }
+
+        // Neighbors of {@code node} with rank strictly greater than {@code minRank}, sorted.
+        private List<String> sortedNeighborsAbove(String node, int minRank, Map<String, Integer> rank) {
+            return adjacency.get(node).stream()
+                    .filter(neighbor -> rank.get(neighbor) > minRank)
+                    .sorted()
+                    .toList();
+        }
+    }
+}

@@ -10,8 +10,9 @@
 
 ###############################################################################
 # Reactive OPF
-# Author:  Jean Maeght 2022 2023
-# Author:  Manuel Ruiz 2023 2024
+# Author:  Jean Maeght   2022 2023
+# Author:  Manuel Ruiz   2023 2024
+# Author:  Oscar Lamolet 2025 2026
 ###############################################################################
 
 
@@ -64,6 +65,26 @@ check {(t,g,n) in UNIT: g in PARAM_UNIT_FIXQ}: unit_id[t,g,n] == param_unit_fixq
 set PARAM_TRANSFORMERS_RATIO_VARIABLE  dimen 1 default {};
 param param_transformers_ratio_variable_id{PARAM_TRANSFORMERS_RATIO_VARIABLE} symbolic;
 check {(t,qq,m,n) in BRANCH: qq in PARAM_TRANSFORMERS_RATIO_VARIABLE}: branch_id[t,qq,m,n] == param_transformers_ratio_variable_id[qq];
+
+
+###############################################################################
+# Controls for parallel transformer bundles
+###############################################################################
+# param_parallel_transformers.txt
+# Topological membership of parallel transformer bundles: all branches sharing a num_bundle
+# are parallel (same bus pair, or a closed loop of transformers within one substation).
+# Each member carries its orientation relative to the bundle's canonical direction:
+# +1 when terminal 1 (AMPL bus1) sits on the canonical origin side, -1 when the member is
+# declared in the opposite direction. The qualification (tie / fix / relax) and ALL
+# numeric bounds are derived in commons.mod from AMPL's own cstratio and tap-table data;
+# this file carries the membership and the orientation only, both purely topological.
+# Indexed by (num_bundle, num_branch).
+#"num_bundle" "num_branch" "orientation" "id"
+set PARAM_PARALLEL_TRANSFORMERS  dimen 2 default {};
+param param_parallel_transformers_orientation{PARAM_PARALLEL_TRANSFORMERS};
+param param_parallel_transformers_id{PARAM_PARALLEL_TRANSFORMERS} symbolic;
+check {(t,qq,m,n) in BRANCH, (g,qq) in PARAM_PARALLEL_TRANSFORMERS}: branch_id[t,qq,m,n] == param_parallel_transformers_id[g,qq];
+check {(g,qq) in PARAM_PARALLEL_TRANSFORMERS}: param_parallel_transformers_orientation[g,qq] == 1 or param_parallel_transformers_orientation[g,qq] == -1;
 
 
 ###############################################################################

@@ -109,6 +109,13 @@ var branch_Ror_var{(qq,m,n) in BRANCHCC_REGL_VAR}
   >= regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]],
   <= regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]];
 
+# Shared effective ratio of a tie-able bundle (canonical direction; see commons.mod header).
+# Every variable member is tied to it by ctr_parallel_bundle_ratio. Bounds are the members'
+# canonical intersection from commons.mod.
+var bundle_Ror_var{g in PARALLEL_BUNDLES}
+  >= parallel_bundle_rho_min[g],
+  <= parallel_bundle_rho_max[g];
+
 #
 # Flows
 #
@@ -246,6 +253,32 @@ var target_voltage_ratio = sum{n in BUSCC: substation_Vnomi[1,bus_substation[1,n
 
 # Voltage target : value V0 in input data
 var target_voltage_data = sum{n in BUSVV} (V[n] - bus_V0[1,n])**2;
+
+
+# Parallel bundles: tie every variable member to its bundle's shared ratio
+# (eff = branch_Ror_var * branch_cstratio). A direct member (orientation +1) is tied by
+# eff = rho_B; a reversed member (orientation -1) transforms in the opposite declared
+# direction, so the physically correct condition is eff * rho_B = 1, kept multiplicative
+# (bilinear) rather than as a division. Around a loop this makes the product of the declared
+# transformations identically 1, whatever rho_B, and when all members share direction and
+# cstratio it reduces to equal tap rhos. Orientation is data, so AMPL resolves each instance
+# to one of the two forms.
+subject to ctr_parallel_bundle_ratio{PROBLEM_ACOPF, (qq,m,n) in BRANCHCC_REGL_VAR: qq in PARALLEL_BRANCHES}:
+  (if parallel_member_orientation[qq] == 1
+     then branch_Ror_var[qq,m,n] * branch_cstratio[1,qq,m,n] - bundle_Ror_var[parallel_bundle_of_member[qq]]
+     else branch_Ror_var[qq,m,n] * branch_cstratio[1,qq,m,n] * bundle_Ror_var[parallel_bundle_of_member[qq]] - 1)
+  = 0;
+
+# POINT/EMPTY bundles: pin each movable member to the bundle centre (commons.mod), inverted
+# for a reversed member to reach its declared direction, then clamped into that member's own
+# declared effective domain [lo, hi].
+subject to ctr_fixed_ratio{PROBLEM_ACOPF, (qq,m,n) in BRANCHCC_REGL_VAR: qq in PARALLEL_FIXED_BRANCHES}:
+  branch_Ror_var[qq,m,n] * branch_cstratio[1,qq,m,n] =
+    max(parallel_declared_rho_lo[qq,m,n],
+    min(parallel_declared_rho_hi[qq,m,n],
+        (if parallel_member_orientation[qq] == 1
+           then parallel_bundle_center[parallel_bundle_of_member[qq]]
+           else 1 / parallel_bundle_center[parallel_bundle_of_member[qq]])));
 
 
 #

@@ -10,8 +10,9 @@
 
 ###############################################################################
 # Reactive OPF
-# Author:  Jean Maeght 2022 2023
-# Author:  Manuel Ruiz 2023 2024
+# Author:  Jean Maeght   2022 2023
+# Author:  Manuel Ruiz   2023 2024
+# Author:  Oscar Lamolet 2025 2026
 ###############################################################################
 
 printf{LOG_DEBUG} "\n* Rounding all the taps of optimized transformers\n";
@@ -35,6 +36,11 @@ for{(qq,m,n) in BRANCHCC_REGL_VAR} {
 
 printf{LOG_DEBUG} "\n* Fixing all variable transformer ratios in next optimization\n";
 fix{(qq,m,n) in BRANCHCC_REGL_VAR} branch_Ror_var[qq,m,n];
+
+# Ratios are now fixed to their independently-rounded discrete values; a tie/fix
+# constraint could contradict that, so relax them for the post-rounding solve.
+drop ctr_parallel_bundle_ratio;
+drop ctr_fixed_ratio;
 
 # solves acopf with new transformer ratios
 solve problem_acopf_objective;

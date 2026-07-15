@@ -262,6 +262,116 @@ param branch_dephex {(qq,m,n) in ALL_BRANCHCC} = 0; # In IIDM, everything is in 
 
 
 ###############################################################################
+# Parallel transformer bundles (shared ratio)
+###############################################################################
+# Bundles of parallel transformers are detected topologically on the Java side and passed
+# as a membership + orientation relation (num_bundle, num_branch, orientation): +1 for a
+# member declared in the bundle's canonical direction (that of its first member in id
+# order), -1 for a member declared in the opposite direction. EVERYTHING numeric is derived
+# here, once, from AMPL's own data: the per-member effective rho bounds, the bundle
+# intersection, the LARGE / POINT / EMPTY qualification, the shared-ratio variable bounds
+# and the fixed targets. Having a single authority means the qualification and the
+# constraints can never disagree (no Java<->AMPL text round-trip on cstratio and tap ratios,
+# which used to trip the solver presolve by a few 1e-6).
+#
+# Everything lives in EFFECTIVE-ratio space: the ratio entering the flow equations is
+# branch_Ror_var * branch_cstratio, and circulating flows between parallel branches are
+# driven by mismatches of this effective quantity. Bundle-level quantities (bounds, centre,
+# shared variable) are expressed in the bundle's CANONICAL direction; a reversed member
+# maps to that space by inversion (its declared range [lo, hi] becomes [1/hi, 1/lo]).
+
+# Branch nums the optimization can actually move this run.
+set BRANCHCC_REGL_VAR_NUM := setof {(qq,m,n) in BRANCHCC_REGL_VAR} qq;
+
+set PARALLEL_BUNDLES_ALL := setof {(g,qq) in PARAM_PARALLEL_TRANSFORMERS} g;
+
+# Width below which an effective intersection is treated as degenerate (a single point, or
+# empty). Single source of truth.
+param parallel_rho_intersection_epsilon := 1e-4;
+
+# Every member num of every bundle (scopes the per-member bounds below).
+set PARALLEL_MEMBER_NUMS := setof {(g,qq) in PARAM_PARALLEL_TRANSFORMERS} qq;
+
+# Bundle a member belongs to, and its orientation relative to that bundle's canonical
+# direction (+1 direct, -1 reversed), straight from the detection file. Membership is a
+# function (bundles are disjoint), so the max over the singleton simply selects it. Defined
+# once for every member and reused by both the tied and the fixed constraints.
+param parallel_bundle_of_member{qq in PARALLEL_MEMBER_NUMS} :=
+  max {(g,qq) in PARAM_PARALLEL_TRANSFORMERS} g;
+param parallel_member_orientation{qq in PARALLEL_MEMBER_NUMS} :=
+  param_parallel_transformers_orientation[parallel_bundle_of_member[qq],qq];
+
+# Effective rho bounds of a member in its DECLARED direction, the exact image of what the
+# flow equations apply to it:
+#  - a member this run can move ((qq,m,n) in BRANCHCC_REGL_VAR) spans its full tap range
+#    [cstratio * regl_ratio_min, cstratio * regl_ratio_max], the image of
+#    branch_Ror_var * branch_cstratio;
+#  - every other member is frozen by the flow equations at the single point branch_Ror
+#    (phase-tap ratio included when the transformer also carries one), whether it is
+#    user-fixed, near-zero impedance (znull) or single-tap.
+param parallel_declared_rho_lo{(qq,m,n) in BRANCHCC: qq in PARALLEL_MEMBER_NUMS} :=
+  if (qq,m,n) in BRANCHCC_REGL_VAR
+    then branch_cstratio[1,qq,m,n] * regl_ratio_min[1,branch_ptrRegl[1,qq,m,n]]
+    else branch_Ror[qq,m,n];
+param parallel_declared_rho_hi{(qq,m,n) in BRANCHCC: qq in PARALLEL_MEMBER_NUMS} :=
+  if (qq,m,n) in BRANCHCC_REGL_VAR
+    then branch_cstratio[1,qq,m,n] * regl_ratio_max[1,branch_ptrRegl[1,qq,m,n]]
+    else branch_Ror[qq,m,n];
+
+# Canonical effective intersection of a bundle's members (direction/inversion convention: see
+# header), taken over the members a reactive loop actually flows through: the in-service ones,
+# i.e. both sides connected in the main component (BRANCHCC), znull included -- a near-zero
+# impedance member still carries the loop at its frozen branch_Ror and pins the bundle like
+# any other frozen member. A side-opened or out-of-component member carries no loop flow: it
+# contributes nothing here, also fails the all-variable requirement below, and its bundle is
+# relaxed instead of being pinned to the ratio of a branch the loop cannot reach.
+param parallel_bundle_rho_min{g in PARALLEL_BUNDLES_ALL} :=
+  max {(g,qq) in PARAM_PARALLEL_TRANSFORMERS, (qq,m,n) in BRANCHCC}
+    (if param_parallel_transformers_orientation[g,qq] == 1
+       then parallel_declared_rho_lo[qq,m,n]
+       else 1 / parallel_declared_rho_hi[qq,m,n]);
+param parallel_bundle_rho_max{g in PARALLEL_BUNDLES_ALL} :=
+  min {(g,qq) in PARAM_PARALLEL_TRANSFORMERS, (qq,m,n) in BRANCHCC}
+    (if param_parallel_transformers_orientation[g,qq] == 1
+       then parallel_declared_rho_hi[qq,m,n]
+       else 1 / parallel_declared_rho_lo[qq,m,n]);
+
+# LARGE: the effective intersection is wider than epsilon (a usable shared interval).
+# Otherwise the bundle is degenerate (POINT/EMPTY) and its members are fixed (see below).
+set PARALLEL_BUNDLES_LARGE := {g in PARALLEL_BUNDLES_ALL:
+  parallel_bundle_rho_max[g] - parallel_bundle_rho_min[g] > parallel_rho_intersection_epsilon};
+
+# Bundles all of whose members are variable-ratio branches this run. The model can silently
+# demote a member to fixed, which the topological detection cannot foresee. An in-service
+# demoted member (znull, single-tap table, ...) contributes its frozen point above and makes
+# its bundle degenerate; a member carrying no loop flow (side opened, out of the main
+# connected component) contributes nothing, and its bundle is not tied (see
+# PARALLEL_BUNDLES_DROPPED), to avoid a silent partial tie.
+set PARALLEL_BUNDLES_ALL_VARIABLE := {g in PARALLEL_BUNDLES_ALL:
+  card({(g,qq) in PARAM_PARALLEL_TRANSFORMERS: qq not in BRANCHCC_REGL_VAR_NUM}) == 0};
+
+# Tied bundles: a wide intersection and every member movable this run.
+set PARALLEL_BUNDLES := PARALLEL_BUNDLES_LARGE inter PARALLEL_BUNDLES_ALL_VARIABLE;
+# Released bundles: a wide intersection would let us tie them, but a member cannot be moved
+# this run, so nothing is tied and the run optimizes them independently (logged in acopf.run).
+set PARALLEL_BUNDLES_DROPPED := PARALLEL_BUNDLES_LARGE diff PARALLEL_BUNDLES_ALL_VARIABLE;
+# Degenerate bundles (POINT/EMPTY): their movable members are fixed, member by member, below.
+set PARALLEL_BUNDLES_FIXED := PARALLEL_BUNDLES_ALL diff PARALLEL_BUNDLES_LARGE;
+
+set PARALLEL_BRANCHES := setof {(g,qq) in PARAM_PARALLEL_TRANSFORMERS: g in PARALLEL_BUNDLES} qq;
+
+# Movable members of a degenerate (POINT/EMPTY) bundle: each is fixed to the bundle's common
+# target, member by member (see ctr_fixed_ratio in acopf.mod). User-fixed members are already
+# frozen at their current tap and need no constraint.
+set PARALLEL_FIXED_BRANCHES := setof
+  {(g,qq) in PARAM_PARALLEL_TRANSFORMERS, (qq,m,n) in BRANCHCC_REGL_VAR: g in PARALLEL_BUNDLES_FIXED} qq;
+# Common target of a degenerate bundle: the centre of its (point or empty) canonical
+# intersection. ctr_fixed_ratio maps and clamps it per member.
+param parallel_bundle_center{g in PARALLEL_BUNDLES_FIXED} :=
+  (parallel_bundle_rho_min[g] + parallel_bundle_rho_max[g]) / 2;
+
+
+###############################################################################
 # Corrected values for units
 ###############################################################################
 param corrected_unit_Pmin{UNITON} default defaultPmin;
