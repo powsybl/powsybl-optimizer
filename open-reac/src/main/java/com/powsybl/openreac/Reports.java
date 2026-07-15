@@ -57,7 +57,8 @@ public final class Reports {
                 .add();
     }
 
-    public static void createShuntModificationsReporter(ReportNode reportNode, String networkId, List<ShuntCompensatorNetworkOutput.ShuntWithDeltaDiscreteOptimalOverThreshold> shuntsWithDeltaDiscreteOptimalOverThresholds) {
+    public static void createShuntModificationsReporter(ReportNode reportNode, String networkId,
+                                                        List<ShuntCompensatorNetworkOutput.ShuntWithDeltaDiscreteOptimalOverThreshold> shuntsWithDeltaDiscreteOptimalOverThresholds) {
         if (!shuntsWithDeltaDiscreteOptimalOverThresholds.isEmpty()) {
             ReportNode reportShunts = reportNode.newReportNode()
                     .withMessageTemplate("optimizer.openreac.shuntCompensatorDeltaOverThreshold")

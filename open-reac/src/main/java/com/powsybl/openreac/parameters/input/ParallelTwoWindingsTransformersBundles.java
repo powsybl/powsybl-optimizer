@@ -10,9 +10,8 @@ package com.powsybl.openreac.parameters.input;
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.ampl.executor.AmplInputFile;
 import com.powsybl.commons.util.StringToIntMapper;
-import com.powsybl.openreac.parameters.AmplIOUtils;
-
 import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector;
+import com.powsybl.openreac.parameters.AmplIOUtils;
 
 import java.io.BufferedWriter;
 import java.io.IOException;

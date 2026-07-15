@@ -71,13 +71,15 @@ public final class OpenReacRunner {
      * @param amplExportConfig  enables tuning of Ampl exporter
      * @return All information  about the run and possible modifications to apply.
      */
-    public static OpenReacResult run(Network network, String variantId, OpenReacParameters parameters, OpenReacConfig config, ComputationManager manager, ReportNode reportNode, AmplExportConfig amplExportConfig) {
+    public static OpenReacResult run(Network network, String variantId, OpenReacParameters parameters, OpenReacConfig config,
+                                     ComputationManager manager, ReportNode reportNode, AmplExportConfig amplExportConfig) {
         checkParameters(network, variantId, parameters, config, manager, reportNode);
         ReportNode openReacReportNode = Reports.createOpenReacReporter(reportNode, network.getId(), parameters.getObjective());
         AmplModel reactiveOpf = OpenReacModel.buildModel();
         OpenReacAmplIOFiles amplIoInterface = buildIoFilesOnVariant(network, variantId, parameters, amplExportConfig, config, openReacReportNode);
         AmplResults run = AmplModelRunner.run(network, variantId, reactiveOpf, manager, amplIoInterface);
-        OpenReacResult result = new OpenReacResult(run.isSuccess() && amplIoInterface.checkErrors() ? OpenReacStatus.OK : OpenReacStatus.NOT_OK, amplIoInterface, run.getIndicators());
+        OpenReacResult result = new OpenReacResult(run.isSuccess() && amplIoInterface.checkErrors() ? OpenReacStatus.OK : OpenReacStatus.NOT_OK,
+                amplIoInterface, run.getIndicators());
         Reports.createShuntModificationsReporter(reportNode, network.getId(), amplIoInterface.getNetworkModifications().getShuntsWithDeltaDiscreteOptimalOverThreshold());
         return result;
     }
@@ -105,14 +107,16 @@ public final class OpenReacRunner {
      * @param amplExportConfig  enables tuning of Ampl exporter
      * @return All information about the run and possible modifications to apply.
      */
-    public static CompletableFuture<OpenReacResult> runAsync(Network network, String variantId, OpenReacParameters parameters, OpenReacConfig config, ComputationManager manager, ReportNode reportNode, AmplExportConfig amplExportConfig) {
+    public static CompletableFuture<OpenReacResult> runAsync(Network network, String variantId, OpenReacParameters parameters,
+                                                             OpenReacConfig config, ComputationManager manager, ReportNode reportNode, AmplExportConfig amplExportConfig) {
         checkParameters(network, variantId, parameters, config, manager, reportNode);
         ReportNode openReacReportNode = Reports.createOpenReacReporter(reportNode, network.getId(), parameters.getObjective());
         AmplModel reactiveOpf = OpenReacModel.buildModel();
         OpenReacAmplIOFiles amplIoInterface = buildIoFilesOnVariant(network, variantId, parameters, amplExportConfig, config, openReacReportNode);
         CompletableFuture<AmplResults> runAsync = AmplModelRunner.runAsync(network, variantId, reactiveOpf, manager, amplIoInterface);
         return runAsync.thenApply(run -> {
-            OpenReacResult result = new OpenReacResult(run.isSuccess() && amplIoInterface.checkErrors() ? OpenReacStatus.OK : OpenReacStatus.NOT_OK, amplIoInterface, run.getIndicators());
+            OpenReacResult result = new OpenReacResult(run.isSuccess() && amplIoInterface.checkErrors() ? OpenReacStatus.OK : OpenReacStatus.NOT_OK,
+                    amplIoInterface, run.getIndicators());
             Reports.createShuntModificationsReporter(reportNode, network.getId(), amplIoInterface.getNetworkModifications().getShuntsWithDeltaDiscreteOptimalOverThreshold());
             return result;
         });
