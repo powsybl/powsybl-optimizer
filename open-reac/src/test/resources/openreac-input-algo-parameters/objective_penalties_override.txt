@@ -19,12 +19,12 @@ default_constraint_scaling_factor 1.0
 reactive_slack_variable_scaling_factor 0.1
 transformer_ratio_variable_scaling_factor 0.001
 shunt_variable_scaling_factor 0.1
-penalty_invest_rea_pos 10.0
-penalty_invest_rea_neg 10.0
-penalty_active_power 1.0
-penalty_units_reactive 0.1
-penalty_transfo_ratio 0.1
-penalty_voltage_target_ratio 0.01
-penalty_voltage_target_data 0.01
+penalty_invest_rea_pos 5.5
+penalty_invest_rea_neg 7.25
+penalty_active_power 0.42
+penalty_units_reactive 0.2
+penalty_transfo_ratio 0.3
+penalty_voltage_target_ratio 0.8
+penalty_voltage_target_data 0.9
 optimization_after_rounding false
 

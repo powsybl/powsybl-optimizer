@@ -16,10 +16,11 @@ import java.io.IOException;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
+ * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
  */
 public class OpenReacParametersSerializer extends StdSerializer<OpenReacParameters> {
 
-    private static final String VERSION = "1.0";
+    static final String VERSION = "1.1";
 
     public OpenReacParametersSerializer() {
         super(OpenReacParameters.class);
@@ -65,6 +66,13 @@ public class OpenReacParametersSerializer extends StdSerializer<OpenReacParamete
         serializerProvider.defaultSerializeField("reactiveSlackVariableScalingFactor", openReacParameters.getReactiveSlackVariableScalingFactor(), jsonGenerator);
         serializerProvider.defaultSerializeField("twoWindingTransformerRatioVariableScalingFactor", openReacParameters.getTwoWindingTransformerRatioVariableScalingFactor(), jsonGenerator);
         serializerProvider.defaultSerializeField("shuntVariableScalingFactor", openReacParameters.getShuntVariableScalingFactor(), jsonGenerator);
+        serializerProvider.defaultSerializeField("penaltyInvestReaPos", openReacParameters.getPenaltyInvestReaPos(), jsonGenerator);
+        serializerProvider.defaultSerializeField("penaltyInvestReaNeg", openReacParameters.getPenaltyInvestReaNeg(), jsonGenerator);
+        serializerProvider.defaultSerializeField("penaltyActivePower", openReacParameters.getPenaltyActivePower(), jsonGenerator);
+        serializerProvider.defaultSerializeField("penaltyUnitsReactive", openReacParameters.getPenaltyUnitsReactive(), jsonGenerator);
+        serializerProvider.defaultSerializeField("penaltyTransfoRatio", openReacParameters.getPenaltyTransfoRatio(), jsonGenerator);
+        serializerProvider.defaultSerializeField("penaltyVoltageTargetRatio", openReacParameters.getPenaltyVoltageTargetRatio(), jsonGenerator);
+        serializerProvider.defaultSerializeField("penaltyVoltageTargetData", openReacParameters.getPenaltyVoltageTargetData(), jsonGenerator);
         serializerProvider.defaultSerializeField("optimizationAfterRounding", openReacParameters.isOptimizationAfterRounding(), jsonGenerator);
         jsonGenerator.writeEndObject();
     }

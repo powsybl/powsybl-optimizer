@@ -63,8 +63,18 @@ To run all the tests, simply launch the following command from the root of the r
 $> mvn package
 ```
 
+
 ## Documentation
 
 Latest version of the documentation is available [here](https://powsybl.readthedocs.io/projects/powsybl-optimizer/en/stable/).
 
-To contribute to the documentation follow the instructions in the [documentation README](https://github.com/powsybl/powsybl-optimizer/blob/main/docs/README.md) page.
+
+## Contributing
+
+See [Contributing.md](https://github.com/powsybl/.github/blob/main/CONTRIBUTING.md) for explanations
+on how to contribute to the code.  
+
+See [documentation README](https://github.com/powsybl/powsybl-optimizer/blob/main/docs/README.md) to find out how to contribute to the documentation.  
+
+See [Security.md](https://github.com/powsybl/.github/blob/main/SECURITY.md) to read about the security policy.
+

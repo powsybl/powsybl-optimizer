@@ -1,5 +1,5 @@
 {
-  "version" : "1.1",
+  "version" : "1.0",
   "specificVoltageLimits" : [ {
     "voltageLevelId" : "foo",
     "voltageLimitType" : "LOW_VOLTAGE_LIMIT",
@@ -47,12 +47,5 @@
   "reactiveSlackVariableScalingFactor" : 0.1,
   "twoWindingTransformerRatioVariableScalingFactor" : 0.001,
   "shuntVariableScalingFactor" : 0.1,
-  "penaltyInvestReaPos" : 10.0,
-  "penaltyInvestReaNeg" : 10.0,
-  "penaltyActivePower" : null,
-  "penaltyUnitsReactive" : 0.1,
-  "penaltyTransfoRatio" : 0.1,
-  "penaltyVoltageTargetRatio" : null,
-  "penaltyVoltageTargetData" : null,
   "optimizationAfterRounding" : false
 }

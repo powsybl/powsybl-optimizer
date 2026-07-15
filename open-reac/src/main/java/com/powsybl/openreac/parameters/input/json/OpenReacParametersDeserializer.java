@@ -12,6 +12,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.powsybl.commons.PowsyblException;
+import com.powsybl.commons.json.JsonUtil;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAmplLogLevel;
@@ -28,6 +29,7 @@ import static java.util.Map.entry;
 
 /**
  * @author Geoffroy Jamgotchian {@literal <geoffroy.jamgotchian at rte-france.com>}
+ * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
  */
 
 public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacParameters> {
@@ -133,6 +135,27 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
             entry("shuntVariableScalingFactor", safeRead((parser, parameters) ->
                 parameters.setShuntVariableScalingFactor(parser.readValueAs(Double.class))
             )),
+            entry("penaltyInvestReaPos", safeRead((parser, parameters) ->
+                parameters.setPenaltyInvestReaPos(parser.readValueAs(Double.class))
+            )),
+            entry("penaltyInvestReaNeg", safeRead((parser, parameters) ->
+                parameters.setPenaltyInvestReaNeg(parser.readValueAs(Double.class))
+            )),
+            entry("penaltyActivePower", safeRead((parser, parameters) ->
+                parameters.setPenaltyActivePower(parser.readValueAs(Double.class))
+            )),
+            entry("penaltyUnitsReactive", safeRead((parser, parameters) ->
+                parameters.setPenaltyUnitsReactive(parser.readValueAs(Double.class))
+            )),
+            entry("penaltyTransfoRatio", safeRead((parser, parameters) ->
+                parameters.setPenaltyTransfoRatio(parser.readValueAs(Double.class))
+            )),
+            entry("penaltyVoltageTargetRatio", safeRead((parser, parameters) ->
+                parameters.setPenaltyVoltageTargetRatio(parser.readValueAs(Double.class))
+            )),
+            entry("penaltyVoltageTargetData", safeRead((parser, parameters) ->
+                parameters.setPenaltyVoltageTargetData(parser.readValueAs(Double.class))
+            )),
             entry("optimizationAfterRounding", safeRead((parser, parameters) ->
                 parameters.setOptimizationAfterRounding(parser.getValueAsBoolean())
             ))
@@ -149,10 +172,29 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
 
     @Override
     public OpenReacParameters deserialize(JsonParser parser, DeserializationContext deserializationContext, OpenReacParameters parameters) throws IOException {
+        String version = OpenReacParametersSerializer.VERSION;
         while (parser.nextToken() != JsonToken.END_OBJECT) {
-            BiConsumer<JsonParser, OpenReacParameters> consumer = FIELD_PROCESSORS.get(parser.currentName());
+            String fieldName = parser.currentName();
+
+            // Capture the version inline so it can be used for version-gated field checks
+            if ("version".equals(fieldName)) {
+                parser.nextToken();
+                version = parser.getValueAsString();
+                continue;
+            }
+
+            // Version-gated fields: these were introduced in 1.1
+            switch (fieldName) {
+                case "penaltyInvestReaPos", "penaltyInvestReaNeg", "penaltyActivePower",
+                     "penaltyUnitsReactive", "penaltyTransfoRatio",
+                     "penaltyVoltageTargetRatio", "penaltyVoltageTargetData" ->
+                    JsonUtil.assertGreaterOrEqualThanReferenceVersion("OpenReacParameters", fieldName, version, "1.1");
+                default -> { /* no version gate */ }
+            }
+
+            BiConsumer<JsonParser, OpenReacParameters> consumer = FIELD_PROCESSORS.get(fieldName);
             if (consumer == null) {
-                throw new IllegalStateException("Unexpected field: " + parser.currentName());
+                throw new IllegalStateException("Unexpected field: " + fieldName);
             }
             try {
                 consumer.accept(parser, parameters);

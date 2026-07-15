@@ -7,7 +7,12 @@
 package com.powsybl.openreac.parameters.input;
 
 import com.powsybl.commons.report.ReportNode;
+import com.powsybl.iidm.network.Branch;
+import com.powsybl.iidm.network.Country;
+import com.powsybl.iidm.network.Line;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.Substation;
+import com.powsybl.iidm.network.TwoWindingsTransformer;
 import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.openreac.Reports;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
@@ -17,12 +22,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.function.ToDoubleFunction;
+import java.util.stream.Stream;
 
 /**
  * This class stores all inputs parameters specific to the OpenReac optimizer.
  *
  * @author Nicolas Pierre {@literal <nicolas.pierre at artelys.com>}
  * @author Pierre Arvy {@literal <pierre.arvy at artelys.com>}
+ * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
  */
 public class OpenReacParameters {
 
@@ -123,6 +131,31 @@ public class OpenReacParameters {
     private static final String SHUNT_VARIABLE_SCALING_FACTOR_KEY = "shunt_variable_scaling_factor";
 
     private double shuntVariableScalingFactor = 1e-1;
+
+    private static final String PENALTY_INVEST_REA_POS_KEY = "penalty_invest_rea_pos";
+    private double penaltyInvestReaPos = 10;
+
+    private static final String PENALTY_INVEST_REA_NEG_KEY = "penalty_invest_rea_neg";
+    private double penaltyInvestReaNeg = 10;
+
+    private static final String PENALTY_ACTIVE_POWER_KEY = "penalty_active_power";
+    // Null = default depends on objective (back-compat): 1 for MIN_GENERATION, 0.01 otherwise.
+    // Non-null = explicit override set by the user.
+    private Double penaltyActivePower = null;
+
+    private static final String PENALTY_UNITS_REACTIVE_KEY = "penalty_units_reactive";
+    private double penaltyUnitsReactive = 0.1;
+
+    private static final String PENALTY_TRANSFO_RATIO_KEY = "penalty_transfo_ratio";
+    private double penaltyTransfoRatio = 0.1;
+
+    private static final String PENALTY_VOLTAGE_TARGET_RATIO_KEY = "penalty_voltage_target_ratio";
+    // Null = default depends on objective: 1 for BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT, 0.01 otherwise.
+    private Double penaltyVoltageTargetRatio = null;
+
+    private static final String PENALTY_VOLTAGE_TARGET_DATA_KEY = "penalty_voltage_target_data";
+    // Null = default depends on objective: 1 for SPECIFIC_VOLTAGE_PROFILE, 0.01 otherwise.
+    private Double penaltyVoltageTargetData = null;
 
     private static final String OPTIMIZATION_AFTER_ROUNDING = "optimization_after_rounding";
 
@@ -566,6 +599,119 @@ public class OpenReacParameters {
         return this;
     }
 
+    public double getPenaltyInvestReaPos() {
+        return penaltyInvestReaPos;
+    }
+
+    public OpenReacParameters setPenaltyInvestReaPos(double penaltyInvestReaPos) {
+        if (penaltyInvestReaPos < 0 || Double.isNaN(penaltyInvestReaPos)) {
+            throw new IllegalArgumentException("Penalty for positive reactive slack investment must be >= 0 and defined to be consistent.");
+        }
+        this.penaltyInvestReaPos = penaltyInvestReaPos;
+        return this;
+    }
+
+    public double getPenaltyInvestReaNeg() {
+        return penaltyInvestReaNeg;
+    }
+
+    public OpenReacParameters setPenaltyInvestReaNeg(double penaltyInvestReaNeg) {
+        if (penaltyInvestReaNeg < 0 || Double.isNaN(penaltyInvestReaNeg)) {
+            throw new IllegalArgumentException("Penalty for negative reactive slack investment must be >= 0 and defined to be consistent.");
+        }
+        this.penaltyInvestReaNeg = penaltyInvestReaNeg;
+        return this;
+    }
+
+    /**
+     * @return the user-configured penalty for active power generation in the ACOPF objective,
+     *         or {@code null} if the historical default (depending on the objective) should be used.
+     */
+    public Double getPenaltyActivePower() {
+        return penaltyActivePower;
+    }
+
+    /**
+     * Sets the penalty for active power generation in the ACOPF objective.
+     * Passing {@code null} restores the historical default (1 for {@link OpenReacOptimisationObjective#MIN_GENERATION},
+     * 0.01 otherwise).
+     */
+    public OpenReacParameters setPenaltyActivePower(Double penaltyActivePower) {
+        if (penaltyActivePower != null && (penaltyActivePower < 0 || Double.isNaN(penaltyActivePower))) {
+            throw new IllegalArgumentException("Penalty for active power generation must be >= 0 and defined to be consistent.");
+        }
+        this.penaltyActivePower = penaltyActivePower;
+        return this;
+    }
+
+    public double getPenaltyUnitsReactive() {
+        return penaltyUnitsReactive;
+    }
+
+    public OpenReacParameters setPenaltyUnitsReactive(double penaltyUnitsReactive) {
+        if (penaltyUnitsReactive < 0 || Double.isNaN(penaltyUnitsReactive)) {
+            throw new IllegalArgumentException("Penalty for reactive power of units must be >= 0 and defined to be consistent.");
+        }
+        this.penaltyUnitsReactive = penaltyUnitsReactive;
+        return this;
+    }
+
+    public double getPenaltyTransfoRatio() {
+        return penaltyTransfoRatio;
+    }
+
+    public OpenReacParameters setPenaltyTransfoRatio(double penaltyTransfoRatio) {
+        if (penaltyTransfoRatio < 0 || Double.isNaN(penaltyTransfoRatio)) {
+            throw new IllegalArgumentException("Penalty for transformer ratio must be >= 0 and defined to be consistent.");
+        }
+        this.penaltyTransfoRatio = penaltyTransfoRatio;
+        return this;
+    }
+
+    /**
+     * @return the user-configured penalty for the voltage target ratio term (Vmin/Vmax normalized target)
+     *         in the ACOPF objective, or {@code null} if the historical default (depending on the objective)
+     *         should be used.
+     */
+    public Double getPenaltyVoltageTargetRatio() {
+        return penaltyVoltageTargetRatio;
+    }
+
+    /**
+     * Sets the penalty for the voltage target ratio term in the ACOPF objective.
+     * Passing {@code null} restores the historical default (1 for
+     * {@link OpenReacOptimisationObjective#BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT}, 0.01 otherwise).
+     */
+    public OpenReacParameters setPenaltyVoltageTargetRatio(Double penaltyVoltageTargetRatio) {
+        if (penaltyVoltageTargetRatio != null && (penaltyVoltageTargetRatio < 0 || Double.isNaN(penaltyVoltageTargetRatio))) {
+            throw new IllegalArgumentException("Penalty for voltage target ratio term must be >= 0 and defined to be consistent.");
+        }
+        this.penaltyVoltageTargetRatio = penaltyVoltageTargetRatio;
+        return this;
+    }
+
+    /**
+     * @return the user-configured penalty for the voltage target data term (V0 input value targeting)
+     *         in the ACOPF objective, or {@code null} if the historical default (depending on the objective)
+     *         should be used.
+     */
+    public Double getPenaltyVoltageTargetData() {
+        return penaltyVoltageTargetData;
+    }
+
+    /**
+     * Sets the penalty for the voltage target data term in the ACOPF objective.
+     * Passing {@code null} restores the historical default (1 for
+     * {@link OpenReacOptimisationObjective#SPECIFIC_VOLTAGE_PROFILE}, 0.01 otherwise).
+     */
+    public OpenReacParameters setPenaltyVoltageTargetData(Double penaltyVoltageTargetData) {
+        if (penaltyVoltageTargetData != null && (penaltyVoltageTargetData < 0 || Double.isNaN(penaltyVoltageTargetData))) {
+            throw new IllegalArgumentException("Penalty for voltage target data term must be >= 0 and defined to be consistent.");
+        }
+        this.penaltyVoltageTargetData = penaltyVoltageTargetData;
+        return this;
+    }
+
     /**
      * @return the shunt compensator activation alert threshold
      */
@@ -607,6 +753,22 @@ public class OpenReacParameters {
         allAlgoParams.add(new OpenReacAlgoParamImpl(REACTIVE_SLACK_VARIABLE_SCALING_FACTOR, Double.toString(reactiveSlackVariableScalingFactor)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(TWO_WINDING_TRANSFORMER_RATIO_VARIABLE_SCALING_FACTOR, Double.toString(twoWindingTransformerRatioVariableScalingFactor)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(SHUNT_VARIABLE_SCALING_FACTOR_KEY, Double.toString(shuntVariableScalingFactor)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_INVEST_REA_POS_KEY, Double.toString(penaltyInvestReaPos)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_INVEST_REA_NEG_KEY, Double.toString(penaltyInvestReaNeg)));
+        double effectivePenaltyActivePower = Objects.requireNonNullElseGet(
+                penaltyActivePower,
+                () -> objective == OpenReacOptimisationObjective.MIN_GENERATION ? 1.0 : 0.01);
+        allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_ACTIVE_POWER_KEY, Double.toString(effectivePenaltyActivePower)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_UNITS_REACTIVE_KEY, Double.toString(penaltyUnitsReactive)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_TRANSFO_RATIO_KEY, Double.toString(penaltyTransfoRatio)));
+        double effectivePenaltyVoltageTargetRatio = Objects.requireNonNullElseGet(
+                penaltyVoltageTargetRatio,
+                () -> objective == OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT ? 1.0 : 0.01);
+        allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_VOLTAGE_TARGET_RATIO_KEY, Double.toString(effectivePenaltyVoltageTargetRatio)));
+        double effectivePenaltyVoltageTargetData = Objects.requireNonNullElseGet(
+                penaltyVoltageTargetData,
+                () -> objective == OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE ? 1.0 : 0.01);
+        allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_VOLTAGE_TARGET_DATA_KEY, Double.toString(effectivePenaltyVoltageTargetData)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(OPTIMIZATION_AFTER_ROUNDING, Boolean.toString(optimizationAfterRounding)));
         return allAlgoParams;
     }
@@ -658,6 +820,186 @@ public class OpenReacParameters {
     }
 
     /**
+     * <p>Check that all branches in the network respect the impedance constraint.</p>
+     * <br/>
+     * <p>For all branches:
+     * <ul>
+     *   <li>When <code>r² + x² <= threshold²</code>:</li>
+     *   <ul>
+     *     <li><code>x = threshold</code></li>
+     *     <li>WARNING (does not stop execution)</li>
+     *   </ul>
+     *   <br/>
+     *   <li>When the branch is French (both substations in France):</li>
+     *   <ul>
+     *     <li>When <code>r > 10 * |x|</code>: ERROR (stops execution)</li>
+     *     <li>When <code>r > |x|</code>: WARNING (does not stop execution)</li>
+     *   </ul>
+     *   <br/>
+     *   <li>When the branch is non-French (at least one substation outside France):</li>
+     *   <ul>
+     *     <li>When <code>r > |x|</code>: WARNING (does not stop execution)</li>
+     *   </ul>
+     * </ul></p>
+     *
+     * @param network the network on which branches are verified
+     * @param reportNode aggregates functional logging
+     * @throws InvalidParametersException if at least one French branch violates the constraint
+     */
+    private void checkBranchImpedanceRatio(Network network, ReportNode reportNode) throws InvalidParametersException {
+        List<BranchImpedanceInfo> violatingFrenchBranches = new ArrayList<>();
+        List<BranchImpedanceInfo> problematicFrenchBranches = new ArrayList<>();
+        List<BranchImpedanceInfo> problematicNonFrenchBranches = new ArrayList<>();
+        List<LowImpedanceBranchInfo> branchesWithLowImpedances = new ArrayList<>();
+
+        // Check all branches
+        Stream.<Branch<?>>concat(
+                network.getLineStream(),
+                network.getTwoWindingsTransformerStream()
+        ).forEach(branch -> {
+            double r = getR(branch);  // in Ohms
+            double x = getX(branch);  // in Ohms
+            double vNom1 = branch.getTerminal1().getVoltageLevel().getNominalV();
+            double vNom2 = branch.getTerminal2().getVoltageLevel().getNominalV();
+
+            // Conversion of the threshold into Ohms
+            double lowImpedanceThresholdOhms = calculateImpedanceThresholdOhms(vNom1);
+
+            // Check if impedance is too low
+            if (r * r + x * x <= lowImpedanceThresholdOhms * lowImpedanceThresholdOhms) {
+                branchesWithLowImpedances.add(new LowImpedanceBranchInfo(branch.getId(), r, x, vNom1, vNom2, lowImpedanceThresholdOhms));
+                x = lowImpedanceThresholdOhms;
+            }
+
+            // Check if both substations are in France
+            boolean isFrench = isFrenchBranch(
+                    branch.getTerminal1().getVoltageLevel().getSubstation().orElse(null),
+                    branch.getTerminal2().getVoltageLevel().getSubstation().orElse(null)
+            );
+
+            double ratio = r / Math.abs(x);
+
+            if (ratio > 1) {
+                if (isFrench && ratio > 10) {
+                    violatingFrenchBranches.add(new BranchImpedanceInfo(branch.getId(), r, x, ratio, vNom1, vNom2));
+                } else if (isFrench) {
+                    problematicFrenchBranches.add(new BranchImpedanceInfo(branch.getId(), r, x, ratio, vNom1, vNom2));
+                } else {
+                    problematicNonFrenchBranches.add(new BranchImpedanceInfo(branch.getId(), r, x, ratio, vNom1, vNom2));
+                }
+            }
+        });
+
+        // Report branches with low impedance
+        if (!branchesWithLowImpedances.isEmpty()) {
+            Reports.reportNbBranchesWithLowImpedance(reportNode, branchesWithLowImpedances.size());
+            branchesWithLowImpedances.forEach(branch -> {
+                Reports.reportBranchWithLowImpedance(reportNode, branch.id, branch.r, branch.x, branch.thresholdOhms);
+                LOGGER.warn("Branch with low impedance: '{}': r={} Ω, x={} Ω (threshold={} Ω) [Vnom1={} kV, Vnom2={} kV]",
+                    branch.id, branch.r, branch.x, branch.thresholdOhms, branch.vNom1, branch.vNom2);
+            });
+        }
+
+        // Report warnings for French branches
+        if (!problematicFrenchBranches.isEmpty()) {
+            Reports.reportNbFrenchBranchesWithAcceptableHighImpedanceRatio(reportNode, problematicFrenchBranches.size());
+            problematicFrenchBranches.forEach(branch -> {
+                Reports.reportFrenchBranchWithAcceptableHighImpedanceRatio(reportNode, branch.id,
+                                                                           branch.r, branch.x, branch.ratio);
+                LOGGER.warn("French branch with high impedance ratio: '{}': r={} Ω, x={} Ω (r/|x|={}) [Vnom1={} kV, Vnom2={} kV]",
+                    branch.id, branch.r, branch.x, branch.ratio, branch.vNom1, branch.vNom2);
+            });
+        }
+
+        // Report warnings for non-French branches
+        if (!problematicNonFrenchBranches.isEmpty()) {
+            Reports.reportNbNonFrenchBranchesWithHighImpedanceRatio(reportNode, problematicNonFrenchBranches.size());
+            problematicNonFrenchBranches.forEach(branch -> {
+                Reports.reportNonFrenchBranchWithHighImpedanceRatio(reportNode, branch.id,
+                                                                    branch.r, branch.x, branch.ratio);
+                LOGGER.warn("Non-French branch with high impedance ratio: '{}': r={} Ω, x={} Ω (r/|x|={}) [Vnom1={} kV, Vnom2={} kV]",
+                    branch.id, branch.r, branch.x, branch.ratio, branch.vNom1, branch.vNom2);
+            });
+        }
+
+        // Report and throw error for French branches
+        if (!violatingFrenchBranches.isEmpty()) {
+            Reports.reportNbFrenchBranchesWithHighImpedanceRatio(reportNode, violatingFrenchBranches.size());
+            StringBuilder errorMessage = new StringBuilder();
+            errorMessage.append("The following French branches have r > 10 * |x|, which is not supported by OpenReac:\n");
+            violatingFrenchBranches.forEach(branch -> {
+                Reports.reportFrenchBranchWithHighImpedanceRatio(reportNode, branch.id,
+                                                                 branch.r, branch.x, branch.ratio);
+                String message = String.format("'%s': r=%.6f Ω, x=%.6f Ω (r/|x|=%.2f) [Vnom1=%.1f kV, Vnom2=%.1f kV]",
+                    branch.id, branch.r, branch.x, branch.ratio, branch.vNom1, branch.vNom2);
+                errorMessage.append("  - ").append(message).append("\n");
+                LOGGER.error("French branch impedance validation failed: {}", message);
+            });
+            throw new InvalidParametersException(errorMessage.toString());
+        }
+    }
+
+    private double getCharactistic(Branch<?> branch,
+                                   ToDoubleFunction<Line> lineCharacteristic,
+                                   ToDoubleFunction<TwoWindingsTransformer> transfoCharacteristic) {
+        return switch (branch) {
+            case Line l -> lineCharacteristic.applyAsDouble(l);
+            case TwoWindingsTransformer t -> transfoCharacteristic.applyAsDouble(t);
+            default -> throw new IllegalStateException("Unexpected value: " + branch);
+        };
+    }
+
+    private double getR(Branch<?> branch) {
+        return getCharactistic(branch, Line::getR, TwoWindingsTransformer::getR);
+    }
+
+    private double getX(Branch<?> branch) {
+        return getCharactistic(branch, Line::getX, TwoWindingsTransformer::getX);
+    }
+
+    /**
+     * Calculate impedance threshold in Ohms for a given nominal voltage
+     *
+     * @param nominalVoltageKv Nominal voltage in kV
+     * @return Impedance threshold in Ohms
+     */
+    private double calculateImpedanceThresholdOhms(double nominalVoltageKv) {
+        double sBase = 100.0;  // MVA (standard base power)
+        double zBase = (nominalVoltageKv * nominalVoltageKv) / sBase;
+        return lowImpedanceThreshold * zBase;
+    }
+
+    /**
+     * Record to store branch information for impedance ratio validation and reporting
+     * Used to collect and report branches with high r/|x| ratios during the validation
+     */
+    private record BranchImpedanceInfo(String id, double r, double x, double ratio, double vNom1, double vNom2) {
+    }
+
+    /**
+     * Record to store branch information for impedance value validation and reporting
+     * Used to collect and report branches with low impedance
+     */
+    private record LowImpedanceBranchInfo(String id, double r, double x, double vNom1, double vNom2, double thresholdOhms) {
+    }
+
+    /**
+     * Check if a branch is French (both substations in France)
+     *
+     * @param substation1 the first substation
+     * @param substation2 the second substation
+     * @return true if both substations are in France, false otherwise
+     */
+    private boolean isFrenchBranch(Substation substation1, Substation substation2) {
+        if (substation1 == null || substation2 == null) {
+            return false;
+        }
+        Country country1 = substation1.getCountry().orElse(null);
+        Country country2 = substation2.getCountry().orElse(null);
+        return country1 == Country.FR && country2 == Country.FR;
+    }
+
+    /**
      * Do some checks on the parameters given, such as provided IDs must correspond to the given network element
      *
      * @param network     Network on which ID are going to be infered
@@ -687,6 +1029,9 @@ public class OpenReacParameters {
                 throw new InvalidParametersException("Bus " + busId + NOT_FOUND_IN_NETWORK);
             }
         }
+
+        // Check branch impedance ratio constraint
+        checkBranchImpedanceRatio(network, reportNode);
 
         // Check integrity of voltage overrides
         boolean integrityVoltageLimitOverrides = checkVoltageLimitOverrides(network, voltageLevelsWithInconsistentLimits);

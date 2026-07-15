@@ -10,8 +10,9 @@
 
 ###############################################################################
 # Reactive OPF
-# Author:  Jean Maeght 2022 2023
-# Author:  Manuel Ruiz 2023 2024
+# Author:  Jean Maeght   2022 2023
+# Author:  Manuel Ruiz   2023 2024
+# Author:  Oscar Lamolet 2025 2026
 ###############################################################################
 
 
@@ -67,9 +68,15 @@ var P{(g,n) in UNITON} =
 
 #
 # Reactive generation
-# 
+#
 # todo: add trapeze or hexagone constraints for reactive power
 var Q{(g,n) in UNITON} <= corrected_unit_Qmax[g,n], >= corrected_unit_Qmin[g,n];
+
+
+#
+# Reactive generation of batteries
+#
+var battery_qvar{(b,n) in BATTERYON} <= corrected_battery_Qmax[b,n], >= corrected_battery_Qmin[b,n];
 
 
 #
@@ -134,7 +141,7 @@ var Red_Tran_Rea_Inv{(qq,m,n) in BRANCHCC } =
 
 var Red_Tran_Act_Dir_Side_2_Opened{(qq,m,n) in BRANCHCC_WITH_SIDE_2_OPENED} =
     (branch_Ror[qq,m,n])**2 * V[m] * (branch_Gor_mod[qq,m,n] + (branch_admi[qq,m,n])**2 * branch_Gex_mod[qq,m,n] / ( (branch_Gex_mod[qq,m,n] + branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]))**2
-    + (- branch_Bex_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 ) 
+    + (- branch_Bex_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 )
     + ((branch_Bex_mod[qq,m,n])**2 + (branch_Gex_mod[qq,m,n])**2) * branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]) / ( (branch_Gex_mod[qq,m,n] + branch_admi[qq,m,n] * sin(branch_angper[qq,m,n]))**2
     + (- branch_Bex_mod[qq,m,n] + branch_admi[qq,m,n] * cos(branch_angper[qq,m,n]))**2 ))
   ;
@@ -192,7 +199,7 @@ sum{(qq,k,n) in BRANCHCC} base100MVA * V[k] * Red_Tran_Act_Dir[qq,k,n]
 
 # Reactive balance slack variables at configured nodes
 set BUSCC_SLACK := if buses_with_reactive_slacks == "ALL" then BUSCC
-                    else if buses_with_reactive_slacks == "NO_GENERATION" then {n in BUSCC: (card{(g,n) in UNITON: (g,n) not in UNIT_FIXQ}==0 and card{(svc,n) in SVCON}==0 and card{(vscconv,n) in VSCCONVON}==0)}
+                    else if buses_with_reactive_slacks == "NO_GENERATION" then {n in BUSCC: (card{(g,n) in UNITON: (g,n) not in UNIT_FIXQ}==0 and card{(svc,n) in SVCON}==0 and card{(vscconv,n) in VSCCONVON}==0 and card{(b,n) in BATTERYON}==0)}
                     else BUSCC inter PARAM_BUSES_WITH_REACTIVE_SLACK; # if = "CONFIGURED", buses given as parameter but in connex component
 var slack1_shunt_B{BUSCC_SLACK} >= 0;
 var slack2_shunt_B{BUSCC_SLACK} >= 0;
@@ -209,7 +216,8 @@ sum{(qq,k,n) in BRANCHCC} base100MVA * V[k] * Red_Tran_Rea_Dir[qq,k,n]
 - sum{(g,k) in UNITON: (g,k) not in UNIT_FIXQ } Q[g,k]
 - sum{(g,k) in UNIT_FIXQ} unit_Qc[1,g,k]
 # Batteries
-- sum{(b,k) in BATTERYCC} battery_q0[1,b,k]
+- sum{(b,k) in BATTERYON} battery_qvar[b,k]
+- sum{(b,k) in BATTERYCC: (b,k) not in BATTERYON} battery_q0[1,b,k]
 # Loads
 + sum{(c,k) in LOADCC} load_QFix[1,c,k]
 # Shunts
@@ -241,19 +249,8 @@ var target_voltage_data = sum{n in BUSVV} (V[n] - bus_V0[1,n])**2;
 
 
 #
-# Objective function and penalties
+# Objective function
 #
-param penalty_invest_rea_pos := 10;
-param penalty_invest_rea_neg := 10;
-param penalty_units_reactive := 0.1;
-param penalty_transfo_ratio  := 0.1;
-
-param penalty_active_power_high := 1;
-param penalty_active_power_low  := 0.01;
-
-param penalty_voltage_target_high := 1;
-param penalty_voltage_target_low  := 0.01;
-
 minimize problem_acopf_objective:
   sum{n in BUSCC_SLACK} (
         penalty_invest_rea_pos * base100MVA * slack1_shunt_B[n]
@@ -262,25 +259,26 @@ minimize problem_acopf_objective:
 
   # coeff_alpha == 1 : minimize sum of generation, all generating units vary with 1 unique variable alpha
   # coeff_alpha == 0 : minimize sum of squared difference between target and value
-  + (if objective_choice==1 or objective_choice==2 then penalty_active_power_low else penalty_active_power_high)
+  + penalty_active_power
   * sum{(g,n) in UNITON} (coeff_alpha * P[g,n] + (1-coeff_alpha)*( (P[g,n]-unit_Pc[1,g,n])/max(1,abs(unit_Pc[1,g,n])) )**2 )
 
   # Voltage for busses, ratio between Vmin and Vmax
-  + (if objective_choice==1 then penalty_voltage_target_high else penalty_voltage_target_low)
-  * target_voltage_ratio
+  + penalty_voltage_target_ratio * target_voltage_ratio
 
   # Voltage target : value V0 in input data
-  + (if objective_choice==2 then penalty_voltage_target_high else penalty_voltage_target_low)
-  * target_voltage_data
+  + penalty_voltage_target_data * target_voltage_data
 
   # Reactive power of units
   + penalty_units_reactive * sum{(g,n) in UNITON} (Q[g,n]/max(1,abs(corrected_unit_Qmin[g,n]),abs(corrected_unit_Qmax[g,n])))**2
+
+  # Reactive power of batteries
+  + penalty_units_reactive * sum{(b,n) in BATTERYON} (battery_qvar[b,n]/max(1,abs(corrected_battery_Qmin[b,n]),abs(corrected_battery_Qmax[b,n])))**2
 
   # Ratio of transformers
   + penalty_transfo_ratio * sum{(qq,m,n) in BRANCHCC_REGL_VAR} (branch_Ror[qq,m,n]-branch_Ror_var[qq,m,n])**2
   ;
 
 
-# 
+#
 param solve_result_num_limit := 200;
 param output_results binary default 0;

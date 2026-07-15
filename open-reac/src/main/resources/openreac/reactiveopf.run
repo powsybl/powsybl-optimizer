@@ -10,8 +10,9 @@
 
 ###############################################################################
 # Reactive OPF
-# Author:  Jean Maeght 2022 2023
-# Author:  Manuel Ruiz 2023 2024
+# Author:  Jean Maeght   2022 2023
+# Author:  Manuel Ruiz   2023 2024
+# Author:  Oscar Lamolet 2025 2026
 ###############################################################################
 
 
@@ -289,6 +290,41 @@ param shunt_variable_scaling_factor default 1e-1;
 if "shunt_variable_scaling_factor" in PARAM_ALGO_KEYS then let shunt_variable_scaling_factor := num(PARAM_ALGO_VALUES["shunt_variable_scaling_factor"]);
 printf{LOG_INFO} "Parameter: scaling factor for shunt variables := %.3f\n",shunt_variable_scaling_factor;
 check shunt_variable_scaling_factor > 0;
+
+param penalty_invest_rea_pos default 10;
+if "penalty_invest_rea_pos" in PARAM_ALGO_KEYS then let penalty_invest_rea_pos := num(PARAM_ALGO_VALUES["penalty_invest_rea_pos"]);
+printf{LOG_INFO} "Parameter: %s = %.3f\n","penalty_invest_rea_pos",penalty_invest_rea_pos;
+check penalty_invest_rea_pos >= 0;
+
+param penalty_invest_rea_neg default 10;
+if "penalty_invest_rea_neg" in PARAM_ALGO_KEYS then let penalty_invest_rea_neg := num(PARAM_ALGO_VALUES["penalty_invest_rea_neg"]);
+printf{LOG_INFO} "Parameter: %s = %.3f\n","penalty_invest_rea_neg",penalty_invest_rea_neg;
+check penalty_invest_rea_neg >= 0;
+
+param penalty_active_power default 1;
+if "penalty_active_power" in PARAM_ALGO_KEYS then let penalty_active_power := num(PARAM_ALGO_VALUES["penalty_active_power"]);
+printf{LOG_INFO} "Parameter: %s = %.3f\n","penalty_active_power",penalty_active_power;
+check penalty_active_power >= 0;
+
+param penalty_units_reactive default 0.1;
+if "penalty_units_reactive" in PARAM_ALGO_KEYS then let penalty_units_reactive := num(PARAM_ALGO_VALUES["penalty_units_reactive"]);
+printf{LOG_INFO} "Parameter: %s = %.3f\n","penalty_units_reactive",penalty_units_reactive;
+check penalty_units_reactive >= 0;
+
+param penalty_transfo_ratio default 0.1;
+if "penalty_transfo_ratio" in PARAM_ALGO_KEYS then let penalty_transfo_ratio := num(PARAM_ALGO_VALUES["penalty_transfo_ratio"]);
+printf{LOG_INFO} "Parameter: %s = %.3f\n","penalty_transfo_ratio",penalty_transfo_ratio;
+check penalty_transfo_ratio >= 0;
+
+param penalty_voltage_target_ratio default 0.01;
+if "penalty_voltage_target_ratio" in PARAM_ALGO_KEYS then let penalty_voltage_target_ratio := num(PARAM_ALGO_VALUES["penalty_voltage_target_ratio"]);
+printf{LOG_INFO} "Parameter: %s = %.3f\n","penalty_voltage_target_ratio",penalty_voltage_target_ratio;
+check penalty_voltage_target_ratio >= 0;
+
+param penalty_voltage_target_data default 0.01;
+if "penalty_voltage_target_data" in PARAM_ALGO_KEYS then let penalty_voltage_target_data := num(PARAM_ALGO_VALUES["penalty_voltage_target_data"]);
+printf{LOG_INFO} "Parameter: %s = %.3f\n","penalty_voltage_target_data",penalty_voltage_target_data;
+check penalty_voltage_target_data >= 0;
 
 param optimization_after_rounding symbolic default "false";
 if "optimization_after_rounding" in PARAM_ALGO_KEYS then let optimization_after_rounding := PARAM_ALGO_VALUES["optimization_after_rounding"];

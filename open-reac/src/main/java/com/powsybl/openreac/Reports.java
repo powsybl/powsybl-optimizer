@@ -21,11 +21,20 @@ import java.util.Map;
 
 /**
  * @author Joris Mancini {@literal <joris.mancini_externe at rte-france.com>}
+ * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
  */
 public final class Reports {
 
     private static final String NETWORK_ID = "networkId";
+    private static final String SIZE = "size";
+    private static final String BRANCH_ID = "branchId";
+    private static final String RESISTANCE = "r";
+    private static final String REACTANCE = "x";
+    private static final String RATIO = "ratio";
+
     private static final DecimalFormat VALUE_FORMAT = new DecimalFormat("0.0", DecimalFormatSymbols.getInstance(Locale.ROOT));
+    private static final DecimalFormat VALUE_FORMAT_ACCURATE = new DecimalFormat("0.00", DecimalFormatSymbols.getInstance(Locale.ROOT));
+    private static final DecimalFormat VALUE_FORMAT_SCIENTIFIC = new DecimalFormat("0.00E00", DecimalFormatSymbols.getInstance(Locale.ROOT));
 
     private Reports() {
         // Should not be instantiated
@@ -74,7 +83,7 @@ public final class Reports {
         reportNode.newReportNode()
             .withMessageTemplate("optimizer.openreac.constantQGeneratorsSize")
             .withSeverity(TypedValue.INFO_SEVERITY)
-            .withUntypedValue("size", constantQGeneratorsSize)
+            .withUntypedValue(SIZE, constantQGeneratorsSize)
             .add();
     }
 
@@ -100,7 +109,7 @@ public final class Reports {
         reportNode.newReportNode()
                 .withMessageTemplate("optimizer.openreac.nbVoltageLevelsWithInconsistentLimits")
                 .withSeverity(TypedValue.ERROR_SEVERITY)
-                .withUntypedValue("size", voltageLevelsWithInconsistentLimitsSize)
+                .withUntypedValue(SIZE, voltageLevelsWithInconsistentLimitsSize)
                 .add();
     }
 
@@ -108,7 +117,7 @@ public final class Reports {
         reportNode.newReportNode()
                 .withMessageTemplate("optimizer.openreac.nbVoltageLevelsWithMissingLimits")
                 .withSeverity(TypedValue.ERROR_SEVERITY)
-                .withUntypedValue("size", voltageLevelsWithMissingLimitsSize)
+                .withUntypedValue(SIZE, voltageLevelsWithMissingLimitsSize)
                 .add();
     }
 
@@ -116,7 +125,7 @@ public final class Reports {
         reportNode.newReportNode()
                 .withMessageTemplate("optimizer.openreac.variableShuntCompensatorsSize")
                 .withSeverity(TypedValue.INFO_SEVERITY)
-                .withUntypedValue("size", variableShuntCompensatorsSize)
+                .withUntypedValue(SIZE, variableShuntCompensatorsSize)
                 .add();
     }
 
@@ -124,7 +133,7 @@ public final class Reports {
         reportNode.newReportNode()
             .withMessageTemplate("optimizer.openreac.variableTwoWindingsTransformersSize")
             .withSeverity(TypedValue.INFO_SEVERITY)
-            .withUntypedValue("size", variableTwoWindingsTransformersSize)
+            .withUntypedValue(SIZE, variableTwoWindingsTransformersSize)
             .add();
     }
 
@@ -139,7 +148,7 @@ public final class Reports {
             reportLimitsOutOfRange.newReportNode()
                 .withMessageTemplate("optimizer.openreac.nbVoltageLevelsWithLimitsOutOfNominalVRange")
                 .withSeverity(TypedValue.WARN_SEVERITY)
-                .withUntypedValue("size", voltageLevelsWithLimitsOutOfNominalVRange.size())
+                .withUntypedValue(SIZE, voltageLevelsWithLimitsOutOfNominalVRange.size())
                 .add();
 
             voltageLevelsWithLimitsOutOfNominalVRange.forEach((voltageLevelId, voltageLevelLimitInfo) -> reportLimitsOutOfRange.newReportNode()
@@ -151,5 +160,85 @@ public final class Reports {
                 .withUntypedValue("nominalVoltage", voltageLevelLimitInfo.nominalV())
                 .add());
         }
+    }
+
+    public static void reportNbFrenchBranchesWithHighImpedanceRatio(ReportNode reportNode, int size) {
+        reportNode.newReportNode()
+                .withMessageTemplate("optimizer.openreac.nbFrenchBranchesWithHighImpedanceRatio")
+                .withSeverity(TypedValue.ERROR_SEVERITY)
+                .withUntypedValue(SIZE, size)
+                .add();
+    }
+
+    public static void reportFrenchBranchWithHighImpedanceRatio(ReportNode reportNode, String branchId,
+                                                                double r, double x, double ratio) {
+        reportNode.newReportNode()
+                .withMessageTemplate("optimizer.openreac.frenchBranchWithHighImpedanceRatio")
+                .withSeverity(TypedValue.DETAIL_SEVERITY)
+                .withUntypedValue(BRANCH_ID, branchId)
+                .withUntypedValue(RESISTANCE, VALUE_FORMAT_ACCURATE.format(r))
+                .withUntypedValue(REACTANCE, VALUE_FORMAT_ACCURATE.format(x))
+                .withUntypedValue(RATIO, VALUE_FORMAT_ACCURATE.format(ratio))
+                .add();
+    }
+
+    public static void reportNbFrenchBranchesWithAcceptableHighImpedanceRatio(ReportNode reportNode, int size) {
+        reportNode.newReportNode()
+                .withMessageTemplate("optimizer.openreac.nbFrenchBranchesWithAcceptableHighImpedanceRatio")
+                .withSeverity(TypedValue.WARN_SEVERITY)
+                .withUntypedValue(SIZE, size)
+                .add();
+    }
+
+    public static void reportFrenchBranchWithAcceptableHighImpedanceRatio(ReportNode reportNode, String branchId,
+                                                                          double r, double x, double ratio) {
+        reportNode.newReportNode()
+                .withMessageTemplate("optimizer.openreac.frenchBranchWithAcceptableHighImpedanceRatio")
+                .withSeverity(TypedValue.DETAIL_SEVERITY)
+                .withUntypedValue(BRANCH_ID, branchId)
+                .withUntypedValue(RESISTANCE, VALUE_FORMAT_ACCURATE.format(r))
+                .withUntypedValue(REACTANCE, VALUE_FORMAT_ACCURATE.format(x))
+                .withUntypedValue(RATIO, VALUE_FORMAT_ACCURATE.format(ratio))
+                .add();
+    }
+
+    public static void reportNbNonFrenchBranchesWithHighImpedanceRatio(ReportNode reportNode, int size) {
+        reportNode.newReportNode()
+                .withMessageTemplate("optimizer.openreac.nbNonFrenchBranchesWithHighImpedanceRatio")
+                .withSeverity(TypedValue.WARN_SEVERITY)
+                .withUntypedValue(SIZE, size)
+                .add();
+    }
+
+    public static void reportNonFrenchBranchWithHighImpedanceRatio(ReportNode reportNode, String branchId,
+                                                                   double r, double x, double ratio) {
+        reportNode.newReportNode()
+                .withMessageTemplate("optimizer.openreac.nonFrenchBranchWithHighImpedanceRatio")
+                .withSeverity(TypedValue.DETAIL_SEVERITY)
+                .withUntypedValue(BRANCH_ID, branchId)
+                .withUntypedValue(RESISTANCE, VALUE_FORMAT_ACCURATE.format(r))
+                .withUntypedValue(REACTANCE, VALUE_FORMAT_ACCURATE.format(x))
+                .withUntypedValue(RATIO, VALUE_FORMAT_ACCURATE.format(ratio))
+                .add();
+    }
+
+    public static void reportNbBranchesWithLowImpedance(ReportNode reportNode, int size) {
+        reportNode.newReportNode()
+                .withMessageTemplate("optimizer.openreac.nbBranchesWithLowImpedance")
+                .withSeverity(TypedValue.WARN_SEVERITY)
+                .withUntypedValue(SIZE, size)
+                .add();
+    }
+
+    public static void reportBranchWithLowImpedance(ReportNode reportNode, String branchId,
+                                                    double r, double x, double threshold) {
+        reportNode.newReportNode()
+                .withMessageTemplate("optimizer.openreac.branchWithLowImpedance")
+                .withSeverity(TypedValue.DETAIL_SEVERITY)
+                .withUntypedValue(BRANCH_ID, branchId)
+                .withUntypedValue(RESISTANCE, VALUE_FORMAT_SCIENTIFIC.format(r))
+                .withUntypedValue(REACTANCE, VALUE_FORMAT_SCIENTIFIC.format(x))
+                .withUntypedValue("threshold", VALUE_FORMAT_SCIENTIFIC.format(threshold))
+                .add();
     }
 }
