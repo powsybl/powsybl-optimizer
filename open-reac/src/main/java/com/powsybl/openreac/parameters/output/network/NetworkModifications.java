@@ -54,6 +54,10 @@ public class NetworkModifications {
         return batteryOutput.getModifications();
     }
 
+    public Map<String, Double> getContinuousSusceptanceByShunt() {
+        return shuntsOutput.getContinuousSusceptanceByShunt();
+    }
+
     public double getTotalReactiveDeviation() {
         return shuntsOutput.getTotalReactiveDeviation();
     }

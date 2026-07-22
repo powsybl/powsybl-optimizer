@@ -31,6 +31,11 @@ public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCo
     private final List<ShuntWithDeltaDiscreteOptimalOverThreshold> shuntWithDeltaDiscreteOptimalOverThresholds = new ArrayList<>();
     private final double shuntCompensatorActivationAlertThreshold;
     /**
+     * Continuous susceptance, in S, returned by the optimizer for each shunt compensator,
+     * before it is discretized onto one of the sections the shunt actually provides.
+     */
+    private final Map<String, Double> continuousSusceptanceByShunt = new HashMap<>();
+    /**
      * Reactive power deviation, in MVar at nominal voltage, introduced by discretizing the
      * continuous susceptances returned by the optimizer onto the sections available on each
      * shunt, summed over every shunt read. NaN as soon as one shunt carries an invalid value.
@@ -96,6 +101,7 @@ public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCo
         if (Math.abs(discretizedReactiveValue - optimalReactiveValue) > shuntCompensatorActivationAlertThreshold) {
             shuntWithDeltaDiscreteOptimalOverThresholds.add(new ShuntWithDeltaDiscreteOptimalOverThreshold(sc.getId(), sc.getMaximumSectionCount(), discretizedReactiveValue, optimalReactiveValue));
         }
+        continuousSusceptanceByShunt.put(sc.getId(), b);
         double reactiveDeviation = minDistance * squaredNominalV;
         totalReactiveDeviation += reactiveDeviation;
         reactiveDeviationByShunt.put(sc.getId(), reactiveDeviation);
@@ -104,6 +110,10 @@ public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCo
 
     public List<ShuntWithDeltaDiscreteOptimalOverThreshold> getShuntsWithDeltaDiscreteOptimalOverThresholds() {
         return shuntWithDeltaDiscreteOptimalOverThresholds;
+    }
+
+    public Map<String, Double> getContinuousSusceptanceByShunt() {
+        return Collections.unmodifiableMap(continuousSusceptanceByShunt);
     }
 
     public double getTotalReactiveDeviation() {
