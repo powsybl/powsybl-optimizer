@@ -14,7 +14,6 @@ import com.powsybl.iidm.network.extensions.VoltageRegulation;
 import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.output.FixedParallelTransformersOutput.FixedParallelTransformer;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput.ReactiveSlack;
-import com.powsybl.openreac.parameters.output.network.ShuntCompensatorNetworkOutput;
 import org.jgrapht.alg.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +41,8 @@ public class OpenReacResult {
     private final List<StaticVarCompensatorModification> svcModifications;
     private final List<RatioTapPositionModification> tapPositionModifications;
     private final HashMap<String, Pair<Double, Double>> voltageProfile;
-    private final ShuntCompensatorNetworkOutput shuntsOutput;
+    private final double totalReactiveDeviation;
+    private final Map<String, Double> reactiveDeviationByShunt;
     private boolean updateNetworkWithVoltages = true;
 
     /**
@@ -63,7 +63,8 @@ public class OpenReacResult {
         this.svcModifications = List.copyOf(amplIOFiles.getNetworkModifications().getSvcModifications());
         this.tapPositionModifications = List.copyOf(amplIOFiles.getNetworkModifications().getTapPositionModifications());
         this.voltageProfile = new HashMap<>(amplIOFiles.getVoltageProfileOutput().getVoltageProfile());
-        this.shuntsOutput = amplIOFiles.getNetworkModifications().getShuntsOutput();
+        this.totalReactiveDeviation = amplIOFiles.getNetworkModifications().getTotalReactiveDeviation();
+        this.reactiveDeviationByShunt = Map.copyOf(amplIOFiles.getNetworkModifications().getReactiveDeviationByShunt());
     }
 
     public OpenReacStatus getStatus() {
@@ -119,8 +120,12 @@ public class OpenReacResult {
         return voltageProfile;
     }
 
-    public ShuntCompensatorNetworkOutput getShuntsOutput() {
-        return shuntsOutput;
+    public double getTotalReactiveDeviation() {
+        return totalReactiveDeviation;
+    }
+
+    public Map<String, Double> getReactiveDeviationByShunt() {
+        return reactiveDeviationByShunt;
     }
 
     public boolean isUpdateNetworkWithVoltages() {
