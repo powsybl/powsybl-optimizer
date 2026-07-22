@@ -30,8 +30,17 @@ public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCo
     private static final int BUS_COLUMN_INDEX = 2;
     private final List<ShuntWithDeltaDiscreteOptimalOverThreshold> shuntWithDeltaDiscreteOptimalOverThresholds = new ArrayList<>();
     private final double shuntCompensatorActivationAlertThreshold;
-    public double susceptanceDifferenceBeforeAfterRound = 0;
-    public Map<ShuntCompensator, Double> susceptanceDifferenceByShunt = new HashMap<>();
+    /**
+     * Reactive power deviation, in MVar at nominal voltage, introduced by discretizing the
+     * continuous susceptances returned by the optimizer onto the sections available on each
+     * shunt, summed over every shunt read. NaN as soon as one shunt carries an invalid value.
+     */
+    public double totalReactiveDeviation = 0;
+    /**
+     * Reactive power deviation, in MVar at nominal voltage, introduced by the discretization,
+     * per shunt compensator.
+     */
+    public Map<ShuntCompensator, Double> reactiveDeviationByShunt = new HashMap<>();
 
     public record ShuntWithDeltaDiscreteOptimalOverThreshold(String id, int maximumSectionCount, double discretizedReactiveValue, double optimalReactiveValue) { }
 
@@ -81,13 +90,15 @@ public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCo
                 sectionCount = i;
             }
         }
-        double optimalReactiveValue = Math.abs(b * Math.pow(sc.getTerminal().getVoltageLevel().getNominalV(), 2));
-        double discretizedReactiveValue = Math.abs(sc.getB(sectionCount) * Math.pow(sc.getTerminal().getVoltageLevel().getNominalV(), 2));
+        double squaredNominalV = Math.pow(sc.getTerminal().getVoltageLevel().getNominalV(), 2);
+        double optimalReactiveValue = Math.abs(b * squaredNominalV);
+        double discretizedReactiveValue = Math.abs(sc.getB(sectionCount) * squaredNominalV);
         if (Math.abs(discretizedReactiveValue - optimalReactiveValue) > shuntCompensatorActivationAlertThreshold) {
             shuntWithDeltaDiscreteOptimalOverThresholds.add(new ShuntWithDeltaDiscreteOptimalOverThreshold(sc.getId(), sc.getMaximumSectionCount(), discretizedReactiveValue, optimalReactiveValue));
         }
-        susceptanceDifferenceBeforeAfterRound += minDistance;
-        susceptanceDifferenceByShunt.put(sc, minDistance);
+        double reactiveDeviation = minDistance * squaredNominalV;
+        totalReactiveDeviation += reactiveDeviation;
+        reactiveDeviationByShunt.put(sc, reactiveDeviation);
         return sectionCount;
     }
 
