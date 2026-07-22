@@ -249,7 +249,7 @@ sum{(qq,k,n) in BRANCHCC} base100MVA * V[k] * Red_Tran_Rea_Dir[qq,k,n]
 
 # Voltage target : ratio between Vmin and Vmax
 var target_voltage_ratio = sum{n in BUSCC: substation_Vnomi[1,bus_substation[1,n]] > ignore_voltage_bounds}
-  ( V[n] - (1-ratio_voltage_target)*voltage_lower_bound[1,bus_substation[1,n]] + ratio_voltage_target*voltage_upper_bound[1,bus_substation[1,n]] )**2;
+  ( V[n] - ( (1-ratio_voltage_target)*voltage_lower_bound[1,bus_substation[1,n]] + ratio_voltage_target*voltage_upper_bound[1,bus_substation[1,n]] ) )**2;
 
 # Voltage target : value V0 in input data
 var target_voltage_data = sum{n in BUSVV} (V[n] - bus_V0[1,n])**2;
