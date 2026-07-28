@@ -101,10 +101,10 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
         assertEquals(OpenReacStatus.OK, result.getStatus());
         assertEquals(16, Integer.parseInt(result.getIndicators().get("nb_substations")));
         assertEquals(16, Integer.parseInt(result.getIndicators().get("nb_bus_in_data_file")));
-        assertEquals(16, Integer.parseInt(result.getIndicators().get("nb_bus_in_ACDC_CC")));
+        assertEquals(16, Integer.parseInt(result.getIndicators().get("nb_bus_in_main_CC")));
         // verify buses outside main SC have been excluded
-        assertEquals(12, Integer.parseInt(result.getIndicators().get("nb_bus_in_AC_CC")));
-        assertEquals(4, Integer.parseInt(result.getIndicators().get("nb_bus_in_ACDC_but_out_AC_CC")));
+        assertEquals(12, Integer.parseInt(result.getIndicators().get("nb_bus_in_main_SC")));
+        assertEquals(4, Integer.parseInt(result.getIndicators().get("nb_bus_in_main_CC_but_out_main_SC")));
         assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_bus_with_voltage_value")));
     }
 

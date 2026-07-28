@@ -29,9 +29,9 @@ optimization_after_rounding false
 
 nb_substations 14
 nb_bus_in_data_file 14
-nb_bus_in_ACDC_CC 14
-nb_bus_in_AC_CC 14
-nb_bus_in_ACDC_but_out_AC_CC 0
+nb_bus_in_main_CC 14
+nb_bus_in_main_SC 14
+nb_bus_in_main_CC_but_out_main_SC 0
 nb_bus_with_voltage_value 14
 nb_bus_with_reactive_slacks 14
 nb_bus_without_reactive_slacks 0
