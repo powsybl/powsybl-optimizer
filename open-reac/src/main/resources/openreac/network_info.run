@@ -17,6 +17,21 @@
 
 ###############################################################################
 #
+# Consistency of the main synchronous component
+#
+###############################################################################
+# Connex and synchronous components are numbered independently, so the main
+# synchronous component is not necessarily part of the main connex one. BUSCC
+# is then empty and nothing can be optimized.
+if card(BUSCC) == 0 then {
+  let errorMessage := "No bus of the main synchronous component in the main connex component";
+  let final_status := "NOK";
+  include reactiveopfexit.run;
+}
+
+
+###############################################################################
+#
 # Fallback computation of "slack bus" or reference bus if absent in provided data
 #
 ###############################################################################
