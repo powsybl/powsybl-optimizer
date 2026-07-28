@@ -23,7 +23,7 @@ are free to configure a different one.
 If you chose to run Knitro, you must have `knitroampl` in your path, after the installation
 of the solver is done and that you got a valid licence.
 
-## First Run
+## First run
 
 Using PowSyBl-OpenReac to run an OPF is simple:
 just load the network you want and launch the optimization with the configuration of your choice.
@@ -59,7 +59,7 @@ After adding a last Maven dependency on OpenReac implementation:
 <dependency>
     <groupId>com.powsybl</groupId>
     <artifactId>powsybl-open-reac</artifactId>
-    <version>0.12.0</version>
+    <version>${powsybl-open-reac.version}</version>
 </dependency>
 ```
 

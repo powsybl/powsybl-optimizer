@@ -25,7 +25,7 @@ Please note that:
 At the end, these variables may differ from the values associated with the discrete taps of the equipment (see [Network data](inputs.md#network-data)), and rounding may be necessary. 
 In the case of transformers, a second optimization can be carried out to adjust the voltage plan to the new transformation ratios after rounding (see [Solving](acOptimalPowerflow.md#solving)).
 - Transformers connected in parallel are grouped and constrained to a common transformation ratio (see [Parallel transformers](#parallel-transformers)). 
-- Shunts that are disconnected at the beginning of the optimization but are specified as variable (see [Configuration of the run](inputs.md#configuration-of-the-run)) are reconnected and optimized.
+- Shunts that are disconnected at the beginning of the optimization but are specified as variable (see [Configuration of the run](inputs.md#configuration-of-the-run)) can be reconnected and optimized.
 - Only batteries that regulate voltage (as flagged in `ampl_network_batteries.txt`) have a variable reactive power; the reactive power of other batteries is fixed at its input value. 
   The active power of batteries is never optimized.
 - The AC emulation of HVDC lines is not considered in the optimization. Also, the losses due to the line and the converter stations themselves are not accounted for in the target used in the optimization.
@@ -159,7 +159,7 @@ Setting an explicit value on any of these three weights overrides this objective
 
 Before solving the ACOPF, the voltage magnitudes $\boldsymbol{V_i}$ are warm-started with $V_i^t$
 (specified in `ampl_network_buses.txt`), as well as the voltage phases $\boldsymbol{\theta_i}$ with the results of the DCOPF (see [DC optimal powerflow](dcOptimalPowerflow.md)).
-The equipment setpoints are also warm-started with the values specified in the AMPL export (see [Configuration of the run](inputs.md#configuration-of-the-run)).
+Some setpoints are also warm-started with the values specified in the AMPL export (see [Network data](inputs.md#network-data)).
 Please also note that a scaling is applied with user-defined values before solving the ACOPF.
 
 A solving is considered as successful if the non-linear solver employed (see [Non-linear optimization solver](../gettingStarted.md#non-linear-optimization-solver)) finds a feasible approximate solution (**even if the sum of slacks is important**).
