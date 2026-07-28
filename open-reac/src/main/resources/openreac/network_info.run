@@ -10,8 +10,9 @@
 
 ###############################################################################
 # Reactive OPF
-# Author:  Jean Maeght 2022 2023
-# Author:  Manuel Ruiz 2023 2024
+# Author:  Jean Maeght   2022 2023
+# Author:  Manuel Ruiz   2023 2024
+# Author:  Oscar Lamolet 2025 2026
 ###############################################################################
 
 
@@ -41,7 +42,7 @@ if card(BUSCC) == 0 then {
 
 if card(SLACK_BUSES) > 0 then {
   let null_phase_bus := min{n in SLACK_BUSES} n; # for now, take the slack bus with min identifier
-  printf{LOG_WARNING} "\nSlack bus %s specified in ampl_network_buses is chosen for phase=0 constraint\n", null_phase_bus;
+  printf{LOG_WARNING} "\nSlack bus %Q specified in ampl_network_buses is chosen for phase=0 constraint\n", bus_id[1,null_phase_bus];
 # if no slack bus is specified in the provided data, compute one
 } else {
   printf{LOG_WARNING} "\nWarning: No slack bus is specified in the file ampl_network_buses.txt";
