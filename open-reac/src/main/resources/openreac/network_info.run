@@ -17,92 +17,55 @@
 
 ###############################################################################
 #
-# Computation of "slack bus" or reference bus
+# Fallback computation of "slack bus" or reference bus if absent in provided data
 #
 ###############################################################################
 # This is not really a slack bus since this reactive OPF will change values
 # of generation proportionally, to ensure global balance generation=losses+load
 # So this "slack node" is used only for zero phase constraint
-# This reference bus is also used to choose on which connect component computation si performed
-printf{LOG_INFO} "\nComputation of bus with largest number of branches connected, in order to fix phase to 0 and to choose on which connex component reacive OPF will run\n";
-let temp1 := min(300,max{n in BUS2} substation_Vnomi[1,bus_substation[1,n]]);
-let null_phase_bus := min{n in BUS2} n;
-let tempo := 0;
-for {n in BUS2 : substation_Vnomi[1,bus_substation[1,n]] >= temp1 * 0.9}
-  let tempo := max (tempo, card({(qq,mm,n) in BRANCH2} union {(qq,n,nn) in BRANCH2}));
-for {n in BUS2 : substation_Vnomi[1,bus_substation[1,n]] >= temp1 * 0.9 && card({(qq,mm,n) in BRANCH2} union {(qq,n,nn) in BRANCH2}) == tempo}
-  let null_phase_bus := n;
-if ( tempo > 0 ) then
-  printf{LOG_INFO} "Bus %QkV with most branches: %Q in substation %s/%s with %Q connected branches\n",
-  substation_Vnomi[1,bus_substation[1,null_phase_bus]],
-  null_phase_bus,
-  substation_id[1,bus_substation[1,null_phase_bus]],
-  substation_description[1,bus_substation[1,null_phase_bus]],
-  tempo;
-if ( tempo == 0 ) then
-  printf{LOG_WARNING} "Bus with most branches: not found. Take first bus (=%Q) for phase=0 constraint\n",null_phase_bus;
 
-
-###############################################################################
-# Solve PROBLEM_CCOMP
-###############################################################################
-
-let PROBLEM_CCOMP := {1};
-let tempstr := ctime();
-printf{LOG_KNITRO} "\n######################################################################\n";
-printf{LOG_KNITRO} "** CCcomp solve: start (%s)\n\n",tempstr;
-
-option presolve 0;
-option knitro_options ("outlev=3");;
-
-# TODO : remove suffix printing
-if (log_level_knitro <= 1) then {
-  solve cccomputation_objective > (nullDevice);
+if card(SLACK_BUSES) > 0 then {
+  let null_phase_bus := min{n in SLACK_BUSES} n; # for now, take the slack bus with min identifier
+  printf{LOG_WARNING} "\nSlack bus %s specified in ampl_network_buses is chosen for phase=0 constraint\n", null_phase_bus;
+# if no slack bus is specified in the provided data, compute one
 } else {
-  solve cccomputation_objective;
+  printf{LOG_WARNING} "\nWarning: No slack bus is specified in the file ampl_network_buses.txt";
+  printf{LOG_INFO} "\nComputation of bus with largest number of branches connected and in main SC is used as fallback, in order to fix phase to 0 in reactive OPF optimization\n";
+  let temp1 := min(300,max{n in BUSCC} substation_Vnomi[1,bus_substation[1,n]]);
+  let null_phase_bus := min{n in BUSCC} n;
+  let tempo := 0;
+  for {n in BUSCC : substation_Vnomi[1,bus_substation[1,n]] >= temp1 * 0.9}
+    let tempo := max (tempo, card({(qq,mm,n) in BRANCH2} union {(qq,n,nn) in BRANCH2}));
+  for {n in BUSCC : substation_Vnomi[1,bus_substation[1,n]] >= temp1 * 0.9 && card({(qq,mm,n) in BRANCH2} union {(qq,n,nn) in BRANCH2}) == tempo}
+    let null_phase_bus := n;
+  if ( tempo > 0 ) then
+    printf{LOG_INFO} "Bus %QkV with most branches: %Q in substation %s/%s with %Q connected branches\n",
+    substation_Vnomi[1,bus_substation[1,null_phase_bus]],
+    null_phase_bus,
+    substation_id[1,bus_substation[1,null_phase_bus]],
+    substation_description[1,bus_substation[1,null_phase_bus]],
+    tempo;
+  if ( tempo == 0 ) then
+    printf{LOG_WARNING} "Bus with most branches: not found. Take first bus (=%Q) for phase=0 constraint\n",null_phase_bus;
 }
-
-printf{LOG_KNITRO} "\n** CCcomp solve: end   (%s -> %s)\n",tempstr,ctime();
-printf{LOG_KNITRO} "######################################################################\n\n";
-
-
-###############################################################################
-# Analysis of solve_result_num
-###############################################################################
-
-if solve_result_num > 103 or card({n in BUS2: teta_ccomputation[n].val > 0.01 and teta_ccomputation[n].val < 0.99})>0
-then {
-  # First return codes of knitro :
-  # See https://www.artelys.com/docs/knitro/3_referenceManual/knitroamplReference.html#return-codes
-  #   0 Locally optimal or satisfactory solution.
-  let errorMessage := "Optimization for connex component computation failed";
-  let final_status := "NOK";
-  include reactiveopfexit.run;
-}
-option presolve 10;
-
-
-###############################################################################
-# Definition of BUSCC below was the purpose of this optimization
-###############################################################################
-
-printf{LOG_INFO} "\n######################################################################\n";
-printf{LOG_INFO} "** CCcomp results\n";
-
-let BUSCC := {n in BUS2: teta_ccomputation[n].val <= 0.01};
-for{n in BUS2 diff BUSCC}
-  printf{LOG_WARNING} "Bus %Q in substation %Q (Vnomi=%.2fkV, country=%Q) is out of main AC CC\n",
-    bus_id[1,n], substation_id[1,bus_substation[1,n]],
-    substation_Vnomi[1,bus_substation[1,n]], substation_country[1,bus_substation[1,n]];
-printf{LOG_INFO} "Nb of busses in AC+DC CC: %i\n",card(BUS2);
-printf{LOG_INFO} "Nb of busses in CC %Q: %i\n",bus_id[1,null_phase_bus],card(BUSCC);
-printf{LOG_INFO} "Nb of busses in other CCs: %Q\n",card(BUS2)-card(BUSCC);
-printf "\n";
+check bus_SC[1,null_phase_bus] == 0;
 
 
 ###############################################################################
 # A few information
 ###############################################################################
+
+printf{LOG_INFO} "\n######################################################################\n";
+printf{LOG_INFO} "** Network information\n";
+
+for{n in BUS2 diff BUSCC}
+  printf{LOG_WARNING} "Bus %Q in substation %Q (Vnomi=%.2fkV, country=%Q) is out of main SC\n",
+    bus_id[1,n], substation_id[1,bus_substation[1,n]],
+    substation_Vnomi[1,bus_substation[1,n]], substation_country[1,bus_substation[1,n]];
+printf{LOG_INFO} "Nb of busses in main CC: %i\n",card(BUS2);
+printf{LOG_INFO} "Nb of busses in SC %Q: %i\n",bus_id[1,null_phase_bus],card(BUSCC);
+printf{LOG_INFO} "Nb of busses in other SCs: %Q\n",card(BUS2)-card(BUSCC);
+printf "\n";
 
 if 1 in LOG_INFO then {
   display
@@ -135,7 +98,7 @@ for {(l,n) in LCCCONVON}
 printf{LOG_INFO} "Sum of HVDC conv.  H: %.0f MW\n", temp3;
 printf{LOG_INFO} "Sum of loads       C: %.0f MW\n", temp1;
 printf{LOG_INFO} "Sum of generations P: %.0f MW\n", temp2;
-printf{LOG_INFO} "  (including batteries for %.1f MW\n", sum{(b,n) in BATTERYCC} battery_p0[1,b,n];
+printf{LOG_INFO} "  (including batteries for %.1f MW)\n", sum{(b,n) in BATTERYCC} battery_p0[1,b,n];
 printf{LOG_INFO} "Balance    (P-C-H)/C: %.2f %%    (global_initial_losses_ratio=%f)\n\n", (temp2-temp1-temp3)/temp1*100,global_initial_losses_ratio;
 
 # Branches with low current limits (but keep in mind they are not used; this is just for information)
@@ -148,6 +111,3 @@ for {(qq,m,n) in BRANCHCC : Fmax[qq,m,n] <= temp1 * 1.5}
 for {(t,n) in BUS: substation_Vnomi[1,bus_substation[1,n]] < epsilon_nominal_voltage}
   printf{LOG_WARNING} "Warning: bus %Q in substation %Q has nominal voltage %.2fkV < %QkV -> bus is ignored\n",
   bus_id[1,n], substation_id[1,bus_substation[1,n]], substation_Vnomi[1,bus_substation[1,n]], epsilon_nominal_voltage;
-
-# desactivate optimization problem
-let PROBLEM_CCOMP := { };

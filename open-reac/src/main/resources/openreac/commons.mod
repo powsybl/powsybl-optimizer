@@ -47,7 +47,9 @@ set BUS2:= setof {(1,n) in BUS:
   } n;
 set BRANCH2:= setof {(1,qq,m,n) in BRANCH: m in BUS2 and n in BUS2} (qq,m,n);
 
-set BUSCC dimen 1 default {};
+# Elements in main synchronous component (computed by IIDM, exported by the AMPL exporter)
+set BUSCC := {n in BUS2 : bus_SC[1,n] == 0};
+set SLACK_BUSES := {n in BUSCC : bus_slack[1,n] == "true"};
 # Branches with bus on side 1 and 2 in CC
 set BRANCHCC  := {(qq,m,n) in BRANCH2: m in BUSCC and n in BUSCC};
 # Branches with bus on side 1 in CC, and disconnected bus on side 2
