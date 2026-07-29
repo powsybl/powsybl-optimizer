@@ -356,7 +356,7 @@ set PARALLEL_BUNDLES_LARGE := {g in PARALLEL_BUNDLES_ALL:
 # demote a member to fixed, which the topological detection cannot foresee. An in-service
 # demoted member (znull, single-tap table, ...) contributes its frozen point above and makes
 # its bundle degenerate; a member carrying no loop flow (side opened, out of the main
-# connected component) contributes nothing, and its bundle is not tied (see
+# synchronous component) contributes nothing, and its bundle is not tied (see
 # PARALLEL_BUNDLES_DROPPED), to avoid a silent partial tie.
 set PARALLEL_BUNDLES_ALL_VARIABLE := {g in PARALLEL_BUNDLES_ALL:
   card({(g,qq) in PARAM_PARALLEL_TRANSFORMERS: qq not in BRANCHCC_REGL_VAR_NUM}) == 0};

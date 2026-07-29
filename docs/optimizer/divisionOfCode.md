@@ -15,12 +15,10 @@ The code of the reactive OPF is divided into several files, each serving a speci
   
 - `dcopf.run`, `acopf_preprocessing.run` and `acopf.run` orchestrate the optimization and its post-processing.
 
-- `reactiveopfoutput.mod` exports result files if the execution of `reactiveopf.run` is successful.  
+- `reactiveopfoutput.run` exports result files if the execution of `reactiveopf.run` is successful.  
   See [Outputs](outputs.md#in-case-of-convergence).
   
 - `reactiveopfexit.run` contains the code executed when the process fails.  
   Refer to section [8.2](outputs.md#in-case-of-inconsistency).
   
 - `reactiveopf.run` executes the AMPL process of OpenReac, calling the previous scripts.
-
-

@@ -58,7 +58,7 @@ if card(SLACK_BUSES) > 0 then {
   let slack_bus_origin := "FALLBACK";
   # No usable slack bus in the provided data: compute one
   if card({(t,n) in BUS : bus_slack[t,n] == "true"}) > 0 then {
-    printf{LOG_WARNING} "\nSlack bus(es) specified in ampl_network_buses.txt are out of the main SC and cannot be used\n";
+    printf{LOG_WARNING} "\nSlack bus(es) specified in ampl_network_buses.txt are out of the optimized component (other SC, or nominal voltage below epsilon_nominal_voltage) and cannot be used\n";
   } else {
     printf{LOG_INFO} "\nNo slack bus is specified in the file ampl_network_buses.txt\n";
   }
