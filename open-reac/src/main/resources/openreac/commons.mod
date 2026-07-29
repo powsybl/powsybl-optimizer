@@ -49,6 +49,11 @@ set BRANCH2:= setof {(1,qq,m,n) in BRANCH: m in BUS2 and n in BUS2} (qq,m,n);
 
 # Elements in main synchronous component (computed by IIDM, exported by the AMPL exporter)
 set BUSCC := {n in BUS2 : bus_SC[1,n] == 0};
+# Buses of the main SC dropped by the BUS2 filters (in practice, nominal voltage below
+# epsilon_nominal_voltage). If this set is empty, BUSCC is connected in BRANCHCC. Otherwise it may
+# not be, in which case ctr_null_phase_bus only fixes the angles of one island.
+set MAIN_SC_DROPPED := (setof {(1,n) in BUS : n >= 0 and bus_SC[1,n] == 0} n) diff BUS2;
+# Buses flagged as slack in the input data (SlackTerminal extension in IIDM), restricted to BUSCC
 set SLACK_BUSES := {n in BUSCC : bus_slack[1,n] == "true"};
 # Branches with bus on side 1 and 2 in CC
 set BRANCHCC  := {(qq,m,n) in BRANCH2: m in BUSCC and n in BUSCC};

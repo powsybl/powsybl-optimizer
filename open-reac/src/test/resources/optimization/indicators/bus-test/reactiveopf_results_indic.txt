@@ -1,5 +1,7 @@
 final_status OK
 dcopf_status OK
+slack_bus 'vl1_0'
+slack_bus_origin FALLBACK
 
 log_level_ampl INFO
 log_level_knitro 2
