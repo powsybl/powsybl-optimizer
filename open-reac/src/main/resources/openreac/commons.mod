@@ -53,6 +53,9 @@ set BUSCC := {n in BUS2 : bus_SC[1,n] == 0};
 # epsilon_nominal_voltage). If this set is empty, BUSCC is connected in BRANCHCC. Otherwise it may
 # not be, in which case ctr_null_phase_bus only fixes the angles of one island.
 set MAIN_SC_DROPPED := (setof {(1,n) in BUS : n >= 0 and bus_SC[1,n] == 0} n) diff BUS2;
+# A dropped bus carrying a single branch is a stub: it cannot split BUSCC.
+set MAIN_SC_DROPPED_RISKY := {n in MAIN_SC_DROPPED :
+  card({(1,qq,m,n) in BRANCH} union {(1,qq,n,nn) in BRANCH}) >= 2};
 # Buses flagged as slack in the input data (SlackTerminal extension in IIDM), restricted to BUSCC
 set SLACK_BUSES := {n in BUSCC : bus_slack[1,n] == "true"};
 # Branches with bus on side 1 and 2 in CC

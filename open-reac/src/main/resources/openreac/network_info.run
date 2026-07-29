@@ -34,9 +34,9 @@ if card(BUSCC) == 0 then {
   include reactiveopfexit.run;
 }
 
-if card(MAIN_SC_DROPPED) > 0 then
-  printf{LOG_WARNING} "%i buses of the main SC are ignored (nominal voltage < %.2fkV): the optimized component may not be connected, in which case voltage angles are defined up to a constant on each island\n",
-  card(MAIN_SC_DROPPED), epsilon_nominal_voltage;
+if card(MAIN_SC_DROPPED_RISKY) > 0 then
+  printf{LOG_WARNING} "%i of the %i ignored buses of the main SC (nominal voltage < %.2fkV) carry more than one branch: the optimized component may not be connected, in which case the optimization may fail\n",
+  card(MAIN_SC_DROPPED_RISKY), card(MAIN_SC_DROPPED), epsilon_nominal_voltage;
 
 
 ###############################################################################
