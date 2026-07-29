@@ -369,6 +369,9 @@ param dcopf_status symbolic default "UNKNOWN";
 # Gobal variables for writing and messages
 param fileOut symbolic default "dummy.txt";
 param errorMessage symbolic default "empty error message";
+# Slack bus used for the phase=0 constraint, and where it comes from
+param slack_bus        symbolic default "UNDEFINED";
+param slack_bus_origin symbolic default "UNDEFINED"; # DATA if read from ampl_network_buses.txt, FALLBACK if computed
 
 # Messages to be written in final indicator file
 param messageInfo symbolic default "empty information message";

@@ -285,6 +285,8 @@ let fileOut := "reactiveopf_results_indic.txt";
 
 printf "%s %s\n","final_status",final_status > (fileOut);
 printf "%s %s\n","dcopf_status",dcopf_status > (fileOut);
+printf "%s %Q\n","slack_bus",slack_bus > (fileOut);
+printf "%s %s\n","slack_bus_origin",slack_bus_origin > (fileOut);
 
 printf{LOG_DEBUG} "\n" > (fileOut);
 printf{LOG_DEBUG} "%s %Q\n","ctime_start",ctime_start > (fileOut);
