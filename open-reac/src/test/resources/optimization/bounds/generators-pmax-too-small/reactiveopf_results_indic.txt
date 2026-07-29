@@ -1,5 +1,7 @@
 final_status NOK
 dcopf_status OK
+slack_bus 'UNDEFINED'
+slack_bus_origin FALLBACK
 
 log_level_ampl INFO
 log_level_knitro 2
@@ -31,6 +33,8 @@ nb_substations 5
 nb_bus_in_data_file 5
 nb_bus_in_main_SC 4
 nb_bus_out_of_main_SC 0
+nb_bus_dropped_in_main_SC 0
+nb_bus_dropped_risky 0
 nb_bus_with_voltage_value 0
 nb_bus_with_reactive_slacks 4
 nb_bus_without_reactive_slacks 0
