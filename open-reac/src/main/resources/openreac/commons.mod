@@ -39,27 +39,28 @@ param voltage_upper_bound{(t,s) in SUBSTATIONS} :=
 
 check {(t,s) in SUBSTATIONS}: voltage_lower_bound[t,s] < voltage_upper_bound[t,s];
 
-# Elements in main connex component
-set BUS2:= setof {(1,n) in BUS:
-  bus_CC[1,n] == 0
-  and n >= 0
+# Connected buses whose nominal voltage is high enough to be handled by the optimization
+set BUS_ELIGIBLE := setof {(1,n) in BUS:
+  n >= 0
   and substation_Vnomi[1,bus_substation[1,n]] >= epsilon_nominal_voltage
   } n;
-set BRANCH2:= setof {(1,qq,m,n) in BRANCH: m in BUS2 and n in BUS2} (qq,m,n);
 
-# Elements in main synchronous component (computed by IIDM, exported by the AMPL exporter)
-set BUSCC := {n in BUS2 : bus_SC[1,n] == 0};
-# Buses of the main SC dropped by the BUS2 filters (in practice, nominal voltage below
-# epsilon_nominal_voltage). If this set is empty, BUSCC is connected in BRANCHCC. Otherwise it may
-# not be, in which case ctr_null_phase_bus only fixes the angles of one island.
-set MAIN_SC_DROPPED := (setof {(1,n) in BUS : n >= 0 and bus_SC[1,n] == 0} n) diff BUS2;
+# Elements in main synchronous component (computed by IIDM, exported by the AMPL exporter).
+# Connex components are deliberately ignored: they are computed across HVDC links, which merge
+# synchronous areas that an ACOPF cannot solve together. The synchronous component is the only
+# relevant notion here, and it is always contained in a single connex component.
+set BUSCC := {n in BUS_ELIGIBLE : bus_SC[1,n] == 0};
+# Buses of the main SC dropped by the nominal voltage filter. If this set is empty, BUSCC is
+# connected in BRANCHCC. Otherwise it may not be, in which case ctr_null_phase_bus only fixes
+# the angles of one island and the other islands must be balanced on their own.
+set MAIN_SC_DROPPED := (setof {(1,n) in BUS : n >= 0 and bus_SC[1,n] == 0} n) diff BUS_ELIGIBLE;
 # A dropped bus carrying a single branch is a stub: it cannot split BUSCC.
 set MAIN_SC_DROPPED_RISKY := {n in MAIN_SC_DROPPED :
   card({(1,qq,m,n) in BRANCH} union {(1,qq,n,nn) in BRANCH}) >= 2};
 # Buses flagged as slack in the input data (SlackTerminal extension in IIDM), restricted to BUSCC
 set SLACK_BUSES := {n in BUSCC : bus_slack[1,n] == "true"};
 # Branches with bus on side 1 and 2 in CC
-set BRANCHCC  := {(qq,m,n) in BRANCH2: m in BUSCC and n in BUSCC};
+set BRANCHCC := setof {(1,qq,m,n) in BRANCH: m in BUSCC and n in BUSCC} (qq,m,n);
 # Branches with bus on side 1 in CC, and disconnected bus on side 2
 set BRANCHCC_WITH_SIDE_2_OPENED := setof {(1,qq,m,n) in BRANCH: m in BUSCC and n == -1 and m != n} (qq,m,n);
 # Branches with bus on side 2 in CC, and disconnected bus on side 1

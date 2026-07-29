@@ -233,7 +233,7 @@ check ignore_voltage_bounds >= 0;
 param buses_with_reactive_slacks symbolic default "ALL";
 if "buses_with_reactive_slacks" in PARAM_ALGO_KEYS then let buses_with_reactive_slacks := PARAM_ALGO_VALUES["buses_with_reactive_slacks"];
 printf{LOG_INFO} "Parameter: choice for buses with reactive slacks in ACOPF := %Q (%s)\n", buses_with_reactive_slacks,
-  if buses_with_reactive_slacks == "ALL" then "every bus in connex component."
+  if buses_with_reactive_slacks == "ALL" then "every bus in main synchronous component."
   else if buses_with_reactive_slacks == "NO_GENERATION" then "buses without generation (no generator, svc or vsc)"
   else if buses_with_reactive_slacks == "CONFIGURED" then "buses given as parameters in param_buses_with_reactive_slack.txt";
 check buses_with_reactive_slacks in {"CONFIGURED", "NO_GENERATION", "ALL"};

@@ -2,20 +2,23 @@
 
 ## Main synchronous component
 
-The OPFs are executed on the **main synchronous component** of the network: the buses whose synchronous component number (`sc` in `ampl_network_buses.txt`) is $0$, restricted to the main connex component (`cc` set to $0$) and to buses whose nominal voltage is greater than or equal to `epsilon_nominal_voltage` (see [Configuration of the run](inputs.md#configuration-of-the-run)).
+The OPFs are executed on the **main synchronous component** of the network: the buses whose synchronous component number (`sc` in `ampl_network_buses.txt`) is $0$, restricted to buses whose nominal voltage is greater than or equal to `epsilon_nominal_voltage` (see [Configuration of the run](inputs.md#configuration-of-the-run)).
 
-Both `cc` and `sc` are computed by PowSyBl on the IIDM network and exported by the AMPL exporter: OpenReac does not recompute them.
-As synchronous components ignore HVDC links, **buses connected to the rest of the network only by HVDC lines are excluded**.
+The `sc` value is computed by PowSyBl on the IIDM network and exported by the AMPL exporter: OpenReac does not recompute it.
+Synchronous components are computed on AC branches only, so **buses connected to the rest of the network only by HVDC lines are excluded**.
+Components are numbered by decreasing size, hence $0$ for the main one.
 
-Connex and synchronous components are numbered independently, both by decreasing size.
-The main synchronous component is therefore not necessarily included in the main connex component.
-When this happens, no bus is left to optimize: the script `reactiveopfexit.run` is executed (see [In case of inconsistency](outputs.md#in-case-of-inconsistency)) and the execution is stopped.
+The connex component (`cc`) is deliberately not used as a filter.
+Connex components are computed across HVDC links, so they may merge several synchronous areas, which an ACOPF cannot solve together.
+Since a synchronous component is always contained in a single connex component, intersecting with the main connex component would either change nothing, or discard the whole main synchronous component when it happens to lie in another connex one.
 
 The sets of buses and branches belonging to the main synchronous component are denoted $BUSCC$ and $BRANCHCC$, respectively.
+If $BUSCC$ is empty, no bus is left to optimize: the script `reactiveopfexit.run` is executed (see [In case of inconsistency](outputs.md#in-case-of-inconsistency)) and the execution is stopped.
 
 Note that buses whose nominal voltage is below `epsilon_nominal_voltage` are discarded even when they belong to the main synchronous component.
-If such a bus is the only link between two parts of the component, $BUSCC$ is not connected in $BRANCHCC$, and the voltage angles are then determined up to a constant on each island.
-A warning is issued when at least one bus of the main synchronous component is discarded this way.
+If such a bus is the only link between two parts of the component, $BUSCC$ is not connected in $BRANCHCC$.
+The angle reference $(1)$ then applies to a single island, and each other island has to be balanced on its own: the DCOPF or the ACOPF may fail, for instance when an island carries load but no generation.
+A warning is issued when at least one discarded bus carries more than one branch, which is a necessary condition for it to split the component.
 
 ## Slack bus
 

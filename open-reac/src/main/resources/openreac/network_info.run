@@ -21,15 +21,15 @@
 # Consistency of the main synchronous component
 #
 ###############################################################################
-# Connex and synchronous components are numbered independently, so the main
-# synchronous component is not necessarily part of the main connex one. BUSCC
-# is then empty and nothing can be optimized.
+# The main synchronous component always exists as soon as the network has at least one connected
+# bus, but all of its buses may be discarded by the nominal voltage filter. Nothing can then be
+# optimized.
 if card(BUSCC) == 0 then {
-  printf{LOG_ERROR} "Main synchronous component (sc=0) is not part of the main connex component (cc=0).\n";
-  printf{LOG_ERROR} "Synchronous components found in the main connex component:\n";
-  for {s in setof{n in BUS2} bus_SC[1,n]}
-    printf{LOG_ERROR} "  sc=%i: %i buses\n", s, card({n in BUS2: bus_SC[1,n] == s});
-  let errorMessage := "No bus of the main synchronous component in the main connex component";
+  printf{LOG_ERROR} "No bus to optimize in the main synchronous component (sc=0).\n";
+  if card(MAIN_SC_DROPPED) > 0 then
+    printf{LOG_ERROR} "Its %i buses all have a nominal voltage below epsilon_nominal_voltage=%.2fkV.\n",
+      card(MAIN_SC_DROPPED), epsilon_nominal_voltage;
+  let errorMessage := "Main synchronous component is empty";
   let final_status := "NOK";
   include reactiveopfexit.run;
 }
@@ -67,8 +67,8 @@ if card(SLACK_BUSES) > 0 then {
   let null_phase_bus := min{n in BUSCC} n;
   let tempo := 0;
   for {n in BUSCC : substation_Vnomi[1,bus_substation[1,n]] >= temp1 * 0.9}
-    let tempo := max (tempo, card({(qq,mm,n) in BRANCH2} union {(qq,n,nn) in BRANCH2}));
-  for {n in BUSCC : substation_Vnomi[1,bus_substation[1,n]] >= temp1 * 0.9 && card({(qq,mm,n) in BRANCH2} union {(qq,n,nn) in BRANCH2}) == tempo}
+    let tempo := max (tempo, card({(qq,mm,n) in BRANCHCC} union {(qq,n,nn) in BRANCHCC}));
+  for {n in BUSCC : substation_Vnomi[1,bus_substation[1,n]] >= temp1 * 0.9 && card({(qq,mm,n) in BRANCHCC} union {(qq,n,nn) in BRANCHCC}) == tempo}
     let null_phase_bus := n;
   if ( tempo > 0 ) then
     printf{LOG_INFO} "Bus %QkV with most branches: %Q in substation %s/%s with %Q connected branches\n",
@@ -90,19 +90,18 @@ let slack_bus := bus_id[1,null_phase_bus];
 printf{LOG_INFO} "\n######################################################################\n";
 printf{LOG_INFO} "** Network information\n";
 
-for{n in BUS2 diff BUSCC}
+for{n in BUS_ELIGIBLE diff BUSCC}
   printf{LOG_WARNING} "Bus %Q in substation %Q (Vnomi=%.2fkV, country=%Q) is out of main SC\n",
     bus_id[1,n], substation_id[1,bus_substation[1,n]],
     substation_Vnomi[1,bus_substation[1,n]], substation_country[1,bus_substation[1,n]];
-printf{LOG_INFO} "Nb of busses in main CC: %i\n",card(BUS2);
 printf{LOG_INFO} "Nb of busses in main SC: %i\n", card(BUSCC);
-printf{LOG_INFO} "Nb of busses in other SCs: %Q\n",card(BUS2)-card(BUSCC);
+printf{LOG_INFO} "Nb of busses in other SCs: %i\n",card(BUS_ELIGIBLE diff BUSCC);
 printf "\n";
 
 if 1 in LOG_INFO then {
   display
     maximal_voltage_upper_bound, minimal_voltage_lower_bound,
-    card(SUBSTATIONS),card(BUS),card(BUS2),card(BUSCC),card(BUS2 diff BUSCC),card(BUSVV),
+    card(SUBSTATIONS),card(BUS),card(BUSCC),card(BUS_ELIGIBLE diff BUSCC),card(BUSVV),
     card(BRANCH),card(BRANCHCC),card(BRANCHZNULL),card(BRANCHCC diff BRANCHZNULL),
     card(UNIT),card(UNITCC),card(UNITON),card(UNITON diff UNIT_FIXQ),card(UNIT_FIXQ),
     card(LOAD),card(LOADCC),
