@@ -121,9 +121,9 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
         assertEquals(OpenReacStatus.OK, result.getStatus());
         assertEquals(4, Integer.parseInt(result.getIndicators().get("nb_branch_in_data_file")));
         // verify opened branches are considered in optimization
-        assertEquals(4, Integer.parseInt(result.getIndicators().get("nb_branch_in_AC_CC")));
-        assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_branch_in_AC_CC_side_1_opened")));
-        assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_branch_in_AC_CC_side_2_opened")));
+        assertEquals(4, Integer.parseInt(result.getIndicators().get("nb_branch_in_main_SC")));
+        assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_branch_in_main_SC_side_1_opened")));
+        assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_branch_in_main_SC_side_2_opened")));
         // verify opened branches can be considered as zero impedance branches
         assertEquals(2, Integer.parseInt(result.getIndicators().get("nb_branch_with_nonsmall_impedance")));
         assertEquals(2, Integer.parseInt(result.getIndicators().get("nb_branch_with_zero_or_small_impedance")));
@@ -139,7 +139,7 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
 
         assertEquals(OpenReacStatus.OK, result.getStatus());
         assertEquals(3, Integer.parseInt(result.getIndicators().get("nb_unit_in_data_file")));
-        assertEquals(3, Integer.parseInt(result.getIndicators().get("nb_unit_in_AC_CC")));
+        assertEquals(3, Integer.parseInt(result.getIndicators().get("nb_unit_in_main_SC")));
         assertEquals(3, Integer.parseInt(result.getIndicators().get("nb_unit_up_and_running")));
         // verify that only the generators indicated as constant and with defined target Q are fixed in optimization
         assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_unit_with_fixed_reactive_power")));
@@ -221,7 +221,7 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
 
         assertEquals(OpenReacStatus.OK, result.getStatus());
         assertEquals(3, Integer.parseInt(result.getIndicators().get("nb_shunt_in_data_file")));
-        assertEquals(3, Integer.parseInt(result.getIndicators().get("nb_shunt_connectable_or_in_AC_CC")));
+        assertEquals(3, Integer.parseInt(result.getIndicators().get("nb_shunt_connectable_or_in_main_SC")));
         // verify disconnected shunt, and not optimized, is not considered in shunts with fixed values
         assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_shunt_with_fixed_value")));
         // verify only one shunt has been optimized (even if it was disconnected)
@@ -245,7 +245,7 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
 
         assertEquals(OpenReacStatus.OK, result.getStatus());
         assertEquals(2, Integer.parseInt(result.getIndicators().get("nb_svc_in_data_file")));
-        assertEquals(2, Integer.parseInt(result.getIndicators().get("nb_svc_in_AC_CC")));
+        assertEquals(2, Integer.parseInt(result.getIndicators().get("nb_svc_in_main_SC")));
         // verify only one svc is regulating
         assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_svc_up_and_operating")));
     }
