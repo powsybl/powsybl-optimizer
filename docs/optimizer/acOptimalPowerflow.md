@@ -35,7 +35,7 @@ In particular, the user can indicate which buses will have associated **reactive
 , expressing the excess (resp. shortfall) of reactive power produced in bus $i$, and used to ensure reactive power balance. 
 To do so, these buses must be specified in parameter file `param_buses_with_reactive_slack.txt`, and `buses_with_reactive_slacks` must be set to $\text{CONFIGURED}$.
 
-The ACOPF involves the following constraints, in addition to the slack constraint $(1)$ introduced in the [Slack bus and main connex component](slackBusMainConnexComponent.md) part:
+The ACOPF involves the following constraints, in addition to the slack constraint $(1)$ introduced in the [Slack bus and main synchronous component](slackBusMainSynchronousComponent.md) part:
 
 $$\sum\limits_{j\in v(i)} \boldsymbol{p_{ij}} = P_i^{in} - \sum\limits_{g}\boldsymbol{P_{i,g}}, \quad i\in\text{BUSCC} \quad (5)$$
 
@@ -117,7 +117,7 @@ A bundle is tied through $(7)$ only if **all** its members are optimized variabl
 
 This grouping interacts with the second optimization after tap rounding (see [Solving](#solving)): constraint $(7)$ is relaxed before rounding, so each transformer is rounded to the nearest tap of its own table independently. Members of a bundle may therefore end up on different discrete taps if their tap tables differ; the shared ratio is guaranteed only for the continuous solving.
 
-Finally, if at solve time a member of a bundle carries no reactive loop flow at all — one of its sides is opened, or it lies outside the main connex component — the whole bundle is relaxed: its members are optimized independently for that run, and the event is logged. A member that is in service but that the model cannot move (near-zero impedance, single-ratio tap table) behaves instead like a non-optimized member above: its frozen effective ratio pins the bundle.
+Finally, if at solve time a member of a bundle carries no reactive loop flow at all — one of its sides is opened, or it lies outside the main synchronous component — the whole bundle is relaxed: its members are optimized independently for that run, and the event is logged. A member that is in service but that the model cannot move (near-zero impedance, single-ratio tap table) behaves instead like a non-optimized member above: its frozen effective ratio pins the bundle.
 
 ## Objective function
 

@@ -7,10 +7,13 @@ The code of the reactive OPF is divided into several files, each serving a speci
   
 - `iidm_importer.mod`, `or_param_importer.mod` and `commons.mod` define the sets and parameters of the optimization.
 
-- `connected_component.mod`, `dcopf.mod` and `acopf.mod` define the optimization problems solved in `reactiveopf.run`.  
-  See [Slack bus and main connex components](slackBusMainConnexComponent.md), [DC optimal power flow](dcOptimalPowerflow.md) and [AC optimal power flow](acOptimalPowerflow.md), respectively.
+- `network_info.run` checks the consistency of the main synchronous component, computes the slack bus when it is not provided in the input data, and prints general information about the network.  
+  See [Slack bus and main synchronous component](slackBusMainSynchronousComponent.md).
   
-- `connected_component.run`, `dcopf.run`, `acopf_preprocessing.run` and `acopf.run` orchestrate the optimization and its post-processing.
+- `dcopf.mod` and `acopf.mod` define the optimization problems solved in `reactiveopf.run`.  
+  See [DC optimal power flow](dcOptimalPowerflow.md) and [AC optimal power flow](acOptimalPowerflow.md), respectively.
+  
+- `dcopf.run`, `acopf_preprocessing.run` and `acopf.run` orchestrate the optimization and its post-processing.
 
 - `reactiveopfoutput.mod` exports result files if the execution of `reactiveopf.run` is successful.  
   See [Outputs](outputs.md#in-case-of-convergence).
