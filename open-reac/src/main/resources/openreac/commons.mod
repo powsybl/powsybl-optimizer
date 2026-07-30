@@ -84,7 +84,7 @@ set UNITON := {(g,n) in UNITCC : abs(unit_Pc[1,g,n]) >= Pnull};
 # Batteries in voltage regulation mode:
 # Contrary to units, the selection is NOT based on an active power threshold: a
 # battery's reactive capability is carried by its converter, which can be online
-# even at P=0. A battery is controllable iff it lies in the main connected
+# even at P=0. A battery is controllable iff it lies in the main synchronous
 # component AND is flagged as regulating voltage. Non-regulating batteries keep
 # their fixed q0 injection (cf. acopf.mod reactive balance).
 set BATTERYON := {(b,n) in BATTERYCC : battery_vregul[1,b,n] == "true"};

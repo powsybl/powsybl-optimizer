@@ -16,8 +16,13 @@ The sets of buses and branches belonging to the main synchronous component are d
 If $BUSCC$ is empty, no bus is left to optimize: the script `reactiveopfexit.run` is executed (see [In case of inconsistency](outputs.md#in-case-of-inconsistency)) and the execution is stopped.
 
 Note that buses whose nominal voltage is below `epsilon_nominal_voltage` are discarded even when they belong to the main synchronous component.
-If such a bus is the only link between two parts of the component, $BUSCC$ is not connected in $BRANCHCC$ and the angle reference $(1)$ only applies to the island containing the slack bus.
-Since the active power balance has no slack variable and generation is scaled by a single global $\alpha$ when `coeff_alpha` is $1$, its default value (see [Constraints](acOptimalPowerflow.md#constraints)), an island without its own angle reference makes the DCOPF or the ACOPF infeasible **even when it is balanced on its own**.
+If such a bus is the only link between two parts of the component, $BUSCC$ is split into islands that are no longer connected in $BRANCHCC$.
+The angle reference $(1)$ then only applies to the island containing the slack bus, which is harmless in itself: the angles of the other islands are simply free within their bounds.
+The consequence is on the active power balance, and it differs between the two problems:
+
+- the DCOPF has one slack variable per bus and unbounded generation, so it balances each island independently. It fails only if an island cannot be balanced at all, typically because it contains no generating unit up and running (see [DC optimal power flow](dcOptimalPowerflow.md));
+- the ACOPF has no slack variable on its active power balance and, when `coeff_alpha` is $1$, its default value (see [Constraints](acOptimalPowerflow.md#constraints)), the generation of every unit is an affine function of a single global variable $\alpha$. One value of $\alpha$ must then balance every island at once, which only happens if all islands require the same $\alpha$. The ACOPF is therefore infeasible in the general case, **even when each island could be balanced on its own**.
+
 Lowering `epsilon_nominal_voltage` restores the discarded links.
 The number of discarded buses is exported as the indicator `nb_bus_dropped_in_main_SC`, and is recalled in the error message when the DCOPF turns out to be infeasible.
 
