@@ -16,8 +16,9 @@ The sets of buses and branches belonging to the main synchronous component are d
 If $BUSCC$ is empty, no bus is left to optimize: the script `reactiveopfexit.run` is executed (see [In case of inconsistency](outputs.md#in-case-of-inconsistency)) and the execution is stopped.
 
 Note that buses whose nominal voltage is below `epsilon_nominal_voltage` are discarded even when they belong to the main synchronous component.
-If such a bus is the only link between two parts of the component, $BUSCC$ is not connected in $BRANCHCC$.
-The angle reference $(1)$ then applies to a single island, and each other island has to be balanced on its own: the DCOPF or the ACOPF may fail, for instance when an island carries load but no generation.
+If such a bus is the only link between two parts of the component, $BUSCC$ is not connected in $BRANCHCC$ and the angle reference $(1)$ only applies to the island containing the slack bus.
+Since the active power balance has no slack variable and generation is scaled by a single global $\alpha$ when `coeff_alpha` is $1$, its default value (see [Constraints](acOptimalPowerflow.md#constraints)), an island without its own angle reference makes the DCOPF or the ACOPF infeasible **even when it is balanced on its own**.
+Lowering `epsilon_nominal_voltage` restores the discarded links.
 The number of discarded buses is exported as the indicator `nb_bus_dropped_in_main_SC`, and is recalled in the error message when the DCOPF turns out to be infeasible.
 
 ## Slack bus
@@ -39,6 +40,6 @@ It is selected as follows:
    In the event that no bus satisfies these conditions, the first bus of the component is selected.
    The indicator `slack_bus_origin` is then set to `FALLBACK`.
 
-A bus flagged as slack but located outside the main synchronous component is ignored, and the fallback applies.
+Buses flagged as slack outside $BUSCC$ are ignored: this includes buses of another synchronous component, of which a load flow typically flags one per component, as well as buses whose nominal voltage is below `epsilon_nominal_voltage`. The fallback applies only when none of the flagged buses belongs to $BUSCC$.
 
 The identifier of the bus finally used is exported as the indicator `slack_bus` in `reactiveopf_results_indic.txt` (see [Outputs](outputs.md#in-case-of-convergence)).

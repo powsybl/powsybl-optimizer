@@ -72,7 +72,7 @@ then {
       balance_pos[n], balance_neg[n];
 
   if card(MAIN_SC_DROPPED) > 0 then
-    printf{LOG_ERROR} "Note: %i buses of the main synchronous component were discarded by epsilon_nominal_voltage=%.2fkV. If one of them was the only link between two parts of the component, the optimized component is not connected and each island must be balanced on its own.\n",
+    printf{LOG_ERROR} "Note: %i buses of the main synchronous component were discarded by epsilon_nominal_voltage=%.2fkV. If one of them was the only link between two parts of the component, the optimized component is not connected and each island must be balanced on its own. Lowering epsilon_nominal_voltage restores the discarded links.\n",
       card(MAIN_SC_DROPPED), epsilon_nominal_voltage;
 
   let final_status := "NOK";
