@@ -18,8 +18,7 @@ If $BUSCC$ is empty, no bus is left to optimize: the script `reactiveopfexit.run
 Note that buses whose nominal voltage is below `epsilon_nominal_voltage` are discarded even when they belong to the main synchronous component.
 If such a bus is the only link between two parts of the component, $BUSCC$ is not connected in $BRANCHCC$.
 The angle reference $(1)$ then applies to a single island, and each other island has to be balanced on its own: the DCOPF or the ACOPF may fail, for instance when an island carries load but no generation.
-A warning is issued when at least one discarded bus carries more than one branch, which is a necessary condition for it to split the component.
-The counts are also exported as the indicators `nb_bus_dropped_in_main_SC` and `nb_bus_dropped_risky`.
+The number of discarded buses is exported as the indicator `nb_bus_dropped_in_main_SC`, and is recalled in the error message when the DCOPF turns out to be infeasible.
 
 ## Slack bus
 

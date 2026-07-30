@@ -134,7 +134,7 @@ class OpenReacAmplIOTest extends AbstractOpenReacRunnerTest {
             assertEquals(1, openReacResult.getVscModifications().size());
             assertEquals(7, openReacResult.getGeneratorModifications().size());
             assertEquals(3, openReacResult.getVoltageProfile().size());
-            assertEquals(80, openReacResult.getIndicators().size());
+            assertEquals(79, openReacResult.getIndicators().size());
 
             assertTrue(openReacResult.getReactiveSlacks().isEmpty());
         }
@@ -152,7 +152,7 @@ class OpenReacAmplIOTest extends AbstractOpenReacRunnerTest {
             OpenReacResult openReacResult = OpenReacRunner.run(network,
                     network.getVariantManager().getWorkingVariantId(), parameters, new OpenReacConfig(true),
                     computationManager);
-            assertEquals(91, openReacResult.getIndicators().size());
+            assertEquals(90, openReacResult.getIndicators().size());
             assertEquals("Tue Dec 17 18:49:34 2024", openReacResult.getIndicators().get("ctime_start"));
             assertEquals(0, Integer.parseInt(openReacResult.getIndicators().get("last_solve_result_num")));
             assertEquals(5, Integer.parseInt(openReacResult.getIndicators().get("nb_iter_last")));
