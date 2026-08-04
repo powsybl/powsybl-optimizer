@@ -87,7 +87,7 @@ printf{LOG_INFO} "\n############################################################
 printf{LOG_INFO} "** Network information\n";
 
 for{n in BUS_ELIGIBLE diff BUSCC}
-  printf{LOG_WARNING} "Bus %Q in substation %Q (Vnomi=%.2fkV, country=%Q) is out of main SC\n",
+  printf{LOG_DEBUG} "Bus %Q in substation %Q (Vnomi=%.2fkV, country=%Q) is out of main SC\n",
     bus_id[1,n], substation_id[1,bus_substation[1,n]],
     substation_Vnomi[1,bus_substation[1,n]], substation_country[1,bus_substation[1,n]];
 printf{LOG_INFO} "Nb of busses in main SC: %i\n", card(BUSCC);
