@@ -132,7 +132,7 @@ $$
 \text{minimize} \quad &
 \sum\limits_{i} \left( w_{\sigma}^{+}\,\boldsymbol{\sigma_{i}^{Q,+}} + w_{\sigma}^{-}\,\boldsymbol{\sigma_{i}^{Q,-}} \right) \\
 & + w_{P} \sum\limits_{g} \left( \alpha \boldsymbol{P_{i,g}} + (1-\alpha)\left(\frac{\boldsymbol{P_{i,g}} - P_{i,g}^t}{\max(1, |P_{i,g}^t|)}\right)^2 \right) \\
-& + w_{V}^{\rho} \sum\limits_{i} \left( \boldsymbol{V_i} - (1-\rho)V_{i}^{\text{min,c}} + \rho V_{i}^{\text{max,c}} \right)^2 + w_{V}^{0} \sum\limits_{i} (\boldsymbol{V_i} - V_i^t)^2 \\
+& + w_{V}^{\rho} \sum\limits_{i} \left( \boldsymbol{V_i} - \left( (1-\rho)V_{i}^{\text{min,c}} + \rho V_{i}^{\text{max,c}} \right) \right)^2 + w_{V}^{0} \sum\limits_{i} (\boldsymbol{V_i} - V_i^t)^2 \\
 & + w_{Q} \sum\limits_{g} \left(\frac{\boldsymbol{Q_{i,g}}}{\max(1,Q_{g}^{\text{min,c}}, Q_{g}^{\text{max,c}})}\right)^2
 + w_{Q} \sum\limits_{b} \left(\frac{\boldsymbol{Q_{i,b}}}{\max(1,Q_{b}^{\text{min,c}}, Q_{b}^{\text{max,c}})}\right)^2 \\
 & + w_{\rho} \sum\limits_{ij} (\boldsymbol{\rho_{ij}} - \rho_{ij})^2
@@ -150,7 +150,7 @@ The high default weight on the reactive slacks drives their sum towards $0$, ens
 
 The three remaining weights — $w_{P}$, $w_{V}^{\rho}$ and $w_{V}^{0}$ — have a default value that depends on the `objective_choice` parameter when they are left unset: the term matching the selected objective receives a weight of $1$, while the other two receive $0.01$. Specifically, if `objective_choice` takes on:
 - $0$ (`MIN_GENERATION`), the minimization of active power production $\sum\limits_{i,g}\boldsymbol{P_{i,g}}$ is prioritized ($w_{P} = 1$).
-- $1$ (`BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT`), the minimization of $\sum\limits_{i} \boldsymbol{V_i}-(\rho V_i^{c,max} - (1-\rho)V_i^{c,min})^2$ is prioritized ($w_{V}^{\rho} = 1$), where $\rho$ equals the configurable parameter `ratio_voltage_target`.
+- $1$ (`BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT`), the minimization of $\sum\limits_{i} \left( \boldsymbol{V_i} - \left( (1-\rho)V_{i}^{\text{min,c}} + \rho V_{i}^{\text{max,c}} \right) \right)^2$ is prioritized ($w_{V}^{\rho} = 1$), where $\rho$ equals the configurable parameter `ratio_voltage_target`.
 - $2$ (`SPECIFIC_VOLTAGE_PROFILE`), the minimization of $\sum\limits_{i} (\boldsymbol{V_i} - V_i^t)^2$ is prioritized ($w_{V}^{0} = 1$).
 
 Setting an explicit value on any of these three weights overrides this objective-dependent default, regardless of the selected objective. As all weights accept any value $\geq 0$, a term can be fully neutralized by setting its weight to $0$.
