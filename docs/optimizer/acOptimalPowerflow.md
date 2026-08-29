@@ -8,7 +8,7 @@ Then, the following values will be variable in the optimization:
 - $\boldsymbol{P_{i,g}}$ (resp. $\boldsymbol{Q_{i,g}}$) the active (resp. reactive) power produced by variable generator $g$ of bus $i$.
 - $\boldsymbol{Q_{i,vsc}}$ the reactive power produced by voltage source converter stations $vsc$ of bus $i$.
 - $\boldsymbol{Q_{i,b}}$ the reactive power produced by battery $b$ of bus $i$ that regulates voltage.
-- $\boldsymbol{b_{i,s}}$ (resp. $\boldsymbol{b_{i,svc}}$) the susceptance of shunt $s$ (resp. of static var compensator $svc$) of bus $i$.
+- $\boldsymbol{b_{i,s}}$ (resp. $\boldsymbol{b_{i,svc}}$) the susceptance of shunt $s$ (resp. of static var compensator $svc$) of bus $i$. For the shunts, only those specified as variable by the user (see [Configuration of the run](inputs.md#configuration-of-the-run)) are optimized.
 - $\boldsymbol{\rho_{ij}}$ the transformer ratio of the ratio tap changer on branch $ij$, 
 specified as variable by the user (see [Configuration of the run](inputs.md#configuration-of-the-run)).
 
@@ -17,16 +17,18 @@ Please note that:
   even if the user designates these generators as fixed in the parameter file `param_generators_reactive.txt` (see [Configuration of the run](inputs.md#configuration-of-the-run)).
   Therefore, when the optimization results are exported, **these generators are exported with a reactive power target of $0$**.
 - **Neither current limits nor power limits** on branches are considered in the optimization.
-- Branches with one side open are considered in optimization. 
+- Branches with one side open are considered in optimization. However, tap changer ratios cannot be optimized on these branches.
 - The voltage controls are not taken into account in the optimization model, as its purpose is to determine them (see [OpenReac](index.md#openreac)).
   However, the remote control of generators, static var compensators and batteries is taken into account in the export of equipment's voltage target 
   (see [Outputs](outputs.md#in-case-of-convergence)).
 - The transformation ratios $\boldsymbol{\rho_{ij}}$ and the shunt susceptances $\boldsymbol{b_{i,s}}$ are continuous in the optimization. 
 At the end, these variables may differ from the values associated with the discrete taps of the equipment (see [Network data](inputs.md#network-data)), and rounding may be necessary. 
-In the case of transformers, a second optimization can be carried out to adjust the voltage plan to the new transformation ratios after rounding (see [Solving](acOptimalPowerflow.md#solving)). 
+In the case of transformers, a second optimization can be carried out to adjust the voltage plan to the new transformation ratios after rounding (see [Solving](acOptimalPowerflow.md#solving)).
 - Transformers connected in parallel are grouped and constrained to a common transformation ratio (see [Parallel transformers](#parallel-transformers)). 
+- Shunts that are disconnected at the beginning of the optimization but are specified as variable (see [Configuration of the run](inputs.md#configuration-of-the-run)) can be reconnected and optimized.
 - Only batteries that regulate voltage (as flagged in `ampl_network_batteries.txt`) have a variable reactive power; the reactive power of other batteries is fixed at its input value. 
   The active power of batteries is never optimized.
+- The AC emulation of HVDC lines is not considered in the optimization. Also, the losses due to the line and the converter stations themselves are not accounted for in the target used in the optimization.
 
 ## Constraints
 
@@ -130,7 +132,7 @@ $$
 \text{minimize} \quad &
 \sum\limits_{i} \left( w_{\sigma}^{+}\,\boldsymbol{\sigma_{i}^{Q,+}} + w_{\sigma}^{-}\,\boldsymbol{\sigma_{i}^{Q,-}} \right) \\
 & + w_{P} \sum\limits_{g} \left( \alpha \boldsymbol{P_{i,g}} + (1-\alpha)\left(\frac{\boldsymbol{P_{i,g}} - P_{i,g}^t}{\max(1, |P_{i,g}^t|)}\right)^2 \right) \\
-& + w_{V}^{\rho} \sum\limits_{i} \left( \boldsymbol{V_i} - (1-\rho)V_{i}^{\text{min,c}} + \rho V_{i}^{\text{max,c}} \right)^2 + w_{V}^{0} \sum\limits_{i} (\boldsymbol{V_i} - V_i^t)^2 \\
+& + w_{V}^{\rho} \sum\limits_{i} \left( \boldsymbol{V_i} - \left( (1-\rho)V_{i}^{\text{min,c}} + \rho V_{i}^{\text{max,c}} \right) \right)^2 + w_{V}^{0} \sum\limits_{i} (\boldsymbol{V_i} - V_i^t)^2 \\
 & + w_{Q} \sum\limits_{g} \left(\frac{\boldsymbol{Q_{i,g}}}{\max(1,Q_{g}^{\text{min,c}}, Q_{g}^{\text{max,c}})}\right)^2
 + w_{Q} \sum\limits_{b} \left(\frac{\boldsymbol{Q_{i,b}}}{\max(1,Q_{b}^{\text{min,c}}, Q_{b}^{\text{max,c}})}\right)^2 \\
 & + w_{\rho} \sum\limits_{ij} (\boldsymbol{\rho_{ij}} - \rho_{ij})^2
@@ -148,7 +150,7 @@ The high default weight on the reactive slacks drives their sum towards $0$, ens
 
 The three remaining weights — $w_{P}$, $w_{V}^{\rho}$ and $w_{V}^{0}$ — have a default value that depends on the `objective_choice` parameter when they are left unset: the term matching the selected objective receives a weight of $1$, while the other two receive $0.01$. Specifically, if `objective_choice` takes on:
 - $0$ (`MIN_GENERATION`), the minimization of active power production $\sum\limits_{i,g}\boldsymbol{P_{i,g}}$ is prioritized ($w_{P} = 1$).
-- $1$ (`BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT`), the minimization of $\sum\limits_{i} \boldsymbol{V_i}-(\rho V_i^{c,max} - (1-\rho)V_i^{c,min})^2$ is prioritized ($w_{V}^{\rho} = 1$), where $\rho$ equals the configurable parameter `ratio_voltage_target`.
+- $1$ (`BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT`), the minimization of $\sum\limits_{i} \left( \boldsymbol{V_i} - \left( (1-\rho)V_{i}^{\text{min,c}} + \rho V_{i}^{\text{max,c}} \right) \right)^2$ is prioritized ($w_{V}^{\rho} = 1$), where $\rho$ equals the configurable parameter `ratio_voltage_target`.
 - $2$ (`SPECIFIC_VOLTAGE_PROFILE`), the minimization of $\sum\limits_{i} (\boldsymbol{V_i} - V_i^t)^2$ is prioritized ($w_{V}^{0} = 1$).
 
 Setting an explicit value on any of these three weights overrides this objective-dependent default, regardless of the selected objective. As all weights accept any value $\geq 0$, a term can be fully neutralized by setting its weight to $0$.
@@ -157,6 +159,7 @@ Setting an explicit value on any of these three weights overrides this objective
 
 Before solving the ACOPF, the voltage magnitudes $\boldsymbol{V_i}$ are warm-started with $V_i^t$
 (specified in `ampl_network_buses.txt`), as well as the voltage phases $\boldsymbol{\theta_i}$ with the results of the DCOPF (see [DC optimal powerflow](dcOptimalPowerflow.md)).
+Some setpoints are also warm-started with the values specified in the AMPL export (see [Network data](inputs.md#network-data)).
 Please also note that a scaling is applied with user-defined values before solving the ACOPF.
 
 A solving is considered as successful if the non-linear solver employed (see [Non-linear optimization solver](../gettingStarted.md#non-linear-optimization-solver)) finds a feasible approximate solution (**even if the sum of slacks is important**).
@@ -169,3 +172,14 @@ Without this optimization, note that power flows can vary significantly before a
 
 If the ACOPF resolution(s) are successfully completed, the script `reactiveopfoutput.run` is executed (see [In case of convergence](outputs.md#in-case-of-convergence)). 
 Otherwise, the script `reactiveopfexit.run` is executed (see [In case of inconsistency](outputs.md#in-case-of-inconsistency)).
+
+## Troubleshooting
+
+If the ACOPF solving does not converge, the following elements are provided as guidance to help the user:
+- The parameter `buses_with_reactive_slacks` should allow for reactive slack on a sufficient number of buses.
+  If the network is unbalanced and too few buses can admit slack, this may prevent the optimization from converging (see [Constraints](acOptimalPowerflow.md#constraints)).
+  It is recommended to use the default configuration, which allows slacks on all network buses.
+- Changing the value of `coeff_alpha` can provide more flexibility in adjusting the active power setpoints of generators.
+  The closer it is to zero, the more freedom the setpoints have (see [Configuration of the run](inputs.md#configuration-of-the-run)).
+- Adjusting the optimization scaling parameters (see [Configuration of the run](inputs.md#configuration-of-the-run)) can help improve convergence.
+  The default parameters are based on empirical tests using real data. Nevertheless, changing these values is not recommended unless the user clearly understands what they are doing.
