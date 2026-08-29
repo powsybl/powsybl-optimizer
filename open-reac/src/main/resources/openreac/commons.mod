@@ -56,11 +56,11 @@ set BUSCC := {n in BUS_ELIGIBLE : bus_SC[1,n] == 0};
 set MAIN_SC_DROPPED := (setof {(1,n) in BUS : n >= 0 and bus_SC[1,n] == 0} n) diff BUS_ELIGIBLE;
 # Buses flagged as slack in the input data (SlackTerminal extension in IIDM), restricted to BUSCC
 set SLACK_BUSES := {n in BUSCC : bus_slack[1,n] == "true"};
-# Branches with bus on side 1 and 2 in CC
+# Branches with both buses in the main SC
 set BRANCHCC := setof {(1,qq,m,n) in BRANCH: m in BUSCC and n in BUSCC} (qq,m,n);
-# Branches with bus on side 1 in CC, and disconnected bus on side 2
+# Branches with bus on side 1 in the main SC, and disconnected bus on side 2
 set BRANCHCC_WITH_SIDE_2_OPENED := setof {(1,qq,m,n) in BRANCH: m in BUSCC and n == -1 and m != n} (qq,m,n);
-# Branches with bus on side 2 in CC, and disconnected bus on side 1
+# Branches with bus on side 2 in the main SC, and disconnected bus on side 1
 set BRANCHCC_WITH_SIDE_1_OPENED := setof {(1,qq,m,n) in BRANCH: m == -1 and n in BUSCC and m != n} (qq,m,n);
 set ALL_BRANCHCC := BRANCHCC union BRANCHCC_WITH_SIDE_2_OPENED union BRANCHCC_WITH_SIDE_1_OPENED;
 
