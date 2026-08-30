@@ -1,7 +1,7 @@
 final_status OK
 dcopf_status OK
 slack_bus 'UNDEFINED'
-slack_bus_origin FALLBACK
+slack_bus_origin UNDEFINED
 
 log_level_ampl INFO
 log_level_knitro 2
