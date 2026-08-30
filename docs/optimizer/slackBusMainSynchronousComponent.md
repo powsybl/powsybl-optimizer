@@ -7,6 +7,8 @@ The OPFs are executed on the **main synchronous component** of the network: the 
 The `sc` value is computed by PowSyBl on the IIDM network and exported by the AMPL exporter: OpenReac does not recompute it.
 Synchronous components are computed on AC branches only, so **buses connected to the rest of the network only by HVDC lines are excluded**.
 Components are numbered by decreasing size, hence $0$ for the main one.
+Note that these numbers are global to the network, whereas the AMPL export can be restricted to the main connex component (through the `AmplExportConfig` export scope; the default scope used by OpenReac exports all the components).
+With such a restricted export, no bus with `sc` $= 0$ may remain when the largest synchronous component lies in another connex one, and the run then stops on an empty main synchronous component.
 
 The connex component (`cc`) is deliberately not used as a filter.
 Connex components are computed across HVDC links, so they may merge several synchronous areas, which an ACOPF cannot solve together.
