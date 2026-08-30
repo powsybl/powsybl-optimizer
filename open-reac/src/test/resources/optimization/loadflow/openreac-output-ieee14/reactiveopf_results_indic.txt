@@ -1,7 +1,7 @@
 final_status OK
 dcopf_status OK
-slack_bus 'UNDEFINED'
-slack_bus_origin FALLBACK
+slack_bus 'VL1_0'
+slack_bus_origin DATA
 
 log_level_ampl INFO
 log_level_knitro 2
@@ -27,6 +27,13 @@ default_constraint_scaling_factor 1.000000
 reactive_slack_variable_scaling_factor 0.100000
 transformer_ratio_variable_scaling_factor 0.001000
 shunt_variable_scaling_factor 0.100000
+penalty_invest_rea_pos 10.000000
+penalty_invest_rea_neg 10.000000
+penalty_active_power 1.000000
+penalty_units_reactive 0.100000
+penalty_transfo_ratio 0.100000
+penalty_voltage_target_ratio 0.010000
+penalty_voltage_target_data 0.010000
 optimization_after_rounding false
 
 nb_substations 14
@@ -39,6 +46,8 @@ nb_bus_with_reactive_slacks 14
 nb_bus_without_reactive_slacks 0
 nb_branch_in_data_file 20
 nb_branch_in_main_SC 20
+nb_branch_in_main_SC_side_1_opened 0
+nb_branch_in_main_SC_side_2_opened 0
 nb_branch_with_nonsmall_impedance 20
 nb_branch_with_zero_or_small_impedance 0
 nb_unit_in_data_file 5
@@ -54,6 +63,11 @@ nb_shunt_with_fixed_value 1
 nb_shunt_with_variable_value 0
 nb_transformers_with_variable_ratio 0
 nb_transformers_with_fixed_ratio 0
+nb_parallel_bundles 0
+nb_parallel_bundles_tied 0
+nb_parallel_bundles_relaxed 0
+nb_parallel_bundles_degenerate 0
+nb_parallel_fixed_transformers 0
 nb_svc_in_data_file 0
 nb_svc_in_main_SC 0
 nb_svc_up_and_operating 0
@@ -62,19 +76,20 @@ nb_vsc_converter_up_and_running 0
 nb_lcc_converter_in_data_file 0
 nb_lcc_converter_up_and_running 0
 nb_batteries 0
+nb_batteries_with_variable_reactive_power 0
 sum_batteries_pmax 0.0
 sum_batteries_pmin 0.0
 
-max_teta_dc 0.19
-max_teta_ac 0.17
-teta_max 3.19
-min_teta_dc -0.12
-min_teta_ac -0.11
-teta_min -3.12
-max_delta_teta_dc 0.159330
-max_delta_teta_ac 0.140559
-min_delta_teta_dc -0.041368
-min_delta_teta_ac -0.041533
+max_teta_dc 0.00
+max_teta_ac 0.00
+teta_max 3.00
+min_teta_dc -0.30
+min_teta_ac -0.14
+teta_min -3.30
+max_delta_teta_dc 0.159381
+max_delta_teta_ac 0.076647
+min_delta_teta_dc -0.041401
+min_delta_teta_ac -0.018540
 
 nb_reactive_slacks 0
 nb_slacks_condensator 0

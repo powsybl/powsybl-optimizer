@@ -1,7 +1,7 @@
 final_status OK
 dcopf_status OK
-slack_bus 'UNDEFINED'
-slack_bus_origin FALLBACK
+slack_bus 'VL1_0'
+slack_bus_origin DATA
 
 ctime_start 'Tue Dec 17 18:49:34 2024'
 last_solve_result_num 0

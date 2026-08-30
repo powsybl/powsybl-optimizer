@@ -1,20 +1,20 @@
 final_status NOK
 dcopf_status OK
-slack_bus 'UNDEFINED'
+slack_bus 'VL_2_0'
 slack_bus_origin FALLBACK
 
-ctime_start 'Wed Apr 02 18:02:20 2025'
+ctime_start 'Sun Aug 30 04:19:19 2026'
 last_solve_result_num 200
-nb_iter_last 179
-nb_iter_total 179
-_ampl_elapsed_time 0.080000
-_total_solve_time 0.062500
+nb_iter_last 114
+nb_iter_total 114
+_ampl_elapsed_time 0.029742
+_total_solve_time 0.038223
 total_time 0
 
-operatingSystem windows
-OS 'Windows_NT'
-COMPUTERNAME 'a computer name'
-directory 'a directory'
+operatingSystem linux
+SHELL '/bin/bash'
+HOSTNAME ''
+directory '/tmp/ampl_5558580539338191813'
 
 log_level_ampl DEBUG
 log_level_knitro 2
@@ -40,6 +40,13 @@ default_constraint_scaling_factor 1.000000
 reactive_slack_variable_scaling_factor 0.100000
 transformer_ratio_variable_scaling_factor 0.001000
 shunt_variable_scaling_factor 0.100000
+penalty_invest_rea_pos 10.000000
+penalty_invest_rea_neg 10.000000
+penalty_active_power 1.000000
+penalty_units_reactive 0.100000
+penalty_transfo_ratio 0.100000
+penalty_voltage_target_ratio 0.010000
+penalty_voltage_target_data 0.010000
 optimization_after_rounding true
 
 nb_substations 3
@@ -69,6 +76,11 @@ nb_shunt_with_fixed_value 0
 nb_shunt_with_variable_value 0
 nb_transformers_with_variable_ratio 1
 nb_transformers_with_fixed_ratio 1
+nb_parallel_bundles 1
+nb_parallel_bundles_tied 0
+nb_parallel_bundles_relaxed 0
+nb_parallel_bundles_degenerate 1
+nb_parallel_fixed_transformers 1
 nb_svc_in_data_file 0
 nb_svc_in_main_SC 0
 nb_svc_up_and_operating 0
@@ -77,19 +89,20 @@ nb_vsc_converter_up_and_running 0
 nb_lcc_converter_in_data_file 0
 nb_lcc_converter_up_and_running 0
 nb_batteries 0
+nb_batteries_with_variable_reactive_power 0
 sum_batteries_pmax 0.0
 sum_batteries_pmin 0.0
 
 max_teta_dc 0.02
-max_teta_ac 0.16
+max_teta_ac 0.18
 teta_max 3.02
 min_teta_dc -0.07
 min_teta_ac 0.00
 teta_min -3.07
 max_delta_teta_dc 0.074380
-max_delta_teta_ac 0.025273
+max_delta_teta_ac 0.026774
 min_delta_teta_dc 0.015725
-min_delta_teta_ac -0.156625
+min_delta_teta_ac -0.181138
 
 nb_reactive_slacks 0
 nb_slacks_condensator 0
