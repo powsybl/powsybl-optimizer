@@ -1,0 +1,41 @@
+final_status NOK
+errorMessage 'Main synchronous component is empty'
+ctime_start 'Sun Aug 30 04:18:59 2026'
+
+dcopf_status UNKNOWN
+slack_bus 'UNDEFINED'
+slack_bus_origin UNDEFINED
+operatingSystem linux
+SHELL '/bin/bash'
+HOSTNAME ''
+directory '/tmp/ampl_16470405768592220900'
+
+log_level_ampl INFO
+log_level_knitro 2
+Pnull 0.010000
+Znull 0.000100
+epsilon_nominal_voltage 1.000000
+min_plausible_low_voltage_limit 0.500000
+max_plausible_high_voltage_limit 1.500000
+ignore_voltage_bounds 0.000000
+buses_with_reactive_slacks ALL
+PQmax 9000.000000
+defaultPmax 1000.000000
+defaultPmin 0.000000
+defaultQmaxPmaxRatio 0.300000
+defaultQmin -300.000000
+defaultQmax 300.000000
+minimalQPrange 1.000000
+default_variable_scaling_factor 1.000000
+default_constraint_scaling_factor 1.000000
+reactive_slack_variable_scaling_factor 0.100000
+transformer_ratio_variable_scaling_factor 0.001000
+shunt_variable_scaling_factor 0.100000
+penalty_invest_rea_pos 10.000000
+penalty_invest_rea_neg 10.000000
+penalty_active_power 1.000000
+penalty_units_reactive 0.100000
+penalty_transfo_ratio 0.100000
+penalty_voltage_target_ratio 0.010000
+penalty_voltage_target_data 0.010000
+optimization_after_rounding false
