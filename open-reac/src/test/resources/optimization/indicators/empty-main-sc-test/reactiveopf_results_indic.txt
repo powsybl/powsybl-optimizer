@@ -1,6 +1,6 @@
 final_status NOK
 errorMessage 'Main synchronous component is empty'
-ctime_start 'Sun Aug 30 04:18:59 2026'
+ctime_start 'Mon Aug 31 09:43:48 2026'
 
 dcopf_status UNKNOWN
 slack_bus 'UNDEFINED'
@@ -8,7 +8,7 @@ slack_bus_origin UNDEFINED
 operatingSystem linux
 SHELL '/bin/bash'
 HOSTNAME ''
-directory '/tmp/ampl_16470405768592220900'
+directory 'a directory'
 
 log_level_ampl INFO
 log_level_knitro 2

@@ -3,18 +3,18 @@ dcopf_status OK
 slack_bus 'VL_2_0'
 slack_bus_origin FALLBACK
 
-ctime_start 'Sun Aug 30 04:19:19 2026'
+ctime_start 'Mon Aug 31 09:43:49 2026'
 last_solve_result_num 200
 nb_iter_last 114
 nb_iter_total 114
-_ampl_elapsed_time 0.029742
-_total_solve_time 0.038223
+_ampl_elapsed_time 0.028091
+_total_solve_time 0.034522
 total_time 0
 
 operatingSystem linux
 SHELL '/bin/bash'
 HOSTNAME ''
-directory '/tmp/ampl_5558580539338191813'
+directory 'a directory'
 
 log_level_ampl DEBUG
 log_level_knitro 2
