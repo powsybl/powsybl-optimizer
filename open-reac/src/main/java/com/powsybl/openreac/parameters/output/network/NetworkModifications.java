@@ -58,8 +58,8 @@ public class NetworkModifications {
         return shuntsOutput.getContinuousSusceptanceByShunt();
     }
 
-    public double getTotalReactiveDeviation() {
-        return shuntsOutput.getTotalReactiveDeviation();
+    public double getTotalAbsoluteReactiveDeviation() {
+        return shuntsOutput.getTotalAbsoluteReactiveDeviation();
     }
 
     public Map<String, Double> getReactiveDeviationByShunt() {

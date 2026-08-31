@@ -96,7 +96,7 @@ class ShuntCompensatorNetworkOutputTest {
      */
     @Test
     void continuousSusceptanceIsExposedPerShunt() throws IOException {
-        ShuntCompensatorNetworkOutput output = readRoundingOutputs();
+        ShuntCompensatorNetworkOutput output = readRoundingOutputs("/mock_outputs/reactiveopf_results_shunts_rounding.csv");
         Map<String, Double> continuousSusceptance = output.getContinuousSusceptanceByShunt();
         assertEquals(2, continuousSusceptance.size());
         assertEquals(1.5e-3, continuousSusceptance.get("SHUNT"), 1e-9);
@@ -104,28 +104,48 @@ class ShuntCompensatorNetworkOutputTest {
     }
 
     /**
-     * The retained sections are 1 and 2, so the discarded susceptances are 5e-4 S and 7.5e-4 S.
-     * At 400 kV those are 80 MVar and 120 MVar. Asserting on the reactive values pins the unit
-     * down: raw susceptances would be smaller by a factor 400^2.
+     * The retained sections are 1 and 2, so the deviations in susceptance are 1e-3 - 1.5e-3 = -5e-4 S
+     * and 3e-3 - 2.25e-3 = +7.5e-4 S: the discretization takes reactive power away from SHUNT and
+     * adds some to SHUNT2. At 400 kV those are -80 MVar and +120 MVar. Asserting on the reactive
+     * values pins the unit down: raw susceptances would be smaller by a factor 400^2.
      */
     @Test
-    void reactiveDeviationIsExpressedInMvar() throws IOException {
-        ShuntCompensatorNetworkOutput output = readRoundingOutputs();
+    void reactiveDeviationIsSignedAndInMvar() throws IOException {
+        ShuntCompensatorNetworkOutput output = readRoundingOutputs("/mock_outputs/reactiveopf_results_shunts_rounding.csv");
         Map<String, Double> reactiveDeviation = output.getReactiveDeviationByShunt();
         assertEquals(2, reactiveDeviation.size());
-        assertEquals(80, reactiveDeviation.get("SHUNT"), 1e-6);
+        assertEquals(-80, reactiveDeviation.get("SHUNT"), 1e-6);
         assertEquals(120, reactiveDeviation.get("SHUNT2"), 1e-6);
     }
 
+    /**
+     * The signed deviations are -80 and +120 MVar, so their net sum would be +40 MVar: asserting
+     * 200 pins the total as the sum of the absolute deviations, not as the net balance.
+     */
     @Test
-    void reactiveDeviationIsSummedOverShunts() throws IOException {
-        ShuntCompensatorNetworkOutput output = readRoundingOutputs();
-        double sumOverShunts = output.getReactiveDeviationByShunt().values().stream().mapToDouble(Double::doubleValue).sum();
-        assertEquals(200, output.getTotalReactiveDeviation(), 1e-6);
-        assertEquals(sumOverShunts, output.getTotalReactiveDeviation(), 1e-6);
+    void totalIsTheSumOfAbsoluteDeviations() throws IOException {
+        ShuntCompensatorNetworkOutput output = readRoundingOutputs("/mock_outputs/reactiveopf_results_shunts_rounding.csv");
+        double sumOfAbsoluteDeviations = output.getReactiveDeviationByShunt().values().stream().mapToDouble(Math::abs).sum();
+        assertEquals(200, output.getTotalAbsoluteReactiveDeviation(), 1e-6);
+        assertEquals(sumOfAbsoluteDeviations, output.getTotalAbsoluteReactiveDeviation(), 1e-6);
     }
 
-    private ShuntCompensatorNetworkOutput readRoundingOutputs() throws IOException {
+    /**
+     * A shunt carrying the AMPL invalid-value sentinel poisons the total to NaN, as documented,
+     * rather than being silently skipped from the sum. The per-shunt maps keep NaN for the
+     * culprit, which stays identifiable, and the valid shunt keeps its values.
+     */
+    @Test
+    void invalidValuePoisonsTotalToNan() throws IOException {
+        ShuntCompensatorNetworkOutput output = readRoundingOutputs("/mock_outputs/reactiveopf_results_shunts_rounding_invalid.csv");
+        assertTrue(Double.isNaN(output.getTotalAbsoluteReactiveDeviation()));
+        assertTrue(Double.isNaN(output.getContinuousSusceptanceByShunt().get("SHUNT")));
+        assertTrue(Double.isNaN(output.getReactiveDeviationByShunt().get("SHUNT")));
+        assertEquals(2.25e-3, output.getContinuousSusceptanceByShunt().get("SHUNT2"), 1e-9);
+        assertEquals(120, output.getReactiveDeviationByShunt().get("SHUNT2"), 1e-6);
+    }
+
+    private ShuntCompensatorNetworkOutput readRoundingOutputs(String resourceName) throws IOException {
         Network network = createWithTwoShuntCompensators();
         ShuntCompensatorNetworkOutput output = new ShuntCompensatorNetworkOutput(network, 0);
         StringToIntMapper<AmplSubset> mapper = new StringToIntMapper<>(AmplSubset.class);
@@ -134,7 +154,7 @@ class ShuntCompensatorNetworkOutputTest {
         for (int i = 0; i < 7; i++) {
             mapper.newInt(AmplSubset.BUS, "BUS" + i);
         }
-        try (InputStream input = getClass().getResourceAsStream("/mock_outputs/reactiveopf_results_shunts_rounding.csv");
+        try (InputStream input = getClass().getResourceAsStream(resourceName);
              InputStreamReader in = new InputStreamReader(input);
              BufferedReader reader = new BufferedReader(in)) {
             output.read(reader, mapper);

@@ -42,7 +42,7 @@ public class OpenReacResult {
     private final List<RatioTapPositionModification> tapPositionModifications;
     private final HashMap<String, Pair<Double, Double>> voltageProfile;
     private final Map<String, Double> continuousSusceptanceByShunt;
-    private final double totalReactiveDeviation;
+    private final double totalAbsoluteReactiveDeviation;
     private final Map<String, Double> reactiveDeviationByShunt;
     private boolean updateNetworkWithVoltages = true;
 
@@ -65,7 +65,7 @@ public class OpenReacResult {
         this.tapPositionModifications = List.copyOf(amplIOFiles.getNetworkModifications().getTapPositionModifications());
         this.voltageProfile = new HashMap<>(amplIOFiles.getVoltageProfileOutput().getVoltageProfile());
         this.continuousSusceptanceByShunt = Map.copyOf(amplIOFiles.getNetworkModifications().getContinuousSusceptanceByShunt());
-        this.totalReactiveDeviation = amplIOFiles.getNetworkModifications().getTotalReactiveDeviation();
+        this.totalAbsoluteReactiveDeviation = amplIOFiles.getNetworkModifications().getTotalAbsoluteReactiveDeviation();
         this.reactiveDeviationByShunt = Map.copyOf(amplIOFiles.getNetworkModifications().getReactiveDeviationByShunt());
     }
 
@@ -126,8 +126,8 @@ public class OpenReacResult {
         return continuousSusceptanceByShunt;
     }
 
-    public double getTotalReactiveDeviation() {
-        return totalReactiveDeviation;
+    public double getTotalAbsoluteReactiveDeviation() {
+        return totalAbsoluteReactiveDeviation;
     }
 
     public Map<String, Double> getReactiveDeviationByShunt() {
