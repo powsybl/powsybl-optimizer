@@ -207,7 +207,7 @@ sum{(qq,k,n) in BRANCHCC} base100MVA * V[k] * Red_Tran_Act_Dir[qq,k,n]
 # Reactive balance slack variables at configured nodes
 set BUSCC_SLACK := if buses_with_reactive_slacks == "ALL" then BUSCC
                     else if buses_with_reactive_slacks == "NO_GENERATION" then {n in BUSCC: (card{(g,n) in UNITON: (g,n) not in UNIT_FIXQ}==0 and card{(svc,n) in SVCON}==0 and card{(vscconv,n) in VSCCONVON}==0 and card{(b,n) in BATTERYON}==0)}
-                    else BUSCC inter PARAM_BUSES_WITH_REACTIVE_SLACK; # if = "CONFIGURED", buses given as parameter but in connex component
+                    else BUSCC inter PARAM_BUSES_WITH_REACTIVE_SLACK; # if = "CONFIGURED", buses given as parameter but in main synchronous component
 var slack1_shunt_B{BUSCC_SLACK} >= 0;
 var slack2_shunt_B{BUSCC_SLACK} >= 0;
 #subject to ctr_compl_slack_Q{PROBLEM_ACOPF,k in BUSCC_SLACK}: slack1_balance_Q[k] >= 0 complements slack2_balance_Q[k] >= 0;

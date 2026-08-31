@@ -39,20 +39,28 @@ param voltage_upper_bound{(t,s) in SUBSTATIONS} :=
 
 check {(t,s) in SUBSTATIONS}: voltage_lower_bound[t,s] < voltage_upper_bound[t,s];
 
-# Elements in main connex component
-set BUS2:= setof {(1,n) in BUS:
-  bus_CC[1,n] == 0
-  and n >= 0
+# Connected buses whose nominal voltage is high enough to be handled by the optimization
+set BUS_ELIGIBLE := setof {(1,n) in BUS:
+  n >= 0
   and substation_Vnomi[1,bus_substation[1,n]] >= epsilon_nominal_voltage
   } n;
-set BRANCH2:= setof {(1,qq,m,n) in BRANCH: m in BUS2 and n in BUS2} (qq,m,n);
 
-set BUSCC dimen 1 default {};
-# Branches with bus on side 1 and 2 in CC
-set BRANCHCC  := {(qq,m,n) in BRANCH2: m in BUSCC and n in BUSCC};
-# Branches with bus on side 1 in CC, and disconnected bus on side 2
+# Elements in main synchronous component (computed by IIDM, exported by the AMPL exporter).
+# Connex components are deliberately ignored: they are computed across HVDC links, which merge
+# synchronous areas that an ACOPF cannot solve together. The synchronous component is the only
+# relevant notion here, and it is always contained in a single connex component.
+set BUSCC := {n in BUS_ELIGIBLE : bus_SC[1,n] == 0};
+# Buses of the main SC dropped by the nominal voltage filter. If this set is empty, BUSCC is
+# connected in BRANCHCC. Otherwise it may not be, in which case ctr_null_phase_bus only fixes
+# the angles of one island and the other islands must be balanced on their own.
+set MAIN_SC_DROPPED := (setof {(1,n) in BUS : n >= 0 and bus_SC[1,n] == 0} n) diff BUS_ELIGIBLE;
+# Buses flagged as slack in the input data (SlackTerminal extension in IIDM), restricted to BUSCC
+set SLACK_BUSES := {n in BUSCC : bus_slack[1,n] == "true"};
+# Branches with both buses in the main SC
+set BRANCHCC := setof {(1,qq,m,n) in BRANCH: m in BUSCC and n in BUSCC} (qq,m,n);
+# Branches with bus on side 1 in the main SC, and disconnected bus on side 2
 set BRANCHCC_WITH_SIDE_2_OPENED := setof {(1,qq,m,n) in BRANCH: m in BUSCC and n == -1 and m != n} (qq,m,n);
-# Branches with bus on side 2 in CC, and disconnected bus on side 1
+# Branches with bus on side 2 in the main SC, and disconnected bus on side 1
 set BRANCHCC_WITH_SIDE_1_OPENED := setof {(1,qq,m,n) in BRANCH: m == -1 and n in BUSCC and m != n} (qq,m,n);
 set ALL_BRANCHCC := BRANCHCC union BRANCHCC_WITH_SIDE_2_OPENED union BRANCHCC_WITH_SIDE_1_OPENED;
 
@@ -76,7 +84,7 @@ set UNITON := {(g,n) in UNITCC : abs(unit_Pc[1,g,n]) >= Pnull};
 # Batteries in voltage regulation mode:
 # Contrary to units, the selection is NOT based on an active power threshold: a
 # battery's reactive capability is carried by its converter, which can be online
-# even at P=0. A battery is controllable iff it lies in the main connected
+# even at P=0. A battery is controllable iff it lies in the main synchronous
 # component AND is flagged as regulating voltage. Non-regulating batteries keep
 # their fixed q0 injection (cf. acopf.mod reactive balance).
 set BATTERYON := {(b,n) in BATTERYCC : battery_vregul[1,b,n] == "true"};
@@ -345,7 +353,7 @@ set PARALLEL_BUNDLES_LARGE := {g in PARALLEL_BUNDLES_ALL:
 # demote a member to fixed, which the topological detection cannot foresee. An in-service
 # demoted member (znull, single-tap table, ...) contributes its frozen point above and makes
 # its bundle degenerate; a member carrying no loop flow (side opened, out of the main
-# connected component) contributes nothing, and its bundle is not tied (see
+# synchronous component) contributes nothing, and its bundle is not tied (see
 # PARALLEL_BUNDLES_DROPPED), to avoid a silent partial tie.
 set PARALLEL_BUNDLES_ALL_VARIABLE := {g in PARALLEL_BUNDLES_ALL:
   card({(g,qq) in PARAM_PARALLEL_TRANSFORMERS: qq not in BRANCHCC_REGL_VAR_NUM}) == 0};
