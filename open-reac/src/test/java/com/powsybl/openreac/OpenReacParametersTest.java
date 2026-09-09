@@ -10,6 +10,7 @@ import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
 import com.powsybl.iidm.network.*;
 import com.powsybl.openreac.exceptions.InvalidParametersException;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
+import com.powsybl.openreac.parameters.input.ReferenceState;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAmplLogLevel;
@@ -653,6 +654,15 @@ class OpenReacParametersTest {
         assertEquals("NO_GENERATION", parameters.getReactiveSlackBusesMode().toParam().getValue());
         parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL);
         assertEquals("ALL", parameters.getReactiveSlackBusesMode().toParam().getValue());
+    }
+
+    @Test
+    void testReferenceState() {
+        OpenReacParameters parameters = new OpenReacParameters();
+        assertEquals(ReferenceState.NETWORK, parameters.getReferenceState());
+        parameters.setReferenceState(ReferenceState.NEUTRAL);
+        assertEquals(ReferenceState.NEUTRAL, parameters.getReferenceState());
+        assertThrows(NullPointerException.class, () -> parameters.setReferenceState(null));
     }
 
     @Test

@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.json.JsonUtil;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
+import com.powsybl.openreac.parameters.input.ReferenceState;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAmplLogLevel;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
@@ -161,6 +162,9 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
             )),
             entry("parallelTransformersGrouping", safeRead((parser, parameters) ->
                 parameters.setParallelTransformersGrouping(parser.getValueAsBoolean())
+            )),
+            entry("referenceState", safeRead((parser, parameters) ->
+                parameters.setReferenceState(ReferenceState.valueOf(parser.getText()))
             ))
     );
 
@@ -194,6 +198,8 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                     JsonUtil.assertGreaterOrEqualThanReferenceVersion("OpenReacParameters", fieldName, version, "1.1");
                 case "parallelTransformersGrouping" ->
                     JsonUtil.assertGreaterOrEqualThanReferenceVersion("OpenReacParameters", fieldName, version, "1.2");
+                case "referenceState" ->
+                    JsonUtil.assertGreaterOrEqualThanReferenceVersion("OpenReacParameters", fieldName, version, "1.3");
                 default -> { /* no version gate */ }
             }
 

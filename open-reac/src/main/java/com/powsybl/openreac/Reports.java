@@ -9,6 +9,7 @@ package com.powsybl.openreac;
 import com.powsybl.commons.report.ReportNode;
 import com.powsybl.commons.report.TypedValue;
 import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector;
+import com.powsybl.openreac.parameters.input.ReferenceState;
 import com.powsybl.openreac.parameters.input.VoltageLevelLimitInfo;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 import com.powsybl.openreac.parameters.output.network.ShuntCompensatorNetworkOutput;
@@ -57,10 +58,11 @@ public final class Reports {
                 .add();
     }
 
-    public static ReportNode createAcopfInitializationReporter(ReportNode reportNode, String networkId) {
+    public static ReportNode createAcopfInitializationReporter(ReportNode reportNode, String networkId, ReferenceState referenceState) {
         return reportNode.newReportNode()
                 .withMessageTemplate("optimizer.openreac.acopfInitialization")
                 .withUntypedValue(NETWORK_ID, networkId)
+                .withUntypedValue("referenceState", referenceState.toString())
                 .add();
     }
 
