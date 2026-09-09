@@ -13,10 +13,13 @@ import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
 import com.powsybl.iidm.network.Bus;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.RatioTapChanger;
 import com.powsybl.iidm.network.extensions.SlackTerminal;
 import com.powsybl.openreac.OpenReacConfig;
 import com.powsybl.openreac.OpenReacRunner;
+import com.powsybl.openreac.network.VoltageControlNetworkFactory;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
+import com.powsybl.openreac.parameters.input.ReferenceState;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.OpenReacStatus;
 import org.junit.jupiter.api.Test;
@@ -40,7 +43,10 @@ import static org.junit.jupiter.api.Assertions.*;
 class OpenReacAcopfInitializationTest extends AbstractOpenReacRunnerTest {
 
     // columns of ampl_network_buses.txt (extended AMPL export version)
+    private static final int V_COLUMN = 5;
     private static final int THETA_COLUMN = 6;
+    // columns of ampl_network_rtc.txt
+    private static final int RTC_TAP_COLUMN = 2;
     private static final int SLACK_COLUMN = 9;
 
     @Test
@@ -107,6 +113,39 @@ class OpenReacAcopfInitializationTest extends AbstractOpenReacRunnerTest {
         assertNotNull(slackTerminal.getTerminal());
         assertEquals(leafBus.getId(), slackTerminal.getTerminal().getBusBreakerView().getBus().getId());
         assertEquals(1, network.getVoltageLevelStream().filter(vl -> vl.getExtension(SlackTerminal.class) != null).count());
+    }
+
+    @Test
+    void testAmplReceivesTheNeutralReferenceState() throws IOException {
+        Network network = VoltageControlNetworkFactory.createNetworkWith2T2wt();
+        setDefaultVoltageLimits(network);
+        String variantId = network.getVariantManager().getWorkingVariantId();
+        Map<String, Double> voltagesBefore = network.getBusView().getBusStream().collect(Collectors.toMap(Bus::getId, Bus::getV));
+        RatioTapChanger ratioTapChanger = network.getTwoWindingsTransformer("T2wT1").getRatioTapChanger();
+        int tapPositionBefore = ratioTapChanger.getTapPosition();
+        int neutralPosition = ratioTapChanger.getNeutralPosition().orElseThrow();
+        assertNotEquals(tapPositionBefore, neutralPosition);
+        OpenReacParameters parameters = new OpenReacParameters()
+                .setReferenceState(ReferenceState.NEUTRAL)
+                .addVariableTwoWindingsTransformers(List.of("T2wT1"));
+
+        LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(List.of("optimization/indicators/bus-test/reactiveopf_results_indic.txt"));
+        try (ComputationManager computationManager = new LocalComputationManager(new LocalComputationConfig(tmpDir),
+                localCommandExecutor, ForkJoinPool.commonPool())) {
+            OpenReacRunner.run(network, variantId, parameters, new OpenReacConfig(true), computationManager);
+
+            List<String[]> buses = readTable(getAmplExecPath().resolve("ampl_network_buses.txt"));
+            assertEquals(network.getBusView().getBusStream().count(), buses.size());
+            buses.forEach(b -> assertEquals(1, Double.parseDouble(b[V_COLUMN]), 1e-6));
+            // the AMPL export numbers taps from 1, the transformer id is the last column
+            Map<String, Integer> exportedTaps = readTable(getAmplExecPath().resolve("ampl_network_rtc.txt")).stream()
+                    .collect(Collectors.toMap(r -> r[r.length - 1].replace("\"", ""), r -> Integer.parseInt(r[RTC_TAP_COLUMN])));
+            assertEquals(neutralPosition - ratioTapChanger.getLowTapPosition() + 1, exportedTaps.get("T2wT1"));
+            assertEquals(tapPositionBefore - ratioTapChanger.getLowTapPosition() + 1, exportedTaps.get("T2wT2"));
+        }
+
+        network.getBusView().getBuses().forEach(b -> assertEquals(voltagesBefore.get(b.getId()), b.getV(), 1e-6));
+        assertEquals(tapPositionBefore, ratioTapChanger.getTapPosition());
     }
 
     private static String[] getBus(List<String[]> buses, String id) {
