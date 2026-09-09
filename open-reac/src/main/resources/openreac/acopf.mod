@@ -23,7 +23,6 @@ set PROBLEM_ACOPF default { };
 # Variables and contraints for ACOPF
 #
 ###############################################################################
-# Notice that some variables and constraints for DCOPF are also used for ACOPF
 
 #
 # Phase and modulus of voltage
@@ -31,6 +30,11 @@ set PROBLEM_ACOPF default { };
 # Complex voltage = V*exp(i*teta). (with i**2=-1)
 
 # Phase of voltage
+# Initial values come from the DC load flow solved in Java before the export (bus_angl0). They are shifted so that
+# the phase reference bus is at 0 whatever the reference bus of that load flow was.
+param teta_init{n in BUSCC} := bus_angl0[1,n] - bus_angl0[1,null_phase_bus];
+param teta_min default -10; # radians, set from teta_init before solving
+param teta_max default  10; # radians, set from teta_init before solving
 var teta{BUSCC} <= teta_max, >= teta_min;
 subject to ctr_null_phase_bus{PROBLEM_ACOPF}: teta[null_phase_bus] = 0;
 

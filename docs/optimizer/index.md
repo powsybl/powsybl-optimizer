@@ -18,7 +18,7 @@ divisionOfCode.md
 inputs.md
 preprocessing.md
 slackBusMainSynchronousComponent.md
-dcOptimalPowerflow.md
+acopfInitialization.md
 acOptimalPowerflow.md
 outputs.md
 

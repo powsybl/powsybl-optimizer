@@ -28,5 +28,5 @@ If ACOPF solving is not successful, the user can export the following optional f
 
 ## In case of inconsistency
 
-If the main synchronous component is empty (see [Slack bus and main synchronous component](slackBusMainSynchronousComponent.md)) or if the DCOPF fails (see [DC Optimal Powerflow](dcOptimalPowerflow.md)), the problem is considered as inconsistent.
+If the main synchronous component is empty or if the slack bus does not belong to it (see [Slack bus and main synchronous component](slackBusMainSynchronousComponent.md)), the problem is considered as inconsistent.
 Then, the script `reactiveopfexit.run` is executed and the file `reactiveopf_results_indic.txt`, described in the [In case of convergence](#in-case-of-convergence) section, is exported, without the information on the calculated angles.
