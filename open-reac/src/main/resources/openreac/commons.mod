@@ -54,8 +54,6 @@ set BUSCC := {n in BUS_ELIGIBLE : bus_SC[1,n] == 0};
 # connected in BRANCHCC. Otherwise it may not be, in which case ctr_null_phase_bus only fixes
 # the angles of one island and the other islands must be balanced on their own.
 set MAIN_SC_DROPPED := (setof {(1,n) in BUS : n >= 0 and bus_SC[1,n] == 0} n) diff BUS_ELIGIBLE;
-# Buses flagged as slack in the input data (SlackTerminal extension in IIDM), restricted to BUSCC
-set SLACK_BUSES := {n in BUSCC : bus_slack[1,n] == "true"};
 # Branches with both buses in the main SC
 set BRANCHCC := setof {(1,qq,m,n) in BRANCH: m in BUSCC and n in BUSCC} (qq,m,n);
 # Branches with bus on side 1 in the main SC, and disconnected bus on side 2

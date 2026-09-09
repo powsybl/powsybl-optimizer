@@ -20,8 +20,16 @@
 # Initial values of the solving
 ###############################################################################
 
-# DC values used as initialization for phases
-let {n in BUSCC} teta[n] := teta_dc[n];
+# Phases: values of the DC load flow solved in Java (see teta_init in acopf.mod)
+let {n in BUSCC} teta[n] := teta_init[n];
+let teta_max := max({n in BUSCC} teta_init[n]) + 3; # radians
+let teta_min := min({n in BUSCC} teta_init[n]) - 3; # radians
+printf{LOG_INFO} "\n** Initialization from the DC load flow solved in Java\n";
+printf{LOG_INFO} "Sum of loads       C: %.0f MW\n", sum{(c,n) in LOADCC} load_PFix[1,c,n];
+printf{LOG_INFO} "Sum of generations P: %.0f MW\n", sum{(g,n) in UNITON} -unit_P0[1,g,n];
+printf{LOG_INFO} "Phases in [%.2f;%.2f] rad, max |delta teta| on a branch %.2f rad, bounds [%.2f;%.2f]\n",
+  min({n in BUSCC} teta_init[n]), max({n in BUSCC} teta_init[n]),
+  max({(qq,m,n) in BRANCHCC} abs(teta_init[m]-teta_init[n])), teta_min, teta_max;
 
 # Voltages
 let {n in BUSVV}            V[n] := bus_V0[1,n];
@@ -31,7 +39,8 @@ let {n in BUSCC diff BUSVV} V[n] := voltage_lower_bound[1,bus_substation[1,n]]
 let {n in BUSCC_SLACK} slack1_shunt_B[n] := 0;
 let {n in BUSCC_SLACK} slack2_shunt_B[n] := 0;
 let alpha := 0.01;
-let {(g,n) in UNITON} P_bounded[g,n] := max(P_dcopf[g,n],unit_Pc[1,g,n]);
+# Active power: value of the DC load flow (unit_P0 is the terminal active power, negative for a generation)
+let {(g,n) in UNITON} P_bounded[g,n] := max(-unit_P0[1,g,n],unit_Pc[1,g,n]);
 let {(g,n) in UNITON} Q[g,n] := 0.5*(corrected_unit_Qmax[g,n] + corrected_unit_Qmin[g,n]);
 let {(b,n) in BATTERYON} battery_qvar[b,n] := 0.5*(corrected_battery_Qmax[b,n] + corrected_battery_Qmin[b,n]);
 let {(shunt,n) in SHUNT_VAR} shunt_var[shunt,n] := min{(1,shunt,k) in SHUNT} shunt_valnom[1,shunt,k];
@@ -97,6 +106,7 @@ if (log_level_knitro <= 1) then {
 
 # add iterations of the first acopf solving
 let nb_iter_total := nb_iter_total + problem_acopf_objective.numiters;
+let objective_value_first := problem_acopf_objective;
 
 # if option is activated and there is at least one transformer tap optimized, round all the taps and conduct another optimization
 if solve_result_num <= 103 and optimization_after_rounding == "true" and card(BRANCHCC_REGL_VAR) > 0 then {
@@ -154,10 +164,10 @@ printf{LOG_INFO} "** ACopf results\n";
 if 1 in LOG_INFO then display
   nb_iter_last,nb_iter_total,
   max({(qq,m,n) in BRANCHCC} branch_R[1,qq,m,n]),max({(qq,m,n) in BRANCHCC} branch_X[1,qq,m,n]),
-  teta_max, max({n in BUSCC} teta[n]), max({n in BUSCC} teta_dc[n]),
-  teta_min, min({n in BUSCC} teta[n]), min({n in BUSCC} teta_dc[n]),
-  max({(qq,m,n) in BRANCHCC} (teta[m]-teta[n])), max({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[n])),
-  min({(qq,m,n) in BRANCHCC} (teta[m]-teta[n])), min({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[n])),
+  teta_max, max({n in BUSCC} teta[n]), max({n in BUSCC} teta_init[n]),
+  teta_min, min({n in BUSCC} teta[n]), min({n in BUSCC} teta_init[n]),
+  max({(qq,m,n) in BRANCHCC} (teta[m]-teta[n])), max({(qq,m,n) in BRANCHCC} (teta_init[m]-teta_init[n])),
+  min({(qq,m,n) in BRANCHCC} (teta[m]-teta[n])), min({(qq,m,n) in BRANCHCC} (teta_init[m]-teta_init[n])),
   min({n in BUSCC}V[n]),max({n in BUSCC}V[n])
   ;
 

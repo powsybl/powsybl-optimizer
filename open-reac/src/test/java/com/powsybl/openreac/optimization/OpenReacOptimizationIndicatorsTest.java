@@ -13,7 +13,6 @@ import com.powsybl.iidm.network.StaticVarCompensator;
 import com.powsybl.iidm.network.Substation;
 import com.powsybl.iidm.network.TopologyKind;
 import com.powsybl.iidm.network.VoltageLevel;
-import com.powsybl.iidm.network.extensions.SlackTerminal;
 import com.powsybl.openreac.network.HvdcNetworkFactory;
 import com.powsybl.openreac.network.ShuntNetworkFactory;
 import com.powsybl.openreac.network.VoltageControlNetworkFactory;
@@ -110,22 +109,6 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
         assertEquals(4, Integer.parseInt(result.getIndicators().get("nb_bus_out_of_main_SC")));
         assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_bus_with_voltage_value")));
         assertEquals("vl1_0", result.getIndicators().get("slack_bus"));
-        assertEquals("FALLBACK", result.getIndicators().get("slack_bus_origin"));
-    }
-
-    @Test
-    void testSlackBusProvidedInDataIndicators() throws IOException {
-        Network network = HvdcNetworkFactory.createLccWithBiggerComponents();
-        // flag two buses of the main synchronous component, none of them being the fallback choice (vl1_0)
-        SlackTerminal.attach(network.getBusBreakerView().getBus("additionnalbus_3"));
-        SlackTerminal.attach(network.getBusBreakerView().getBus("additionnalbus_7"));
-        OpenReacResult result = runOpenReac(network, "optimization/indicators/slack-bus-data-test", true);
-
-        assertEquals(OpenReacStatus.OK, result.getStatus());
-        // verify the slack bus is read from the input data instead of being computed,
-        // and that the flagged bus with the smallest num is used
-        assertEquals("DATA", result.getIndicators().get("slack_bus_origin"));
-        assertEquals("additionnalbus_3_vl_0", result.getIndicators().get("slack_bus"));
     }
 
     @Test
@@ -134,12 +117,10 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
         OpenReacResult result = runOpenReac(network, "optimization/indicators/empty-main-sc-test", true);
 
         // every bus is below the default epsilon_nominal_voltage (1kV): nothing can be optimized,
-        // and the AMPL process exits before the slack bus computation and the DCOPF
+        // and the AMPL process exits before the slack bus check and the ACOPF
         assertEquals(OpenReacStatus.NOT_OK, result.getStatus());
         assertEquals("NOK", result.getIndicators().get("final_status"));
-        assertEquals("UNKNOWN", result.getIndicators().get("dcopf_status"));
         assertEquals("UNDEFINED", result.getIndicators().get("slack_bus"));
-        assertEquals("UNDEFINED", result.getIndicators().get("slack_bus_origin"));
     }
 
     @Test

@@ -49,13 +49,14 @@ These are specified in the file `param_algo.txt`:
 | `transformer_ratio_variable_scaling_factor` | Scaling factor applied to all transformer ratio variables before ACOPF solving (see [AC optimal powerflow](acOptimalPowerflow.md))                                                     | $0.001$            | $\mathbb{R}^{*,+}$                            |
 | `shunt_variable_scaling_factor`             | Scaling factor applied to all shunt variables before ACOPF solving (see [AC optimal powerflow](acOptimalPowerflow.md))                                                                 | $0.1$              | $\mathbb{R}^{*,+}$                            |
 | `optimization_after_rounding`               | Boolean to indicate if a 2nd ACOPF optimization should be conducted after rounding the transformer taps (see [AC optimal powerflow](acOptimalPowerflow.md))                            | false              | {false, true}                                 |
+| `slack_bus_id`                              | Identifier of the bus used as angle reference, written by the Java interface from the DC load flow of the initialization (see [Slack bus](slackBusMainSynchronousComponent.md#slack-bus)). The run stops if it is not provided or does not belong to the main synchronous component | computed           | bus identifier                                |
 
 :::{warning}
 Modifying the parameters marked with ⚠️ is strongly discouraged. No serious large-scale testing has been carried out
 on values other than their defaults, and no guarantee is given on the solutions returned by the optimizer if they are changed.
 :::
 
-Please note that for these parameters, the AMPL code defines default values which may be different from those in Java (for example, for the scaling values). This allows a user to use the AMPL code without going through the Java interface, and without providing the file `param_algo.txt`.
+Please note that for these parameters, the AMPL code defines default values which may be different from those in Java (for example, for the scaling values). This allows a user to use the AMPL code without going through the Java interface, provided that `slack_bus_id` is given in the file `param_algo.txt`.
 
 In addition to the previous parameters, the user can specify which parameters will be variable or fixed in the ACOPF solving (see [AC optimal powerflow](acOptimalPowerflow.md)).
 This is done using the following files:

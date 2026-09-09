@@ -363,15 +363,13 @@ suffix knitro_niter OUT;
 # Global variables
 ###############################################################################
 
-# DCOPF status
-param dcopf_status symbolic default "UNKNOWN";
-
 # Gobal variables for writing and messages
 param fileOut symbolic default "dummy.txt";
 param errorMessage symbolic default "empty error message";
-# Slack bus used for the phase=0 constraint, and where it comes from
+# Slack bus used for the phase=0 constraint: the one of the DC load flow of the initialization
 param slack_bus        symbolic default "UNDEFINED";
-param slack_bus_origin symbolic default "UNDEFINED"; # DATA if read from ampl_network_buses.txt, FALLBACK if computed
+param slack_bus_id     symbolic default "UNDEFINED";
+if "slack_bus_id" in PARAM_ALGO_KEYS then let slack_bus_id := PARAM_ALGO_VALUES["slack_bus_id"];
 
 # Messages to be written in final indicator file
 param messageInfo symbolic default "empty information message";
@@ -380,6 +378,7 @@ set messagesInfo default {};
 # Number of iterations for AC OPF
 param nb_iter_last  integer default 0;
 param nb_iter_total integer default 0;
+param objective_value_first default 0; # objective value of the first acopf solving
 
 # Additional dummy parameters, used for local computation
 # Remenber you cannot declare new variable in loop or "if"
@@ -407,16 +406,9 @@ check;
 model "commons.mod";
 
 ###############################################################################
-# Reference bus fallback and print network few information
+# Check main synchronous component and reference bus, print network few information
 ###############################################################################
 include "network_info.run";
-
-###############################################################################
-# Optimisation DC OPF (for phase initialization and data consistency check)
-###############################################################################
-model "dcopf.mod";
-include "dcopf.run";
-
 
 ###############################################################################
 # Optimisation AC OPF
