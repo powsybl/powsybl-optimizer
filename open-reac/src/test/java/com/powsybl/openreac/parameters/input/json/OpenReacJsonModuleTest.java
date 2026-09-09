@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.json.JsonUtil;
 import com.powsybl.commons.test.ComparisonUtils;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
+import com.powsybl.openreac.parameters.input.ReferenceState;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAmplLogLevel;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
@@ -84,6 +85,7 @@ class OpenReacJsonModuleTest {
         parameters.setMinPlausibleLowVoltageLimit(0.755);
         parameters.setMaxPlausibleHighVoltageLimit(1.236);
         parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL);
+        parameters.setReferenceState(ReferenceState.NEUTRAL);
         parameters.setActivePowerVariationRate(0.56);
         parameters.setMinPlausibleActivePowerThreshold(0.5);
         parameters.setLowImpedanceThreshold(1e-5);
@@ -182,8 +184,9 @@ class OpenReacJsonModuleTest {
                 Objects.requireNonNull(getClass().getResourceAsStream("/parametersV1dot0.json")),
                 OpenReacParameters.class);
 
-        // The 1.1 and 1.2 fields must fall back to their defaults when reading a v1.0 file
+        // The 1.1, 1.2 and 1.3 fields must fall back to their defaults when reading a v1.0 file
         assertTrue(parameters.isParallelTransformersGrouping());
+        assertEquals(ReferenceState.NETWORK, parameters.getReferenceState());
         assertEquals(10, parameters.getPenaltyInvestReaPos());
         assertEquals(10, parameters.getPenaltyInvestReaNeg());
         assertNull(parameters.getPenaltyActivePower());

@@ -80,7 +80,7 @@ public final class OpenReacRunner {
         checkParameters(network, variantId, parameters, config, manager, reportNode);
         ReportNode openReacReportNode = Reports.createOpenReacReporter(reportNode, network.getId(), parameters.getObjective());
         AmplModel reactiveOpf = OpenReacModel.buildModel();
-        InitializedVariant initializedVariant = createInitializedVariant(network, variantId, openReacReportNode);
+        InitializedVariant initializedVariant = createInitializedVariant(network, variantId, parameters, openReacReportNode);
         try {
             OpenReacAmplIOFiles amplIoInterface = buildIoFilesOnVariant(network, initializedVariant, parameters, amplExportConfig, config, openReacReportNode);
             AmplResults run = AmplModelRunner.run(network, initializedVariant.id(), reactiveOpf, manager, amplIoInterface);
@@ -118,7 +118,7 @@ public final class OpenReacRunner {
         checkParameters(network, variantId, parameters, config, manager, reportNode);
         ReportNode openReacReportNode = Reports.createOpenReacReporter(reportNode, network.getId(), parameters.getObjective());
         AmplModel reactiveOpf = OpenReacModel.buildModel();
-        InitializedVariant initializedVariant = createInitializedVariant(network, variantId, openReacReportNode);
+        InitializedVariant initializedVariant = createInitializedVariant(network, variantId, parameters, openReacReportNode);
         boolean submitted = false;
         try {
             OpenReacAmplIOFiles amplIoInterface = buildIoFilesOnVariant(network, initializedVariant, parameters, amplExportConfig, config, openReacReportNode);
@@ -149,7 +149,7 @@ public final class OpenReacRunner {
      *
      * @return the initialized variant, to be removed with {@link #removeInitializedVariant}.
      */
-    private static InitializedVariant createInitializedVariant(Network network, String variantId, ReportNode openReacReportNode) {
+    private static InitializedVariant createInitializedVariant(Network network, String variantId, OpenReacParameters parameters, ReportNode openReacReportNode) {
         VariantManager variantManager = network.getVariantManager();
         String previousVariantId = variantManager.getWorkingVariantId();
         String initializedVariantId = INITIALIZED_VARIANT_PREFIX + UUID.randomUUID();
@@ -157,7 +157,7 @@ public final class OpenReacRunner {
         variantManager.setWorkingVariant(initializedVariantId);
         String slackBusId = null;
         try {
-            slackBusId = AcopfInitializer.initialize(network, Reports.createAcopfInitializationReporter(openReacReportNode, network.getId()));
+            slackBusId = AcopfInitializer.initialize(network, parameters, Reports.createAcopfInitializationReporter(openReacReportNode, network.getId(), parameters.getReferenceState()));
         } finally {
             variantManager.setWorkingVariant(previousVariantId);
             if (slackBusId == null) {

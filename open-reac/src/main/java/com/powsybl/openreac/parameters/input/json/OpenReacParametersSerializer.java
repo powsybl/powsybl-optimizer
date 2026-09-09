@@ -20,7 +20,7 @@ import java.io.IOException;
  */
 public class OpenReacParametersSerializer extends StdSerializer<OpenReacParameters> {
 
-    static final String VERSION = "1.2";
+    static final String VERSION = "1.3";
 
     public OpenReacParametersSerializer() {
         super(OpenReacParameters.class);
@@ -75,6 +75,7 @@ public class OpenReacParametersSerializer extends StdSerializer<OpenReacParamete
         serializerProvider.defaultSerializeField("penaltyVoltageTargetData", openReacParameters.getPenaltyVoltageTargetData(), jsonGenerator);
         serializerProvider.defaultSerializeField("optimizationAfterRounding", openReacParameters.isOptimizationAfterRounding(), jsonGenerator);
         serializerProvider.defaultSerializeField("parallelTransformersGrouping", openReacParameters.isParallelTransformersGrouping(), jsonGenerator);
+        serializerProvider.defaultSerializeField("referenceState", openReacParameters.getReferenceState(), jsonGenerator);
         jsonGenerator.writeEndObject();
     }
 }
