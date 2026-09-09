@@ -1,12 +1,12 @@
 final_status OK
-dcopf_status OK
 slack_bus 'VL1_0'
-slack_bus_origin DATA
 
 ctime_start 'Tue Dec 17 18:49:34 2024'
 last_solve_result_num 0
 nb_iter_last 5
 nb_iter_total 5
+objective_value_first 24.800533
+objective_value_last 24.800533
 _ampl_elapsed_time 0.095000
 _total_solve_time 0.062500
 total_time 0
@@ -78,15 +78,15 @@ nb_batteries 0
 sum_batteries_pmax 0.0
 sum_batteries_pmin 0.0
 
-max_teta_dc 0.19
+max_teta_init 0.19
 max_teta_ac 0.09
 teta_max 3.19
-min_teta_dc -0.12
+min_teta_init -0.12
 min_teta_ac -0.05
 teta_min -3.12
-max_delta_teta_dc 0.159381
+max_delta_teta_init 0.159381
 max_delta_teta_ac 0.076647
-min_delta_teta_dc -0.041401
+min_delta_teta_init -0.041401
 min_delta_teta_ac -0.018540
 
 nb_reactive_slacks 0

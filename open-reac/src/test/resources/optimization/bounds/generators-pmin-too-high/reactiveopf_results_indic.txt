@@ -1,7 +1,5 @@
 final_status NOK
-dcopf_status OK
 slack_bus 'b1_vl_0'
-slack_bus_origin FALLBACK
 
 log_level_ampl INFO
 log_level_knitro 2
@@ -80,20 +78,20 @@ nb_batteries_with_variable_reactive_power 0
 sum_batteries_pmax 0.0
 sum_batteries_pmin 0.0
 
-max_teta_dc 0.01
-max_teta_ac 0.02
-teta_max 3.01
-min_teta_dc -0.03
-min_teta_ac -0.04
+max_teta_init 0.02
+max_teta_ac 0.01
+teta_max 3.02
+min_teta_init -0.03
+min_teta_ac -0.03
 teta_min -3.03
-max_delta_teta_dc 0.030000
-max_delta_teta_ac 0.035077
-min_delta_teta_dc -0.015000
-min_delta_teta_ac -0.018561
+max_delta_teta_init 0.030000
+max_delta_teta_ac 0.025795
+min_delta_teta_init -0.020000
+min_delta_teta_ac -0.013718
 
 nb_reactive_slacks 4
 nb_slacks_condensator 4
-sum_slacks_condensator 1.3
+sum_slacks_condensator 1.9
 nb_slacks_self 4
-sum_slacks_self 1.2
+sum_slacks_self 1.9
 messageInfo1 'Acopf optimization was ***not*** successfull - Convergence to an infeasible solution'
