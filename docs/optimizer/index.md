@@ -21,6 +21,7 @@ slackBusMainConnexComponent.md
 dcOptimalPowerflow.md
 acOptimalPowerflow.md
 outputs.md
+results.md
 
 ```
 
