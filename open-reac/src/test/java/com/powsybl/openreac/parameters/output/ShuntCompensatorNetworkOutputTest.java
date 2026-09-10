@@ -7,6 +7,7 @@
  */
 package com.powsybl.openreac.parameters.output;
 
+import com.powsybl.ampl.converter.AmplConstants;
 import com.powsybl.ampl.converter.AmplSubset;
 import com.powsybl.commons.util.StringToIntMapper;
 import com.powsybl.iidm.network.Network;
@@ -27,6 +28,9 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Pierre Arvy {@literal <pierre.arvy at artelys.com>}
  */
 class ShuntCompensatorNetworkOutputTest {
+
+    private static final double NOMINAL_V = 400;
+
     @Test
     void read() throws IOException {
         Network network = createWithNonLinearModel();
@@ -90,24 +94,23 @@ class ShuntCompensatorNetworkOutputTest {
     }
 
     /**
-     * SHUNT and SHUNT2 sit on a 400 kV voltage level and provide sections at b = 0, 1e-3 and
-     * 3e-3 S. The optimizer returns 2.4 pu and 3.6 pu, that is 1.5e-3 S and 2.25e-3 S once
-     * brought back to siemens, which is what issue #18 asks to expose.
+     * SHUNT and SHUNT2 sit on a 400 kV voltage level and provide sections at b = 0, 1e-3 and 3e-3 S.
+     * The optimizer returns b = 2.4 pu and 3.6 pu on the SB = 100 MVA base, that is
+     * b * SB / Vnom^2 = 2.4 * 100 / 400^2 = 1.5e-3 S and 3.6 * 100 / 400^2 = 2.25e-3 S.
      */
     @Test
     void continuousSusceptanceIsExposedPerShunt() throws IOException {
         ShuntCompensatorNetworkOutput output = readRoundingOutputs("/mock_outputs/reactiveopf_results_shunts_rounding.csv");
         Map<String, Double> continuousSusceptance = output.getContinuousSusceptanceByShunt();
         assertEquals(2, continuousSusceptance.size());
-        assertEquals(1.5e-3, continuousSusceptance.get("SHUNT"), 1e-9);
-        assertEquals(2.25e-3, continuousSusceptance.get("SHUNT2"), 1e-9);
+        assertEquals(2.4 * AmplConstants.SB / (NOMINAL_V * NOMINAL_V), continuousSusceptance.get("SHUNT"), 1e-9);
+        assertEquals(3.6 * AmplConstants.SB / (NOMINAL_V * NOMINAL_V), continuousSusceptance.get("SHUNT2"), 1e-9);
     }
 
     /**
      * The retained sections are 1 and 2, so the deviations in susceptance are 1e-3 - 1.5e-3 = -5e-4 S
      * and 3e-3 - 2.25e-3 = +7.5e-4 S: the discretization takes reactive power away from SHUNT and
-     * adds some to SHUNT2. At 400 kV those are -80 MVar and +120 MVar. Asserting on the reactive
-     * values pins the unit down: raw susceptances would be smaller by a factor 400^2.
+     * adds some to SHUNT2. In MVar at nominal voltage, -5e-4 * 400^2 = -80 and 7.5e-4 * 400^2 = +120.
      */
     @Test
     void reactiveDeviationIsSignedAndInMvar() throws IOException {
@@ -141,7 +144,7 @@ class ShuntCompensatorNetworkOutputTest {
         assertTrue(Double.isNaN(output.getTotalAbsoluteReactiveDeviation()));
         assertTrue(Double.isNaN(output.getContinuousSusceptanceByShunt().get("SHUNT")));
         assertTrue(Double.isNaN(output.getReactiveDeviationByShunt().get("SHUNT")));
-        assertEquals(2.25e-3, output.getContinuousSusceptanceByShunt().get("SHUNT2"), 1e-9);
+        assertEquals(3.6 * AmplConstants.SB / (NOMINAL_V * NOMINAL_V), output.getContinuousSusceptanceByShunt().get("SHUNT2"), 1e-9);
         assertEquals(120, output.getReactiveDeviationByShunt().get("SHUNT2"), 1e-6);
     }
 
@@ -151,9 +154,7 @@ class ShuntCompensatorNetworkOutputTest {
         StringToIntMapper<AmplSubset> mapper = new StringToIntMapper<>(AmplSubset.class);
         mapper.newInt(AmplSubset.SHUNT, "SHUNT");
         mapper.newInt(AmplSubset.SHUNT, "SHUNT2");
-        for (int i = 0; i < 7; i++) {
-            mapper.newInt(AmplSubset.BUS, "BUS" + i);
-        }
+        mapper.newInt(AmplSubset.BUS, "b1");
         try (InputStream input = getClass().getResourceAsStream(resourceName);
              InputStreamReader in = new InputStreamReader(input);
              BufferedReader reader = new BufferedReader(in)) {
