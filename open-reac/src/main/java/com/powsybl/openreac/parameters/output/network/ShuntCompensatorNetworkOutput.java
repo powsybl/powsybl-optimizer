@@ -80,7 +80,9 @@ public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCo
             if (busId != null && busId.equals(shuntCompensator.getTerminal().getBusView().getConnectableBus().getId())) {
                 reconnect = true;
             }
-            modifications.add(new ShuntCompensatorModification(id, reconnect, findSectionCount(shuntCompensator, b)));
+            int sectionCount = findSectionCount(shuntCompensator, b);
+            modifications.add(new ShuntCompensatorModification(id, reconnect, sectionCount));
+            recordDiscretizationDeviation(shuntCompensator, b, sectionCount);
         } else {
             LOGGER.warn("Shunt compensator with id {} not found in the network", id);
         }
@@ -100,6 +102,10 @@ public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCo
                 sectionCount = i;
             }
         }
+        return sectionCount;
+    }
+
+    private void recordDiscretizationDeviation(ShuntCompensator sc, double b, int sectionCount) {
         double squaredNominalV = Math.pow(sc.getTerminal().getVoltageLevel().getNominalV(), 2);
         double optimalReactiveValue = Math.abs(b * squaredNominalV);
         double discretizedReactiveValue = Math.abs(sc.getB(sectionCount) * squaredNominalV);
@@ -110,7 +116,6 @@ public class ShuntCompensatorNetworkOutput extends AbstractNetworkOutput<ShuntCo
         double reactiveDeviation = (sc.getB(sectionCount) - b) * squaredNominalV;
         totalAbsoluteReactiveDeviation += Math.abs(reactiveDeviation);
         reactiveDeviationByShunt.put(sc.getId(), reactiveDeviation);
-        return sectionCount;
     }
 
     public List<ShuntWithDeltaDiscreteOptimalOverThreshold> getShuntsWithDeltaDiscreteOptimalOverThresholds() {
