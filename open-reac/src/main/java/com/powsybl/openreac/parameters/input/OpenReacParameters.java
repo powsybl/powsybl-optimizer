@@ -163,6 +163,8 @@ public class OpenReacParameters {
 
     private boolean parallelTransformersGrouping = true;
 
+    private ReferenceState referenceState = ReferenceState.NETWORK;
+
     // Shunt compensator alert threshold
     // (to help reporting the shunt compensators with a delta between optimized and discretized reactive value over this threshold in MVar)
 
@@ -599,6 +601,19 @@ public class OpenReacParameters {
 
     public OpenReacParameters setParallelTransformersGrouping(boolean parallelTransformersGrouping) {
         this.parallelTransformersGrouping = parallelTransformersGrouping;
+        return this;
+    }
+
+    /**
+     * @return the state of the controls the ACOPF starts from and is pulled back to by its penalties
+     *         (default {@link ReferenceState#NETWORK}).
+     */
+    public ReferenceState getReferenceState() {
+        return referenceState;
+    }
+
+    public OpenReacParameters setReferenceState(ReferenceState referenceState) {
+        this.referenceState = Objects.requireNonNull(referenceState);
         return this;
     }
 
