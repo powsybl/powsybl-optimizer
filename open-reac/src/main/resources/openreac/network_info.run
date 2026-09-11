@@ -37,45 +37,21 @@ if card(BUSCC) == 0 then {
 
 ###############################################################################
 #
-# Fallback computation of "slack bus" or reference bus if absent in provided data
+# Slack bus, used only for the zero phase constraint
 #
 ###############################################################################
 # This is not really a slack bus since this reactive OPF will change values
-# of generation proportionally, to ensure global balance generation=losses+load
-# So this "slack node" is used only for zero phase constraint
+# of generation proportionally, to ensure global balance generation=losses+load.
+# It is the slack bus of the DC load flow of the initialization, given in param_algo.txt.
 
-if card(SLACK_BUSES) > 0 then {
-  let slack_bus_origin := "DATA";
-  let null_phase_bus := min{n in SLACK_BUSES} n; # for now, take the slack bus with min identifier
-  printf{LOG_INFO} "\nSlack bus %Q specified in ampl_network_buses.txt is chosen for phase=0 constraint\n", bus_id[1,null_phase_bus];
-  if card(SLACK_BUSES) > 1 then
-    printf{LOG_WARNING} "%i slack buses are specified in ampl_network_buses.txt, only one is used for phase=0 constraint\n", card(SLACK_BUSES);
-} else {
-  let slack_bus_origin := "FALLBACK";
-  # No usable slack bus in the provided data: compute one
-  if card({(1,n) in BUS : bus_slack[1,n] == "true"}) > 0 then {
-    printf{LOG_WARNING} "\nSlack bus(es) specified in ampl_network_buses.txt are out of the optimized component (other SC, or nominal voltage below epsilon_nominal_voltage) and cannot be used\n";
-  } else {
-    printf{LOG_INFO} "\nNo slack bus is specified in the file ampl_network_buses.txt\n";
-  }
-  printf{LOG_INFO} "Computation of bus with largest number of branches connected and in main SC is used as fallback, in order to fix phase to 0 in reactive OPF optimization\n";
-  let temp1 := min(300,max{n in BUSCC} substation_Vnomi[1,bus_substation[1,n]]);
-  let null_phase_bus := min{n in BUSCC} n;
-  let tempo := 0;
-  for {n in BUSCC : substation_Vnomi[1,bus_substation[1,n]] >= temp1 * 0.9}
-    let tempo := max (tempo, card({(qq,mm,n) in BRANCHCC} union {(qq,n,nn) in BRANCHCC}));
-  for {n in BUSCC : substation_Vnomi[1,bus_substation[1,n]] >= temp1 * 0.9 && card({(qq,mm,n) in BRANCHCC} union {(qq,n,nn) in BRANCHCC}) == tempo}
-    let null_phase_bus := n;
-  if ( tempo > 0 ) then
-    printf{LOG_INFO} "Bus %QkV with most branches: %Q in substation %s/%s with %Q connected branches\n",
-    substation_Vnomi[1,bus_substation[1,null_phase_bus]],
-    null_phase_bus,
-    substation_id[1,bus_substation[1,null_phase_bus]],
-    substation_description[1,bus_substation[1,null_phase_bus]],
-    tempo;
-  if ( tempo == 0 ) then
-    printf{LOG_WARNING} "Bus with most branches: not found. Take first bus (=%Q) for phase=0 constraint\n",null_phase_bus;
+if card({n in BUSCC : bus_id[1,n] == slack_bus_id}) == 0 then {
+  printf{LOG_ERROR} "\nSlack bus %Q given in param_algo.txt is not in the main synchronous component\n", slack_bus_id;
+  let errorMessage := "Slack bus not in the main synchronous component";
+  let final_status := "NOK";
+  include reactiveopfexit.run;
 }
+let null_phase_bus := min{n in BUSCC : bus_id[1,n] == slack_bus_id} n;
+printf{LOG_INFO} "\nSlack bus %Q given in param_algo.txt is chosen for phase=0 constraint\n", slack_bus_id;
 let slack_bus := bus_id[1,null_phase_bus];
 
 

@@ -284,15 +284,15 @@ if final_status == "OK" then {
 let fileOut := "reactiveopf_results_indic.txt";
 
 printf "%s %s\n","final_status",final_status > (fileOut);
-printf "%s %s\n","dcopf_status",dcopf_status > (fileOut);
 printf "%s %Q\n","slack_bus",slack_bus > (fileOut);
-printf "%s %s\n","slack_bus_origin",slack_bus_origin > (fileOut);
 
 printf{LOG_DEBUG} "\n" > (fileOut);
 printf{LOG_DEBUG} "%s %Q\n","ctime_start",ctime_start > (fileOut);
 printf{LOG_DEBUG} "%s %i\n","last_solve_result_num",solve_result_num > (fileOut);
 printf{LOG_DEBUG} "%s %i\n","nb_iter_last",nb_iter_last > (fileOut);
 printf{LOG_DEBUG} "%s %i\n","nb_iter_total",nb_iter_total > (fileOut);
+printf{LOG_DEBUG} "%s %f\n","objective_value_first",objective_value_first > (fileOut);
+printf{LOG_DEBUG} "%s %f\n","objective_value_last",problem_acopf_objective > (fileOut);
 printf{LOG_DEBUG} "%s %f\n","_ampl_elapsed_time",_ampl_elapsed_time > (fileOut);
 printf{LOG_DEBUG} "%s %f\n","_total_solve_time",_total_solve_time > (fileOut);
 printf{LOG_DEBUG} "%s %i\n","total_time",_total_solve_time+_ampl_elapsed_time > (fileOut);
@@ -389,15 +389,15 @@ printf "%s %.1f\n","sum_batteries_pmax",sum{(b,k) in BATTERYCC} battery_Pmax[1,b
 printf "%s %.1f\n","sum_batteries_pmin",sum{(b,k) in BATTERYCC} battery_Pmin[1,b,k] > (fileOut);
 
 printf "\n" > (fileOut);
-printf "max_teta_dc %.2f\n",max({n in BUSCC} teta_dc[n]) > (fileOut);
+printf "max_teta_init %.2f\n",max({n in BUSCC} teta_init[n]) > (fileOut);
 printf "max_teta_ac %.2f\n",max({n in BUSCC} teta[n]) > (fileOut);
 printf "teta_max %.2f\n",teta_max > (fileOut);
-printf "min_teta_dc %.2f\n",min({n in BUSCC} teta_dc[n]) > (fileOut);
+printf "min_teta_init %.2f\n",min({n in BUSCC} teta_init[n]) > (fileOut);
 printf "min_teta_ac %.2f\n",min({n in BUSCC} teta[n]) > (fileOut);
 printf "teta_min %.2f\n",teta_min > (fileOut);
-printf "max_delta_teta_dc %2f\n",max({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[n])) > (fileOut);
+printf "max_delta_teta_init %2f\n",max({(qq,m,n) in BRANCHCC} (teta_init[m]-teta_init[n])) > (fileOut);
 printf "max_delta_teta_ac %2f\n",max({(qq,m,n) in BRANCHCC} (teta[m]-teta[n])) > (fileOut);
-printf "min_delta_teta_dc %2f\n",min({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[n])) > (fileOut);
+printf "min_delta_teta_init %2f\n",min({(qq,m,n) in BRANCHCC} (teta_init[m]-teta_init[n])) > (fileOut);
 printf "min_delta_teta_ac %2f\n",min({(qq,m,n) in BRANCHCC} (teta[m]-teta[n])) > (fileOut);
 
 printf "\n" > (fileOut);

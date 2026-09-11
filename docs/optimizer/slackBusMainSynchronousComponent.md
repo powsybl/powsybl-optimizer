@@ -20,33 +20,22 @@ If $BUSCC$ is empty, no bus is left to optimize: the script `reactiveopfexit.run
 Note that buses whose nominal voltage is below `epsilon_nominal_voltage` are discarded even when they belong to the main synchronous component.
 If such a bus is the only link between two parts of the component, $BUSCC$ is split into islands that are no longer connected in $BRANCHCC$.
 The angle reference $(1)$ then only applies to the island containing the slack bus, which is harmless in itself: the angles of the other islands are simply free within their bounds.
-The consequence is on the active power balance, and it differs between the two problems:
-
-- the DCOPF has one slack variable per bus and unbounded generation, so it balances each island independently. It fails only if an island cannot be balanced at all, typically because it contains no generating unit up and running (see [DC optimal power flow](dcOptimalPowerflow.md));
-- the ACOPF has no slack variable on its active power balance and, when `coeff_alpha` is $1$, its default value (see [Constraints](acOptimalPowerflow.md#constraints)), the generation of every unit is an affine function of a single global variable $\alpha$. One value of $\alpha$ must then balance every island at once, which only happens if all islands require the same $\alpha$. The ACOPF is therefore infeasible in the general case, **even when each island could be balanced on its own**.
+The consequence is on the active power balance of the ACOPF: it has no slack variable on this balance and, when `coeff_alpha` is $1$, its default value (see [Constraints](acOptimalPowerflow.md#constraints)), the generation of every unit is an affine function of a single global variable $\alpha$. One value of $\alpha$ must then balance every island at once, which only happens if all islands require the same $\alpha$. The ACOPF is therefore infeasible in the general case, **even when each island could be balanced on its own**.
+The DC load flow of the initialization (see [ACOPF initialization](acopfInitialization.md)) is not affected, as it is solved on the whole main synchronous component.
 
 Lowering `epsilon_nominal_voltage` restores the discarded links.
-The number of discarded buses is exported as the indicator `nb_bus_dropped_in_main_SC`, and is recalled in the error message when the DCOPF turns out to be infeasible.
+The number of discarded buses is exported as the indicator `nb_bus_dropped_in_main_SC`, and is recalled in the error message when $BUSCC$ turns out to be empty.
 
 ## Slack bus
 
-The slack bus $s$ is used only to fix the voltage angle reference of the DCOPF and the ACOPF:
+The slack bus $s$ is used only to fix the voltage angle reference of the ACOPF:
 
 $$\boldsymbol{\theta_s} = 0 \quad (1)$$
 
 It is not a slack bus in the load flow sense: this reactive OPF changes the generation values proportionally, in order to ensure the global balance generation = losses + load.
 
-It is selected as follows:
+It is the slack bus of the DC load flow solved before the export (see [ACOPF initialization](acopfInitialization.md)), whose identifier is given in `param_algo.txt` as `slack_bus_id` (see [Configuration of the run](inputs.md#configuration-of-the-run)).
+The buses flagged in the `slack bus` column of `ampl_network_buses.txt` are ignored.
+If the given bus does not belong to $BUSCC$, the script `reactiveopfexit.run` is executed (see [In case of inconsistency](outputs.md#in-case-of-inconsistency)) and the execution is stopped.
 
-1. If at least one bus of the main synchronous component is flagged in the `slack bus` column of `ampl_network_buses.txt`, the one with the smallest `num` is used.
-   In IIDM, this flag comes from the `SlackTerminal` extension, which is typically written by a load flow previously executed on the network.
-   The indicator `slack_bus_origin` is then set to `DATA`.
-2. Otherwise, a fallback bus is computed.
-   Among the buses of the main synchronous component whose nominal voltage is at least 90% of $\min(300 \text{ kV}, V_{nom}^{max})$, where $V_{nom}^{max}$ is the highest nominal voltage of the component, the bus with the **highest number of AC branches connected** is selected.
-   If multiple buses have such cardinality, the one with the highest identifier (`num` parameter) is chosen.
-   In the event that no bus satisfies these conditions, the first bus of the component is selected.
-   The indicator `slack_bus_origin` is then set to `FALLBACK`.
-
-Buses flagged as slack outside $BUSCC$ are ignored: this includes buses of another synchronous component, of which a load flow typically flags one per component, as well as buses whose nominal voltage is below `epsilon_nominal_voltage`. The fallback applies only when none of the flagged buses belongs to $BUSCC$.
-
-The identifier of the bus finally used is exported as the indicator `slack_bus` in `reactiveopf_results_indic.txt` (see [Outputs](outputs.md#in-case-of-convergence)).
+The identifier of the bus used is exported as the indicator `slack_bus` in `reactiveopf_results_indic.txt` (see [Outputs](outputs.md#in-case-of-convergence)).

@@ -1,10 +1,8 @@
 final_status NOK
 errorMessage 'Main synchronous component is empty'
-ctime_start 'Mon Aug 31 09:43:48 2026'
+ctime_start 'Wed Sep 09 15:15:51 2026'
 
-dcopf_status UNKNOWN
 slack_bus 'UNDEFINED'
-slack_bus_origin UNDEFINED
 operatingSystem linux
 SHELL '/bin/bash'
 HOSTNAME ''
