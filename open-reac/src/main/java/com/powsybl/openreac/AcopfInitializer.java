@@ -102,7 +102,10 @@ public final class AcopfInitializer {
         OpenLoadFlowParameters.create(parameters)
                 .setSlackBusSelectionMode(SlackBusSelectionMode.MOST_MESHED)
                 // the ACOPF has its own active power slack handling: a mismatch that cannot be distributed is not an error here
-                .setSlackDistributionFailureBehavior(OpenLoadFlowParameters.SlackDistributionFailureBehavior.LEAVE_ON_SLACK_BUS);
+                .setSlackDistributionFailureBehavior(OpenLoadFlowParameters.SlackDistributionFailureBehavior.LEAVE_ON_SLACK_BUS)
+                // as the former DCOPF, the mismatch is distributed regardless of the active power limits: the ACOPF
+                // starts from the resulting phases only, its own dispatch is bounded
+                .setUseActiveLimits(false);
         return parameters;
     }
 

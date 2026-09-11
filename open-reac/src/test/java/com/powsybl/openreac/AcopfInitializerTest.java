@@ -16,6 +16,7 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.extensions.SlackTerminal;
 import org.junit.jupiter.api.Test;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -90,6 +91,24 @@ class AcopfInitializerTest {
         });
         // targets are the reference of the ACOPF objective and are never touched
         network.getGenerators().forEach(g -> assertEquals(targetsBefore.get(g.getId()), g.getTargetP(), DELTA));
+    }
+
+    @Test
+    void testActivePowerLimitsDoNotBoundTheDistribution() {
+        Network network = IeeeCdfNetworkFactory.create14();
+        // surplus of generation: the distribution lowers the generators
+        assertTrue(network.getGeneratorStream().mapToDouble(Generator::getTargetP).sum()
+                > network.getLoadStream().mapToDouble(Load::getP0).sum());
+        Generator generator = network.getGeneratorStream()
+                .filter(g -> g.getTargetP() > 0)
+                .min(Comparator.comparingDouble(Generator::getTargetP))
+                .orElseThrow();
+        generator.setMinP(generator.getTargetP());
+
+        initialize(network);
+
+        // the generator takes its share of the mismatch below its minimum, as it did with the DCOPF
+        assertTrue(-generator.getTerminal().getP() < generator.getMinP() - 1e-3);
     }
 
     @Test
