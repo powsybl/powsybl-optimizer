@@ -16,7 +16,7 @@ import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.RatioTapChanger;
 import com.powsybl.iidm.network.ShuntCompensator;
-import com.powsybl.iidm.network.StaticVarCompensator;
+import com.powsybl.iidm.network.regulation.RegulationMode;
 import com.powsybl.openreac.OpenReacConfig;
 import com.powsybl.openreac.OpenReacRunner;
 import com.powsybl.openreac.network.HvdcNetworkFactory;
@@ -86,7 +86,7 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
     void testSvc() throws IOException {
         Network network = VoltageControlNetworkFactory.createWithStaticVarCompensator();
         network.getVoltageLevelStream().forEach(vl -> vl.setLowVoltageLimit(380).setHighVoltageLimit(420));
-        network.getStaticVarCompensator("svc1").setVoltageSetpoint(390).setRegulationMode(StaticVarCompensator.RegulationMode.VOLTAGE);
+        network.getStaticVarCompensator("svc1").setVoltageSetpoint(390).setRegulationMode(RegulationMode.VOLTAGE);
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.addConstantQGenerators(List.of("g1"));
         testAllModifAndLoadFlow(network, "optimization/loadflow/openreac-output-svc", parameters, ReportNode.NO_OP);

@@ -12,7 +12,7 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.Substation;
 import com.powsybl.iidm.network.TopologyKind;
 import com.powsybl.iidm.network.VoltageLevel;
-import com.powsybl.iidm.network.extensions.VoltageRegulationAdder;
+import com.powsybl.iidm.network.regulation.RegulationMode;
 
 /**
  * Minimal test networks with a single battery.
@@ -44,7 +44,7 @@ public final class BatteryNetworkFactory {
                 .setMinP(-100.0)
                 .setMaxP(100.0)
                 .setTargetP(10.0)
-                .setTargetQ(0.0)
+                .setLocalTargetQ(0.0)
                 .add();
         return network;
     }
@@ -52,14 +52,13 @@ public final class BatteryNetworkFactory {
     /**
      * Same network, with voltage regulation enabled on the battery (local regulation).
      */
-    public static Network createWithVoltageRegulationOn() {
+    public static Network createWithLocalVoltageRegulationOn() {
         Network network = create();
         Battery battery = network.getBattery("BATTERY");
-        battery.newExtension(VoltageRegulationAdder.class)
-                .withVoltageRegulatorOn(true)
-                .withTargetV(400.0)
-                .withRegulatingTerminal(battery.getTerminal())
-                .add();
+        battery.setLocalTargetV(400.0);
+        battery.newVoltageRegulation()
+                .withMode(RegulationMode.VOLTAGE)
+                .build();
         return network;
     }
 }

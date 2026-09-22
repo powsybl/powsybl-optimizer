@@ -9,6 +9,7 @@ package com.powsybl.openreac.optimization;
 
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.StaticVarCompensator;
+import com.powsybl.iidm.network.regulation.RegulationMode;
 import com.powsybl.openreac.network.VoltageControlNetworkFactory;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
@@ -59,7 +60,7 @@ class OpenReacRemoteVoltageControlOptimizationTest extends AbstractOpenReacRunne
                 .setTargetQ(5);
         StaticVarCompensator svc = network.getStaticVarCompensator("svc1");
         svc.setVoltageSetpoint(390)
-            .setRegulationMode(StaticVarCompensator.RegulationMode.VOLTAGE)
+            .setRegulationMode(RegulationMode.VOLTAGE)
             .setRegulatingTerminal(network.getGenerator("g1").getTerminal());
 
         OpenReacParameters parameters = new OpenReacParameters();

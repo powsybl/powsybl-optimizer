@@ -9,7 +9,7 @@ package com.powsybl.openreac.optimization;
 
 import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
 import com.powsybl.iidm.network.Network;
-import com.powsybl.iidm.network.StaticVarCompensator;
+import com.powsybl.iidm.network.regulation.RegulationMode;
 import com.powsybl.openreac.network.HvdcNetworkFactory;
 import com.powsybl.openreac.network.ShuntNetworkFactory;
 import com.powsybl.openreac.network.VoltageControlNetworkFactory;
@@ -235,7 +235,7 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
                 .setId("svc2")
                 .setConnectableBus("b2")
                 .setBus("b2")
-                .setRegulationMode(StaticVarCompensator.RegulationMode.VOLTAGE)
+                .setRegulationMode(RegulationMode.VOLTAGE)
                 .setVoltageSetpoint(400)
                 .setRegulating(true)
                 .setBmin(-0.008)

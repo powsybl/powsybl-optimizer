@@ -10,7 +10,7 @@ import com.powsybl.iidm.modification.*;
 import com.powsybl.iidm.modification.tapchanger.AbstractTapPositionModification;
 import com.powsybl.iidm.modification.tapchanger.RatioTapPositionModification;
 import com.powsybl.iidm.network.*;
-import com.powsybl.iidm.network.extensions.VoltageRegulation;
+import com.powsybl.iidm.network.regulation.RegulationMode;
 import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.output.FixedParallelTransformersOutput.FixedParallelTransformer;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput.ReactiveSlack;
@@ -169,11 +169,16 @@ public class OpenReacResult {
                 .map(network::getBattery)
                 .filter(Objects::nonNull)
                 .forEach(battery -> {
-                    VoltageRegulation vr = battery.getExtension(VoltageRegulation.class);
-                    if (vr == null || !vr.isVoltageRegulatorOn()) {
+                    if (!battery.isRegulatingWithMode(RegulationMode.VOLTAGE)) {
                         return;
                     }
-                    updateTargetV(vr.getRegulatingTerminal(), battery.getId(), vr::setTargetV);
+                    updateTargetV(battery.getRegulatingTerminal(), battery.getId(), v -> {
+                        if (battery.getVoltageRegulation().getTerminal() == null) {
+                            battery.setLocalTargetV(v);
+                        } else {
+                            battery.getVoltageRegulation().setTargetValue(v);
+                        }
+                    });
                 });
 
         // update voltages of the buses

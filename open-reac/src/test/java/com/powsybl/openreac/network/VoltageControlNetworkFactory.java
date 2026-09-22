@@ -7,6 +7,7 @@
 package com.powsybl.openreac.network;
 
 import com.powsybl.iidm.network.*;
+import com.powsybl.iidm.network.regulation.RegulationMode;
 
 /**
  * @author Anne Tilloy {@literal <anne.tilloy@rte-france.com>}
@@ -968,7 +969,7 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
                 .setId("svc1")
                 .setConnectableBus("b2")
                 .setBus("b2")
-                .setRegulationMode(StaticVarCompensator.RegulationMode.VOLTAGE)
+                .setRegulationMode(RegulationMode.VOLTAGE)
                 .setRegulating(false)
                 .setBmin(-0.008)
                 .setBmax(0.008)
