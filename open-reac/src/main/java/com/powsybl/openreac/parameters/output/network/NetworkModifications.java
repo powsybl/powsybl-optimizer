@@ -16,6 +16,7 @@ import com.powsybl.iidm.modification.tapchanger.RatioTapPositionModification;
 import com.powsybl.iidm.network.Network;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Data class to store all outputs resulting of NetworkModification.
@@ -51,6 +52,18 @@ public class NetworkModifications {
 
     public List<BatteryModification> getBatteryModifications() {
         return batteryOutput.getModifications();
+    }
+
+    public Map<String, Double> getContinuousSusceptanceByShunt() {
+        return shuntsOutput.getContinuousSusceptanceByShunt();
+    }
+
+    public double getTotalAbsoluteReactiveDeviation() {
+        return shuntsOutput.getTotalAbsoluteReactiveDeviation();
+    }
+
+    public Map<String, Double> getReactiveDeviationByShunt() {
+        return shuntsOutput.getReactiveDeviationByShunt();
     }
 
     public List<ShuntCompensatorModification> getShuntModifications() {
