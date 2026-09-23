@@ -145,15 +145,11 @@ where:
 - $\rho_{ij}$ is the transformer ratio of line $ij$, specified in `ampl_network_tct.txt`.
 - the weights $w_{\sigma}^{+}$, $w_{\sigma}^{-}$, $w_{P}$, $w_{V}^{\rho}$, $w_{V}^{0}$, $w_{Q}$ and $w_{\rho}$ correspond respectively to the parameters `penalty_invest_rea_pos`, `penalty_invest_rea_neg`, `penalty_active_power`, `penalty_voltage_target_ratio`, `penalty_voltage_target_data`, `penalty_units_reactive` and `penalty_transfo_ratio`.
 
-Four of these weights have a fixed default value: $w_{\sigma}^{+} = 10$, $w_{\sigma}^{-} = 10$, $w_{Q} = 0.1$ and $w_{\rho} = 0.1$.
+The default values of the weights are $w_{\sigma}^{+} = 10$, $w_{\sigma}^{-} = 10$, $w_{P} = 1$, $w_{Q} = 0.1$, $w_{\rho} = 0.1$ and $w_{V}^{\rho} = w_{V}^{0} = 0.01$: by default, the objective minimizes the active power production $\sum\limits_{i,g}\boldsymbol{P_{i,g}}$ and the reactive power of units.
 The high default weight on the reactive slacks drives their sum towards $0$, ensuring reactive power balance at each bus of the network.
+In the voltage target ratio term, $\rho$ equals the configurable parameter `ratio_voltage_target`.
 
-The three remaining weights — $w_{P}$, $w_{V}^{\rho}$ and $w_{V}^{0}$ — have a default value that depends on the `objective_choice` parameter when they are left unset: the term matching the selected objective receives a weight of $1$, while the other two receive $0.01$. Specifically, if `objective_choice` takes on:
-- $0$ (`MIN_GENERATION`), the minimization of active power production $\sum\limits_{i,g}\boldsymbol{P_{i,g}}$ is prioritized ($w_{P} = 1$).
-- $1$ (`BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT`), the minimization of $\sum\limits_{i} \left( \boldsymbol{V_i} - \left( (1-\rho)V_{i}^{\text{min,c}} + \rho V_{i}^{\text{max,c}} \right) \right)^2$ is prioritized ($w_{V}^{\rho} = 1$), where $\rho$ equals the configurable parameter `ratio_voltage_target`.
-- $2$ (`SPECIFIC_VOLTAGE_PROFILE`), the minimization of $\sum\limits_{i} (\boldsymbol{V_i} - V_i^t)^2$ is prioritized ($w_{V}^{0} = 1$).
-
-Setting an explicit value on any of these three weights overrides this objective-dependent default, regardless of the selected objective. As all weights accept any value $\geq 0$, a term can be fully neutralized by setting its weight to $0$.
+As all weights accept any value $\geq 0$, a term can be fully neutralized by setting its weight to $0$.
 
 ## Solving
 

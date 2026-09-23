@@ -1,5 +1,5 @@
 {
-  "version" : "1.3",
+  "version" : "1.4",
   "specificVoltageLimits" : [ {
     "voltageLevelId" : "foo",
     "voltageLimitType" : "LOW_VOLTAGE_LIMIT",
@@ -25,7 +25,6 @@
   "variableTwoWindingsTransformers" : [ "tr1" ],
   "variableShuntCompensators" : [ "sc1", "sc2" ],
   "configuredReactiveSlackBuses" : [ "bus1", "bus2" ],
-  "objective" : "MIN_GENERATION",
   "logLevelAmpl" : "INFO",
   "logLevelSolver" : "EVERYTHING",
   "debugDir" : "/tmp/debugDir",
@@ -49,11 +48,11 @@
   "shuntVariableScalingFactor" : 0.1,
   "penaltyInvestReaPos" : 10.0,
   "penaltyInvestReaNeg" : 10.0,
-  "penaltyActivePower" : null,
+  "penaltyActivePower" : 1.0,
   "penaltyUnitsReactive" : 0.1,
   "penaltyTransfoRatio" : 0.1,
-  "penaltyVoltageTargetRatio" : null,
-  "penaltyVoltageTargetData" : null,
+  "penaltyVoltageTargetRatio" : 0.01,
+  "penaltyVoltageTargetData" : 0.01,
   "optimizationAfterRounding" : false,
   "parallelTransformersGrouping" : true,
   "referenceState" : "NETWORK"

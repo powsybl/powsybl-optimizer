@@ -1,9 +1,10 @@
 {
-  "version" : "1.4",
+  "version" : "1.2",
   "specificVoltageLimits" : [ ],
   "constantQGenerators" : [ ],
   "variableTwoWindingsTransformers" : [ ],
   "variableShuntCompensators" : [ ],
+  "objective" : "SPECIFIC_VOLTAGE_PROFILE",
   "objectiveDistance" : 5.0,
   "logLevelAmpl" : "WARNING",
   "logLevelSolver" : "NOTHING",
@@ -27,12 +28,11 @@
   "shuntVariableScalingFactor" : 0.1,
   "penaltyInvestReaPos" : 10.0,
   "penaltyInvestReaNeg" : 10.0,
-  "penaltyActivePower" : 1.0,
+  "penaltyActivePower" : null,
   "penaltyUnitsReactive" : 0.1,
   "penaltyTransfoRatio" : 0.1,
-  "penaltyVoltageTargetRatio" : 0.01,
-  "penaltyVoltageTargetData" : 0.01,
+  "penaltyVoltageTargetRatio" : null,
+  "penaltyVoltageTargetData" : null,
   "optimizationAfterRounding" : true,
-  "parallelTransformersGrouping" : false,
-  "referenceState" : "NEUTRAL"
+  "parallelTransformersGrouping" : false
 }

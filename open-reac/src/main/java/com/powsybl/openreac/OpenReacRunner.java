@@ -78,7 +78,7 @@ public final class OpenReacRunner {
     public static OpenReacResult run(Network network, String variantId, OpenReacParameters parameters, OpenReacConfig config,
                                      ComputationManager manager, ReportNode reportNode, AmplExportConfig amplExportConfig) {
         checkParameters(network, variantId, parameters, config, manager, reportNode);
-        ReportNode openReacReportNode = Reports.createOpenReacReporter(reportNode, network.getId(), parameters.getObjective());
+        ReportNode openReacReportNode = Reports.createOpenReacReporter(reportNode, network.getId());
         AmplModel reactiveOpf = OpenReacModel.buildModel();
         InitializedVariant initializedVariant = createInitializedVariant(network, variantId, parameters, openReacReportNode);
         try {
@@ -116,7 +116,7 @@ public final class OpenReacRunner {
     public static CompletableFuture<OpenReacResult> runAsync(Network network, String variantId, OpenReacParameters parameters,
                                                              OpenReacConfig config, ComputationManager manager, ReportNode reportNode, AmplExportConfig amplExportConfig) {
         checkParameters(network, variantId, parameters, config, manager, reportNode);
-        ReportNode openReacReportNode = Reports.createOpenReacReporter(reportNode, network.getId(), parameters.getObjective());
+        ReportNode openReacReportNode = Reports.createOpenReacReporter(reportNode, network.getId());
         AmplModel reactiveOpf = OpenReacModel.buildModel();
         InitializedVariant initializedVariant = createInitializedVariant(network, variantId, parameters, openReacReportNode);
         boolean submitted = false;
