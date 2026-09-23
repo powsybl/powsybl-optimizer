@@ -172,8 +172,8 @@ class OpenReacJsonModuleTest {
                 OpenReacParameters.class);
 
         assertEquals(1.0, parameters.getPenaltyActivePower());
-        assertEquals(0.01, parameters.getPenaltyVoltageTargetRatio());
-        assertEquals(0.01, parameters.getPenaltyVoltageTargetData());
+        assertEquals(0, parameters.getPenaltyVoltageTargetRatio());
+        assertEquals(0, parameters.getPenaltyVoltageTargetData());
         assertEquals(5, parameters.getObjectiveDistance());
         assertFalse(parameters.isParallelTransformersGrouping());
 
@@ -201,9 +201,9 @@ class OpenReacJsonModuleTest {
         assertEquals(10, parameters.getPenaltyInvestReaNeg());
         assertEquals(1.0, parameters.getPenaltyActivePower());
         assertEquals(0.1, parameters.getPenaltyUnitsReactive());
-        assertEquals(0.1, parameters.getPenaltyTransfoRatio());
-        assertEquals(0.01, parameters.getPenaltyVoltageTargetRatio());
-        assertEquals(0.01, parameters.getPenaltyVoltageTargetData());
+        assertEquals(0, parameters.getPenaltyTransfoRatio());
+        assertEquals(0, parameters.getPenaltyVoltageTargetRatio());
+        assertEquals(0, parameters.getPenaltyVoltageTargetData());
 
         // Spot-check a few pre-existing fields to confirm the rest of the deserialization still works
         assertEquals(ReactiveSlackBusesMode.CONFIGURED, parameters.getReactiveSlackBusesMode());
