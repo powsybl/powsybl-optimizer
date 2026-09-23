@@ -50,7 +50,7 @@ for {g in PARALLEL_BUNDLES_DROPPED} {
        else if card({(qq,m,n) in BRANCHCC_WITH_SIDE_1_OPENED}) > 0 then
          "side 1 opened"
        else if card({(qq,m,n) in BRANCHCC}) == 0 then
-         "out of main connected component"
+         "out of main synchronous component"
        else
          "unexpected: an in-service member should have made the bundle degenerate");
   }

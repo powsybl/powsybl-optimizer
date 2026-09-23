@@ -70,7 +70,7 @@ check maximal_voltage_upper_bound > minimal_voltage_lower_bound;
 # ampl_network_buses.txt
 set BUS dimen 2 ; # [variant, bus]
 param bus_substation{BUS} integer;
-param bus_CC        {BUS} integer; # num of connex component. Computation only in CC number 0 (=main connex component)
+param bus_CC        {BUS} integer; # num of connex component. Not used: connex components are computed across HVDC links
 param bus_SC        {BUS} integer; # num of synchronous component. Computation only in SC number 0 (=main synchronous component)
 param bus_V0        {BUS};
 param bus_angl0     {BUS};

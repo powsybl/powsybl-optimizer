@@ -40,6 +40,8 @@ if card(messagesInfo) > 0 then {
 # Other indicators
 printf "\n" > (fileOut);
 printf "%s %s\n","dcopf_status",dcopf_status > (fileOut);
+printf "%s %Q\n","slack_bus",slack_bus > (fileOut);
+printf "%s %s\n","slack_bus_origin",slack_bus_origin > (fileOut);
 printf "%s %s\n","operatingSystem",operatingSystem > (fileOut);
 if length($OS) > 0 then {
   printf "%s %Q\n","OS",$OS > (fileOut); # Windows

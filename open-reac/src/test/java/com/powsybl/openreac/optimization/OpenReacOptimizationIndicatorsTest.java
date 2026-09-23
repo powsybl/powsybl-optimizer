@@ -10,6 +10,10 @@ package com.powsybl.openreac.optimization;
 import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.StaticVarCompensator;
+import com.powsybl.iidm.network.Substation;
+import com.powsybl.iidm.network.TopologyKind;
+import com.powsybl.iidm.network.VoltageLevel;
+import com.powsybl.iidm.network.extensions.SlackTerminal;
 import com.powsybl.openreac.network.HvdcNetworkFactory;
 import com.powsybl.openreac.network.ShuntNetworkFactory;
 import com.powsybl.openreac.network.VoltageControlNetworkFactory;
@@ -101,11 +105,41 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
         assertEquals(OpenReacStatus.OK, result.getStatus());
         assertEquals(16, Integer.parseInt(result.getIndicators().get("nb_substations")));
         assertEquals(16, Integer.parseInt(result.getIndicators().get("nb_bus_in_data_file")));
-        assertEquals(16, Integer.parseInt(result.getIndicators().get("nb_bus_in_ACDC_CC")));
         // verify buses outside main SC have been excluded
-        assertEquals(12, Integer.parseInt(result.getIndicators().get("nb_bus_in_AC_CC")));
-        assertEquals(4, Integer.parseInt(result.getIndicators().get("nb_bus_in_ACDC_but_out_AC_CC")));
+        assertEquals(12, Integer.parseInt(result.getIndicators().get("nb_bus_in_main_SC")));
+        assertEquals(4, Integer.parseInt(result.getIndicators().get("nb_bus_out_of_main_SC")));
         assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_bus_with_voltage_value")));
+        assertEquals("vl1_0", result.getIndicators().get("slack_bus"));
+        assertEquals("FALLBACK", result.getIndicators().get("slack_bus_origin"));
+    }
+
+    @Test
+    void testSlackBusProvidedInDataIndicators() throws IOException {
+        Network network = HvdcNetworkFactory.createLccWithBiggerComponents();
+        // flag two buses of the main synchronous component, none of them being the fallback choice (vl1_0)
+        SlackTerminal.attach(network.getBusBreakerView().getBus("additionnalbus_3"));
+        SlackTerminal.attach(network.getBusBreakerView().getBus("additionnalbus_7"));
+        OpenReacResult result = runOpenReac(network, "optimization/indicators/slack-bus-data-test", true);
+
+        assertEquals(OpenReacStatus.OK, result.getStatus());
+        // verify the slack bus is read from the input data instead of being computed,
+        // and that the flagged bus with the smallest num is used
+        assertEquals("DATA", result.getIndicators().get("slack_bus_origin"));
+        assertEquals("additionnalbus_3_vl_0", result.getIndicators().get("slack_bus"));
+    }
+
+    @Test
+    void testEmptyMainSynchronousComponentIndicators() throws IOException {
+        Network network = createLowNominalVoltageNetwork();
+        OpenReacResult result = runOpenReac(network, "optimization/indicators/empty-main-sc-test", true);
+
+        // every bus is below the default epsilon_nominal_voltage (1kV): nothing can be optimized,
+        // and the AMPL process exits before the slack bus computation and the DCOPF
+        assertEquals(OpenReacStatus.NOT_OK, result.getStatus());
+        assertEquals("NOK", result.getIndicators().get("final_status"));
+        assertEquals("UNKNOWN", result.getIndicators().get("dcopf_status"));
+        assertEquals("UNDEFINED", result.getIndicators().get("slack_bus"));
+        assertEquals("UNDEFINED", result.getIndicators().get("slack_bus_origin"));
     }
 
     @Test
@@ -121,9 +155,9 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
         assertEquals(OpenReacStatus.OK, result.getStatus());
         assertEquals(4, Integer.parseInt(result.getIndicators().get("nb_branch_in_data_file")));
         // verify opened branches are considered in optimization
-        assertEquals(4, Integer.parseInt(result.getIndicators().get("nb_branch_in_AC_CC")));
-        assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_branch_in_AC_CC_side_1_opened")));
-        assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_branch_in_AC_CC_side_2_opened")));
+        assertEquals(4, Integer.parseInt(result.getIndicators().get("nb_branch_in_main_SC")));
+        assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_branch_in_main_SC_side_1_opened")));
+        assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_branch_in_main_SC_side_2_opened")));
         // verify opened branches can be considered as zero impedance branches
         assertEquals(2, Integer.parseInt(result.getIndicators().get("nb_branch_with_nonsmall_impedance")));
         assertEquals(2, Integer.parseInt(result.getIndicators().get("nb_branch_with_zero_or_small_impedance")));
@@ -139,7 +173,7 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
 
         assertEquals(OpenReacStatus.OK, result.getStatus());
         assertEquals(3, Integer.parseInt(result.getIndicators().get("nb_unit_in_data_file")));
-        assertEquals(3, Integer.parseInt(result.getIndicators().get("nb_unit_in_AC_CC")));
+        assertEquals(3, Integer.parseInt(result.getIndicators().get("nb_unit_in_main_SC")));
         assertEquals(3, Integer.parseInt(result.getIndicators().get("nb_unit_up_and_running")));
         // verify that only the generators indicated as constant and with defined target Q are fixed in optimization
         assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_unit_with_fixed_reactive_power")));
@@ -221,7 +255,7 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
 
         assertEquals(OpenReacStatus.OK, result.getStatus());
         assertEquals(3, Integer.parseInt(result.getIndicators().get("nb_shunt_in_data_file")));
-        assertEquals(3, Integer.parseInt(result.getIndicators().get("nb_shunt_connectable_or_in_AC_CC")));
+        assertEquals(3, Integer.parseInt(result.getIndicators().get("nb_shunt_connectable_or_in_main_SC")));
         // verify disconnected shunt, and not optimized, is not considered in shunts with fixed values
         assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_shunt_with_fixed_value")));
         // verify only one shunt has been optimized (even if it was disconnected)
@@ -245,7 +279,7 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
 
         assertEquals(OpenReacStatus.OK, result.getStatus());
         assertEquals(2, Integer.parseInt(result.getIndicators().get("nb_svc_in_data_file")));
-        assertEquals(2, Integer.parseInt(result.getIndicators().get("nb_svc_in_AC_CC")));
+        assertEquals(2, Integer.parseInt(result.getIndicators().get("nb_svc_in_main_SC")));
         // verify only one svc is regulating
         assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_svc_up_and_operating")));
     }
@@ -280,6 +314,124 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
         // verify the sum of max and min active power of the batteries
         assertEquals(21, Double.parseDouble(result.getIndicators().get("sum_batteries_pmax")));
         assertEquals(-19, Double.parseDouble(result.getIndicators().get("sum_batteries_pmin")));
+    }
+
+    /**
+     * Network whose main synchronous component (the largest one, hence sc=0) only contains buses
+     * with a nominal voltage below the default epsilon_nominal_voltage (1kV), so that it is empty
+     * once the nominal voltage filter is applied. A smaller synchronous component at 400kV is
+     * added so that the network passes the consistency check requiring more than one voltage
+     * level above epsilon_nominal_voltage.
+     */
+    private static Network createLowNominalVoltageNetwork() {
+        Network network = Network.create("low-nominal-voltage", "test");
+        Substation s = network.newSubstation()
+                .setId("S1")
+                .add();
+        // main synchronous component: three buses below epsilon_nominal_voltage
+        VoltageLevel vl1 = s.newVoltageLevel()
+                .setId("vl1")
+                .setNominalV(0.4)
+                .setTopologyKind(TopologyKind.BUS_BREAKER)
+                .add();
+        vl1.getBusBreakerView().newBus()
+                .setId("b1")
+                .add();
+        vl1.newGenerator()
+                .setId("g1")
+                .setBus("b1")
+                .setConnectableBus("b1")
+                .setTargetP(1)
+                .setTargetV(0.4)
+                .setMinP(0)
+                .setMaxP(2)
+                .setVoltageRegulatorOn(true)
+                .add();
+        VoltageLevel vl2 = s.newVoltageLevel()
+                .setId("vl2")
+                .setNominalV(0.4)
+                .setTopologyKind(TopologyKind.BUS_BREAKER)
+                .add();
+        vl2.getBusBreakerView().newBus()
+                .setId("b2")
+                .add();
+        vl2.newLoad()
+                .setId("ld2")
+                .setBus("b2")
+                .setConnectableBus("b2")
+                .setP0(1)
+                .setQ0(0.2)
+                .add();
+        VoltageLevel vl3 = s.newVoltageLevel()
+                .setId("vl3")
+                .setNominalV(0.4)
+                .setTopologyKind(TopologyKind.BUS_BREAKER)
+                .add();
+        vl3.getBusBreakerView().newBus()
+                .setId("b3")
+                .add();
+        network.newLine()
+                .setId("l12")
+                .setBus1("b1")
+                .setConnectableBus1("b1")
+                .setBus2("b2")
+                .setConnectableBus2("b2")
+                .setR(0.01)
+                .setX(0.03)
+                .add();
+        network.newLine()
+                .setId("l23")
+                .setBus1("b2")
+                .setConnectableBus1("b2")
+                .setBus2("b3")
+                .setConnectableBus2("b3")
+                .setR(0.01)
+                .setX(0.03)
+                .add();
+        // smaller synchronous component above epsilon_nominal_voltage
+        VoltageLevel vl4 = s.newVoltageLevel()
+                .setId("vl4")
+                .setNominalV(400)
+                .setTopologyKind(TopologyKind.BUS_BREAKER)
+                .add();
+        vl4.getBusBreakerView().newBus()
+                .setId("b4")
+                .add();
+        vl4.newGenerator()
+                .setId("g4")
+                .setBus("b4")
+                .setConnectableBus("b4")
+                .setTargetP(10)
+                .setTargetV(400)
+                .setMinP(0)
+                .setMaxP(20)
+                .setVoltageRegulatorOn(true)
+                .add();
+        VoltageLevel vl5 = s.newVoltageLevel()
+                .setId("vl5")
+                .setNominalV(400)
+                .setTopologyKind(TopologyKind.BUS_BREAKER)
+                .add();
+        vl5.getBusBreakerView().newBus()
+                .setId("b5")
+                .add();
+        vl5.newLoad()
+                .setId("ld5")
+                .setBus("b5")
+                .setConnectableBus("b5")
+                .setP0(10)
+                .setQ0(2)
+                .add();
+        network.newLine()
+                .setId("l45")
+                .setBus1("b4")
+                .setConnectableBus1("b4")
+                .setBus2("b5")
+                .setConnectableBus2("b5")
+                .setR(1)
+                .setX(3)
+                .add();
+        return network;
     }
 
 }

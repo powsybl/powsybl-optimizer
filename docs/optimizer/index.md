@@ -17,7 +17,7 @@ hidden: true
 divisionOfCode.md
 inputs.md
 preprocessing.md
-slackBusMainConnexComponent.md
+slackBusMainSynchronousComponent.md
 dcOptimalPowerflow.md
 acOptimalPowerflow.md
 outputs.md

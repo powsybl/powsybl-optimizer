@@ -9,7 +9,7 @@ Before addressing the ACOPF (see [AC optimal powerflow](acOptimalPowerflow.md)),
 
 ## Optimization problem
 
-The DCOPF model involves the following constraints, in addition to the slack constraint $(1)$ introduced in [Slack bus and main connex component](slackBusMainConnexComponent.md):
+The DCOPF model involves the following constraints, in addition to the slack constraint $(1)$ introduced in [Slack bus and main synchronous component](slackBusMainSynchronousComponent.md):
 
 $$\sum\limits_{j\in v(i)} \boldsymbol{p_{ij}} = P_i^{in} + \boldsymbol{\sigma_{P,i}^{+}} - \boldsymbol{\sigma_{P,i}^{-}} - \sum\limits_{g}\boldsymbol{P_{i,g}}, \quad i\in\text{BUSCC} \quad (4)$$
 
