@@ -3,7 +3,6 @@ slack_bus 'VL13_0'
 
 log_level_ampl WARNING
 log_level_knitro 1
-objective_choice 2
 ratio_voltage_target 0.700000
 coeff_alpha 0.999000
 Pnull 0.020000
