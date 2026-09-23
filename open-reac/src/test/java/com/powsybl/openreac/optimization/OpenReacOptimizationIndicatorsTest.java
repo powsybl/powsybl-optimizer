@@ -18,7 +18,6 @@ import com.powsybl.openreac.network.ShuntNetworkFactory;
 import com.powsybl.openreac.network.VoltageControlNetworkFactory;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAmplLogLevel;
-import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 import com.powsybl.openreac.parameters.input.algo.OpenReacSolverLogLevel;
 import com.powsybl.openreac.parameters.input.algo.ReactiveSlackBusesMode;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
@@ -43,7 +42,6 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
     void testParametrizationIndicators() throws IOException {
         Network network = IeeeCdfNetworkFactory.create57();
         OpenReacParameters parameters = new OpenReacParameters()
-                .setObjective(OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE)
                 .setObjectiveDistance(70)
                 .setLogLevelAmpl(OpenReacAmplLogLevel.WARNING)
                 .setLogLevelSolver(OpenReacSolverLogLevel.ONLY_RESULTS)
@@ -70,7 +68,6 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
 
         assertEquals("WARNING", result.getIndicators().get("log_level_ampl"));
         assertEquals(1, Integer.parseInt(result.getIndicators().get("log_level_knitro")));
-        assertEquals(2, Integer.parseInt(result.getIndicators().get("objective_choice")));
         assertEquals(0.7, Double.parseDouble(result.getIndicators().get("ratio_voltage_target")));
         assertEquals(0.999, Double.parseDouble(result.getIndicators().get("coeff_alpha")));
         assertEquals(0.02, Double.parseDouble(result.getIndicators().get("Pnull")));
