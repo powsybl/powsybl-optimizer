@@ -145,7 +145,7 @@ where:
 - $\rho_{ij}$ is the transformer ratio of line $ij$, specified in `ampl_network_tct.txt`.
 - the weights $w_{\sigma}^{+}$, $w_{\sigma}^{-}$, $w_{P}$, $w_{V}^{\rho}$, $w_{V}^{0}$, $w_{Q}$ and $w_{\rho}$ correspond respectively to the parameters `penalty_invest_rea_pos`, `penalty_invest_rea_neg`, `penalty_active_power`, `penalty_voltage_target_ratio`, `penalty_voltage_target_data`, `penalty_units_reactive` and `penalty_transfo_ratio`.
 
-The default values of the weights are $w_{\sigma}^{+} = 10$, $w_{\sigma}^{-} = 10$, $w_{P} = 1$, $w_{Q} = 0.1$, $w_{\rho} = 0.1$ and $w_{V}^{\rho} = w_{V}^{0} = 0.01$: by default, the objective minimizes the active power production $\sum\limits_{i,g}\boldsymbol{P_{i,g}}$ and the reactive power of units.
+The default values of the weights are $w_{\sigma}^{+} = 10$, $w_{\sigma}^{-} = 10$, $w_{P} = 1$, $w_{Q} = 0.1$ and $w_{V}^{\rho} = w_{V}^{0} = w_{\rho} = 0$: by default, the objective minimizes the active power production $\sum\limits_{i,g}\boldsymbol{P_{i,g}}$ and the reactive power of units, and the voltage targeting and transformer ratio terms are inactive.
 The high default weight on the reactive slacks drives their sum towards $0$, ensuring reactive power balance at each bus of the network.
 In the voltage target ratio term, $\rho$ equals the configurable parameter `ratio_voltage_target`.
 

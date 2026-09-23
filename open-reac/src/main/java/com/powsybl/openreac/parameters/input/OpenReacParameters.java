@@ -143,13 +143,13 @@ public class OpenReacParameters {
     private double penaltyUnitsReactive = 0.1;
 
     private static final String PENALTY_TRANSFO_RATIO_KEY = "penalty_transfo_ratio";
-    private double penaltyTransfoRatio = 0.1;
+    private double penaltyTransfoRatio = 0;
 
     private static final String PENALTY_VOLTAGE_TARGET_RATIO_KEY = "penalty_voltage_target_ratio";
-    private double penaltyVoltageTargetRatio = 0.01;
+    private double penaltyVoltageTargetRatio = 0;
 
     private static final String PENALTY_VOLTAGE_TARGET_DATA_KEY = "penalty_voltage_target_data";
-    private double penaltyVoltageTargetData = 0.01;
+    private double penaltyVoltageTargetData = 0;
 
     private static final String OPTIMIZATION_AFTER_ROUNDING = "optimization_after_rounding";
 
