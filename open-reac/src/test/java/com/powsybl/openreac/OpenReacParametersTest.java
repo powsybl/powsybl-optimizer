@@ -355,7 +355,7 @@ class OpenReacParametersTest {
     void testPenaltyTransfoRatioIntegrity() {
         OpenReacParameters parameters = new OpenReacParameters();
 
-        assertEquals(0.1, parameters.getPenaltyTransfoRatio());
+        assertEquals(0, parameters.getPenaltyTransfoRatio());
 
         parameters.setPenaltyTransfoRatio(0.1);
         assertEquals(0.1, parameters.getPenaltyTransfoRatio());
@@ -372,7 +372,7 @@ class OpenReacParametersTest {
     void testPenaltyVoltageTargetRatioIntegrity() {
         OpenReacParameters parameters = new OpenReacParameters();
 
-        assertEquals(0.01, parameters.getPenaltyVoltageTargetRatio());
+        assertEquals(0, parameters.getPenaltyVoltageTargetRatio());
 
         parameters.setPenaltyVoltageTargetRatio(0.01);
         assertEquals(0.01, parameters.getPenaltyVoltageTargetRatio());
@@ -389,7 +389,7 @@ class OpenReacParametersTest {
     void testPenaltyVoltageTargetDataIntegrity() {
         OpenReacParameters parameters = new OpenReacParameters();
 
-        assertEquals(0.01, parameters.getPenaltyVoltageTargetData());
+        assertEquals(0, parameters.getPenaltyVoltageTargetData());
 
         parameters.setPenaltyVoltageTargetData(0.01);
         assertEquals(0.01, parameters.getPenaltyVoltageTargetData());
@@ -518,8 +518,8 @@ class OpenReacParametersTest {
         assertEquals("10.0", algoParams.get(22).getValue());
         assertEquals("0.01", algoParams.get(23).getValue());
         assertEquals("0.1", algoParams.get(24).getValue());
-        assertEquals("0.1", algoParams.get(25).getValue());
-        assertEquals("0.01", algoParams.get(26).getValue());
+        assertEquals("0.0", algoParams.get(25).getValue());
+        assertEquals("0.0", algoParams.get(26).getValue());
         assertEquals("1.0", algoParams.get(27).getValue());
         assertEquals("true", algoParams.get(28).getValue());
     }
@@ -574,9 +574,9 @@ class OpenReacParametersTest {
         assertEquals(10.0, parameters.getPenaltyInvestReaNeg());
         assertEquals(1.0, parameters.getPenaltyActivePower());
         assertEquals(0.1, parameters.getPenaltyUnitsReactive());
-        assertEquals(0.1, parameters.getPenaltyTransfoRatio());
-        assertEquals(0.01, parameters.getPenaltyVoltageTargetRatio());
-        assertEquals(0.01, parameters.getPenaltyVoltageTargetData());
+        assertEquals(0, parameters.getPenaltyTransfoRatio());
+        assertEquals(0, parameters.getPenaltyVoltageTargetRatio());
+        assertEquals(0, parameters.getPenaltyVoltageTargetData());
         assertFalse(parameters.isOptimizationAfterRounding());
         assertTrue(parameters.isParallelTransformersGrouping());
         assertTrue(parameters.checkAlgorithmParametersIntegrity());

@@ -29,9 +29,9 @@
   "penaltyInvestReaNeg" : 10.0,
   "penaltyActivePower" : 1.0,
   "penaltyUnitsReactive" : 0.1,
-  "penaltyTransfoRatio" : 0.1,
-  "penaltyVoltageTargetRatio" : 0.01,
-  "penaltyVoltageTargetData" : 0.01,
+  "penaltyTransfoRatio" : 0.0,
+  "penaltyVoltageTargetRatio" : 0.0,
+  "penaltyVoltageTargetData" : 0.0,
   "optimizationAfterRounding" : true,
   "parallelTransformersGrouping" : false,
   "referenceState" : "NEUTRAL"
