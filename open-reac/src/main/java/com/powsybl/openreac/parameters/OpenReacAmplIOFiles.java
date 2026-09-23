@@ -16,6 +16,8 @@ import com.powsybl.openreac.Reports;
 import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector;
 import com.powsybl.openreac.parameters.input.*;
 import com.powsybl.openreac.parameters.input.algo.AlgorithmInput;
+import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParam;
+import com.powsybl.openreac.parameters.input.algo.OpenReacAlgoParamImpl;
 import com.powsybl.openreac.parameters.output.FixedParallelTransformersOutput;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput;
@@ -26,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -40,6 +43,8 @@ import java.util.Set;
  * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
  */
 public class OpenReacAmplIOFiles implements AmplParameters {
+
+    private static final String SLACK_BUS_ID_PARAM = "slack_bus_id";
 
     private final ConstantQGenerators constantQGenerators;
     private final VariableShuntCompensators variableShuntCompensators;
@@ -56,13 +61,19 @@ public class OpenReacAmplIOFiles implements AmplParameters {
     private final ParallelTwoWindingsTransformersBundles parallelTwoWindingsTransformersBundles;
     private final FixedParallelTransformersOutput fixedParallelTransformersOutput;
 
-    public OpenReacAmplIOFiles(OpenReacParameters params, AmplExportConfig amplExportConfig, Network network, boolean debug, ReportNode reportNode) {
+    /**
+     * @param slackBusId id of the bus of the main synchronous component used as angle reference by the ACOPF.
+     */
+    public OpenReacAmplIOFiles(OpenReacParameters params, AmplExportConfig amplExportConfig, Network network, String slackBusId,
+                               boolean debug, ReportNode reportNode) {
 
         //inputs
         this.constantQGenerators = new ConstantQGenerators(params.getConstantQGenerators());
         this.variableShuntCompensators = new VariableShuntCompensators(params.getVariableShuntCompensators());
         this.variableTwoWindingsTransformers = new VariableTwoWindingsTransformers(params.getVariableTwoWindingsTransformers());
-        this.algorithmParams = new AlgorithmInput(params.getAllAlgorithmParams());
+        List<OpenReacAlgoParam> algoParams = new ArrayList<>(params.getAllAlgorithmParams());
+        algoParams.add(new OpenReacAlgoParamImpl(SLACK_BUS_ID_PARAM, "\"" + Objects.requireNonNull(slackBusId) + "\""));
+        this.algorithmParams = new AlgorithmInput(algoParams);
         this.voltageLimitsOverride = new VoltageLevelLimitsOverrideInput(params.getSpecificVoltageLimits(), network, reportNode);
         this.configuredReactiveSlackBuses = new ConfiguredBusesWithReactiveSlack(params.getConfiguredReactiveSlackBuses());
         this.amplExportConfig = amplExportConfig;

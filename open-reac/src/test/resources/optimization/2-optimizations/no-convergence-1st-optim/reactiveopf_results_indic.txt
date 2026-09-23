@@ -1,14 +1,14 @@
 final_status NOK
-dcopf_status OK
 slack_bus 'VL_2_0'
-slack_bus_origin FALLBACK
 
-ctime_start 'Mon Aug 31 09:43:49 2026'
+ctime_start 'Wed Sep 09 15:16:04 2026'
 last_solve_result_num 200
-nb_iter_last 114
-nb_iter_total 114
-_ampl_elapsed_time 0.028091
-_total_solve_time 0.034522
+nb_iter_last 113
+nb_iter_total 113
+objective_value_first 59.692776
+objective_value_last 59.692776
+_ampl_elapsed_time 0.029367
+_total_solve_time 0.021427
 total_time 0
 
 operatingSystem linux
@@ -93,15 +93,15 @@ nb_batteries_with_variable_reactive_power 0
 sum_batteries_pmax 0.0
 sum_batteries_pmin 0.0
 
-max_teta_dc 0.02
+max_teta_init 0.02
 max_teta_ac 0.18
 teta_max 3.02
-min_teta_dc -0.07
+min_teta_init -0.07
 min_teta_ac 0.00
 teta_min -3.07
-max_delta_teta_dc 0.074380
+max_delta_teta_init 0.074388
 max_delta_teta_ac 0.026774
-min_delta_teta_dc 0.015725
+min_delta_teta_init 0.015725
 min_delta_teta_ac -0.181138
 
 nb_reactive_slacks 0

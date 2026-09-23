@@ -27,4 +27,5 @@ penalty_transfo_ratio 0.3
 penalty_voltage_target_ratio 0.8
 penalty_voltage_target_data 0.9
 optimization_after_rounding false
+slack_bus_id "VL13_0"
 

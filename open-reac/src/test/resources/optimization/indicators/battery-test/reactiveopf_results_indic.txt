@@ -1,7 +1,5 @@
 final_status OK
-dcopf_status OK
 slack_bus 'vl4_0'
-slack_bus_origin FALLBACK
 
 log_level_ampl INFO
 log_level_knitro 2
@@ -80,15 +78,15 @@ nb_batteries_with_variable_reactive_power 0
 sum_batteries_pmax 21.0
 sum_batteries_pmin -19.0
 
-max_teta_dc 0.03
+max_teta_init 0.03
 max_teta_ac 0.02
 teta_max 3.03
-min_teta_dc 0.00
+min_teta_init 0.00
 min_teta_ac 0.00
 teta_min -3.00
-max_delta_teta_dc 0.030896
+max_delta_teta_init 0.030899
 max_delta_teta_ac 0.015495
-min_delta_teta_dc 0.018725
+min_delta_teta_init 0.018725
 min_delta_teta_ac 0.009609
 
 nb_reactive_slacks 1
