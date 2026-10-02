@@ -27,5 +27,6 @@ penalty_transfo_ratio 0.0
 penalty_voltage_target_ratio 0.0
 penalty_voltage_target_data 1.0
 optimization_after_rounding true
+hvdc_ac_emulation false
 slack_bus_id "VL13_0"
 

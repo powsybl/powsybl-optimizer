@@ -1,5 +1,5 @@
 {
-  "version" : "1.4",
+  "version" : "1.5",
   "specificVoltageLimits" : [ ],
   "constantQGenerators" : [ ],
   "variableTwoWindingsTransformers" : [ ],
@@ -33,5 +33,6 @@
   "penaltyVoltageTargetData" : 0.9,
   "optimizationAfterRounding" : false,
   "parallelTransformersGrouping" : true,
-  "referenceState" : "NETWORK"
+  "referenceState" : "NETWORK",
+  "hvdcAcEmulation" : true
 }
