@@ -28,7 +28,12 @@ In the case of transformers, a second optimization can be carried out to adjust 
 - Shunts that are disconnected at the beginning of the optimization but are specified as variable (see [Configuration of the run](inputs.md#configuration-of-the-run)) can be reconnected and optimized.
 - Only batteries that regulate voltage (as flagged in `ampl_network_batteries.txt`) have a variable reactive power; the reactive power of other batteries is fixed at its input value. 
   The active power of batteries is never optimized.
-- The AC emulation of HVDC lines is not considered in the optimization. Also, the losses due to the line and the converter stations themselves are not accounted for in the target used in the optimization.
+- As in OpenLoadFlow, VSC HVDC lines with an enabled angle droop active power control (IIDM extension `hvdcAngleDroopActivePowerControl`), whose two converter stations are in the main synchronous component,
+  are modeled in AC emulation, unless `hvdc_ac_emulation` is set to false (see [Configuration of the run](inputs.md#configuration-of-the-run)):
+  the active power flowing from converter station 1 to converter station 2 is $P_0 + k(\boldsymbol{\theta_1} - \boldsymbol{\theta_2})$, where $P_0$ and $k$ are the active power offset and the droop of the extension
+  (the droop, given in MW/° in IIDM, is used in MW/rad), and $\boldsymbol{\theta_1}$ and $\boldsymbol{\theta_2}$ are the phases of the buses of the converter stations.
+  The other HVDC lines are modeled by their active power set point. In both cases, the losses due to the line and the converter stations themselves are not accounted for.
+  For the lines in AC emulation, the saturation of the active power at the maximum active power of the line is not modeled either.
 
 ## Constraints
 
@@ -48,6 +53,7 @@ where:
   calculated as defined in the [PowSyBl documentation](https://powsybl.readthedocs.io/projects/powsybl-open-loadflow).
   Those are variables because they depend on $\boldsymbol{V_i}$, $\boldsymbol{V_j}$, $\boldsymbol{\theta_i}$, $\boldsymbol{\theta_j}$ and $\boldsymbol{\rho_{ij}}$.
 - $P_i^{in}$ is the constant active power injected or consumed in bus $i$ by batteries, loads, VSC stations and LCC stations.
+  For the converter stations of a VSC HVDC line in AC emulation (see [Generalities](#generalities)), the constant active power is replaced by the AC emulation flow, consumed at the bus of converter station 1 and injected at the bus of converter station 2.
 - $Q_i^{in}$ is the constant reactive power injected or consumed in bus $i$, by fixed generators and fixed shunts (see [Configuration of the run](inputs.md#configuration-of-the-run)), batteries that do not regulate voltage, loads and LCC stations.
 
 In order to bound the variables described in [Generalities](#generalities), the limits specified in the files of network data (see [Network data](inputs.md#network-data)) are used. We specify the following special treatments:
