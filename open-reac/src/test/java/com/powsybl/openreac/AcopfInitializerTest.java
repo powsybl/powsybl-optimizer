@@ -17,6 +17,7 @@ import com.powsybl.iidm.network.RatioTapChanger;
 import com.powsybl.iidm.network.ShuntCompensator;
 import com.powsybl.iidm.network.TwoWindingsTransformer;
 import com.powsybl.iidm.network.VscConverterStation;
+import com.powsybl.iidm.network.extensions.HvdcAngleDroopActivePowerControlAdder;
 import com.powsybl.iidm.network.extensions.SlackTerminal;
 import com.powsybl.openreac.network.HvdcNetworkFactory;
 import com.powsybl.openreac.network.ShuntNetworkFactory;
@@ -264,6 +265,31 @@ class AcopfInitializerTest {
         initialize(network, new OpenReacParameters().setReferenceState(ReferenceState.NEUTRAL));
 
         assertEquals(20, regulating.getReactivePowerSetpoint(), DELTA);
+    }
+
+    @Test
+    void testHvdcAcEmulation() {
+        Network network = HvdcNetworkFactory.createNetworkWithGenerators2();
+        // the emulated flow (about 0.62 MW) exceeds the maximum active power of the line
+        network.getHvdcLine("hvdc34").setActivePowerSetpoint(0.5).setMaxP(0.5)
+                .newExtension(HvdcAngleDroopActivePowerControlAdder.class)
+                .withP0(0)
+                .withDroop(0.2f)
+                .withEnabled(true)
+                .add();
+        VscConverterStation cs3 = network.getVscConverterStation("cs3");
+        VscConverterStation cs4 = network.getVscConverterStation("cs4");
+
+        initialize(network, new OpenReacParameters().setHvdcAcEmulation(false));
+        // set point: the rectifier converter station 2 withdraws it
+        assertEquals(0.5, cs4.getTerminal().getP(), DELTA);
+
+        initialize(network, new OpenReacParameters());
+        // AC emulation, not saturated at the maximum active power, as in the ACOPF
+        double angle3 = cs3.getTerminal().getBusView().getBus().getAngle();
+        double angle4 = cs4.getTerminal().getBusView().getBus().getAngle();
+        assertEquals(0.2 * (angle3 - angle4), cs3.getTerminal().getP(), DELTA);
+        assertTrue(-cs3.getTerminal().getP() > 0.5 + 1e-3);
     }
 
     private static String initialize(Network network, OpenReacParameters parameters) {

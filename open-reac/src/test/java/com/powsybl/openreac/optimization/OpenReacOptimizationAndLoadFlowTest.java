@@ -17,6 +17,7 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.RatioTapChanger;
 import com.powsybl.iidm.network.ShuntCompensator;
 import com.powsybl.iidm.network.StaticVarCompensator;
+import com.powsybl.iidm.network.extensions.HvdcAngleDroopActivePowerControlAdder;
 import com.powsybl.openreac.OpenReacConfig;
 import com.powsybl.openreac.OpenReacRunner;
 import com.powsybl.openreac.network.HvdcNetworkFactory;
@@ -80,6 +81,23 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.addConstantQGenerators(List.of("g1", "g2", "g5", "g6"));
         testAllModifAndLoadFlow(network, "optimization/loadflow/openreac-output-vsc", parameters, ReportNode.NO_OP);
+    }
+
+    @Test
+    void testHvdcAcEmulation() throws IOException {
+        Network network = HvdcNetworkFactory.createNetworkWithGenerators2();
+        network.getHvdcLine("hvdc34").newExtension(HvdcAngleDroopActivePowerControlAdder.class)
+                .withP0(0)
+                .withDroop(0.2f)
+                .withEnabled(true)
+                .add();
+
+        OpenReacParameters parameters = new OpenReacParameters();
+        parameters.addConstantQGenerators(List.of("g1", "g2", "g5", "g6"));
+        OpenReacResult result = runOpenReac(network, "optimization/loadflow/openreac-output-vsc-ac-emulation", parameters, true);
+        assertEquals("1", result.getIndicators().get("nb_hvdc_ac_emulation"));
+        assertEquals("0", result.getIndicators().get("nb_hvdc_ac_emulation_above_max_p"));
+        testAllModifAndLoadFlow(network, "optimization/loadflow/openreac-output-vsc-ac-emulation", parameters, ReportNode.NO_OP);
     }
 
     @Test
