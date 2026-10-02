@@ -186,6 +186,17 @@ for {(qq,m,n) in BRANCHCC: (teta[m]-teta[n])>temp1*0.99 or (teta[m]-teta[n])<tem
   printf"\n";
   }
 
+if output_results > 0 then {
+  for {h in HVDC_AC_EMULATION} {
+    printf{LOG_INFO} "HVDC %Q in AC emulation: P=%.2fMW P1=%.2fMW P2=%.2fMW (P0=%.2fMW k=%.2fMW/rad delta_teta=%.4frad)\n",
+      hvdc_id[1,h], hvdc_ac_emulation_p[h], hvdc_ac_emulation_p1[h], hvdc_ac_emulation_p2[h], hvdc_p0[1,h], hvdc_k[1,h],
+      teta[hvdc_ac_emulation_bus1[h]] - teta[hvdc_ac_emulation_bus2[h]];
+    if abs(hvdc_ac_emulation_p[h]) > hvdc_Pmax[1,h] then
+      printf{LOG_WARNING} "WARNING HVDC %Q in AC emulation: |P|=%.2fMW exceeds maxP=%.2fMW (saturation is not modeled)\n",
+        hvdc_id[1,h], abs(hvdc_ac_emulation_p[h]), hvdc_Pmax[1,h];
+  }
+}
+
 # Ouput reactive slack values and voltages
 printf "\n";
 if 1 in LOG_INFO then display card(BUSCC_SLACK),
@@ -318,7 +329,8 @@ printf{LOG_INFO} "  %-55s = %.4f MW\n", "Total active load", temp1;
 let temp2 := temp2 - temp1;
 
 # VSC converters
-let temp1 := sum{(v,n) in VSCCONVON} vscconv_targetP[v];
+let temp1 := sum{(v,n) in VSCCONVON_FIXED_P} vscconv_targetP[v]
+  + sum{h in HVDC_AC_EMULATION} (hvdc_ac_emulation_p1[h] + hvdc_ac_emulation_p2[h]);
 printf{LOG_INFO} "  %-55s = %.4f MW\n", "Total VSC converter injection", temp1;
 let temp2 := temp2 - temp1;
 

@@ -82,6 +82,7 @@ printf "%s %f\n","penalty_transfo_ratio",penalty_transfo_ratio > (fileOut);
 printf "%s %f\n","penalty_voltage_target_ratio",penalty_voltage_target_ratio > (fileOut);
 printf "%s %f\n","penalty_voltage_target_data",penalty_voltage_target_data > (fileOut);
 printf "%s %s\n","optimization_after_rounding",optimization_after_rounding > (fileOut);
+printf "%s %s\n","hvdc_ac_emulation",hvdc_ac_emulation > (fileOut);
 
 close (fileOut);
 

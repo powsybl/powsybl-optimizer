@@ -80,7 +80,7 @@ public final class AcopfInitializer {
         if (parameters.getReferenceState() == ReferenceState.NEUTRAL) {
             writeNeutralReferenceState(network, parameters);
         }
-        return runDcLoadFlow(network, reportNode);
+        return runDcLoadFlow(network, parameters.isHvdcAcEmulation(), reportNode);
     }
 
     private static void writeNeutralReferenceState(Network network, OpenReacParameters parameters) {
@@ -158,8 +158,8 @@ public final class AcopfInitializer {
         return bus != null && bus.getSynchronousComponent().getNum() == ComponentConstants.MAIN_NUM;
     }
 
-    private static String runDcLoadFlow(Network network, ReportNode reportNode) {
-        LoadFlowParameters loadFlowParameters = createLoadFlowParameters();
+    private static String runDcLoadFlow(Network network, boolean hvdcAcEmulation, ReportNode reportNode) {
+        LoadFlowParameters loadFlowParameters = createLoadFlowParameters(hvdcAcEmulation);
         OpenLoadFlowParameters openLoadFlowParameters = OpenLoadFlowParameters.get(loadFlowParameters);
         DcLoadFlowParameters dcParameters = OpenLoadFlowParameters.createDcParameters(network, loadFlowParameters, openLoadFlowParameters,
                 new SparseMatrixFactory(), new EvenShiloachGraphDecrementalConnectivityFactory<>(), false);
@@ -185,16 +185,17 @@ public final class AcopfInitializer {
         return slackBus.getId();
     }
 
-    private static LoadFlowParameters createLoadFlowParameters() {
+    private static LoadFlowParameters createLoadFlowParameters(boolean hvdcAcEmulation) {
         LoadFlowParameters parameters = new LoadFlowParameters()
                 .setDc(true)
                 .setComponentMode(LoadFlowParameters.ComponentMode.MAIN_SYNCHRONOUS) // the component optimized by OpenReac
                 .setDistributedSlack(true)
                 .setBalanceType(LoadFlowParameters.BalanceType.PROPORTIONAL_TO_GENERATION_P)
                 .setDcUseTransformerRatio(false) // ratios of the variable transformers are decided by the ACOPF
-                // phase shifter taps and HVDC active powers are data for the ACOPF: the DC load flow uses the same
+                // phase shifter taps are data for the ACOPF: the DC load flow uses the same
                 .setPhaseShifterRegulationOn(false)
-                .setHvdcAcEmulation(false)
+                // HVDC lines are modeled as in the ACOPF: in AC emulation or with their active power set point
+                .setHvdcAcEmulation(hvdcAcEmulation)
                 .setReadSlackBus(false) // the slack bus is always the one selected below
                 .setWriteSlackBus(false); // and is given to AMPL as a parameter, not through the network
         OpenLoadFlowParameters.create(parameters)
@@ -203,7 +204,9 @@ public final class AcopfInitializer {
                 .setSlackDistributionFailureBehavior(OpenLoadFlowParameters.SlackDistributionFailureBehavior.LEAVE_ON_SLACK_BUS)
                 // as the former DCOPF, the mismatch is distributed regardless of the active power limits: the ACOPF
                 // starts from the resulting phases only, its own dispatch is bounded
-                .setUseActiveLimits(false);
+                .setUseActiveLimits(false)
+                // no outer loop: as in the ACOPF, the AC emulation of HVDC lines is not saturated at their maximum active power
+                .setOuterLoopNames(List.of());
         return parameters;
     }
 
