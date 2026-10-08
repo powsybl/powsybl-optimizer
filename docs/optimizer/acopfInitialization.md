@@ -23,7 +23,8 @@ With `NEUTRAL`, the voltage target $V_i^t$ of the objective function is $1$ p.u.
 
 A DC load flow is then solved with [OpenLoadFlow](https://github.com/powsybl/powsybl-open-loadflow) on the main synchronous component, in place of the DCOPF formerly solved in AMPL.
 The active power mismatch is distributed on the generators proportionally to their active power target, regardless of their active power limits as in the former DCOPF, and what cannot be distributed is left on the slack bus: the ACOPF has its own handling of the active power balance (see [Constraints](acOptimalPowerflow.md#constraints)).
-As in the ACOPF, the HVDC lines in AC emulation (see [AC optimal powerflow](acOptimalPowerflow.md#generalities)) are modeled as such, without saturation at their maximum active power, and the phase shifters are not regulating. The transformation ratios are ignored.
+The HVDC lines in AC emulation are modeled as such, and saturated as in OpenLoadFlow: a line saturated by this load flow is written with its saturation limit as active power set point, and its angle droop active power control is disabled (see [AC optimal powerflow](acOptimalPowerflow.md#generalities)).
+The phase shifters are not regulating and the transformation ratios are ignored.
 
 The slack bus of this load flow is the most meshed bus among those of the highest nominal voltages.
 It is the angle reference of the ACOPF, given to AMPL through `param_algo.txt` (see [Slack bus](slackBusMainSynchronousComponent.md#slack-bus)).
