@@ -33,7 +33,10 @@ In the case of transformers, a second optimization can be carried out to adjust 
   the active power flowing from converter station 1 to converter station 2 is $P_0 + k(\boldsymbol{\theta_1} - \boldsymbol{\theta_2})$, where $P_0$ and $k$ are the active power offset and the droop of the extension
   (the droop, given in MW/° in IIDM, is used in MW/rad), and $\boldsymbol{\theta_1}$ and $\boldsymbol{\theta_2}$ are the phases of the buses of the converter stations.
   The other HVDC lines are modeled by their active power set point. In both cases, the losses due to the line and the converter stations themselves are not accounted for.
-  For the lines in AC emulation, the saturation of the active power at the maximum active power of the line is not modeled either.
+  As in OpenLoadFlow, the active power of a line in AC emulation is saturated at the operator active power range of the extension `hvdcOperatorActivePowerRange` if present, at the maximum active power of the line otherwise.
+  This saturation is decided by the DC load flow of the initialization (see [ACOPF initialization](acopfInitialization.md#dc-load-flow)): a line it saturates is exported with its saturation limit as active power set point, and out of AC emulation,
+  so that it is modeled by this set point. A line whose saturation limit exceeds its maximum active power, which the extension allows, is left in AC emulation, the active power of its converter stations being bounded by the maximum active power.
+  The ACOPF neither desaturates the saturated lines nor saturates the others: after solving, a warning is logged for each line in AC emulation whose active power exceeds the maximum active power of the line (indicator `nb_hvdc_ac_emulation_above_max_p`).
 
 ## Constraints
 

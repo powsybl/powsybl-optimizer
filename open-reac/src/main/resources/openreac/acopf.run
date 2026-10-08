@@ -192,7 +192,7 @@ if output_results > 0 then {
       hvdc_id[1,h], hvdc_ac_emulation_p[h], hvdc_ac_emulation_p1[h], hvdc_ac_emulation_p2[h], hvdc_p0[1,h], hvdc_k[1,h],
       teta[hvdc_ac_emulation_bus1[h]] - teta[hvdc_ac_emulation_bus2[h]];
     if abs(hvdc_ac_emulation_p[h]) > hvdc_Pmax[1,h] then
-      printf{LOG_WARNING} "WARNING HVDC %Q in AC emulation: |P|=%.2fMW exceeds maxP=%.2fMW (saturation is not modeled)\n",
+      printf{LOG_WARNING} "WARNING HVDC %Q in AC emulation: |P|=%.2fMW exceeds maxP=%.2fMW (not saturated by the DC load flow)\n",
         hvdc_id[1,h], abs(hvdc_ac_emulation_p[h]), hvdc_Pmax[1,h];
   }
 }
