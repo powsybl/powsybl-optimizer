@@ -102,6 +102,7 @@ class OpenReacJsonModuleTest {
         parameters.setTwoWindingTransformerRatioVariableScalingFactor(0.005);
         parameters.setOptimizationAfterRounding(true);
         parameters.setParallelTransformersGrouping(false);
+        parameters.setHvdcAcEmulation(false);
 
         String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(parameters);
         ComparisonUtils.assertTxtEquals(Objects.requireNonNull(getClass().getResourceAsStream("/parametersThresholds.json")), json);
@@ -129,6 +130,7 @@ class OpenReacJsonModuleTest {
         assertEquals(0.005, parameters2.getTwoWindingTransformerRatioVariableScalingFactor());
         assertTrue(parameters2.isOptimizationAfterRounding());
         assertFalse(parameters2.isParallelTransformersGrouping());
+        assertFalse(parameters2.isHvdcAcEmulation());
     }
 
     @Test
@@ -194,9 +196,10 @@ class OpenReacJsonModuleTest {
                 Objects.requireNonNull(getClass().getResourceAsStream("/parametersV1dot0.json")),
                 OpenReacParameters.class);
 
-        // The 1.1, 1.2 and 1.3 fields must fall back to their defaults when reading a v1.0 file
+        // The 1.1, 1.2, 1.3 and 1.5 fields must fall back to their defaults when reading a v1.0 file
         assertTrue(parameters.isParallelTransformersGrouping());
         assertEquals(ReferenceState.NETWORK, parameters.getReferenceState());
+        assertTrue(parameters.isHvdcAcEmulation());
         assertEquals(10, parameters.getPenaltyInvestReaPos());
         assertEquals(10, parameters.getPenaltyInvestReaNeg());
         assertEquals(1.0, parameters.getPenaltyActivePower());

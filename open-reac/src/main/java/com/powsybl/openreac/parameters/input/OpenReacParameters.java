@@ -159,6 +159,8 @@ public class OpenReacParameters {
 
     private ReferenceState referenceState = ReferenceState.NETWORK;
 
+    private boolean hvdcAcEmulation = true;
+
     // Shunt compensator alert threshold
     // (to help reporting the shunt compensators with a delta between optimized and discretized reactive value over this threshold in MVar)
 
@@ -594,6 +596,20 @@ public class OpenReacParameters {
 
     public OpenReacParameters setReferenceState(ReferenceState referenceState) {
         this.referenceState = Objects.requireNonNull(referenceState);
+        return this;
+    }
+
+    /**
+     * @return the boolean indicating if HVDC lines with an enabled angle droop active power control are modeled in AC
+     *         emulation by the DC load flow of the initialization, whose active power is then their set point in the
+     *         ACOPF (default true). When disabled, all HVDC lines keep their active power set point.
+     */
+    public boolean isHvdcAcEmulation() {
+        return hvdcAcEmulation;
+    }
+
+    public OpenReacParameters setHvdcAcEmulation(boolean hvdcAcEmulation) {
+        this.hvdcAcEmulation = hvdcAcEmulation;
         return this;
     }
 

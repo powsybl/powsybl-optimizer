@@ -28,7 +28,9 @@ In the case of transformers, a second optimization can be carried out to adjust 
 - Shunts that are disconnected at the beginning of the optimization but are specified as variable (see [Configuration of the run](inputs.md#configuration-of-the-run)) can be reconnected and optimized.
 - Only batteries that regulate voltage (as flagged in `ampl_network_batteries.txt`) have a variable reactive power; the reactive power of other batteries is fixed at its input value. 
   The active power of batteries is never optimized.
-- The AC emulation of HVDC lines is not considered in the optimization. Also, the losses due to the line and the converter stations themselves are not accounted for in the target used in the optimization.
+- The AC emulation of HVDC lines is not modeled in the optimization: as the other HVDC lines, a VSC HVDC line in AC emulation is modeled by an active power set point,
+  the one given by the DC load flow of the initialization (see [ACOPF initialization](acopfInitialization.md#dc-load-flow)).
+  Also, the losses due to the line and the converter stations themselves are not accounted for in the target used in the optimization.
 
 ## Constraints
 

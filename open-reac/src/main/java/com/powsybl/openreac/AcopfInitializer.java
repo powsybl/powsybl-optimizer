@@ -10,6 +10,7 @@ import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.report.ReportNode;
 import com.powsybl.iidm.network.Bus;
 import com.powsybl.iidm.network.ComponentConstants;
+import com.powsybl.iidm.network.HvdcLine;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.RatioTapChanger;
 import com.powsybl.iidm.network.ReactiveCapabilityCurve;
@@ -18,6 +19,7 @@ import com.powsybl.iidm.network.ShuntCompensatorModelType;
 import com.powsybl.iidm.network.Terminal;
 import com.powsybl.iidm.network.TwoWindingsTransformer;
 import com.powsybl.iidm.network.VscConverterStation;
+import com.powsybl.iidm.network.extensions.HvdcAngleDroopActivePowerControl;
 import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.math.matrix.SparseMatrixFactory;
 import com.powsybl.openloadflow.OpenLoadFlowParameters;
@@ -26,6 +28,7 @@ import com.powsybl.openloadflow.dc.DcLoadFlowParameters;
 import com.powsybl.openloadflow.dc.DcLoadFlowResult;
 import com.powsybl.openloadflow.graph.EvenShiloachGraphDecrementalConnectivityFactory;
 import com.powsybl.openloadflow.network.LfBus;
+import com.powsybl.openloadflow.network.LfHvdc;
 import com.powsybl.openloadflow.network.LfNetwork;
 import com.powsybl.openloadflow.network.LfNetworkStateUpdateParameters;
 import com.powsybl.openloadflow.network.ReactivePowerDispatchMode;
@@ -56,6 +59,9 @@ import java.util.stream.Stream;
  * rather than the {@link com.powsybl.loadflow.LoadFlow} API on purpose: the OpenLoadFlow provider resets the whole
  * network state, including voltage magnitudes, before writing DC results.
  * <p>
+ * The HVDC lines in AC emulation are solved, and saturated, by the DC load flow as in OpenLoadFlow. Each of them is
+ * then written with its active power as set point, and without AC emulation: the ACOPF models it by this set point.
+ * <p>
  * The controls the ACOPF optimizes are written first, as requested by {@link ReferenceState}. With
  * {@link ReferenceState#NEUTRAL}, the sections of the non linear shunt compensators are not written: the bounds
  * exported to AMPL for these shunts depend on their current section.
@@ -65,6 +71,8 @@ import java.util.stream.Stream;
 public final class AcopfInitializer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AcopfInitializer.class);
+
+    private static final double MAX_P_TOLERANCE = 1e-6; // MW, per-unit rounding of a saturation at the maximum active power
 
     private AcopfInitializer() {
     }
@@ -80,7 +88,7 @@ public final class AcopfInitializer {
         if (parameters.getReferenceState() == ReferenceState.NEUTRAL) {
             writeNeutralReferenceState(network, parameters);
         }
-        return runDcLoadFlow(network, reportNode);
+        return runDcLoadFlow(network, parameters.isHvdcAcEmulation(), reportNode);
     }
 
     private static void writeNeutralReferenceState(Network network, OpenReacParameters parameters) {
@@ -158,8 +166,8 @@ public final class AcopfInitializer {
         return bus != null && bus.getSynchronousComponent().getNum() == ComponentConstants.MAIN_NUM;
     }
 
-    private static String runDcLoadFlow(Network network, ReportNode reportNode) {
-        LoadFlowParameters loadFlowParameters = createLoadFlowParameters();
+    private static String runDcLoadFlow(Network network, boolean hvdcAcEmulation, ReportNode reportNode) {
+        LoadFlowParameters loadFlowParameters = createLoadFlowParameters(hvdcAcEmulation);
         OpenLoadFlowParameters openLoadFlowParameters = OpenLoadFlowParameters.get(loadFlowParameters);
         DcLoadFlowParameters dcParameters = OpenLoadFlowParameters.createDcParameters(network, loadFlowParameters, openLoadFlowParameters,
                 new SparseMatrixFactory(), new EvenShiloachGraphDecrementalConnectivityFactory<>(), false);
@@ -178,6 +186,7 @@ public final class AcopfInitializer {
         }
 
         result.getNetwork().updateState(createStateUpdateParameters());
+        writeAcEmulationHvdcLines(network, result.getNetwork());
 
         LfBus slackBus = result.getNetwork().getSynchronousNetworks().getFirst().getSlackBuses().getFirst();
         LOGGER.info("DC load flow initialization: slack bus {}, {} MW distributed on generators, {} MW left on slack bus",
@@ -185,16 +194,43 @@ public final class AcopfInitializer {
         return slackBus.getId();
     }
 
-    private static LoadFlowParameters createLoadFlowParameters() {
+    private static void writeAcEmulationHvdcLines(Network network, LfNetwork lfNetwork) {
+        lfNetwork.getHvdcs().stream()
+                .filter(LfHvdc::isAcEmulation)
+                .forEach(lfHvdc -> writeActivePowerSetpoint(network.getHvdcLine(lfHvdc.getId())));
+    }
+
+    /**
+     * Writes the active power the DC load flow gives to the HVDC line as its set point, and disables its AC emulation.
+     */
+    private static void writeActivePowerSetpoint(HvdcLine hvdcLine) {
+        // without losses in DC, the active power withdrawn by converter station 1 flows to converter station 2
+        double p = hvdcLine.getConverterStation1().getTerminal().getP();
+        // AMPL rejects a set point above the maximum active power, which the operator active power range may exceed
+        double setpoint = Math.min(Math.abs(p), hvdcLine.getMaxP());
+        if (Math.abs(p) - setpoint > MAX_P_TOLERANCE) {
+            LOGGER.warn("DC load flow initialization: HVDC line {} in AC emulation at {} MW, above its maximum active power {} MW: set point bounded",
+                    hvdcLine.getId(), p, hvdcLine.getMaxP());
+        }
+        hvdcLine.setConvertersMode(p >= 0 ? HvdcLine.ConvertersMode.SIDE_1_RECTIFIER_SIDE_2_INVERTER
+                        : HvdcLine.ConvertersMode.SIDE_1_INVERTER_SIDE_2_RECTIFIER)
+                .setActivePowerSetpoint(setpoint);
+        hvdcLine.getExtension(HvdcAngleDroopActivePowerControl.class).setEnabled(false);
+        LOGGER.info("DC load flow initialization: HVDC line {} in AC emulation modeled by a set point of {} MW from converter station 1 to 2",
+                hvdcLine.getId(), Math.copySign(setpoint, p));
+    }
+
+    private static LoadFlowParameters createLoadFlowParameters(boolean hvdcAcEmulation) {
         LoadFlowParameters parameters = new LoadFlowParameters()
                 .setDc(true)
                 .setComponentMode(LoadFlowParameters.ComponentMode.MAIN_SYNCHRONOUS) // the component optimized by OpenReac
                 .setDistributedSlack(true)
                 .setBalanceType(LoadFlowParameters.BalanceType.PROPORTIONAL_TO_GENERATION_P)
                 .setDcUseTransformerRatio(false) // ratios of the variable transformers are decided by the ACOPF
-                // phase shifter taps and HVDC active powers are data for the ACOPF: the DC load flow uses the same
+                // phase shifter taps are data for the ACOPF: the DC load flow uses the same
                 .setPhaseShifterRegulationOn(false)
-                .setHvdcAcEmulation(false)
+                // the active power of the HVDC lines in AC emulation is decided here, and is their set point in the ACOPF
+                .setHvdcAcEmulation(hvdcAcEmulation)
                 .setReadSlackBus(false) // the slack bus is always the one selected below
                 .setWriteSlackBus(false); // and is given to AMPL as a parameter, not through the network
         OpenLoadFlowParameters.create(parameters)

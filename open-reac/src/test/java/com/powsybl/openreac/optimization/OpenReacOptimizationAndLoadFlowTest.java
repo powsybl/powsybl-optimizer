@@ -13,10 +13,13 @@ import com.powsybl.computation.local.LocalCommandExecutor;
 import com.powsybl.computation.local.LocalComputationConfig;
 import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
+import com.powsybl.iidm.network.HvdcLine;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.RatioTapChanger;
 import com.powsybl.iidm.network.ShuntCompensator;
 import com.powsybl.iidm.network.StaticVarCompensator;
+import com.powsybl.iidm.network.extensions.HvdcAngleDroopActivePowerControl;
+import com.powsybl.iidm.network.extensions.HvdcAngleDroopActivePowerControlAdder;
 import com.powsybl.openreac.OpenReacConfig;
 import com.powsybl.openreac.OpenReacRunner;
 import com.powsybl.openreac.network.HvdcNetworkFactory;
@@ -80,6 +83,26 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.addConstantQGenerators(List.of("g1", "g2", "g5", "g6"));
         testAllModifAndLoadFlow(network, "optimization/loadflow/openreac-output-vsc", parameters, ReportNode.NO_OP);
+    }
+
+    @Test
+    void testHvdcAcEmulation() throws IOException {
+        Network network = HvdcNetworkFactory.createNetworkWithGenerators2();
+        HvdcLine hvdc34 = network.getHvdcLine("hvdc34");
+        hvdc34.newExtension(HvdcAngleDroopActivePowerControlAdder.class)
+                .withP0(0)
+                .withDroop(0.2f)
+                .withEnabled(true)
+                .add();
+
+        OpenReacParameters parameters = new OpenReacParameters();
+        parameters.addConstantQGenerators(List.of("g1", "g2", "g5", "g6"));
+        testAllModifAndLoadFlow(network, "optimization/loadflow/openreac-output-vsc-ac-emulation", parameters, ReportNode.NO_OP);
+        // the set point of the DC load flow is only written in the variant given to the ACOPF: the network keeps its
+        // set point and its AC emulation
+        assertEquals(HvdcLine.ConvertersMode.SIDE_1_INVERTER_SIDE_2_RECTIFIER, hvdc34.getConvertersMode());
+        assertEquals(2, hvdc34.getActivePowerSetpoint());
+        assertTrue(hvdc34.getExtension(HvdcAngleDroopActivePowerControl.class).isEnabled());
     }
 
     @Test

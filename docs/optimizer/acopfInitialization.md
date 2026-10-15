@@ -23,7 +23,12 @@ With `NEUTRAL`, the voltage target $V_i^t$ of the objective function is $1$ p.u.
 
 A DC load flow is then solved with [OpenLoadFlow](https://github.com/powsybl/powsybl-open-loadflow) on the main synchronous component, in place of the DCOPF formerly solved in AMPL.
 The active power mismatch is distributed on the generators proportionally to their active power target, regardless of their active power limits as in the former DCOPF, and what cannot be distributed is left on the slack bus: the ACOPF has its own handling of the active power balance (see [Constraints](acOptimalPowerflow.md#constraints)).
-As in the ACOPF, the AC emulation of HVDC lines is not considered and the phase shifters are not regulating. The transformation ratios are ignored.
+As in OpenLoadFlow, the VSC HVDC lines with an enabled angle droop active power control (IIDM extension `hvdcAngleDroopActivePowerControl`) are modeled in AC emulation,
+saturated at the operator active power range of the extension `hvdcOperatorActivePowerRange` if present, at the maximum active power of the line otherwise.
+Each of them is then written with the active power this load flow gives it as active power set point, bounded by the maximum active power of the line, and its angle droop active power control is disabled:
+the ACOPF models it by this set point (see [AC optimal powerflow](acOptimalPowerflow.md#generalities)).
+The AC emulation can be disabled through the Java API (`OpenReacParameters`, parameter `hvdcAcEmulation`, true by default): all the HVDC lines then keep their active power set point.
+The phase shifters are not regulating and the transformation ratios are ignored.
 
 The slack bus of this load flow is the most meshed bus among those of the highest nominal voltages.
 It is the angle reference of the ACOPF, given to AMPL through `param_algo.txt` (see [Slack bus](slackBusMainSynchronousComponent.md#slack-bus)).
