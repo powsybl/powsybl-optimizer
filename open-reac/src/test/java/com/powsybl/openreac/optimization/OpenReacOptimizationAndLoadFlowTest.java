@@ -88,28 +88,7 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
     @Test
     void testHvdcAcEmulation() throws IOException {
         Network network = HvdcNetworkFactory.createNetworkWithGenerators2();
-        network.getHvdcLine("hvdc34").newExtension(HvdcAngleDroopActivePowerControlAdder.class)
-                .withP0(0)
-                .withDroop(0.2f)
-                .withEnabled(true)
-                .add();
-
-        OpenReacParameters parameters = new OpenReacParameters();
-        parameters.addConstantQGenerators(List.of("g1", "g2", "g5", "g6"));
-        OpenReacResult result = runOpenReac(network, "optimization/loadflow/openreac-output-vsc-ac-emulation", parameters, true);
-        assertEquals("1", result.getIndicators().get("nb_hvdc_ac_emulation"));
-        assertEquals("0", result.getIndicators().get("nb_hvdc_ac_emulation_above_max_p"));
-        testAllModifAndLoadFlow(network, "optimization/loadflow/openreac-output-vsc-ac-emulation", parameters, ReportNode.NO_OP);
-    }
-
-    @Test
-    void testHvdcAcEmulationSaturated() throws IOException {
-        Network network = HvdcNetworkFactory.createNetworkWithGenerators2();
-        // the emulated flow exceeds the maximum active power of the line: saturated by the DC load flow
-        // (the set point, unused in AC emulation, differs from the saturation to check that the network keeps it)
-        HvdcLine hvdc34 = network.getHvdcLine("hvdc34").setMaxP(0.5)
-                .setConvertersMode(HvdcLine.ConvertersMode.SIDE_1_RECTIFIER_SIDE_2_INVERTER)
-                .setActivePowerSetpoint(0.3);
+        HvdcLine hvdc34 = network.getHvdcLine("hvdc34");
         hvdc34.newExtension(HvdcAngleDroopActivePowerControlAdder.class)
                 .withP0(0)
                 .withDroop(0.2f)
@@ -118,14 +97,12 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
 
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.addConstantQGenerators(List.of("g1", "g2", "g5", "g6"));
-        OpenReacResult result = runOpenReac(network, "optimization/loadflow/openreac-output-vsc-ac-emulation-saturated", parameters, true);
-        // modeled by its set point in the ACOPF
-        assertEquals("0", result.getIndicators().get("nb_hvdc_ac_emulation"));
-        // only in the variant given to the ACOPF: the network keeps its set point and its AC emulation
-        assertEquals(HvdcLine.ConvertersMode.SIDE_1_RECTIFIER_SIDE_2_INVERTER, hvdc34.getConvertersMode());
-        assertEquals(0.3, hvdc34.getActivePowerSetpoint());
+        testAllModifAndLoadFlow(network, "optimization/loadflow/openreac-output-vsc-ac-emulation", parameters, ReportNode.NO_OP);
+        // the set point of the DC load flow is only written in the variant given to the ACOPF: the network keeps its
+        // set point and its AC emulation
+        assertEquals(HvdcLine.ConvertersMode.SIDE_1_INVERTER_SIDE_2_RECTIFIER, hvdc34.getConvertersMode());
+        assertEquals(2, hvdc34.getActivePowerSetpoint());
         assertTrue(hvdc34.getExtension(HvdcAngleDroopActivePowerControl.class).isEnabled());
-        testAllModifAndLoadFlow(network, "optimization/loadflow/openreac-output-vsc-ac-emulation-saturated", parameters, ReportNode.NO_OP);
     }
 
     @Test

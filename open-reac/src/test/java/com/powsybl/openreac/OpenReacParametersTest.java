@@ -498,10 +498,9 @@ class OpenReacParametersTest {
         parameters.setTwoWindingTransformerRatioVariableScalingFactor(0.0001);
         parameters.setShuntVariableScalingFactor(3e-2);
         parameters.setOptimizationAfterRounding(true);
-        parameters.setHvdcAcEmulation(false);
 
         List<OpenReacAlgoParam> algoParams = parameters.getAllAlgorithmParams();
-        assertEquals(30, algoParams.size());
+        assertEquals(29, algoParams.size());
         assertEquals("0.4", algoParams.get(0).getValue());
         assertEquals("DEBUG", algoParams.get(1).getValue());
         assertEquals("0", algoParams.get(2).getValue());
@@ -531,7 +530,6 @@ class OpenReacParametersTest {
         assertEquals("0.0", algoParams.get(26).getValue());
         assertEquals("1.0", algoParams.get(27).getValue());
         assertEquals("true", algoParams.get(28).getValue());
-        assertEquals("false", algoParams.get(29).getValue());
     }
 
     @Test
@@ -602,7 +600,7 @@ class OpenReacParametersTest {
         assertEquals(0, parameters.getConstantQGenerators().size(), "ConstantQGenerators should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getVariableShuntCompensators().size(), "VariableShuntCompensators should be empty when using default OpenReacParameter constructor.");
         assertEquals(0, parameters.getConfiguredReactiveSlackBuses().size(), "ConfiguredReactiveSlackBuses should be empty when using default OpenReacParameter constructor.");
-        assertEquals(29, parameters.getAllAlgorithmParams().size());
+        assertEquals(28, parameters.getAllAlgorithmParams().size());
     }
 
     @Test

@@ -148,10 +148,7 @@ printf{(v,n) in VSCCONVON} "%i;%i;%i;%Q;%.3f;%.1f;%.1f;%.1f;\n",
   vscconv_vregul[1,v,n],
   V[n],
   vscconv_qvar[v,n],
-  if v in VSCCONV_AC_EMULATION
-    then (sum{h in HVDC_AC_EMULATION: hvdc_conv1[1,h] == v} hvdc_ac_emulation_p1[h]
-        + sum{h in HVDC_AC_EMULATION: hvdc_conv2[1,h] == v} hvdc_ac_emulation_p2[h])
-    else vscconv_targetP[v],
+  vscconv_targetP[v],
   vscconv_qvar[v,n]
   > (fileOut);
 close (fileOut);
@@ -344,7 +341,6 @@ printf "%s %f\n","penalty_transfo_ratio",penalty_transfo_ratio > (fileOut);
 printf "%s %f\n","penalty_voltage_target_ratio",penalty_voltage_target_ratio > (fileOut);
 printf "%s %f\n","penalty_voltage_target_data",penalty_voltage_target_data > (fileOut);
 printf "%s %s\n","optimization_after_rounding",optimization_after_rounding > (fileOut);
-printf "%s %s\n","hvdc_ac_emulation",hvdc_ac_emulation > (fileOut);
 
 printf "\n" > (fileOut);
 printf "%s %i\n","nb_substations",card(SUBSTATIONS) > (fileOut);
@@ -384,8 +380,6 @@ printf "%s %i\n","nb_svc_in_main_SC",card(SVCCC) > (fileOut);
 printf "%s %i\n","nb_svc_up_and_operating",card(SVCON) > (fileOut);
 printf "%s %i\n","nb_vsc_converter_in_data_file",card(VSCCONV) > (fileOut);
 printf "%s %i\n","nb_vsc_converter_up_and_running",card(VSCCONVON) > (fileOut);
-printf "%s %i\n","nb_hvdc_ac_emulation",card(HVDC_AC_EMULATION) > (fileOut);
-printf "%s %i\n","nb_hvdc_ac_emulation_above_max_p",card({h in HVDC_AC_EMULATION: abs(hvdc_ac_emulation_p[h]) > hvdc_Pmax[1,h]}) > (fileOut);
 printf "%s %i\n","nb_lcc_converter_in_data_file",card(LCCCONV) > (fileOut);
 printf "%s %i\n","nb_lcc_converter_up_and_running",card(LCCCONVON) > (fileOut);
 printf "%s %i\n","nb_batteries",card(BATTERYCC) > (fileOut);
@@ -488,19 +482,5 @@ for {(qq,m,n) in ALL_BRANCHCC}
     then base100MVA * V[n] * Red_Tran_Rea_Inv_Side_1_Opened[qq,m,n]
     else 0, # no flow as branch is opened on side 2
     '"' & branch_id[1,qq,m,n] & '"'
-    > (fileOut);
-close (fileOut);
-
-# Write HVDC lines in AC emulation (debug only)
-let fileOut := "reactiveopf_results_hvdc_ac_emulation.csv";
-printf{LOG_DEBUG} "#variant;num;bus1;bus2;P0(MW);k(MW/rad);P_init(MW);P(MW);P1(MW);P2(MW);maxP(MW);id;\n" > (fileOut);
-for {h in HVDC_AC_EMULATION}
-  printf{LOG_DEBUG} "%i;%i;%i;%i;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;%s;\n",
-    1,h,hvdc_ac_emulation_bus1[h],hvdc_ac_emulation_bus2[h],
-    hvdc_p0[1,h],hvdc_k[1,h],
-    hvdc_p0[1,h] + hvdc_k[1,h] * (teta_init[hvdc_ac_emulation_bus1[h]] - teta_init[hvdc_ac_emulation_bus2[h]]),
-    hvdc_ac_emulation_p[h],hvdc_ac_emulation_p1[h],hvdc_ac_emulation_p2[h],
-    hvdc_Pmax[1,h],
-    '"' & hvdc_id[1,h] & '"'
     > (fileOut);
 close (fileOut);

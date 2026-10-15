@@ -159,8 +159,6 @@ public class OpenReacParameters {
 
     private ReferenceState referenceState = ReferenceState.NETWORK;
 
-    private static final String HVDC_AC_EMULATION_KEY = "hvdc_ac_emulation";
-
     private boolean hvdcAcEmulation = true;
 
     // Shunt compensator alert threshold
@@ -602,8 +600,9 @@ public class OpenReacParameters {
     }
 
     /**
-     * @return the boolean indicating if HVDC lines with an enabled angle droop active power control are modeled
-     *         in AC emulation (default true). When disabled, all HVDC lines keep their active power set point.
+     * @return the boolean indicating if HVDC lines with an enabled angle droop active power control are modeled in AC
+     *         emulation by the DC load flow of the initialization, whose active power is then their set point in the
+     *         ACOPF (default true). When disabled, all HVDC lines keep their active power set point.
      */
     public boolean isHvdcAcEmulation() {
         return hvdcAcEmulation;
@@ -769,7 +768,6 @@ public class OpenReacParameters {
         allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_VOLTAGE_TARGET_RATIO_KEY, Double.toString(penaltyVoltageTargetRatio)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_VOLTAGE_TARGET_DATA_KEY, Double.toString(penaltyVoltageTargetData)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(OPTIMIZATION_AFTER_ROUNDING, Boolean.toString(optimizationAfterRounding)));
-        allAlgoParams.add(new OpenReacAlgoParamImpl(HVDC_AC_EMULATION_KEY, Boolean.toString(hvdcAcEmulation)));
         return allAlgoParams;
     }
 
