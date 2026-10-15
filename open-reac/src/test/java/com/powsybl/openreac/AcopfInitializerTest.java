@@ -274,82 +274,55 @@ class AcopfInitializerTest {
     void testHvdcAcEmulation() {
         Network network = HvdcNetworkFactory.createNetworkWithGenerators2();
         // the emulated flow (about 0.62 MW) exceeds the maximum active power of the line
-        network.getHvdcLine("hvdc34").setActivePowerSetpoint(0.5).setMaxP(0.5)
-                .newExtension(HvdcAngleDroopActivePowerControlAdder.class)
-                .withP0(0)
-                .withDroop(0.2f)
-                .withEnabled(true)
-                .add();
+        HvdcLine hvdc34 = enableAcEmulation(network, 0).setActivePowerSetpoint(0.5).setMaxP(0.5);
         VscConverterStation cs3 = network.getVscConverterStation("cs3");
         VscConverterStation cs4 = network.getVscConverterStation("cs4");
 
         initialize(network, new OpenReacParameters().setHvdcAcEmulation(false));
         // set point: the rectifier converter station 2 withdraws it
         assertEquals(0.5, cs4.getTerminal().getP(), DELTA);
+        assertTrue(hvdc34.getExtension(HvdcAngleDroopActivePowerControl.class).isEnabled());
 
         // the set point does not matter in AC emulation: written over below
-        HvdcLine hvdc34 = network.getHvdcLine("hvdc34")
-                .setConvertersMode(HvdcLine.ConvertersMode.SIDE_1_RECTIFIER_SIDE_2_INVERTER)
-                .setActivePowerSetpoint(0.1);
+        hvdc34.setConvertersMode(HvdcLine.ConvertersMode.SIDE_1_RECTIFIER_SIDE_2_INVERTER).setActivePowerSetpoint(0.1);
         initialize(network, new OpenReacParameters());
         // AC emulation saturated at the maximum active power, from converter station 2 to converter station 1
         assertEquals(0.5, cs4.getTerminal().getP(), DELTA);
         assertEquals(-0.5, cs3.getTerminal().getP(), DELTA);
-        // written as a set point, without AC emulation
-        assertEquals(HvdcLine.ConvertersMode.SIDE_1_INVERTER_SIDE_2_RECTIFIER, hvdc34.getConvertersMode());
-        assertEquals(0.5, hvdc34.getActivePowerSetpoint(), DELTA);
-        assertFalse(hvdc34.getExtension(HvdcAngleDroopActivePowerControl.class).isEnabled());
+        assertSetpoint(hvdc34, HvdcLine.ConvertersMode.SIDE_1_INVERTER_SIDE_2_RECTIFIER, 0.5);
     }
 
     @Test
     void testHvdcAcEmulationSaturatedFromStation1To2() {
         Network network = HvdcNetworkFactory.createNetworkWithGenerators2();
-        HvdcLine hvdc34 = network.getHvdcLine("hvdc34").setActivePowerSetpoint(0.5).setMaxP(0.5);
         // a large active power offset makes the flow go from converter station 1 to converter station 2
-        hvdc34.newExtension(HvdcAngleDroopActivePowerControlAdder.class)
-                .withP0(10)
-                .withDroop(0.2f)
-                .withEnabled(true)
-                .add();
+        HvdcLine hvdc34 = enableAcEmulation(network, 10).setMaxP(0.5);
 
         initialize(network, new OpenReacParameters());
         // AC emulation saturated at the maximum active power, from converter station 1 to converter station 2
         assertEquals(0.5, network.getVscConverterStation("cs3").getTerminal().getP(), DELTA);
-        // written as a set point, without AC emulation
-        assertEquals(HvdcLine.ConvertersMode.SIDE_1_RECTIFIER_SIDE_2_INVERTER, hvdc34.getConvertersMode());
-        assertEquals(0.5, hvdc34.getActivePowerSetpoint(), DELTA);
-        assertFalse(hvdc34.getExtension(HvdcAngleDroopActivePowerControl.class).isEnabled());
+        assertSetpoint(hvdc34, HvdcLine.ConvertersMode.SIDE_1_RECTIFIER_SIDE_2_INVERTER, 0.5);
     }
 
     @Test
     void testHvdcAcEmulationNotSaturated() {
         Network network = HvdcNetworkFactory.createNetworkWithGenerators2();
-        HvdcLine hvdc34 = network.getHvdcLine("hvdc34");
-        hvdc34.newExtension(HvdcAngleDroopActivePowerControlAdder.class)
-                .withP0(0)
-                .withDroop(0.2f)
-                .withEnabled(true)
-                .add();
+        HvdcLine hvdc34 = enableAcEmulation(network, 0);
 
         initialize(network, new OpenReacParameters());
-        // the emulated flow (about 0.62 MW) is below the maximum active power: the line is left in AC emulation
+        // the emulated flow (about 0.62 MW), below the maximum active power, goes from converter station 2 to converter station 1
         VscConverterStation cs3 = network.getVscConverterStation("cs3");
         double angle3 = cs3.getTerminal().getBusView().getBus().getAngle();
         double angle4 = network.getVscConverterStation("cs4").getTerminal().getBusView().getBus().getAngle();
-        assertEquals(0.2 * (angle3 - angle4), cs3.getTerminal().getP(), DELTA);
-        assertTrue(hvdc34.getExtension(HvdcAngleDroopActivePowerControl.class).isEnabled());
-        assertEquals(2, hvdc34.getActivePowerSetpoint(), DELTA);
+        double p = 0.2 * (angle3 - angle4);
+        assertEquals(p, cs3.getTerminal().getP(), DELTA);
+        assertSetpoint(hvdc34, HvdcLine.ConvertersMode.SIDE_1_INVERTER_SIDE_2_RECTIFIER, -p);
     }
 
     @Test
-    void testHvdcAcEmulationSaturatedAboveMaxP() {
+    void testHvdcAcEmulationAboveMaxP() {
         Network network = HvdcNetworkFactory.createNetworkWithGenerators2();
-        HvdcLine hvdc34 = network.getHvdcLine("hvdc34").setActivePowerSetpoint(0.5).setMaxP(0.5);
-        hvdc34.newExtension(HvdcAngleDroopActivePowerControlAdder.class)
-                .withP0(0)
-                .withDroop(0.2f)
-                .withEnabled(true)
-                .add();
+        HvdcLine hvdc34 = enableAcEmulation(network, 0).setMaxP(0.5);
         // the operator active power range allows more than the maximum active power of the line
         hvdc34.newExtension(HvdcOperatorActivePowerRangeAdder.class)
                 .withOprFromCS1toCS2(0.55f)
@@ -357,11 +330,29 @@ class AcopfInitializerTest {
                 .add();
 
         initialize(network, new OpenReacParameters());
-        // precondition: the DC load flow saturates the line at the operator active power range, above its maximum active power
+        // the DC load flow saturates the line at the operator active power range, from converter station 2 to converter station 1
         assertEquals(-0.55, network.getVscConverterStation("cs3").getTerminal().getP(), DELTA);
-        // so the line is not written as a set point: it is left in AC emulation
-        assertTrue(hvdc34.getExtension(HvdcAngleDroopActivePowerControl.class).isEnabled());
-        assertEquals(0.5, hvdc34.getActivePowerSetpoint(), DELTA);
+        // the set point is bounded by the maximum active power
+        assertSetpoint(hvdc34, HvdcLine.ConvertersMode.SIDE_1_INVERTER_SIDE_2_RECTIFIER, 0.5);
+    }
+
+    /**
+     * @return the HVDC line hvdc34 of the network, in AC emulation with the given active power offset.
+     */
+    private static HvdcLine enableAcEmulation(Network network, float p0) {
+        HvdcLine hvdc34 = network.getHvdcLine("hvdc34");
+        hvdc34.newExtension(HvdcAngleDroopActivePowerControlAdder.class)
+                .withP0(p0)
+                .withDroop(0.2f)
+                .withEnabled(true)
+                .add();
+        return hvdc34;
+    }
+
+    private static void assertSetpoint(HvdcLine hvdcLine, HvdcLine.ConvertersMode convertersMode, double activePowerSetpoint) {
+        assertEquals(convertersMode, hvdcLine.getConvertersMode());
+        assertEquals(activePowerSetpoint, hvdcLine.getActivePowerSetpoint(), DELTA);
+        assertFalse(hvdcLine.getExtension(HvdcAngleDroopActivePowerControl.class).isEnabled());
     }
 
     private static String initialize(Network network, OpenReacParameters parameters) {

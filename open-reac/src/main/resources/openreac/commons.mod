@@ -129,24 +129,6 @@ set VSCCONVON := setof{(t,v,n) in VSCCONV:
   and vscconv_targetP[v] >= vscconv_Pmin[t,v,n]
   and vscconv_targetP[v] <= vscconv_Pmax[t,v,n]
   } (v,n);
-set VSCCONVON_NUM := setof{(v,n) in VSCCONVON} v;
-
-#
-# HVDC lines in AC emulation
-#
-# As in OpenLoadFlow: VSC lines with an enabled angle droop control, whose two converter stations
-# are in the main synchronous component. Other lines keep their active power set point.
-set HVDC_AC_EMULATION := setof{(1,h) in HVDC:
-  hvdc_ac_emulation == "true"
-  and hvdc_type[1,h] == 1
-  and hvdc_ac_emul[1,h] == "true"
-  and hvdc_conv1[1,h] in VSCCONVON_NUM
-  and hvdc_conv2[1,h] in VSCCONVON_NUM
-  } h;
-param hvdc_ac_emulation_bus1{h in HVDC_AC_EMULATION} := max{(v,n) in VSCCONVON: v == hvdc_conv1[1,h]} n;
-param hvdc_ac_emulation_bus2{h in HVDC_AC_EMULATION} := max{(v,n) in VSCCONVON: v == hvdc_conv2[1,h]} n;
-set VSCCONV_AC_EMULATION := (setof{h in HVDC_AC_EMULATION} hvdc_conv1[1,h]) union (setof{h in HVDC_AC_EMULATION} hvdc_conv2[1,h]);
-set VSCCONVON_FIXED_P := {(v,n) in VSCCONVON: v not in VSCCONV_AC_EMULATION};
 
 #
 # LCC converter stations

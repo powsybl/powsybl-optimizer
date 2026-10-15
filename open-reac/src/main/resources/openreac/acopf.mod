@@ -107,17 +107,6 @@ var vscconv_qvar{(v,n) in VSCCONVON}
 
 
 #
-# HVDC lines in AC emulation
-#
-# Active power from converter station 1 to converter station 2
-var hvdc_ac_emulation_p{h in HVDC_AC_EMULATION} =
-  hvdc_p0[1,h] + hvdc_k[1,h] * (teta[hvdc_ac_emulation_bus1[h]] - teta[hvdc_ac_emulation_bus2[h]]);
-# Active power withdrawn from the AC grid by converter stations 1 and 2 (load convention)
-var hvdc_ac_emulation_p1{h in HVDC_AC_EMULATION} = hvdc_ac_emulation_p[h];
-var hvdc_ac_emulation_p2{h in HVDC_AC_EMULATION} = - hvdc_ac_emulation_p[h];
-
-
-#
 # Ratios of transformers
 #
 var branch_Ror_var{(qq,m,n) in BRANCHCC_REGL_VAR}
@@ -209,9 +198,7 @@ sum{(qq,k,n) in BRANCHCC} base100MVA * V[k] * Red_Tran_Act_Dir[qq,k,n]
 # Loads
 + sum{(c,k) in LOADCC} load_PFix[1,c,k]     # Fixed value
 # VSC converters
-+ sum{(v,k) in VSCCONVON_FIXED_P} vscconv_targetP[v] # Fixed value
-+ sum{h in HVDC_AC_EMULATION: hvdc_ac_emulation_bus1[h] == k} hvdc_ac_emulation_p1[h]
-+ sum{h in HVDC_AC_EMULATION: hvdc_ac_emulation_bus2[h] == k} hvdc_ac_emulation_p2[h]
++ sum{(v,k) in VSCCONVON} vscconv_targetP[v] # Fixed value
 # LCC converters
 + sum{(l,k) in LCCCONVON} lccconv_targetP[l] # Fixed value
 = 0; # No slack variables for active power. If data are really too bad, may not converge.
