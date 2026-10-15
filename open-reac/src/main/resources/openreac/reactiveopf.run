@@ -324,11 +324,6 @@ if "optimization_after_rounding" in PARAM_ALGO_KEYS then let optimization_after_
 printf{LOG_INFO} "Parameter: optimization after rounding := %s\n", optimization_after_rounding;
 check optimization_after_rounding in {"false", "true"}; # boolean value
 
-param hvdc_ac_emulation symbolic default "true";
-if "hvdc_ac_emulation" in PARAM_ALGO_KEYS then let hvdc_ac_emulation := PARAM_ALGO_VALUES["hvdc_ac_emulation"];
-printf{LOG_INFO} "Parameter: AC emulation of HVDC lines := %s\n", hvdc_ac_emulation;
-check hvdc_ac_emulation in {"false", "true"}; # boolean value
-
 ###############################################################################
 # Solver choice and options
 ###############################################################################

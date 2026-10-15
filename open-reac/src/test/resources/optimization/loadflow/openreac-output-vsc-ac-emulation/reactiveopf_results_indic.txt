@@ -32,7 +32,6 @@ penalty_transfo_ratio 0.000000
 penalty_voltage_target_ratio 0.000000
 penalty_voltage_target_data 0.000000
 optimization_after_rounding false
-hvdc_ac_emulation true
 
 nb_substations 6
 nb_bus_in_data_file 6
@@ -71,8 +70,6 @@ nb_svc_in_main_SC 0
 nb_svc_up_and_operating 0
 nb_vsc_converter_in_data_file 2
 nb_vsc_converter_up_and_running 2
-nb_hvdc_ac_emulation 1
-nb_hvdc_ac_emulation_above_max_p 0
 nb_lcc_converter_in_data_file 0
 nb_lcc_converter_up_and_running 0
 nb_batteries 0
@@ -81,15 +78,15 @@ sum_batteries_pmax 0.0
 sum_batteries_pmin 0.0
 
 max_teta_init 0.18
-max_teta_ac 0.12
+max_teta_ac 0.11
 teta_max 3.18
 min_teta_init 0.00
 min_teta_ac 0.00
 teta_min -3.00
 max_delta_teta_init 0.087461
-max_delta_teta_ac 0.050021
+max_delta_teta_ac 0.051945
 min_delta_teta_init -0.137617
-min_delta_teta_ac -0.087691
+min_delta_teta_ac -0.081932
 
 nb_reactive_slacks 0
 nb_slacks_condensator 0
