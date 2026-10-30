@@ -43,7 +43,7 @@ import java.util.Objects;
  *
  * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}
  */
-public final class AcopfInitializer {
+final class AcopfInitializer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AcopfInitializer.class);
 
@@ -54,7 +54,7 @@ public final class AcopfInitializer {
      * @return the id of the slack bus of the DC load flow, the angle reference of the ACOPF.
      * @throws PowsyblException if the main synchronous component cannot be computed or if the DC load flow fails.
      */
-    public static String initialize(Network network, ReportNode reportNode) {
+    static String initialize(Network network, ReportNode reportNode) {
         Objects.requireNonNull(network);
         Objects.requireNonNull(reportNode);
         return runDcLoadFlow(network, reportNode);
