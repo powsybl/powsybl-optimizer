@@ -78,16 +78,16 @@ nb_batteries_with_variable_reactive_power 0
 sum_batteries_pmax 0.0
 sum_batteries_pmin 0.0
 
-max_teta_init 0.03
-max_teta_ac 0.01
-teta_max 3.02
-min_teta_init -0.05
-min_teta_ac -0.02
-teta_min -3.05
-max_delta_teta_init 0.050000
-max_delta_teta_ac 0.024739
-min_delta_teta_init -0.025000
-min_delta_teta_ac -0.012269
+max_theta_init 0.03
+max_theta_ac 0.01
+theta_max 3.02
+min_theta_init -0.05
+min_theta_ac -0.02
+theta_min -3.05
+max_delta_theta_init 0.050000
+max_delta_theta_ac 0.024739
+min_delta_theta_init -0.025000
+min_delta_theta_ac -0.012269
 
 nb_reactive_slacks 0
 nb_slacks_condensator 0
