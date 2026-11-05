@@ -56,5 +56,5 @@
   "penaltyVoltageTargetData" : null,
   "optimizationAfterRounding" : false,
   "parallelTransformersGrouping" : true,
-  "referenceState" : "NETWORK"
+  "referenceState" : "NEUTRAL"
 }

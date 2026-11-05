@@ -12,8 +12,8 @@ It is built in two steps: the controls optimized by the ACOPF are set to the req
 The reference state is the state the ACOPF starts from and, for the controls carrying a penalty in its objective function (see [Objective function](acOptimalPowerflow.md#objective-function)), is pulled back to.
 It is chosen through the Java API (`OpenReacParameters`, parameter `referenceState`):
 
-- `NETWORK` (default): the state of the network, which may be the result of a previous optimization.
-- `NEUTRAL`: a state independent of the input, so that two successive runs, between which the results have been applied, give the same solution.
+- `NETWORK`: the state of the network, which may be the result of a previous optimization.
+- `NEUTRAL` (default): a state independent of the input, so that two successive runs, between which the results have been applied, give the same solution.
   On the main synchronous component, the voltage magnitudes are set to $1$ p.u., the ratio tap changers optimized by the ACOPF to their neutral position (ratio $1$, or the closest one), the variable shunts with a linear model to $0$ section, and the reactive power set point of VSC converter stations to the middle of their reactive power range, as generators and batteries are in the ACOPF (see [Solving](acOptimalPowerflow.md#solving)).
   Variable shunts with a non linear model are left as they are: the susceptance bounds of these shunts in `ampl_network_shunts.txt` depend on their current section.
 

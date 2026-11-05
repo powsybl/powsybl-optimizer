@@ -45,7 +45,7 @@ class AcopfInitializerTest {
         Map<String, Double> voltagesBefore = network.getBusView().getBusStream()
                 .collect(Collectors.toMap(Bus::getId, Bus::getV));
 
-        String slackBusId = initialize(network, new OpenReacParameters());
+        String slackBusId = initialize(network, new OpenReacParameters().setReferenceState(ReferenceState.NETWORK));
 
         // the angle reference is the most meshed bus at the highest nominal voltage
         assertEquals(getBusViewBusId(network, "B4"), slackBusId);

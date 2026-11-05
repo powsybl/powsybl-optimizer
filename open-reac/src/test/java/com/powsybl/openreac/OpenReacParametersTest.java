@@ -659,9 +659,9 @@ class OpenReacParametersTest {
     @Test
     void testReferenceState() {
         OpenReacParameters parameters = new OpenReacParameters();
-        assertEquals(ReferenceState.NETWORK, parameters.getReferenceState());
-        parameters.setReferenceState(ReferenceState.NEUTRAL);
         assertEquals(ReferenceState.NEUTRAL, parameters.getReferenceState());
+        parameters.setReferenceState(ReferenceState.NETWORK);
+        assertEquals(ReferenceState.NETWORK, parameters.getReferenceState());
         assertThrows(NullPointerException.class, () -> parameters.setReferenceState(null));
     }
 

@@ -85,7 +85,7 @@ class OpenReacJsonModuleTest {
         parameters.setMinPlausibleLowVoltageLimit(0.755);
         parameters.setMaxPlausibleHighVoltageLimit(1.236);
         parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL);
-        parameters.setReferenceState(ReferenceState.NEUTRAL);
+        parameters.setReferenceState(ReferenceState.NETWORK);
         parameters.setActivePowerVariationRate(0.56);
         parameters.setMinPlausibleActivePowerThreshold(0.5);
         parameters.setLowImpedanceThreshold(1e-5);
@@ -186,7 +186,7 @@ class OpenReacJsonModuleTest {
 
         // The 1.1, 1.2 and 1.3 fields must fall back to their defaults when reading a v1.0 file
         assertTrue(parameters.isParallelTransformersGrouping());
-        assertEquals(ReferenceState.NETWORK, parameters.getReferenceState());
+        assertEquals(ReferenceState.NEUTRAL, parameters.getReferenceState());
         assertEquals(10, parameters.getPenaltyInvestReaPos());
         assertEquals(10, parameters.getPenaltyInvestReaNeg());
         assertNull(parameters.getPenaltyActivePower());
