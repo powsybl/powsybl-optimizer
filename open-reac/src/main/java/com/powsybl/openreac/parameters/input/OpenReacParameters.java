@@ -50,8 +50,6 @@ public class OpenReacParameters {
 
     // Algo parameters
 
-    private OpenReacOptimisationObjective objective = OpenReacOptimisationObjective.MIN_GENERATION;
-
     private OpenReacAmplLogLevel logLevelAmpl = OpenReacAmplLogLevel.INFO;
 
     private OpenReacSolverLogLevel logLevelSolver = OpenReacSolverLogLevel.EVERYTHING;
@@ -139,9 +137,7 @@ public class OpenReacParameters {
     private double penaltyInvestReaNeg = 10;
 
     private static final String PENALTY_ACTIVE_POWER_KEY = "penalty_active_power";
-    // Null = default depends on objective (back-compat): 1 for MIN_GENERATION, 0.01 otherwise.
-    // Non-null = explicit override set by the user.
-    private Double penaltyActivePower = null;
+    private double penaltyActivePower = 1;
 
     private static final String PENALTY_UNITS_REACTIVE_KEY = "penalty_units_reactive";
     private double penaltyUnitsReactive = 0.1;
@@ -150,12 +146,10 @@ public class OpenReacParameters {
     private double penaltyTransfoRatio = 0.1;
 
     private static final String PENALTY_VOLTAGE_TARGET_RATIO_KEY = "penalty_voltage_target_ratio";
-    // Null = default depends on objective: 1 for BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT, 0.01 otherwise.
-    private Double penaltyVoltageTargetRatio = null;
+    private double penaltyVoltageTargetRatio = 0.01;
 
     private static final String PENALTY_VOLTAGE_TARGET_DATA_KEY = "penalty_voltage_target_data";
-    // Null = default depends on objective: 1 for SPECIFIC_VOLTAGE_PROFILE, 0.01 otherwise.
-    private Double penaltyVoltageTargetData = null;
+    private double penaltyVoltageTargetData = 0.01;
 
     private static final String OPTIMIZATION_AFTER_ROUNDING = "optimization_after_rounding";
 
@@ -235,36 +229,22 @@ public class OpenReacParameters {
     }
 
     /**
-     * The definition of the objective function for the optimization.
-     */
-    public OpenReacOptimisationObjective getObjective() {
-        return objective;
-    }
-
-    /**
-     * The definition of the objective function for the optimization.
-     */
-    public OpenReacParameters setObjective(OpenReacOptimisationObjective objective) {
-        this.objective = Objects.requireNonNull(objective);
-        return this;
-    }
-
-    /**
-     * Must be used with {@link OpenReacOptimisationObjective#BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT}
-     * to define the voltage between low and high voltage limits, which OpenReac should converge to.
+     * Voltage target of the voltage target ratio term of the ACOPF objective (see {@link #setPenaltyVoltageTargetRatio}),
+     * as a distance in percent between the low and high voltage limits.
      * <p>
-     * A 0% objective means the model will target lower voltage limit.
-     * A 100% objective means the model will target upper voltage limit.
+     * A 0% distance means the term targets the lower voltage limit.
+     * A 100% distance means the term targets the upper voltage limit.
+     * Defaults to 50% when not set.
      */
     public Double getObjectiveDistance() {
         return objectiveDistance;
     }
 
     /**
-     * Must be used with {@link OpenReacOptimisationObjective#BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT}
+     * Voltage target of the voltage target ratio term of the ACOPF objective (see {@link #setPenaltyVoltageTargetRatio}).
      * <p>
-     * A 0% objective means the model will target lower voltage limit.
-     * A 100% objective means the model will target upper voltage limit.
+     * A 0% distance means the term targets the lower voltage limit.
+     * A 100% distance means the term targets the upper voltage limit.
      * @param objectiveDistance is in %
      */
     public OpenReacParameters setObjectiveDistance(double objectiveDistance) {
@@ -656,21 +636,12 @@ public class OpenReacParameters {
         return this;
     }
 
-    /**
-     * @return the user-configured penalty for active power generation in the ACOPF objective,
-     *         or {@code null} if the historical default (depending on the objective) should be used.
-     */
-    public Double getPenaltyActivePower() {
+    public double getPenaltyActivePower() {
         return penaltyActivePower;
     }
 
-    /**
-     * Sets the penalty for active power generation in the ACOPF objective.
-     * Passing {@code null} restores the historical default (1 for {@link OpenReacOptimisationObjective#MIN_GENERATION},
-     * 0.01 otherwise).
-     */
-    public OpenReacParameters setPenaltyActivePower(Double penaltyActivePower) {
-        if (penaltyActivePower != null && (penaltyActivePower < 0 || Double.isNaN(penaltyActivePower))) {
+    public OpenReacParameters setPenaltyActivePower(double penaltyActivePower) {
+        if (penaltyActivePower < 0 || Double.isNaN(penaltyActivePower)) {
             throw new IllegalArgumentException("Penalty for active power generation must be >= 0 and defined to be consistent.");
         }
         this.penaltyActivePower = penaltyActivePower;
@@ -702,21 +673,15 @@ public class OpenReacParameters {
     }
 
     /**
-     * @return the user-configured penalty for the voltage target ratio term (Vmin/Vmax normalized target)
-     *         in the ACOPF objective, or {@code null} if the historical default (depending on the objective)
-     *         should be used.
+     * @return the penalty for the voltage target ratio term in the ACOPF objective, which targets for each bus
+     *         the voltage at {@link #getObjectiveDistance()} percent between its low and high voltage limits.
      */
-    public Double getPenaltyVoltageTargetRatio() {
+    public double getPenaltyVoltageTargetRatio() {
         return penaltyVoltageTargetRatio;
     }
 
-    /**
-     * Sets the penalty for the voltage target ratio term in the ACOPF objective.
-     * Passing {@code null} restores the historical default (1 for
-     * {@link OpenReacOptimisationObjective#BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT}, 0.01 otherwise).
-     */
-    public OpenReacParameters setPenaltyVoltageTargetRatio(Double penaltyVoltageTargetRatio) {
-        if (penaltyVoltageTargetRatio != null && (penaltyVoltageTargetRatio < 0 || Double.isNaN(penaltyVoltageTargetRatio))) {
+    public OpenReacParameters setPenaltyVoltageTargetRatio(double penaltyVoltageTargetRatio) {
+        if (penaltyVoltageTargetRatio < 0 || Double.isNaN(penaltyVoltageTargetRatio)) {
             throw new IllegalArgumentException("Penalty for voltage target ratio term must be >= 0 and defined to be consistent.");
         }
         this.penaltyVoltageTargetRatio = penaltyVoltageTargetRatio;
@@ -724,21 +689,15 @@ public class OpenReacParameters {
     }
 
     /**
-     * @return the user-configured penalty for the voltage target data term (V0 input value targeting)
-     *         in the ACOPF objective, or {@code null} if the historical default (depending on the objective)
-     *         should be used.
+     * @return the penalty for the voltage target data term in the ACOPF objective, which targets for each bus
+     *         its voltage in the input network.
      */
-    public Double getPenaltyVoltageTargetData() {
+    public double getPenaltyVoltageTargetData() {
         return penaltyVoltageTargetData;
     }
 
-    /**
-     * Sets the penalty for the voltage target data term in the ACOPF objective.
-     * Passing {@code null} restores the historical default (1 for
-     * {@link OpenReacOptimisationObjective#SPECIFIC_VOLTAGE_PROFILE}, 0.01 otherwise).
-     */
-    public OpenReacParameters setPenaltyVoltageTargetData(Double penaltyVoltageTargetData) {
-        if (penaltyVoltageTargetData != null && (penaltyVoltageTargetData < 0 || Double.isNaN(penaltyVoltageTargetData))) {
+    public OpenReacParameters setPenaltyVoltageTargetData(double penaltyVoltageTargetData) {
+        if (penaltyVoltageTargetData < 0 || Double.isNaN(penaltyVoltageTargetData)) {
             throw new IllegalArgumentException("Penalty for voltage target data term must be >= 0 and defined to be consistent.");
         }
         this.penaltyVoltageTargetData = penaltyVoltageTargetData;
@@ -762,7 +721,6 @@ public class OpenReacParameters {
 
     public List<OpenReacAlgoParam> getAllAlgorithmParams() {
         ArrayList<OpenReacAlgoParam> allAlgoParams = new ArrayList<>();
-        allAlgoParams.add(objective.toParam());
         if (objectiveDistance != null) {
             allAlgoParams.add(new OpenReacAlgoParamImpl(OBJECTIVE_DISTANCE_KEY, Double.toString(objectiveDistance / 100)));
         }
@@ -788,20 +746,11 @@ public class OpenReacParameters {
         allAlgoParams.add(new OpenReacAlgoParamImpl(SHUNT_VARIABLE_SCALING_FACTOR_KEY, Double.toString(shuntVariableScalingFactor)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_INVEST_REA_POS_KEY, Double.toString(penaltyInvestReaPos)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_INVEST_REA_NEG_KEY, Double.toString(penaltyInvestReaNeg)));
-        double effectivePenaltyActivePower = Objects.requireNonNullElseGet(
-                penaltyActivePower,
-                () -> objective == OpenReacOptimisationObjective.MIN_GENERATION ? 1.0 : 0.01);
-        allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_ACTIVE_POWER_KEY, Double.toString(effectivePenaltyActivePower)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_ACTIVE_POWER_KEY, Double.toString(penaltyActivePower)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_UNITS_REACTIVE_KEY, Double.toString(penaltyUnitsReactive)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_TRANSFO_RATIO_KEY, Double.toString(penaltyTransfoRatio)));
-        double effectivePenaltyVoltageTargetRatio = Objects.requireNonNullElseGet(
-                penaltyVoltageTargetRatio,
-                () -> objective == OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT ? 1.0 : 0.01);
-        allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_VOLTAGE_TARGET_RATIO_KEY, Double.toString(effectivePenaltyVoltageTargetRatio)));
-        double effectivePenaltyVoltageTargetData = Objects.requireNonNullElseGet(
-                penaltyVoltageTargetData,
-                () -> objective == OpenReacOptimisationObjective.SPECIFIC_VOLTAGE_PROFILE ? 1.0 : 0.01);
-        allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_VOLTAGE_TARGET_DATA_KEY, Double.toString(effectivePenaltyVoltageTargetData)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_VOLTAGE_TARGET_RATIO_KEY, Double.toString(penaltyVoltageTargetRatio)));
+        allAlgoParams.add(new OpenReacAlgoParamImpl(PENALTY_VOLTAGE_TARGET_DATA_KEY, Double.toString(penaltyVoltageTargetData)));
         allAlgoParams.add(new OpenReacAlgoParamImpl(OPTIMIZATION_AFTER_ROUNDING, Boolean.toString(optimizationAfterRounding)));
         return allAlgoParams;
     }
@@ -1099,12 +1048,6 @@ public class OpenReacParameters {
      */
     public boolean checkAlgorithmParametersIntegrity() {
         boolean integrityAlgorithmParameters = true;
-
-        // Check integrity of objective function
-        if (objective.equals(OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT) && objectiveDistance == null) {
-            LOGGER.warn("In using {} as objective, a distance in percent between low and high voltage limits is expected.", OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT);
-            integrityAlgorithmParameters = false;
-        }
 
         // Check integrity of min/max plausible voltage limits
         if (minPlausibleLowVoltageLimit > maxPlausibleHighVoltageLimit) {

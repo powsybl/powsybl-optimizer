@@ -3,7 +3,6 @@ slack_bus 'VL4_0'
 
 log_level_ampl INFO
 log_level_knitro 2
-objective_choice 0
 ratio_voltage_target 0.500000
 coeff_alpha 1.000000
 Pnull 0.010000

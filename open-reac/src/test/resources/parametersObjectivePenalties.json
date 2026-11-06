@@ -1,10 +1,9 @@
 {
-  "version" : "1.3",
+  "version" : "1.4",
   "specificVoltageLimits" : [ ],
   "constantQGenerators" : [ ],
   "variableTwoWindingsTransformers" : [ ],
   "variableShuntCompensators" : [ ],
-  "objective" : "MIN_GENERATION",
   "logLevelAmpl" : "INFO",
   "logLevelSolver" : "EVERYTHING",
   "minPlausibleLowVoltageLimit" : 0.5,

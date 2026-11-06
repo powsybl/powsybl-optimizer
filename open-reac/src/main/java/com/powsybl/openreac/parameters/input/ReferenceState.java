@@ -10,7 +10,7 @@ package com.powsybl.openreac.parameters.input;
  * State of the controls the ACOPF starts from and, for those carrying a penalty in the objective function, is pulled
  * back to: voltage magnitudes, ratios of the variable transformers, sections of the variable shunt compensators and
  * reactive power of the VSC converter stations. The voltage magnitudes of this state are thus the
- * target of the objective {@link com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective#SPECIFIC_VOLTAGE_PROFILE},
+ * target of the voltage target data term of the objective (see {@link OpenReacParameters#setPenaltyVoltageTargetData}),
  * in place of the profile of the network.
  *
  * @author Oscar Lamolet {@literal <lamoletoscar at proton.me>}

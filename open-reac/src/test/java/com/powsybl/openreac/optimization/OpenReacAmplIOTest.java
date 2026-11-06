@@ -16,7 +16,6 @@ import com.powsybl.openreac.OpenReacConfig;
 import com.powsybl.openreac.OpenReacRunner;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAmplLogLevel;
-import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 import com.powsybl.openreac.parameters.input.algo.ReactiveSlackBusesMode;
 import com.powsybl.openreac.parameters.output.OpenReacResult;
 import com.powsybl.openreac.parameters.output.OpenReacStatus;
@@ -41,9 +40,10 @@ class OpenReacAmplIOTest extends AbstractOpenReacRunnerTest {
         Network network = IeeeCdfNetworkFactory.create57();
         setDefaultVoltageLimits(network); // set default voltage limits to every voltage levels of the network
 
-        OpenReacParameters parameters = new OpenReacParameters().setObjective(
-                        OpenReacOptimisationObjective.BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT)
+        OpenReacParameters parameters = new OpenReacParameters()
                 .setObjectiveDistance(70)
+                .setPenaltyActivePower(0.01)
+                .setPenaltyVoltageTargetRatio(1.0)
                 .setReactiveSlackBusesMode(ReactiveSlackBusesMode.CONFIGURED)
                 .addVariableTwoWindingsTransformers(network.getTwoWindingsTransformerStream()
                         .limit(1)
@@ -134,7 +134,7 @@ class OpenReacAmplIOTest extends AbstractOpenReacRunnerTest {
             assertEquals(1, openReacResult.getVscModifications().size());
             assertEquals(7, openReacResult.getGeneratorModifications().size());
             assertEquals(3, openReacResult.getVoltageProfile().size());
-            assertEquals(77, openReacResult.getIndicators().size());
+            assertEquals(76, openReacResult.getIndicators().size());
 
             assertTrue(openReacResult.getReactiveSlacks().isEmpty());
         }
@@ -152,7 +152,7 @@ class OpenReacAmplIOTest extends AbstractOpenReacRunnerTest {
             OpenReacResult openReacResult = OpenReacRunner.run(network,
                     network.getVariantManager().getWorkingVariantId(), parameters, new OpenReacConfig(true),
                     computationManager);
-            assertEquals(90, openReacResult.getIndicators().size());
+            assertEquals(89, openReacResult.getIndicators().size());
             assertEquals("Tue Dec 17 18:49:34 2024", openReacResult.getIndicators().get("ctime_start"));
             assertEquals(0, Integer.parseInt(openReacResult.getIndicators().get("last_solve_result_num")));
             assertEquals(5, Integer.parseInt(openReacResult.getIndicators().get("nb_iter_last")));
