@@ -57,6 +57,13 @@ public final class Reports {
                 .add();
     }
 
+    public static ReportNode createAcopfInitializationReporter(ReportNode reportNode, String networkId) {
+        return reportNode.newReportNode()
+                .withMessageTemplate("optimizer.openreac.acopfInitialization")
+                .withUntypedValue(NETWORK_ID, networkId)
+                .add();
+    }
+
     public static void createShuntModificationsReporter(ReportNode reportNode, String networkId,
                                                         List<ShuntCompensatorNetworkOutput.ShuntWithDeltaDiscreteOptimalOverThreshold> shuntsWithDeltaDiscreteOptimalOverThresholds) {
         if (!shuntsWithDeltaDiscreteOptimalOverThresholds.isEmpty()) {

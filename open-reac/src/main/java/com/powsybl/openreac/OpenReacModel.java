@@ -53,8 +53,7 @@ public class OpenReacModel implements AmplModel {
         return new OpenReacModel(OUTPUT_FILE_PREFIX, "openreac",
                 List.of("reactiveopf.run"),
                 List.of("commons.mod", "iidm_importer.mod", "or_param_importer.mod", "reactiveopf.dat", // code to import the data
-                        "network_info.run", // slack bus fallback computation and network information printings
-                        "dcopf.mod", "dcopf.run", // dcopf to warm start the acopf
+                        "network_info.run", // main synchronous component and slack bus checks, network information printings
                         "acopf_preprocessing.run", "acopf.mod", "acopf.run", "acopf_2nd.run", // reactive acopf
                         "reactiveopfexit.run", "reactiveopfoutput.run")); // code to export optimization results
     }

@@ -1,7 +1,5 @@
 final_status OK
-dcopf_status OK
 slack_bus 'UNDEFINED'
-slack_bus_origin UNDEFINED
 
 log_level_ampl INFO
 log_level_knitro 2
@@ -65,16 +63,16 @@ nb_batteries 0
 sum_batteries_pmax 0.0
 sum_batteries_pmin 0.0
 
-max_teta_dc 0.21
-max_teta_ac 0.09
-teta_max 3.21
-min_teta_dc -0.17
-min_teta_ac -0.08
-teta_min -3.17
-max_delta_teta_dc 0.146072
-max_delta_teta_ac 0.069420
-min_delta_teta_dc -0.144911
-min_delta_teta_ac -0.059976
+max_theta_dc 0.21
+max_theta_ac 0.09
+theta_max 3.21
+min_theta_dc -0.17
+min_theta_ac -0.08
+theta_min -3.17
+max_delta_theta_dc 0.146072
+max_delta_theta_ac 0.069420
+min_delta_theta_dc -0.144911
+min_delta_theta_ac -0.059976
 
 nb_reactive_slacks 0
 nb_slacks_condensator 0

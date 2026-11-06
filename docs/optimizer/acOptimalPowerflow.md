@@ -158,7 +158,7 @@ Setting an explicit value on any of these three weights overrides this objective
 ## Solving
 
 Before solving the ACOPF, the voltage magnitudes $\boldsymbol{V_i}$ are warm-started with $V_i^t$
-(specified in `ampl_network_buses.txt`), as well as the voltage phases $\boldsymbol{\theta_i}$ with the results of the DCOPF (see [DC optimal powerflow](dcOptimalPowerflow.md)).
+(specified in `ampl_network_buses.txt`), as well as the voltage phases $\boldsymbol{\theta_i}$ and the active powers $\boldsymbol{P_{i,g}}$ with the results of the DC load flow (see [ACOPF initialization](acopfInitialization.md)).
 Some setpoints are also warm-started with the values specified in the AMPL export (see [Network data](inputs.md#network-data)).
 Please also note that a scaling is applied with user-defined values before solving the ACOPF.
 
