@@ -14,7 +14,7 @@ It is chosen through the Java API (`OpenReacParameters`, parameter `referenceSta
 
 - `NETWORK`: the state of the network, which may be the result of a previous optimization.
 - `NEUTRAL` (default): a state independent of the input, so that two successive runs, between which the results have been applied, give the same solution.
-  On the main synchronous component, the voltage magnitudes are set to $1$ p.u., the ratio tap changers optimized by the ACOPF to their neutral position (ratio $1$, or the closest one), the variable shunts with a linear model to $0$ section, and the reactive power set point of VSC converter stations to the middle of their reactive power range, as generators and batteries are in the ACOPF (see [Solving](acOptimalPowerflow.md#solving)).
+  On the main synchronous component, the voltage magnitudes are set to $1$ p.u., the ratio tap changers optimized by the ACOPF to their neutral position (ratio $1$, or the closest one), the variable shunts with a linear model to $0$ section, and the reactive power setpoint of VSC converter stations to the middle of their reactive power range, as generators and batteries are in the ACOPF (see [Solving](acOptimalPowerflow.md#solving)).
   Variable shunts with a non linear model are left as they are: the susceptance bounds of these shunts in `ampl_network_shunts.txt` depend on their current section.
 
 With `NEUTRAL`, the voltage target $V_i^t$ of the objective function is $1$ p.u. on every bus.
@@ -23,7 +23,12 @@ With `NEUTRAL`, the voltage target $V_i^t$ of the objective function is $1$ p.u.
 
 A DC load flow is then solved with [OpenLoadFlow](https://github.com/powsybl/powsybl-open-loadflow) on the main synchronous component, in place of the DCOPF formerly solved in AMPL.
 The active power mismatch is distributed on the generators proportionally to their active power target, regardless of their active power limits as in the former DCOPF, and what cannot be distributed is left on the slack bus: the ACOPF has its own handling of the active power balance (see [Constraints](acOptimalPowerflow.md#constraints)).
-As in the ACOPF, the AC emulation of HVDC lines is not considered and the phase shifters are not regulating. The transformation ratios are ignored.
+As in OpenLoadFlow, the VSC HVDC lines with an enabled angle droop active power control (IIDM extension `hvdcAngleDroopActivePowerControl`) are modeled in AC emulation,
+saturated at the operator active power range of the extension `hvdcOperatorActivePowerRange` if present, at the maximum active power of the line otherwise.
+The active power that this load flow gives to each of these lines then becomes its active power setpoint, bounded by the maximum active power of the line, and its angle droop active power control is disabled:
+the ACOPF models the line by this setpoint (see [AC optimal powerflow](acOptimalPowerflow.md#generalities)).
+The AC emulation can be disabled through the Java API (`OpenReacParameters`, parameter `hvdcAcEmulation`, true by default): all the HVDC lines then keep their active power setpoint.
+The phase shifters are not regulating and the transformation ratios are ignored.
 
 The slack bus of this load flow is the most meshed bus among those of the highest nominal voltages.
 It is the angle reference of the ACOPF, given to AMPL through `param_algo.txt` (see [Slack bus](slackBusMainSynchronousComponent.md#slack-bus)).
