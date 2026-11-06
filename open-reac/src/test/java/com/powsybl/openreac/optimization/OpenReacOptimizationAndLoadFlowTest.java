@@ -98,8 +98,8 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.addConstantQGenerators(List.of("g1", "g2", "g5", "g6"));
         testAllModifAndLoadFlow(network, "optimization/loadflow/openreac-output-vsc-ac-emulation", parameters, ReportNode.NO_OP);
-        // the set point of the DC load flow is only written in the variant given to the ACOPF: the network keeps its
-        // set point and its AC emulation
+        // the setpoint of the DC load flow is only written in the variant given to the ACOPF: the network keeps its
+        // setpoint and its AC emulation
         assertEquals(HvdcLine.ConvertersMode.SIDE_1_INVERTER_SIDE_2_RECTIFIER, hvdc34.getConvertersMode());
         assertEquals(2, hvdc34.getActivePowerSetpoint());
         assertTrue(hvdc34.getExtension(HvdcAngleDroopActivePowerControl.class).isEnabled());

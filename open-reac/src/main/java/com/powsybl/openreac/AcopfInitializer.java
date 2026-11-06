@@ -60,7 +60,7 @@ import java.util.stream.Stream;
  * network state, including voltage magnitudes, before writing DC results.
  * <p>
  * The HVDC lines in AC emulation are solved, and saturated, by the DC load flow as in OpenLoadFlow. Each of them is
- * then written with its active power as set point, and without AC emulation: the ACOPF models it by this set point.
+ * then written with its active power as setpoint, and without AC emulation: the ACOPF models it by this setpoint.
  * <p>
  * The controls the ACOPF optimizes are written first, as requested by {@link ReferenceState}. With
  * {@link ReferenceState#NEUTRAL}, the sections of the non linear shunt compensators are not written: the bounds
@@ -201,22 +201,22 @@ final class AcopfInitializer {
     }
 
     /**
-     * Writes the active power the DC load flow gives to the HVDC line as its set point, and disables its AC emulation.
+     * Writes the active power the DC load flow gives to the HVDC line as its setpoint, and disables its AC emulation.
      */
     private static void writeActivePowerSetpoint(HvdcLine hvdcLine) {
         // without losses in DC, the active power withdrawn by converter station 1 flows to converter station 2
         double p = hvdcLine.getConverterStation1().getTerminal().getP();
-        // AMPL rejects a set point above the maximum active power, which the operator active power range may exceed
+        // AMPL rejects a setpoint above the maximum active power, which the operator active power range may exceed
         double setpoint = Math.min(Math.abs(p), hvdcLine.getMaxP());
         if (Math.abs(p) - setpoint > MAX_P_TOLERANCE) {
-            LOGGER.warn("DC load flow initialization: HVDC line {} in AC emulation at {} MW, above its maximum active power {} MW: set point bounded",
+            LOGGER.warn("DC load flow initialization: HVDC line {} in AC emulation at {} MW, above its maximum active power {} MW: setpoint bounded",
                     hvdcLine.getId(), p, hvdcLine.getMaxP());
         }
         hvdcLine.setConvertersMode(p >= 0 ? HvdcLine.ConvertersMode.SIDE_1_RECTIFIER_SIDE_2_INVERTER
                         : HvdcLine.ConvertersMode.SIDE_1_INVERTER_SIDE_2_RECTIFIER)
                 .setActivePowerSetpoint(setpoint);
         hvdcLine.getExtension(HvdcAngleDroopActivePowerControl.class).setEnabled(false);
-        LOGGER.info("DC load flow initialization: HVDC line {} in AC emulation modeled by a set point of {} MW from converter station 1 to 2",
+        LOGGER.info("DC load flow initialization: HVDC line {} in AC emulation modeled by a setpoint of {} MW from converter station 1 to 2",
                 hvdcLine.getId(), Math.copySign(setpoint, p));
     }
 
@@ -229,7 +229,7 @@ final class AcopfInitializer {
                 .setDcUseTransformerRatio(false) // ratios of the variable transformers are decided by the ACOPF
                 // phase shifter taps are data for the ACOPF: the DC load flow uses the same
                 .setPhaseShifterRegulationOn(false)
-                // the active power of the HVDC lines in AC emulation is decided here, and is their set point in the ACOPF
+                // the active power of the HVDC lines in AC emulation is decided here, and is their setpoint in the ACOPF
                 .setHvdcAcEmulation(hvdcAcEmulation)
                 .setReadSlackBus(false) // the slack bus is always the one selected below
                 .setWriteSlackBus(false); // and is given to AMPL as a parameter, not through the network
