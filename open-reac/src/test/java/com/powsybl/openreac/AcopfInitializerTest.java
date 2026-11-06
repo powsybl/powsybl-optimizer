@@ -279,11 +279,11 @@ class AcopfInitializerTest {
         VscConverterStation cs4 = network.getVscConverterStation("cs4");
 
         initialize(network, new OpenReacParameters().setHvdcAcEmulation(false));
-        // set point: the rectifier converter station 2 withdraws it
+        // setpoint: the rectifier converter station 2 withdraws it
         assertEquals(0.5, cs4.getTerminal().getP(), DELTA);
         assertTrue(hvdc34.getExtension(HvdcAngleDroopActivePowerControl.class).isEnabled());
 
-        // the set point does not matter in AC emulation: written over below
+        // the setpoint does not matter in AC emulation: written over below
         hvdc34.setConvertersMode(HvdcLine.ConvertersMode.SIDE_1_RECTIFIER_SIDE_2_INVERTER).setActivePowerSetpoint(0.1);
         initialize(network, new OpenReacParameters());
         // AC emulation saturated at the maximum active power, from converter station 2 to converter station 1
@@ -332,7 +332,7 @@ class AcopfInitializerTest {
         initialize(network, new OpenReacParameters());
         // the DC load flow saturates the line at the operator active power range, from converter station 2 to converter station 1
         assertEquals(-0.55, network.getVscConverterStation("cs3").getTerminal().getP(), DELTA);
-        // the set point is bounded by the maximum active power
+        // the setpoint is bounded by the maximum active power
         assertSetpoint(hvdc34, HvdcLine.ConvertersMode.SIDE_1_INVERTER_SIDE_2_RECTIFIER, 0.5);
     }
 

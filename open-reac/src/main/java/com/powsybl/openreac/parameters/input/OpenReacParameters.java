@@ -601,8 +601,8 @@ public class OpenReacParameters {
 
     /**
      * @return the boolean indicating if HVDC lines with an enabled angle droop active power control are modeled in AC
-     *         emulation by the DC load flow of the initialization, whose active power is then their set point in the
-     *         ACOPF (default true). When disabled, all HVDC lines keep their active power set point.
+     *         emulation by the DC load flow of the initialization, whose active power is then their setpoint in the
+     *         ACOPF (default true). When disabled, all HVDC lines keep their active power setpoint.
      */
     public boolean isHvdcAcEmulation() {
         return hvdcAcEmulation;
