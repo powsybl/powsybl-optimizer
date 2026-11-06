@@ -44,11 +44,10 @@ public class VscNetworkOutput extends AbstractNetworkOutput<VscConverterStationM
             .getRegulatingTerminal()
             .getVoltageLevel()
             .getNominalV();
+        // results are read on the variant initialized by AcopfInitializer, whose reactive power setpoint may
+        // differ from the one of the caller's variant: the optimized value is always carried
         Double targetQ = readDouble(tokens[SET_POINT_Q_COLUMN_INDEX]);
 
-        if (targetQ == vscConverterStation.getReactivePowerSetpoint()) {
-            targetQ = null;
-        }
         if (targetV == vscConverterStation.getVoltageSetpoint()) {
             targetV = null;
         }

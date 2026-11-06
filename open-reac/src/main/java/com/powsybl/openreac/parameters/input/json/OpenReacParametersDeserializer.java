@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.json.JsonUtil;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
+import com.powsybl.openreac.parameters.input.ReferenceState;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAmplLogLevel;
 import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
@@ -48,6 +49,8 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
             }
         };
     }
+
+    private static final String CLASS_NAME = "OpenReacParameters";
 
     private static final Map<String, BiConsumer<JsonParser, OpenReacParameters>> FIELD_PROCESSORS = Map.ofEntries(
             entry("version", (parser, parameters) -> { }),
@@ -161,6 +164,9 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
             )),
             entry("parallelTransformersGrouping", safeRead((parser, parameters) ->
                 parameters.setParallelTransformersGrouping(parser.getValueAsBoolean())
+            )),
+            entry("referenceState", safeRead((parser, parameters) ->
+                parameters.setReferenceState(ReferenceState.valueOf(parser.getText()))
             ))
     );
 
@@ -191,9 +197,11 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                 case "penaltyInvestReaPos", "penaltyInvestReaNeg", "penaltyActivePower",
                      "penaltyUnitsReactive", "penaltyTransfoRatio",
                      "penaltyVoltageTargetRatio", "penaltyVoltageTargetData" ->
-                    JsonUtil.assertGreaterOrEqualThanReferenceVersion("OpenReacParameters", fieldName, version, "1.1");
+                    JsonUtil.assertGreaterOrEqualThanReferenceVersion(CLASS_NAME, fieldName, version, "1.1");
                 case "parallelTransformersGrouping" ->
-                    JsonUtil.assertGreaterOrEqualThanReferenceVersion("OpenReacParameters", fieldName, version, "1.2");
+                    JsonUtil.assertGreaterOrEqualThanReferenceVersion(CLASS_NAME, fieldName, version, "1.2");
+                case "referenceState" ->
+                    JsonUtil.assertGreaterOrEqualThanReferenceVersion(CLASS_NAME, fieldName, version, "1.3");
                 default -> { /* no version gate */ }
             }
 
