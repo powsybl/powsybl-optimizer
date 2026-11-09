@@ -304,17 +304,17 @@ if "penalty_units_reactive" in PARAM_ALGO_KEYS then let penalty_units_reactive :
 printf{LOG_INFO} "Parameter: %s = %.3f\n","penalty_units_reactive",penalty_units_reactive;
 check penalty_units_reactive >= 0;
 
-param penalty_transfo_ratio default 0.1;
+param penalty_transfo_ratio default 0;
 if "penalty_transfo_ratio" in PARAM_ALGO_KEYS then let penalty_transfo_ratio := num(PARAM_ALGO_VALUES["penalty_transfo_ratio"]);
 printf{LOG_INFO} "Parameter: %s = %.3f\n","penalty_transfo_ratio",penalty_transfo_ratio;
 check penalty_transfo_ratio >= 0;
 
-param penalty_voltage_target_ratio default 0.01;
+param penalty_voltage_target_ratio default 0;
 if "penalty_voltage_target_ratio" in PARAM_ALGO_KEYS then let penalty_voltage_target_ratio := num(PARAM_ALGO_VALUES["penalty_voltage_target_ratio"]);
 printf{LOG_INFO} "Parameter: %s = %.3f\n","penalty_voltage_target_ratio",penalty_voltage_target_ratio;
 check penalty_voltage_target_ratio >= 0;
 
-param penalty_voltage_target_data default 0.01;
+param penalty_voltage_target_data default 0;
 if "penalty_voltage_target_data" in PARAM_ALGO_KEYS then let penalty_voltage_target_data := num(PARAM_ALGO_VALUES["penalty_voltage_target_data"]);
 printf{LOG_INFO} "Parameter: %s = %.3f\n","penalty_voltage_target_data",penalty_voltage_target_data;
 check penalty_voltage_target_data >= 0;
