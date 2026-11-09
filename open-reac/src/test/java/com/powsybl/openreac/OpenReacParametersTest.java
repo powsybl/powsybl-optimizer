@@ -455,6 +455,14 @@ class OpenReacParametersTest {
     }
 
     @Test
+    void testIsHvdcAcEmulation() {
+        OpenReacParameters parameters = new OpenReacParameters();
+        assertTrue(parameters.isHvdcAcEmulation());
+        parameters.setHvdcAcEmulation(false);
+        assertFalse(parameters.isHvdcAcEmulation());
+    }
+
+    @Test
     void testIsParallelTransformersGrouping() {
         OpenReacParameters parameters = new OpenReacParameters();
         assertTrue(parameters.isParallelTransformersGrouping());
@@ -579,6 +587,7 @@ class OpenReacParametersTest {
         assertEquals(0, parameters.getPenaltyVoltageTargetData());
         assertFalse(parameters.isOptimizationAfterRounding());
         assertTrue(parameters.isParallelTransformersGrouping());
+        assertTrue(parameters.isHvdcAcEmulation());
         assertTrue(parameters.checkAlgorithmParametersIntegrity());
     }
 
