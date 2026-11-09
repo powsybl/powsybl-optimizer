@@ -20,7 +20,7 @@ import java.io.IOException;
  */
 public class OpenReacParametersSerializer extends StdSerializer<OpenReacParameters> {
 
-    static final String VERSION = "1.3";
+    static final String VERSION = "1.4";
 
     public OpenReacParametersSerializer() {
         super(OpenReacParameters.class);
@@ -39,7 +39,6 @@ public class OpenReacParametersSerializer extends StdSerializer<OpenReacParamete
         if (openReacParameters.getReactiveSlackBusesMode() == ReactiveSlackBusesMode.CONFIGURED) {
             serializerProvider.defaultSerializeField("configuredReactiveSlackBuses", openReacParameters.getConfiguredReactiveSlackBuses(), jsonGenerator);
         }
-        serializerProvider.defaultSerializeField("objective", openReacParameters.getObjective().name(), jsonGenerator);
         if (openReacParameters.getObjectiveDistance() != null) {
             serializerProvider.defaultSerializeField("objectiveDistance", openReacParameters.getObjectiveDistance(), jsonGenerator);
         }

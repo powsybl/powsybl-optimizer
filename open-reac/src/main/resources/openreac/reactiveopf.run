@@ -166,20 +166,11 @@ check log_level_knitro in {0, 1, 2};
 # Never change this unless you really know what you do
 param base100MVA := 100;
 
-# Choice of objective function
-param objective_choice integer default 0;
-if "objective_choice" in PARAM_ALGO_KEYS then let objective_choice := num(PARAM_ALGO_VALUES["objective_choice"]);
-printf{LOG_INFO} "Parameter: choice for objective function := %Q (%s)\n",objective_choice,
-  if objective_choice==2 then "voltage targets are provided values"
-  else if objective_choice==1 then "voltage targets are Vmin+ratio*(Vmax-Vmin)"
-  else "active power minimization";
-
-# If voltage target is ratio between Vmin and Vmax
+# Voltage target of the voltage target ratio term of the objective: ratio between Vmin and Vmax
 param ratio_voltage_target default 0.5;
 if "ratio_voltage_target" in PARAM_ALGO_KEYS then let ratio_voltage_target := num(PARAM_ALGO_VALUES["ratio_voltage_target"]);
 check ratio_voltage_target >= 0 and ratio_voltage_target <= 1;
-if objective_choice==1
-then printf{LOG_INFO} "Parameter: ratio for voltage target is := %f (%.2f%%)\n",ratio_voltage_target,ratio_voltage_target*100;
+printf{LOG_INFO} "Parameter: ratio for voltage target is := %f (%.2f%%)\n",ratio_voltage_target,ratio_voltage_target*100;
 
 # coeff_alpha == 1 : minimize sum of generation, all generating units vary with 1 unique variable alpha
 # coeff_alpha == 0 : minimize sum of squared difference between target and value
