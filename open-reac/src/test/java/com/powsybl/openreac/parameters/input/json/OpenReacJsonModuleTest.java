@@ -7,12 +7,13 @@
 package com.powsybl.openreac.parameters.input.json;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.json.JsonUtil;
 import com.powsybl.commons.test.ComparisonUtils;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
+import com.powsybl.openreac.parameters.input.ReferenceState;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAmplLogLevel;
-import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 import com.powsybl.openreac.parameters.input.algo.OpenReacSolverLogLevel;
 import com.powsybl.openreac.parameters.input.algo.ReactiveSlackBusesMode;
 import org.junit.jupiter.api.Test;
@@ -84,6 +85,7 @@ class OpenReacJsonModuleTest {
         parameters.setMinPlausibleLowVoltageLimit(0.755);
         parameters.setMaxPlausibleHighVoltageLimit(1.236);
         parameters.setReactiveSlackBusesMode(ReactiveSlackBusesMode.ALL);
+        parameters.setReferenceState(ReferenceState.NETWORK);
         parameters.setActivePowerVariationRate(0.56);
         parameters.setMinPlausibleActivePowerThreshold(0.5);
         parameters.setLowImpedanceThreshold(1e-5);
@@ -100,6 +102,7 @@ class OpenReacJsonModuleTest {
         parameters.setTwoWindingTransformerRatioVariableScalingFactor(0.005);
         parameters.setOptimizationAfterRounding(true);
         parameters.setParallelTransformersGrouping(false);
+        parameters.setHvdcAcEmulation(false);
 
         String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(parameters);
         ComparisonUtils.assertTxtEquals(Objects.requireNonNull(getClass().getResourceAsStream("/parametersThresholds.json")), json);
@@ -111,7 +114,6 @@ class OpenReacJsonModuleTest {
         assertEquals(0.755, parameters2.getMinPlausibleLowVoltageLimit());
         assertEquals(1.236, parameters2.getMaxPlausibleHighVoltageLimit());
         assertEquals(ReactiveSlackBusesMode.ALL, parameters2.getReactiveSlackBusesMode());
-        assertEquals(OpenReacOptimisationObjective.MIN_GENERATION, parameters2.getObjective());
         assertEquals(0.56, parameters2.getActivePowerVariationRate());
         assertEquals(0.5, parameters2.getMinPlausibleActivePowerThreshold());
         assertEquals(1e-5, parameters2.getLowImpedanceThreshold());
@@ -128,6 +130,7 @@ class OpenReacJsonModuleTest {
         assertEquals(0.005, parameters2.getTwoWindingTransformerRatioVariableScalingFactor());
         assertTrue(parameters2.isOptimizationAfterRounding());
         assertFalse(parameters2.isParallelTransformersGrouping());
+        assertFalse(parameters2.isHvdcAcEmulation());
     }
 
     @Test
@@ -157,18 +160,29 @@ class OpenReacJsonModuleTest {
         assertEquals(0.3, parameters2.getPenaltyTransfoRatio());
         assertEquals(0.8, parameters2.getPenaltyVoltageTargetRatio());
         assertEquals(0.9, parameters2.getPenaltyVoltageTargetData());
+    }
 
-        // Round-trip null restoration: setting penaltyActivePower to null should survive JSON serialization
-        parameters2.setPenaltyActivePower(null);
-        parameters2.setPenaltyVoltageTargetRatio(null);
-        parameters2.setPenaltyVoltageTargetData(null);
-        String json2 = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(parameters2);
-        OpenReacParameters parameters3 = objectMapper.readValue(json2, OpenReacParameters.class);
-        assertNull(parameters3.getPenaltyActivePower());
-        assertNull(parameters3.getPenaltyVoltageTargetRatio());
-        assertNull(parameters3.getPenaltyVoltageTargetData());
-        assertEquals(5.5, parameters3.getPenaltyInvestReaPos());
-        assertEquals(7.25, parameters3.getPenaltyInvestReaNeg());
+    @Test
+    void testOpenReacParametersBackwardCompatibilityV1dot2() throws IOException {
+        ObjectMapper objectMapper = JsonUtil.createObjectMapper()
+                .registerModule(new OpenReactJsonModule());
+
+        // Read a v1.2 file: the objective type is ignored, and the null penalties (which used to mean
+        // "objective-dependent default") fall back on the fixed defaults.
+        OpenReacParameters parameters = objectMapper.readValue(
+                Objects.requireNonNull(getClass().getResourceAsStream("/parametersV1dot2.json")),
+                OpenReacParameters.class);
+
+        assertEquals(1.0, parameters.getPenaltyActivePower());
+        assertEquals(0, parameters.getPenaltyVoltageTargetRatio());
+        assertEquals(0, parameters.getPenaltyVoltageTargetData());
+        assertEquals(5, parameters.getObjectiveDistance());
+        assertFalse(parameters.isParallelTransformersGrouping());
+
+        // The objective field is rejected from version 1.4
+        String json = "{\"version\" : \"1.4\", \"objective\" : \"MIN_GENERATION\"}";
+        PowsyblException e = assertThrows(PowsyblException.class, () -> objectMapper.readValue(json, OpenReacParameters.class));
+        assertTrue(e.getMessage().contains("objective is not valid for version 1.4"));
     }
 
     @Test
@@ -182,18 +196,19 @@ class OpenReacJsonModuleTest {
                 Objects.requireNonNull(getClass().getResourceAsStream("/parametersV1dot0.json")),
                 OpenReacParameters.class);
 
-        // The 1.1 and 1.2 fields must fall back to their defaults when reading a v1.0 file
+        // The 1.1, 1.2, 1.3 and 1.5 fields must fall back to their defaults when reading a v1.0 file
         assertTrue(parameters.isParallelTransformersGrouping());
+        assertEquals(ReferenceState.NEUTRAL, parameters.getReferenceState());
+        assertTrue(parameters.isHvdcAcEmulation());
         assertEquals(10, parameters.getPenaltyInvestReaPos());
         assertEquals(10, parameters.getPenaltyInvestReaNeg());
-        assertNull(parameters.getPenaltyActivePower());
+        assertEquals(1.0, parameters.getPenaltyActivePower());
         assertEquals(0.1, parameters.getPenaltyUnitsReactive());
-        assertEquals(0.1, parameters.getPenaltyTransfoRatio());
-        assertNull(parameters.getPenaltyVoltageTargetRatio());
-        assertNull(parameters.getPenaltyVoltageTargetData());
+        assertEquals(0, parameters.getPenaltyTransfoRatio());
+        assertEquals(0, parameters.getPenaltyVoltageTargetRatio());
+        assertEquals(0, parameters.getPenaltyVoltageTargetData());
 
         // Spot-check a few pre-existing fields to confirm the rest of the deserialization still works
-        assertEquals(OpenReacOptimisationObjective.MIN_GENERATION, parameters.getObjective());
         assertEquals(ReactiveSlackBusesMode.CONFIGURED, parameters.getReactiveSlackBusesMode());
         assertEquals(List.of("g1", "g2"), parameters.getConstantQGenerators());
         assertEquals(0.1, parameters.getShuntVariableScalingFactor());

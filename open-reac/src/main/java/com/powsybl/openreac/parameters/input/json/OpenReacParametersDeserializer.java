@@ -14,16 +14,19 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.json.JsonUtil;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
+import com.powsybl.openreac.parameters.input.ReferenceState;
 import com.powsybl.openreac.parameters.input.VoltageLimitOverride;
 import com.powsybl.openreac.parameters.input.algo.OpenReacAmplLogLevel;
-import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 import com.powsybl.openreac.parameters.input.algo.OpenReacSolverLogLevel;
 import com.powsybl.openreac.parameters.input.algo.ReactiveSlackBusesMode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.function.ObjDoubleConsumer;
 
 import static java.util.Map.entry;
 
@@ -33,6 +36,8 @@ import static java.util.Map.entry;
  */
 
 public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacParameters> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(OpenReacParametersDeserializer.class);
 
     private interface IOBiConsumer<T, U> {
         void accept(T t, U u) throws IOException;
@@ -47,6 +52,18 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                 throw new PowsyblException(e);
             }
         };
+    }
+
+    private static final String CLASS_NAME = "OpenReacParameters";
+
+    // Up to version 1.3, a null penalty meant "use the default of the objective type". Objective types are gone,
+    // so a null value now simply keeps the default of the parameter.
+    private static BiConsumer<JsonParser, OpenReacParameters> safeReadNullableDouble(ObjDoubleConsumer<OpenReacParameters> setter) {
+        return safeRead((parser, parameters) -> {
+            if (parser.currentToken() != JsonToken.VALUE_NULL) {
+                setter.accept(parameters, parser.getValueAsDouble());
+            }
+        });
     }
 
     private static final Map<String, BiConsumer<JsonParser, OpenReacParameters>> FIELD_PROCESSORS = Map.ofEntries(
@@ -67,7 +84,7 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                 parameters.addConfiguredReactiveSlackBuses(parser.readValueAs(new TypeReference<List<String>>() { }))
             )),
             entry("objective", safeRead((parser, parameters) ->
-                parameters.setObjective(OpenReacOptimisationObjective.valueOf(parser.getText()))
+                LOGGER.warn("Objective types have been removed, field 'objective' ({}) is ignored: set the penalty weights explicitly instead.", parser.getText())
             )),
             entry("objectiveDistance", safeRead((parser, parameters) ->
                 parameters.setObjectiveDistance(parser.getValueAsDouble())
@@ -141,26 +158,26 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
             entry("penaltyInvestReaNeg", safeRead((parser, parameters) ->
                 parameters.setPenaltyInvestReaNeg(parser.readValueAs(Double.class))
             )),
-            entry("penaltyActivePower", safeRead((parser, parameters) ->
-                parameters.setPenaltyActivePower(parser.readValueAs(Double.class))
-            )),
+            entry("penaltyActivePower", safeReadNullableDouble(OpenReacParameters::setPenaltyActivePower)),
             entry("penaltyUnitsReactive", safeRead((parser, parameters) ->
                 parameters.setPenaltyUnitsReactive(parser.readValueAs(Double.class))
             )),
             entry("penaltyTransfoRatio", safeRead((parser, parameters) ->
                 parameters.setPenaltyTransfoRatio(parser.readValueAs(Double.class))
             )),
-            entry("penaltyVoltageTargetRatio", safeRead((parser, parameters) ->
-                parameters.setPenaltyVoltageTargetRatio(parser.readValueAs(Double.class))
-            )),
-            entry("penaltyVoltageTargetData", safeRead((parser, parameters) ->
-                parameters.setPenaltyVoltageTargetData(parser.readValueAs(Double.class))
-            )),
+            entry("penaltyVoltageTargetRatio", safeReadNullableDouble(OpenReacParameters::setPenaltyVoltageTargetRatio)),
+            entry("penaltyVoltageTargetData", safeReadNullableDouble(OpenReacParameters::setPenaltyVoltageTargetData)),
             entry("optimizationAfterRounding", safeRead((parser, parameters) ->
                 parameters.setOptimizationAfterRounding(parser.getValueAsBoolean())
             )),
             entry("parallelTransformersGrouping", safeRead((parser, parameters) ->
                 parameters.setParallelTransformersGrouping(parser.getValueAsBoolean())
+            )),
+            entry("referenceState", safeRead((parser, parameters) ->
+                parameters.setReferenceState(ReferenceState.valueOf(parser.getText()))
+            )),
+            entry("hvdcAcEmulation", safeRead((parser, parameters) ->
+                parameters.setHvdcAcEmulation(parser.getValueAsBoolean())
             ))
     );
 
@@ -186,14 +203,20 @@ public class OpenReacParametersDeserializer extends StdDeserializer<OpenReacPara
                 continue;
             }
 
-            // Version-gated fields, by the version that introduced them
+            // Version-gated fields, by the version that introduced (or removed) them
             switch (fieldName) {
                 case "penaltyInvestReaPos", "penaltyInvestReaNeg", "penaltyActivePower",
                      "penaltyUnitsReactive", "penaltyTransfoRatio",
                      "penaltyVoltageTargetRatio", "penaltyVoltageTargetData" ->
-                    JsonUtil.assertGreaterOrEqualThanReferenceVersion("OpenReacParameters", fieldName, version, "1.1");
+                    JsonUtil.assertGreaterOrEqualThanReferenceVersion(CLASS_NAME, fieldName, version, "1.1");
                 case "parallelTransformersGrouping" ->
-                    JsonUtil.assertGreaterOrEqualThanReferenceVersion("OpenReacParameters", fieldName, version, "1.2");
+                    JsonUtil.assertGreaterOrEqualThanReferenceVersion(CLASS_NAME, fieldName, version, "1.2");
+                case "referenceState" ->
+                    JsonUtil.assertGreaterOrEqualThanReferenceVersion(CLASS_NAME, fieldName, version, "1.3");
+                case "objective" ->
+                    JsonUtil.assertLessThanReferenceVersion(CLASS_NAME, fieldName, version, "1.4");
+                case "hvdcAcEmulation" ->
+                    JsonUtil.assertGreaterOrEqualThanReferenceVersion(CLASS_NAME, fieldName, version, "1.5");
                 default -> { /* no version gate */ }
             }
 

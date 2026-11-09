@@ -46,7 +46,7 @@ class OpenReacBranchWithOneSideOpenedTest extends AbstractOpenReacRunnerTest {
 
         OpenReacResult result = runOpenReac(network, "optimization/opened-branches/zero-impedance-open-side-2");
         // opened branch is considered as non impedant
-        assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_branch_in_AC_CC_side_2_opened")));
+        assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_branch_in_main_SC_side_2_opened")));
         assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_branch_with_zero_or_small_impedance")));
 
         assertEquals(OpenReacStatus.OK, result.getStatus());
@@ -62,7 +62,7 @@ class OpenReacBranchWithOneSideOpenedTest extends AbstractOpenReacRunnerTest {
 
         OpenReacResult result = runOpenReac(network, "optimization/opened-branches/zero-impedance-open-side-1");
         // opened branch is considered as non impedance branch
-        assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_branch_in_AC_CC_side_1_opened")));
+        assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_branch_in_main_SC_side_1_opened")));
         assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_branch_with_zero_or_small_impedance")));
 
         assertEquals(OpenReacStatus.OK, result.getStatus());
@@ -78,7 +78,7 @@ class OpenReacBranchWithOneSideOpenedTest extends AbstractOpenReacRunnerTest {
 
         OpenReacResult result = runOpenReac(network, "optimization/opened-branches/rtc-open-side-2");
         // verify ratio tap changer is considered in optimization
-        assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_branch_in_AC_CC_side_2_opened")));
+        assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_branch_in_main_SC_side_2_opened")));
         assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_transformers_with_fixed_ratio")));
 
         assertEquals(OpenReacStatus.OK, result.getStatus());
@@ -94,7 +94,7 @@ class OpenReacBranchWithOneSideOpenedTest extends AbstractOpenReacRunnerTest {
 
         OpenReacResult result = runOpenReac(network, "optimization/opened-branches/rtc-open-side-1");
         // verify ratio tap changer on T2wT1 is ignored in optimization
-        assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_branch_in_AC_CC_side_1_opened")));
+        assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_branch_in_main_SC_side_1_opened")));
         assertEquals(1, Integer.parseInt(result.getIndicators().get("nb_transformers_with_fixed_ratio")));
 
         assertEquals(OpenReacStatus.OK, result.getStatus());

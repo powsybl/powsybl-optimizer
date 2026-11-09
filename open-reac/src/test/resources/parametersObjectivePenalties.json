@@ -1,10 +1,9 @@
 {
-  "version" : "1.2",
+  "version" : "1.5",
   "specificVoltageLimits" : [ ],
   "constantQGenerators" : [ ],
   "variableTwoWindingsTransformers" : [ ],
   "variableShuntCompensators" : [ ],
-  "objective" : "MIN_GENERATION",
   "logLevelAmpl" : "INFO",
   "logLevelSolver" : "EVERYTHING",
   "minPlausibleLowVoltageLimit" : 0.5,
@@ -33,5 +32,7 @@
   "penaltyVoltageTargetRatio" : 0.8,
   "penaltyVoltageTargetData" : 0.9,
   "optimizationAfterRounding" : false,
-  "parallelTransformersGrouping" : true
+  "parallelTransformersGrouping" : true,
+  "referenceState" : "NEUTRAL",
+  "hvdcAcEmulation" : true
 }

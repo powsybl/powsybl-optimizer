@@ -17,10 +17,11 @@ hidden: true
 divisionOfCode.md
 inputs.md
 preprocessing.md
-slackBusMainConnexComponent.md
-dcOptimalPowerflow.md
+slackBusMainSynchronousComponent.md
+acopfInitialization.md
 acOptimalPowerflow.md
 outputs.md
+results.md
 
 ```
 

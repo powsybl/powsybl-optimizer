@@ -1,10 +1,9 @@
 {
-  "version" : "1.2",
+  "version" : "1.5",
   "specificVoltageLimits" : [ ],
   "constantQGenerators" : [ ],
   "variableTwoWindingsTransformers" : [ ],
   "variableShuntCompensators" : [ ],
-  "objective" : "MIN_GENERATION",
   "objectiveDistance" : 5.0,
   "logLevelAmpl" : "WARNING",
   "logLevelSolver" : "NOTHING",
@@ -28,11 +27,13 @@
   "shuntVariableScalingFactor" : 0.1,
   "penaltyInvestReaPos" : 10.0,
   "penaltyInvestReaNeg" : 10.0,
-  "penaltyActivePower" : null,
+  "penaltyActivePower" : 1.0,
   "penaltyUnitsReactive" : 0.1,
-  "penaltyTransfoRatio" : 0.1,
-  "penaltyVoltageTargetRatio" : null,
-  "penaltyVoltageTargetData" : null,
+  "penaltyTransfoRatio" : 0.0,
+  "penaltyVoltageTargetRatio" : 0.0,
+  "penaltyVoltageTargetData" : 0.0,
   "optimizationAfterRounding" : true,
-  "parallelTransformersGrouping" : false
+  "parallelTransformersGrouping" : false,
+  "referenceState" : "NETWORK",
+  "hvdcAcEmulation" : false
 }

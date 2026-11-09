@@ -28,7 +28,9 @@ In the case of transformers, a second optimization can be carried out to adjust 
 - Shunts that are disconnected at the beginning of the optimization but are specified as variable (see [Configuration of the run](inputs.md#configuration-of-the-run)) can be reconnected and optimized.
 - Only batteries that regulate voltage (as flagged in `ampl_network_batteries.txt`) have a variable reactive power; the reactive power of other batteries is fixed at its input value. 
   The active power of batteries is never optimized.
-- The AC emulation of HVDC lines is not considered in the optimization. Also, the losses due to the line and the converter stations themselves are not accounted for in the target used in the optimization.
+- The AC emulation of HVDC lines is not modeled in the optimization: as the other HVDC lines, a VSC HVDC line in AC emulation is modeled by an active power setpoint,
+  the one given by the DC load flow of the initialization (see [ACOPF initialization](acopfInitialization.md#dc-load-flow)).
+  Also, the losses due to the line and the converter stations themselves are not accounted for in the target used in the optimization.
 
 ## Constraints
 
@@ -37,7 +39,7 @@ In particular, the user can indicate which buses will have associated **reactive
 , expressing the excess (resp. shortfall) of reactive power produced in bus $i$, and used to ensure reactive power balance. 
 To do so, these buses must be specified in parameter file `param_buses_with_reactive_slack.txt`, and `buses_with_reactive_slacks` must be set to $\text{CONFIGURED}$.
 
-The ACOPF involves the following constraints, in addition to the slack constraint $(1)$ introduced in the [Slack bus and main connex component](slackBusMainConnexComponent.md) part:
+The ACOPF involves the following constraints, in addition to the slack constraint $(1)$ introduced in the [Slack bus and main synchronous component](slackBusMainSynchronousComponent.md) part:
 
 $$\sum\limits_{j\in v(i)} \boldsymbol{p_{ij}} = P_i^{in} - \sum\limits_{g}\boldsymbol{P_{i,g}}, \quad i\in\text{BUSCC} \quad (5)$$
 
@@ -119,7 +121,7 @@ A bundle is tied through $(7)$ only if **all** its members are optimized variabl
 
 This grouping interacts with the second optimization after tap rounding (see [Solving](#solving)): constraint $(7)$ is relaxed before rounding, so each transformer is rounded to the nearest tap of its own table independently. Members of a bundle may therefore end up on different discrete taps if their tap tables differ; the shared ratio is guaranteed only for the continuous solving.
 
-Finally, if at solve time a member of a bundle carries no reactive loop flow at all — one of its sides is opened, or it lies outside the main connex component — the whole bundle is relaxed: its members are optimized independently for that run, and the event is logged. A member that is in service but that the model cannot move (near-zero impedance, single-ratio tap table) behaves instead like a non-optimized member above: its frozen effective ratio pins the bundle.
+Finally, if at solve time a member of a bundle carries no reactive loop flow at all — one of its sides is opened, or it lies outside the main synchronous component — the whole bundle is relaxed: its members are optimized independently for that run, and the event is logged. A member that is in service but that the model cannot move (near-zero impedance, single-ratio tap table) behaves instead like a non-optimized member above: its frozen effective ratio pins the bundle.
 
 ## Objective function
 
@@ -145,20 +147,16 @@ where:
 - $\rho_{ij}$ is the transformer ratio of line $ij$, specified in `ampl_network_tct.txt`.
 - the weights $w_{\sigma}^{+}$, $w_{\sigma}^{-}$, $w_{P}$, $w_{V}^{\rho}$, $w_{V}^{0}$, $w_{Q}$ and $w_{\rho}$ correspond respectively to the parameters `penalty_invest_rea_pos`, `penalty_invest_rea_neg`, `penalty_active_power`, `penalty_voltage_target_ratio`, `penalty_voltage_target_data`, `penalty_units_reactive` and `penalty_transfo_ratio`.
 
-Four of these weights have a fixed default value: $w_{\sigma}^{+} = 10$, $w_{\sigma}^{-} = 10$, $w_{Q} = 0.1$ and $w_{\rho} = 0.1$.
+The default values of the weights are $w_{\sigma}^{+} = 10$, $w_{\sigma}^{-} = 10$, $w_{P} = 1$, $w_{Q} = 0.1$ and $w_{V}^{\rho} = w_{V}^{0} = w_{\rho} = 0$: by default, the objective minimizes the active power production $\sum\limits_{i,g}\boldsymbol{P_{i,g}}$ and the reactive power of units, and the voltage targeting and transformer ratio terms are inactive.
 The high default weight on the reactive slacks drives their sum towards $0$, ensuring reactive power balance at each bus of the network.
+In the voltage target ratio term, $\rho$ equals the configurable parameter `ratio_voltage_target`.
 
-The three remaining weights — $w_{P}$, $w_{V}^{\rho}$ and $w_{V}^{0}$ — have a default value that depends on the `objective_choice` parameter when they are left unset: the term matching the selected objective receives a weight of $1$, while the other two receive $0.01$. Specifically, if `objective_choice` takes on:
-- $0$ (`MIN_GENERATION`), the minimization of active power production $\sum\limits_{i,g}\boldsymbol{P_{i,g}}$ is prioritized ($w_{P} = 1$).
-- $1$ (`BETWEEN_HIGH_AND_LOW_VOLTAGE_LIMIT`), the minimization of $\sum\limits_{i} \left( \boldsymbol{V_i} - \left( (1-\rho)V_{i}^{\text{min,c}} + \rho V_{i}^{\text{max,c}} \right) \right)^2$ is prioritized ($w_{V}^{\rho} = 1$), where $\rho$ equals the configurable parameter `ratio_voltage_target`.
-- $2$ (`SPECIFIC_VOLTAGE_PROFILE`), the minimization of $\sum\limits_{i} (\boldsymbol{V_i} - V_i^t)^2$ is prioritized ($w_{V}^{0} = 1$).
-
-Setting an explicit value on any of these three weights overrides this objective-dependent default, regardless of the selected objective. As all weights accept any value $\geq 0$, a term can be fully neutralized by setting its weight to $0$.
+As all weights accept any value $\geq 0$, a term can be fully neutralized by setting its weight to $0$.
 
 ## Solving
 
 Before solving the ACOPF, the voltage magnitudes $\boldsymbol{V_i}$ are warm-started with $V_i^t$
-(specified in `ampl_network_buses.txt`), as well as the voltage phases $\boldsymbol{\theta_i}$ with the results of the DCOPF (see [DC optimal powerflow](dcOptimalPowerflow.md)).
+(specified in `ampl_network_buses.txt`), as well as the voltage phases $\boldsymbol{\theta_i}$ and the active powers $\boldsymbol{P_{i,g}}$ with the results of the DC load flow (see [ACOPF initialization](acopfInitialization.md)).
 Some setpoints are also warm-started with the values specified in the AMPL export (see [Network data](inputs.md#network-data)).
 Please also note that a scaling is applied with user-defined values before solving the ACOPF.
 

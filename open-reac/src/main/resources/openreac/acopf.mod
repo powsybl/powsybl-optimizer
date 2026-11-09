@@ -23,16 +23,20 @@ set PROBLEM_ACOPF default { };
 # Variables and contraints for ACOPF
 #
 ###############################################################################
-# Notice that some variables and constraints for DCOPF are also used for ACOPF
 
 #
 # Phase and modulus of voltage
 #
-# Complex voltage = V*exp(i*teta). (with i**2=-1)
+# Complex voltage = V*exp(i*theta). (with i**2=-1)
 
 # Phase of voltage
-var teta{BUSCC} <= teta_max, >= teta_min;
-subject to ctr_null_phase_bus{PROBLEM_ACOPF}: teta[null_phase_bus] = 0;
+# Initial values come from the DC load flow solved in Java before the export (bus_angl0). They are shifted so that
+# the phase reference bus is at 0 whatever the reference bus of that load flow was.
+param theta_init{n in BUSCC} := bus_angl0[1,n] - bus_angl0[1,null_phase_bus];
+param theta_min default -10; # radians, set from theta_init before solving
+param theta_max default  10; # radians, set from theta_init before solving
+var theta{BUSCC} <= theta_max, >= theta_min;
+subject to ctr_null_phase_bus{PROBLEM_ACOPF}: theta[null_phase_bus] = 0;
 
 # Modulus of voltage
 var V{n in BUSCC}
@@ -121,27 +125,27 @@ var bundle_Ror_var{g in PARALLEL_BUNDLES}
 #
 
 var Red_Tran_Act_Dir{(qq,m,n) in BRANCHCC } =
-    V[n] * branch_admi[qq,m,n] * sin(teta[m]-teta[n]+branch_dephor[qq,m,n]-branch_angper[qq,m,n])
+    V[n] * branch_admi[qq,m,n] * sin(theta[m]-theta[n]+branch_dephor[qq,m,n]-branch_angper[qq,m,n])
     * (if (qq,m,n) in BRANCHCC_REGL_VAR then branch_Ror_var[qq,m,n]*branch_cstratio[1,qq,m,n] else branch_Ror[qq,m,n])
   + V[m] * (branch_admi[qq,m,n]*sin(branch_angper[qq,m,n])+branch_Gor_mod[qq,m,n])
     * (if (qq,m,n) in BRANCHCC_REGL_VAR then branch_Ror_var[qq,m,n]*branch_cstratio[1,qq,m,n] else branch_Ror[qq,m,n])**2
   ;
 
 var Red_Tran_Rea_Dir{(qq,m,n) in BRANCHCC } =
-  - V[n] * branch_admi[qq,m,n] * cos(teta[m]-teta[n]+branch_dephor[qq,m,n]-branch_angper[qq,m,n])
+  - V[n] * branch_admi[qq,m,n] * cos(theta[m]-theta[n]+branch_dephor[qq,m,n]-branch_angper[qq,m,n])
     * (if (qq,m,n) in BRANCHCC_REGL_VAR then branch_Ror_var[qq,m,n]*branch_cstratio[1,qq,m,n] else branch_Ror[qq,m,n])
   + V[m] * (branch_admi[qq,m,n]*cos(branch_angper[qq,m,n])-branch_Bor_mod[qq,m,n])
     * (if (qq,m,n) in BRANCHCC_REGL_VAR then branch_Ror_var[qq,m,n]*branch_cstratio[1,qq,m,n] else branch_Ror[qq,m,n])^2
   ;
 
 var Red_Tran_Act_Inv{(qq,m,n) in BRANCHCC } =
-    V[m] * branch_admi[qq,m,n] * sin(teta[n]-teta[m]-branch_dephor[qq,m,n]-branch_angper[qq,m,n])
+    V[m] * branch_admi[qq,m,n] * sin(theta[n]-theta[m]-branch_dephor[qq,m,n]-branch_angper[qq,m,n])
     * (if (qq,m,n) in BRANCHCC_REGL_VAR then branch_Ror_var[qq,m,n]*branch_cstratio[1,qq,m,n] else branch_Ror[qq,m,n])
   + V[n] * (branch_admi[qq,m,n]*sin(branch_angper[qq,m,n])+branch_Gex_mod[qq,m,n])
   ;
 
 var Red_Tran_Rea_Inv{(qq,m,n) in BRANCHCC } =
-  - V[m] * branch_admi[qq,m,n] * cos(teta[n]-teta[m]-branch_dephor[qq,m,n]-branch_angper[qq,m,n])
+  - V[m] * branch_admi[qq,m,n] * cos(theta[n]-theta[m]-branch_dephor[qq,m,n]-branch_angper[qq,m,n])
     * (if (qq,m,n) in BRANCHCC_REGL_VAR then branch_Ror_var[qq,m,n]*branch_cstratio[1,qq,m,n] else branch_Ror[qq,m,n])
   + V[n] * (branch_admi[qq,m,n]*cos(branch_angper[qq,m,n])-branch_Bex_mod[qq,m,n])
   ;
@@ -207,7 +211,7 @@ sum{(qq,k,n) in BRANCHCC} base100MVA * V[k] * Red_Tran_Act_Dir[qq,k,n]
 # Reactive balance slack variables at configured nodes
 set BUSCC_SLACK := if buses_with_reactive_slacks == "ALL" then BUSCC
                     else if buses_with_reactive_slacks == "NO_GENERATION" then {n in BUSCC: (card{(g,n) in UNITON: (g,n) not in UNIT_FIXQ}==0 and card{(svc,n) in SVCON}==0 and card{(vscconv,n) in VSCCONVON}==0 and card{(b,n) in BATTERYON}==0)}
-                    else BUSCC inter PARAM_BUSES_WITH_REACTIVE_SLACK; # if = "CONFIGURED", buses given as parameter but in connex component
+                    else BUSCC inter PARAM_BUSES_WITH_REACTIVE_SLACK; # if = "CONFIGURED", buses given as parameter but in main synchronous component
 var slack1_shunt_B{BUSCC_SLACK} >= 0;
 var slack2_shunt_B{BUSCC_SLACK} >= 0;
 #subject to ctr_compl_slack_Q{PROBLEM_ACOPF,k in BUSCC_SLACK}: slack1_balance_Q[k] >= 0 complements slack2_balance_Q[k] >= 0;

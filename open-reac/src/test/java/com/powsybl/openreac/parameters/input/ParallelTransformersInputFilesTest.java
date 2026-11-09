@@ -105,7 +105,7 @@ class ParallelTransformersInputFilesTest {
     void membershipEmptyWhenGroupingIsOptedOut() throws IOException {
         Network network = ParallelTransformersNetworkFactory.createSimpleParallel();
         OpenReacParameters parameters = new OpenReacParameters().setParallelTransformersGrouping(false);
-        OpenReacAmplIOFiles io = new OpenReacAmplIOFiles(parameters, null, network, false, ReportNode.NO_OP);
+        OpenReacAmplIOFiles io = new OpenReacAmplIOFiles(parameters, null, network, "slack", false, ReportNode.NO_OP);
         AmplInputFile input = io.getInputParameters().stream()
                 .filter(f -> ParallelTwoWindingsTransformersBundles.PARAM_PARALLEL_TRANSFORMERS_FILE_NAME.equals(f.getFileName()))
                 .findFirst().orElseThrow();

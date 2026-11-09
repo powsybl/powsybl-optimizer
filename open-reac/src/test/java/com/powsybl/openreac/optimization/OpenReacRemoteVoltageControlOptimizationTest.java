@@ -61,6 +61,7 @@ class OpenReacRemoteVoltageControlOptimizationTest extends AbstractOpenReacRunne
         StaticVarCompensator svc = network.getStaticVarCompensator("svc1");
         svc.setVoltageSetpoint(390)
             .setRegulationMode(RegulationMode.VOLTAGE)
+            .setRegulating(true)
             .setRegulatingTerminal(network.getGenerator("g1").getTerminal());
 
         OpenReacParameters parameters = new OpenReacParameters();

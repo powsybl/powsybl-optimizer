@@ -259,7 +259,7 @@ if final_status == "OK" then {
   let fileOut := "reactiveopf_results_voltages.csv";
   printf "#variant;bus;V(pu);theta(rad);id;\n" > (fileOut);
   printf {n in BUSCC} "%i;%i;%.3f;%.3f;%s;\n",
-    1, n, V[n], teta[n], '"' & bus_id[1,n] & '"'
+    1, n, V[n], theta[n], '"' & bus_id[1,n] & '"'
     > (fileOut);
   close (fileOut);
 
@@ -284,13 +284,15 @@ if final_status == "OK" then {
 let fileOut := "reactiveopf_results_indic.txt";
 
 printf "%s %s\n","final_status",final_status > (fileOut);
-printf "%s %s\n","dcopf_status",dcopf_status > (fileOut);
+printf "%s %Q\n","slack_bus",slack_bus > (fileOut);
 
 printf{LOG_DEBUG} "\n" > (fileOut);
 printf{LOG_DEBUG} "%s %Q\n","ctime_start",ctime_start > (fileOut);
 printf{LOG_DEBUG} "%s %i\n","last_solve_result_num",solve_result_num > (fileOut);
 printf{LOG_DEBUG} "%s %i\n","nb_iter_last",nb_iter_last > (fileOut);
 printf{LOG_DEBUG} "%s %i\n","nb_iter_total",nb_iter_total > (fileOut);
+printf{LOG_DEBUG} "%s %f\n","objective_value_first",objective_value_first > (fileOut);
+printf{LOG_DEBUG} "%s %f\n","objective_value_last",problem_acopf_objective > (fileOut);
 printf{LOG_DEBUG} "%s %f\n","_ampl_elapsed_time",_ampl_elapsed_time > (fileOut);
 printf{LOG_DEBUG} "%s %f\n","_total_solve_time",_total_solve_time > (fileOut);
 printf{LOG_DEBUG} "%s %i\n","total_time",_total_solve_time+_ampl_elapsed_time > (fileOut);
@@ -310,7 +312,6 @@ printf{LOG_DEBUG} "%s %Q\n","directory",_cd > (fileOut);
 printf "\n" > (fileOut);
 printf "%s %s\n","log_level_ampl",log_level_ampl > (fileOut);
 printf "%s %i\n","log_level_knitro",log_level_knitro > (fileOut);
-printf "%s %i\n","objective_choice",objective_choice > (fileOut);
 printf "%s %f\n","ratio_voltage_target",ratio_voltage_target > (fileOut);
 printf "%s %f\n","coeff_alpha",coeff_alpha > (fileOut);
 printf "%s %f\n","Pnull",Pnull > (fileOut);
@@ -344,27 +345,27 @@ printf "%s %s\n","optimization_after_rounding",optimization_after_rounding > (fi
 printf "\n" > (fileOut);
 printf "%s %i\n","nb_substations",card(SUBSTATIONS) > (fileOut);
 printf "%s %i\n","nb_bus_in_data_file",card(BUS) > (fileOut);
-printf "%s %i\n","nb_bus_in_ACDC_CC",card(BUS2) > (fileOut);
-printf "%s %i\n","nb_bus_in_AC_CC",card(BUSCC) > (fileOut);
-printf "%s %i\n","nb_bus_in_ACDC_but_out_AC_CC",card(BUS2 diff BUSCC) > (fileOut);
+printf "%s %i\n","nb_bus_in_main_SC",card(BUSCC) > (fileOut);
+printf "%s %i\n","nb_bus_out_of_main_SC",card(BUS_ELIGIBLE diff BUSCC) > (fileOut);
+printf "%s %i\n","nb_bus_dropped_in_main_SC",card(MAIN_SC_DROPPED) > (fileOut);
 printf "%s %i\n","nb_bus_with_voltage_value",card(BUSVV) > (fileOut);
 printf "%s %i\n","nb_bus_with_reactive_slacks",card(BUSCC_SLACK) > (fileOut);
 printf "%s %i\n","nb_bus_without_reactive_slacks",card(BUSCC diff BUSCC_SLACK) > (fileOut);
 printf "%s %i\n","nb_branch_in_data_file",card(BRANCH) > (fileOut);
-printf "%s %i\n","nb_branch_in_AC_CC",card(ALL_BRANCHCC) > (fileOut);
-printf "%s %i\n","nb_branch_in_AC_CC_side_1_opened",card(BRANCHCC_WITH_SIDE_1_OPENED) > (fileOut);
-printf "%s %i\n","nb_branch_in_AC_CC_side_2_opened",card(BRANCHCC_WITH_SIDE_2_OPENED) > (fileOut);
+printf "%s %i\n","nb_branch_in_main_SC",card(ALL_BRANCHCC) > (fileOut);
+printf "%s %i\n","nb_branch_in_main_SC_side_1_opened",card(BRANCHCC_WITH_SIDE_1_OPENED) > (fileOut);
+printf "%s %i\n","nb_branch_in_main_SC_side_2_opened",card(BRANCHCC_WITH_SIDE_2_OPENED) > (fileOut);
 printf "%s %i\n","nb_branch_with_nonsmall_impedance",card(ALL_BRANCHCC diff BRANCHZNULL) > (fileOut);
 printf "%s %i\n","nb_branch_with_zero_or_small_impedance",card(BRANCHZNULL) > (fileOut);
 printf "%s %i\n","nb_unit_in_data_file",card(UNIT) > (fileOut);
-printf "%s %i\n","nb_unit_in_AC_CC",card(UNITCC) > (fileOut);
+printf "%s %i\n","nb_unit_in_main_SC",card(UNITCC) > (fileOut);
 printf "%s %i\n","nb_unit_up_and_running",card(UNITON) > (fileOut);
 printf "%s %i\n","nb_unit_with_variable_reactive_power",card(UNITON diff UNIT_FIXQ) > (fileOut);
 printf "%s %i\n","nb_unit_with_fixed_reactive_power",card(UNIT_FIXQ) > (fileOut);
 printf "%s %i\n","nb_load_in_data_file",card(LOAD) > (fileOut);
-printf "%s %i\n","nb_load_in_AC_CC",card(LOADCC) > (fileOut);
+printf "%s %i\n","nb_load_in_main_SC",card(LOADCC) > (fileOut);
 printf "%s %i\n","nb_shunt_in_data_file",card(SHUNT) > (fileOut);
-printf "%s %i\n","nb_shunt_connectable_or_in_AC_CC",card(SHUNTCC) > (fileOut);
+printf "%s %i\n","nb_shunt_connectable_or_in_main_SC",card(SHUNTCC) > (fileOut);
 printf "%s %i\n","nb_shunt_with_fixed_value",card(SHUNT_FIX) > (fileOut);
 printf "%s %i\n","nb_shunt_with_variable_value",card(SHUNT_VAR) > (fileOut);
 printf "%s %i\n","nb_transformers_with_variable_ratio",card(BRANCHCC_REGL_VAR) > (fileOut);
@@ -375,7 +376,7 @@ printf "%s %i\n","nb_parallel_bundles_relaxed",card(PARALLEL_BUNDLES_DROPPED) > 
 printf "%s %i\n","nb_parallel_bundles_degenerate",card(PARALLEL_BUNDLES_FIXED) > (fileOut);
 printf "%s %i\n","nb_parallel_fixed_transformers",card(PARALLEL_FIXED_BRANCHES) > (fileOut);
 printf "%s %i\n","nb_svc_in_data_file",card(SVC) > (fileOut);
-printf "%s %i\n","nb_svc_in_AC_CC",card(SVCCC) > (fileOut);
+printf "%s %i\n","nb_svc_in_main_SC",card(SVCCC) > (fileOut);
 printf "%s %i\n","nb_svc_up_and_operating",card(SVCON) > (fileOut);
 printf "%s %i\n","nb_vsc_converter_in_data_file",card(VSCCONV) > (fileOut);
 printf "%s %i\n","nb_vsc_converter_up_and_running",card(VSCCONVON) > (fileOut);
@@ -387,16 +388,16 @@ printf "%s %.1f\n","sum_batteries_pmax",sum{(b,k) in BATTERYCC} battery_Pmax[1,b
 printf "%s %.1f\n","sum_batteries_pmin",sum{(b,k) in BATTERYCC} battery_Pmin[1,b,k] > (fileOut);
 
 printf "\n" > (fileOut);
-printf "max_teta_dc %.2f\n",max({n in BUSCC} teta_dc[n]) > (fileOut);
-printf "max_teta_ac %.2f\n",max({n in BUSCC} teta[n]) > (fileOut);
-printf "teta_max %.2f\n",teta_max > (fileOut);
-printf "min_teta_dc %.2f\n",min({n in BUSCC} teta_dc[n]) > (fileOut);
-printf "min_teta_ac %.2f\n",min({n in BUSCC} teta[n]) > (fileOut);
-printf "teta_min %.2f\n",teta_min > (fileOut);
-printf "max_delta_teta_dc %2f\n",max({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[n])) > (fileOut);
-printf "max_delta_teta_ac %2f\n",max({(qq,m,n) in BRANCHCC} (teta[m]-teta[n])) > (fileOut);
-printf "min_delta_teta_dc %2f\n",min({(qq,m,n) in BRANCHCC} (teta_dc[m]-teta_dc[n])) > (fileOut);
-printf "min_delta_teta_ac %2f\n",min({(qq,m,n) in BRANCHCC} (teta[m]-teta[n])) > (fileOut);
+printf "max_theta_init %.2f\n",max({n in BUSCC} theta_init[n]) > (fileOut);
+printf "max_theta_ac %.2f\n",max({n in BUSCC} theta[n]) > (fileOut);
+printf "theta_max %.2f\n",theta_max > (fileOut);
+printf "min_theta_init %.2f\n",min({n in BUSCC} theta_init[n]) > (fileOut);
+printf "min_theta_ac %.2f\n",min({n in BUSCC} theta[n]) > (fileOut);
+printf "theta_min %.2f\n",theta_min > (fileOut);
+printf "max_delta_theta_init %2f\n",max({(qq,m,n) in BRANCHCC} (theta_init[m]-theta_init[n])) > (fileOut);
+printf "max_delta_theta_ac %2f\n",max({(qq,m,n) in BRANCHCC} (theta[m]-theta[n])) > (fileOut);
+printf "min_delta_theta_init %2f\n",min({(qq,m,n) in BRANCHCC} (theta_init[m]-theta_init[n])) > (fileOut);
+printf "min_delta_theta_ac %2f\n",min({(qq,m,n) in BRANCHCC} (theta[m]-theta[n])) > (fileOut);
 
 printf "\n" > (fileOut);
 printf "%s %i\n","nb_reactive_slacks",card({n in BUSCC_SLACK: slack1_balance_Q[n]>Pnull or slack2_balance_Q[n]>Pnull}) > (fileOut);

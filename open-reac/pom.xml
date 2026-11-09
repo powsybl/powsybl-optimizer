@@ -84,6 +84,11 @@
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-loadflow-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-open-loadflow</artifactId>
+            <version>${powsybl-open-loadflow.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>com.powsybl</groupId>
@@ -135,12 +140,6 @@
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-ieee-cdf-converter</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.powsybl</groupId>
-            <artifactId>powsybl-open-loadflow</artifactId>
-            <version>${powsybl-open-loadflow.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

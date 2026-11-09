@@ -9,8 +9,8 @@ package com.powsybl.openreac;
 import com.powsybl.commons.report.ReportNode;
 import com.powsybl.commons.report.TypedValue;
 import com.powsybl.openreac.network.ParallelTwoWindingsTransformersDetector;
+import com.powsybl.openreac.parameters.input.ReferenceState;
 import com.powsybl.openreac.parameters.input.VoltageLevelLimitInfo;
-import com.powsybl.openreac.parameters.input.algo.OpenReacOptimisationObjective;
 import com.powsybl.openreac.parameters.output.network.ShuntCompensatorNetworkOutput;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -42,11 +42,10 @@ public final class Reports {
         // Should not be instantiated
     }
 
-    public static ReportNode createOpenReacReporter(ReportNode reportNode, String networkId, OpenReacOptimisationObjective objective) {
+    public static ReportNode createOpenReacReporter(ReportNode reportNode, String networkId) {
         return reportNode.newReportNode()
             .withMessageTemplate("optimizer.openreac.openReac")
             .withUntypedValue(NETWORK_ID, networkId)
-            .withUntypedValue("objective", objective.toString())
             .add();
     }
 
@@ -54,6 +53,14 @@ public final class Reports {
         return reportNode.newReportNode()
                 .withMessageTemplate("optimizer.openreac.openReacParameterIntegrity")
                 .withUntypedValue(NETWORK_ID, networkId)
+                .add();
+    }
+
+    public static ReportNode createAcopfInitializationReporter(ReportNode reportNode, String networkId, ReferenceState referenceState) {
+        return reportNode.newReportNode()
+                .withMessageTemplate("optimizer.openreac.acopfInitialization")
+                .withUntypedValue(NETWORK_ID, networkId)
+                .withUntypedValue("referenceState", referenceState.toString())
                 .add();
     }
 
