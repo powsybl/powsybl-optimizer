@@ -158,6 +158,18 @@ public class OpenReacResult {
         return modifs;
     }
 
+    /**
+     * Applies all the optimization results to the given network.
+     * <p>First, all network modifications (generators, batteries, shunts, static var compensators,
+     * tap positions and VSC converter stations) are applied. Then the voltage targets of the
+     * regulating ratio tap changers, shunts and batteries are updated from the optimized voltage
+     * profile. Finally, if enabled with {@link #setUpdateNetworkWithVoltages(boolean)}, bus voltages
+     * and angles are updated.</p>
+     *
+     * @param network the network to update
+     * @throws IllegalStateException if a bus of the voltage profile (or the regulating bus of an
+     *                               element) is missing from the network or the voltage profile
+     */
     public void applyAllModifications(Network network) {
         for (NetworkModification modif : getAllNetworkModifications()) {
             modif.apply(network);

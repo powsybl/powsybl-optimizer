@@ -24,6 +24,12 @@ public final class BatteryNetworkFactory {
     private BatteryNetworkFactory() {
     }
 
+    /**
+     * Creates a network with one substation, one 400 kV voltage level with a single bus,
+     * and one battery without voltage regulation.
+     *
+     * @return the created network
+     */
     public static Network create() {
         Network network = Network.create("battery-test", "test");
         Substation s = network.newSubstation()
@@ -51,6 +57,8 @@ public final class BatteryNetworkFactory {
 
     /**
      * Same network, with voltage regulation enabled on the battery (local regulation).
+     *
+     * @return the created network
      */
     public static Network createWithLocalVoltageRegulationOn() {
         Network network = create();

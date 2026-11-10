@@ -24,6 +24,10 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
      *  +------ b4 -----+
      *          |
      *          l4
+     *
+     * Creates a network where a generator regulates the voltage of a remote bus.
+     *
+     * @return the created network
      */
     public static Network createWithGeneratorRemoteControl() {
 
@@ -156,6 +160,11 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
         return network;
     }
 
+    /**
+     * Creates a network with identical transformers.
+     *
+     * @return the created network
+     */
     public static Network createWithIdenticalTransformers() {
 
         Network network = Network.create("generator-remote-control-test", "code");
@@ -287,6 +296,12 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
         return network;
     }
 
+    /**
+     * Creates the base network (without transformers) shared by the transformer test networks.
+     *
+     * @param id the network id
+     * @return the created network
+     */
     public static Network createTransformerBaseNetwork(String id) {
 
         Network network = Network.create(id, "test");
@@ -377,10 +392,14 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
      *     B1         B2      B3
      *                  \    /
      *                   T2WT
+     *
+     * Creates a network with a two-winding transformer with a ratio tap changer.
+     *
+     * @return the created network
      */
     public static Network createNetworkWithT2wt() {
 
-        Network network = VoltageControlNetworkFactory.createTransformerBaseNetwork("two-windings-transformer-control");
+        Network network = VoltageControlNetworkFactory.createTransformerBaseNetwork("two-winding-transformer-control");
 
         TwoWindingsTransformer t2wt = network.getSubstation("SUBSTATION").newTwoWindingsTransformer()
                 .setId("T2wT")
@@ -436,9 +455,14 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
         return network;
     }
 
+    /**
+     * Creates a variant of the network with a two-winding transformer.
+     *
+     * @return the created network
+     */
     public static Network createNetworkWithT2wt2() {
 
-        Network network = VoltageControlNetworkFactory.createTransformerBaseNetwork("two-windings-transformer-control");
+        Network network = VoltageControlNetworkFactory.createTransformerBaseNetwork("two-winding-transformer-control");
 
         TwoWindingsTransformer t2wt = network.getSubstation("SUBSTATION").newTwoWindingsTransformer()
                 .setId("T2wT")
@@ -531,10 +555,14 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
      *     B1         B2       B3
      *                 \      /
      *                  T2WT1
+     *
+     * Creates a network with two two-winding transformers.
+     *
+     * @return the created network
      */
     public static Network createNetworkWith2T2wt() {
 
-        Network network = VoltageControlNetworkFactory.createTransformerBaseNetwork("two-windings-transformer-control");
+        Network network = VoltageControlNetworkFactory.createTransformerBaseNetwork("two-winding-transformer-control");
 
         TwoWindingsTransformer t2wt1 = network.getSubstation("SUBSTATION").newTwoWindingsTransformer()
                 .setId("T2wT1")
@@ -658,10 +686,14 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
      *                      B4
      *                      |
      *                     LD4
+     *
+     * Creates a network with a three-winding transformer.
+     *
+     * @return the created network
      */
     public static Network createNetworkWithT3wt() {
 
-        Network network = VoltageControlNetworkFactory.createTransformerBaseNetwork("two-windings-transformer-control");
+        Network network = VoltageControlNetworkFactory.createTransformerBaseNetwork("two-winding-transformer-control");
 
         VoltageLevel vl4 = network.getSubstation("SUBSTATION").newVoltageLevel()
                 .setId("VL_4")
@@ -750,6 +782,10 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
      *     B1         B2        B3
      *                  \      /
      *                    T2WT
+     *
+     * Creates a network where several transformers share the same remote voltage control.
+     *
+     * @return the created network
      */
     public static Network createWithTransformerSharedRemoteControl() {
         Network network = createNetworkWithT2wt();
@@ -831,6 +867,10 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
      *  +------ b4 -----+
      *          |
      *          l4
+     *
+     * Creates a network where several shunts share the same remote voltage control.
+     *
+     * @return the created network
      */
     public static Network createWithShuntSharedRemoteControl() {
 
@@ -974,6 +1014,10 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
      * b1---------b2
      *      l1    |
      *           svc1
+     *
+     * Creates a network with a static var compensator.
+     *
+     * @return the created network
      */
     public static Network createWithStaticVarCompensator() {
         Network network = Network.create("svc", "test");
@@ -1046,6 +1090,10 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
      * g3 - b3 ---------------- b4 - g4 (regulating b1)
      *      |
      *      l3
+     *
+     * Creates a network with a simple remote voltage control.
+     *
+     * @return the created network
      */
     public static Network createWithSimpleRemoteControl() {
         Network network = Network.create("remoteControl", "code");
@@ -1078,6 +1126,10 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
      *     b1 ------------- b4 ------------- b5 - l5
      *     |
      *     b3 - g3
+     *
+     * Creates a network with two voltage controls.
+     *
+     * @return the created network
      */
     public static Network createWithTwoVoltageControls() {
         Network network = Network.create("twoVoltageControls", "code");
@@ -1118,6 +1170,10 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
      *     b1 ------------- b3
      *     |
      *     shunt1
+     *
+     * Creates a network with both a shunt and a generator voltage control.
+     *
+     * @return the created network
      */
     public static Network createWithShuntAndGeneratorVoltageControl() {
         Network network = Network.create("shuntAndGeneratorVoltageControl", "code");
