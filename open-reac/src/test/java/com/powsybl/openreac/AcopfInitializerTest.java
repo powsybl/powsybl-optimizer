@@ -22,6 +22,7 @@ import com.powsybl.iidm.network.extensions.HvdcAngleDroopActivePowerControl;
 import com.powsybl.iidm.network.extensions.HvdcAngleDroopActivePowerControlAdder;
 import com.powsybl.iidm.network.extensions.HvdcOperatorActivePowerRangeAdder;
 import com.powsybl.iidm.network.extensions.SlackTerminal;
+import com.powsybl.iidm.network.regulation.RegulationMode;
 import com.powsybl.openreac.network.HvdcNetworkFactory;
 import com.powsybl.openreac.network.ShuntNetworkFactory;
 import com.powsybl.openreac.network.VoltageControlNetworkFactory;
@@ -252,6 +253,22 @@ class AcopfInitializerTest {
 
         assertEquals(50, inMainComponent.getRegulatingTargetQ(), DELTA);
         assertEquals(outOfMainComponentSetpoint, outOfMainComponent.getRegulatingTargetQ());
+    }
+
+    @Test
+    void testNeutralVscConverterStationRegulatingReactivePowerWithRemoteTerminal() {
+        Network network = HvdcNetworkFactory.createVsc();
+        VscConverterStation vsc = network.getVscConverterStation("cs2");
+        vsc.newMinMaxReactiveLimits().setMinQ(-50).setMaxQ(150).add();
+        vsc.getVoltageRegulation()
+                .setTerminal(vsc.getTerminal(), 10)
+                .setMode(RegulationMode.REACTIVE_POWER)
+                .setRegulating(true);
+
+        initialize(network, new OpenReacParameters().setReferenceState(ReferenceState.NEUTRAL));
+
+        assertEquals(50, vsc.getRegulatingTargetQ(), DELTA);
+        assertEquals(-50, vsc.getVoltageRegulation().getTargetValue(), DELTA);
     }
 
     @Test
