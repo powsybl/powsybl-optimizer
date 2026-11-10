@@ -109,7 +109,8 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
     void testSvc() throws IOException {
         Network network = VoltageControlNetworkFactory.createWithStaticVarCompensator();
         network.getVoltageLevelStream().forEach(vl -> vl.setLowVoltageLimit(380).setHighVoltageLimit(420));
-        network.getStaticVarCompensator("svc1").setVoltageSetpoint(390).setRegulationMode(RegulationMode.VOLTAGE);
+        network.getStaticVarCompensator("svc1").setLocalTargetV(390);
+        network.getStaticVarCompensator("svc1").getVoltageRegulation().setMode(RegulationMode.VOLTAGE);
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.addConstantQGenerators(List.of("g1"));
         testAllModifAndLoadFlow(network, "optimization/loadflow/openreac-output-svc", parameters, ReportNode.NO_OP);
@@ -120,7 +121,7 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
         Network network = createWithLinearModel();
         ShuntCompensator shunt = network.getShuntCompensator("SHUNT");
         assertFalse(shunt.getTerminal().isConnected());
-        assertEquals(393, shunt.getTargetV());
+        assertEquals(393, shunt.getLocalTargetV());
 
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.addVariableShuntCompensators(List.of(shunt.getId()));
@@ -144,7 +145,7 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
         assertEquals(TypedValue.DETAIL_SEVERITY.getValue(), values.get("reportSeverity").toString());
 
         assertTrue(shunt.getTerminal().isConnected()); // shunt has been reconnected
-        assertEquals(420.8, shunt.getTargetV()); // targetV has been updated
+        assertEquals(420.8, shunt.getLocalTargetV()); // targetV has been updated
     }
 
     @Test
@@ -152,7 +153,7 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
         Network network = createWithLinearModel();
         ShuntCompensator shunt = network.getShuntCompensator("SHUNT");
         assertFalse(shunt.getTerminal().isConnected());
-        assertEquals(393, shunt.getTargetV());
+        assertEquals(393, shunt.getLocalTargetV());
 
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.setShuntCompensatorActivationAlertThreshold(100.);
@@ -163,25 +164,24 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
         assertEquals(2, reportNode.getChildren().size());
 
         assertTrue(shunt.getTerminal().isConnected()); // shunt has been reconnected
-        assertEquals(420.8, shunt.getTargetV()); // targetV has been updated
+        assertEquals(420.8, shunt.getLocalTargetV()); // targetV has been updated
     }
 
     @Test
     void testTransformer() throws IOException {
         Network network = VoltageControlNetworkFactory.createNetworkWithT2wt();
         RatioTapChanger rtc = network.getTwoWindingsTransformer("T2wT").getRatioTapChanger()
-                .setTapPosition(2)
-                .setTargetDeadband(0)
-                .setRegulating(true);
+                .setTapPosition(2);
+        rtc.getVoltageRegulation().setTargetDeadband(0).setRegulating(true);
         assertEquals(2, rtc.getTapPosition());
-        assertEquals(33.0, rtc.getTargetV());
+        assertEquals(33.0, rtc.getVoltageRegulation().getTargetValue());
 
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.addConstantQGenerators(List.of("GEN_1"));
         parameters.addVariableTwoWindingsTransformers(List.of("T2wT"));
         testAllModifAndLoadFlow(network, "optimization/loadflow/openreac-output-transfo", parameters, ReportNode.NO_OP);
         assertEquals(0, rtc.getTapPosition());
-        assertEquals(22.935, rtc.getTargetV());
+        assertEquals(22.935, rtc.getVoltageRegulation().getTargetValue());
     }
 
     @Test

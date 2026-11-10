@@ -170,7 +170,7 @@ public class OpenReacResult {
                 .forEach(transformer -> {
                     RatioTapChanger ratioTapChanger = transformer.getRatioTapChanger();
                     if (ratioTapChanger != null) {
-                        updateTargetV(ratioTapChanger.getRegulationTerminal(), transformer.getId(), ratioTapChanger::setTargetV);
+                        updateTargetV(ratioTapChanger.getRegulatingTerminal(), transformer.getId(), ratioTapChanger.getVoltageRegulation()::setTargetValue);
                     }
                 });
 
@@ -179,7 +179,13 @@ public class OpenReacResult {
                 .map(ShuntCompensatorModification::getShuntCompensatorId)
                 .map(network::getShuntCompensator)
                 .forEach(shunt ->
-                        updateTargetV(shunt.getRegulatingTerminal(), shunt.getId(), shunt::setTargetV));
+                        updateTargetV(shunt.getRegulatingTerminal(), shunt.getId(), v -> {
+                            if (shunt.getVoltageRegulation() == null || shunt.getVoltageRegulation().getTerminal() == null) {
+                                shunt.setLocalTargetV(v);
+                            } else {
+                                shunt.getVoltageRegulation().setTargetValue(v);
+                            }
+                        }));
 
         // update target voltage of regulating batteries
         getBatteryModifications().stream()

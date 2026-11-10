@@ -49,9 +49,8 @@ class OpenReacResultsTest {
     void testTransformerTargetVUpdateWithoutVoltageResult() throws IOException {
         Network network = VoltageControlNetworkFactory.createNetworkWithT2wt();
         String t2wtId = "T2wT";
-        RatioTapChanger rtc = network.getTwoWindingsTransformer(t2wtId).getRatioTapChanger()
-                .setTargetDeadband(0)
-                .setRegulating(true);
+        RatioTapChanger rtc = network.getTwoWindingsTransformer(t2wtId).getRatioTapChanger();
+        rtc.getVoltageRegulation().setTargetDeadband(0).setRegulating(true);
 
         // add transformer as variable for target V update
         OpenReacAmplIOFiles io = getIOWithMockVoltageProfile(network);
@@ -59,17 +58,16 @@ class OpenReacResultsTest {
 
         OpenReacResult results = new OpenReacResult(OpenReacStatus.OK, io, new HashMap<>());
         IllegalStateException e = assertThrows(IllegalStateException.class, () -> results.applyAllModifications(network));
-        assertEquals("Voltage profile not found for bus " + rtc.getRegulationTerminal().getBusView().getBus().getId(), e.getMessage());
+        assertEquals("Voltage profile not found for bus " + rtc.getRegulatingTerminal().getBusView().getBus().getId(), e.getMessage());
     }
 
     @Test
     void testTransformerTargetVUpdateWithoutRegulationBus() throws IOException {
         Network network = VoltageControlNetworkFactory.createNetworkWithT2wt();
         String t2wtId = "T2wT";
-        RatioTapChanger rtc = network.getTwoWindingsTransformer(t2wtId).getRatioTapChanger()
-                .setTargetDeadband(0)
-                .setRegulating(true);
-        rtc.getRegulationTerminal().disconnect();
+        RatioTapChanger rtc = network.getTwoWindingsTransformer(t2wtId).getRatioTapChanger();
+        rtc.getVoltageRegulation().setTargetDeadband(0).setRegulating(true);
+        rtc.getRegulatingTerminal().disconnect();
 
         // add transformer as variable for target V update
         OpenReacAmplIOFiles io = getIOWithMockVoltageProfile(network);
@@ -81,7 +79,7 @@ class OpenReacResultsTest {
         results.applyAllModifications(network);
 
         // target V is not updated
-        assertEquals(33, rtc.getTargetV());
+        assertEquals(33, rtc.getVoltageRegulation().getTargetValue());
     }
 
     @Test
@@ -113,7 +111,7 @@ class OpenReacResultsTest {
         results.applyAllModifications(network);
 
         // target V not updated
-        assertEquals(393, shunt.getTargetV());
+        assertEquals(393, shunt.getLocalTargetV());
     }
 
     @Test
@@ -171,7 +169,7 @@ class OpenReacResultsTest {
         results.applyAllModifications(network);
 
         // optimized targetQ is applied, targetV is updated from the voltage profile
-        assertEquals(5., battery.getTargetQ());
+        assertEquals(5., battery.getLocalTargetQ());
         assertEquals(1.05 * 400, battery.getLocalTargetV(), 1e-9);
     }
 
@@ -205,7 +203,7 @@ class OpenReacResultsTest {
         results.applyAllModifications(network);
 
         // targetQ is applied but targetV is not updated (regulating bus cannot be resolved)
-        assertEquals(5., battery.getTargetQ());
+        assertEquals(5., battery.getLocalTargetQ());
         assertEquals(initialTargetV, battery.getLocalTargetV());
     }
 
@@ -224,7 +222,7 @@ class OpenReacResultsTest {
         results.applyAllModifications(network);
 
         // targetQ is applied but targetV is left untouched
-        assertEquals(5., battery.getTargetQ());
+        assertEquals(5., battery.getLocalTargetQ());
         assertEquals(initialTargetV, battery.getRegulatingTargetV());
     }
 
@@ -241,7 +239,7 @@ class OpenReacResultsTest {
         results.applyAllModifications(network);
 
         // targetQ is applied, no targetV update is attempted and no exception is raised
-        assertEquals(5., battery.getTargetQ());
+        assertEquals(5., battery.getLocalTargetQ());
         assertNull(battery.getExtension(VoltageRegulation.class));
     }
 

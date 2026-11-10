@@ -48,21 +48,21 @@ class OpenReacRemoteVoltageControlOptimizationTest extends AbstractOpenReacRunne
         assertEquals(targetV, result.getGeneratorModifications().get(2).getModifs().getTargetV());
 
         result.applyAllModifications(network);
-        assertEquals(targetV, network.getGenerator("g1").getTargetV());
-        assertEquals(targetV, network.getGenerator("g2").getTargetV());
-        assertEquals(targetV, network.getGenerator("g3").getTargetV());
+        assertEquals(targetV, network.getGenerator("g1").getVoltageRegulation().getTargetValue());
+        assertEquals(targetV, network.getGenerator("g2").getVoltageRegulation().getTargetValue());
+        assertEquals(targetV, network.getGenerator("g3").getVoltageRegulation().getTargetValue());
     }
 
     @Test
     void testStaticVarCompensatorRemoteVoltageControl() throws IOException {
         Network network = VoltageControlNetworkFactory.createWithStaticVarCompensator();
         network.getGenerator("g1")
-                .setTargetQ(5);
+                .setLocalTargetQ(5);
         StaticVarCompensator svc = network.getStaticVarCompensator("svc1");
-        svc.setVoltageSetpoint(390)
-            .setRegulationMode(RegulationMode.VOLTAGE)
-            .setRegulating(true)
-            .setRegulatingTerminal(network.getGenerator("g1").getTerminal());
+        svc.getVoltageRegulation()
+            .setTerminal(network.getGenerator("g1").getTerminal(), 390)
+            .setMode(RegulationMode.VOLTAGE)
+            .setRegulating(true);
 
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.addConstantQGenerators(List.of("g1")); // fix Q of g1 to ensure voltage difference
@@ -75,6 +75,6 @@ class OpenReacRemoteVoltageControlOptimizationTest extends AbstractOpenReacRunne
         assertEquals(targetV, result.getSvcModifications().get(0).getVoltageSetpoint());
 
         result.applyAllModifications(network);
-        assertEquals(targetV, svc.getVoltageSetpoint());
+        assertEquals(targetV, svc.getVoltageRegulation().getTargetValue());
     }
 }
