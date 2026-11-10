@@ -162,8 +162,14 @@ public class OpenReacResult {
         for (NetworkModification modif : getAllNetworkModifications()) {
             modif.apply(network);
         }
+        updateRatioTapChangerTargets(network);
+        updateShuntTargets(network);
+        updateBatteryTargets(network);
+        updateBusVoltages(network);
+    }
 
-        // update target of ratio tap changers specified as variable by user
+    /** Updates target of ratio tap changers specified as variable by user. */
+    private void updateRatioTapChangerTargets(Network network) {
         getTapPositionModifications().stream()
                 .map(AbstractTapPositionModification::getTransformerId)
                 .map(network::getTwoWindingsTransformer)
@@ -173,8 +179,10 @@ public class OpenReacResult {
                         updateTargetV(ratioTapChanger.getRegulatingTerminal(), transformer.getId(), ratioTapChanger.getVoltageRegulation()::setTargetValue);
                     }
                 });
+    }
 
-        // update target of shunts specified as variable by user
+    /** Updates target of shunts specified as variable by user. */
+    private void updateShuntTargets(Network network) {
         getShuntsModifications().stream()
                 .map(ShuntCompensatorModification::getShuntCompensatorId)
                 .map(network::getShuntCompensator)
@@ -186,38 +194,39 @@ public class OpenReacResult {
                                 shunt.getVoltageRegulation().setTargetValue(v);
                             }
                         }));
+    }
 
-        // update target voltage of regulating batteries
+    /** Updates target voltage of regulating batteries. */
+    private void updateBatteryTargets(Network network) {
         getBatteryModifications().stream()
                 .map(BatteryModification::getBatteryId)
                 .map(network::getBattery)
                 .filter(Objects::nonNull)
-                .forEach(battery -> {
-                    if (!battery.isRegulatingWithMode(RegulationMode.VOLTAGE)) {
-                        return;
-                    }
+                .filter(battery -> battery.isRegulatingWithMode(RegulationMode.VOLTAGE))
+                .forEach(battery ->
                     updateTargetV(battery.getRegulatingTerminal(), battery.getId(), v -> {
                         if (battery.getVoltageRegulation().getTerminal() == null) {
                             battery.setLocalTargetV(v);
                         } else {
                             battery.getVoltageRegulation().setTargetValue(v);
                         }
-                    });
-                });
+                    }));
+    }
 
-        // update voltages of the buses
-        if (isUpdateNetworkWithVoltages()) {
-            for (var busUpdate : voltageProfile.entrySet()) {
-                Optional.ofNullable(network.getBusView().getBus(busUpdate.getKey())).ifPresentOrElse(
-                    bus -> {
-                        double v = busUpdate.getValue().getFirst();
-                        double angle = busUpdate.getValue().getSecond();
-                        bus.setV(v * bus.getVoltageLevel().getNominalV());
-                        bus.setAngle(Math.toDegrees(angle));
-                    }, () -> {
-                        throw new IllegalStateException("Bus " + busUpdate.getKey() + " not found in network " + network.getId());
-                    });
-            }
+    private void updateBusVoltages(Network network) {
+        if (!isUpdateNetworkWithVoltages()) {
+            return;
+        }
+        for (var busUpdate : voltageProfile.entrySet()) {
+            Optional.ofNullable(network.getBusView().getBus(busUpdate.getKey())).ifPresentOrElse(
+                bus -> {
+                    double v = busUpdate.getValue().getFirst();
+                    double angle = busUpdate.getValue().getSecond();
+                    bus.setV(v * bus.getVoltageLevel().getNominalV());
+                    bus.setAngle(Math.toDegrees(angle));
+                }, () -> {
+                    throw new IllegalStateException("Bus " + busUpdate.getKey() + " not found in network " + network.getId());
+                });
         }
     }
 
