@@ -79,7 +79,7 @@ class OpenReacResultsTest {
         results.applyAllModifications(network);
 
         // target V is not updated
-        assertEquals(33, rtc.getVoltageRegulation().getTargetValue());
+        assertEquals(33, rtc.getRegulatingTargetV());
     }
 
     @Test
@@ -111,7 +111,7 @@ class OpenReacResultsTest {
         results.applyAllModifications(network);
 
         // target V not updated
-        assertEquals(393, shunt.getLocalTargetV());
+        assertEquals(393, shunt.getRegulatingTargetV());
     }
 
     @Test
@@ -156,7 +156,7 @@ class OpenReacResultsTest {
     void testBatteryTargetVUpdate() throws IOException {
         Network network = BatteryNetworkFactory.createWithLocalVoltageRegulationOn();
         Battery battery = network.getBattery("BATTERY");
-        String regulatedBusId = battery.getTerminal().getBusView().getBus().getId();
+        String regulatedBusId = battery.getRegulatingTerminal().getBusView().getBus().getId();
 
         OpenReacAmplIOFiles io = getIOWithMockVoltageProfile(network);
         // make the regulated bus part of the optimized voltage profile
@@ -169,16 +169,15 @@ class OpenReacResultsTest {
         results.applyAllModifications(network);
 
         // optimized targetQ is applied, targetV is updated from the voltage profile
-        assertEquals(5., battery.getLocalTargetQ());
-        assertEquals(1.05 * 400, battery.getLocalTargetV(), 1e-9);
+        assertEquals(5., battery.getRegulatingTargetQ());
+        assertEquals(1.05 * 400, battery.getRegulatingTargetV(), 1e-9);
     }
 
     @Test
     void testBatteryTargetVUpdateWithoutVoltageResult() throws IOException {
         Network network = BatteryNetworkFactory.createWithLocalVoltageRegulationOn();
         Battery battery = network.getBattery("BATTERY");
-        String regulatedBusId = battery.getTerminal().getBusView().getBus().getId();
-
+        String regulatedBusId = battery.getRegulatingTerminal().getBusView().getBus().getId();
         OpenReacAmplIOFiles io = getIOWithMockVoltageProfile(network);
         io.getNetworkModifications().getBatteryModifications().add(new BatteryModification("BATTERY", null, 5.));
 
@@ -203,15 +202,15 @@ class OpenReacResultsTest {
         results.applyAllModifications(network);
 
         // targetQ is applied but targetV is not updated (regulating bus cannot be resolved)
-        assertEquals(5., battery.getLocalTargetQ());
-        assertEquals(initialTargetV, battery.getLocalTargetV());
+        assertEquals(5., battery.getRegulatingTargetQ());
+        assertEquals(initialTargetV, battery.getRegulatingTargetV());
     }
 
     @Test
     void testBatteryUpdateWithVoltageRegulationOff() throws IOException {
         Network network = BatteryNetworkFactory.createWithLocalVoltageRegulationOn();
         Battery battery = network.getBattery("BATTERY");
-        double initialTargetV = battery.getLocalTargetV();
+        double initialTargetV = battery.getRegulatingTargetV();
         battery.getVoltageRegulation().setRegulating(false);
 
         OpenReacAmplIOFiles io = getIOWithMockVoltageProfile(network);
@@ -222,7 +221,7 @@ class OpenReacResultsTest {
         results.applyAllModifications(network);
 
         // targetQ is applied but targetV is left untouched
-        assertEquals(5., battery.getLocalTargetQ());
+        assertEquals(5., battery.getRegulatingTargetQ());
         assertEquals(initialTargetV, battery.getRegulatingTargetV());
     }
 
@@ -239,7 +238,7 @@ class OpenReacResultsTest {
         results.applyAllModifications(network);
 
         // targetQ is applied, no targetV update is attempted and no exception is raised
-        assertEquals(5., battery.getLocalTargetQ());
+        assertEquals(5., battery.getRegulatingTargetQ());
         assertNull(battery.getExtension(VoltageRegulation.class));
     }
 
