@@ -121,7 +121,7 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
         Network network = createWithLinearModel();
         ShuntCompensator shunt = network.getShuntCompensator("SHUNT");
         assertFalse(shunt.getTerminal().isConnected());
-        assertEquals(393, shunt.getLocalTargetV());
+        assertEquals(393, shunt.getRegulatingTargetV());
 
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.addVariableShuntCompensators(List.of(shunt.getId()));
@@ -145,7 +145,7 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
         assertEquals(TypedValue.DETAIL_SEVERITY.getValue(), values.get("reportSeverity").toString());
 
         assertTrue(shunt.getTerminal().isConnected()); // shunt has been reconnected
-        assertEquals(420.8, shunt.getLocalTargetV()); // targetV has been updated
+        assertEquals(420.8, shunt.getRegulatingTargetV()); // targetV has been updated
     }
 
     @Test
@@ -153,7 +153,7 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
         Network network = createWithLinearModel();
         ShuntCompensator shunt = network.getShuntCompensator("SHUNT");
         assertFalse(shunt.getTerminal().isConnected());
-        assertEquals(393, shunt.getLocalTargetV());
+        assertEquals(393, shunt.getRegulatingTargetV());
 
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.setShuntCompensatorActivationAlertThreshold(100.);
@@ -164,7 +164,7 @@ class OpenReacOptimizationAndLoadFlowTest extends AbstractOpenReacRunnerTest {
         assertEquals(2, reportNode.getChildren().size());
 
         assertTrue(shunt.getTerminal().isConnected()); // shunt has been reconnected
-        assertEquals(420.8, shunt.getLocalTargetV()); // targetV has been updated
+        assertEquals(420.8, shunt.getRegulatingTargetV()); // targetV has been updated
     }
 
     @Test

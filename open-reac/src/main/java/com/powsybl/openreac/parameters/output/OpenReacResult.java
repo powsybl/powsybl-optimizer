@@ -205,7 +205,7 @@ public class OpenReacResult {
                 .filter(battery -> battery.isRegulatingWithMode(RegulationMode.VOLTAGE))
                 .forEach(battery ->
                     updateTargetV(battery.getRegulatingTerminal(), battery.getId(), v -> {
-                        if (battery.getVoltageRegulation().getTerminal() == null) {
+                        if (battery.getVoltageRegulation() == null || battery.getVoltageRegulation().getTerminal() == null) {
                             battery.setLocalTargetV(v);
                         } else {
                             battery.getVoltageRegulation().setTargetValue(v);

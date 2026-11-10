@@ -48,9 +48,9 @@ class OpenReacRemoteVoltageControlOptimizationTest extends AbstractOpenReacRunne
         assertEquals(targetV, result.getGeneratorModifications().get(2).getModifs().getTargetV());
 
         result.applyAllModifications(network);
-        assertEquals(targetV, network.getGenerator("g1").getVoltageRegulation().getTargetValue());
-        assertEquals(targetV, network.getGenerator("g2").getVoltageRegulation().getTargetValue());
-        assertEquals(targetV, network.getGenerator("g3").getVoltageRegulation().getTargetValue());
+        assertEquals(targetV, network.getGenerator("g1").getRegulatingTargetV());
+        assertEquals(targetV, network.getGenerator("g2").getRegulatingTargetV());
+        assertEquals(targetV, network.getGenerator("g3").getRegulatingTargetV());
     }
 
     @Test
@@ -75,6 +75,6 @@ class OpenReacRemoteVoltageControlOptimizationTest extends AbstractOpenReacRunne
         assertEquals(targetV, result.getSvcModifications().get(0).getVoltageSetpoint());
 
         result.applyAllModifications(network);
-        assertEquals(targetV, svc.getVoltageRegulation().getTargetValue());
+        assertEquals(targetV, svc.getRegulatingTargetV());
     }
 }
