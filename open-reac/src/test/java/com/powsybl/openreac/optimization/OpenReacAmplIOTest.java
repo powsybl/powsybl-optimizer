@@ -12,6 +12,7 @@ import com.powsybl.computation.local.LocalComputationConfig;
 import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
 import com.powsybl.iidm.network.*;
+import com.powsybl.iidm.network.regulation.RegulationMode;
 import com.powsybl.openreac.OpenReacConfig;
 import com.powsybl.openreac.OpenReacRunner;
 import com.powsybl.openreac.parameters.input.OpenReacParameters;
@@ -100,8 +101,10 @@ class OpenReacAmplIOTest extends AbstractOpenReacRunnerTest {
                 .setBus("bus-1")
                 .setBmin(1.1)
                 .setBmax(1.3)
-                .setRegulationMode(StaticVarCompensator.RegulationMode.VOLTAGE)
-                .setRegulating(false)
+                .newVoltageRegulation()
+                        .withMode(RegulationMode.VOLTAGE)
+                        .withRegulating(false)
+                        .add()
                 .add();
         // VSC
         vl.newVscConverterStation()
@@ -109,8 +112,11 @@ class OpenReacAmplIOTest extends AbstractOpenReacRunnerTest {
                 .setConnectableBus("bus-1")
                 .setBus("bus-1")
                 .setLossFactor(1.1f)
-                .setVoltageSetpoint(405.0)
-                .setVoltageRegulatorOn(true)
+                .newVoltageRegulation()
+                        .withMode(RegulationMode.VOLTAGE)
+                        .withRegulating(true)
+                        .add()
+                .setLocalTargetV(405.0)
                 .add();
 
         LocalCommandExecutor localCommandExecutor = new TestLocalCommandExecutor(

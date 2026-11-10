@@ -7,6 +7,7 @@
 package com.powsybl.openreac.network;
 
 import com.powsybl.iidm.network.*;
+import com.powsybl.iidm.network.regulation.RegulationMode;
 
 /**
  * @author Anne Tilloy {@literal <anne.tilloy@rte-france.com>}
@@ -23,6 +24,10 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
      *  +------ b4 -----+
      *          |
      *          l4
+     *
+     * Creates a network where a generator regulates the voltage of a remote bus.
+     *
+     * @return the created network
      */
     public static Network createWithGeneratorRemoteControl() {
 
@@ -79,9 +84,12 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
                 .setMinP(0)
                 .setMaxP(200)
                 .setTargetP(100)
-                .setTargetV(413.4) // 22 413.4
-                .setVoltageRegulatorOn(true)
-                .setRegulatingTerminal(l4.getTerminal())
+                .newVoltageRegulation()
+                        .withMode(RegulationMode.VOLTAGE)
+                        .withTargetValue(413.4)
+                        .withRegulating(true)
+                        .withTerminal(l4.getTerminal())
+                        .add()
                 .add();
         b2.getVoltageLevel()
                 .newGenerator()
@@ -92,9 +100,12 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
                 .setMinP(0)
                 .setMaxP(200)
                 .setTargetP(100)
-                .setTargetV(413.4)
-                .setVoltageRegulatorOn(true)
-                .setRegulatingTerminal(l4.getTerminal())
+                .newVoltageRegulation()
+                        .withMode(RegulationMode.VOLTAGE)
+                        .withTargetValue(413.4)
+                        .withRegulating(true)
+                        .withTerminal(l4.getTerminal())
+                        .add()
                 .add();
         b3.getVoltageLevel()
                 .newGenerator()
@@ -105,9 +116,12 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
                 .setMinP(0)
                 .setMaxP(200)
                 .setTargetP(100)
-                .setTargetV(413.4)
-                .setVoltageRegulatorOn(true)
-                .setRegulatingTerminal(l4.getTerminal())
+                .newVoltageRegulation()
+                        .withMode(RegulationMode.VOLTAGE)
+                        .withTargetValue(413.4)
+                        .withRegulating(true)
+                        .withTerminal(l4.getTerminal())
+                        .add()
                 .add();
         s.newTwoWindingsTransformer()
                 .setId("tr1")
@@ -146,6 +160,11 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
         return network;
     }
 
+    /**
+     * Creates a network with identical transformers.
+     *
+     * @return the created network
+     */
     public static Network createWithIdenticalTransformers() {
 
         Network network = Network.create("generator-remote-control-test", "code");
@@ -201,9 +220,12 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
                 .setMinP(0)
                 .setMaxP(200)
                 .setTargetP(100)
-                .setTargetV(413.4) // 22 413.4
-                .setVoltageRegulatorOn(true)
-                .setRegulatingTerminal(l4.getTerminal())
+                .newVoltageRegulation()
+                        .withMode(RegulationMode.VOLTAGE)
+                        .withTargetValue(413.4)
+                        .withRegulating(true)
+                        .withTerminal(l4.getTerminal())
+                        .add()
                 .add();
         b2.getVoltageLevel()
                 .newGenerator()
@@ -214,9 +236,12 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
                 .setMinP(0)
                 .setMaxP(200)
                 .setTargetP(100)
-                .setTargetV(413.4)
-                .setVoltageRegulatorOn(true)
-                .setRegulatingTerminal(l4.getTerminal())
+                .newVoltageRegulation()
+                        .withMode(RegulationMode.VOLTAGE)
+                        .withTargetValue(413.4)
+                        .withRegulating(true)
+                        .withTerminal(l4.getTerminal())
+                        .add()
                 .add();
         b3.getVoltageLevel()
                 .newGenerator()
@@ -227,9 +252,12 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
                 .setMinP(0)
                 .setMaxP(200)
                 .setTargetP(100)
-                .setTargetV(413.4)
-                .setVoltageRegulatorOn(true)
-                .setRegulatingTerminal(l4.getTerminal())
+                .newVoltageRegulation()
+                        .withMode(RegulationMode.VOLTAGE)
+                        .withTargetValue(413.4)
+                        .withRegulating(true)
+                        .withTerminal(l4.getTerminal())
+                        .add()
                 .add();
         s.newTwoWindingsTransformer()
                 .setId("tr1")
@@ -268,6 +296,12 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
         return network;
     }
 
+    /**
+     * Creates the base network (without transformers) shared by the transformer test networks.
+     *
+     * @param id the network id
+     * @return the created network
+     */
     public static Network createTransformerBaseNetwork(String id) {
 
         Network network = Network.create(id, "test");
@@ -292,8 +326,11 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
                 .setMinP(0.0)
                 .setMaxP(140)
                 .setTargetP(25)
-                .setTargetV(135)
-                .setVoltageRegulatorOn(true)
+                .setLocalTargetV(135)
+                .newVoltageRegulation()
+                        .withMode(RegulationMode.VOLTAGE)
+                        .withRegulating(true)
+                        .add()
                 .add();
 
         Substation substation = network.newSubstation()
@@ -355,10 +392,14 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
      *     B1         B2      B3
      *                  \    /
      *                   T2WT
+     *
+     * Creates a network with a two-winding transformer with a ratio tap changer.
+     *
+     * @return the created network
      */
     public static Network createNetworkWithT2wt() {
 
-        Network network = VoltageControlNetworkFactory.createTransformerBaseNetwork("two-windings-transformer-control");
+        Network network = VoltageControlNetworkFactory.createTransformerBaseNetwork("two-winding-transformer-control");
 
         TwoWindingsTransformer t2wt = network.getSubstation("SUBSTATION").newTwoWindingsTransformer()
                 .setId("T2wT")
@@ -403,17 +444,25 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
                 .endStep()
                 .setTapPosition(0)
                 .setLoadTapChangingCapabilities(true)
-                .setRegulating(false)
-                .setTargetV(33.0)
-                .setRegulationTerminal(network.getLoad("LOAD_3").getTerminal())
+                .newVoltageRegulation()
+                        .withMode(RegulationMode.VOLTAGE)
+                        .withTargetValue(33.0)
+                        .withRegulating(false)
+                        .withTerminal(network.getLoad("LOAD_3").getTerminal())
+                        .add()
                 .add();
 
         return network;
     }
 
+    /**
+     * Creates a variant of the network with a two-winding transformer.
+     *
+     * @return the created network
+     */
     public static Network createNetworkWithT2wt2() {
 
-        Network network = VoltageControlNetworkFactory.createTransformerBaseNetwork("two-windings-transformer-control");
+        Network network = VoltageControlNetworkFactory.createTransformerBaseNetwork("two-winding-transformer-control");
 
         TwoWindingsTransformer t2wt = network.getSubstation("SUBSTATION").newTwoWindingsTransformer()
                 .setId("T2wT")
@@ -486,9 +535,12 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
                 .endStep()
                 .setTapPosition(0)
                 .setLoadTapChangingCapabilities(true)
-                .setRegulating(false)
-                .setTargetV(33.0)
-                .setRegulationTerminal(network.getLoad("LOAD_3").getTerminal())
+                .newVoltageRegulation()
+                        .withMode(RegulationMode.VOLTAGE)
+                        .withTargetValue(33.0)
+                        .withRegulating(false)
+                        .withTerminal(network.getLoad("LOAD_3").getTerminal())
+                        .add()
                 .add();
 
         return network;
@@ -503,10 +555,14 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
      *     B1         B2       B3
      *                 \      /
      *                  T2WT1
+     *
+     * Creates a network with two two-winding transformers.
+     *
+     * @return the created network
      */
     public static Network createNetworkWith2T2wt() {
 
-        Network network = VoltageControlNetworkFactory.createTransformerBaseNetwork("two-windings-transformer-control");
+        Network network = VoltageControlNetworkFactory.createTransformerBaseNetwork("two-winding-transformer-control");
 
         TwoWindingsTransformer t2wt1 = network.getSubstation("SUBSTATION").newTwoWindingsTransformer()
                 .setId("T2wT1")
@@ -551,9 +607,12 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
                 .endStep()
                 .setTapPosition(0)
                 .setLoadTapChangingCapabilities(true)
-                .setRegulating(false)
-                .setTargetV(33.0)
-                .setRegulationTerminal(network.getLoad("LOAD_3").getTerminal())
+                .newVoltageRegulation()
+                        .withMode(RegulationMode.VOLTAGE)
+                        .withTargetValue(33.0)
+                        .withRegulating(false)
+                        .withTerminal(network.getLoad("LOAD_3").getTerminal())
+                        .add()
                 .add();
 
         TwoWindingsTransformer t2wt2 = network.getSubstation("SUBSTATION").newTwoWindingsTransformer()
@@ -599,9 +658,12 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
                 .endStep()
                 .setTapPosition(0)
                 .setLoadTapChangingCapabilities(true)
-                .setRegulating(false)
-                .setTargetV(33.0)
-                .setRegulationTerminal(network.getLoad("LOAD_3").getTerminal())
+                .newVoltageRegulation()
+                        .withMode(RegulationMode.VOLTAGE)
+                        .withTargetValue(33.0)
+                        .withRegulating(false)
+                        .withTerminal(network.getLoad("LOAD_3").getTerminal())
+                        .add()
                 .add();
 
         return network;
@@ -624,10 +686,14 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
      *                      B4
      *                      |
      *                     LD4
+     *
+     * Creates a network with a three-winding transformer.
+     *
+     * @return the created network
      */
     public static Network createNetworkWithT3wt() {
 
-        Network network = VoltageControlNetworkFactory.createTransformerBaseNetwork("two-windings-transformer-control");
+        Network network = VoltageControlNetworkFactory.createTransformerBaseNetwork("two-winding-transformer-control");
 
         VoltageLevel vl4 = network.getSubstation("SUBSTATION").newVoltageLevel()
                 .setId("VL_4")
@@ -697,9 +763,12 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
                 .endStep()
                 .setTapPosition(0)
                 .setLoadTapChangingCapabilities(true)
-                .setRegulating(false)
-                .setTargetV(33.0)
-                .setRegulationTerminal(network.getLoad("LOAD_3").getTerminal())
+                .newVoltageRegulation()
+                        .withMode(RegulationMode.VOLTAGE)
+                        .withTargetValue(33.0)
+                        .withRegulating(false)
+                        .withTerminal(network.getLoad("LOAD_3").getTerminal())
+                        .add()
                 .add();
 
         return network;
@@ -713,6 +782,10 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
      *     B1         B2        B3
      *                  \      /
      *                    T2WT
+     *
+     * Creates a network where several transformers share the same remote voltage control.
+     *
+     * @return the created network
      */
     public static Network createWithTransformerSharedRemoteControl() {
         Network network = createNetworkWithT2wt();
@@ -761,19 +834,25 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
                 .endStep()
                 .setTapPosition(0)
                 .setLoadTapChangingCapabilities(true)
-                .setRegulating(true)
-                .setTargetV(34.0)
-                .setTargetDeadband(0)
-                .setRegulationTerminal(t2wt2.getTerminal2())
+                .newVoltageRegulation()
+                        .withMode(RegulationMode.VOLTAGE)
+                        .withTargetValue(34.0)
+                        .withRegulating(true)
+                        .withTerminal(t2wt2.getTerminal2())
+                        .withTargetDeadband(0)
+                        .add()
                 .add();
 
         TwoWindingsTransformer t2wt = network.getTwoWindingsTransformer("T2wT");
         t2wt.getRatioTapChanger()
-                .setTargetDeadband(0)
-                .setRegulating(true)
                 .setTapPosition(0)
-                .setRegulationTerminal(t2wt.getTerminal2())
-                .setTargetV(34.0);
+                .newVoltageRegulation()
+                        .withMode(RegulationMode.VOLTAGE)
+                        .withTargetValue(34.0)
+                        .withTargetDeadband(0)
+                        .withRegulating(true)
+                        .withTerminal(t2wt.getTerminal2())
+                        .build();
 
         return network;
     }
@@ -788,6 +867,10 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
      *  +------ b4 -----+
      *          |
      *          l4
+     *
+     * Creates a network where several shunts share the same remote voltage control.
+     *
+     * @return the created network
      */
     public static Network createWithShuntSharedRemoteControl() {
 
@@ -844,18 +927,24 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
                 .setMinP(0)
                 .setMaxP(200)
                 .setTargetP(100)
-                .setTargetV(21)
-                .setVoltageRegulatorOn(true)
+                .setLocalTargetV(21)
+                .newVoltageRegulation()
+                        .withMode(RegulationMode.VOLTAGE)
+                        .withRegulating(true)
+                        .add()
                 .add();
         b2.getVoltageLevel().newShuntCompensator()
                 .setId("SHUNT2")
                 .setBus("b2")
                 .setConnectableBus("b2")
                 .setSectionCount(0)
-                .setVoltageRegulatorOn(true)
-                .setRegulatingTerminal(l4.getTerminal())
-                .setTargetV(400)
-                .setTargetDeadband(5.0)
+                .newVoltageRegulation()
+                        .withMode(RegulationMode.VOLTAGE)
+                        .withTargetValue(400)
+                        .withRegulating(true)
+                        .withTerminal(l4.getTerminal())
+                        .withTargetDeadband(5.0)
+                        .add()
                 .newLinearModel()
                 .setMaximumSectionCount(50)
                 .setBPerSection(-1E-2)
@@ -867,10 +956,13 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
                 .setBus("b3")
                 .setConnectableBus("b3")
                 .setSectionCount(0)
-                .setVoltageRegulatorOn(true)
-                .setRegulatingTerminal(l4.getTerminal())
-                .setTargetV(400)
-                .setTargetDeadband(5.0)
+                .newVoltageRegulation()
+                        .withMode(RegulationMode.VOLTAGE)
+                        .withTargetValue(400)
+                        .withRegulating(true)
+                        .withTerminal(l4.getTerminal())
+                        .withTargetDeadband(5.0)
+                        .add()
                 .newLinearModel()
                 .setMaximumSectionCount(50)
                 .setBPerSection(-1E-2)
@@ -922,6 +1014,10 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
      * b1---------b2
      *      l1    |
      *           svc1
+     *
+     * Creates a network with a static var compensator.
+     *
+     * @return the created network
      */
     public static Network createWithStaticVarCompensator() {
         Network network = Network.create("svc", "test");
@@ -944,10 +1040,13 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
                 .setConnectableBus("b1")
                 .setBus("b1")
                 .setTargetP(101.3664)
-                .setTargetV(390)
+                .setLocalTargetV(390)
+                .newVoltageRegulation()
+                        .withMode(RegulationMode.VOLTAGE)
+                        .withRegulating(true)
+                        .add()
                 .setMinP(0)
                 .setMaxP(150)
-                .setVoltageRegulatorOn(true)
                 .add();
         VoltageLevel vl2 = s2.newVoltageLevel()
                 .setId("vl2")
@@ -968,8 +1067,10 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
                 .setId("svc1")
                 .setConnectableBus("b2")
                 .setBus("b2")
-                .setRegulationMode(StaticVarCompensator.RegulationMode.VOLTAGE)
-                .setRegulating(false)
+                .newVoltageRegulation()
+                        .withMode(RegulationMode.VOLTAGE)
+                        .withRegulating(false)
+                        .add()
                 .setBmin(-0.008)
                 .setBmax(0.008)
                 .add();
@@ -989,6 +1090,10 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
      * g3 - b3 ---------------- b4 - g4 (regulating b1)
      *      |
      *      l3
+     *
+     * Creates a network with a simple remote voltage control.
+     *
+     * @return the created network
      */
     public static Network createWithSimpleRemoteControl() {
         Network network = Network.create("remoteControl", "code");
@@ -1005,7 +1110,13 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
         createLine(network, b2, b4, "l24", 0.01);
         createLine(network, b4, b3, "l43", 0.01);
         createLine(network, b3, b1, "l31", 0.0);
-        network.getGenerator("g4").setRegulatingTerminal(network.getLoad("l1").getTerminal()); // remote control.
+        Generator g4Gen = network.getGenerator("g4");
+        g4Gen.newVoltageRegulation()
+                .withMode(RegulationMode.VOLTAGE)
+                .withTargetValue(g4Gen.getRegulatingTargetV())
+                .withRegulating(g4Gen.isRegulating())
+                .withTerminal(network.getLoad("l1").getTerminal())
+                .build(); // remote control.
         return network;
     }
 
@@ -1015,6 +1126,10 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
      *     b1 ------------- b4 ------------- b5 - l5
      *     |
      *     b3 - g3
+     *
+     * Creates a network with two voltage controls.
+     *
+     * @return the created network
      */
     public static Network createWithTwoVoltageControls() {
         Network network = Network.create("twoVoltageControls", "code");
@@ -1032,8 +1147,20 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
         createLine(network, b1, b3, "l13", 0.01);
         createLine(network, b1, b4, "l14", 0.01);
         createLine(network, b4, b5, "l45", 0.01);
-        network.getGenerator("g2").setRegulatingTerminal(network.getLine("l12").getTerminal1()); // remote control (g2 -> b1).
-        network.getGenerator("g3").setRegulatingTerminal(network.getLine("l13").getTerminal1()); // remote control (g3 -> b1).
+        Generator g2Gen = network.getGenerator("g2");
+        g2Gen.newVoltageRegulation()
+                .withMode(RegulationMode.VOLTAGE)
+                .withTargetValue(g2Gen.getRegulatingTargetV())
+                .withRegulating(g2Gen.isRegulating())
+                .withTerminal(network.getLine("l12").getTerminal1())
+                .build(); // remote control (g2 -> b1).
+        Generator g3Gen = network.getGenerator("g3");
+        g3Gen.newVoltageRegulation()
+                .withMode(RegulationMode.VOLTAGE)
+                .withTargetValue(g3Gen.getRegulatingTargetV())
+                .withRegulating(g3Gen.isRegulating())
+                .withTerminal(network.getLine("l13").getTerminal1())
+                .build(); // remote control (g3 -> b1).
         return network;
     }
 
@@ -1043,6 +1170,10 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
      *     b1 ------------- b3
      *     |
      *     shunt1
+     *
+     * Creates a network with both a shunt and a generator voltage control.
+     *
+     * @return the created network
      */
     public static Network createWithShuntAndGeneratorVoltageControl() {
         Network network = Network.create("shuntAndGeneratorVoltageControl", "code");
@@ -1059,16 +1190,25 @@ public class VoltageControlNetworkFactory extends AbstractLoadFlowNetworkFactory
                 .setBus("b3")
                 .setConnectableBus("b3")
                 .setSectionCount(0)
-                .setVoltageRegulatorOn(true)
-                .setTargetV(1)
-                .setTargetDeadband(0.1)
+                .newVoltageRegulation()
+                        .withMode(RegulationMode.VOLTAGE)
+                        .withTargetValue(1)
+                        .withRegulating(true)
+                        .withTargetDeadband(0.1)
+                        .add()
                 .newLinearModel()
                 .setMaximumSectionCount(50)
                 .setBPerSection(1E-3)
                 .setGPerSection(0.0)
                 .add()
                 .add();
-        network.getGenerator("g1").setRegulatingTerminal(network.getLine("l12").getTerminal1()); // remote control (g2 -> b1).
+        Generator g1Gen = network.getGenerator("g1");
+        g1Gen.newVoltageRegulation()
+                .withMode(RegulationMode.VOLTAGE)
+                .withTargetValue(g1Gen.getRegulatingTargetV())
+                .withRegulating(g1Gen.isRegulating())
+                .withTerminal(network.getLine("l12").getTerminal1())
+                .build(); // remote control (g2 -> b1).
         return network;
     }
 }
