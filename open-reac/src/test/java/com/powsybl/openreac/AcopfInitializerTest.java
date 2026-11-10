@@ -242,16 +242,16 @@ class AcopfInitializerTest {
         Network network = HvdcNetworkFactory.createVsc();
         VscConverterStation inMainComponent = network.getVscConverterStation("cs2");
         VscConverterStation outOfMainComponent = network.getVscConverterStation("cs3");
-        double outOfMainComponentSetpoint = outOfMainComponent.getReactivePowerSetpoint();
-        assertEquals(100, inMainComponent.getReactivePowerSetpoint());
+        double outOfMainComponentSetpoint = outOfMainComponent.getRegulatingTargetQ();
+        assertEquals(100, inMainComponent.getRegulatingTargetQ());
         inMainComponent.newMinMaxReactiveLimits().setMinQ(-50).setMaxQ(150).add();
         // the ACOPF optimizes the reactive power of a VSC converter station whether it regulates voltage or not
-        inMainComponent.setVoltageRegulatorOn(false);
+        inMainComponent.getVoltageRegulation().setRegulating(false);
 
         initialize(network, new OpenReacParameters().setReferenceState(ReferenceState.NEUTRAL));
 
-        assertEquals(50, inMainComponent.getReactivePowerSetpoint(), DELTA);
-        assertEquals(outOfMainComponentSetpoint, outOfMainComponent.getReactivePowerSetpoint());
+        assertEquals(50, inMainComponent.getRegulatingTargetQ(), DELTA);
+        assertEquals(outOfMainComponentSetpoint, outOfMainComponent.getRegulatingTargetQ());
     }
 
     @Test
@@ -267,7 +267,7 @@ class AcopfInitializerTest {
 
         initialize(network, new OpenReacParameters().setReferenceState(ReferenceState.NEUTRAL));
 
-        assertEquals(20, regulating.getReactivePowerSetpoint(), DELTA);
+        assertEquals(20, regulating.getRegulatingTargetQ(), DELTA);
     }
 
     @Test
