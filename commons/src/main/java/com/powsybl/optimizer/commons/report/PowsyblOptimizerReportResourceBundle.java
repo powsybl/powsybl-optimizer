@@ -1,5 +1,3 @@
-package com.powsybl.optimizer.commons.report;
-
 /**
  * Copyright (c) 2025, RTE (http://www.rte-france.com)
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -7,6 +5,7 @@ package com.powsybl.optimizer.commons.report;
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * SPDX-License-Identifier: MPL-2.0
  */
+package com.powsybl.optimizer.commons.report;
 
 import com.google.auto.service.AutoService;
 import com.powsybl.commons.report.ReportResourceBundle;
