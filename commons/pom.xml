@@ -13,7 +13,7 @@
     <parent>
         <groupId>com.powsybl</groupId>
         <artifactId>powsybl-optimizer</artifactId>
-        <version>0.19.1-SNAPSHOT</version>
+        <version>0.19.1</version>
     </parent>
 
     <packaging>jar</packaging>
