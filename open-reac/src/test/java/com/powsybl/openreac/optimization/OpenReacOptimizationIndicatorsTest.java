@@ -9,10 +9,10 @@ package com.powsybl.openreac.optimization;
 
 import com.powsybl.ieeecdf.converter.IeeeCdfNetworkFactory;
 import com.powsybl.iidm.network.Network;
-import com.powsybl.iidm.network.StaticVarCompensator;
 import com.powsybl.iidm.network.Substation;
 import com.powsybl.iidm.network.TopologyKind;
 import com.powsybl.iidm.network.VoltageLevel;
+import com.powsybl.iidm.network.regulation.RegulationMode;
 import com.powsybl.openreac.network.HvdcNetworkFactory;
 import com.powsybl.openreac.network.ShuntNetworkFactory;
 import com.powsybl.openreac.network.VoltageControlNetworkFactory;
@@ -27,7 +27,8 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Test the indicators returned by OpenReac optimization.
@@ -144,7 +145,7 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
     @Test
     void testGeneratorIndicators() throws IOException {
         Network network = VoltageControlNetworkFactory.createWithGeneratorRemoteControl();
-        network.getGenerator("g1").setTargetQ(50);
+        network.getGenerator("g1").setLocalTargetQ(50);
         OpenReacParameters parameters = new OpenReacParameters();
         parameters.addConstantQGenerators(List.of("g1", "g3"));
         OpenReacResult result = runOpenReac(network, "optimization/indicators/generators-test", parameters, true);
@@ -205,9 +206,12 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
                 .setBus("b3")
                 .setConnectableBus("b3")
                 .setSectionCount(0)
-                .setVoltageRegulatorOn(true)
-                .setTargetV(393)
-                .setTargetDeadband(5.0)
+                .setLocalTargetV(393)
+                .newVoltageRegulation()
+                        .withMode(RegulationMode.VOLTAGE)
+                        .withRegulating(true)
+                        .withTargetDeadband(5.0)
+                        .add()
                 .newLinearModel()
                 .setMaximumSectionCount(25)
                 .setBPerSection(1e-3)
@@ -219,9 +223,12 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
                 // .setBus("b3")
                 .setConnectableBus("b3")
                 .setSectionCount(0)
-                .setVoltageRegulatorOn(true)
-                .setTargetV(393)
-                .setTargetDeadband(5.0)
+                .setLocalTargetV(393)
+                .newVoltageRegulation()
+                        .withMode(RegulationMode.VOLTAGE)
+                        .withRegulating(true)
+                        .withTargetDeadband(5.0)
+                        .add()
                 .newLinearModel()
                 .setMaximumSectionCount(25)
                 .setBPerSection(1e-3)
@@ -247,9 +254,11 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
                 .setId("svc2")
                 .setConnectableBus("b2")
                 .setBus("b2")
-                .setRegulationMode(StaticVarCompensator.RegulationMode.VOLTAGE)
-                .setVoltageSetpoint(400)
-                .setRegulating(true)
+                .setLocalTargetV(400)
+                .newVoltageRegulation()
+                        .withMode(RegulationMode.VOLTAGE)
+                        .withRegulating(true)
+                        .add()
                 .setBmin(-0.008)
                 .setBmax(0.008)
                 .add();
@@ -273,7 +282,7 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
                 .setTargetP(2)
                 .setBus("b4")
                 .setConnectableBus("b4")
-                .setTargetQ(0)
+                .setLocalTargetQ(0)
                 .add();
         network.getVoltageLevel("vl1")
                 .newBattery()
@@ -283,7 +292,7 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
                 .setTargetP(1)
                 .setBus("b1")
                 .setConnectableBus("b1")
-                .setTargetQ(0.2)
+                .setLocalTargetQ(0.2)
                 .add();
         OpenReacResult result = runOpenReac(network, "optimization/indicators/battery-test", true);
 
@@ -320,10 +329,13 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
                 .setBus("b1")
                 .setConnectableBus("b1")
                 .setTargetP(1)
-                .setTargetV(0.4)
+                .setLocalTargetV(0.4)
                 .setMinP(0)
                 .setMaxP(2)
-                .setVoltageRegulatorOn(true)
+                .newVoltageRegulation()
+                        .withMode(RegulationMode.VOLTAGE)
+                        .withRegulating(true)
+                        .add()
                 .add();
         VoltageLevel vl2 = s.newVoltageLevel()
                 .setId("vl2")
@@ -380,10 +392,13 @@ class OpenReacOptimizationIndicatorsTest extends AbstractOpenReacRunnerTest {
                 .setBus("b4")
                 .setConnectableBus("b4")
                 .setTargetP(10)
-                .setTargetV(400)
+                .setLocalTargetV(400)
                 .setMinP(0)
                 .setMaxP(20)
-                .setVoltageRegulatorOn(true)
+                .newVoltageRegulation()
+                        .withMode(RegulationMode.VOLTAGE)
+                        .withRegulating(true)
+                        .add()
                 .add();
         VoltageLevel vl5 = s.newVoltageLevel()
                 .setId("vl5")

@@ -48,7 +48,7 @@ public class VscNetworkOutput extends AbstractNetworkOutput<VscConverterStationM
         // differ from the one of the caller's variant: the optimized value is always carried
         Double targetQ = readDouble(tokens[SET_POINT_Q_COLUMN_INDEX]);
 
-        if (targetV == vscConverterStation.getVoltageSetpoint()) {
+        if (targetV == vscConverterStation.getRegulatingTargetV()) {
             targetV = null;
         }
         modifications.add(new VscConverterStationModification(id, targetV, targetQ));

@@ -47,10 +47,10 @@ public class SvcNetworkOutput extends AbstractNetworkOutput<StaticVarCompensator
                 .getNominalV();
         Double targetQ = readDouble(tokens[SET_POINT_Q_COLUMN_INDEX]);
 
-        if (targetQ == staticVarCompensator.getReactivePowerSetpoint()) {
+        if (targetQ == staticVarCompensator.getRegulatingTargetQ()) {
             targetQ = null;
         }
-        if (targetV == staticVarCompensator.getVoltageSetpoint()) {
+        if (targetV == staticVarCompensator.getRegulatingTargetV()) {
             targetV = null;
         }
         modifications.add(new StaticVarCompensatorModification(id, targetV, targetQ));

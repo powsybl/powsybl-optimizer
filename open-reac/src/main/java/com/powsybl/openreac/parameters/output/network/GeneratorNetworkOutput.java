@@ -42,10 +42,10 @@ public class GeneratorNetworkOutput extends AbstractNetworkOutput<GeneratorModif
         double targetQ = readDouble(tokens[TARGET_Q_COLUMN_INDEX]);
 
         GeneratorModification.Modifs modifs = new GeneratorModification.Modifs();
-        if (targetQ != network.getGenerator(id).getTargetQ()) {
+        if (targetQ != network.getGenerator(id).getRegulatingTargetQ()) {
             modifs.setTargetQ(targetQ);
         }
-        if (targetV != network.getGenerator(id).getTargetV()) {
+        if (targetV != network.getGenerator(id).getRegulatingTargetV()) {
             modifs.setTargetV(targetV);
         }
         modifications.add(new GeneratorModification(id, modifs));

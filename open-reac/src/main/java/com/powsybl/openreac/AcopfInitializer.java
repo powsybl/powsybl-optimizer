@@ -20,6 +20,7 @@ import com.powsybl.iidm.network.Terminal;
 import com.powsybl.iidm.network.TwoWindingsTransformer;
 import com.powsybl.iidm.network.VscConverterStation;
 import com.powsybl.iidm.network.extensions.HvdcAngleDroopActivePowerControl;
+import com.powsybl.iidm.network.regulation.RegulationMode;
 import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.math.matrix.SparseMatrixFactory;
 import com.powsybl.openloadflow.OpenLoadFlowParameters;
@@ -117,7 +118,17 @@ final class AcopfInitializer {
         // the ACOPF optimizes the reactive power of every VSC converter station of the component, regulating or not
         network.getVscConverterStationStream()
                 .filter(vsc -> isInMainComponent(vsc.getTerminal()))
-                .forEach(vsc -> vsc.setReactivePowerSetpoint(getNeutralReactivePower(vsc)));
+                .forEach(AcopfInitializer::setNeutralReactivePower);
+    }
+
+    private static void setNeutralReactivePower(VscConverterStation vsc) {
+        double q = getNeutralReactivePower(vsc);
+        if (vsc.isRegulatingWithMode(RegulationMode.REACTIVE_POWER) && vsc.hasRegulatingTerminal()) {
+            // remote reactive power regulation: the target is stored in the voltage regulation, in load sign convention
+            vsc.getVoltageRegulation().setTargetValue(-q);
+        } else {
+            vsc.setLocalTargetQ(q);
+        }
     }
 
     private static boolean isOptimizedRatio(TwoWindingsTransformer t, OpenReacParameters parameters) {

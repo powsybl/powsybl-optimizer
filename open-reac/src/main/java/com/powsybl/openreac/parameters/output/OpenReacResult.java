@@ -10,7 +10,7 @@ import com.powsybl.iidm.modification.*;
 import com.powsybl.iidm.modification.tapchanger.AbstractTapPositionModification;
 import com.powsybl.iidm.modification.tapchanger.RatioTapPositionModification;
 import com.powsybl.iidm.network.*;
-import com.powsybl.iidm.network.extensions.VoltageRegulation;
+import com.powsybl.iidm.network.regulation.RegulationMode;
 import com.powsybl.openreac.parameters.OpenReacAmplIOFiles;
 import com.powsybl.openreac.parameters.output.FixedParallelTransformersOutput.FixedParallelTransformer;
 import com.powsybl.openreac.parameters.output.ReactiveSlackOutput.ReactiveSlack;
@@ -158,55 +158,87 @@ public class OpenReacResult {
         return modifs;
     }
 
+    /**
+     * Applies all the optimization results to the given network.
+     * <p>First, all network modifications (generators, batteries, shunts, static var compensators,
+     * tap positions and VSC converter stations) are applied. Then the voltage targets of the
+     * regulating ratio tap changers, shunts and batteries are updated from the optimized voltage
+     * profile. Finally, if enabled with {@link #setUpdateNetworkWithVoltages(boolean)}, bus voltages
+     * and angles are updated.</p>
+     *
+     * @param network the network to update
+     * @throws IllegalStateException if a bus of the voltage profile (or the regulating bus of an
+     *                               element) is missing from the network or the voltage profile
+     */
     public void applyAllModifications(Network network) {
         for (NetworkModification modif : getAllNetworkModifications()) {
             modif.apply(network);
         }
+        updateRatioTapChangerTargets(network);
+        updateShuntTargets(network);
+        updateBatteryTargets(network);
+        updateBusVoltages(network);
+    }
 
-        // update target of ratio tap changers specified as variable by user
+    /** Updates target of ratio tap changers specified as variable by user. */
+    private void updateRatioTapChangerTargets(Network network) {
         getTapPositionModifications().stream()
                 .map(AbstractTapPositionModification::getTransformerId)
                 .map(network::getTwoWindingsTransformer)
                 .forEach(transformer -> {
                     RatioTapChanger ratioTapChanger = transformer.getRatioTapChanger();
                     if (ratioTapChanger != null) {
-                        updateTargetV(ratioTapChanger.getRegulationTerminal(), transformer.getId(), ratioTapChanger::setTargetV);
+                        updateTargetV(ratioTapChanger.getRegulatingTerminal(), transformer.getId(), ratioTapChanger.getVoltageRegulation()::setTargetValue);
                     }
                 });
+    }
 
-        // update target of shunts specified as variable by user
+    /** Updates target of shunts specified as variable by user. */
+    private void updateShuntTargets(Network network) {
         getShuntsModifications().stream()
                 .map(ShuntCompensatorModification::getShuntCompensatorId)
                 .map(network::getShuntCompensator)
                 .forEach(shunt ->
-                        updateTargetV(shunt.getRegulatingTerminal(), shunt.getId(), shunt::setTargetV));
+                        updateTargetV(shunt.getRegulatingTerminal(), shunt.getId(), v -> {
+                            if (shunt.getVoltageRegulation() == null || shunt.getVoltageRegulation().getTerminal() == null) {
+                                shunt.setLocalTargetV(v);
+                            } else {
+                                shunt.getVoltageRegulation().setTargetValue(v);
+                            }
+                        }));
+    }
 
-        // update target voltage of regulating batteries
+    /** Updates target voltage of regulating batteries. */
+    private void updateBatteryTargets(Network network) {
         getBatteryModifications().stream()
                 .map(BatteryModification::getBatteryId)
                 .map(network::getBattery)
                 .filter(Objects::nonNull)
-                .forEach(battery -> {
-                    VoltageRegulation vr = battery.getExtension(VoltageRegulation.class);
-                    if (vr == null || !vr.isVoltageRegulatorOn()) {
-                        return;
-                    }
-                    updateTargetV(vr.getRegulatingTerminal(), battery.getId(), vr::setTargetV);
-                });
+                .filter(battery -> battery.isRegulatingWithMode(RegulationMode.VOLTAGE))
+                .forEach(battery ->
+                    updateTargetV(battery.getRegulatingTerminal(), battery.getId(), v -> {
+                        if (battery.getVoltageRegulation() == null || battery.getVoltageRegulation().getTerminal() == null) {
+                            battery.setLocalTargetV(v);
+                        } else {
+                            battery.getVoltageRegulation().setTargetValue(v);
+                        }
+                    }));
+    }
 
-        // update voltages of the buses
-        if (isUpdateNetworkWithVoltages()) {
-            for (var busUpdate : voltageProfile.entrySet()) {
-                Optional.ofNullable(network.getBusView().getBus(busUpdate.getKey())).ifPresentOrElse(
-                    bus -> {
-                        double v = busUpdate.getValue().getFirst();
-                        double angle = busUpdate.getValue().getSecond();
-                        bus.setV(v * bus.getVoltageLevel().getNominalV());
-                        bus.setAngle(Math.toDegrees(angle));
-                    }, () -> {
-                        throw new IllegalStateException("Bus " + busUpdate.getKey() + " not found in network " + network.getId());
-                    });
-            }
+    private void updateBusVoltages(Network network) {
+        if (!isUpdateNetworkWithVoltages()) {
+            return;
+        }
+        for (var busUpdate : voltageProfile.entrySet()) {
+            Optional.ofNullable(network.getBusView().getBus(busUpdate.getKey())).ifPresentOrElse(
+                bus -> {
+                    double v = busUpdate.getValue().getFirst();
+                    double angle = busUpdate.getValue().getSecond();
+                    bus.setV(v * bus.getVoltageLevel().getNominalV());
+                    bus.setAngle(Math.toDegrees(angle));
+                }, () -> {
+                    throw new IllegalStateException("Bus " + busUpdate.getKey() + " not found in network " + network.getId());
+                });
         }
     }
 
