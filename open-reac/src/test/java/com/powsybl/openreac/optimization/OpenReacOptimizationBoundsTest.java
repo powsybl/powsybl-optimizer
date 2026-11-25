@@ -399,6 +399,53 @@ class OpenReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
         assertEquals(OpenReacStatus.NOT_OK, result.getStatus());
     }
 
+    @Test
+    void testCondenserQBoundsTakenAtP0() throws IOException {
+        // verify feasibility when minQ/maxQ of a condenser with null targetP are taken at P=0 (targetP = 0 < minP)
+        Network network = createWithNullTargetP(true, 105);
+        testAllModifAndLoadFlow(network, "optimization/bounds/condenser-q-bounds-taken-at-p0/valid", parameters, ReportNode.NO_OP);
+
+        // verify non convergence due to insufficient bounds at P=0, even if bounds at minP and maxP are sufficient
+        network = createWithNullTargetP(true, 95);
+        OpenReacResult result = runOpenReac(network, "optimization/bounds/condenser-q-bounds-taken-at-p0/invalid", parameters, true);
+        assertEquals(OpenReacStatus.NOT_OK, result.getStatus());
+
+        // verify non convergence when the generator is not a condenser, as it is then excluded from the optimization
+        network = createWithNullTargetP(false, 105);
+        result = runOpenReac(network, "optimization/bounds/condenser-q-bounds-taken-at-p0/not-condenser", parameters, true);
+        assertEquals(OpenReacStatus.NOT_OK, result.getStatus());
+    }
+
+    private Network createWithNullTargetP(boolean condenser, double maxQAtP0) {
+        Network network = create(0, 50, 150, 100, condenser);
+        setDefaultVoltageLimits(network, 0.85, 1.15);
+        network.getGenerator("g1").newReactiveCapabilityCurve()
+                .beginPoint()
+                .setP(0)
+                .setMinQ(-maxQAtP0)
+                .setMaxQ(maxQAtP0)
+                .endPoint()
+                .beginPoint()
+                .setP(150)
+                .setMinQ(-200)
+                .setMaxQ(200)
+                .endPoint()
+                .add();
+        // add a generator to balance the load, as P of g1 is fixed to 0 in optimization
+        network.getLoad("ld1").setP0(1);
+        network.getVoltageLevel("vl1").newGenerator()
+                .setId("g2")
+                .setConnectableBus("b1")
+                .setBus("b1")
+                .setTargetP(1)
+                .setTargetV(390)
+                .setMinP(0)
+                .setMaxP(2)
+                .setVoltageRegulatorOn(true)
+                .add();
+        return network;
+    }
+
     /**
      *  g1        ld1
      *  |          |
@@ -406,6 +453,10 @@ class OpenReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
      *       l1
      */
     public static Network create(double targetP, double minP, double maxP, double loadTargetQ) {
+        return create(targetP, minP, maxP, loadTargetQ, false);
+    }
+
+    public static Network create(double targetP, double minP, double maxP, double loadTargetQ, boolean condenser) {
         Network network = Network.create("q-bounds", "test");
         Substation s1 = network.newSubstation()
                 .setId("S1")
@@ -430,6 +481,7 @@ class OpenReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
                 .setMinP(minP)
                 .setMaxP(maxP)
                 .setVoltageRegulatorOn(true)
+                .setCondenser(condenser)
                 .add();
         VoltageLevel vl2 = s2.newVoltageLevel()
                 .setId("vl2")

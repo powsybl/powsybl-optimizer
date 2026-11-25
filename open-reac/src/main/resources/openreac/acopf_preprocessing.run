@@ -301,7 +301,14 @@ for {(g,n) in UNITON} {
     let corrected_unit_Qp[g,n] := tempo;
   }
 
-  if (unit_Pc[1,g,n] >= corrected_unit_Pmin[g,n] and unit_Pc[1,g,n] <= corrected_unit_Pmax[g,n] and (corrected_unit_Pmin[g,n] >= 0 or corrected_unit_Pmax[g,n] <= 0)) then {
+  # condensers with null active power (the only units in UNITON with |Pc| < Pnull):
+  # Qmin/Qmax are taken at P=0, as the cascade below may land in the default case for Pc=0
+  if abs(unit_Pc[1,g,n]) < Pnull then {
+    let corrected_unit_Qmin[g,n] := corrected_unit_qp0[g,n];
+    let corrected_unit_Qmax[g,n] := corrected_unit_Qp0[g,n];
+
+  # cases when Qmin/Qmax are interpolated between pmin and pmax
+  } else if (unit_Pc[1,g,n] >= corrected_unit_Pmin[g,n] and unit_Pc[1,g,n] <= corrected_unit_Pmax[g,n] and (corrected_unit_Pmin[g,n] >= 0 or corrected_unit_Pmax[g,n] <= 0)) then {
     # if Pmin/Pmax are too close, compute Qmin/Qmax as the mean of diagram values
     if (abs((corrected_unit_Pmax[g,n] - corrected_unit_Pmin[g,n])) < Pnull) then {
       let corrected_unit_Qmin[g,n] := (corrected_unit_qp[g,n] + corrected_unit_qP[g,n]) / 2;
@@ -351,7 +358,7 @@ for {(g,n) in UNITON} {
     let corrected_unit_Qmax[g,n] := min(corrected_unit_QP[g,n],corrected_unit_Qp[g,n]);
   }
 
-  if unit_Pc[1,g,n] > corrected_unit_Pmax[g,n] or unit_Pc[1,g,n] < corrected_unit_Pmin[g,n]
+  if abs(unit_Pc[1,g,n]) >= Pnull and (unit_Pc[1,g,n] > corrected_unit_Pmax[g,n] or unit_Pc[1,g,n] < corrected_unit_Pmin[g,n])
   then printf{LOG_WARNING} "Warning unit %Q Pc=%Q not in bounds [ Pmin=%Q ; Pmax=%Q ]\n",
     unit_id[1,g,n],unit_Pc[1,g,n],corrected_unit_Pmin[g,n],corrected_unit_Pmax[g,n];
 

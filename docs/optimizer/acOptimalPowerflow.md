@@ -16,6 +16,7 @@ Please note that:
 - Units with active power specified in `ampl_network_generators.txt` that is less than the configurable parameter `Pnull` **are excluded from the optimization**,
   even if the user designates these generators as fixed in the parameter file `param_generators_reactive.txt` (see [Configuration of the run](inputs.md#configuration-of-the-run)).
   Therefore, when the optimization results are exported, **these generators are exported with a reactive power target of $0$**.
+  Condensers (`condenser` column of `ampl_network_generators.txt`) are the exception, as they can control voltage whatever their active power.
 - **Neither current limits nor power limits** on branches are considered in the optimization.
 - Branches with one side open are considered in optimization. However, tap changer ratios cannot be optimized on these branches.
 - The voltage controls are not taken into account in the optimization model, as its purpose is to determine them (see [OpenReac](index.md#openreac)).
