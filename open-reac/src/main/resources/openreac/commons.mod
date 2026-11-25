@@ -75,9 +75,9 @@ set UNITCC    := setof {(1,g,n) in UNIT    : n in BUSCC} (g,n);
 set BATTERYCC := setof {(1,b,n) in BATTERY : n in BUSCC} (b,n);
 
 
-# Units up and generating:
-# Warning: units with Ptarget=0 are considered as out of order
-set UNITON := {(g,n) in UNITCC : abs(unit_Pc[1,g,n]) >= Pnull};
+# Units up and generating, and condensers (which can control voltage even with Ptarget=0):
+# Warning: other units with Ptarget=0 are considered as out of order
+set UNITON := {(g,n) in UNITCC : abs(unit_Pc[1,g,n]) >= Pnull or unit_condenser[1,g,n] == "true"};
 
 # Batteries in voltage regulation mode:
 # Contrary to units, the selection is NOT based on an active power threshold: a
