@@ -29,7 +29,7 @@ The following corrections apply successively to determine consistent domains for
 
 To determine the consistent domain of produced active power, the bounds of the domains $P_g^{min}$ and $P_g^{max}$, as well as the target $P_g^{t}$ of generator $g$ (all specified in `ampl_network_generators.txt`) are used.
 
-Let $P_{g}^{min,c}$ and $P_{g}^{max,c}$ be the corrected active bounds. Note that these bounds are used to determine the generator's reactive bounds, and they can be used in the optimization if the user specifies a value for
+Let $P_{g}^{min,c}$ and $P_{g}^{max,c}$ be the corrected active bounds. Note that $P_{g}^{max,c}$ is used in the correction of the generator's reactive bounds, and these bounds can be used in the optimization if the user specifies a value for
 `coeff_alpha` different from 1 (see [Configuration of the run](inputs.md#configuration-of-the-run)).
 
 $P_{g}^{min,c}$ and $P_{g}^{max,c}$ are computed using the following:
@@ -39,52 +39,15 @@ $P_{g}^{min,c}$ and $P_{g}^{max,c}$ are computed using the following:
 - If $|P_g^{min}| \geq \text{PQmax}$, then $P_{g}^{min,c} = \min(\text{defaultPmin}, P_g^t)$
 - If $|P_{g}^{max,c} - P_{g}^{min,c}| \leq \text{minimalQPrange}$, then $P_{g}^{max,c} = P_{g}^{min,c} = P_{g}^t$ (active power is fixed).
 
-To determine the consistent domain of produced reactive power, the reactive power diagram (specified in `ampl_network_generators.txt`) of generator $g$ is used: $qp_g$ (resp. $qp0_g$, $qP_g$) and $Qp_g$ (resp. $Qp0_g$, $QP_g$) when $P_{g}^{min,c}$ (resp. $0$, $P_{g}^{max,c}$) is reached.
-Let $qp_g^c$ (resp. $qp0_g^c$, $qP_g^c$) and $Qp_g^c$ (resp. $Qp0_g^c$, $QP_g^c$) be the bounds of the corrected reactive diagram, 
-and $Q_{g}^{min,c}$ and $Q_{g}^{max,c}$ be the corrected reactive bounds, used in the optimization:
+To determine the consistent domain of produced reactive power, the reactive power limits $qPc_g$ and $QPc_g$ of generator $g$ at its active power target $P_g^t$ (specified in `ampl_network_generators.txt`) are used.
+They are computed by the AMPL export from the reactive capability curve of the generator, and extrapolated when $P_g^t$ is outside the range of the curve's points.
+Let $Q_{g}^{min,c}$ and $Q_{g}^{max,c}$ be the corrected reactive bounds, used in the optimization:
 
-- By default, $qp_g^{c} = qP_{g}^{c} = - \text{defaultPmin} \times \text{defaultQmaxPmaxRatio}$ and $Qp_{g}^{c} = QP_{g}^{c} = \text{defaultPmax} \times \text{defaultQmaxPmaxRatio}$ (see [Configuration of the run](inputs.md#configuration-of-the-run))
-- If $|qp_{g}| \geq \text{PQmax}$, then $qp_{g}^{c} = -\text{defaultQmaxPmaxRatio} \times P_{max}^{g,c}$.  
-  Same with $qP_{g}^{c}$, $qp0_{g}^{c}$.  
-- If $|Qp_{g}| \geq \text{PQmax}$, then $Qp_{g}^{c} = \text{defaultQmaxPmaxRatio} \times P_{max}^{g,c}$.  
-  Same with $QP_{g}^{c}$, $Qp0_{g}^{c}$.  
-- If $qp_{g}^{c} > Qp_{g}^{c}$, the values are swapped.  
-  Same with $qP_{g}^{c}$ and $QP_{g}^{c}$, $qp0_{g}^{c}$ and $Qp0_{g}^{c}$.  
-- If the corrected reactive diagram is too small between $P_{g}^{min,c}$ and $P_{g}^{max,c}$ (the distances between the vertices of the reactive diagram are lower than $\text{minimalQPrange}$), 
-then $qp_{g}^{c} = Qp_{g}^{c} = qP_{g}^{c} = QP_{g}^{c} = \frac{qp_{g}^{c} + Qp_{g}^{c} + qP_{g}^{c} + QP_{g}^{c}}{4}$ (reactive power is fixed). The same applies if the diagram
-is too small between $P_{g}^{min,c}$ and 0, or 0 and $P_{g}^{max,c}$.
+- If $|qPc_{g}| \geq \text{PQmax}$, then $Q_{g}^{min,c} = -\text{defaultQmaxPmaxRatio} \times P_{g}^{max,c}$, otherwise $Q_{g}^{min,c} = qPc_{g}$.
+- If $|QPc_{g}| \geq \text{PQmax}$, then $Q_{g}^{max,c} = \text{defaultQmaxPmaxRatio} \times P_{g}^{max,c}$, otherwise $Q_{g}^{max,c} = QPc_{g}$.
+- If $Q_{g}^{min,c} > Q_{g}^{max,c}$, the values are swapped.
+- If $Q_{g}^{max,c} - Q_{g}^{min,c} \leq \text{minimalQPrange}$, then $Q_{g}^{min,c} = Q_{g}^{max,c} = \frac{Q_{g}^{min,c} + Q_{g}^{max,c}}{2}$ (reactive power is fixed).
 
-Then, the corrected reactive bounds ($Q_{g}^{min,c}$ and $Q_{g}^{max,c}$) are interpolated between the points forming the hexagonal diagram.
-The general case corresponds to the active target being between the active bounds ($P_{g}^{min,c}$ and $P_{g}^{max,c}$). The interpolating formula is as follows:
-- $Q_{g}^{min,c} = qp_{g}^{c} + \frac{P_{g}^{t}-P_{g}^{min,c}}{P_{g}^{max,c}-P_{g}^{min,c}}(qP_{g}^{c}-qp_{g}^{c})$
-- $Q_{g}^{max,c} = Qp_{g}^{c} + \frac{P_{g}^{t}-P_{g}^{min,c}}{P_{g}^{max,c}-P_{g}^{min,c}}(QP_{g}^{c}-Qp_{g}^{c})$
+Please note that in the end, the corrected bounds are used in the reactive OPF (see [AC optimal powerflow](acOptimalPowerflow.md)).
 
-The formula also applies when the active target is between $0$ and $P_{g}^{min,c}$, or $0$ and $P_{g}^{max,c}$. For the last case, the interpolating formula becomes:
-- $Q_{g}^{min,c} = qp0_{g}^{c} + \frac{P_{g}^{t}}{P_{g}^{max,c}}(qP_{g}^{c}-qp0_{g}^{c})$
-- $Q_{g}^{max,c} = Qp0_{g}^{c} + \frac{P_{g}^{t}}{P_{g}^{max,c}}(QP_{g}^{c}-Qp0_{g}^{c})$
-
-This is illustrated in the following figure:
-![Reactive diagram between 0 and Pmax](_static/img/reactive-bounds-ptarget-between-0-pmax.PNG){width="50%" align=center}
-
-The following corner cases are important to clarify:
-- If the generator has an active power target located between $0$ and $P_{g}^{min,c}$ (e.g., during ramp up), the 
-interpolation is performed between the points $0$ and $P_{g}^{min,c}$, as follows:
-![Reactive diagram between 0 and Pmin](_static/img/reactive-bounds-ptarget-between-0-pmin.PNG){width="50%" align=center}
-
-- If the generator has a target greater (resp. smaller) than its upper (resp. lower) active power bound, and 
-this bound is greater (resp. smaller) than $0$, then the corrected reactive bounds are taken at $P_{g}^{max,c}$ (resp. $P_{g}^{min,c}$), as follows:
-![Reactive diagram taken at Pmax](_static/img/reactive-bounds-ptarget-higher-than-pmax.PNG){width="50%" align=center}
-
-- If corrected active bounds $P_{g}^{min,c}$ and $P_{g}^{max,c}$ are too close, and the target
-  of the generator is located between these points, then the corrected reactive bounds are taken as the midpoint of the extreme points of the diagram. The same applies
-  if $0$ and $P_{g}^{min,c}$ or $0$ and $P_{g}^{max,c}$ are too close, and that the target is located between.
-  This is illustrated below:
-![Reactive diagram when active bounds are too close](_static/img/reactive-bounds-ptarget-in-active-bounds-too-close.PNG){width="50%" align=center}
-
-Please note that in the end, the corrected bounds are used in the reactive OPF (see [AC optimal powerflow](acOptimalPowerflow.md). 
-In addition, note that bounds $qP_{g}^0$ and $Qp_{g}^0$ are only used to interpolate the corrected bounds $Q_{g}^{min,c}$ and $Q_{g}^{max,c}$, 
-as generators with zero active power are excluded from the optimisation (see [AC optimal powerflow](acOptimalPowerflow.md#generalities)).
-
-The same reactive-domain correction applies to batteries that regulate voltage, interpolated at their fixed active power $P_b^0$ instead of a generator target. 
-There is one difference: contrary to generators, a voltage-regulating battery is **not** excluded from the optimization when its active power is null. 
-In that case (i.e. $|P_b^0| < \text{Pnull}$), its corrected reactive bounds are taken directly at the $P=0$ vertices of its reactive diagram ($qp0_b^c$ and $Qp0_b^c$).
+The same reactive-domain correction applies to batteries that regulate voltage, with the reactive power limits taken at their fixed active power $P_b^0$.

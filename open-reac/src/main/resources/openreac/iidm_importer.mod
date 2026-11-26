@@ -106,10 +106,14 @@ param unit_qp          {UNIT};
 param unit_QP          {UNIT};
 param unit_Qp0         {UNIT};
 param unit_Qp          {UNIT};
+param unit_qPc         {UNIT}; # Reactive power lower bound at active power set point
+param unit_QPc         {UNIT}; # Reactive power upper bound at active power set point
 param unit_vregul      {UNIT} symbolic; # Does unit do voltage regulation, or PQ bus?
 param unit_vregul_bus  {UNIT} integer; # Bus regulated by unit, if it does voltage regulation
 param unit_Vc          {UNIT}; # Voltage set point (in case of voltage regulation)
 param unit_condenser   {UNIT} symbolic; # Is unit a condenser
+param unit_tanphi_regul{UNIT} symbolic; # Does unit regulate reactive power proportionally to active power
+param unit_tanphi      {UNIT}; # Q/P ratio of this regulation
 param unit_Pc          {UNIT}; # Active  power set point
 param unit_Qc          {UNIT}; # Rective power set point (in case no voltage regulation)
 param unit_fault       {UNIT};
@@ -127,9 +131,6 @@ check {(t,g,n) in UNIT}: (t,n) in BUS or n==-1;
 check {(t,g,n) in UNIT}: (t,unit_substation[t,g,n]) in SUBSTATIONS;
 check {(t,g,n) in UNIT}: (t,unit_vregul_bus[t,g,n]) in BUS or unit_vregul_bus[t,g,n] == -1;
 check {(t,g,n) in UNIT}: unit_Pmax[t,g,n] >= unit_Pmin[t,g,n];
-# Checks below are useless since values will be corrected for units in UNITON
-#check {(t,g,n) in UNIT}: unit_Qp[t,g,n] >= unit_qp[t,g,n];
-#check {(t,g,n) in UNIT}: unit_QP[t,g,n] >= unit_qP[t,g,n] ;
 
 # Global inital losses_ratio: value of (P-C-H)/(C+H) in data files
 # Value is 0 if no losses
@@ -241,9 +242,13 @@ param battery_qp         {BATTERY};
 param battery_QP         {BATTERY};
 param battery_Qp0        {BATTERY};
 param battery_Qp         {BATTERY};
+param battery_qPc        {BATTERY}; # Reactive power lower bound at P0
+param battery_QPc        {BATTERY}; # Reactive power upper bound at P0
 param battery_vregul     {BATTERY} symbolic; # Does battery do voltage regulation, or PQ bus?
 param battery_Vc         {BATTERY}; # Voltage set point (in case of voltage regulation)
 param battery_vregul_bus {BATTERY} integer; # Bus regulated by battery, if it does voltage regulation
+param battery_tanphi_regul {BATTERY} symbolic; # Does battery regulate reactive power proportionally to active power
+param battery_tanphi     {BATTERY}; # Q/P ratio of this regulation
 param battery_fault      {BATTERY};
 param battery_curative   {BATTERY};
 param battery_id         {BATTERY} symbolic;
@@ -392,6 +397,8 @@ param vscconv_qp          {VSCCONV};
 param vscconv_QP          {VSCCONV};
 param vscconv_Qp0         {VSCCONV};
 param vscconv_Qp          {VSCCONV};
+param vscconv_qPc         {VSCCONV}; # Reactive power lower bound at active power set point
+param vscconv_QPc         {VSCCONV}; # Reactive power upper bound at active power set point
 param vscconv_vregul      {VSCCONV} symbolic;
 param vscconv_targetV     {VSCCONV};
 param vscconv_targetQ     {VSCCONV};
@@ -407,9 +414,7 @@ param vscconv_Q0          {VSCCONV};
 check {(t,cs,n) in VSCCONV}: (t,n)  in BUS union {(1,-1)};
 check {(t,cs,n) in VSCCONV}: (t,vscconv_substation[t,cs,n]) in SUBSTATIONS;
 check {(t,cs,n) in VSCCONV}: vscconv_Pmin[t,cs,n] <= vscconv_Pmax[t,cs,n];
-check {(t,cs,n) in VSCCONV}: vscconv_qp[t,cs,n]   <= vscconv_Qp[t,cs,n];
-check {(t,cs,n) in VSCCONV}: vscconv_qp0[t,cs,n]  <= vscconv_Qp0[t,cs,n];
-check {(t,cs,n) in VSCCONV}: vscconv_qP[t,cs,n]   <= vscconv_QP[t,cs,n];
+check {(t,cs,n) in VSCCONV}: vscconv_qPc[t,cs,n]  <= vscconv_QPc[t,cs,n];
 
 
 
