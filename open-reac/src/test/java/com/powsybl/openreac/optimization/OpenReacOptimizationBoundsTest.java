@@ -104,235 +104,24 @@ class OpenReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
     }
 
     @Test
-    void testGeneratorQBoundsInterpolatedBetweenMinPMaxP() throws IOException {
-        // verify feasibility when minQ/maxQ are interpolated between minP and maxP (0 < minP < targetP < maxP)
+    void testGeneratorQBoundsAtTargetP() throws IOException {
+        // verify feasibility when minQ/maxQ are read on the reactive capability curve at targetP
         Network network = create(101, 50, 150, 150);
-        network.getGenerator("g1").newReactiveCapabilityCurve()
-                .beginPoint()
-                .setP(0)
-                .setMinQ(-100)
-                .setMaxQ(100)
-                .endPoint()
-                .beginPoint()
-                .setP(150)
-                .setMinQ(-200)
-                .setMaxQ(200)
-                .endPoint()
-                .add();
-        testAllModifAndLoadFlow(network, "optimization/bounds/generator-q-bounds-interpolated-between-pmin-pmax/positive-pmin/valid", parameters, ReportNode.NO_OP);
+        setSymmetricReactiveCapabilityCurve(network.getGenerator("g1"), 0, 100, 100, 170, 150, 100);
+        testAllModifAndLoadFlow(network, "optimization/bounds/generator-q-bounds-at-target-p/valid", parameters, ReportNode.NO_OP);
 
         // verify non convergence due to insufficient bounds
         network = create(101, 50, 150, 150);
-        network.getGenerator("g1").newReactiveCapabilityCurve()
-                .beginPoint()
-                .setP(0)
-                .setMinQ(-100)
-                .setMaxQ(100)
-                .endPoint()
-                .beginPoint()
-                .setP(150)
-                .setMinQ(-150)
-                .setMaxQ(150)
-                .endPoint()
-                .add();
-        OpenReacResult result = runOpenReac(network, "optimization/bounds/generator-q-bounds-interpolated-between-pmin-pmax/positive-pmin/invalid", parameters, true);
+        setSymmetricReactiveCapabilityCurve(network.getGenerator("g1"), 0, 100, 100, 130, 150, 100);
+        OpenReacResult result = runOpenReac(network, "optimization/bounds/generator-q-bounds-at-target-p/invalid", parameters, true);
         assertEquals(OpenReacStatus.NOT_OK, result.getStatus());
     }
 
     @Test
-    void testGeneratorQBoundsInterpolatedBetweenMinPMaxP2() throws IOException {
-        // verify feasibility when minQ/maxQ are interpolated between minP and maxP (minP < targetP < maxP < 0)
-        Network network = create(-10, -20, -5, -10);
-        setDefaultVoltageLimits(network, 0.85, 1.15);
-        network.getGenerator("g1").newReactiveCapabilityCurve()
-                .beginPoint()
-                .setP(-20)
-                .setMinQ(-30)
-                .setMaxQ(30)
-                .endPoint()
-                .beginPoint()
-                .setP(-5)
-                .setMinQ(-5)
-                .setMaxQ(5)
-                .endPoint()
-                .add();
-        testAllModifAndLoadFlow(network, "optimization/bounds/generator-q-bounds-interpolated-between-pmin-pmax/negative-pmax/valid", parameters, ReportNode.NO_OP);
-
-        // verify non convergence due to insufficient bounds
-        network.getGenerator("g1").newReactiveCapabilityCurve()
-                .beginPoint()
-                .setP(-20)
-                .setMinQ(-18)
-                .setMaxQ(18)
-                .endPoint()
-                .beginPoint()
-                .setP(-5)
-                .setMinQ(-5)
-                .setMaxQ(5)
-                .endPoint()
-                .add();
-        OpenReacResult result = runOpenReac(network, "optimization/bounds/generator-q-bounds-interpolated-between-pmin-pmax/negative-pmax/invalid", parameters, true);
-        assertEquals(OpenReacStatus.NOT_OK, result.getStatus());
-    }
-
-    @Test
-    void testGeneratorQBoundsInterpolatedBetweenP0MaxP() throws IOException {
-        // verify feasibility when minQ/maxQ are interpolated between P0 and maxP (minP < 0 < targetP < maxP)
-        Network network = create(101, -50, 150, 150);
-        network.getGenerator("g1").newReactiveCapabilityCurve()
-                .beginPoint()
-                .setP(0)
-                .setMinQ(0)
-                .setMaxQ(0)
-                .endPoint()
-                .beginPoint()
-                .setP(150)
-                .setMinQ(-300)
-                .setMaxQ(300)
-                .endPoint()
-                .add();
-        testAllModifAndLoadFlow(network, "optimization/bounds/generator-q-bounds-interpolated-between-0-pmax/positive-pmax/valid", parameters, ReportNode.NO_OP);
-
-        // verify non convergence due to insufficient bounds
-        network.getGenerator("g1").newReactiveCapabilityCurve()
-                .beginPoint()
-                .setP(0)
-                .setMinQ(0)
-                .setMaxQ(0)
-                .endPoint()
-                .beginPoint()
-                .setP(150)
-                .setMinQ(-100)
-                .setMaxQ(100)
-                .endPoint()
-                .add();
-        OpenReacResult result = runOpenReac(network, "optimization/bounds/generator-q-bounds-interpolated-between-0-pmax/positive-pmax/invalid", parameters, true);
-        assertEquals(OpenReacStatus.NOT_OK, result.getStatus());
-    }
-
-    @Test
-    void testGeneratorQBoundsInterpolatedBetweenP0MaxP2() throws IOException {
-        // verify feasibility when minQ/maxQ are interpolated between P0 and maxP (maxP < targetP < 0)
-        Network network = create(-4, -20, -5, -4);
-        setDefaultVoltageLimits(network, 0.85, 1.15);
-        network.getGenerator("g1").newReactiveCapabilityCurve()
-                .beginPoint()
-                .setP(-5)
-                .setMinQ(-5)
-                .setMaxQ(5)
-                .endPoint()
-                .beginPoint()
-                .setP(0)
-                .setMinQ(-1)
-                .setMaxQ(1)
-                .endPoint()
-                .add();
-        testAllModifAndLoadFlow(network, "optimization/bounds/generator-q-bounds-interpolated-between-0-pmax/negative-pmax/valid", parameters, ReportNode.NO_OP);
-
-        // verify non convergence due to insufficient bounds
-        network.getGenerator("g1").newReactiveCapabilityCurve()
-                .beginPoint()
-                .setP(-5)
-                .setMinQ(-4.25)
-                .setMaxQ(4.25)
-                .endPoint()
-                .beginPoint()
-                .setP(0)
-                .setMinQ(-1)
-                .setMaxQ(1)
-                .endPoint()
-                .add();
-        OpenReacResult result = runOpenReac(network, "optimization/bounds/generator-q-bounds-interpolated-between-0-pmax/negative-pmax/invalid", parameters, true);
-        assertEquals(OpenReacStatus.NOT_OK, result.getStatus());
-    }
-
-    @Test
-    void testGeneratorQBoundsInterpolatedBetweenP0MinP() throws IOException {
-        // verify feasibility when minQ/maxQ are interpolated between minP and P0 (0 < targetP < minP)
-        Network network = create(101, 150, 200, 100);
-        network.getGenerator("g1").newReactiveCapabilityCurve()
-                .beginPoint()
-                .setP(0)
-                .setMinQ(0)
-                .setMaxQ(0)
-                .endPoint()
-                .beginPoint()
-                .setP(150)
-                .setMinQ(-150)
-                .setMaxQ(150)
-                .endPoint()
-                .add();
-        testAllModifAndLoadFlow(network, "optimization/bounds/generator-q-bounds-interpolated-between-0-pmin/positive-pmin/valid", parameters, ReportNode.NO_OP);
-
-        // verify non convergence due to insufficient bounds
-        network.getGenerator("g1").newReactiveCapabilityCurve()
-                .beginPoint()
-                .setP(0)
-                .setMinQ(0)
-                .setMaxQ(0)
-                .endPoint()
-                .beginPoint()
-                .setP(150)
-                .setMinQ(-140)
-                .setMaxQ(140)
-                .endPoint()
-                .add();
-        OpenReacResult result = runOpenReac(network, "optimization/bounds/generator-q-bounds-interpolated-between-0-pmin/positive-pmin/invalid", parameters, true);
-        assertEquals(OpenReacStatus.NOT_OK, result.getStatus());
-    }
-
-    @Test
-    void testGeneratorQBoundsInterpolatedBetweenP0MinP2() throws IOException {
-        // verify feasibility when minQ/maxQ are interpolated between minP and P0 (minP < targetP < 0 < maxP)
-        Network network = create(-5.1, -10, 10, -2);
-        setDefaultVoltageLimits(network, 0.85, 1.15);
-        network.getGenerator("g1").newReactiveCapabilityCurve()
-                .beginPoint()
-                .setP(0)
-                .setMinQ(-0)
-                .setMaxQ(0)
-                .endPoint()
-                .beginPoint()
-                .setP(-10)
-                .setMinQ(-4)
-                .setMaxQ(4)
-                .endPoint()
-                .add();
-        testAllModifAndLoadFlow(network, "optimization/bounds/generator-q-bounds-interpolated-between-0-pmin/negative-pmin/valid", parameters, ReportNode.NO_OP);
-
-        // verify non convergence due to insufficient bounds
-        network.getGenerator("g1").newReactiveCapabilityCurve()
-                .beginPoint()
-                .setP(0)
-                .setMinQ(0)
-                .setMaxQ(0)
-                .endPoint()
-                .beginPoint()
-                .setP(-10)
-                .setMinQ(-3)
-                .setMaxQ(3)
-                .endPoint()
-                .add();
-        OpenReacResult result = runOpenReac(network, "optimization/bounds/generator-q-bounds-interpolated-between-0-pmin/negative-pmin/invalid", parameters, true);
-        assertEquals(OpenReacStatus.NOT_OK, result.getStatus());
-    }
-
-    @Test
-    void testGeneratorQBoundsTakenAtMaxP() throws IOException {
-        // verify feasibility when minQ/maxQ are taken at maxP (0 < maxP < targetP)
+    void testGeneratorQBoundsExtrapolated() throws IOException {
+        // verify feasibility when minQ/maxQ are extrapolated as targetP is outside the reactive capability curve
         Network network = create(102, 50, 100, 150);
-        network.getGenerator("g1").newReactiveCapabilityCurve()
-                .beginPoint()
-                .setP(50)
-                .setMinQ(0)
-                .setMaxQ(0)
-                .endPoint()
-                .beginPoint()
-                .setP(100)
-                .setMinQ(-152)
-                .setMaxQ(152)
-                .endPoint()
-                .add();
+        setSymmetricReactiveCapabilityCurve(network.getGenerator("g1"), 50, 0, 100, 148);
         // add a generator to allow convergence, as variable P of g1 will be fixed to 102 in optimization
         network.getVoltageLevel("vl1").newGenerator()
                 .setId("g2")
@@ -344,59 +133,20 @@ class OpenReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
                 .setMaxP(2)
                 .setVoltageRegulatorOn(true)
                 .add();
-        testAllModifAndLoadFlow(network, "optimization/bounds/generator-q-bounds-taken-at-pmax/valid", parameters, ReportNode.NO_OP);
+        testAllModifAndLoadFlow(network, "optimization/bounds/generator-q-bounds-extrapolated/valid", parameters, ReportNode.NO_OP);
 
         // verify non convergence due to insufficient bounds
-        network.getGenerator("g1").newReactiveCapabilityCurve()
-                .beginPoint()
-                .setP(50)
-                .setMinQ(0)
-                .setMaxQ(0)
-                .endPoint()
-                .beginPoint()
-                .setP(100)
-                .setMinQ(-149)
-                .setMaxQ(149)
-                .endPoint()
-                .add();
-        OpenReacResult result = runOpenReac(network, "optimization/bounds/generator-q-bounds-taken-at-pmax/invalid", parameters, true);
+        setSymmetricReactiveCapabilityCurve(network.getGenerator("g1"), 50, 0, 100, 140);
+        OpenReacResult result = runOpenReac(network, "optimization/bounds/generator-q-bounds-extrapolated/invalid", parameters, true);
         assertEquals(OpenReacStatus.NOT_OK, result.getStatus());
     }
 
-    @Test
-    void testGeneratorQBoundsTakenAtMinP() throws IOException {
-        // verify feasibility when minQ/maxQ are taken at minP (targetP < minP < 0)
-        Network network = create(-0.5, 0, 10, -0.25);
-        setDefaultVoltageLimits(network, 0.85, 1.15);
-        network.getGenerator("g1").newReactiveCapabilityCurve()
-                .beginPoint()
-                .setP(0)
-                .setMinQ(-100)
-                .setMaxQ(100)
-                .endPoint()
-                .beginPoint()
-                .setP(2)
-                .setMinQ(-10)
-                .setMaxQ(10)
-                .endPoint()
-                .add();
-        testAllModifAndLoadFlow(network, "optimization/bounds/generator-q-bounds-taken-at-pmin/valid", parameters, ReportNode.NO_OP);
-
-        // verify non convergence due to insufficient bounds
-        network.getGenerator("g1").newReactiveCapabilityCurve()
-                .beginPoint()
-                .setP(0)
-                .setMinQ(0)
-                .setMaxQ(0)
-                .endPoint()
-                .beginPoint()
-                .setP(-10)
-                .setMinQ(-1.99)
-                .setMaxQ(1.99)
-                .endPoint()
-                .add();
-        OpenReacResult result = runOpenReac(network, "optimization/bounds/generator-q-bounds-taken-at-pmin/invalid", parameters, true);
-        assertEquals(OpenReacStatus.NOT_OK, result.getStatus());
+    private static void setSymmetricReactiveCapabilityCurve(Generator generator, double... pAndMaxQ) {
+        ReactiveCapabilityCurveAdder adder = generator.newReactiveCapabilityCurve();
+        for (int i = 0; i < pAndMaxQ.length; i += 2) {
+            adder.beginPoint().setP(pAndMaxQ[i]).setMinQ(-pAndMaxQ[i + 1]).setMaxQ(pAndMaxQ[i + 1]).endPoint();
+        }
+        adder.add();
     }
 
     /**
@@ -416,6 +166,8 @@ class OpenReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
         VoltageLevel vl1 = s1.newVoltageLevel()
                 .setId("vl1")
                 .setNominalV(400)
+                .setLowVoltageLimit(360)
+                .setHighVoltageLimit(440)
                 .setTopologyKind(TopologyKind.BUS_BREAKER)
                 .add();
         vl1.getBusBreakerView().newBus()
@@ -434,6 +186,8 @@ class OpenReacOptimizationBoundsTest extends AbstractOpenReacRunnerTest {
         VoltageLevel vl2 = s2.newVoltageLevel()
                 .setId("vl2")
                 .setNominalV(400)
+                .setLowVoltageLimit(360)
+                .setHighVoltageLimit(440)
                 .setTopologyKind(TopologyKind.BUS_BREAKER)
                 .add();
         vl2.getBusBreakerView().newBus()

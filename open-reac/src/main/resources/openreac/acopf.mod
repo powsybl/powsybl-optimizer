@@ -100,10 +100,7 @@ var svc_qvar{(svc,n) in SVCON} >= svc_bmin[1,svc,n], <= svc_bmax[1,svc,n];
 #
 # VSCCONV reactive generation
 #
-var vscconv_qvar{(v,n) in VSCCONVON}
-  >= min(vscconv_qP[1,v,n],vscconv_qp0[1,v,n],vscconv_qp[1,v,n]),
-  <= max(vscconv_QP[1,v,n],vscconv_Qp0[1,v,n],vscconv_Qp[1,v,n]);
-# todo: add trapeze or hexagone constraints for reactive power
+var vscconv_qvar{(v,n) in VSCCONVON} >= vscconv_qPc[1,v,n], <= vscconv_QPc[1,v,n];
 
 
 #

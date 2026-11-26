@@ -382,12 +382,6 @@ param parallel_bundle_center{g in PARALLEL_BUNDLES_FIXED} :=
 ###############################################################################
 param corrected_unit_Pmin{UNITON} default defaultPmin;
 param corrected_unit_Pmax{UNITON} default defaultPmax;
-param corrected_unit_qP  {UNITON} default defaultQmin;
-param corrected_unit_qp  {UNITON} default defaultQmin;
-param corrected_unit_qp0  {UNITON} default defaultQmin;
-param corrected_unit_QP  {UNITON} default defaultQmax;
-param corrected_unit_Qp  {UNITON} default defaultQmax;
-param corrected_unit_Qp0  {UNITON} default defaultQmax;
 param corrected_unit_Qmin{UNITON} default defaultQmin;
 param corrected_unit_Qmax{UNITON} default defaultQmax;
 
@@ -398,13 +392,6 @@ param corrected_unit_Qmax{UNITON} default defaultQmax;
 # Active bounds are NOT optimization variables for batteries (P stays fixed at
 # battery_p0). corrected_battery_Pmax is kept only as a fallback for the reactive-
 # limits correction (cf. defaultQmaxPmaxRatio in acopf_preprocessing.run).
-param corrected_battery_Pmin{BATTERYON} default defaultPmin;
 param corrected_battery_Pmax{BATTERYON} default defaultPmax;
-param corrected_battery_qP  {BATTERYON} default defaultQmin;
-param corrected_battery_qp  {BATTERYON} default defaultQmin;
-param corrected_battery_qp0 {BATTERYON} default defaultQmin;
-param corrected_battery_QP  {BATTERYON} default defaultQmax;
-param corrected_battery_Qp  {BATTERYON} default defaultQmax;
-param corrected_battery_Qp0 {BATTERYON} default defaultQmax;
 param corrected_battery_Qmin{BATTERYON} default defaultQmin;
 param corrected_battery_Qmax{BATTERYON} default defaultQmax;

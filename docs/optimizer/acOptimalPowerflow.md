@@ -58,7 +58,7 @@ In order to bound the variables described in [Generalities](#generalities), the 
 - The active power $\boldsymbol{P_{i,g}}$ also lies between the corrected limits described in the [P/Q unit domain](preprocessing.md#pq-unit-domain) section, but these bounds are only considered when the configurable parameter $\alpha$ is different than $1$ (default value).
 Otherwise, all active powers evolve proportionally to their initial point $P_{i,g}^t$ (specified in `ampl_network_generators.txt`):
 $\boldsymbol{P_{i,g}} = P_{i,g}^t + \boldsymbol{\gamma} (P_{g}^{max,c} - P_{i,g}^t)$, where $\boldsymbol{\gamma}$ is optimized and lies in $[-1;1]$.
-- The reactive power $\boldsymbol{Q_{i,vsc}}$ produced by voltage source converter station $vsc$ is included in $[\min(qP_{vsc}, qp_{vsc}, qp_{vsc}^0)$; $\max(QP_{vsc}, Qp_{vsc}, Qp_{vsc}^0)]$.
+- The reactive power $\boldsymbol{Q_{i,vsc}}$ produced by voltage source converter station $vsc$ is included in $[qPc_{vsc}; QPc_{vsc}]$, its reactive power limits at its active power target (specified in `ampl_network_vsc_converter_stations.txt`).
 - The reactive power $\boldsymbol{Q_{i,b}}$ produced by a voltage-regulating battery $b$ lies between corrected reactive limits derived from its reactive capability diagram at its (fixed) active power $P_b^0$, computed as for units (see [P/Q unit domain](preprocessing.md#pq-unit-domain)).
 **The bounds are therefore rectangular, not trapezoidal.**
 
